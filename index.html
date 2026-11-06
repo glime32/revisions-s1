@@ -2335,7 +2335,7 @@ function pilefile(host){
 /* trouve l'erreur : des algorithmes avec des fautes de forme typiques */
 const BUGS=[
  {t:"compteEgaux (tableau)",L:["FONCTION : compteEgaux (E e : entier, E T : tableau d'entiers)","SPÉCIFICATIONS : renvoie le nombre d'éléments de T égaux à e.","Variable : cpt : entier, i : entier","DÉBUT","    pour i de 0 à taille(T) faire","        si T[i] = e alors","            cpt ← cpt + 1","        fin si;","    fin pour;","    Renvoyer cpt","FIN"],
-  bad:{0:"Il manque le type du résultat d'une fonction : « : entier » à la fin de la signature.",2:"i est l'indice de la boucle pour : ce n'est pas une variable, on ne le déclare pas (cours, page 11).",4:"Les indices vont de 0 à taille(T) − 1 : T[taille(T)] n'existe pas.",6:"cpt n'a jamais reçu de valeur : il faut cpt ← 0 avant la boucle."},alias:{3:6},
+  bad:{0:"Il manque le type du résultat d'une fonction : « : entier » à la fin de la signature.",2:"i est l'indice de la boucle pour : ce n'est pas une variable, on ne le déclare pas (cours, page 11).",4:"Les indices vont de 0 à taille(T) − 1 : T[taille(T)] n'existe pas.",6:"cpt est utilisé sans avoir jamais reçu de valeur : il manque la ligne cpt ← 0 juste après DÉBUT, avant la boucle."},alias:{3:6},
   fix:`FONCTION : compteEgaux (E e : entier, E T : tableau d'entiers) : entier
 SPÉCIFICATIONS : renvoie le nombre d'éléments de T égaux à e.
 Variable : cpt : entier
@@ -2415,12 +2415,15 @@ function bugHunt(host){
   let k=0,sel=new Set(),checked=false;
   host.innerHTML=`<div class="widget"><div class="w-ctrl"><select data-k aria-label="Choisir l'algorithme">${BUGS.map((b,i)=>`<option value="${i}">Algorithme ${i+1} : ${b.t}</option>`).join("")}</select></div><p class="muted bh-help" style="margin:0"></p><div class="bugs"></div><div class="w-ctrl"><button class="btn pri" data-a="check">Vérifier</button><button class="btn" data-a="reset">Recommencer</button></div><div class="w-note"></div></div>`;
   const q=s=>host.querySelector(s);
-  function draw(){const B=BUGS[k],nb=Object.keys(B.bad).length;
-    const hit=i=>B.bad[i]!=null?i:(B.alias&&B.alias[i]!=null?B.alias[i]:null);
-    const found=new Set([...sel].map(hit).filter(x=>x!=null)),wrong=[...sel].filter(i=>hit(i)==null).length;
-    q(".bh-help").textContent=`Clique sur chaque ligne qui contient une erreur (il y en a ${nb}), puis sur « Vérifier ».`;
-    q(".bugs").innerHTML=B.L.map((l,i)=>{let c="";if(checked){if(sel.has(i))c=hit(i)!=null?"good":"bad";else if(B.bad[i]!=null&&!found.has(i))c="miss";}return `<button data-l="${i}" aria-pressed="${sel.has(i)}" class="${c}">${esc(l)}</button>`;}).join("");
-    q(".w-note").innerHTML=checked?`<div class="verdict ${found.size===nb&&!wrong?"ok":"info"}">${found.size} erreur(s) trouvée(s) sur ${nb}${wrong?`, et ${wrong} ligne(s) correcte(s) marquée(s) à tort (en rouge)`:""}. Les erreurs oubliées sont en pointillés.</div><ul>${Object.entries(B.bad).map(([i,e])=>`<li><b>Ligne ${+i+1}</b> : ${e}</li>`).join("")}</ul><p class="muted" style="margin:0">La version corrigée :</p>${C(B.fix)}`:"";}
+  /* une erreur = un message + les lignes où on peut la voir (une ligne qui manque se voit juste avant, ou là où elle aurait servi) */
+  const errsOf=B=>Object.entries(B.bad).map(([m,msg])=>{const main=+m,alt=Object.keys(B.alias||{}).filter(a=>B.alias[a]===main).map(Number);return {main,lines:[main,...alt].sort((a,b)=>a-b),msg};}).sort((a,b)=>a.lines[0]-b.lines[0]);
+  const L=a=>a.length===1?`Ligne ${a[0]+1}`:`Lignes ${a.slice(0,-1).map(x=>x+1).join(", ")} et ${a[a.length-1]+1}`;
+  function draw(){const B=BUGS[k],E=errsOf(B),nb=E.length,two=E.some(e=>e.lines.length>1);
+    const errOfLine=i=>E.find(e=>e.lines.includes(i));
+    const found=E.filter(e=>e.lines.some(i=>sel.has(i))),wrong=[...sel].filter(i=>!errOfLine(i)),dbl=E.filter(e=>e.lines.filter(i=>sel.has(i)).length>1);
+    q(".bh-help").textContent=`Il y a ${nb} erreur${nb>1?"s":""}. Clique sur la ligne de chaque erreur, puis sur « Vérifier ».${two?" Une ligne qui manque se signale sur la ligne juste avant le trou ou sur celle qui en a besoin : une seule des deux suffit.":""}`;
+    q(".bugs").innerHTML=B.L.map((l,i)=>{let c="";if(checked){const e=errOfLine(i);if(sel.has(i))c=e?"good":"bad";else if(e&&!found.includes(e)&&e.main===i)c="miss";}return `<button data-l="${i}" aria-pressed="${sel.has(i)}" class="${c}"><span class="muted" style="user-select:none">${String(i+1).padStart(2," ")}  </span>${esc(l)}</button>`;}).join("");
+    q(".w-note").innerHTML=checked?`<div class="verdict ${found.length===nb&&!wrong.length?"ok":"info"}">${found.length} erreur${found.length>1?"s":""} trouvée${found.length>1?"s":""} sur ${nb}.${wrong.length?` ${wrong.length} ligne${wrong.length>1?"s":""} correcte${wrong.length>1?"s":""} marquée${wrong.length>1?"s":""} à tort, en rouge (${wrong.map(i=>i+1).join(", ")}).`:""}${found.length<nb?" Les erreurs oubliées sont en pointillés.":""}${dbl.map(e=>` Tu as marqué ${L(e.lines.filter(i=>sel.has(i))).toLowerCase()} : c'est la même erreur, comptée une fois.`).join("")}</div><ul>${E.map(e=>`<li><b>${L(e.lines)}</b> : ${e.msg}</li>`).join("")}</ul><p class="muted" style="margin:0">La version corrigée :</p>${C(B.fix)}`:"";}
   host.addEventListener("click",e=>{const b=e.target.closest("[data-l]");if(b&&!checked){const i=+b.dataset.l;if(sel.has(i))sel.delete(i);else sel.add(i);draw();return;}const a=e.target.closest("[data-a]")?.dataset.a;if(a==="check"){checked=true;draw();}if(a==="reset"){sel.clear();checked=false;draw();}});
   host.addEventListener("change",e=>{if(e.target.matches("[data-k]")){k=+e.target.value;sel.clear();checked=false;draw();}});
   draw();
