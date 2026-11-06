@@ -496,6 +496,9 @@ pre.code,pre.console,.sol pre,.enon pre{max-width:100%;overflow-x:auto}
 .pv-state{overflow-x:auto}
 .sec>*,.widget>*,.cours>*,.figs>*,.usage>*,.piege>*,.check>*,.redac>*,.recipe>*,.paper>*,details.ex>*,#tdl>*,#ann>*{min-width:0}
 
+.pretest{border-left:4px solid var(--cobalt);background:var(--cobalt-voile);border-radius:0 10px 10px 0;padding:12px 16px;line-height:1.5}
+.pretest .muted{display:block;font-size:.9rem;margin-top:4px}
+
 </style>
 <script>try{var s=JSON.parse(localStorage.getItem("rev-hub-v1")||localStorage.getItem("geo-cc1-dossier-v1")||"{}");document.documentElement.dataset.theme=s.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"sombre":"clair");}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
@@ -2349,14 +2352,14 @@ DÉBUT
     Renvoyer cpt
 FIN`},
  {t:"somElem (tableau 2D)",L:["FONCTION : somElem (E T : tableau 2D d'entiers) : entier","SPÉCIFICATIONS : calcule et renvoie la somme des éléments de T.","Variable : som : entier","DÉBUT","    som ← 0","    pour i de 0 à taille(T)-1 faire","        pour j de 0 à taille(T)-1 faire","            som ← som + T[i][j]","        fin pour;","        Renvoyer som","    fin pour;","FIN"],
-  bad:{6:"taille(T) est le nombre de lignes. Pour les colonnes, c'est taille(T[0]) − 1.",9:"Renvoyer est dans la boucle des lignes : l'algorithme s'arrête après la première ligne. Il doit venir après le dernier fin pour;."},alias:{10:9},
+  bad:{6:"taille(T) est le nombre de lignes. Pour parcourir les colonnes de la ligne i : taille(T[i]) − 1 (le cours écrit aussi taille(T[0]) − 1 : c'est pareil, toutes les lignes ont la même taille).",9:"Renvoyer est dans la boucle des lignes : l'algorithme s'arrête après la première ligne. Il doit venir après le dernier fin pour;."},alias:{10:9},
   fix:`FONCTION : somElem (E T : tableau 2D d'entiers) : entier
 SPÉCIFICATIONS : calcule et renvoie la somme des éléments de T.
 Variable : som : entier
 DÉBUT
     som ← 0
     pour i de 0 à taille(T)-1 faire
-        pour j de 0 à taille(T[0])-1 faire
+        pour j de 0 à taille(T[i])-1 faire
             som ← som + T[i][j]
         fin pour;
     fin pour;
@@ -2802,7 +2805,7 @@ Renvoyer R`)}`,
  q:"Que renvoie maximum([3, 8, 2, 8, 11, 5]) et combien de comparaisons fait-il ?",a:"11, en 5 comparaisons (une par élément après le premier).",rel:["a-tableaux-2d","a-pseudo"]});
 
 add(3,{id:"a-tableaux-2d",type:"code",ref:"Cours p. 28 à 33, TD 4 ex. 15-16, TP jeu de la vie",t:"Tableaux 2D et jeu de la vie",short:"Tableaux 2D, jeu de la vie",
- plain:`Un tableau 2D est un ${hl("tableau de lignes")} : T[i][j] est la case de la ligne i, colonne j. ${hl("taille(T)")} donne le nombre de lignes, ${hl("taille(T[0])")} le nombre de colonnes. On le parcourt avec deux boucles pour imbriquées. Le jeu de la vie du TP : chaque case regarde ses 8 voisines.`,
+ plain:`Un tableau 2D est un ${hl("tableau de lignes")} : T[i][j] est la case de la ligne i, colonne j. ${hl("taille(T)")} donne le nombre de lignes, ${hl("taille(T[i])")} le nombre de colonnes de la ligne i (toutes les lignes ont la même taille, le cours écrit aussi taille(T[0])). On le parcourt avec deux boucles pour imbriquées. Le jeu de la vie du TP : chaque case regarde ses 8 voisines.`,
  fig:()=>lifeLab,
  formal:`${C(`FONCTION : nbVoisins (E G : tableau 2D d'entiers, E i : entier, E j : entier) : entier
 SPÉCIFICATIONS : G contient des 0 (morte) et des 1 (vivante).
@@ -2812,7 +2815,7 @@ DÉBUT
     nb ← 0
     pour a de i-1 à i+1 faire
         pour b de j-1 à j+1 faire
-            si a ≥ 0 et a < taille(G) et b ≥ 0 et b < taille(G[0]) et (a ≠ i ou b ≠ j) alors
+            si a ≥ 0 et a < taille(G) et b ≥ 0 et b < taille(G[a]) et (a ≠ i ou b ≠ j) alors
                 nb ← nb + G[a][b]
             fin si;
         fin pour;
@@ -2826,7 +2829,7 @@ SPÉCIFICATIONS : renvoie la génération suivante : une vivante survit avec 2 o
 Variable : H : tableau taille(G) x taille(G[0]) d'entiers ; v : entier
 DÉBUT
     pour i de 0 à taille(G)-1 faire
-        pour j de 0 à taille(G[0])-1 faire
+        pour j de 0 à taille(G[i])-1 faire
             v ← nbVoisins(G, i, j)
             si G[i][j] = 1 et (v = 2 ou v = 3) alors
                 H[i][j] ← 1
@@ -2841,7 +2844,7 @@ DÉBUT
 FIN`)}`,
  use:`<p>TD 4, ex. 15 (fait en TD) : moyennes arithmétique et géométrique d'un tableau 2D, et ex. 16.1 : le plus fort dénivelé entre deux voisins. Leurs corrigés sont dans les exercices de TD. Écris toujours i pour les lignes, j pour les colonnes.</p>`,
  trap:`Au bord, une case a moins de 8 voisines : teste a ≥ 0 et a &lt; taille(G) avant de lire G[a][b] (le « et » s'arrête au premier faux, donc pas d'erreur). Et calcule la génération suivante dans un nouveau tableau H : si tu modifies G pendant que tu le lis, les cases suivantes comptent des voisines déjà changées.`,
- q:"Comment obtenir le nombre de colonnes d'un tableau 2D T ?",a:"taille(T[0]) : la taille de la première ligne. taille(T) donne le nombre de lignes.",rel:["a-tableaux","td"]});
+ q:"Comment obtenir le nombre de colonnes d'un tableau 2D T ?",a:"taille(T[i]) : la taille de la ligne i (ou taille(T[0]), c'est pareil puisque toutes les lignes ont la même taille). taille(T) donne le nombre de lignes.",rel:["a-tableaux","td"]});
 
 add(3,{id:"a-dicos",type:"def",maybe:"Vu en cours (p. 34 à 37), mais sans exercice de TD : une question de cours est possible.",ref:"Cours p. 34 à 37",t:"Dictionnaires : des valeurs repérées par une clé",short:"Dictionnaires",
  plain:`Un dictionnaire regroupe plusieurs valeurs, chacune repérée par ${hl("une clé")} (une chaîne), et non par une position comme dans un tableau. Les valeurs peuvent être de types différents. Une association clé + valeur s'appelle un ${hl("champ")}.`,
@@ -3274,12 +3277,12 @@ FIN`)+`<p>4c, avec un milliard de 1 : injectifA appelle compteEgaux(T[0], T), qu
 SPÉCIFICATIONS : les valeurs de T sont > 0. Renvoie [moyenne arithmétique, moyenne géométrique].
 Variable : som, prod : nombre ; nb : entier ; R : tableau de 2 nombres
 DÉBUT
-    som, prod ← 0, 1
-    nb ← taille(T) * taille(T[0])
+    som, prod, nb ← 0, 1, 0
     pour i de 0 à taille(T)-1 faire
-        pour j de 0 à taille(T[0])-1 faire
+        pour j de 0 à taille(T[i])-1 faire
             som ← som + T[i][j]
             prod ← prod * T[i][j]
+            nb ← nb + 1
         fin pour;
     fin pour;
     R[0] ← som / nb
@@ -3293,8 +3296,8 @@ Variable : d : nombre
 DÉBUT
     d ← 0
     pour i de 0 à taille(T)-1 faire
-        pour j de 0 à taille(T[0])-1 faire
-            si j < taille(T[0])-1 alors
+        pour j de 0 à taille(T[i])-1 faire
+            si j < taille(T[i])-1 alors
                 d ← max(d, abs(T[i][j] - T[i][j+1]))
             fin si;
             si i < taille(T)-1 alors
@@ -3303,7 +3306,7 @@ DÉBUT
         fin pour;
     fin pour;
     Renvoyer d
-FIN`)+`<p>Les tests j &lt; taille(T[0]) − 1 et i &lt; taille(T) − 1 évitent de sortir du tableau. Si max et abs ne sont pas autorisés, écris-les avec des si.</p>`},
+FIN`)+`<p>Les tests j &lt; taille(T[i]) − 1 et i &lt; taille(T) − 1 évitent de sortir du tableau. Si max et abs ne sont pas autorisés, écris-les avec des si.</p>`},
  {id:"TP1",s:3,t:"TP : le jeu de la vie",en:"Grille G de 0 (morte) et de 1 (vivante). 1. nbVoisins(G, i, j) : nombre de voisines vivantes de la case (i, j). 2. suivante(G) : la grille de la génération suivante (une vivante survit avec 2 ou 3 voisines ; une morte naît avec exactement 3).",link:"a-tableaux-2d",hint:"Deux boucles pour a de i − 1 à i + 1 et b de j − 1 à j + 1, en ignorant la case elle-même et les cases hors du tableau.",
   sol:`<p>Le corrigé complet est dans la fiche « Tableaux 2D, jeu de la vie », avec une grille pour tester. Les deux points à ne pas rater : tester les bords avant de lire G[a][b], et remplir un nouveau tableau H au lieu de modifier G.</p>`},
  {id:"TP2",s:2,t:"TP : le pendu, avec des tableaux",en:"Le mot à deviner est une chaîne mot ; vues est un tableau de booléens de même taille (vrai si la lettre a été trouvée). 1. afficheMot(mot, vues) : affiche les lettres trouvées et un _ pour les autres. 2. propose(c, mot, vues) : marque toutes les cases où mot contient c, et renvoie vrai si c est dans le mot. 3. gagne(vues).",link:"a-tableaux",
@@ -3499,7 +3502,7 @@ const quiz=[
  {q:"Que vaut 1 + 5 / 2 ?",o:["3 (entier)","3.5 (nombre)","erreur","2"],a:1,e:"/ donne un nombre ; div donnerait le quotient entier.",link:"a-expressions"},
  {q:"Pourquoi la boucle tant que est-elle plus générale que la boucle pour ?",o:["Elle est plus rapide","On n'a pas besoin de connaître le nombre de tours à l'avance","Elle n'a pas de condition","Elle est récursive"],a:1,e:"PEIP 2023, question 2.",link:"a-boucles"},
  {q:"Ligne i (de 1 à n) du triangle inversé : combien d'étoiles ?",o:["i","n − i","n − i + 1","i − 1"],a:2,e:"Ligne 1 : n étoiles ; ligne n : 1 étoile.",link:"a-motifs"},
- {q:"Nombre de colonnes d'un tableau 2D T ?",o:["taille(T)","taille(T[0])","taille(T) − 1","T[0]"],a:1,e:"taille(T) est le nombre de lignes.",link:"a-tableaux-2d"},
+ {q:"Nombre de colonnes d'un tableau 2D T ?",o:["taille(T)","taille(T[i]), ou taille(T[0])","taille(T) − 1","T[i]"],a:1,e:"taille(T) est le nombre de lignes ; toutes les lignes ont la même taille.",link:"a-tableaux-2d"},
  {q:"Jeu de la vie : pourquoi calculer la génération suivante dans un nouveau tableau H ?",o:["Pour aller plus vite","Sinon on lirait des cases déjà modifiées","Parce que G est un paramètre S","Ce n'est pas nécessaire"],a:1,e:"Chaque case doit compter ses voisines de la génération actuelle.",link:"a-tableaux-2d"},
  {q:"Que vaut tête(queue([2, 3, 2, 4])) ?",o:["2","3","[3, 2, 4]","erreur"],a:1,e:"queue donne [3, 2, 4], sa tête est 3.",link:"a-listes"},
  {q:"Que vaut estVide(tête([2, 3])) ?",o:["vrai","faux","erreur de type","[3]"],a:2,e:"tête renvoie 2, qui n'est pas une liste.",link:"a-listes"},
@@ -3514,7 +3517,7 @@ const quiz=[
 
 /* ---------- pages ---------- */
 const feuille=`<div class="title-row"><h1>Ma feuille A4</h1><button class="btn pri" onclick="window.print()">Imprimer cette feuille</button></div>
-<p class="lead no-print">En 2024 et au PEIP 2023, une feuille A4 était autorisée (à confirmer avec ton chargé de TD). Voici l'essentiel du programme de cette année sur une page. Recopie-la à la main : l'écrire t'aide déjà à la retenir.</p>
+<p class="lead no-print">Une feuille A4 est autorisée au CC d'algo (tes camarades le confirment), et tu y écris ce que tu veux. Voici l'essentiel sur une page. Recopie-la à la main plutôt que de l'imprimer : la réécrire t'oblige à la reformuler, et c'est ça qui fait retenir.</p>
 <div class="a4">
 <div><h3>La forme</h3>${C(`FONCTION : f (E x : entier, E T : tableau d'entiers) : booléen
 SPÉCIFICATIONS : ce qu'on suppose, ce qu'on renvoie.
@@ -3528,7 +3531,7 @@ DÉBUT
     Renvoyer cpt > 0
 FIN`)}<p>PROCÉDURE : pas de type de résultat. E entrée, S sortie, ES modifié. Indice de pour et paramètres : pas dans Variable. Renvoyer après la boucle, sauf recherche.</p></div>
 <div><h3>Expressions</h3><p>/ nombre, div quotient, mod reste, ^ puissance. et, ou paresseux. cond(a, b, c) : b et c même type. Erreur : mauvais nombre d'arguments, booléen dans un calcul, entier dans et/ou.</p><h3>Récursivité</h3><p>Cas de base sans appel + appel sur plus petit. Méthode : f(0) = … ; f(n) = … f(n−1) … ; puis cond.</p><p><b>Affichage</b> : calcule G(1), G(2), G(3) puis assemble dans l'ordre des instructions.</p><h3>Motifs</h3><p>Ligne i : nb d'espaces, nb d'étoiles en fonction de i, n. pour i [espaces] [étoiles] affRL() fin pour;</p></div>
-<div><h3>Tableaux</h3><p>Indices 0 à taille(T) − 1. 2D : T[i][j], lignes taille(T), colonnes taille(T[0]), deux pour imbriqués. Accumuler (0 ou 1 avant, mise à jour dedans, Renvoyer après). Tous : Renvoyer faux dans la boucle, vrai après. Voisins : tester a ≥ 0 et a &lt; taille(G) avant G[a][b]. Nouveau tableau H pour la génération suivante.</p><h3>Dictionnaires</h3><p>D['clé'], pour k dans D faire, si k dans D alors.</p></div>
+<div><h3>Tableaux</h3><p>Indices 0 à taille(T) − 1. 2D : T[i][j], lignes taille(T), colonnes taille(T[i]) (= taille(T[0])), deux pour imbriqués. Accumuler (0 ou 1 avant, mise à jour dedans, Renvoyer après). Tous : Renvoyer faux dans la boucle, vrai après. Voisins : tester a ≥ 0 et a &lt; taille(G) avant G[a][b]. Nouveau tableau H pour la génération suivante.</p><h3>Dictionnaires</h3><p>D['clé'], pour k dans D faire, si k dans D alors.</p></div>
 <div><h3>Listes</h3><p>tête(L) élément, queue(L) liste, cons(x, L) ajout devant, estVide(L), pas de L[2]. 1 élément : estVide(queue(L)). Récursif : cond(estVide(L), base, … tête(L) … f(queue(L))). Itératif : M ← L ; tant que non estVide(M) … M ← queue(M) fin tq;. Garder l'ordre d'un tableau : parcourir de la fin, cons.</p><h3>Piles et files</h3><p>empiler(e, P), depiler(P) renvoie et enlève le sommet, estVide(P). Pas de P[i], pas de cons. Vider une pile dans une autre inverse l'ordre : inverser P = 3 transvasements. File : enfiler(e, F), defiler(F) (premier arrivé).</p><h3>Python</h3><p>pour i de a à b → for i in range(a, b+1). ← → =, = → ==, div → //, mod → %.</p></div>
 </div>`;
 const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></div><p class="lead">Le CC est sur papier. Ces étapes te font gagner les points de forme, même quand tu n'es pas sûr du fond.</p>
@@ -3545,7 +3548,7 @@ const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></di
   <tr><td>« tous les éléments… »</td><td>dans la boucle : si contre-exemple alors Renvoyer faux fin si; ; après la boucle : Renvoyer vrai</td></tr>
   <tr><td>« il existe un élément… »</td><td>dans la boucle : si trouvé alors Renvoyer vrai fin si; ; après : Renvoyer faux</td></tr>
   <tr><td>un nouveau tableau</td><td>Variable : R : tableau de taille(T) …, une boucle qui remplit R[i], Renvoyer R</td></tr>
-  <tr><td>un tableau 2D</td><td>pour i de 0 à taille(T)-1 faire pour j de 0 à taille(T[0])-1 faire …</td></tr>
+  <tr><td>un tableau 2D</td><td>pour i de 0 à taille(T)-1 faire pour j de 0 à taille(T[i])-1 faire …</td></tr>
   <tr><td>une liste, en récursif</td><td>cond(estVide(L), cas de base, … tête(L) … f(queue(L)) …)</td></tr>
   <tr><td>une liste dans l'ordre d'un tableau</td><td>pour i de taille(T)-1 à 0 par pas de -1 faire L ← cons(T[i], L) fin pour;</td></tr>
   <tr><td>une figure d'étoiles</td><td>ligne i : combien d'espaces, combien d'étoiles ; une boucle par morceau, affRL() à la fin de la ligne</td></tr></tbody></table></div>`)}
@@ -3555,11 +3558,11 @@ const infos=({sec,exam})=>`<div class="title-row"><h1>Le CC1 d'algorithmique en 
  ${sec(2,"Le poids",`<p>Contrôle continu intégral : 3 CC à 32 %, 34 % et 34 %, sans rattrapage. Coefficient 5 dans le semestre : c'est l'une des matières qui comptent le plus.</p>`)}
  ${sec(3,"Le programme",`<ul><li>D'après tes camarades : « tout ce qu'on a fait », jusqu'au TD 5 et au casse-tête des piles du cours.</li><li>TD 1 (expressions, cond, motifs), TD 2 (récursivité), TD 3 (tableaux 1D), TD 4 (tableaux 2D, jusqu'à l'exercice 15 compris), TD 5 (listes). TP : le jeu de la vie et le pendu.</li><li>Cours : jusqu'aux piles (p. 43 à 47) ; les files viennent juste après.</li><li>Pas encore vu : preuves, complexité, recherche, tris. Ces fiches sont rangées à part.</li></ul>`)}
  ${sec(4,"Le conseil de tes camarades",`<p>« Apprends bien comment écrire du pseudo-code : ne pas oublier la signature, et mettre fin pour, fin tant que au bon endroit. » Commence par la fiche <a href="#/c/a-pseudo">Écrire un algorithme sans faute</a> et la page <a href="#/p/recettes">Recettes pas à pas</a>.</p>`)}
- ${sec(5,"Documents",`<p>En 2024 et au PEIP 2023 : une feuille A4 autorisée, aucun matériel électronique. Prépare-la avec la page « Ma feuille A4 ». Le CC de 2022 n'autorisait aucun document : vérifie la consigne avec ton chargé de TD.</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
+ ${sec(5,"Documents",`<p>Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment). Aucun matériel électronique. Prépare-la avec la page « Ma feuille A4 ».</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#0F766E",coef:5,share:0.32,key:"rev-algo-v1",lang:"pseudo",
  exam:{day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",unsure:"Heure supposée : ton TD d'algo de 15h."},
- docs:"une feuille A4 (en 2024)",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
+ docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Pas de preuves, complexité ni tris.",
  chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",7:"Pas au CC1 (pas encore vu)"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD, ex.",
@@ -3577,7 +3580,7 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#0F766E",coef:5,share:0.
  {id:"a4",t:"Listes : tête, queue, cons, récursif et itératif",min:45,p:1,items:["a-listes","a-listes-rec"],why:"2,5 à 4 points à chaque CC."},
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
  {id:"a5",t:"Piles et files : le casse-tête du cours",min:25,p:2,items:["a-piles-files"]},
- {id:"feuille",t:"Recopier ta feuille A4",min:25,p:1,manual:true,links:[["p/feuille","Ma feuille A4"]],why:"Elle était autorisée en 2023 et 2024 : autant qu'elle soit parfaite."},
+ {id:"feuille",t:"Recopier ta feuille A4",min:25,p:1,manual:true,links:[["p/feuille","Ma feuille A4"]],why:"Elle est autorisée : écris-y les schémas que tu oublies."},
  {id:"peip",t:"Annale PEIP 2023 en 1 h chrono, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus proche de ton programme."},
  {id:"cc24",t:"Annale CC1 2024, exercices 1 à 3",min:50,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"tdex2",t:"Autres exercices de TD sur papier",min:50,p:2,td:["2","3","7","13","16","TP2"],links:[["td","Exercices de TD"]]},
@@ -4133,22 +4136,38 @@ const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></di
   <tr><td>les diviseurs de n jusqu'à i</td><td><code>if i = 0 then …</code></td><td><code>if n mod i = 0 then … f n (i - 1) else f n (i - 1)</code></td></tr></tbody></table></div>`)}
  ${sec(3,"Trouver un type ou une valeur",`<div class="recipe"><ol><li>Regarde les opérateurs : + - * / mod veulent des int, +. -. *. /. des float, && || not des bool, ^ des string.</li><li>Les deux branches d'un if ont le même type ; la condition est un bool.</li><li>À droite de ::, une liste ; à gauche, un élément du même type que ceux de la liste.</li><li>Calcule la valeur étape par étape, en écrivant chaque résultat intermédiaire.</li></ol><p>Entraîne-toi avec <a href="#/p/types">l'entraînement types et valeurs</a>.</p></div>`)}
  ${sec(4,"Avant de rendre ta copie",`<div class="paper"><b>Pour chaque fonction, vérifie :</b><ul><li>le mot <code>rec</code> si la fonction s'appelle elle-même ;</li><li>la signature écrite (et cohérente : int list, pas int) ;</li><li>la forme curryfiée dès qu'il y a deux paramètres ;</li><li>des parenthèses autour de chaque argument calculé : <code>f (List.tl li)</code>, <code>f (n - 1)</code> ;</li><li>un <code>else</code> pour chaque <code>if</code>, et le même type dans les deux branches ;</li><li>pas de List.hd sans avoir testé que la liste n'est pas vide ;</li><li>les opérateurs à point pour les float : <code>+.</code>, <code>*.</code>.</li></ul></div>`)}`;
+const feuille=`<div class="title-row"><h1>Ma feuille A4</h1><button class="btn pri" onclick="window.print()">Imprimer cette feuille</button></div>
+<p class="lead no-print">Une feuille A4 est autorisée au contrôle (tes camarades le confirment). Voici l'essentiel sur une page. Recopie-la à la main : la réécrire t'oblige à la reformuler, et c'est ça qui fait retenir.</p>
+<div class="a4">
+<div><h3>Types et opérateurs</h3><p>int : + - * / (division entière) mod. float : +. -. *. /. (avec un point), 3.0 ou 3. ; float_of_int, int_of_float (tronque). bool : && || not. string : ^. Comparaisons = &lt;&gt; &lt; &gt; &lt;= &gt;= entre deux valeurs du même type. Jamais de mélange int/float.</p><p><b>if c then a else b</b> : c bool, a et b même type, else obligatoire. <b>let x = e1 in e2</b> ; avec <b>and</b>, les définitions ne se voient pas entre elles.</p></div>
+<div><h3>Fonctions et signatures</h3>${M(`let f : int -> int = function n -> 2 * n + 1
+let g : int * int -> bool = function (x, y) -> x < y      (* couple *)
+let h : int -> int -> int = fun a b -> a + b             (* curryfiée *)
+h 2 3        g (2, 3)        f (n - 1)`)}<p>Signature : types des paramètres puis du résultat. Une flèche par paramètre (curryfiée), une étoile dans un couple. Deux paramètres ou plus : forme curryfiée.</p></div>
+<div><h3>Récursivité</h3>${M(`let rec f : int -> int = function
+  n -> if n = 0 then (cas de base) else ... f (n - 1) ...
+let rec chiffres n = if n < 10 then ... else ... n mod 10 ... (n / 10)
+let rec div n i = if i = 0 then ... else if n mod i = 0 then ... else ...`)}<p>rec obligatoire. f (n - 1) entre parenthèses. Somme, compte : base 0. Produit : base 1.</p></div>
+<div><h3>Listes</h3>${M(`let rec g : int list -> int = function
+  li -> if li = [] then (base)
+        else ... List.hd li ... g (List.tl li) ...`)}<p>[2; 3] avec des points-virgules. x :: li ajoute devant ; li @ [x] à la fin. Somme : base 0, +. Tous : base true, &&. Il existe : base false, ||. Garder : List.hd li :: g (List.tl li), sinon g (List.tl li). Liste non vide (max, dernier) : if List.tl li = [] then List.hd li.</p><p><b>Au cas où (match)</b> : match li with [] -> … | x :: r -> … : x = List.hd li, r = List.tl li.</p></div>
+</div>`;
 const types=({sec})=>`<div class="title-row"><h1>Entraînement : types et valeurs</h1></div><p class="lead">27 expressions tirées du TD et du partiel. Choisis le type, lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : c'est 3 points faciles au contrôle.</p><div id="drill"></div>`;
 const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation fonctionnelle en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Le contrôle écrit d'1 h, prévu le 23 octobre, a été reporté. Tu dis qu'il a lieu vendredi : je l'ai placé à 10h, sur le cours magistral qui occupe deux amphis (5.03 et 5.01) dans ton emploi du temps. Corrige l'heure dans « Examens et coefficients » si besoin.</p>`)}
  ${sec(2,"Le poids",`<p>Note finale = 0,30 × contrôle écrit + 0,03 × TP noté + 0,67 × examen de janvier. Coefficient 5 dans le semestre.</p>`)}
- ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, aucun document. Réponses sur la feuille du sujet.</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme : jusqu'aux listes comprises (TD ex. 1 à 31). D'après le mail : pas de polymorphisme ; le filtrage (match) n'est pas sûr.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Tout le site écrit les fonctions sans match, avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, qui marche dans tous les cas.</li></ul>`)}
+ ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment) : prépare-la avec la page « Ma feuille A4 ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme : jusqu'aux listes comprises (TD ex. 1 à 31). D'après le mail : pas de polymorphisme ; le filtrage (match) n'est pas sûr.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Tout le site écrit les fonctions sans match, avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, qui marche dans tous les cas.</li></ul>`)}
  ${sec(4,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["pf/cours.pdf","Cours complet"],["pf/td.pdf","Feuille de TD"],["pf/partiel_oct2021.pdf","Partiel 2021"],["pf/exam_jan2024_sujet.pdf","Examen 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#7C3AED",coef:5,share:0.30,key:"rev-pf-v1",lang:"ml",
  exam:{day:"2026-11-13",start:"10:00",end:"11:00",place:"amphis 5.03 et 5.01",dur:"1 h",unsure:"Heure supposée : le cours magistral de 10h."},
- docs:"aucun",examMinutes:60,examMorning:"Refais l'entraînement « types et valeurs » une fois, puis relis les erreurs classiques.",
+ docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Refais l'entraînement « types et valeurs » une fois, relis ta feuille A4, puis les erreurs classiques.",
  prog:"Sur papier. OCaml jusqu'aux listes comprises (TD ex. 1 à 31) : types, fonctions et signatures, récursivité sur les entiers et les listes. Pas de polymorphisme ; filtrage pas sûr.",
  chapters:{1:"1. Expressions et types",2:"2. Fonctions et signatures",3:"3. Récursivité sur les entiers",4:"4. Listes (TD ex. 22 à 31)",5:"5. À relire avant le contrôle",6:"Pas sûr qu'il tombe",7:"Pas au contrôle"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
  annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h, aucun document). J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
- pages:[{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true}],
+ pages:[{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
  {id:"pf1",t:"Types, if, let : les expressions OCaml",min:45,p:1,items:["pf-types","pf-if","pf-let"],why:"3 points au partiel 2021, et la base de tout le reste."},
  {id:"drill",t:"Entraînement « types et valeurs » sans faute",min:20,p:1,manual:true,links:[["p/types","Entraînement"]]},
@@ -4159,6 +4178,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#7C3AED",coef:5,share:
  {id:"pf5",t:"Listes : fabriquer et tester (TD ex. 24 à 31)",min:50,p:1,items:["pf-listes-construire","pf-listes-tests"]},
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["18","21","24","26","27","28"],links:[["td","Exercices de TD"]]},
  {id:"pf6",t:"Les erreurs classiques",min:15,p:1,items:["pf-erreurs"]},
+ {id:"feuille",t:"Recopier ta feuille A4",min:20,p:1,manual:true,links:[["p/feuille","Ma feuille A4"]],why:"Elle est autorisée : écris-y les schémas que tu oublies."},
  {id:"p21",t:"Partiel 2021 en 1 h chrono, puis correction",min:65,p:1,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"tdex2",t:"Exercices ★★★ de plus : derListe, prefixe et suffixe",min:40,p:2,td:["25","31"],links:[["td","Exercices de TD"]]},
  {id:"fermat",t:"Exercices d'examen : Fermat et Pythagore",min:40,p:3,manual:true,links:[["annales","Annales"]]},
@@ -4595,7 +4615,7 @@ function plan(force){if(force||!hub.plan||hub.plan.day!==today()||hub.plan.v!==6
 const LOCAL=location.protocol==="file:"||/^(localhost|127\.)/.test(location.hostname);
 function fixLinks(root,sid){if(!LOCAL)root.querySelectorAll('a[href^="../"]').forEach(a=>{const sp=document.createElement("span");sp.className="muted";sp.textContent=a.textContent+" (PDF sur ton ordinateur)";a.replaceWith(sp);});
   root.querySelectorAll('a[href^="#/"]').forEach(a=>{const h=a.getAttribute("href"),seg=h.slice(2).split("/")[0];if(h==="#/"||SIDS.includes(seg)||seg==="edt"||seg==="examens")return;
-  const map={redaction:"p/redaction",notations:"p/notations",infos:"p/infos"};a.setAttribute("href",`#/${sid}/`+(map[seg]&&h.slice(2)===seg?map[seg]:h.slice(2)));});}
+  if(seg==="mix"||seg==="methode")return;const map={redaction:"p/redaction",notations:"p/notations",infos:"p/infos"};a.setAttribute("href",`#/${sid}/`+(map[seg]&&h.slice(2)===seg?map[seg]:h.slice(2)));});}
 
 /* ---------- barre latérale ---------- */
 let CUR={sid:null,page:"today"};
@@ -4603,7 +4623,7 @@ function link(href,t,on,extra){return `<a href="${href}"${on?' aria-current="pag
 function sideHTML(){
   const {sid,page}=CUR;
   if(!sid){
-    let h=`${link("#/","Aujourd'hui",page==="today")}${link("#/edt","Emploi du temps de la semaine",page==="edt")}${link("#/examens","Examens et coefficients",page==="examens")}<h4>Mes matières</h4>`;
+    let h=`${link("#/","Aujourd'hui",page==="today")}${link("#/mix","Entraînement mélangé",page==="mix")}${link("#/methode","Comment réviser",page==="methode")}${link("#/edt","Emploi du temps de la semaine",page==="edt")}${link("#/examens","Examens et coefficients",page==="examens")}<h4>Mes matières</h4>`;
     SIDS.forEach(id=>{const S=SUBJ[id];h+=link(`#/${id}`,`<i class="sdot" style="background:${S.color}"></i>${S.name}`,false,`<span class="star" style="color:var(--graphite)">${jx(S)}</span>`);});
     return h;
   }
@@ -4658,6 +4678,7 @@ function hubHome(){
   const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0);
   let body="";
   if(exToday.length)body+=`<div class="examday">${exToday.map(S=>`<p><b>CC de ${S.name} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, ${exam(S).place}. ${S.examMorning||"Relis seulement tes fiches en rouge."}</p>`).join("")}</div>`;
+  body+=`<div class="examcard" style="--sc:var(--cobalt)"><div><b>Commence chaque séance par l'entraînement mélangé</b> : 10 questions de toutes tes matières, surtout ton prochain CC et ce que tu rates, environ 10 minutes. ${hub.mixOn===t0?`Fait aujourd'hui : ${hub.mixScore} sur 10.`:"Pas encore fait aujourd'hui."}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn pri" href="#/mix">Commencer</a><a class="btn" href="#/methode">Pourquoi ça marche</a></div></div>`;
   body+=sec(1,"Aujourd'hui",tb.length?`<p class="muted">${tb.length} créneau(x), environ ${hm(tb.reduce((s,b)=>s+b.end-b.start,0))} de révision, placés autour de tes cours. Les étapes de fiches se cochent toutes seules quand tu marques les fiches « Je sais ».</p>${tb.map(b=>blockHTML(b,true)).join("")}`:`<p class="muted">Aucun créneau de révision prévu aujourd'hui. ${P.blocks.length?"Regarde les jours suivants.":"Tout est fait, ou tous les CC sont passés."}</p>`);
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
   if(days.length)body+=sec(2,"Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d);const ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
@@ -4730,10 +4751,11 @@ function concept(sid,c){
   const main=$("#main");
   main.innerHTML=`<article class="page">${head(S,c)}
    ${c.out?`<div class="outnote">${c.out===true?"D'après ce que tu m'as dit, ce chapitre ne devrait pas tomber à ce CC. Lis-le seulement s'il te reste du temps.":c.out}</div>`:""}${c.maybe?`<div class="outnote">${c.maybe}</div>`:""}
+   <div class="pretest"><b>Teste-toi d'abord :</b> ${c.q} <span class="muted">Cherche la réponse 30 secondes avant de lire, même si tu ne la connais pas : chercher fait mieux retenir ce que tu lis ensuite. La réponse est en partie 4.</span></div>
    ${sec(1,"Comprendre",`<p class="lead">${c.plain}</p><div class="figs" style="display:grid;gap:14px"></div>`)}
    ${sec(2,"Ce que dit le cours",`<div class="cours"><span class="ref">${c.ref}</span>${c.formal}${c.gloss?`<div class="gloss">${c.gloss.map(g=>`<span>${g}</span>`).join("")}</div>`:""}</div>`)}
    ${sec(3,"Au CC",`${c.use?`<div class="usage"><h2>Comment t'en servir</h2>${c.use}</div>`:""}${c.trap?`<div class="piege"><h2>Le piège</h2><p>${c.trap}</p></div>`:""}${related(S,c)}`)}
-   ${sec(4,"Vérifie-toi",`<div class="check"><p class="q">${c.q}</p><button class="btn" data-rev>Voir la réponse</button><div class="a" hidden>${c.a}</div><p class="muted" style="font-size:.9rem">Réponds dans ta tête, regarde la réponse, puis marque la fiche. « À revoir » la met en rouge : elle sera revue la veille du CC.</p>${knowBtns(sid,c.id)}</div>`)}
+   ${sec(4,"Vérifie-toi",`<div class="check"><p class="q">${c.q}</p><button class="btn" data-rev>Voir la réponse</button><div class="a" hidden>${c.a}</div><p class="muted" style="font-size:.9rem">Réponds de mémoire, sans remonter, puis regarde la réponse. Marque « Je sais » seulement si tu avais trouvé : la fiche reviendra demain dans « Révision du jour ». Sinon « À revoir » : elle passe en rouge.</p>${knowBtns(sid,c.id)}</div>`)}
    ${pager(S,c)}</article>`;
   mount(main.querySelector(".figs"),c);
   const chk=main.querySelector(".check");chk.querySelector("[data-rev]").addEventListener("click",e=>{const a=chk.querySelector(".a");a.hidden=!a.hidden;e.target.textContent=a.hidden?"Voir la réponse":"Cacher la réponse";});
@@ -4758,11 +4780,11 @@ function demo(sid,c){
 /* ---------- cartes ---------- */
 let deck=[],di=0,flip=false,dfilter="todo";
 function cards(sid,f){
-  const S=SUBJ[sid];if(f)dfilter=f;else if(!["todo","rouge","all"].includes(dfilter))dfilter="todo";
+  const S=SUBJ[sid];if(f)dfilter=f;else if(!["todo","due","rouge","all"].includes(dfilter))dfilter="todo";
   const types=[...new Set(S.ORDER.map(c=>c.type))];
-  const FIL=[["todo","Pas encore sues"],["rouge","En rouge"],["all","Toutes"]].concat(types.map(t=>[t,(TYPE[t]||[t])[0]+"s"]));
-  const build=()=>{deck=S.ORDER.filter(c=>dfilter==="all"||(dfilter==="todo"?!ST[sid].known[c.id]&&!c.out:dfilter==="rouge"?ST[sid].review[c.id]:c.type===dfilter&&!c.out));di=0;flip=false;};build();
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Cartes de révision</h1></div><p class="lead">Lis le titre, réponds dans ta tête ou sur une feuille, puis retourne la carte. Raccourcis : espace pour retourner, 1 pour « Je sais », 2 pour « À revoir ».</p>
+  const FIL=[["todo","Pas encore sues"],["due","Révision du jour"],["rouge","En rouge"],["all","Toutes"]].concat(types.map(t=>[t,(TYPE[t]||[t])[0]+"s"]));
+  const build=()=>{deck=S.ORDER.filter(c=>dfilter==="all"||(dfilter==="todo"?!ST[sid].known[c.id]&&!c.out:dfilter==="due"?ST[sid].review[c.id]||(ST[sid].known[c.id]&&(ST[sid].knownOn[c.id]||"")<today()):dfilter==="rouge"?ST[sid].review[c.id]:c.type===dfilter&&!c.out));di=0;flip=false;};build();
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Cartes de révision</h1></div><p class="lead">Lis le titre, réponds de mémoire (à voix haute ou sur une feuille), puis retourne la carte. « Révision du jour » ressort les cartes en rouge et celles que tu savais hier ou avant : les revoir à quelques jours d'écart les fait tenir jusqu'au CC. Raccourcis : espace pour retourner, 1 pour « Je sais », 2 pour « À revoir ».</p>
    <div class="filters" id="ff">${FIL.map(x=>`<button class="btn" data-f="${x[0]}" aria-pressed="${x[0]===dfilter}">${x[1]}</button>`).join("")}<button class="btn" id="shuf">Mélanger</button></div><div id="card"></div></div>`;
   $("#ff").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){dfilter=b.dataset.f;document.querySelectorAll("#ff [data-f]").forEach(x=>x.setAttribute("aria-pressed",x===b));build();drawCard(sid);}});
   $("#shuf").addEventListener("click",()=>{for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}di=0;flip=false;drawCard(sid);});
@@ -4770,7 +4792,7 @@ function cards(sid,f){
 }
 function drawCard(sid){
   const S=SUBJ[sid],box=$("#card");if(!box)return;
-  if(!deck.length){box.innerHTML=`<div class="fc"><p class="front">Aucune carte ici.</p><p>${dfilter==="rouge"?"Aucune fiche en rouge. Le bouton « À revoir » met une fiche en rouge.":dfilter==="todo"?"Toutes les fiches sont sues. Passe au quiz ou aux annales.":"Choisis un autre filtre."}</p></div>`;return;}
+  if(!deck.length){box.innerHTML=`<div class="fc"><p class="front">Aucune carte ici.</p><p>${dfilter==="rouge"?"Aucune fiche en rouge. Le bouton « À revoir » met une fiche en rouge.":dfilter==="todo"?"Toutes les fiches sont sues. Passe au quiz ou aux annales.":dfilter==="due"?"Rien à revoir aujourd'hui. Une fiche que tu marques « Je sais » revient le lendemain : c'est en la retrouvant de mémoire quelques jours de suite qu'on la retient.":"Choisis un autre filtre."}</p></div>`;return;}
   if(di>=deck.length){const r=deck.filter(c=>ST[sid].review[c.id]).length;box.innerHTML=`<div class="fc"><p class="front">Paquet terminé.</p><p>${r?`${r} carte(s) en rouge dans ce paquet.`:"Aucune carte en rouge dans ce paquet."}</p><div class="acts"><button class="btn pri" id="again">Recommencer</button>${r?`<a class="btn rev" href="#/${sid}/cartes/rouge">Revoir les cartes en rouge</a>`:""}</div></div>`;$("#again").addEventListener("click",()=>cards(sid,dfilter));return;}
   const c=deck[di];
   box.innerHTML=`<div class="fc"><span class="muted">Carte ${di+1} sur ${deck.length}. ${(TYPE[c.type]||["Fiche"])[0]}, ${c.ref} ${pill(sid,c.id)}</span><p class="front">${c.t}</p>
@@ -4788,7 +4810,7 @@ function quiz(sid){
   const S=SUBJ[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):null;
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Quiz de cours</h1></div><p class="lead">${S.quizIntro||"Des questions dans le style des questions de cours du CC."}${goal?` Objectif du plan : au moins ${goal} sur ${activeQuiz(S).length}.`:""}</p><div class="qbox" id="qbox" aria-live="polite"></div></div>`;
   qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;drawQ(sid);
-  $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;if(qAns===S.quiz[qOrder[qi]].a)qScore++;drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;drawQ(sid);}if(id==="qre")quiz(sid);});
+  $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;const qq=S.quiz[qOrder[qi]];if(qAns===qq.a)qScore++;else if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;drawQ(sid);}if(id==="qre")quiz(sid);});
 }
 function drawQ(sid){
   const S=SUBJ[sid],Q=S.quiz,n=qOrder.length,box=$("#qbox"),st=ST[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):n;
@@ -4842,6 +4864,37 @@ function page(sid,pid){const S=SUBJ[sid],p=S.pages.find(x=>x.id===pid);if(!p)ret
   else $("#main").innerHTML=`<div class="page">${typeof p.html==="function"?p.html({S,sec,exam:exam(S)}):p.html}</div>`;
   fixLinks($("#main"),sid);}
 
+/* ---------- entraînement mélangé (tous les quiz, priorité au prochain CC et aux notions ratées) ---------- */
+let mx={q:[],i:0,score:0,ans:null};
+function mix(){
+  const n=NOW(),act=SIDS.filter(id=>examStart(SUBJ[id])>n),near=act.slice().sort((a,b)=>examStart(SUBJ[a])-examStart(SUBJ[b]))[0];
+  const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id];activeQuiz(S).forEach(q=>{let w=1;if(q.link){if(st.review[q.link])w=4;else if(!st.known[q.link])w=2;}if(id===near)w*=2;pool.push({sid:id,q,w});});});
+  const pick=[];for(let k=0;k<10&&pool.length;k++){let t=Math.random()*pool.reduce((s,x)=>s+x.w,0),j=0;for(;j<pool.length-1;j++){t-=pool[j].w;if(t<=0)break;}pick.push(pool.splice(j,1)[0]);}
+  mx={q:pick,i:0,score:0,ans:null};
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Entraînement mélangé</h1></div><p class="lead">10 questions de toutes tes matières, surtout ton prochain CC et les notions que tu rates. Réponds avant de regarder les choix si tu peux. Chaque erreur met la fiche en rouge : elle reviendra dans « Révision du jour ».</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
+  drawMix();
+  $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&mx.ans===null){const it=mx.q[mx.i];mx.ans=+o.dataset.o;if(mx.ans===it.q.a)mx.score++;else if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}drawMix();$("#mxn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;drawMix();}if(id==="mxre")mix();});
+}
+function drawMix(){
+  const box=$("#mxbox"),n=mx.q.length;
+  if(!n){box.innerHTML=`<p>Aucune question : tous tes CC sont passés.</p>`;return;}
+  if(mx.i>=n){hub.mixOn=today();hub.mixScore=mx.score;saveHub();box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${mx.score===n?"Parfait.":"Les notions ratées sont en rouge. Ouvre leur fiche maintenant, ou retrouve-les demain dans « Révision du jour »."}</p><div class="acts"><button class="btn pri" id="mxre">10 autres questions</button><a class="btn" href="#/">Retour à aujourd'hui</a></div>`;return;}
+  const it=mx.q[mx.i],q=it.q,S=SUBJ[it.sid];
+  box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
+   <div class="opts">${q.o.map((o,i)=>{let c="";if(mx.ans!==null){if(i===q.a)c="good";else if(i===mx.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${mx.ans!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
+   ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
+}
+function methode(){
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Réviser efficacement en peu de temps</h1></div>
+   <p class="lead">Une grande synthèse de la recherche sur l'apprentissage (Dunlosky et ses collègues, 2013) compare dix façons de réviser. Deux sortent nettement du lot : <b>se tester</b> et <b>espacer</b>. Relire, surligner et résumer arrivent en bas du classement. Le site est construit autour de ça.</p>
+   ${sec(1,"Se tester au lieu de relire",`<p>Chercher une réponse de mémoire renforce le souvenir bien plus qu'une relecture, même quand on se trompe, à condition de voir la correction juste après. C'est pour ça que chaque fiche commence par une question, que les cartes se retournent, et que les corrigés de TD restent cachés tant que tu n'as pas cherché.</p><p><b>En pratique</b> : ferme la fiche et réécris l'énoncé ou l'algorithme sur une feuille, puis compare.</p>`)}
+   ${sec(2,"Espacer",`<p>Revoir une notion le lendemain, puis deux jours après, la fait tenir beaucoup mieux que la revoir trois fois le même soir. Une fiche marquée « Je sais » revient le lendemain dans le filtre « Révision du jour » des cartes. Les fiches ratées passent en rouge et reviennent aussi.</p><p><b>En pratique</b> : 10 minutes de « Révision du jour » au début de chaque séance.</p>`)}
+   ${sec(3,"Mélanger les matières",`<p>Alterner les sujets oblige à choisir la bonne méthode à chaque question, comme le jour du CC. C'est l'idée de l'entraînement mélangé de l'accueil.</p>`)}
+   ${sec(4,"S'entraîner dans les conditions du CC",`<p>Tes contrôles sont sur papier, en 1 heure. Fais au moins une annale en temps réel par matière (le chrono est dans « Annales »), sur papier, puis corrige-toi avec la liste « Avant de rendre ta copie » des pages Recettes.</p>`)}
+   ${sec(5,"Dormir",`<p>Le sommeil consolide ce que tu as appris dans la journée. Une nuit blanche avant un CC fait perdre plus qu'elle ne rapporte : la veille, révise les fiches en rouge et dors.</p>`)}
+   <p><a class="btn pri" href="#/mix">Faire l'entraînement mélangé</a></p></div>`;
+}
+
 /* ---------- recherche ---------- */
 const strip=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/<[^>]+>/g,"");
 const IDX=[];SIDS.forEach(id=>{const S=SUBJ[id];S.ORDER.forEach(c=>IDX.push({h:`#/${id}/c/${c.id}`,t:c.t,sub:`${S.name}, ${c.ref}`,k:strip(S.name+" "+c.t+" "+c.ref+" "+c.plain)}));S.pages.forEach(p=>IDX.push({h:`#/${id}/p/${p.id}`,t:p.t,sub:S.name,k:strip(S.name+" "+p.t)}));[["cartes","Cartes"],["quiz","Quiz"],["td",S.tdTitle||"TD"],["annales","Annales"]].forEach(([r,t])=>IDX.push({h:`#/${id}/${r}`,t:`${t} de ${S.name}`,sub:S.name,k:strip(S.name+" "+t)}));});
@@ -4867,8 +4920,8 @@ function route(){
     else subjHome(sid);
     CUR={sid,page:pg};document.documentElement.style.setProperty("--sc",S.color);
   } else {
-    CUR={sid:null,page:first==="edt"?"edt":first==="examens"?"examens":"today"};
-    if(first==="edt")edt();else if(first==="examens")examens();else hubHome();
+    CUR={sid:null,page:["edt","examens","mix","methode"].includes(first)?first:"today"};
+    if(first==="edt")edt();else if(first==="examens")examens();else if(first==="mix")mix();else if(first==="methode")methode();else hubHome();
   }
   renderSide();topInfo();window.scrollTo(0,0);
   const h1=$("#main h1");document.title=(h1?h1.textContent+" · ":"")+"Mes révisions";
