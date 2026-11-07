@@ -54,6 +54,8 @@
 .s-calc{--c:#FFB547;--c-deep:#8A4A00;--tagc:#FFE7C2;--g1:#ffb547;--g2:#ff5470}
 .s-lin{--c:#FF7AB8;--c-deep:#8A0F4D;--tagc:#FFD6EA;--g1:#ff7ab8;--g2:#c04dff}
 .s-ana{--c:#FFE45C;--c-deep:#6B5800;--tagc:#FFF6C2;--g1:#ffe45c;--g2:#ffb547}
+.s-rai{--c:#C8F560;--c-deep:#3F5A00;--tagc:#EFFFC2;--g1:#c8f560;--g2:#4be08a}
+.tbl.tv td,.tbl.tv th{text-align:center}
 .c-bleu{--c:var(--cornflower);--c-deep:var(--persian);--tagc:var(--aqua);--g1:#2ee6ff;--g2:#3a5cff}
 .c-violet{--c:var(--violet-hi);--c-deep:var(--violet);--tagc:var(--violet-pale);--g1:#c04dff;--g2:#3a5cff}
 .c-vert{--c:var(--vert);--c-deep:#0E6B39;--tagc:#CFF9DF;--g1:#4be08a;--g2:#2ee6ff}
@@ -917,6 +919,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
  <symbol id="d-integrale" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 54h96M18 60V6"/><path d="M20 44c22-30 52-32 82-12"/><path d="M40 54V25.4M80 54V21.3"/><path d="M48 54V21.7M56 54V19.6M64 54V18.9M72 54V19.5" stroke-width="1.4" opacity=".7"/></g></symbol>
  <symbol id="d-matrice" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M36 6h-8v52h8M84 6h8v52h-8"/></g><g fill="currentColor"><circle cx="44" cy="17" r="3.2"/><circle cx="60" cy="17" r="3.2"/><circle cx="76" cy="17" r="3.2"/><circle cx="44" cy="32" r="3.2" opacity=".55"/><circle cx="60" cy="32" r="3.2"/><circle cx="76" cy="32" r="3.2"/><circle cx="44" cy="47" r="3.2" opacity=".55"/><circle cx="60" cy="47" r="3.2" opacity=".55"/><circle cx="76" cy="47" r="3.2"/></g></symbol>
  <symbol id="d-courbe" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 20h104" stroke-dasharray="4 5" opacity=".7"/><path d="M8 13h104M8 27h104" opacity=".35"/></g><g fill="currentColor"><circle cx="14" cy="56" r="3"/><circle cx="26" cy="9" r="3"/><circle cx="38" cy="38" r="3"/><circle cx="50" cy="13" r="3"/><circle cx="62" cy="28" r="3"/><circle cx="74" cy="17" r="3"/><circle cx="86" cy="23" r="3"/><circle cx="98" cy="19" r="3"/><circle cx="110" cy="21" r="3"/></g></symbol>
+ <symbol id="d-ensembles" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="48" cy="32" r="22"/><circle cx="72" cy="32" r="22"/></g><path fill="currentColor" opacity=".35" d="M60 13.6a22 22 0 0 1 0 36.8 22 22 0 0 1 0-36.8z"/></symbol>
  <symbol id="d-etoile" viewBox="0 0 120 64"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M60 4c1.6 14 10.4 22.4 24 24-13.6 1.6-22.4 10.4-24 24-1.6-13.6-10.4-22.4-24-24 13.6-1.6 22.4-10 24-24z"/></symbol>
 </svg>
 <script>
@@ -5324,6 +5327,170 @@ SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"r
 
 </script>
 <script>
+/* Raisonnement et théorie des ensembles (HAX101X, Simon Modeste) : CC2 vendredi 4 décembre à 15h, amphi 5.05, 1 h.
+   CC1 du 5/11 neutralisé (mail du 3/11) : CC2 = 55 % de la note, CC3 (exercices de formalisation en ligne, clos le 2/10) = 45 %.
+   Pas d'examen en janvier pour cette UE (contrôle continu intégral). Coefficient 2. */
+(function(){
+window.SUBJ=window.SUBJ||{};
+const hl=s=>`<span class="hl">${s}</span>`,F=s=>`<div class="formula">${s}</div>`;
+const concepts=[];const add=(ch,o)=>{o.ch=ch;concepts.push(o);};
+
+/* ---------- chapitres 1 et 2 : logique et raisonnements ---------- */
+add(1,{id:"rai-logique",type:"def",ref:"Chapitre 1 ; TD 1, ex. 3, 5, 6, 8",t:"Connecteurs et tables de vérité",short:"Tables de vérité",
+ plain:`On combine des propositions avec non, et, ou, ⇒, ⇔. L'implication P ⇒ Q n'est ${hl("fausse que dans un cas")} : P vraie et Q fausse.`,
+ formal:`<ul><li>« ou » est inclusif. P ⇒ Q ≡ (non P) ou Q. P ⇔ Q ≡ (P ⇒ Q) et (Q ⇒ P).</li><li>De Morgan : non(P et Q) ≡ non P ou non Q ; non(P ou Q) ≡ non P et non Q.</li><li>non(P ⇒ Q) ≡ P et non Q.</li></ul>`,
+ use:`<p>Pour comparer deux expressions, dresse leur table de vérité : une seule ligne différente suffit pour dire qu'elles ne sont pas équivalentes.</p>`,
+ trap:`« Si 2 + 2 = 5, alors 1 = 2 » est vraie (hypothèse fausse).`,
+ q:"Négation de (A ou B) ⇒ C ?",a:"(A ou B) et non C.",rel:["rai-quantif","rai-raisonnements"]});
+
+add(1,{id:"rai-quantif",type:"meth",ref:"Chapitres 1 et 2 ; TD 1, ex. 1, 2, 7, 10, 12, 17 ; CC2 2023-2024, ex. 1 et 2",t:"Quantificateurs : traduire, nier, prouver",short:"∀, ∃ et négation",cc:"2 exercices sur 5 en 2023",
+ plain:`Pour nier, on ${hl("échange ∀ et ∃")} dans l'ordre et on nie la fin. Pour prouver un ∀ : « Soit x ». Pour un ∃ : on exhibe un exemple.`,
+ formal:`${F("non(∀x ∈ ℝ, ∀ε &gt; 0, ∃y ∈ ℚ, x &lt; y &lt; x + ε) = ∃x ∈ ℝ, ∃ε &gt; 0, ∀y ∈ ℚ, (y ≤ x ou y ≥ x + ε)")}<ul><li>« Tout … qui … » : ∀x, (… ) ⇒ (…).</li><li>« Au moins deux » : ∃x, ∃y, x ≠ y et …</li><li>Réfuter un ∀ : un contre-exemple ; réfuter un ∃ : montrer la négation pour tous.</li></ul>`,
+ use:`<p>Garde les domaines (x ∈ ℝ, y ∈ ℚ) en niant ; seule la propriété finale est niée.</p>`,
+ trap:`non(x &lt; y &lt; x + ε) = (y ≤ x ou y ≥ x + ε) : un « ou ».`,
+ q:"Goldbach avec Pair et Prem ?",a:"∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒ ∃p, q ∈ ℕ, Prem(p) et Prem(q) et n = p + q.",rel:["rai-logique","rai-raisonnements"]});
+
+add(2,{id:"rai-raisonnements",type:"meth",ref:"Chapitre 2 ; TD 1, ex. 4, 13, 18 ; TD 2, ex. 1, 7, 18 ; CC2 2025-2026, ex. 2",t:"Contraposée, absurde, disjonction de cas",short:"Types de raisonnement",
+ plain:`Quand une preuve directe bloque : prouver la ${hl("contraposée")} (non Q ⇒ non P), raisonner ${hl("par l'absurde")}, ou ${hl("séparer en cas")} (pair / impair).`,
+ formal:`<ul><li>P ⇒ Q ≡ non Q ⇒ non P (contraposée). La réciproque Q ⇒ P n'est pas équivalente.</li><li>Par l'absurde : supposer la négation exacte et obtenir une contradiction (√2 irrationnel).</li><li>Disjonction de cas : des cas qui couvrent tout.</li></ul>${F("9x⁵ − 11x⁴ + 6x − 5 est impair pour tout entier x (cas x pair, x impair) : il ne vaut jamais 0.")}`,
+ use:`<p>Écris toujours la contraposée ou l'hypothèse de l'absurde en toutes lettres avant de commencer.</p>`,
+ trap:`L'hypothèse de l'absurde est la négation exacte : « il existe r ∈ A, r &lt; 0 et r³ ∈ ℤ », pas « pour tout r ».`,
+ q:"Contraposée de « si n² est impair, alors n est impair » ?",a:"Si n est pair, alors n² est pair (vrai : n = 2k donne n² = 2(2k²)).",rel:["rai-recurrence","rai-quantif"]});
+
+add(2,{id:"rai-recurrence",type:"meth",ref:"Chapitre 2 (2.5) ; TD 2, ex. 9, 10, 20 ; CC 2024-2025, ex. 3",t:"La récurrence",short:"Récurrence",cc:"un exercice en 2024",
+ plain:`Une récurrence, c'est un ${hl("effet domino")} : le premier tombe (initialisation), et chaque domino fait tomber le suivant (hérédité).`,
+ formal:`<ol><li>Énoncer P(n).</li><li>Initialisation : P(0).</li><li>Hérédité : soit n ∈ ℕ ; supposons P(n) ; montrons P(n + 1).</li><li>Conclusion : P(n) pour tout n.</li></ol>${F("3²ⁿ⁺⁴ − 2ⁿ⁺² = 9(3²ⁿ⁺² − 2ⁿ⁺¹) + 7 · 2ⁿ⁺¹ = 7(9k + 2ⁿ⁺¹)")}`,
+ use:`<p>Dans l'hérédité, fais apparaître l'expression de P(n) pour utiliser l'hypothèse.</p>`,
+ trap:`Une propriété héréditaire mais fausse au départ (4ⁿ + 1 multiple de 3) n'est jamais vraie.`,
+ q:"Pourquoi 2ⁿ⁺¹ ≥ n + 1 si 2ⁿ ≥ n ?",a:"2ⁿ⁺¹ = 2ⁿ + 2ⁿ ≥ n + 1, car 2ⁿ ≥ n et 2ⁿ ≥ 1.",rel:["rai-raisonnements"]});
+
+/* ---------- chapitre 3 : ensembles ---------- */
+add(3,{id:"rai-ensembles",type:"def",ref:"Chapitre 3 ; TD 2, ex. 3 à 6",t:"Ensembles, ∈ et ⊂, parties",short:"∈, ⊂, P(E)",
+ plain:`∈ relie un ${hl("élément")} à un ensemble ; ⊂ relie ${hl("deux ensembles")}. P(E) est l'ensemble de toutes les parties de E.`,
+ formal:`<ul><li>A ⊂ B ⇔ ∀x ∈ A, x ∈ B ; A = B ⇔ A ⊂ B et B ⊂ A.</li><li>P(E) : les parties de E ; A ∈ P(E) ⇔ A ⊂ E ; Card P(E) = 2^(Card E).</li><li>A × B = {(a, b) | a ∈ A, b ∈ B}.</li></ul>${F("1 ∈ ℕ ; {1} ⊂ ℕ ; {1} ∈ P(ℕ) ; P({a, b}) = {∅, {a}, {b}, {a, b}}")}`,
+ use:`<p>Pour chaque symbole, demande-toi : à gauche, est-ce un élément ou un ensemble ?</p>`,
+ trap:`A = {0, 1, 8} : A ∈ P(ℕ), mais A ⊄ P(ℕ) (0 n'est pas une partie de ℕ).`,
+ q:"B = {{0}, {1, 2}, {1}} : B ⊂ P(ℕ) ? B ∈ P(ℕ) ?",a:"B ⊂ P(ℕ) (ses éléments sont des parties de ℕ) ; B ∉ P(ℕ) (ses éléments ne sont pas des entiers).",rel:["rai-operations"]});
+
+add(3,{id:"rai-operations",type:"meth",ref:"Chapitre 3 ; TD 2, ex. 4, 12, 14, 21 ; CC2 2023-2024, ex. 3",t:"Opérations et égalités d'ensembles",short:"∪, ∩, ∖ et preuves",cc:"un exercice en 2023 et en 2024",
+ plain:`∪ c'est « ou », ∩ c'est « et », ∖ c'est « et pas ». Pour prouver une égalité d'ensembles : ${hl("double inclusion")}.`,
+ formal:`<ul><li>A ∪ B : x ∈ A ou x ∈ B ; A ∩ B : x ∈ A et x ∈ B ; A ∖ B : x ∈ A et x ∉ B.</li><li>Complémentaire de A ∪ B = Ā ∩ B̄ ; de A ∩ B = Ā ∪ B̄.</li><li>A Δ B = (A ∖ B) ∪ (B ∖ A) = (A ∪ B) ∖ (A ∩ B).</li></ul>`,
+ use:`<p>« Soit x ∈ A. … Donc x ∈ B. » puis l'inverse. Ou bien une chaîne d'équivalences sur x.</p>`,
+ trap:`Les bornes : ]−√2, 0] et pas [−√2, 0] pour A ∖ B quand B contient −√2.`,
+ q:"A = ℝ₋, B = {x | x² ≥ 2} : A ∖ B ?",a:"]−√2, 0].",rel:["rai-ensembles","rai-image"]});
+
+/* ---------- chapitre 4 : applications ---------- */
+add(4,{id:"rai-image",type:"def",ref:"Chapitre 4 (3) ; TD 3, ex. 4, 6, 8, 15 ; CC2 2025-2026, ex. 1 et 3a",t:"Image directe, image réciproque",short:"f(A) et f⁻¹(B)",cc:"tombé en 2024 et en 2025",
+ plain:`f(A) : ${hl("toutes les images")} des éléments de A. f⁻¹(B) : ${hl("tous les éléments dont l'image est dans B")}. f⁻¹(B) existe même si f n'est pas bijective.`,
+ formal:`${F("f(A) = {f(x) | x ∈ A} = {y ∈ F | ∃x ∈ A, y = f(x)}        f⁻¹(B) = {x ∈ E | f(x) ∈ B}")}<ul><li>f(f⁻¹(B)) ⊂ B ; A ⊂ f⁻¹(f(A)) ; égalités si f est surjective (resp. injective).</li><li>f(A₁ ∩ A₂) ⊂ f(A₁) ∩ f(A₂) ; f⁻¹(B₁ ∪ B₂) = f⁻¹(B₁) ∪ f⁻¹(B₂).</li></ul>`,
+ use:`<p>Pour prouver une inclusion avec f(A), écris « il existe x ∈ A tel que y = f(x) ». Pour f⁻¹(B), traduis « x ∈ f⁻¹(B) » par « f(x) ∈ B ».</p>`,
+ trap:`f(f⁻¹(B)) = B est faux en général : x², B = {−1}.`,
+ q:"f(x) = x² : f⁻¹(ℝ₋) ?",a:"{0}.",rel:["rai-injective","rai-operations"]});
+
+add(4,{id:"rai-injective",type:"def",ref:"Chapitre 4 (6) ; TD 3, ex. 2, 7, 10, 13 ; CC 2024-2025, ex. 2 ; CC2 2025-2026, ex. 3c",t:"Injective, surjective, bijective",short:"Injectivité, surjectivité",cc:"tombé chaque année",
+ plain:`Injective : ${hl("jamais deux éléments pour une même image")}. Surjective : ${hl("tout est atteint")}. Bijective : les deux, chaque élément d'arrivée a exactement un antécédent.`,
+ formal:`<ul><li>Injective : ∀x, x′ ∈ E, f(x) = f(x′) ⇒ x = x′.</li><li>Surjective : ∀y ∈ F, ∃x ∈ E, f(x) = y.</li><li>Bijective : injective et surjective ; réciproque f⁻¹ : F → E.</li></ul>${F("f(x) = 2x sur ℕ : injective, pas surjective.   g(x) = x/2 (pair), 0 (impair) : surjective, pas injective.")}`,
+ use:`<p>« Oui » : la méthode générale (« Soient x, x′ … » ou « Soit y … posons x = … »). « Non » : un contre-exemple chiffré.</p>`,
+ trap:`Les ensembles de départ et d'arrivée font partie de l'application : x² est bijective de ℝ₊ dans ℝ₊, pas de ℝ dans ℝ.`,
+ q:"f : ℤ × ℤ → ℤ, (a, b) ↦ 2a + b : injective ? surjective ?",a:"Pas injective (f(0, 0) = f(1, −2)) ; surjective (f(0, m) = m).",rel:["rai-image","rai-composition"]});
+
+add(4,{id:"rai-composition",type:"th",ref:"Chapitre 4 (4) ; TD 3, ex. 9, 10, 11 ; CC2 2023-2024, ex. 4",t:"Composition",short:"Composée g ∘ f",
+ plain:`g ∘ f, c'est ${hl("f d'abord, puis g")}. Si g ∘ f est injective, f l'est ; si g ∘ f est surjective, g l'est.`,
+ formal:`<ul><li>f : E → F, g : F → G : g ∘ f : E → G, x ↦ g(f(x)).</li><li>g ∘ f injective ⇒ f injective ; g ∘ f surjective ⇒ g surjective.</li><li>Composée de deux injections : injection ; de deux surjections : surjection.</li></ul>`,
+ use:`<p>Pour une relation comme f(f(x) − 1) = x + 1 : injectivité en appliquant f, surjectivité en choisissant x = y − 1.</p>`,
+ trap:`f ∘ g peut ne pas exister alors que g ∘ f existe (f : ℤ × ℤ → ℤ, g : ℤ → ℤ).`,
+ q:"g ∘ f surjective : qui est surjective ?",a:"g (la dernière appliquée).",rel:["rai-injective"]});
+
+/* ---------- TD ---------- */
+const td=[
+ {id:"1.1",s:1,t:"Nier une phrase en français",en:"« Tous les habitants de la rue du Havre qui ont les yeux bleus gagneront au loto et prendront leur retraite avant 50 ans. »",link:"rai-quantif",sol:`<p>Il existe un habitant de la rue du Havre qui a les yeux bleus et qui ne gagnera pas au loto ou ne prendra pas sa retraite avant 50 ans.</p>`},
+ {id:"1.2",s:1,t:"Négations",en:"(a) (A ou B) ⇒ C ; (b) ∀x ∈ ℝ, ∃y ∈ ℝ, f(x) ≤ g(y).",link:"rai-logique",sol:`<ol><li>(A ou B) et non C.</li><li>∃x ∈ ℝ, ∀y ∈ ℝ, f(x) &gt; g(y).</li></ol>`},
+ {id:"1.3",s:1,t:"Valeurs de vérité",en:"(a) 12 divisible par 2 ou par 4 ; (b) par 2 et par 5 ; (c) si 2 &lt; 3 alors 1 = 0 ; (d) si 3 + 2 = 5 alors 4 + 4 = 8 ; (e) il est faux que si 2 + 2 = 5 alors 1 = 2 ; (h) 110 divisible par 10 ⇔ par 2 et par 5 ; (i) 18 pair ⇔ divisible par 2 et par 7.",link:"rai-logique",sol:`<p>(a) V ; (b) F ; (c) F ; (d) V ; (e) F (l'implication F ⇒ F est vraie) ; (h) V ; (i) F.</p>`},
+ {id:"1.4",s:1,t:"Contraposées",en:"(a) Si c'est lundi, c'est raviolis ; (b) ∀x ∈ ℝ, x² ∉ ℚ ⇒ x ∉ ℤ ; (c) si les étudiants ne travaillent pas, ils n'apprennent pas de mathématiques.",link:"rai-raisonnements",sol:`<ol><li>Si ce n'est pas raviolis, ce n'est pas lundi.</li><li>∀x ∈ ℝ, x ∈ ℤ ⇒ x² ∈ ℚ.</li><li>Si les étudiants apprennent des mathématiques, ils travaillent.</li></ol>`},
+ {id:"1.6",s:2,t:"Équivalent à A ⇔ B ?",en:"Cocher les propositions équivalentes à A ⇔ B.",link:"rai-logique",sol:`<p>Oui : (A et B) ou (non A et non B) ; non A ⇔ non B ; (A ⇒ B) et (B ⇒ A). Non : (A ou non A) ⇒ (B ou non B) (toujours vraie) ; (A ⇒ B) et (non B ⇒ non A) et non(A et non B) (équivalentes à A ⇒ B seulement).</p>`},
+ {id:"1.9",s:2,t:"Vrai ou faux",en:"(a) ∀x ∈ ℕ, ∃y ∈ ℕ, y &gt; x³ ; (b) ∀x ∈ ℝ, x² ∉ ℚ ⇒ x ∉ ℤ ; (c) ∀x ∈ ℝ, x ∉ ℤ ⇒ x² ∉ ℚ ; (d) ∀x ∈ ℝ, ∀n ∈ ℕ, ((n pair et x ≥ 0) ou (n impair et x ≤ 0)) ⇒ (−1)ⁿx³ ≥ 0.",link:"rai-quantif",sol:`<ol><li>Vrai : y = x³ + 1.</li><li>Vrai : contraposée, x ∈ ℤ ⇒ x² ∈ ℤ ⊂ ℚ.</li><li>Faux : x = 1/2.</li><li>Vrai : n pair et x ≥ 0 donnent x³ ≥ 0 ; n impair et x ≤ 0 donnent −x³ ≥ 0.</li></ol>`},
+ {id:"1.10",s:2,t:"Quantificateurs sur des ensembles finis",en:"A = {2, 3, 5, 6}, B = {1, 2, −3} : (a) ∀x ∈ A, ∃y ∈ B, x + y ∈ A ; (b) ∀x ∈ A, ∀y ∈ B, x + y ∈ A ; (c) ∃x ∈ A, ∀y ∈ B, x + y ∈ A ; (d) ∃x ∈ A, ∀y ∈ B, ∃z ∈ B, x + y + z ∈ A.",link:"rai-quantif",sol:`<p>(a) Vrai ; (b) faux (2 + 2) ; (c) faux ; (d) vrai avec x = 3.</p>`},
+ {id:"1.11",s:3,t:"Paire et croissante ⇒ constante",en:"Traduire « paire », « croissante », « constante » ; montrer : paire et croissante ⇒ constante.",link:"rai-quantif",sol:`<p>Pour x ≥ 0 : f(0) ≤ f(x) (croissance) et f(x) = f(−x) ≤ f(0). Donc f(x) = f(0) ; pour x &lt; 0, f(x) = f(−x) = f(0).</p>`},
+ {id:"1.13",s:2,t:"n impair et n²",en:"(a) n impair ⇒ n² impair ; (b) n² impair ⇒ n impair.",link:"rai-raisonnements",sol:`<ol><li>Vrai : (2k + 1)² = 2(2k² + 2k) + 1.</li><li>Vrai, par contraposée : n pair ⇒ n² pair.</li></ol>`},
+ {id:"1.17",s:2,t:"Goldbach",en:"Écrire la conjecture avec Pair et Prem.",link:"rai-quantif",sol:`<p>∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒ (∃p ∈ ℕ, ∃q ∈ ℕ, Prem(p) et Prem(q) et n = p + q).</p>`},
+ {id:"2.1",s:1,t:"Première ligne d'un raisonnement par l'absurde",en:"Pour « ∀r ∈ A, r³ ∈ ℤ ⇒ r ≥ 0 ».",link:"rai-raisonnements",sol:`<p>« On suppose qu'il existe un rationnel r dans A, strictement négatif, dont le cube est un entier relatif. »</p>`},
+ {id:"2.3",s:1,t:"∈, ⊂ ou =",en:"1 … ℕ ; {2, 3} … ℕ ; {1} … ℕ ; 1 … {1}.",link:"rai-ensembles",sol:`<p>1 ∈ ℕ ; {2, 3} ⊂ ℕ ; {1} ⊂ ℕ ; 1 ∈ {1}.</p>`},
+ {id:"2.4",s:2,t:"Opérations",en:"A = {1, 2, 4}, B = {1, 3, 4}, C = [−2, 4[ : réunions, intersections, différences, C ∩ ℤ, C ∩ ℕ.",link:"rai-operations",sol:`<p>A ∪ B = {1, 2, 3, 4} ; A ∪ C = B ∪ C = [−2, 4] ; A ∩ B = {1, 4} ; A ∩ C = {1, 2} ; B ∩ C = {1, 3} ; A ∖ B = {2} ; C ∖ A = [−2, 1[ ∪ ]1, 2[ ∪ ]2, 4[ ; C ∩ ℤ = {−2, −1, 0, 1, 2, 3} ; C ∩ ℕ = {0, 1, 2, 3}.</p>`},
+ {id:"2.6",s:2,t:"Parties de ℕ",en:"A = {0, 1, 8}, B = {{0}, {1, 2}, {1}} : A ∈ ℕ ? A ∈ P(ℕ) ? A ⊂ P(ℕ) ? B ∈ P(ℕ) ? B ⊂ P(ℕ) ?",link:"rai-ensembles",sol:`<p>Faux, vrai, faux, faux, vrai.</p>`},
+ {id:"2.7",s:3,t:"Contraposée et parité",en:"(a) Pour tout n ∈ ℤ, si n² − 1 n'est pas divisible par 8, alors n est pair.",link:"rai-raisonnements",sol:`<p>Contraposée : n impair ⇒ 8 | n² − 1. n = 2k + 1 : n² − 1 = 4k(k + 1), et k(k + 1) est pair.</p>`},
+ {id:"2.9",s:3,t:"Récurrences",en:"(a) 2ⁿ ≥ n ; (b) (1 + x)ⁿ ≥ 1 + nx (x &gt; 0, n ≥ 1) ; (c) 3ⁿ ≥ n².",link:"rai-recurrence",sol:`<p>Voir la leçon « La récurrence ».</p>`},
+ {id:"2.10",s:2,t:"Initialisation et hérédité",en:"(a) ∀n, ∃k, 4ⁿ − 1 = 3k ; (b) ∀n, ∃k, 4ⁿ + 1 = 3k.",link:"rai-recurrence",sol:`<ol><li>Vrai : 4⁰ − 1 = 0 et 4ⁿ⁺¹ − 1 = 4(4ⁿ − 1) + 3.</li><li>Héréditaire (4ⁿ⁺¹ + 1 = 4(4ⁿ + 1) − 3) mais fausse en 0 : on ne peut rien conclure, et elle est en fait toujours fausse.</li></ol>`},
+ {id:"2.14",s:2,t:"Égalités d'ensembles",en:"(a) A ∪ B = A ∩ B ⇔ A = B ; (b) A ⊂ B ⇔ A ∩ B̄ = ∅.",link:"rai-operations",sol:`<ol><li>⇐ évident ; ⇒ : A ⊂ A ∪ B = A ∩ B ⊂ B, et de même B ⊂ A.</li><li>⇒ : un x ∈ A ∩ B̄ serait dans B et hors de B. ⇐ : si x ∈ A et x ∉ B, x ∈ A ∩ B̄ = ∅, impossible.</li></ol>`},
+ {id:"2.18",s:3,t:"Pas de solution entière",en:"9x⁵ − 11x⁴ + 6x − 5 = 0.",link:"rai-raisonnements",sol:`<p>Pour x entier, pair ou impair, le membre de gauche est impair, donc non nul.</p>`},
+ {id:"2.20",s:3,t:"Divisibilité par 7",en:"∀n ∈ ℕ, 3²ⁿ⁺² − 2ⁿ⁺¹ est divisible par 7.",link:"rai-recurrence",sol:`<p>P(0) : 7. Hérédité : 3²ⁿ⁺⁴ − 2ⁿ⁺² = 9 · 7k + 7 · 2ⁿ⁺¹.</p>`},
+ {id:"2.21",s:3,t:"Différence symétrique",en:"A Δ B = (A ∖ B) ∪ (B ∖ A) = (A ∪ B) ∖ (A ∩ B).",link:"rai-operations",sol:`<p>Double inclusion, avec une disjonction de cas (voir la leçon).</p>`},
+ {id:"3.1",s:1,t:"Application ou pas ?",en:"A = {1, 2, 3} vers B = {a, b, c, d} : (a) 1 ↦ a, 3 ↦ d ; (b) 1 ↦ a, c ↦ 2, 3 ↦ 1 ; (c) 1 ↦ c, 3 ↦ b, 2 ↦ a, 1 ↦ d ; (d) 1 ↦ d, 3 ↦ a, 2 ↦ d.",link:"rai-injective",sol:`<p>(a) Non (2 n'a pas d'image) ; (b) non ; (c) non (1 a deux images) ; (d) oui.</p>`},
+ {id:"3.2",s:2,t:"Toutes les applications de {♥, ◦, △} vers {⋆, ■}",en:"Lesquelles sont injectives, surjectives, bijectives ?",link:"rai-injective",sol:`<p>2³ = 8 applications. Aucune injective (3 éléments vers 2). Surjectives : toutes sauf les 2 constantes (6). Aucune bijective.</p>`},
+ {id:"3.4",s:2,t:"Images de x³ − 3x",en:"f([−1, 1]), f(ℝ*₊), f⁻¹(ℝ*₋), f⁻¹(]−2, +∞[) ; injective, surjective ?",link:"rai-image",sol:`<p>f(−1) = 2, f(1) = −2, f décroissante sur [−1, 1] : f([−1, 1]) = [−2, 2]. f(ℝ*₊) = [−2, +∞[. f⁻¹(ℝ*₋) = ]−∞, −√3[ ∪ ]0, √3[. x³ − 3x + 2 = (x − 1)²(x + 2) &gt; 0 : f⁻¹(]−2, +∞[) = ]−2, 1[ ∪ ]1, +∞[. Pas injective (f(0) = f(√3)), surjective.</p>`},
+ {id:"3.7",s:3,t:"Injective ? surjective ? bijective ?",en:"n ↦ n + 1 (ℕ) ; n ↦ n − 1 (ℤ) ; (x, y) ↦ x + y (ℕ × [0, 1] → ℝ₊) ; x ↦ (2x)² (ℝ → ℝ₊) ; x ↦ −x/2 + 1 (ℚ) ; θ (x/2 si pair, 2x si impair, ℕ).",link:"rai-injective",sol:`<ul><li>n + 1 : injective, pas surjective.</li><li>n − 1 sur ℤ : bijective, réciproque n ↦ n + 1.</li><li>x + y : surjective (t = E(t) + (t − E(t))), pas injective ((0, 1) et (1, 0)).</li><li>(2x)² : surjective, pas injective.</li><li>−x/2 + 1 : bijective, réciproque y ↦ 2 − 2y.</li><li>θ : surjective (θ(2m) = m), pas injective (θ(4) = θ(1) = 2).</li></ul>`},
+ {id:"3.8",s:3,t:"Images et opérations",en:"f(A₁ ∩ A₂) ⊂ f(A₁) ∩ f(A₂) sans égalité en général ; f⁻¹(B₁ ∪ B₂) = f⁻¹(B₁) ∪ f⁻¹(B₂).",link:"rai-image",sol:`<p>Voir la leçon ; contre-exemple : x², A₁ = {−1}, A₂ = {1}. Pour f⁻¹ : x ∈ f⁻¹(B₁ ∪ B₂) ⇔ f(x) ∈ B₁ ou f(x) ∈ B₂.</p>`},
+ {id:"3.9",s:3,t:"Composées et injectivité",en:"g ∘ f injective ⇒ f injective ; g ∘ f surjective ⇒ g surjective.",link:"rai-composition",sol:`<p>Voir la leçon « Composition ».</p>`},
+ {id:"3.10",s:3,t:"f(k) = 2k et g",en:"Injectivité, surjectivité de f, g, g ∘ f, f ∘ g.",link:"rai-composition",sol:`<p>f injective non surjective ; g surjective non injective ; g ∘ f = id ; f ∘ g ni injective ni surjective.</p>`},
+ {id:"3.11",s:3,t:"f(f(x) − 1) = x + 1",en:"Montrer que f est bijective.",link:"rai-composition",sol:`<p>Injective : appliquer la relation à x et x′. Surjective : y a pour antécédent f(y − 1) − 1.</p>`},
+ {id:"3.13",s:2,t:"x² + 1 sur [0, +∞[",en:"Antécédents de y₀ ; injective, surjective ; f⁻¹(]0, 1]).",link:"rai-injective",sol:`<p>y₀ ≥ 1 : {√(y₀ − 1)} ; y₀ &lt; 1 : ∅. Injective (strictement croissante), pas surjective (0), pas bijective. f⁻¹(]0, 1]) = {0}.</p>`}];
+
+/* ---------- annales ---------- */
+const ann=[
+ {src:"CC2 2025-2026 · Ex. 1",t:"Image, image réciproque, f(f⁻¹(B))",en:"(a) Définitions de f(A) et f⁻¹(B). (b) f(f⁻¹(B)) ⊂ B. (c) Contre-exemple à l'inclusion réciproque.",go:"rai-image",sol:`<ol><li>f(A) = {f(x) | x ∈ A} ; f⁻¹(B) = {x ∈ E | f(x) ∈ B}.</li><li>Soit y ∈ f(f⁻¹(B)) : y = f(x) avec x ∈ f⁻¹(B), donc f(x) ∈ B.</li><li>f(x) = x² sur ℝ, B = {−1} : f(f⁻¹(B)) = ∅.</li></ol>`},
+ {src:"CC2 2025-2026 · Ex. 2",t:"Pas de solution entière",en:"9x⁵ − 11x⁴ + 6x − 5 = 0 n'a pas de solution entière (parité).",go:"rai-raisonnements",sol:`<p>Par l'absurde et disjonction de cas : x pair ou impair, le membre de gauche est impair, donc ≠ 0.</p>`},
+ {src:"CC2 2025-2026 · Ex. 3",t:"Deux applications sur ℤ",en:"f : ℤ × ℤ → ℤ, (a, b) ↦ 2a + b ; g : ℤ → ℤ, n ↦ n/2 si pair, 0 si impair. Images, composées, injectivité, surjectivité.",go:"rai-injective",sol:`<ol><li>f(ℤ × {1}) = les impairs ; f⁻¹({0}) = {(a, −2a)} ; g(ℤ) = ℤ ; g⁻¹(ℕ*) = {2, 4, 6, …}.</li><li>g ∘ f : (a, b) ↦ (2a + b)/2 si b pair, 0 si b impair. f ∘ g n'existe pas.</li><li>f surjective non injective ; g surjective non injective ; aucune bijective.</li></ol>`},
+ {src:"CC 2024-2025 · Ex. 1",t:"Ensembles et images",en:"A = ℝ₋, B = {x | x² ≥ 2}, f(x) = x² : A ∪ B, A ∩ B, A ∖ B, B ∖ A ; A × B, B × B ; f(A), f(B), f⁻¹(A), f⁻¹(B).",go:"rai-operations",sol:`<ul><li>A ∪ B = ]−∞, 0] ∪ [√2, +∞[ ; A ∩ B = ]−∞, −√2] ; A ∖ B = ]−√2, 0] ; B ∖ A = [√2, +∞[.</li><li>f(A) = [0, +∞[ ; f(B) = [2, +∞[ ; f⁻¹(A) = {0} ; f⁻¹(B) = {x | x⁴ ≥ 2} = ]−∞, −⁴√2] ∪ [⁴√2, +∞[.</li></ul>`},
+ {src:"CC 2024-2025 · Ex. 2",t:"f(x) = 2x et g",en:"Composées g ∘ f et f ∘ g ; injectivité, surjectivité.",go:"rai-injective",sol:`<p>g ∘ f = id ; f ∘ g(x) = x si pair, 0 si impair. f injective non surjective ; g surjective non injective.</p>`},
+ {src:"CC 2024-2025 · Ex. 3",t:"Récurrence",en:"∀n ∈ ℕ, 3²ⁿ⁺² − 2ⁿ⁺¹ est divisible par 7.",go:"rai-recurrence",sol:`<p>P(0) : 7 ; hérédité : 9 · 7k + 7 · 2ⁿ⁺¹ = 7(9k + 2ⁿ⁺¹).</p>`},
+ {src:"CC2 2023-2024 · Ex. 1 à 3",t:"Négation, Goldbach, différence symétrique",en:"Nier ∀x ∈ ℝ, ∀ε &gt; 0, ∃y ∈ ℚ, x &lt; y &lt; x + ε ; écrire Goldbach ; A Δ B = (A ∪ B) ∖ (A ∩ B).",go:"rai-quantif",sol:`<ol><li>∃x ∈ ℝ, ∃ε &gt; 0, ∀y ∈ ℚ, (y ≤ x ou y ≥ x + ε).</li><li>∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒ ∃p, q ∈ ℕ, Prem(p) et Prem(q) et n = p + q.</li><li>Double inclusion (voir la leçon).</li></ol>`},
+ {src:"CC2 2023-2024 · Ex. 4 et 5",t:"Composées et f⁻¹(f(A))",en:"g ∘ f surjective ⇒ g surjective ; g ∘ f injective ⇒ f injective ; f ∘ g ∘ f bijective ⇒ f bijective ; f(2f(x) + 4) = x − 1 ⇒ f bijective. f⁻¹(f(A)) par compréhension ; f injective ⇒ A = f⁻¹(f(A)).",go:"rai-composition",sol:`<ul><li>Voir la leçon « Composition » pour (a) à (d).</li><li>f⁻¹(f(A)) = {x ∈ E | ∃a ∈ A, f(x) = f(a)}. On a toujours A ⊂ f⁻¹(f(A)). Si f est injective et x ∈ f⁻¹(f(A)) : f(x) = f(a) avec a ∈ A, donc x = a ∈ A.</li></ul>`}];
+
+/* ---------- quiz ---------- */
+const quiz=[
+ {q:"P ⇒ Q est fausse quand…",o:["P vraie et Q fausse","P fausse et Q vraie","P et Q fausses"],a:0,e:"C'est le seul cas.",link:"rai-logique"},
+ {q:"non(P et Q) ≡ ?",o:["non P ou non Q","non P et non Q","P ou Q"],a:0,e:"De Morgan.",link:"rai-logique"},
+ {q:"Contraposée de P ⇒ Q ?",o:["non Q ⇒ non P","Q ⇒ P","non P ⇒ non Q"],a:0,e:"Les deux autres sont la réciproque et son contraposé.",link:"rai-raisonnements"},
+ {q:"Négation de ∃x, ∀y, P(x, y) ?",o:["∀x, ∃y, non P(x, y)","∃x, ∀y, non P(x, y)","∀x, ∀y, non P(x, y)"],a:0,e:"Chaque quantificateur change.",link:"rai-quantif"},
+ {q:"Pour réfuter « ∀x, P(x) » :",o:["un contre-exemple","prouver non P(x) pour tout x","un exemple"],a:0,e:"Un seul x qui ne marche pas.",link:"rai-quantif"},
+ {q:"L'hérédité commence par…",o:["Soit n ∈ ℕ ; supposons P(n)","Supposons P(n) pour tout n","Vérifions P(0)"],a:0,e:"On fixe un n.",link:"rai-recurrence"},
+ {q:"{1} … ℕ ?",o:["⊂","∈","="],a:0,e:"{1} est une partie.",link:"rai-ensembles"},
+ {q:"Card P(E) si E a 3 éléments ?",o:["8","6","3","9"],a:0,e:"2³.",link:"rai-ensembles"},
+ {q:"A ∖ B = ?",o:["{x | x ∈ A et x ∉ B}","{x | x ∈ A ou x ∉ B}","{x | x ∉ A et x ∈ B}"],a:0,e:"Dans A, pas dans B.",link:"rai-operations"},
+ {q:"f⁻¹(B) = ?",o:["{x ∈ E | f(x) ∈ B}","{f(x) | x ∈ B}","l'image de B par la réciproque de f, qui doit exister"],a:0,e:"Existe toujours, même sans bijection.",link:"rai-image"},
+ {q:"f(f⁻¹(B)) et B :",o:["f(f⁻¹(B)) ⊂ B","égaux toujours","B ⊂ f(f⁻¹(B))"],a:0,e:"Égalité si f est surjective.",link:"rai-image"},
+ {q:"Injective ⇔ ?",o:["f(x) = f(x′) ⇒ x = x′","x = x′ ⇒ f(x) = f(x′)","∀y, ∃x, f(x) = y"],a:0,e:"La 2ᵉ est vraie pour toute application ; la 3ᵉ est la surjectivité.",link:"rai-injective"},
+ {q:"x ↦ x² de ℝ₊ dans ℝ₊ est…",o:["bijective","injective seulement","surjective seulement"],a:0,e:"Racine carrée en réciproque.",link:"rai-injective"},
+ {q:"g ∘ f injective ⇒ ?",o:["f injective","g injective","g surjective"],a:0,e:"La première appliquée.",link:"rai-composition"}];
+
+const infos=({sec})=>`<div class="title-row"><h1>Le CC2 de raisonnement en bref</h1></div>
+ ${sec(1,"Quand et où",`<p>Vendredi 4 décembre à 15h, amphi 5.05 (Prose). 1 h, aucun document. « Une attention particulière sera apportée à la qualité de la rédaction et à la propreté de la copie. »</p>`)}
+ ${sec(2,"Le poids : 55 % de la note",`<p>Le CC1 du 5 novembre a été <b>neutralisé</b> (mail de Simon Modeste du 3/11) : le CC2 compte pour 55 %, le CC3 pour 45 %. Le CC3, ce sont les exercices de formalisation en ligne, ouverts jusqu'au 2 octobre (0,5 point par exercice fait). Pas d'examen en janvier pour cette UE. Coefficient 2.</p>`)}
+ ${sec(3,"Le programme",`<p>Pas encore annoncé : le site couvre tout le cours (logique, raisonnements, ensembles, applications), TD 1 à 3, comme les CC2 de 2023, 2024 et 2025.</p>`)}
+ ${sec(4,"La forme des anciens CC2",`<ul><li>Des définitions à rappeler (f(A), f⁻¹(B)) et une petite preuve (f(f⁻¹(B)) ⊂ B, contre-exemple).</li><li>Une preuve par l'absurde, par contraposée ou par récurrence (divisibilité, parité).</li><li>Une étude d'applications : images, composées, injective, surjective, bijective.</li><li>Des ensembles : réunion, intersection, différence, produit ; une égalité d'ensembles à prouver.</li></ul>`)}
+ ${sec(5,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["rai/chap2.pdf","Chapitre 2"],["rai/chap3.pdf","Chapitre 3"],["rai/chap4.pdf","Chapitre 4"],["rai/td1-logique.pdf","TD 1"],["rai/td2-preuves-ensembles.pdf","TD 2"],["rai/td3-ensembles-applications.pdf","TD 3"],["rai/annale-2025-26-CC2-correction.pdf","CC2 2025 corrigé"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
+const recettes=({sec})=>`<div class="title-row"><h1>Débuts de preuves</h1></div><p class="lead">La première ligne décide souvent de toute la preuve. Les voici.</p>
+ ${sec(1,"Selon ce qu'on veut montrer",`<div class="recipe"><ul><li>∀x ∈ E, P(x) : « Soit x ∈ E. »</li><li>∃x ∈ E, P(x) : « Posons x = … ; alors … »</li><li>P ⇒ Q : « Supposons P. » (ou la contraposée : « Supposons non Q. »)</li><li>P ⇔ Q : « (⇒) … (⇐) … »</li><li>Par l'absurde : « Supposons, par l'absurde, que [négation exacte]. »</li><li>Récurrence : « Pour n ∈ ℕ, notons P(n) : … »</li></ul></div>`)}
+ ${sec(2,"Ensembles et applications",`<div class="recipe"><ul><li>A ⊂ B : « Soit x ∈ A. … Donc x ∈ B. »</li><li>A = B : « Montrons A ⊂ B et B ⊂ A. »</li><li>y ∈ f(A) : « Il existe x ∈ A tel que y = f(x). »</li><li>x ∈ f⁻¹(B) : « f(x) ∈ B. »</li><li>f injective : « Soient x, x′ ∈ E tels que f(x) = f(x′). … Donc x = x′. »</li><li>f surjective : « Soit y ∈ F. Posons x = … ∈ E. Alors f(x) = y. »</li><li>Pas injective / pas surjective : un contre-exemple chiffré.</li></ul></div>`)}`;
+
+SUBJ.rai={name:"Raisonnement",code:"HAX101X",color:"#C8F560",coef:2,share:0.55,key:"rev-rai-v1",lang:"",from:"2026-11-14",
+ exams:[{id:"cc2",label:"CC2",day:"2026-12-04",start:"15:00",end:"16:00",place:"amphi 5.05",dur:"1 h",share:0.55,unsure:"Programme pas encore annoncé : le site couvre tout le cours. Le CC1 a été neutralisé : ce CC2 compte pour 55 %."}],
+ docs:"aucun",examMinutes:60,examMorning:"Relis les « Débuts de preuves », refais une récurrence de divisibilité et une étude d'injectivité, puis les cartes en rouge.",
+ prog:"Pas encore annoncé : tout le cours (logique et quantificateurs, raisonnements et récurrence, ensembles, applications), TD 1 à 3, comme les CC2 de 2023 à 2025.",
+ chapters:{1:"1. Logique et quantificateurs",2:"2. Raisonnements",3:"3. Ensembles",4:"4. Applications"},
+ concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
+ tdIntro:"Les exercices des TD 1 à 3 les plus proches des CC, corrigés par moi. Les ★★★ ressemblent le plus aux CC. Dis-moi si tu veux les autres.",annIntro:"Les CC2 de 2023, 2024 et 2025, d'après les corrigés officiels.",
+ pages:[{id:"infos",t:"Le CC2 en bref",html:infos},{id:"recettes",t:"Débuts de preuves",html:recettes}],
+ tasks:[
+ {id:"tdapp",t:"Exercices de TD ★★★ sur les applications, sur papier",min:45,p:1,td:["3.7","3.8","3.10","3.11"],links:[["td","Exercices de TD"]]},
+ {id:"tdpreuves",t:"Exercices de TD ★★★ sur les preuves et les ensembles, sur papier",min:45,p:1,td:["1.11","2.7","2.20","2.21"],links:[["td","Exercices de TD"]]},
+ {id:"blanc",t:"Examen blanc : CC2 2025-2026 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Images, parité, applications : le format exact."},
+ {id:"blanc2",t:"Annale CC 2024-2025 en 1 h",min:65,p:2,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+})();
+
+</script>
+<script>
 /* Leçons pas à pas de géométrie (HAX104X, CC1 du mardi 10 novembre).
    Programme : poly jusqu'à la fin du §3.2, feuille de TD 1, les 12 démos exigibles.
    Ordre choisi pour rapporter le plus de points d'abord (définitions, Thalès, symétrie centrale). */
@@ -6707,6 +6874,175 @@ LES.ana=[
 
 </script>
 <script>
+/* Leçons pas à pas de raisonnement et ensembles (HAX101X, Simon Modeste). CC2 le vendredi 4 décembre à 15h, 1 h, aucun document.
+   Le CC1 du 5/11 a été neutralisé : ce CC2 compte pour 55 % de la note (le CC3, les exercices de formalisation en ligne, 45 %).
+   Programme retenu : tout le cours (logique, raisonnements, ensembles, applications), comme les CC2 de 2023, 2024 et 2025. */
+(function(){
+const LES=window.LESSONS=window.LESSONS||{};
+const L=(h,x,o)=>Object.assign({k:"learn",h,x},o||{});
+const Q=(q,o,a,e,x)=>Object.assign({k:"qcm",q,o,a,e},x||{});
+const S=(h,intro,s,x)=>Object.assign({k:"steps",h,intro,s},x||{});
+const P=(h,x,sol,check,min,o)=>Object.assign({k:"paper",h,x,sol,check,min},o||{});
+const K=(f,b)=>({k:"card",f,b});
+const box=s=>`<div class="formula">${s}</div>`;
+const tv=(head,rows)=>`<div style="overflow-x:auto"><table class="tbl tv"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+
+LES.rai=[
+/* ------------------------------------------------------------------ */
+{id:"r-logique",t:"Propositions, connecteurs, tables de vérité",min:11,goal:"Calculer la valeur de vérité d'une phrase composée, surtout d'une implication (TD 1, ex. 3, 5, 6, 8).",steps:[
+ Q("« Si 2 + 2 = 5, alors 1 = 2. » Cette phrase est-elle vraie ?",["Oui : une implication dont l'hypothèse est fausse est vraie","Non, car 1 ≠ 2","On ne peut pas savoir"],0,"P ⇒ Q n'est fausse que si P est vraie et Q fausse. Ici P est fausse : l'implication est vraie."),
+ L("Les connecteurs",`<p>Une <b>proposition</b> est un énoncé vrai ou faux. On les combine avec non (¬), et (∧), ou (∨), implique (⇒), équivaut (⇔).</p>${tv(["P","Q","P et Q","P ou Q","P ⇒ Q","P ⇔ Q"],[["V","V","V","V","V","V"],["V","F","F","V","<b>F</b>","F"],["F","V","F","V","V","F"],["F","F","F","F","V","V"]])}<ul><li>« ou » est <b>inclusif</b> : vrai si l'un des deux, ou les deux.</li><li><b>P ⇒ Q est fausse seulement quand P est vraie et Q fausse</b>. Elle a la même table que (non P) ou Q.</li></ul>`),
+ Q("« Si 2 &lt; 3, alors 1 = 0. » Valeur de vérité ?",["Faux : hypothèse vraie, conclusion fausse","Vrai","Ni l'un ni l'autre"],0,"Vrai ⇒ Faux, c'est le seul cas où l'implication est fausse (TD 1, ex. 3c)."),
+ L("Équivalences et lois de De Morgan",`<p>Deux propositions sont <b>équivalentes</b> (≡) si elles ont la même table de vérité.</p>${box("non(P et Q) ≡ (non P) ou (non Q)        non(P ou Q) ≡ (non P) et (non Q)")}<ul><li>P ⇔ Q ≡ (P ⇒ Q) et (Q ⇒ P) ≡ (P et Q) ou (non P et non Q) ≡ (non P ⇔ non Q).</li><li>non(P ⇒ Q) ≡ P et (non Q).</li><li>« et » et « ou » sont distributifs l'un sur l'autre : P et (Q ou R) ≡ (P et Q) ou (P et R).</li></ul>`),
+ Q("Laquelle est équivalente à P ⇔ Q ?",["(P ⇒ Q) et (Q ⇒ P)","non(P et non Q)","(P ⇒ Q) et (non Q ⇒ non P)","(P ou non P) ⇒ (Q ou non Q)"],0,"Les deux sens. « non(P et non Q) » et « (P ⇒ Q) et (non Q ⇒ non P) » ne disent que P ⇒ Q ; la dernière est toujours vraie (TD 1, ex. 6)."),
+ Q("(P et Q) ou R, et P et (Q ou R) : sont-elles équivalentes ?",["Non : avec P faux et R vrai, la 1ʳᵉ est vraie et la 2ᵉ fausse","Oui, toujours"],0,"Une seule ligne de table de vérité différente suffit (TD 1, ex. 8)."),
+ K("Quand P ⇒ Q est-elle fausse ?","Seulement quand P est vraie et Q fausse. P ⇒ Q ≡ (non P) ou Q ; non(P ⇒ Q) ≡ P et non Q."),
+ K("Lois de De Morgan ?","non(P et Q) ≡ non P ou non Q ; non(P ou Q) ≡ non P et non Q.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-quantif",t:"Quantificateurs : traduire et nier",min:13,goal:"Écrire une phrase avec ∀ et ∃, et écrire sa négation (CC2 2023-2024, ex. 1 et 2 ; TD 1, ex. 1, 2, 7, 12, 17).",steps:[
+ Q("Négation de « tous les étudiants ont réussi » ?",["Au moins un étudiant n'a pas réussi","Aucun étudiant n'a réussi","Tous les étudiants ont échoué"],0,"non(∀x, P(x)) = ∃x, non P(x) : il suffit d'un contre-exemple."),
+ L("Traduire avec ∀ et ∃",`<ul><li>∀x ∈ E, P(x) : pour tout x de E, P(x). ∃x ∈ E, P(x) : il existe au moins un x de E tel que P(x).</li><li>« Au moins deux solutions » : ∃x, ∃y, x ≠ y et (x solution) et (y solution).</li><li>L'ordre compte : « ∀x, ∃y » (y peut dépendre de x) n'est pas « ∃y, ∀x » (un même y pour tous).</li></ul>${box("Goldbach : ∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒ (∃p ∈ ℕ, ∃q ∈ ℕ, Prem(p) et Prem(q) et n = p + q)")}<p>« Tout … qui … » se traduit par ∀ avec une <b>implication</b> : « tout entier pair supérieur à 3 » = ∀n, (Pair(n) et n &gt; 3) ⇒ ….</p>`),
+ Q("« L'équation eˣ − x³ = 2 a au moins deux solutions réelles distinctes » s'écrit…",["∃x ∈ ℝ, ∃y ∈ ℝ, x ≠ y et eˣ − x³ = 2 et eʸ − y³ = 2","∀x ∈ ℝ, eˣ − x³ = 2","∃x ∈ ℝ, eˣ − x³ = 2 et e^x − x³ = 2"],0,"Deux éléments, différents, qui vérifient tous les deux l'équation (TD 1, ex. 7)."),
+ L("Nier une phrase quantifiée",`<p>On parcourt la phrase de gauche à droite : chaque ∀ devient ∃, chaque ∃ devient ∀, et on nie la fin (le domaine ∈ ne change pas).</p>${box("non(∀x ∈ ℝ, ∀ε &gt; 0, ∃y ∈ ℚ, x &lt; y &lt; x + ε)  =  ∃x ∈ ℝ, ∃ε &gt; 0, ∀y ∈ ℚ, (y ≤ x ou y ≥ x + ε)")}<ul><li>non(a &lt; y &lt; b) = (y ≤ a ou y ≥ b) : la double inégalité est un « et ».</li><li>non(P ⇒ Q) = P et non Q : « tous ceux qui ont les yeux bleus gagneront » se nie en « il y a quelqu'un qui a les yeux bleus et qui ne gagnera pas ».</li></ul>`),
+ Q("Négation de « ∀x ∈ ℝ, ∃y ∈ ℝ, f(x) ≤ g(y) » ?",["∃x ∈ ℝ, ∀y ∈ ℝ, f(x) &gt; g(y)","∃x ∈ ℝ, ∃y ∈ ℝ, f(x) &gt; g(y)","∀x ∈ ℝ, ∀y ∈ ℝ, f(x) &gt; g(y)"],0,"Chaque quantificateur change, et ≤ devient &gt; (TD 1, ex. 2b)."),
+ S("Vrai ou faux avec A = {2, 3, 5, 6} et B = {1, 2, −3} (TD 1, ex. 10)","On vérifie chaque phrase en suivant l'ordre des quantificateurs.",[
+  {w:"∀x ∈ A, ∃y ∈ B, x + y ∈ A : vrai. 2 + 1 = 3, 3 + 2 = 5, 5 + 1 = 6, 6 − 3 = 3.",why:"Pour chaque x, on exhibe un y (qui peut changer avec x)."},
+  {w:"∀x ∈ A, ∀y ∈ B, x + y ∈ A : faux. 2 + 2 = 4 ∉ A.",why:"Un contre-exemple suffit."},
+  {w:"∃x ∈ A, ∀y ∈ B, x + y ∈ A : faux. Pour chaque x, un y fait sortir de A : 2 + 2, 3 + 1, 5 + 2, 6 + 1.",why:"Pour nier un ∃, il faut traiter tous les x."},
+  {w:"∃x ∈ A, ∀y ∈ B, ∃z ∈ B, x + y + z ∈ A : vrai avec x = 3 : y = 1 → z = 1 (5) ; y = 2 → z = 1 (6) ; y = −3 → z = 2 (2).",why:"z peut dépendre de y."}]),
+ P("Négations et traductions, sur papier","1. Nier « ∀x ∈ ℚ, ∀ε &gt; 0, ∃y ∈ ℚ, x &lt; y &lt; x + ε ». 2. Écrire « f est paire », « f est croissante », « f est constante » avec des quantificateurs. 3. Écrire la conjecture de Goldbach avec Pair et Prem.",`<ol><li>∃x ∈ ℚ, ∃ε &gt; 0, ∀y ∈ ℚ, (y ≤ x ou y ≥ x + ε).</li><li>Paire : ∀x ∈ ℝ, f(−x) = f(x). Croissante : ∀x, y ∈ ℝ, x ≤ y ⇒ f(x) ≤ f(y). Constante : ∃c ∈ ℝ, ∀x ∈ ℝ, f(x) = c.</li><li>∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒ ∃p, q ∈ ℕ, Prem(p) et Prem(q) et n = p + q.</li></ol>`,["Chaque ∀/∃ changé dans la négation","La double inégalité niée en « ou »","« Tout … qui … » traduit par une implication","Le domaine de chaque variable indiqué"],12),
+ K("Nier une phrase quantifiée ?","Chaque ∀ devient ∃ et inversement, dans le même ordre ; on nie la fin. non(a &lt; y &lt; b) = y ≤ a ou y ≥ b ; non(P ⇒ Q) = P et non Q."),
+ K("Traduire « tout entier pair supérieur à 3 vérifie … » ?","∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒ … : un ∀ suivi d'une implication.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-preuves",t:"Prouver un ∀, un ∃, et rédiger",min:12,goal:"Savoir comment commencer chaque preuve, et prouver une propriété sur une fonction paire et croissante (TD 1, ex. 9 et 11).",steps:[
+ Q("Pour montrer « ∀x ∈ ℝ, P(x) », on commence par…",["« Soit x ∈ ℝ. »","« Prenons x = 0. »","« Supposons qu'il existe x tel que P(x). »"],0,"On fixe un x quelconque, puis on montre P(x) pour ce x-là, sans rien supposer d'autre."),
+ L("Comment commencer",`<ul><li><b>∀x ∈ E, P(x)</b> : « Soit x ∈ E », puis on prouve P(x). Pour réfuter : <b>un</b> contre-exemple.</li><li><b>∃x ∈ E, P(x)</b> : on <b>exhibe</b> un x (« Posons x = … ») et on vérifie. Pour réfuter : on montre non P(x) pour tout x.</li><li><b>P ⇒ Q</b> : « Supposons P », puis on montre Q.</li><li><b>P ⇔ Q</b> : deux sens, P ⇒ Q puis Q ⇒ P.</li><li><b>P et Q</b> : on prouve les deux. <b>P ou Q</b> : on suppose non P et on montre Q.</li></ul>${box("∀x ∈ ℕ, ∃y ∈ ℕ, y &gt; x³ :  « Soit x ∈ ℕ. Posons y = x³ + 1 ∈ ℕ. Alors y &gt; x³. »")}`),
+ Q("Pour montrer « ∀x ∈ ℕ, ∃y ∈ ℕ, y &gt; x³ », on écrit…",["Soit x ∈ ℕ. Posons y = x³ + 1 : alors y &gt; x³.","Posons y = 1 : alors y &gt; x³ pour tout x.","Soit y ∈ ℕ. Posons x = 0."],0,"y est choisi après x et peut dépendre de x. y = 1 ne marche pas pour x = 1 (TD 1, ex. 9a)."),
+ Q("« ∀x ∈ ℝ, x ∉ ℤ ⇒ x² ∉ ℚ » est-elle vraie ?",["Non : x = 1/2 n'est pas entier, mais x² = 1/4 ∈ ℚ","Oui","Oui, par contraposée"],0,"Un contre-exemple suffit pour un ∀ (TD 1, ex. 9c)."),
+ S("TD 1, ex. 11 : f paire et croissante ⇒ f constante","On montre que f(x) = f(0) pour tout réel x.",[
+  {w:"Soit x ≥ 0. Comme 0 ≤ x et f est croissante : f(0) ≤ f(x).",why:"On applique la définition de « croissante » à 0 ≤ x."},
+  {w:"Comme −x ≤ 0 : f(−x) ≤ f(0). Et f(−x) = f(x) car f est paire. Donc f(x) ≤ f(0).",why:"On applique la croissance à −x ≤ 0, puis la parité."},
+  {w:"Donc f(x) = f(0) pour tout x ≥ 0.",why:"Deux inégalités dans les deux sens donnent l'égalité."},
+  {w:"Si x &lt; 0 : f(x) = f(−x) avec −x &gt; 0, donc f(x) = f(0). Ainsi f est constante, égale à f(0).",why:"Disjonction de cas : x ≥ 0 puis x &lt; 0."}]),
+ Q("Pour réfuter « ∃x ∈ A, ∀y ∈ B, x + y ∈ A », il faut…",["Montrer que pour chaque x de A, un y de B fait sortir de A","Un seul x qui ne marche pas","Un seul y qui ne marche pas"],0,"La négation est ∀x ∈ A, ∃y ∈ B, x + y ∉ A : il faut traiter tous les x."),
+ K("Comment commencer une preuve de ∀, ∃, ⇒, ⇔ ?","∀ : « Soit x » ; ∃ : « Posons x = … » ; ⇒ : « Supposons P » ; ⇔ : les deux sens. Réfuter un ∀ : un contre-exemple."),
+ K("Prouver « P ou Q » ?","Supposer non P et montrer Q (ou l'inverse).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-contraposee",t:"Contraposée, réciproque, absurde",min:13,goal:"Choisir le bon type de raisonnement : contraposée, absurde, disjonction de cas (TD 1, ex. 4, 13, 18 ; TD 2, ex. 1 et 7).",steps:[
+ Q("La contraposée de « s'il pleut, alors le sol est mouillé » est…",["Si le sol n'est pas mouillé, alors il ne pleut pas","Si le sol est mouillé, alors il pleut","S'il ne pleut pas, alors le sol n'est pas mouillé"],0,"Contraposée de P ⇒ Q : non Q ⇒ non P. Elle est équivalente à P ⇒ Q. La 2ᵉ est la réciproque, qui ne l'est pas."),
+ L("Contraposée et réciproque",`${box("P ⇒ Q  ≡  non Q ⇒ non P   (contraposée)")}<ul><li>La contraposée est <b>équivalente</b> : la prouver suffit. Utile quand « non Q » donne une information plus simple.</li><li>La <b>réciproque</b> Q ⇒ P n'est <b>pas</b> équivalente.</li></ul><p>Exemple : « si n² est impair, alors n est impair ». Contraposée : « si n est pair, alors n² est pair ». n = 2k donne n² = 4k² = 2(2k²), pair.</p>`),
+ Q("Contraposée de « ∀x ∈ ℝ, x² ∉ ℚ ⇒ x ∉ ℤ » ?",["∀x ∈ ℝ, x ∈ ℤ ⇒ x² ∈ ℚ","∀x ∈ ℝ, x ∉ ℤ ⇒ x² ∉ ℚ","∃x ∈ ℝ, x ∈ ℤ et x² ∉ ℚ"],0,"Le ∀ reste ; on échange et on nie les deux côtés de l'implication (TD 1, ex. 4b)."),
+ L("Par l'absurde et par disjonction de cas",`<ul><li><b>Par l'absurde</b> : on suppose le <b>contraire</b> de ce qu'on veut, et on aboutit à une contradiction. Pour « ∀r ∈ A, r³ ∈ ℤ ⇒ r ≥ 0 », on suppose : « il existe r ∈ A, r &lt; 0, avec r³ ∈ ℤ ».</li><li><b>Disjonction de cas</b> : on sépare en cas qui couvrent tout (n pair / n impair ; x ≥ 0 / x &lt; 0).</li></ul><p>Exemple classique du cours : √2 est irrationnel (par l'absurde : √2 = p/q irréductible donne p² = 2q², donc p pair, puis q pair : contradiction).</p>`),
+ Q("Pour prouver par l'absurde « ∀r ∈ A, r³ ∈ ℤ ⇒ r ≥ 0 », la première ligne est…",["On suppose qu'il existe r ∈ A, strictement négatif, dont le cube est un entier","On suppose que pour tout r ∈ A, r³ ∈ ℤ et r &lt; 0","On suppose qu'il existe r ∈ A positif dont le cube n'est pas entier"],0,"C'est la négation exacte : ∃r ∈ A, r³ ∈ ℤ et r &lt; 0 (TD 2, ex. 1)."),
+ S("CC2 2025-2026, ex. 2 : 9x⁵ − 11x⁴ + 6x − 5 = 0 n'a pas de solution entière","Par l'absurde et par disjonction de cas, sur la parité.",[
+  {w:"Supposons qu'un entier x vérifie 9x⁵ − 11x⁴ + 6x − 5 = 0.",why:"Par l'absurde."},
+  {w:"Si x est pair : 9x⁵, 11x⁴ et 6x sont pairs, donc 9x⁵ − 11x⁴ + 6x − 5 est impair.",why:"Pair − 5 = impair."},
+  {w:"Si x est impair : 9x⁵ et 11x⁴ sont impairs, leur différence est paire ; 6x est pair ; donc le tout moins 5 est impair.",why:"Impair − impair = pair ; pair + pair − impair = impair."},
+  {w:"Dans les deux cas, le membre de gauche est impair, donc non nul : contradiction. L'équation n'a pas de solution entière.",why:"0 est pair."}]),
+ P("TD 2, ex. 7a et TD 1, ex. 18, sur papier","1. Montrer : pour tout n ∈ ℤ, si n² − 1 n'est pas divisible par 8, alors n est pair. 2. Écrire la contraposée de « pour tout n ∈ ℕ, si n² n'est pas un multiple de 3, alors n n'est pas un multiple de 3 », puis prouver l'assertion.",`<ol><li>Contraposée : si n est impair, alors 8 divise n² − 1. n = 2k + 1 : n² − 1 = 4k² + 4k = 4k(k + 1). k(k + 1) est pair (deux entiers consécutifs), donc 8 divise n² − 1.</li><li>Contraposée : pour tout n ∈ ℕ, si n est un multiple de 3, alors n² aussi. n = 3k donne n² = 9k² = 3(3k²). La contraposée est vraie, donc l'assertion aussi.</li></ol>`,["La contraposée écrite avant la preuve","n écrit 2k + 1 ou 3k","Le produit de deux entiers consécutifs justifié pair","La conclusion revient à l'énoncé de départ"],12),
+ K("Contraposée de P ⇒ Q ?","non Q ⇒ non P, équivalente à P ⇒ Q. La réciproque Q ⇒ P ne l'est pas."),
+ K("Raisonnement par l'absurde ?","Supposer la négation exacte de ce qu'on veut (∀ devient ∃, P ⇒ Q devient P et non Q), puis trouver une contradiction.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-recurrence",t:"La récurrence",min:14,goal:"Rédiger une récurrence complète, comme l'exercice 3 du CC 2024-2025 (divisibilité par 7).",steps:[
+ Q("Pour prouver P(n) pour tout n ∈ ℕ par récurrence, il faut…",["P(0) et : pour tout n, P(n) ⇒ P(n + 1)","P(0) et P(1)","P(n) pour n = 0, 1, 2, 3"],0,"Initialisation et hérédité ; quelques exemples ne prouvent rien."),
+ L("Le schéma",`<ol><li><b>Énoncer</b> P(n) clairement : « Pour n ∈ ℕ, notons P(n) : … ».</li><li><b>Initialisation</b> : vérifier P(0) (ou P(n₀) si on commence à n₀).</li><li><b>Hérédité</b> : « Soit n ∈ ℕ. Supposons P(n). Montrons P(n + 1). » On utilise P(n) dans le calcul.</li><li><b>Conclusion</b> : « Par récurrence, P(n) est vraie pour tout n ∈ ℕ. »</li></ol><p>Les deux étapes sont indispensables : 4ⁿ + 1 = 3k est héréditaire, mais fausse pour n = 0 (2 n'est pas multiple de 3), et en fait toujours fausse (TD 2, ex. 10).</p>`),
+ Q("Quelle phrase commence correctement l'hérédité ?",["Soit n ∈ ℕ. Supposons P(n) et montrons P(n + 1).","Supposons P(n) vraie pour tout n.","Montrons P(n + 1) pour n = 0."],0,"On fixe un n et on suppose P(n) pour ce n seulement : supposer « pour tout n » serait supposer ce qu'on veut montrer."),
+ S("CC 2024-2025, ex. 3 : 3²ⁿ⁺² − 2ⁿ⁺¹ est divisible par 7","P(n) : « 7 divise 3²ⁿ⁺² − 2ⁿ⁺¹ ».",[
+  {w:"Initialisation : 3² − 2¹ = 9 − 2 = 7, divisible par 7. P(0) est vraie.",why:"On remplace n par 0."},
+  {w:"Hérédité : soit n ∈ ℕ tel que P(n). Il existe k ∈ ℤ tel que 3²ⁿ⁺² − 2ⁿ⁺¹ = 7k.",why:"On traduit l'hypothèse en égalité."},
+  {w:"3²⁽ⁿ⁺¹⁾⁺² − 2ⁿ⁺² = 9 · 3²ⁿ⁺² − 2 · 2ⁿ⁺¹ = 9(3²ⁿ⁺² − 2ⁿ⁺¹) + 9 · 2ⁿ⁺¹ − 2 · 2ⁿ⁺¹.",why:"On fait apparaître l'expression de P(n)."},
+  {w:"= 9 · 7k + 7 · 2ⁿ⁺¹ = 7(9k + 2ⁿ⁺¹) : divisible par 7. P(n + 1) est vraie.",why:"On factorise par 7."},
+  {w:"Conclusion : par récurrence, pour tout n ∈ ℕ, 7 divise 3²ⁿ⁺² − 2ⁿ⁺¹.",why:"La phrase finale est attendue."}]),
+ Q("Dans l'hérédité, pourquoi écrire 9 · 3²ⁿ⁺² = 9(3²ⁿ⁺² − 2ⁿ⁺¹) + 9 · 2ⁿ⁺¹ ?",["Pour faire apparaître l'expression de P(n), qui vaut 7k","Pour simplifier par 9","Pour avoir n = 0"],0,"C'est l'astuce de toutes les divisibilités : on ajoute et on retire ce qu'il faut pour retrouver l'hypothèse."),
+ L("Inégalités par récurrence",`<p>Exemple (TD 2, ex. 9) : ∀n ∈ ℕ, 2ⁿ ≥ n.</p><ul><li>Initialisation : 2⁰ = 1 ≥ 0.</li><li>Hérédité : si 2ⁿ ≥ n, alors 2ⁿ⁺¹ = 2ⁿ + 2ⁿ ≥ n + 1, car 2ⁿ ≥ n et 2ⁿ ≥ 1.</li></ul><p>Inégalité de Bernoulli : pour x &gt; 0 et n ≥ 1, (1 + x)ⁿ ≥ 1 + nx. Hérédité : (1 + x)ⁿ⁺¹ = (1 + x)ⁿ(1 + x) ≥ (1 + nx)(1 + x) = 1 + (n + 1)x + nx² ≥ 1 + (n + 1)x. On a multiplié par 1 + x &gt; 0.</p>`),
+ Q("Dans la preuve de Bernoulli, pourquoi peut-on multiplier l'inégalité par 1 + x ?",["Parce que 1 + x &gt; 0","Parce que n ≥ 1","On ne peut pas"],0,"Multiplier une inégalité par un nombre positif la conserve."),
+ P("TD 2, exercice 9, sur papier","Montrer par récurrence : (a) ∀n ∈ ℕ, 2ⁿ ≥ n ; (b) ∀x &gt; 0, ∀n ∈ ℕ*, (1 + x)ⁿ ≥ 1 + nx ; (c) ∀n ∈ ℕ, 3ⁿ ≥ n².",`<ol><li>Voir la leçon : 2ⁿ⁺¹ = 2ⁿ + 2ⁿ ≥ n + 1.</li><li>Fixer x &gt; 0 ; P(1) : 1 + x ≥ 1 + x. Hérédité : multiplier par 1 + x &gt; 0, puis nx² ≥ 0.</li><li>Vrai pour n = 0, 1, 2 (1 ≥ 0, 3 ≥ 1, 9 ≥ 4). Hérédité pour n ≥ 2 : 3ⁿ⁺¹ = 3 · 3ⁿ ≥ 3n² et 3n² − (n + 1)² = 2n² − 2n − 1 ≥ 0 pour n ≥ 2 (car 2n² − 2n − 1 = 2n(n − 1) − 1 ≥ 3).</li></ol>`,["P(n) énoncé","Initialisation vérifiée","L'hypothèse de récurrence utilisée","Phrase de conclusion"],15),
+ K("Les quatre étapes d'une récurrence ?","Énoncer P(n) ; initialisation P(0) ; hérédité « Soit n, supposons P(n), montrons P(n + 1) » ; conclusion."),
+ K("Astuce pour une divisibilité ?","Dans l'hérédité, faire apparaître l'expression de P(n) (qui vaut 7k) : 9 · 3²ⁿ⁺² − 2 · 2ⁿ⁺¹ = 9(3²ⁿ⁺² − 2ⁿ⁺¹) + 7 · 2ⁿ⁺¹.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-ensembles",t:"Ensembles : écrire, appartenir, inclure",min:11,goal:"Ne plus confondre ∈ et ⊂, décrire un ensemble, lister P(E) (TD 2, ex. 3 à 6).",steps:[
+ Q("Que faut-il écrire entre 1 et ℕ ?",["1 ∈ ℕ","1 ⊂ ℕ","1 = ℕ"],0,"1 est un élément : on écrit ∈. {1} est une partie : on écrirait {1} ⊂ ℕ."),
+ L("Décrire un ensemble",`<ul><li><b>En extension</b> : on liste les éléments, {1, 2, 4, −1}.</li><li><b>En compréhension</b> : {x ∈ E | P(x)}, par exemple {x ∈ ℝ | x² &lt; 3}.</li><li><b>Paramétré</b> : {f(t) | t ∈ T}, par exemple {2k + 1 | k ∈ ℤ} (les impairs).</li></ul><p><b>x ∈ A</b> : x est un élément de A. <b>A ⊂ B</b> : tout élément de A est dans B, c'est-à-dire ∀x ∈ A, x ∈ B. ∅ ⊂ E et E ⊂ E pour tout E.</p><p><b>A = B</b> ⇔ A ⊂ B et B ⊂ A (double inclusion).</p>`),
+ Q("{2, 3} … ℕ : quel symbole ?",["⊂","∈","="],0,"{2, 3} est un ensemble de nombres, dont tous les éléments sont dans ℕ : c'est une partie de ℕ."),
+ L("Parties et produit",`<ul><li><b>P(E)</b> : l'ensemble de toutes les parties de E. P({a, b}) = {∅, {a}, {b}, {a, b}}. Si E a n éléments, P(E) en a <b>2ⁿ</b>.</li><li>A ∈ P(E) ⇔ A ⊂ E.</li><li><b>Produit cartésien</b> : A × B = {(a, b) | a ∈ A, b ∈ B}, les couples. ℝ² = ℝ × ℝ est le plan.</li></ul>`),
+ Q("A = {0, 1, 8}. Laquelle est vraie ?",["A ∈ P(ℕ)","A ∈ ℕ","A ⊂ P(ℕ)"],0,"A est une partie de ℕ, donc un élément de P(ℕ). Ses éléments sont des nombres, pas des parties : A ⊄ P(ℕ) (TD 2, ex. 6)."),
+ Q("Combien d'éléments a P({♥, □, •}) ?",["8","3","6","9"],0,"2³ = 8 : ∅, trois singletons, trois paires, et {♥, □, •} (TD 2, ex. 5)."),
+ K("∈ ou ⊂ ?","x ∈ A : x est un élément de A. A ⊂ B : tout élément de A est dans B (∀x ∈ A, x ∈ B). A ∈ P(E) ⇔ A ⊂ E."),
+ K("Prouver A = B ?","Double inclusion : A ⊂ B (« Soit x ∈ A, … donc x ∈ B ») et B ⊂ A.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-operations",t:"Réunion, intersection, différence : prouver",min:13,goal:"Calculer A ∪ B, A ∩ B, A ∖ B, et prouver une égalité d'ensembles (CC2 2023-2024, ex. 3 ; CC 2024-2025, ex. 1).",steps:[
+ Q("A = {1, 2, 4}, B = {1, 3, 4}. Que vaut A ∖ B ?",["{2}","{3}","{1, 4}","{2, 3}"],0,"Les éléments de A qui ne sont pas dans B : seul 2."),
+ L("Les opérations",`${box("A ∪ B = {x | x ∈ A ou x ∈ B}    A ∩ B = {x | x ∈ A et x ∈ B}    A ∖ B = {x | x ∈ A et x ∉ B}")}<ul><li>Complémentaire dans E : Ā = E ∖ A.</li><li>De Morgan pour les ensembles : complémentaire de (A ∪ B) = Ā ∩ B̄ ; de (A ∩ B) = Ā ∪ B̄.</li></ul><p>Exemple (CC 2024-2025) : A = ℝ₋ = ]−∞, 0] et B = {x | x² ≥ 2} = ]−∞, −√2] ∪ [√2, +∞[. A ∪ B = ]−∞, 0] ∪ [√2, +∞[, A ∩ B = ]−∞, −√2], A ∖ B = ]−√2, 0], B ∖ A = [√2, +∞[.</p>`),
+ Q("Avec ces A et B, que vaut A ∩ B ?",["]−∞, −√2]","]−∞, 0]","[√2, +∞[","∅"],0,"Les négatifs dont le carré est au moins 2."),
+ L("Prouver une égalité d'ensembles",`<p>Deux méthodes :</p><ul><li><b>Double inclusion</b> : « Soit x ∈ A. … Donc x ∈ B. » Puis l'inverse.</li><li><b>Par équivalences sur un élément</b> : x ∈ A ⇔ … ⇔ x ∈ B, en traduisant ∪, ∩, ∖ par « ou », « et », « et non », puis en utilisant la logique.</li></ul><p>Exemple : A ∪ B = A ∩ B ⇔ A = B. Si A ∪ B = A ∩ B : A ⊂ A ∪ B = A ∩ B ⊂ B, et de même B ⊂ A.</p>`),
+ S("CC2 2023-2024, ex. 3 : A Δ B = (A ∪ B) ∖ (A ∩ B)","Avec A Δ B = (A ∖ B) ∪ (B ∖ A). Par double inclusion.",[
+  {w:"⊂ : soit x ∈ A Δ B. Si x ∈ A ∖ B : x ∈ A, donc x ∈ A ∪ B ; x ∉ B, donc x ∉ A ∩ B. Ainsi x ∈ (A ∪ B) ∖ (A ∩ B). Même chose si x ∈ B ∖ A.",why:"Disjonction de cas selon le morceau de la réunion."},
+  {w:"⊃ : soit x ∈ (A ∪ B) ∖ (A ∩ B). Alors x ∈ A ou x ∈ B, et x n'est pas dans les deux.",why:"On traduit chaque opération."},
+  {w:"Si x ∈ A : comme x n'est pas dans les deux, x ∉ B, donc x ∈ A ∖ B. Si x ∈ B : de même x ∈ B ∖ A. Dans les deux cas, x ∈ A Δ B.",why:"Disjonction de cas."},
+  {w:"Par double inclusion, A Δ B = (A ∪ B) ∖ (A ∩ B).",why:"Conclusion."}]),
+ Q("Pour montrer A ⊂ B, on commence par…",["Soit x ∈ A.","Soit x ∈ B.","Supposons A = B."],0,"On prend un élément quelconque de A et on montre qu'il est dans B."),
+ P("TD 2, ex. 4 et 14, sur papier","1. A = {1, 2, 4}, B = {1, 3, 4}, C = [−2, 4[ : A ∪ C, A ∩ C, C ∖ A, C ∩ ℤ, C ∩ ℕ. 2. Montrer A ⊂ B ⇔ A ∩ B̄ = ∅.",`<ol><li>A ∪ C = [−2, 4] (4 ∈ A) ; A ∩ C = {1, 2} ; C ∖ A = [−2, 1[ ∪ ]1, 2[ ∪ ]2, 4[ ; C ∩ ℤ = {−2, −1, 0, 1, 2, 3} ; C ∩ ℕ = {0, 1, 2, 3}.</li><li>⇒ : si x ∈ A ∩ B̄, alors x ∈ A ⊂ B et x ∉ B : impossible, donc A ∩ B̄ = ∅. ⇐ : soit x ∈ A ; si x ∉ B, x serait dans A ∩ B̄ = ∅ ; donc x ∈ B.</li></ol>`,["Les bornes ouvertes ou fermées justes","4 ∈ A, donc 4 ∈ A ∪ C","Les deux sens de l'équivalence","« Soit x ∈ A » pour l'inclusion"],12),
+ K("A ∪ B, A ∩ B, A ∖ B ?","x ∈ A ou x ∈ B ; x ∈ A et x ∈ B ; x ∈ A et x ∉ B. Complémentaire de A ∪ B = Ā ∩ B̄."),
+ K("Prouver une égalité d'ensembles ?","Double inclusion (« Soit x ∈ A … donc x ∈ B », puis l'inverse), ou équivalences sur un élément x.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-image",t:"Applications : image et image réciproque",min:14,goal:"Calculer f(A) et f⁻¹(B), et prouver f(f⁻¹(B)) ⊂ B : l'exercice 1 du CC2 2025-2026.",steps:[
+ Q("f(x) = x² sur ℝ. Que vaut f⁻¹({4}) ?",["{−2, 2}","{16}","{2}","∅"],0,"f⁻¹({4}) est l'ensemble des x dont l'image est 4 : x² = 4 donne x = 2 ou x = −2."),
+ L("Les définitions",`<p>Une application f : E → F associe à chaque x de E <b>un unique</b> f(x) de F.</p>${box("f(A) = {f(x) | x ∈ A} = {y ∈ F | ∃x ∈ A, y = f(x)}   (image directe de A ⊂ E)")}${box("f⁻¹(B) = {x ∈ E | f(x) ∈ B}   (image réciproque de B ⊂ F)")}<ul><li>f(A) est une partie de F ; f⁻¹(B) est une partie de E.</li><li>f⁻¹(B) existe toujours, même si f n'est pas bijective : c'est l'ensemble des antécédents.</li></ul>`),
+ Q("f(x) = x², A = ℝ₋. Que vaut f(A) ?",["[0, +∞[","]−∞, 0]","{0}","ℝ"],0,"Les carrés des négatifs : tous les réels positifs (CC 2024-2025, ex. 1c)."),
+ Q("f(x) = x², A = ℝ₋. Que vaut f⁻¹(A) ?",["{0}","]−∞, 0]","∅","ℝ"],0,"Les x tels que x² ≤ 0 : seulement 0."),
+ S("CC2 2025-2026, ex. 1b et 1c : f(f⁻¹(B)) ⊂ B","Soit f : E → F et B ⊂ F.",[
+  {w:"Soit y ∈ f(f⁻¹(B)). Par définition de l'image directe, il existe x ∈ f⁻¹(B) tel que y = f(x).",why:"On traduit l'appartenance à f(…)."},
+  {w:"x ∈ f⁻¹(B) signifie f(x) ∈ B. Donc y = f(x) ∈ B.",why:"On traduit l'appartenance à f⁻¹(…)."},
+  {w:"Donc f(f⁻¹(B)) ⊂ B.",why:"Tout élément de gauche est dans B."},
+  {w:"L'inclusion inverse est fausse : f : ℝ → ℝ, x ↦ x², B = {−1}. f⁻¹(B) = ∅, donc f(f⁻¹(B)) = ∅, qui ne contient pas −1.",why:"(c) Un contre-exemple concret : −1 n'a pas d'antécédent."}]),
+ Q("Pour montrer f(A₁ ∩ A₂) ⊂ f(A₁) ∩ f(A₂), on commence par…",["Soit y ∈ f(A₁ ∩ A₂) : il existe x ∈ A₁ ∩ A₂ tel que y = f(x)","Soit x ∈ A₁","Supposons f injective"],0,"Puis x ∈ A₁ donne y ∈ f(A₁), x ∈ A₂ donne y ∈ f(A₂). L'égalité est fausse en général : x², A₁ = {−1}, A₂ = {1} (TD 3, ex. 8)."),
+ P("CC2 2025-2026, ex. 3a, sur papier","f : ℤ × ℤ → ℤ, (a, b) ↦ 2a + b ; g : ℤ → ℤ, n ↦ n/2 si n pair, 0 si n impair. Déterminer f(ℤ × {1}), f⁻¹({0}), g(ℤ) et g⁻¹(ℕ*).",`<ul><li>f(ℤ × {1}) = {2a + 1 | a ∈ ℤ} : les entiers impairs.</li><li>f⁻¹({0}) = {(a, b) | 2a + b = 0} = {(a, −2a) | a ∈ ℤ}.</li><li>g(ℤ) = ℤ : pour tout m ∈ ℤ, g(2m) = m.</li><li>g⁻¹(ℕ*) = {n | g(n) ≥ 1} : les n pairs avec n/2 ≥ 1, soit {2, 4, 6, …} = {2k | k ∈ ℕ*}.</li></ul>`,["Chaque ensemble décrit précisément (extension ou paramètres)","Pour g(ℤ) : un antécédent exhibé pour tout m","Les impairs exclus de g⁻¹(ℕ*) (leur image est 0)","Des couples pour f⁻¹({0})"],12),
+ K("f(A) et f⁻¹(B) ?","f(A) = {f(x) | x ∈ A} ⊂ F ; f⁻¹(B) = {x ∈ E | f(x) ∈ B} ⊂ E. f⁻¹(B) existe même si f n'est pas bijective."),
+ K("f(f⁻¹(B)) et B ?","f(f⁻¹(B)) ⊂ B, et l'égalité peut être fausse (x², B = {−1}).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-injective",t:"Injective, surjective, bijective",min:15,goal:"Dire, en justifiant, si une application est injective, surjective, bijective (CC2 2024-2025 ex. 2 ; 2025-2026 ex. 3c ; TD 3, ex. 7 et 10).",steps:[
+ Q("f : ℝ → ℝ, x ↦ x². Est-elle injective ?",["Non : f(1) = f(−1)","Oui","Oui, sur ℝ"],0,"Deux nombres différents ont la même image."),
+ L("Les trois définitions",`<ul><li><b>Injective</b> : deux éléments différents ont des images différentes. ∀x, x′ ∈ E, f(x) = f(x′) ⇒ x = x′. (Chaque y a <b>au plus</b> un antécédent.)</li><li><b>Surjective</b> : tout élément de F est atteint. ∀y ∈ F, ∃x ∈ E, f(x) = y. (Au <b>moins</b> un antécédent.)</li><li><b>Bijective</b> : les deux. (<b>Exactement</b> un antécédent.) Elle a alors une réciproque f⁻¹ : F → E.</li></ul>`),
+ Q("f : ℕ → ℕ, n ↦ n + 1. Laquelle est vraie ?",["Injective, pas surjective (0 n'a pas d'antécédent)","Bijective","Surjective, pas injective"],0,"n + 1 = m + 1 donne n = m. Mais n + 1 = 0 n'a pas de solution dans ℕ (TD 3, ex. 7)."),
+ L("Les méthodes",`<ul><li><b>Prouver injective</b> : « Soient x, x′ tels que f(x) = f(x′). … Donc x = x′. »</li><li><b>Réfuter injective</b> : deux éléments différents de même image (f(1) = f(−1)).</li><li><b>Prouver surjective</b> : « Soit y ∈ F. Posons x = … ∈ E. Alors f(x) = y. » (Résoudre f(x) = y.)</li><li><b>Réfuter surjective</b> : un y sans antécédent, en le justifiant.</li></ul><p>Les ensembles de départ et d'arrivée comptent : x ↦ x² est bijective de ℝ₊ dans ℝ₊, mais ni injective ni surjective de ℝ dans ℝ.</p>`),
+ S("CC 2024-2025, ex. 2 : f(x) = 2x et g(x) = x/2 si x pair, 0 si impair (de ℕ dans ℕ)","Composées, puis injectivité et surjectivité.",[
+  {w:"g ∘ f(x) = g(2x) = 2x/2 = x : g ∘ f = id<sub>ℕ</sub>. f ∘ g(x) = 2 · x/2 = x si x pair, et 2 · 0 = 0 si x impair.",why:"(a) Pour g ∘ f, on applique f d'abord ; 2x est toujours pair."},
+  {w:"f injective : 2x = 2x′ ⇒ x = x′. Pas surjective : 1 n'est pas le double d'un entier.",why:"Méthode pour prouver, puis un y sans antécédent."},
+  {w:"g surjective : pour tout y ∈ ℕ, g(2y) = y. Pas injective : g(1) = g(3) = 0.",why:"Un antécédent exhibé, puis deux éléments de même image."},
+  {w:"Ni f ni g n'est bijective.",why:"Il manque une propriété à chacune."}]),
+ Q("f : ℤ × ℤ → ℤ, (a, b) ↦ 2a + b est-elle injective ?",["Non : f(0, 0) = f(1, −2) = 0","Oui","Oui, car 2a + b détermine a"],0,"Deux couples différents, même image (CC2 2025-2026, ex. 3c). Elle est surjective : f(0, m) = m."),
+ Q("φ : ℚ → ℚ, x ↦ −x/2 + 1 est bijective. Quelle est sa réciproque ?",["y ↦ 2 − 2y","y ↦ −y/2 + 1","y ↦ 2y − 2","y ↦ 1/y"],0,"y = −x/2 + 1 ⇔ x = 2(1 − y) = 2 − 2y, qui est bien dans ℚ (TD 3, ex. 7)."),
+ P("TD 3, exercice 10, sur papier","f, g : ℕ → ℕ, f(k) = 2k, g(k) = k/2 si k pair, (k − 1)/2 si k impair. (a) Injectivité, surjectivité de f et g. (b) g ∘ f et f ∘ g.",`<ol><li>f injective, pas surjective (1). g surjective (g(2m) = m), pas injective (g(0) = g(1) = 0).</li><li>g ∘ f(k) = g(2k) = k : l'identité, bijective. f ∘ g(k) = k si k pair, k − 1 si k impair : ni injective (0 et 1 ont l'image 0) ni surjective (les impairs ne sont pas atteints).</li></ol>`,["Chaque « oui » prouvé par la méthode","Chaque « non » par un contre-exemple chiffré","Les deux cas (pair, impair) traités","L'ordre de la composition respecté"],15),
+ K("Injective, surjective, bijective ?","Injective : f(x) = f(x′) ⇒ x = x′ (au plus un antécédent). Surjective : ∀y, ∃x, f(x) = y (au moins un). Bijective : exactement un."),
+ K("Réfuter l'injectivité, la surjectivité ?","Injectivité : deux éléments différents de même image. Surjectivité : un élément d'arrivée sans antécédent.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"r-composition",t:"Composition et preuves sur les applications",min:13,goal:"Composer des applications et prouver « g ∘ f injective ⇒ f injective » (CC2 2023-2024, ex. 4 ; TD 3, ex. 9 et 11).",steps:[
+ Q("Pour calculer (g ∘ f)(x), on applique…",["d'abord f, puis g","d'abord g, puis f","f et g en même temps"],0,"(g ∘ f)(x) = g(f(x)) : f agit en premier, comme on lit de droite à gauche."),
+ L("La composée",`<p>Si f : E → F et g : F → G, alors <b>g ∘ f : E → G</b>, x ↦ g(f(x)). Il faut que l'arrivée de f soit le départ de g (ou y soit incluse).</p><ul><li>f : ℤ × ℤ → ℤ et g : ℤ → ℤ : g ∘ f existe (de ℤ × ℤ dans ℤ), mais <b>f ∘ g n'existe pas</b> : g arrive dans ℤ alors que f part de ℤ × ℤ.</li><li>En général, g ∘ f ≠ f ∘ g.</li></ul>`),
+ Q("f : ℤ × ℤ → ℤ, g : ℤ → ℤ. Laquelle existe ?",["g ∘ f","f ∘ g","Les deux","Aucune"],0,"g ∘ f applique f (qui donne un entier), puis g. f ∘ g demanderait de donner un entier à f, qui attend un couple (CC2 2025-2026, ex. 3b)."),
+ L("Les deux résultats à savoir prouver",`<ul><li><b>g ∘ f injective ⇒ f injective</b> : soient x, x′ tels que f(x) = f(x′). Alors g(f(x)) = g(f(x′)), c'est-à-dire (g ∘ f)(x) = (g ∘ f)(x′), donc x = x′.</li><li><b>g ∘ f surjective ⇒ g surjective</b> : soit z ∈ G. Il existe x ∈ E tel que g(f(x)) = z. Alors y = f(x) ∈ F vérifie g(y) = z.</li></ul><p>À retenir : c'est la <b>première</b> appliquée (f) qui hérite de l'injectivité, la <b>dernière</b> (g) de la surjectivité.</p>`),
+ Q("Si g ∘ f est surjective, que peut-on dire ?",["g est surjective","f est surjective","f est injective"],0,"Tout z est atteint par g(f(x)), donc par g (en f(x))."),
+ S("TD 3, ex. 11 : f(f(x) − 1) = x + 1 pour tout x ⇒ f bijective","f : ℝ → ℝ vérifie ∀x ∈ ℝ, f(f(x) − 1) = x + 1.",[
+  {w:"Injective : soient x, x′ avec f(x) = f(x′). Alors f(x) − 1 = f(x′) − 1, donc f(f(x) − 1) = f(f(x′) − 1), c'est-à-dire x + 1 = x′ + 1, donc x = x′.",why:"On applique la relation aux deux nombres."},
+  {w:"Surjective : soit y ∈ ℝ. Avec x = y − 1 : f(f(y − 1) − 1) = (y − 1) + 1 = y. Donc y a pour antécédent f(y − 1) − 1.",why:"On choisit x pour que x + 1 = y."},
+  {w:"f est injective et surjective : elle est bijective.",why:"Conclusion."}]),
+ P("CC2 2023-2024, ex. 4, sur papier","f : A → B, g : B → C. (a) g ∘ f surjective ⇒ g surjective. (b) g ∘ f injective ⇒ f injective. (c) Si A = C et f ∘ g ∘ f bijective, alors f est bijective. (d) f : ℝ → ℝ avec f(2f(x) + 4) = x − 1 pour tout x : f est bijective.",`<ol><li>Voir la leçon.</li><li>Voir la leçon.</li><li>f ∘ g ∘ f = (f ∘ g) ∘ f est injective, donc f est injective (b). f ∘ g ∘ f = f ∘ (g ∘ f) est surjective, donc f est surjective (a). Donc f est bijective.</li><li>Injective : f(x) = f(x′) ⇒ 2f(x) + 4 = 2f(x′) + 4 ⇒ x − 1 = x′ − 1 ⇒ x = x′. Surjective : pour y ∈ ℝ, x = y + 1 donne f(2f(y + 1) + 4) = y.</li></ol>`,["« Soient x, x′ tels que f(x) = f(x′) » pour l'injectivité","« Soit y » puis un antécédent pour la surjectivité","Les parenthèses (f ∘ g) ∘ f et f ∘ (g ∘ f) écrites","Chaque résultat utilisé cité"],15),
+ K("g ∘ f : qui hérite de quoi ?","g ∘ f injective ⇒ f injective (la première) ; g ∘ f surjective ⇒ g surjective (la dernière)."),
+ K("Existence de g ∘ f ?","Il faut que f arrive là où g part : f : E → F, g : F → G donnent g ∘ f : E → G, x ↦ g(f(x)).")]}
+];
+})();
+
+</script>
+<script>
 /* « En clair » : avant le texte du cours, la même idée en mots simples, avec un exemple.
    Rattaché aux écrans « learn » par leur titre. Le texte du cours lui-même n'est pas modifié. */
 (function(){
@@ -6925,7 +7261,36 @@ ana:{
   "Le modèle de rédaction en +∞":`<p>D'abord, on calcule l'écart f(x) − ℓ et on le simplifie, par exemple en 1/x. Ensuite, on cherche à partir de quand cet écart est plus petit que ε.</p><p>Exemple : 1/x &lt; ε dès que x &gt; 1/ε.</p>`},
  "a-lim-calc":{
   "Les mêmes règles que pour les suites":`<p>Pour calculer une limite de fonction, on utilise les mêmes règles que pour les suites. Pour se débarrasser des racines, on multiplie en haut et en bas par l'expression « conjuguée » (avec le signe opposé).</p><p>Exemple : (√a − √b)(√a + √b) = a − b, il n'y a plus de racine.</p>`,
-  "Limites et suites":`<p>Si f a une limite en x₀, alors f(xₙ) tend vers cette limite pour n'importe quelle suite xₙ qui s'approche de x₀.</p><p>Donc, si deux chemins vers x₀ donnent deux résultats différents, la limite n'existe pas.</p>`}}};
+  "Limites et suites":`<p>Si f a une limite en x₀, alors f(xₙ) tend vers cette limite pour n'importe quelle suite xₙ qui s'approche de x₀.</p><p>Donc, si deux chemins vers x₀ donnent deux résultats différents, la limite n'existe pas.</p>`}},
+rai:{
+ "r-logique":{
+  "Les connecteurs":`<p>« et » demande que les deux soient vrais ; « ou » se contente d'un des deux (ou des deux). « Si P alors Q » est une promesse : elle n'est rompue que si P arrive et que Q ne suit pas.</p><p>Exemple : « s'il pleut, je prends mon parapluie ». S'il ne pleut pas, la promesse n'est pas rompue, quoi que je fasse.</p>`,
+  "Équivalences et lois de De Morgan":`<p>Le contraire de « il fait beau et chaud », c'est « il ne fait pas beau, ou il ne fait pas chaud » : il suffit qu'une des deux choses manque.</p><p>Et le contraire de « je prends le bus ou le tram », c'est « je ne prends ni le bus, ni le tram ».</p>`},
+ "r-quantif":{
+  "Traduire avec ∀ et ∃":`<p>« Tout chat est gris » : pour tout animal, s'il est un chat, alors il est gris. C'est pour ça que « tout … qui … » devient « pour tout x, si … alors … ».</p><p>« Il y a au moins deux solutions » : il en existe deux, différentes, qui marchent toutes les deux.</p>`,
+  "Nier une phrase quantifiée":`<p>Pour dire le contraire, on remplace « pour tout » par « il existe » (et inversement), et on dit le contraire de la fin.</p><p>Le contraire de « tous les élèves ont un stylo », c'est « il existe un élève sans stylo ».</p>`},
+ "r-preuves":{
+  "Comment commencer":`<p>Pour prouver que quelque chose est vrai pour tous, on prend un cas quelconque sans le choisir (« Soit x »), et on montre que ça marche.</p><p>Pour prouver qu'il en existe un, on le montre du doigt : « prenons x = 3 ».</p>`},
+ "r-contraposee":{
+  "Contraposée et réciproque":`<p>« S'il pleut, le sol est mouillé » veut dire la même chose que « si le sol est sec, il ne pleut pas » : c'est la contraposée.</p><p>Mais « si le sol est mouillé, il pleut » est autre chose (on a peut-être arrosé) : c'est la réciproque.</p>`,
+  "Par l'absurde et par disjonction de cas":`<p>Par l'absurde : on fait semblant que le contraire est vrai, et on tombe sur quelque chose d'impossible. Donc le contraire était faux.</p><p>Par cas : on coupe en morceaux qui couvrent tout (pair ou impair), et on traite chaque morceau.</p>`},
+ "r-recurrence":{
+  "Le schéma":`<p>C'est l'effet domino : si le premier domino tombe, et si chaque domino qui tombe fait tomber le suivant, alors ils tombent tous.</p><p>L'initialisation, c'est le premier domino ; l'hérédité, c'est « chacun fait tomber le suivant ».</p>`,
+  "Inégalités par récurrence":`<p>Pour une inégalité, l'hérédité consiste à partir de ce qu'on suppose vrai au rang n, et à le transformer pour arriver au rang n + 1.</p><p>Quand on multiplie une inégalité, on vérifie que le nombre est positif.</p>`},
+ "r-ensembles":{
+  "Décrire un ensemble":`<p>Un ensemble, c'est un sac d'objets. On peut le décrire en listant ce qu'il contient, ou en donnant la règle pour y entrer : « les réels dont le carré est plus petit que 3 ».</p><p>∈ dit qu'un objet est dans le sac ; ⊂ dit qu'un sac entier est rangé dans un autre.</p>`,
+  "Parties et produit":`<p>P(E), c'est la liste de tous les sous-sacs qu'on peut faire avec E, y compris le sac vide et E lui-même.</p><p>A × B, ce sont tous les couples (un objet de A, un objet de B), comme les cases d'un tableau.</p>`},
+ "r-operations":{
+  "Les opérations":`<p>A ∪ B : tout ce qui est dans A ou dans B (on met tout ensemble). A ∩ B : ce qui est dans les deux à la fois. A ∖ B : ce qui est dans A mais pas dans B.</p><p>Exemple : A = {1, 2, 4}, B = {1, 3, 4} : A ∩ B = {1, 4}.</p>`,
+  "Prouver une égalité d'ensembles":`<p>Pour montrer que deux sacs ont le même contenu, on montre que tout ce qui est dans le premier est dans le second, puis l'inverse.</p><p>À chaque fois, on part d'un objet quelconque et on suit les règles.</p>`},
+ "r-image":{
+  "Les définitions":`<p>Imagine que f associe à chaque élève sa note. f(A) : les notes obtenues par les élèves du groupe A. f⁻¹(B) : les élèves dont la note est dans B, par exemple ceux qui ont eu au moins 10.</p><p>f⁻¹(B) existe toujours : c'est juste « qui a une note dans B ».</p>`},
+ "r-injective":{
+  "Les trois définitions":`<p>Injective : deux élèves différents n'ont jamais la même note. Surjective : chaque note possible est obtenue par au moins un élève. Bijective : chaque note est obtenue par exactement un élève.</p>`,
+  "Les méthodes":`<p>Pour dire « oui », il faut un raisonnement qui marche pour tous les cas. Pour dire « non », un seul exemple qui coince suffit.</p><p>Exemple : x ↦ x² n'est pas injective sur ℝ, car 1 et −1 ont la même image.</p>`},
+ "r-composition":{
+  "La composée":`<p>Composer, c'est enchaîner : g ∘ f veut dire « d'abord f, puis g sur le résultat ». On lit de droite à gauche.</p><p>Exemple : f ajoute 1, g double. (g ∘ f)(3) = g(4) = 8, mais (f ∘ g)(3) = f(6) = 7.</p>`,
+  "Les deux résultats à savoir prouver":`<p>Si l'enchaînement complet ne confond jamais deux départs, alors la première étape ne les confondait pas non plus : f est injective.</p><p>Et si l'enchaînement atteint toutes les arrivées, c'est que la dernière étape les atteint : g est surjective.</p>`}}};
 const LES=window.LESSONS||{};
 Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.id];if(!M)return;
   L.steps.forEach(s=>{if(s.k==="learn"&&M[s.h])s.clair=M[s.h];});}));
@@ -7162,7 +7527,7 @@ function drawCard(){
   badges();}
 
 /* ================= les morceaux du nouvel onglet ================= */
-const ART={geo:"triangle",algo:"algo",pf:"lambda",calc:"integrale",lin:"matrice",ana:"courbe"};
+const ART={geo:"triangle",algo:"algo",pf:"lambda",calc:"integrale",lin:"matrice",ana:"courbe",rai:"ensembles"};
 const ico=(id,cls)=>`<svg class="${cls||"ico"}" aria-hidden="true"><use href="#${id}"/></svg>`;
 const artSVG=n=>`<svg class="art" viewBox="0 0 120 64" aria-hidden="true"><use href="#d-${n}" class="art__a"/><use href="#d-${n}" class="art__b"/><use href="#d-${n}" class="art__c"/></svg>`;
 const tart=id=>`<svg class="tart" viewBox="0 0 120 64" aria-hidden="true"><use href="#d-${ART[id]||"etoile"}"/></svg>`;
