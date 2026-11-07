@@ -737,18 +737,15 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 .cp h2{font-size:clamp(1.6rem,1.2rem + 1.4vw,2.2rem)}
 .lp-bar{position:relative}
 .lp-mark{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#000;opacity:.85}
-/* le cours mis en forme : une idée par ligne, une couleur par rôle */
-.fmt{display:grid;gap:3px}
-.fmt .ln{display:block;padding:1px 0 1px 12px;border-left:3px solid color-mix(in srgb,var(--icy) 22%,transparent)}
-.fmt .l-hyp{border-left-color:var(--cornflower);color:#D3E0FF}
-.fmt .l-concl{border-left-color:var(--vert);color:#D7F8E4}
-.jref{color:var(--ambre);font-weight:650}
-.fmtleg{display:flex;flex-wrap:wrap;gap:4px 14px;font:750 .7rem/1.4 var(--f-sans);text-transform:uppercase;letter-spacing:.05em;color:var(--graphite);margin:0 0 4px}
-.fmtleg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-.fmtleg .lg-h::before{background:var(--cornflower)}
-.fmtleg .lg-s::before{background:color-mix(in srgb,var(--icy) 35%,transparent)}
-.fmtleg .lg-r::before{background:var(--ambre)}
-.fmtleg .lg-c::before{background:var(--vert)}
+/* les preuves à refaire : une phrase par ligne, et les objets clés de la même couleur que sur la figure */
+.redac .phr{display:block}
+.k1{color:#3BE8F0;font-weight:700}.k2{color:#FFB547;font-weight:700}.k3{color:#D980FF;font-weight:700}.k4{color:#8C9BFF;font-weight:700}.k5{color:#FF7AB8;font-weight:700}
+svg .lk1,svg .lk1d{stroke:#3BE8F0}svg .lk2,svg .lk2d{stroke:#FFB547}svg .lk3,svg .lk3d{stroke:#D980FF}svg .lk4,svg .lk4d{stroke:#8C9BFF}svg .lk5,svg .lk5d{stroke:#FF7AB8}
+svg :is(.lk1,.lk2,.lk3,.lk4,.lk5){stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg :is(.lk1d,.lk2d,.lk3d,.lk4d,.lk5d){stroke-width:2.2;fill:none;stroke-dasharray:7 5}
+svg .pk1,svg .arrow-k1{fill:#3BE8F0}svg .pk2,svg .arrow-k2{fill:#FFB547}svg .pk3,svg .arrow-k3{fill:#D980FF}svg .pk4,svg .arrow-k4{fill:#8C9BFF}svg .pk5,svg .arrow-k5{fill:#FF7AB8}
+svg text.tk1{fill:#3BE8F0}svg text.tk2{fill:#FFB547}svg text.tk3{fill:#D980FF}svg text.tk4{fill:#8C9BFF}svg text.tk5{fill:#FF7AB8}
+svg .fk2{fill:#FFB547;fill-opacity:.18;stroke:none}
 body{overscroll-behavior-y:none}
 .resume{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:2px solid var(--cornflower);background:color-mix(in srgb,var(--cornflower) 10%,#000);border-radius:14px;padding:10px 12px;animation:rise .35s var(--snap)}
 .lp-left{color:var(--graphite);text-transform:none;letter-spacing:0;font-weight:700}
@@ -1002,7 +999,7 @@ function defs(){
   if(document.getElementById("geo-defs"))return;
   const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
   s.setAttribute("id","geo-defs");s.setAttribute("width","0");s.setAttribute("height","0");s.style.position="absolute";
-  s.innerHTML="<defs>"+["cob","ink","amb","red","ok"].map(k=>`<marker id="mk-${k}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrow-${k}"/></marker>`).join("")+"</defs>";
+  s.innerHTML="<defs>"+["cob","ink","amb","red","ok","k1","k2","k3","k4","k5"].map(k=>`<marker id="mk-${k}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrow-${k}"/></marker>`).join("")+"</defs>";
   document.body.appendChild(s);
 }
 
@@ -1387,9 +1384,9 @@ push({id:"demo-1-1-1",type:"demo",ref:"Proposition 1.1.1",t:"Démo : intersectio
  idea:`Si les droites ont deux points communs A ≠ B, l'axiome I les force toutes les deux à être (AB).`,
  fig:()=>({w:560,h:300,P:{A:[170,200],B:[390,120]},S:{step:0},hint:"Déplace A et B : les deux droites restent collées.",
    draw:(P,S)=>{const k=S.step;let s="";
-     if(k===0){s+=D.line(V(80,260),V(480,60),"l-cob")+D.line(V(60,120),V(500,250),"l-amb")+D.dot(inter(V(80,260),V(480,60),V(60,120),V(500,250)),"p-red",5)+D.txt(V(20,30),"Cas (ii) : un point commun","t-mut t-up");return s;}
-     s+=D.line(P.A,P.B,"l-cob");
-     if(k>=3)s+=D.line(P.A,P.B,"l-amb-d");
+     if(k===0){s+=D.line(V(80,260),V(480,60),"lk1")+D.line(V(60,120),V(500,250),"lk2")+D.dot(inter(V(80,260),V(480,60),V(60,120),V(500,250)),"p-red",5)+D.txt(V(20,30),"Cas (ii) : un point commun","t-mut t-up");return s;}
+     s+=D.line(P.A,P.B,"lk1");
+     if(k>=3)s+=D.line(P.A,P.B,"lk2d");
      if(k>=2)s+=D.txt(V(20,30),k>=4?"Δ = (AB) = Δ′ : une seule droite":k>=3?"Δ′ passe aussi par A et B : Δ′ = (AB)":"Δ passe par A et B : Δ = (AB)","t-cob t-up");
      if(k===1)s+=D.txt(V(20,30),"Δ et Δ′ ont deux points communs A et B","t-mut t-up");
      return s;},
@@ -1785,7 +1782,7 @@ push({id:"demo-1-6-1",type:"demo",ref:"Proposition 1.6.1",t:"Démo : l'aire d'un
    sliders:[{k:"e",label:"ε =",min:0.05,max:1.5,step:0.01,fmt:v=>fr(v)}],
    draw:(P,S)=>{const u=unit(sub(P.B,P.A)),n=G.perp(u),e=S.e*40,h=mul(n,e/2),o=mul(u,e/2);
      const R1=[add(add(P.A,mul(o,-1)),h),add(add(P.B,o),h),add(add(P.B,o),mul(h,-1)),add(add(P.A,mul(o,-1)),mul(h,-1))];
-     return (S.step>=0?D.poly(R1,"f-amb")+D.pline(R1.concat([R1[0]]),"l-amb"):"")+D.seg(P.A,P.B,"l-cob");},
+     return (S.step>=0?D.poly(R1,"fk2")+D.pline(R1.concat([R1[0]]),"lk2"):"")+D.seg(P.A,P.B,"lk1");},
    info:(P,S)=>{const ab=d(P.A,P.B);return R.m([["AB",fr(ab)],["ε",fr(S.e)],["(AB + ε) × ε",fr((ab+S.e)*S.e,3)]])+R.v("𝒜([AB]) est plus petite que ce nombre, pour tout ε > 0. Réduis ε : la borne tend vers 0.","info");},
    hint:"Fais glisser ε vers 0."}),
  steps:[
@@ -1842,8 +1839,8 @@ push({id:"demo-2-1-2",type:"demo",ref:"Proposition 2.1.2",t:"Démo : une isomét
      let s=D.line(P.A,P.B,k===4?"l-cob":"l-cons")+D.line(A2,B2,k===4?"l-cob":"l-cons");
      if(k===0){s+=D.seg(P.A,P.B,"l-cob")+D.seg(A2,B2,"l-cob");}
      if(k===1){s+=D.ray(P.A,P.B,"l-cob")+D.ray(A2,B2,"l-cob");}
-     if(k===2||k===3){s+=D.ray(P.A,P.B,"l-cob")+D.ray(A2,B2,"l-cob");const lam=dpx(P.A,P.M);s+=D.circ(P.A,lam,"l-cons")+D.circ(A2,lam,"l-cons")+D.txt(mid(A2,M2),"λ","t-amb",10,-10)+D.txt(mid(P.A,P.M),"λ","t-amb",10,-10);}
-     s+=D.pt(P.A,"",null)+D.pt(A2,"s(A)",O,"p-cob","t-cob")+D.pt(B2,"s(B)",O,"p-cob","t-cob")+D.pt(M2,k>=2&&k<=3?"N = s(M)":"s(M)",O,"p-cob","t-cob");
+     if(k===2||k===3){s+=D.ray(P.A,P.B,"l-cob")+D.ray(A2,B2,"l-cob");const lam=dpx(P.A,P.M);s+=D.circ(P.A,lam,"l-cons")+D.circ(A2,lam,"l-cons")+D.txt(mid(A2,M2),"λ","tk2",10,-10)+D.txt(mid(P.A,P.M),"λ","tk2",10,-10);}
+     s+=D.pt(P.A,"",null)+D.pt(A2,"s(A)",O,"p-cob","t-cob")+D.pt(B2,"s(B)",O,"p-cob","t-cob")+D.pt(M2,k>=2&&k<=3?"N = s(M)":"s(M)",O,"pk3","tk3");
      return s;},
    info:(P)=>{const O=V(330,200),t=-1.1,f=q=>add(rot(q,O,t),V(80,-20));const A2=f(P.A),B2=f(P.B),M2=f(P.M);const tm=param(P.M,P.A,P.B);
      return R.m([["AM + MB",fr(d(P.A,P.M)+d(P.M,P.B))],["AB",fl(P.A,P.B)],["s(A)s(M) + s(M)s(B)",fr(d(A2,M2)+d(M2,B2))],["M ∈ [AB) ?",yes(tm>=-1e-6)],["s(M) ∈ [s(A)s(B)) ?",yes(param(M2,A2,B2)>=-1e-6)]]);},
@@ -1883,11 +1880,11 @@ push({id:"demo-2-2-1",type:"demo",ref:"Lemme 2.2.1",t:"Démo : existence et unic
  fig:()=>({w:560,h:280,P:{O:[280,150],A:[150,200]},S:{step:0},labels:{O:"O"},
    draw:(P,S)=>{const k=S.step,A2=sym(P.A,P.O),r=dpx(P.A,P.O);let s="";
      if(k===0){return D.pt(P.O,"",null,"p-cob")+D.txt(V(20,30),"Si A = O, on prend A′ = O.","t-mut t-up");}
-     s+=D.line(P.A,P.O,"l-thin")+D.txt(V(20,30),"Δ = (AO), λ = AO","t-mut t-up");
-     if(k>=1)s+=D.circ(P.O,r,"l-cons")+D.pt(A2,"A′",P.A,"p-cob","t-cob");
-     if(k>=2)s+=D.len(P.A,P.O,"t-amb",-16)+D.len(P.O,A2,"t-amb",-16);
+     s+=D.line(P.A,P.O,"lk1")+D.txt(V(20,30),"Δ = (AO), λ = AO","t-mut t-up");
+     if(k>=1)s+=D.circ(P.O,r,"l-cons")+D.pt(A2,"A′",P.A,"pk3","tk3");
+     if(k>=2)s+=D.len(P.A,P.O,"tk2",-16)+D.len(P.O,A2,"tk2",-16);
      if(k>=3)s+=D.seg(P.A,A2,"l-cob")+D.ticks(P.A,P.O,1,"l-cob")+D.ticks(P.O,A2,1,"l-cob");
-     if(k>=4)s+=D.txt(V(20,54),"Un autre point A″ ? Il serait aussi sur le cercle et sur Δ : A″ = A′.","t-cob t-up");
+     if(k>=4)s+=D.txt(V(20,54),"Un autre point A″ ? Il serait aussi sur le cercle et sur Δ : A″ = A′.","tk5 t-up");
      return s;},
    info:(P)=>{const A2=sym(P.A,P.O);return R.m([["AO",fl(P.A,P.O)],["A′O",fl(A2,P.O)],["AA′",fl(P.A,A2)],["AO + A′O",fr(d(P.A,P.O)*2)]]);},
    hide:(k,P,S)=>S.step===0&&k==="A"}),
@@ -1925,9 +1922,9 @@ push({id:"demo-2-2-4",type:"demo",ref:"Corollaire 2.2.4",t:"Démo : côtés para
  fig:()=>({w:560,h:320,P:{A:[110,250],B:[190,90],C:[450,80]},S:{step:0},
    draw:(P,S)=>{const k=S.step,Dd=para4(P),O=mid(P.B,Dd),sC=sym(P.C,O);
      let s=D.pline([P.A,P.B,P.C,Dd,P.A],"l-ink")+D.seg(P.B,Dd,"l-cons")+D.pt(Dd,"D",mid(P.A,P.C))+D.pt(O,"O",P.C,"p-cob","t-cob");
-     if(k===1)s+=D.line(P.B,P.C,"l-amb")+D.line(P.A,Dd,"l-cob")+D.txt(V(16,26),"s((BC)) : parallèle à (BC) et passe par D, donc = (AD)","t-cob t-up");
-     if(k===2)s+=D.line(Dd,P.C,"l-amb")+D.line(P.A,P.B,"l-cob")+D.txt(V(16,26),"s((CD)) : parallèle à (CD) et passe par B, donc = (AB)","t-cob t-up");
-     if(k===3)s+=D.line(P.A,Dd,"l-cob")+D.line(P.A,P.B,"l-cob")+D.seg(P.C,sC,"l-cob-d")+D.dot(sC,"p-red",6)+D.txt(V(16,26),"s(C) est sur les deux droites : s(C) = A","t-cob t-up");
+     if(k===1)s+=D.line(P.B,P.C,"lk1d")+D.line(P.A,Dd,"lk1")+D.txt(V(16,26),"s((BC)) : parallèle à (BC) et passe par D, donc = (AD)","t-cob t-up");
+     if(k===2)s+=D.line(Dd,P.C,"lk3d")+D.line(P.A,P.B,"lk3")+D.txt(V(16,26),"s((CD)) : parallèle à (CD) et passe par B, donc = (AB)","t-cob t-up");
+     if(k===3)s+=D.line(P.A,Dd,"lk1")+D.line(P.A,P.B,"lk3")+D.seg(P.C,sC,"lk2d")+D.dot(sC,"pk2",6)+D.txt(V(16,26),"s(C) est sur les deux droites : s(C) = A","t-cob t-up");
      if(k===4)s+=D.ticks(P.A,P.B,1,"l-cob")+D.ticks(P.C,Dd,1,"l-cob")+D.ticks(P.B,P.C,2,"l-amb")+D.ticks(Dd,P.A,2,"l-amb")+D.seg(P.A,P.C,"l-cob-d");
      if(k===0)s+=D.ticks(P.B,O,1,"l-cob")+D.ticks(O,Dd,1,"l-cob")+D.txt(V(16,26),"O milieu de [BD] : s(B) = D","t-cob t-up");
      return s;},
@@ -1945,10 +1942,10 @@ push({id:"demo-2-2-4",type:"demo",ref:"Corollaire 2.2.4",t:"Démo : côtés para
 /* ---------------- Angles alternes-internes ---------------- */
 function aiFig(withSym){return {w:580,h:330,P:{D:[230,90],A:[70,90],Dp:[330,250],B:[520,250]},labels:{Dp:"D′"},S:{step:0},
    con:{B:(p,P)=>{const Q=add(P.Dp,sub(P.D,P.A));return snapLine(p,P.Dp,Q,8);}},
-   draw:(P,S)=>{const par=parallel(P.D,P.A,P.Dp,P.B,0.002);let s=D.line(P.A,P.D,"l-ink")+D.line(P.B,P.Dp,"l-ink")+D.line(P.D,P.Dp,"l-thin")+D.txt(add(P.A,V(-30,-14)),"Δ","t-mut")+D.txt(add(P.B,V(14,-14)),"Δ′","t-mut");
+   draw:(P,S)=>{const par=parallel(P.D,P.A,P.Dp,P.B,0.002);let s=D.line(P.A,P.D,"lk1")+D.line(P.B,P.Dp,"lk3")+D.line(P.D,P.Dp,"l-thin")+D.txt(add(P.A,V(-30,-14)),"Δ","tk1")+D.txt(add(P.B,V(14,-14)),"Δ′","tk3");
      s+=D.wedge(P.A,P.D,P.Dp,40,"f-amb")+D.arc(P.A,P.D,P.Dp,40,"l-amb",true,"amb")+D.wedge(P.B,P.Dp,P.D,40,"f-cob")+D.arc(P.B,P.Dp,P.D,40,"l-cob",true,"cob");
      if(withSym){const O=mid(P.D,P.Dp),sA=sym(P.A,O),k=S.step;s+=D.pt(O,"O",P.A,"p-cob","t-cob");
-       if(k>=0)s+=D.line(sA,P.Dp,"l-cob-d")+D.seg(P.A,sA,"l-cons")+D.pt(sA,"s(A)",O,"p-cob","t-cob");}
+       if(k>=0)s+=D.line(sA,P.Dp,"lk1d")+D.seg(P.A,sA,"l-cons")+D.pt(sA,"s(A)",O,"pk2","tk2");}
      return s+(par?D.txt(V(16,26),"Δ // Δ′","t-ok t-up"):"");},
    info:(P)=>{const a=ang(P.A,P.D,P.Dp),b=ang(P.B,P.Dp,P.D),par=parallel(P.D,P.A,P.Dp,P.B,0.002),sep=side(P.A,P.D,P.Dp)*side(P.B,P.D,P.Dp)<0;
      return R.m([[an("ADD′"),fa(a)],[an("BD′D"),fa(b)],["parallèles ?",yes(par)]])+R.v(!sep?"Attention : A et B doivent être de part et d'autre de la sécante (DD′).":par?"Δ // Δ′ et les angles alternes-internes sont égaux.":"Angles différents : Δ et Δ′ ne sont pas parallèles.",sep&&par?"ok":"");},
@@ -2017,8 +2014,8 @@ push({id:"demo-2-4-1",type:"demo",ref:"Proposition 2.4.1",t:"Démo : l'aire du t
    con:{A:(p,P,S)=>S.step<2?V(P.B.x,Math.min(p.y,P.B.y-40)):V(p.x,Math.min(p.y,P.B.y-40))},
    onStep:(k,P)=>{if(k<2)P.A=V(P.B.x,P.A.y);else if(k===2)P.A=V(230,P.A.y);else P.A=V(500,P.A.y);},
    draw:(P,S)=>{const k=S.step,H=V(P.A.x,P.B.y);let s=D.line(P.B,P.C,"l-cons")+D.pt(P.B,"B",V(P.B.x+20,P.B.y-40))+D.pt(P.C,"C",V(P.C.x-30,P.C.y-40));
-     if(k<2){const Dd=V(P.C.x,P.A.y);s+=D.poly([P.A,P.B,P.C,Dd],k===1?"f-amb":"f-ink")+D.poly([P.A,P.B,P.C],"f-cob")+D.pline([P.A,P.B,P.C,Dd,P.A],"l-ink")+D.seg(P.A,P.C,"l-cob")+D.right(P.A,P.B,P.C,12,"l-thin")+D.pt(Dd,"D",P.B);return s;}
-     s+=D.seg(P.A,H,"l-cob")+D.right(P.C,H,P.A,11,"l-cob")+D.pt(H,"H<tspan font-size='11' dy='4'>A</tspan>",V(H.x,H.y-60),"p-cob","t-cob");
+     if(k<2){const Dd=V(P.C.x,P.A.y);s+=D.poly([P.A,P.B,P.C,Dd],k===1?"f-amb":"f-ink")+D.poly([P.A,P.B,P.C],"f-cob")+D.pline([P.A,P.B,P.C,Dd,P.A],"l-ink")+D.seg(P.A,P.C,"l-cob")+D.right(P.A,P.B,P.C,12,"l-thin")+D.pt(Dd,"D",P.B,"pk2","tk2");return s;}
+     s+=D.seg(P.A,H,"lk1")+D.right(P.C,H,P.A,11,"lk1")+D.pt(H,"H<tspan font-size='11' dy='4'>A</tspan>",V(H.x,H.y-60),"pk1","tk1");
      if(k===2)s+=D.poly([P.A,H,P.B],"f-cob")+D.poly([P.A,H,P.C],"f-amb")+D.pline([P.A,P.B,P.C,P.A],"l-ink");
      if(k===3)s+=D.poly([P.A,P.B,H],"f-cob")+D.poly([P.A,P.C,H],"f-red")+D.pline([P.A,P.B,P.C,P.A],"l-ink")+D.seg(P.C,H,"l-red");
      return s;},
@@ -2093,12 +2090,12 @@ push({id:"demo-2-5-1",type:"demo",ref:"Théorème 2.5.1",t:"Démo : Thalès, 1ʳ
    con:{M:(p,P)=>onSeg(p,lerp(P.A,P.B,0.12),lerp(P.A,P.B,0.9))},
    draw:(P,S)=>{const N=thN(P),k=S.step,HN=proj(N,P.A,P.B),HM=proj(P.M,P.A,P.C);
      let s=D.pline([P.A,P.B,P.C,P.A],"l-ink")+D.seg(P.M,N,"l-ink")+D.pt(P.A,"A",V(250,200))+D.pt(P.B,"B",V(300,200))+D.pt(P.C,"C",V(250,200))+D.pt(N,"N",V(200,170),"p-fix");
-     if(k===0)s+=D.seg(N,HN,"l-cob-d")+D.seg(P.M,HM,"l-amb-d")+D.right(P.A,HN,N,8,"l-cob")+D.right(P.A,HM,P.M,8,"l-amb")+D.pt(HN,"H<tspan font-size='11' dy='4'>N</tspan>",N,"p-cob","t-cob")+D.pt(HM,"H<tspan font-size='11' dy='4'>M</tspan>",P.M,"p-cob","t-amb");
+     if(k===0)s+=D.seg(N,HN,"lk1d")+D.seg(P.M,HM,"lk2d")+D.right(P.A,HN,N,8,"lk1")+D.right(P.A,HM,P.M,8,"lk2")+D.pt(HN,"H<tspan font-size='11' dy='4'>N</tspan>",N,"pk1","tk1")+D.pt(HM,"H<tspan font-size='11' dy='4'>M</tspan>",P.M,"pk2","tk2");
      if(k===1)s+=D.poly([P.B,P.M,N],"f-cob")+D.poly([P.C,P.M,N],"f-amb")+D.seg(P.B,N,"l-cob")+D.seg(P.C,P.M,"l-amb");
-     if(k===2)s+=D.poly([P.A,P.M,N],"f-cob")+D.pline([P.A,P.B,N,P.A],"l-cob")+D.seg(N,HN,"l-cob-d")+D.pt(HN,"",null,"p-cob");
+     if(k===2)s+=D.poly([P.A,P.M,N],"f-cob")+D.pline([P.A,P.B,N,P.A],"l-cob")+D.seg(N,HN,"lk1d")+D.pt(HN,"",null,"pk1");
      if(k===3)s+=D.poly([P.A,P.M,N],"f-cob")+D.poly([P.B,P.M,N],"f-amb")+D.seg(P.B,N,"l-amb");
      if(k===4)s+=D.poly([P.A,P.M,N],"f-cob")+D.poly([P.C,P.M,N],"f-amb")+D.seg(P.C,P.M,"l-amb");
-     if(k===5)s+=D.poly([P.A,P.M,N],"f-cob")+D.pline([P.A,P.M,P.C,P.A],"l-cob")+D.seg(P.M,HM,"l-cob-d")+D.pt(HM,"",null,"p-cob");
+     if(k===5)s+=D.poly([P.A,P.M,N],"f-cob")+D.pline([P.A,P.M,P.C,P.A],"l-cob")+D.seg(P.M,HM,"lk2d")+D.pt(HM,"",null,"pk2");
      return s;},
    info:(P,S)=>{const N=thN(P),k=S.step;const aAMN=area(P.A,P.M,N),aBMN=area(P.B,P.M,N),aCMN=area(P.C,P.M,N);
      const rows=[[["AM/AB",fr(d(P.A,P.M)/d(P.A,P.B),3)],["AN/AC",fr(d(P.A,N)/d(P.A,P.C),3)]],
@@ -2135,12 +2132,12 @@ push({id:"demo-2-5-2",type:"demo",ref:"Théorème 2.5.2",t:"Démo : la réciproq
  fig:()=>({w:560,h:320,P:{A:[240,60],B:[110,280],C:[450,260],M:[175,170]},S:{step:0},drag:["M"],
    con:{M:(p,P)=>onRay(p,lerp(P.A,P.B,0.12),P.B)},
    draw:(P,S)=>{const k=S.step,r=d(P.A,P.M)/d(P.A,P.B),N=add(P.A,mul(sub(P.C,P.A),r));const Np=thN(P);
-     let s=D.pline([P.A,P.B,P.C,P.A],"l-ink")+D.pt(P.A,"A",V(260,200))+D.pt(P.B,"B",V(300,200))+D.pt(P.C,"C",V(250,200))+D.pt(N,"N",V(N.x+60,N.y),"p-fix");
-     if(k>=1)s+=D.line(P.M,add(P.M,sub(P.C,P.B)),"l-cob-d")+D.txt(V(16,26),"Δ : la parallèle à (BC) passant par M","t-cob t-up");
-     if(k>=1&&Np)s+=D.dot(Np,"p-cob",5)+D.lab(Np,"N′",P.C,"t-cob",30);
-     if(k===2)s+=D.seg(P.A,Np,"l-cob");
+     let s=D.pline([P.A,P.B,P.C,P.A],"l-ink")+D.pt(P.A,"A",V(260,200))+D.pt(P.B,"B",V(300,200))+D.pt(P.C,"C",V(250,200))+D.seg(P.B,P.C,"lk4")+D.pt(N,"N",V(N.x+60,N.y),"pk1","tk1");
+     if(k>=1)s+=D.line(P.M,add(P.M,sub(P.C,P.B)),"lk3d")+D.txt(V(16,26),"Δ : la parallèle à (BC) passant par M","tk3 t-up");
+     if(k>=1&&Np)s+=D.dot(Np,"pk2",5)+D.lab(Np,"N′",P.C,"tk2",30);
+     if(k===2)s+=D.seg(P.A,Np,"lk2");
      if(k===3)s+=D.txt(V(16,50),"N et N′ : même distance de A sur [AC)","t-ok t-up");
-     if(k>=4)s+=D.seg(P.M,N,"l-ok");
+     if(k>=4)s+=D.seg(P.M,N,"lk3");
      return s;},
    info:(P)=>{const r=d(P.A,P.M)/d(P.A,P.B),N=add(P.A,mul(sub(P.C,P.A),r)),Np=thN(P);return R.m([["AM/AB",fr(r,3)],["AN",fr(d(P.A,N))],["AN′",Np?fr(d(P.A,Np)):"–"]]);},
    hint:"Déplace M."}),
@@ -2218,11 +2215,11 @@ push3({id:"demo-3-1-2",type:"demo",ref:"Proposition 3.1.2",t:"Démo : les côté
  hyp:"ABCD est un parallélogramme : [AC] et [BD] ont le même milieu O.",concl:"(AB) // (CD), AB = CD, (AD) // (BC) et AD = BC.",
  idea:`s = symétrie de centre O. s(A) = C et s(B) = D, et le Thm 2.2.3 fait tout le reste.`,
  fig:()=>({w:560,h:300,P:{A:[110,240],B:[170,80],C:[440,70]},S:{step:0},
-   draw:(P,S)=>{const k=S.step,Dd=add(P.A,sub(P.C,P.B)),O=mid(P.A,P.C);let s=quad(P.A,P.B,P.C,Dd,"l-ink")+D.seg(P.A,P.C,"l-cons")+D.seg(P.B,Dd,"l-cons")+D.pt(Dd,"D",O)+D.pt(O,"O",P.B,"p-cob","t-cob");
+   draw:(P,S)=>{const k=S.step,Dd=add(P.A,sub(P.C,P.B)),O=mid(P.A,P.C);let s=quad(P.A,P.B,P.C,Dd,"l-ink")+D.seg(P.A,P.C,"l-cons")+D.seg(P.B,Dd,"l-cons")+D.pt(Dd,"D",O)+D.pt(O,"O",P.B,"pk1","tk1");
      if(k===0)s+=D.ticks(P.A,O,1,"l-cob")+D.ticks(O,P.C,1,"l-cob")+D.ticks(P.B,O,2,"l-amb")+D.ticks(O,Dd,2,"l-amb");
-     if(k===1)s+=D.line(P.A,P.B,"l-amb")+D.line(P.C,Dd,"l-cob");
-     if(k===2)s+=D.seg(P.A,P.B,"l-cob")+D.seg(P.C,Dd,"l-cob")+D.ticks(P.A,P.B,1,"l-cob")+D.ticks(P.C,Dd,1,"l-cob");
-     if(k===3)s+=D.line(P.A,Dd,"l-amb")+D.line(P.B,P.C,"l-cob")+D.ticks(P.A,Dd,2,"l-amb")+D.ticks(P.B,P.C,2,"l-amb");
+     if(k===1)s+=D.line(P.A,P.B,"lk3d")+D.line(P.C,Dd,"lk3");
+     if(k===2)s+=D.seg(P.A,P.B,"lk3")+D.seg(P.C,Dd,"lk3")+D.ticks(P.A,P.B,1,"l-cob")+D.ticks(P.C,Dd,1,"l-cob");
+     if(k===3)s+=D.line(P.A,Dd,"lk5d")+D.line(P.B,P.C,"lk5")+D.ticks(P.A,Dd,2,"l-amb")+D.ticks(P.B,P.C,2,"l-amb");
      return s;},
    info:(P)=>{const Dd=add(P.A,sub(P.C,P.B));return R.m([["AB",fl(P.A,P.B)],["CD",fl(P.C,Dd)],["AD",fl(P.A,Dd)],["BC",fl(P.B,P.C)]]);}}),
  steps:[
@@ -2291,11 +2288,11 @@ push3({id:"demo-3-2-6",type:"demo",ref:"Lemme 3.2.6",t:"Démo : le translaté d'
  hyp:`${vc("u")} est un vecteur et A un point.`,concl:`il existe un unique point B tel que ${vc("u")} = ${vc("AB")}.`,
  idea:`Prends M le milieu de [AD], puis B le symétrique de C par rapport à M : les diagonales [AD] et [CB] ont le même milieu.`,
  fig:()=>({w:560,h:320,P:{C:[90,250],D:[250,200],A:[230,80]},S:{step:0},
-   draw:(P,S)=>{const k=S.step,M=mid(P.A,P.D),B=sym(P.C,M);let s=D.vec(P.C,P.D,"l-cob","cob")+D.txt(mid(P.C,P.D),"u","t-cob",-6,18);
-     if(k>=1)s+=D.seg(P.A,P.D,"l-cons")+D.pt(M,"M",P.C,"p-cob","t-cob")+D.ticks(P.A,M,1,"l-amb")+D.ticks(M,P.D,1,"l-amb");
-     if(k>=1)s+=D.seg(P.C,B,"l-cons")+D.pt(B,"B",M,"p-cob","t-cob")+D.ticks(P.C,M,2,"l-thin")+D.ticks(M,B,2,"l-thin");
+   draw:(P,S)=>{const k=S.step,M=mid(P.A,P.D),B=sym(P.C,M);let s=D.vec(P.C,P.D,"lk1","k1")+D.txt(mid(P.C,P.D),"u","tk1",-6,18);
+     if(k>=1)s+=D.seg(P.A,P.D,"l-cons")+D.pt(M,"M",P.C,"pk2","tk2")+D.ticks(P.A,M,1,"l-amb")+D.ticks(M,P.D,1,"l-amb");
+     if(k>=1)s+=D.seg(P.C,B,"l-cons")+D.pt(B,"B",M,"pk3","tk3")+D.ticks(P.C,M,2,"l-thin")+D.ticks(M,B,2,"l-thin");
      if(k>=2)s+=quad(P.A,B,P.D,P.C,"l-thin");
-     if(k>=3)s+=D.vec(P.A,B,"l-ok","ok");
+     if(k>=3)s+=D.vec(P.A,B,"lk1","k1");
      return s;},
    info:(P)=>{const M=mid(P.A,P.D),B=sym(P.C,M);return R.m([["CD",fl(P.C,P.D)],["AB",fl(P.A,B)],["(AB) // (CD) ?",yes(parallel(P.A,B,P.C,P.D,0.001))]]);},
    hint:"Déplace A, C ou D."}),
@@ -2331,7 +2328,7 @@ push3({id:"demo-3-2-8",type:"demo",ref:"Proposition 3.2.8",t:"Démo : la somme d
  idea:`Remarque 3.2.5 : ${vc("AB")} = ${vc("A′B′")} ⇔ ${vc("AA′")} = ${vc("BB′")}. On fait passer l'égalité de B à E, puis de A à E.`,
  fig:()=>({w:580,h:330,P:{A:[60,250],B:[180,170],Ap:[260,290],C:[360,90],Dv:[450,60]},labels:{Ap:"A′",Dv:"D"},S:{step:0},
    draw:(P,S)=>{const k=S.step,u=sub(P.B,P.A),v=sub(P.Dv,P.C),Bp=add(P.Ap,u),E=add(P.B,v),Ep=add(Bp,v);
-     let s=D.vec(P.A,P.B,"l-cob","cob")+D.vec(P.Ap,Bp,"l-cob","cob")+D.vec(P.C,P.Dv,"l-amb","amb")+D.vec(P.B,E,"l-amb","amb")+D.vec(Bp,Ep,"l-amb","amb")+D.pt(Bp,"B′",P.Ap,"p-fix")+D.pt(E,"E",P.B,"p-ok","t-ok")+D.pt(Ep,"E′",Bp,"p-ok","t-ok");
+     let s=D.vec(P.A,P.B,"l-cob","cob")+D.vec(P.Ap,Bp,"l-cob","cob")+D.vec(P.C,P.Dv,"l-amb","amb")+D.vec(P.B,E,"l-amb","amb")+D.vec(Bp,Ep,"l-amb","amb")+D.pt(Bp,"B′",P.Ap,"p-fix")+D.pt(E,"E",P.B,"pk1","tk1")+D.pt(Ep,"E′",Bp,"pk5","tk5");
      if(k===0)s+=D.txt(V(16,26),"BE = CD = B′E′","t-amb t-up");
      if(k>=1)s+=D.vec(P.B,Bp,"l-red","red")+D.vec(E,Ep,"l-red","red");
      if(k>=2)s+=D.vec(P.A,P.Ap,"l-red","red");
@@ -2608,6 +2605,53 @@ window.REDAC=`
  <li><a href="#/c/axiome-3">L'axiome III (d) et (e)</a> : démos 2.1.2, 2.2.1, réciproque de Thalès.</li>
  <li><a href="#/c/axiome-2">L'unicité de la parallèle</a> : démos 2.2.4, 2.3.1, réciproque de Thalès.</li>
 </ul><p>Si tu maîtrises ces quatre outils, les démos se reconstruisent presque seules à partir de la figure.</p></section>`;
+
+</script>
+<script>
+/* Les preuves à savoir refaire (démos exigibles) : le texte du cours, mot pour mot,
+   avec une phrase par ligne et les points et droites clés de la même couleur que sur la figure.
+   k1 cyan · k2 orange · k3 violet · k4 bleu · k5 rose (les classes lk*, pk*, tk* des figures). */
+(function(){
+const KEYS={
+ "demo-1-1-1":{"Δ′":"k2","Δ":"k1"},
+ "demo-1-6-1":{"[AB]":"k1","ε":"k2"},
+ "demo-2-1-2":{"s(M)":"k3","N":"k3","λ":"k2"},
+ "demo-2-2-1":{"A″":"k5","A′":"k3","Δ":"k1","λ":"k2"},
+ "demo-2-2-4":{"(BC)":"k1","(AD)":"k1","(CD)":"k3","(AB)":"k3","s(C)":"k2"},
+ "demo-2-3-1":{"Δ′":"k3","Δ":"k1","s(A)":"k2"},
+ "demo-2-4-1":{"H<sub>A</sub>":"k1","D":"k2"},
+ "demo-2-5-1":{"H<sub>N</sub>":"k1","H<sub>M</sub>":"k2"},
+ "demo-2-5-2":{"N′":"k2","N":"k1","Δ":"k3","(BC)":"k4"},
+ "demo-3-1-2":{"O":"k1","(AB)":"k3","(CD)":"k3","(AD)":"k5","(BC)":"k5"},
+ "demo-3-2-6":{'<span class="vec">u</span>':"k1","M":"k2","B′":"k5","B":"k3"},
+ "demo-3-2-8":{"E′":"k5","E":"k1"}};
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+/* colore les objets clés, sans toucher au texte ni aux balises */
+function colorKeys(html,map){
+  const keys=Object.keys(map).sort((a,b)=>b.length-a.length);
+  keys.filter(k=>k.indexOf("<")>=0).forEach(k=>{html=html.split(k).join(`<span class="${map[k]}">${k}</span>`);});
+  const plain=keys.filter(k=>k.indexOf("<")<0);if(!plain.length)return html;
+  /* une lettre seule est un point si elle n'est pas dans un mot (« On », « L'assertion ») */
+  const re=new RegExp(plain.map(k=>/^[A-Z]$/.test(k)?`(?<![a-zà-ÿ])${k}(?![a-zà-ÿ'’′″])`:esc(k)).join("|"),"g");
+  let depth=0;
+  return html.split(/(<[^>]+>)/).map(seg=>{
+    if(seg.charAt(0)==="<"){if(/^<span class="k\d">/.test(seg))depth++;else if(depth&&seg==="</span>")depth--;return seg;}
+    return depth?seg:seg.replace(re,m=>`<span class="${map[m]||map[m.charAt(0)]}">${m}</span>`);}).join("");}
+/* une phrase par ligne : on coupe seulement après un point final, jamais au milieu d'une phrase */
+function sentences(html){
+  const one=h=>{const out=[];let cur="",depth=0,i=0;
+    while(i<h.length){const ch=h[i];
+      if(ch==="<"){const j=h.indexOf(">",i);if(j<0){cur+=h.slice(i);break;}const tag=h.slice(i,j+1);if(tag.charAt(1)==="/")depth=Math.max(0,depth-1);else if(!/\/>$/.test(tag)&&!/^<(br|img|wbr)\b/i.test(tag))depth++;cur+=tag;i=j+1;continue;}
+      cur+=ch;i++;let m;
+      if(!depth&&/[.!?]/.test(ch)&&(m=h.slice(i).match(/^\s+(?=[A-ZÀ-ÖØ-Þ«(<])/))){out.push(cur);cur="";i+=m[0].length;}}
+    if(cur.trim())out.push(cur);return out.length>1?out.map(x=>`<span class="phr">${x}</span>`).join(""):h;};
+  if(/<p[ >]/.test(html))return html.replace(/(<p(?: [^>]*)?>)([\s\S]*?)(<\/p>)/g,(all,a,b,c)=>/class="muted"/.test(a)?all:a+one(b)+c);
+  return one(html);}
+(window.CONCEPTS||[]).forEach(c=>{const map=KEYS[c.id];if(!map)return;
+  if(c.redac)c.redac=sentences(colorKeys(c.redac,map));
+  ["hyp","concl","idea"].forEach(f=>{if(typeof c[f]==="string")c[f]=colorKeys(c[f],map);});
+  (c.steps||[]).forEach(s=>{if(s.w)s.w=colorKeys(s.w,map);});});
+})();
 
 </script>
 <script>
@@ -5882,7 +5926,7 @@ function drawStep(){
   const pd=$("#pz-done"),pl=$("#pz-later");if(pd)pd.addEventListener("click",()=>{WORK.acc=0;WORK.last=Date.now();$(".pausebar").remove();});if(pl)pl.addEventListener("click",()=>{WORK.snooze=Date.now()+15*60e3;$(".pausebar").remove();});
   next.addEventListener("click",()=>{if(next.disabled)return;if(next.dataset.mode==="check"){next.dispatchEvent(new CustomEvent("check"));return;}LP.i++;if(PT.includes(LP.i))LP.cp=LP.i;drawStep();});
   const rs=$("#lp-restart");if(rs)rs.addEventListener("click",()=>{progDrop(LP.sid,LP.id,true);LP=newLP(LP.sid,LP.id);drawStep();});
-  A.fmtCourseIn(body);progSave();fixLinks(body,LP.sid);window.scrollTo(0,0);}
+  progSave();fixLinks(body,LP.sid);window.scrollTo(0,0);}
 const code=(src,lang)=>W.code(src,lang||SUBJ[LP.sid].lang||"txt");
 const STEP={
  learn(s,body){
@@ -6440,29 +6484,6 @@ let CUR={sid:null,page:"today"};
 function renderSide(){if(APP.ext&&APP.ext.badges)try{APP.ext.badges();}catch(e){}}
 function topInfo(){const n=NOW();const next=SIDS.map(id=>SUBJ[id]).filter(S=>examStart(S)>n).sort((a,b)=>examStart(a)-examStart(b))[0];const el=$("#jx");if(el){el.innerHTML=next?`${next.name} · <b>${jx(next)}</b>`:"CC passés";el.title=next?"Prochain CC":"";}}
 
-/* ---------- mise en forme du cours : une idée par ligne, et une couleur par rôle, sans changer un mot ----------
-   bleu : ce qu'on suppose ou ce qu'on introduit · orange : la justification (axiome, théorème, TD…) · vert : ce qu'on obtient */
-const JREF=/(r[ée]ciproque du th[ée]or[èe]me de Thal[èe]s|th[ée]or[èe]me de Thal[èe]s|th[ée]or[èe]me des milieux|relation de Chasles|in[ée]galit[ée] triangulaire|axiomes? [IVX]+(?: ?\([a-z]\))?|(?:Prop(?:osition)?|Thm|Th[ée]or[èe]me|Lemme|Cor(?:ollaire)?|D[ée]f(?:inition)?)\.? ?\d+(?:\.\d+)+|\bTD ?\d+(?:\.\d+)*|\bCCC\b|\bCAC\b|\bACA\b|\bChasles\b)/g;
-const jrefs=h=>h.split(/(<[^>]+>)/).map(x=>x.charAt(0)==="<"?x:x.replace(JREF,'<span class="jref">$1</span>')).join("");
-function splitLines(h){const out=[];let cur="",depth=0,i=0;
-  while(i<h.length){const ch=h[i];
-    if(ch==="<"){const j=h.indexOf(">",i);if(j<0){cur+=h.slice(i);break;}const tag=h.slice(i,j+1);if(tag.charAt(1)==="/")depth=Math.max(0,depth-1);else if(!/\/>$/.test(tag)&&!/^<(br|img|input|hr|wbr)\b/i.test(tag))depth++;cur+=tag;i=j+1;continue;}
-    cur+=ch;i++;if(depth)continue;const rest=h.slice(i);let m;
-    if(/[.!?]/.test(ch)&&(m=rest.match(/^\s+(?=[A-ZÀ-ÖØ-Þ«(<])/))){out.push(cur);cur="";i+=m[0].length;continue;}
-    if(ch===","&&(m=rest.match(/^\s+(?=(?:donc|d['’]où|alors|on en déduit|on obtient|ce qui donne)(?![A-Za-zÀ-ÖØ-öø-ÿ]))/))){out.push(cur);cur="";i+=m[0].length;continue;}}
-  if(cur.trim())out.push(cur);return out;}
-function lineKind(l){const t=l.replace(/<[^>]+>/g,"").trim();
-  if(/^(on suppose|supposons|soit\b|soient\b|on considère|on pose|notons|si\b|par hypothèse)/i.test(t))return "l-hyp";
-  if(/^(donc|d['’]où|ainsi|alors|on en déduit|on a donc|on a alors|par conséquent|finalement|ce qui|c'est donc|on obtient|on conclut)/i.test(t))return "l-concl";return "l-step";}
-const FMTLEG=`<p class="fmtleg" aria-hidden="true"><span class="lg-h">on suppose, on introduit</span><span class="lg-s">une étape</span><span class="lg-r">la justification</span><span class="lg-c">ce qu'on obtient</span></p>`;
-function fmtCourseIn(root){if(!root)return;
-  root.querySelectorAll(".redac,.cours,.lp-body .sol,.lp-body .lx,.fc .back").forEach(box=>{if(box.classList.contains("fmtd")||box.closest(".clair"))return;box.classList.add("fmtd");
-    if(!box.querySelector("p,li,div,pre,ol,ul")&&box.textContent.trim()){box.innerHTML=`<p>${box.innerHTML}</p>`;}
-    box.querySelectorAll("p").forEach(p=>{if(p.classList.contains("muted")||p.classList.contains("formula")||p.closest(".clair,.fmtleg"))return;const L=splitLines(p.innerHTML);
-      if(L.length>1||lineKind(L[0]||"")!=="l-step"){p.innerHTML=L.map(l=>`<span class="ln ${lineKind(l)}">${jrefs(l)}</span>`).join("");p.classList.add("fmt");}else p.innerHTML=jrefs(p.innerHTML);});
-    box.querySelectorAll("li").forEach(li=>{if(!li.querySelector("p,ul,ol"))li.innerHTML=jrefs(li.innerHTML);});
-    if(box.classList.contains("redac")&&box.querySelector(".fmt"))box.insertAdjacentHTML("afterbegin",FMTLEG);});}
-
 /* ---------- petits morceaux de page ---------- */
 const sec=(n,t,body)=>`<section class="sec"><h2><span class="num">${n}</span>${t}</h2>${body}</section>`;
 function badges(S,c){const t=TYPE[c.type]||["Fiche","def"];return `<span class="badge ${t[1]}">${t[0]}</span><span class="badge">${c.ref}</span>${c.cc?`<span class="badge cc">${c.cc}</span>`:""}${c.out?`<span class="badge out">Sans doute pas au CC</span>`:""}${c.maybe?`<span class="badge out">Peut-être au CC</span>`:""}`;}
@@ -6621,7 +6642,7 @@ function drawCard(sid){
    ${flip?`<div class="back"><p>${c.type==="demo"?`<b>Énoncé :</b> si ${c.hyp.replace(/\.$/,"")}, alors ${c.concl.charAt(0).toLowerCase()+c.concl.slice(1)}</p><p><b>L'idée :</b> ${c.idea}`:c.plain}</p>${c.type==="demo"?"":`<div class="cours" style="border-left-width:3px">${c.formal}</div>`}<p><a href="#/${sid}/c/${c.id}">Ouvrir la fiche complète</a></p></div>`:""}
    <div class="acts">${flip?`<button class="btn ok" data-k="1">Je sais (1)</button><button class="btn rev" data-k="0">À revoir (2)</button>`:`<button class="btn pri" data-flip>Retourner (espace)</button>`}</div></div>`;
   box.querySelector("[data-flip]")?.addEventListener("click",()=>{flip=true;drawCard(sid);});
-  fmtCourseIn(box);box.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",()=>cardAnswer(sid,b.dataset.k==="1")));fixLinks(box,sid);
+  box.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",()=>cardAnswer(sid,b.dataset.k==="1")));fixLinks(box,sid);
 }
 function cardAnswer(sid,ok){const c=deck[di];setStatus(sid,c.id,ok?"known":"review");di++;flip=false;drawCard(sid);renderSide();}
 document.addEventListener("keydown",e=>{if(!CUR.sid||!CUR.page.startsWith("cartes")||(e.target.closest&&e.target.closest("input,textarea,button,select")))return;if(e.key===" "&&!flip&&deck[di]){e.preventDefault();flip=true;drawCard(CUR.sid);}else if(flip&&(e.key==="1"||e.key==="2"))cardAnswer(CUR.sid,e.key==="1");});
@@ -6778,7 +6799,7 @@ function render(parts){
   document.body.classList.toggle("in-lesson",first==="lecon");
   const tab=tabOf(parts);
   document.querySelectorAll("#tabbar a,#topnav a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
-  fmtCourseIn(main);renderSide();topInfo();window.scrollTo(0,0);
+  renderSide();topInfo();window.scrollTo(0,0);
   const h1=$("#main h1");document.title=(h1?h1.textContent+" · ":"")+"Mes révisions";
 }
 function route(){
@@ -6790,7 +6811,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,emit,fmtCourseIn,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 APP.onChange=APP.ext.onChange||null;
 window.addEventListener("hashchange",route);
