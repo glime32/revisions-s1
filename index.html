@@ -53,6 +53,7 @@
 .s-pf{--c:#8C9BFF;--c-deep:#1B2CC1;--tagc:#DCE2FF;--g1:#7692ff;--g2:#c04dff}
 .s-calc{--c:#FFB547;--c-deep:#8A4A00;--tagc:#FFE7C2;--g1:#ffb547;--g2:#ff5470}
 .s-lin{--c:#FF7AB8;--c-deep:#8A0F4D;--tagc:#FFD6EA;--g1:#ff7ab8;--g2:#c04dff}
+.s-ana{--c:#FFE45C;--c-deep:#6B5800;--tagc:#FFF6C2;--g1:#ffe45c;--g2:#ffb547}
 .c-bleu{--c:var(--cornflower);--c-deep:var(--persian);--tagc:var(--aqua);--g1:#2ee6ff;--g2:#3a5cff}
 .c-violet{--c:var(--violet-hi);--c-deep:var(--violet);--tagc:var(--violet-pale);--g1:#c04dff;--g2:#3a5cff}
 .c-vert{--c:var(--vert);--c-deep:#0E6B39;--tagc:#CFF9DF;--g1:#4be08a;--g2:#2ee6ff}
@@ -915,6 +916,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
  <symbol id="d-triangle" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M60 6l34 50H26z"/><path d="M60 6v50" stroke-dasharray="3 4"/><path d="M60 50h6v6"/><path d="M37 56a11 11 0 0 0-4.3-9.6"/><path d="M40 33l3 3M80 33l-3 3" opacity=".8"/></g></symbol>
  <symbol id="d-integrale" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 54h96M18 60V6"/><path d="M20 44c22-30 52-32 82-12"/><path d="M40 54V25.4M80 54V21.3"/><path d="M48 54V21.7M56 54V19.6M64 54V18.9M72 54V19.5" stroke-width="1.4" opacity=".7"/></g></symbol>
  <symbol id="d-matrice" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M36 6h-8v52h8M84 6h8v52h-8"/></g><g fill="currentColor"><circle cx="44" cy="17" r="3.2"/><circle cx="60" cy="17" r="3.2"/><circle cx="76" cy="17" r="3.2"/><circle cx="44" cy="32" r="3.2" opacity=".55"/><circle cx="60" cy="32" r="3.2"/><circle cx="76" cy="32" r="3.2"/><circle cx="44" cy="47" r="3.2" opacity=".55"/><circle cx="60" cy="47" r="3.2" opacity=".55"/><circle cx="76" cy="47" r="3.2"/></g></symbol>
+ <symbol id="d-courbe" viewBox="0 0 120 64"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 20h104" stroke-dasharray="4 5" opacity=".7"/><path d="M8 13h104M8 27h104" opacity=".35"/></g><g fill="currentColor"><circle cx="14" cy="56" r="3"/><circle cx="26" cy="9" r="3"/><circle cx="38" cy="38" r="3"/><circle cx="50" cy="13" r="3"/><circle cx="62" cy="28" r="3"/><circle cx="74" cy="17" r="3"/><circle cx="86" cy="23" r="3"/><circle cx="98" cy="19" r="3"/><circle cx="110" cy="21" r="3"/></g></symbol>
  <symbol id="d-etoile" viewBox="0 0 120 64"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M60 4c1.6 14 10.4 22.4 24 24-13.6 1.6-22.4 10.4-24 24-1.6-13.6-10.4-22.4-24-24 13.6-1.6 22.4-10 24-24z"/></symbol>
 </svg>
 <script>
@@ -5125,6 +5127,203 @@ SUBJ.lin={name:"Algèbre",code:"HAX102X",color:"#FF7AB8",coef:5,share:0.20,key:"
 
 </script>
 <script>
+/* Analyse I (HAX103X, cours de Floriane Wozniak, poly de Simon Modeste) : CC1 lundi 23 novembre à 15h, CC2 mercredi 16 décembre à 15h.
+   Note : 0,25 × CC1 + 0,25 × CC2 + 0,5 × examen de janvier. Coefficient 5. Aucun document, aucune calculatrice. */
+(function(){
+window.SUBJ=window.SUBJ||{};
+const hl=s=>`<span class="hl">${s}</span>`,F=s=>`<div class="formula">${s}</div>`;
+const concepts=[];const add=(ch,o)=>{o.ch=ch;concepts.push(o);};
+
+/* ---------- chapitre 1 : les réels ---------- */
+add(1,{id:"ana-quantif",type:"meth",ref:"Chapitres 1 à 3 ; TD 2, ex. 1, 3, 4 ; TD 3, ex. 1 et 5",t:"Quantificateurs et négation",short:"∀, ∃ et négation",cc:"vrai/faux du CC : 4 points en 2024",
+ plain:`∀ veut dire « pour tout », ∃ « il existe ». L'${hl("ordre")} compte : ce qui suit un ∃ peut dépendre de ce qui est avant. Pour nier une phrase, on ${hl("échange ∀ et ∃")} et on nie la fin.`,
+ formal:`<ul><li>Prouver ∀x, P(x) : « Soit x » quelconque. Réfuter : un contre-exemple.</li><li>Prouver ∃x, P(x) : un exemple. Réfuter : montrer non P(x) pour tout x.</li><li>non(∀x, P) = ∃x, non P ; non(∃x, P) = ∀x, non P ; non(P ⇒ Q) = P et non Q.</li></ul>${F("∃c, ∀n, uₙ ≤ c : (uₙ) est majorée.    ∀n, ∃c, uₙ ≤ c : toujours vrai (c = uₙ).")}`,
+ use:`<p>Au vrai/faux, cherche d'abord un contre-exemple simple (x = 0, 1, −1, 1/4, 2,5…). Une réponse fausse peut coûter des points : ne coche pas au hasard.</p>`,
+ trap:`« ∀ε ≥ 0 » au lieu de « ∀ε &gt; 0 » change tout : avec ε = 0, il faut |uₙ − ℓ| ≤ 0, donc uₙ = ℓ à partir d'un rang (TD 2, ex. 4a).`,
+ q:"Négation de « ∀ε &gt; 0, ∃N, ∀n ≥ N, |uₙ − ℓ| ≤ ε » ?",a:"∃ε &gt; 0, ∀N, ∃n ≥ N, |uₙ − ℓ| &gt; ε.",rel:["ana-limite","ana-lim-fonction"]});
+
+add(1,{id:"ana-abs",type:"meth",ref:"Chapitre 1 ; TD 1, ex. 3 et 6",t:"Valeur absolue et distance",short:"Valeur absolue",
+ plain:`|b − a| est la ${hl("distance")} entre a et b. « |x − a| ≤ d » veut dire « x est à moins de d de a », c'est-à-dire x ∈ [a − d, a + d].`,
+ formal:`<ul><li>|x − a| ≤ d ⇔ a − d ≤ x ≤ a + d ; avec &lt; : intervalle ouvert.</li><li>||a| − |b|| ≤ |a + b| ≤ |a| + |b| ; ||a| − |b|| ≤ |a − b|.</li><li>Si ∀ε &gt; 0, |b − a| ≤ ε, alors a = b.</li></ul>${F("|x + 2| &gt; 7 ⇔ x &lt; −9 ou x &gt; 5.    |2x − 4| ≤ |x + 2| ⇔ x ∈ [2/3, 6].")}`,
+ use:`<p>Pour |A| ≤ |B|, compare les carrés (deux nombres positifs sont rangés comme leurs carrés).</p>`,
+ trap:`|a − b| ≤ |a| − |b| est fausse (a = 0, b = 1).`,
+ q:"{x | |x − 1| &lt; 2} = ?",a:"]−1, 3[.",rel:["ana-intervalles"]});
+
+add(1,{id:"ana-intervalles",type:"def",ref:"Chapitre 1 ; TD 1, ex. 4, 7, 13, 14",t:"Intervalles et partie entière",short:"Intervalles, E(x)",
+ plain:`Un intervalle est un morceau ${hl("d'un seul tenant")} de ℝ : entre deux de ses points, il contient tout. La partie entière E(x) est l'entier juste en dessous de x.`,
+ formal:`<ul><li>A est un intervalle ⇔ ∀α, β ∈ A, [α, β] ⊂ A.</li><li>E(x) : l'unique entier n tel que n ≤ x &lt; n + 1 ; x − 1 &lt; E(x) ≤ x ; E(x + 1) = E(x) + 1.</li><li>ℝ est archimédien : pour tout a &gt; 0 et tout b, il existe n ∈ ℕ tel que b ≤ na.</li></ul>`,
+ use:`<p>« Pas un intervalle » : deux points de A et un point entre eux hors de A. Pour choisir un rang : N = E(1/ε) + 1 &gt; 1/ε.</p>`,
+ trap:`E(−2,7) = −3, pas −2. Et la réunion de deux intervalles n'est pas toujours un intervalle ([0, 1] ∪ [2, 3]).`,
+ q:"{(t² + 1)/2 | t ∈ ℝ} est-il un intervalle ?",a:"Oui : c'est [1/2, +∞[.",rel:["ana-bornes"]});
+
+add(1,{id:"ana-bornes",type:"def",ref:"Chapitre 1 ; TD 1, ex. 5, 8, 15 ; CC1 2024 et 2025 (tableaux)",t:"Majorants, max, sup",short:"Max, min, sup, inf",cc:"tableau de 4 points en 2024 et en 2025",
+ plain:`Un majorant est au-dessus de tout l'ensemble ; le max est un majorant ${hl("qui est dans l'ensemble")} ; la borne sup est le ${hl("plus petit des majorants")} (elle existe dès que l'ensemble est non vide et majoré).`,
+ formal:`<ul><li>m majorant de A : ∀a ∈ A, a ≤ m. max(A) : un majorant qui appartient à A.</li><li>sup(A) : le plus petit des majorants ; existe pour A non vide majorée. Si max(A) existe, sup(A) = max(A).</li><li>De même : minorant, min, inf (le plus grand des minorants).</li></ul>${F("[0, 1[ : inf = min = 0, sup = 1, pas de max.   ℕ : inf = min = 0, ni sup ni max.")}`,
+ use:`<p>Pour le tableau : écris l'ensemble sous forme simple (intervalle, réunion), puis regarde chaque borne : existe-t-elle ? est-elle atteinte ?</p>`,
+ trap:`Un ensemble infini peut avoir un sup ([0, 1]) ; un ensemble borné peut être infini.`,
+ q:"ℚ ∩ ]√2, 2[ : inf, min, max, sup ?",a:"inf = √2 et sup = 2, ni min ni max.",rel:["ana-sup","ana-intervalles"]});
+
+add(1,{id:"ana-sup",type:"th",ref:"Chapitres 1 et 2 (« Retour sur la borne sup ») ; chapitre 3, point adhérent",t:"Caractériser la borne sup ; point adhérent",short:"Borne sup avec ε",cc:"question de cours en 2024 et en 2025 (2 points)",
+ plain:`m est la borne sup de A si m est un majorant et si, ${hl("juste en dessous de m")}, on trouve encore des éléments de A. Un point est adhérent à A si A contient des points ${hl("aussi proches qu'on veut")} de lui.`,
+ formal:`${F("m = sup(A) ⇔ m majore A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a")}${F("x adhérent à A ⇔ ∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε ⇔ une suite d'éléments de A converge vers x")}<p>Et : m = sup(A) ⇔ m majore A et il existe une suite d'éléments de A qui converge vers m.</p>`,
+ use:`<p>« 1 = sup ]0, 1[ » : 1 majore, et uₙ = 1 − 1/n (n ≥ 2) est une suite d'éléments de ]0, 1[ qui tend vers 1. « 1 adhérent à [0, 1[ » : même suite.</p>`,
+ trap:`Ne pas confondre la caractérisation (avec ε) et la définition (« le plus petit des majorants ») : le CC 2025 demandait la caractérisation.`,
+ q:"Caractérisation de m = sup(A) ?",a:"m est un majorant de A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a.",rel:["ana-bornes","ana-limite"]});
+
+/* ---------- chapitre 2 : suites ---------- */
+add(2,{id:"ana-limite",type:"def",ref:"Chapitre 2 ; TD 2, ex. 6 ; CC1 2024-2025, ex. 1",t:"Limite d'une suite : la définition",short:"Limite avec ε",cc:"4 points en 2024",
+ plain:`uₙ → ℓ : ${hl("quelle que soit la précision ε")}, il y a un rang à partir duquel tous les termes sont à moins de ε de ℓ.`,
+ formal:`${F("uₙ → ℓ ⇔ ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε")}${F("uₙ → +∞ ⇔ ∀A ∈ ℝ, ∃N ∈ ℕ, ∀n ≥ N, uₙ ≥ A")}<ul><li>La limite est unique ; une suite convergente est bornée.</li><li>qⁿ → 0 si |q| &lt; 1, → +∞ si q &gt; 1 ; nᵖ → +∞ si p &gt; 0, → 0 si p &lt; 0.</li></ul>`,
+ use:`<p>Modèle : majorer |uₙ − ℓ| ≤ 1/n ; « Soit ε &gt; 0 », N = E(1/ε) + 1 ; pour n ≥ N, |uₙ − ℓ| ≤ 1/n ≤ 1/N &lt; ε ; conclure en réécrivant la définition.</p>`,
+ trap:`Choisir N avant ε, ou un N qui dépend de n : N ne dépend que de ε.`,
+ q:"Montrer n sin(n)/(n² + 2) → 0 : quelle majoration ?",a:"|n sin(n)/(n² + 2)| ≤ n/(n² + 2) ≤ n/n² = 1/n.",rel:["ana-calcul","ana-quantif"]});
+
+add(2,{id:"ana-calcul",type:"meth",ref:"Chapitre 2 ; TD 2, ex. 5",t:"Calculer une limite de suite",short:"Calcul de limites",
+ plain:`On combine les limites connues avec les règles d'opérations. Devant une ${hl("forme indéterminée")}, on transforme l'expression : factoriser par le terme dominant, diviser, quantité conjuguée.`,
+ formal:`<ul><li>Formes indéterminées : +∞ − ∞, 0 × ∞, ∞/∞, 0/0.</li><li>Fraction : factoriser en haut et en bas par le terme dominant.</li><li>aⁿ − bⁿ avec 0 ≤ a &lt; b : diviser par bⁿ.</li><li>Différence de racines : quantité conjuguée.</li></ul>${F("(aⁿ − bⁿ)/(aⁿ + bⁿ) → −1 si 0 ≤ a &lt; b.    (n + 1)/√(n³ − 2n + 1) → 0.")}`,
+ use:`<p>Annonce le terme dominant, écris la factorisation, puis la limite de chaque morceau.</p>`,
+ trap:`(−2)ⁿ n'a pas de limite (termes pairs → +∞, impairs → −∞).`,
+ q:"Limite de n((1/3)ⁿ − 2) ?",a:"−∞ : (1/3)ⁿ − 2 → −2 et n → +∞.",rel:["ana-limite","ana-comparaison"]});
+
+add(2,{id:"ana-comparaison",type:"th",ref:"Chapitre 2 (limites et inégalités) ; TD 2, ex. 9",t:"Inégalités, gendarmes",short:"Gendarmes",
+ plain:`Les inégalités ${hl("passent à la limite")} (en devenant larges), et une suite coincée entre deux suites de même limite a cette limite.`,
+ formal:`<ul><li>uₙ ≤ vₙ (à partir d'un rang), deux suites convergentes ⇒ lim uₙ ≤ lim vₙ.</li><li>uₙ → ℓ &gt; 0 ⇒ uₙ &gt; 0 à partir d'un rang ; uₙ ≥ 0 à partir d'un rang ⇒ ℓ ≥ 0.</li><li>Gendarmes : uₙ ≤ vₙ ≤ wₙ, uₙ et wₙ → ℓ ⇒ vₙ → ℓ. Si uₙ ≤ vₙ et uₙ → +∞ : vₙ → +∞.</li></ul>`,
+ use:`<p>Avec sin ou cos : |sin| ≤ 1, |cos| ≤ 1, puis gendarmes.</p>`,
+ trap:`uₙ &lt; vₙ ne donne pas lim uₙ &lt; lim vₙ (0 &lt; 1/n, limites égales).`,
+ q:"Limite de cos(n)/√n ?",a:"0 : |cos(n)/√n| ≤ 1/√n → 0.",rel:["ana-calcul","ana-monotone"]});
+
+add(2,{id:"ana-monotone",type:"meth",ref:"Chapitre 2 ; TD 2, ex. 7 ; CC1 2024-2025, ex. 2",t:"Suites monotones, suites récurrentes",short:"Suite récurrente",cc:"6 points en 2024",
+ plain:`Une suite croissante qui ne dépasse jamais un plafond ${hl("finit par se stabiliser")} : elle converge. Pour une suite uₙ₊₁ = f(uₙ), on montre bornes, monotonie, convergence, puis ℓ = f(ℓ).`,
+ formal:`<ul><li>Croissante majorée ⇒ converge ; décroissante minorée ⇒ converge. Croissante non majorée ⇒ +∞.</li><li>Méthode : (1) bornes par récurrence ; (2) monotonie ; (3) convergence ; (4) ℓ = f(ℓ), les bornes choisissent la solution.</li></ul>${F("u₀ = 2, uₙ₊₁ = uₙ/2 + 1/uₙ : uₙ &gt; √2, décroissante, limite √2.")}`,
+ use:`<p>Rédige les récurrences en trois temps (initialisation, hérédité, conclusion). Pour la monotonie de termes positifs, le quotient uₙ₊₁/uₙ est souvent plus simple.</p>`,
+ trap:`Le théorème donne l'existence de la limite, pas sa valeur ; et ℓ = f(ℓ) a souvent deux solutions.`,
+ q:"uₙ₊₁ = uₙ/2 + uₙ²/4, u₀ ∈ ]0, 1] : limite ?",a:"0 : la suite est décroissante, minorée par 0, et ℓ(ℓ − 2) = 0 avec ℓ ≤ 1.",rel:["ana-adjacentes","ana-comparaison"]});
+
+add(2,{id:"ana-adjacentes",type:"th",ref:"Chapitre 2 ; TD 2, ex. 8 ; CC1 2025-2026, ex. 2",t:"Suites adjacentes",short:"Suites adjacentes",cc:"6 points en 2025",
+ plain:`Une suite qui monte, une qui descend, toujours ${hl("l'une sous l'autre")}, et un écart qui tend vers 0 : elles ont la même limite.`,
+ formal:`${F("(uₙ) ↗, (vₙ) ↘, uₙ ≤ vₙ, vₙ − uₙ → 0 ⇒ elles convergent vers la même limite ℓ, avec uₙ ≤ ℓ ≤ vₙ")}`,
+ use:`<p>Pour trouver ℓ : cherche une quantité constante (au CC 2025, uₙ + vₙ = 4, donc 2ℓ = 4).</p>`,
+ trap:`Les quatre conditions sont nécessaires : vérifie-les toutes et cite-les.`,
+ q:"u₀ = 1, v₀ = 3, uₙ₊₁ = (3uₙ + vₙ)/4, vₙ₊₁ = (uₙ + 3vₙ)/4 : limite commune ?",a:"2, car uₙ + vₙ = 4 pour tout n.",rel:["ana-monotone"]});
+
+add(2,{id:"ana-extraites",type:"def",ref:"Chapitre 2 ; TD 2, ex. 10",t:"Suites extraites, valeurs d'adhérence",short:"Suites extraites",
+ plain:`Une suite extraite garde certains termes, dans l'ordre (par exemple ceux de rang pair). Si la suite converge, toutes ses sous-suites ont ${hl("la même limite")}.`,
+ formal:`<ul><li>Extraction : φ : ℕ → ℕ strictement croissante ; suite extraite (u<sub>φ(n)</sub>).</li><li>uₙ → ℓ ⇒ toute suite extraite → ℓ. Deux sous-suites de limites différentes ⇒ (uₙ) diverge.</li><li>(u₂ₙ) et (u₂ₙ₊₁) → ℓ ⇒ uₙ → ℓ.</li><li>Valeur d'adhérence : limite d'une sous-suite.</li></ul>`,
+ use:`<p>Pour montrer une divergence : u₂ₙ et u₂ₙ₊₁.</p>`,
+ trap:`(u₂ₙ) et (u₂ₙ₊₁) convergentes ne suffit pas : il faut la même limite.`,
+ q:"Valeurs d'adhérence de ((−1)ⁿ) ?",a:"1 et −1.",rel:["ana-limite"]});
+
+/* ---------- chapitre 3 : limites de fonctions ---------- */
+add(3,{id:"ana-lim-fonction",type:"def",ref:"Chapitre 3 ; TD 3, ex. 1, 2, 6, 7 ; CC1 2025-2026, ex. 1",t:"Limite d'une fonction : définitions",short:"Limites de fonctions (ε, η)",cc:"4 points en 2025",
+ plain:`Même idée que pour les suites : f(x) reste aussi près qu'on veut de ℓ ${hl("dès que x est assez près de x₀")} (ou assez grand).`,
+ formal:`${F("lim<sub>x→x₀</sub> f(x) = ℓ ⇔ ∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε")}${F("lim<sub>x→+∞</sub> f(x) = ℓ ⇔ ∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ I, x &gt; α ⇒ |f(x) − ℓ| &lt; ε")}${F("lim<sub>x→x₀</sub> f(x) = +∞ ⇔ ∀A &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ f(x) &gt; A")}<ul><li>x₀ doit être adhérent à I. Si x₀ ∈ I et que la limite existe, elle vaut f(x₀). La limite est unique.</li><li>Limites à droite, à gauche, épointées : on restreint les x.</li></ul>`,
+ use:`<p>Modèle en +∞ : simplifier f(x) − ℓ ; « Soit ε &gt; 0 », α en fonction de ε ; pour x &gt; α, |f(x) − ℓ| &lt; ε ; conclure.</p>`,
+ trap:`Échanger ε et η dans la définition (piège du vrai/faux 2024).`,
+ q:"f(x) = (2x + 1)/x : quel α pour |f(x) − 2| &lt; ε en +∞ ?",a:"α = 1/ε : pour x &gt; α, |f(x) − 2| = 1/x &lt; ε.",rel:["ana-lim-calc","ana-quantif"]});
+
+add(3,{id:"ana-lim-calc",type:"meth",ref:"Chapitre 3 ; TD 3, ex. 3, 4, 9 à 13",t:"Limites de fonctions : calculs et non-existence",short:"Calculs, pas de limite",
+ plain:`On calcule comme pour les suites (opérations, gendarmes, identités remarquables). Pour prouver qu'il ${hl("n'y a pas de limite")} : deux suites qui donnent deux limites différentes, ou deux limites latérales différentes.`,
+ formal:`<ul><li>Si f(x) → ℓ en x₀ et xₙ → x₀ (xₙ ∈ I), alors f(xₙ) → ℓ.</li><li>sin(1/x) n'a pas de limite en 0 : xₙ = 1/(2πn) donne 0, yₙ = 1/(π/2 + 2πn) donne 1.</li><li>f ≤ g ⇒ lim f ≤ lim g ; f &lt; g ne donne que ≤.</li></ul>${F("lim en 0 de (√(1 + x) − √(1 − x))/x = 1 ;  lim en π de sin²x/(1 + cos x) = 2.")}`,
+ use:`<p>Racines : quantité conjuguée ; racines cubiques : (a − b)(a² + ab + b²) = a³ − b³.</p>`,
+ trap:`f(n) → L ne prouve pas f(x) → L en +∞ (sin(πx)).`,
+ q:"(x² + 2|x|)/x a-t-elle une limite en 0 ?",a:"Non : 2 à droite, −2 à gauche.",rel:["ana-lim-fonction"]});
+
+/* ---------- TD (corrections écrites pour le site) ---------- */
+const td=[
+ {id:"1.3",s:1,t:"Vrai ou faux (valeur absolue, partie entière)",en:"(a) ∀a, b, |a − b| ≤ |a| − |b| ; (b) ∀x, E(2x) = 2E(x).",link:"ana-abs",sol:`<ol><li>Faux : a = 0, b = 1 donne 1 ≤ −1.</li><li>Faux : x = 1/2 donne E(1) = 1 et 2E(1/2) = 0.</li></ol>`},
+ {id:"1.4",s:1,t:"Vrai ou faux (intervalles, bornés)",en:"(a) La réunion de deux intervalles est un intervalle. (b) La réunion d'un minoré et d'un majoré est bornée. (c) L'intersection d'un minoré et d'un majoré est bornée.",link:"ana-intervalles",sol:`<ol><li>Faux : [0, 1] ∪ [2, 3].</li><li>Faux : [0, +∞[ ∪ ]−∞, 0] = ℝ.</li><li>Vrai : si A ⊂ [m, +∞[ et B ⊂ ]−∞, M], alors A ∩ B ⊂ [m, M].</li></ol>`},
+ {id:"1.5",s:1,t:"Vrai ou faux (bornes)",en:"(a) Une partie peut avoir un sup sans être majorée. (b) Un sup est toujours un max. (c) Infinie ⇒ pas de sup. (d) Bornée ⇒ finie.",link:"ana-bornes",sol:`<p>Tout est faux. (a) Un sup est un majorant. (b) [0, 1[ a un sup (1) mais pas de max. (c) [0, 1] est infini et a un sup. (d) [0, 1] est borné et infini.</p>`},
+ {id:"1.6",s:2,t:"Équations et inéquations",en:"(a) |x − 3| = 5 ; (b) |x + 3| ≤ 5 ; (c) |x + 2| &gt; 7 ; (d) |2x − 4| ≤ |x + 2|.",link:"ana-abs",sol:`<ol><li>x = 8 ou x = −2.</li><li>[−8, 2].</li><li>]−∞, −9[ ∪ ]5, +∞[.</li><li>(2x − 4)² ≤ (x + 2)² ⇔ 3x² − 20x + 12 ≤ 0 ⇔ x ∈ [2/3, 6].</li></ol>`},
+ {id:"1.7",s:2,t:"Intervalles ou pas ?",en:"(a) ℚ ; (b) [1, 2] ∪ [2, 3[ ; (c) ℝ*₊ ; (d) ℝ ∖ {1, 2} ; (e) {(t² + 1)/2 | t ∈ ℝ} ; (f) solutions de |x + 3| ≤ 7 ; (g) {x | x² − 1 &gt; 0} ; (h) le complémentaire d'un intervalle.",link:"ana-intervalles",sol:`<ol><li>Non.</li><li>Oui : [1, 3[.</li><li>Oui : ]0, +∞[.</li><li>Non.</li><li>Oui : [1/2, +∞[.</li><li>Oui : [−10, 4].</li><li>Non : ]−∞, −1[ ∪ ]1, +∞[.</li><li>Pas toujours : le complémentaire de [0, 1] n'en est pas un, mais celui de ]−∞, 0] en est un (]0, +∞[).</li></ol>`},
+ {id:"1.8",s:3,t:"Bornes, max, min",en:"A = [−1, 0[ ; B = ]−2, +∞[ ; C = ℕ ; D = {1/n | n ∈ ℕ*} ; E = {x | x² &lt; 3} ; F = {1/n − 1/p | n, p ∈ ℕ*}.",link:"ana-bornes",sol:`<ul><li>A : inf = min = −1 ; sup = 0, pas de max.</li><li>B : inf = −2, pas de min ; ni sup ni max.</li><li>C : inf = min = 0 ; ni sup ni max.</li><li>D : sup = max = 1 ; inf = 0, pas de min.</li><li>E = ]−√3, √3[ : inf = −√3, sup = √3, ni min ni max.</li><li>F : sup = 1 et inf = −1, ni max ni min (1/n − 1/p ∈ ]−1, 1[).</li></ul>`},
+ {id:"1.10",s:2,t:"Max et min avec la valeur absolue",en:"Montrer max(x, y) = (x + y + |x − y|)/2 et min(x, y) = (x + y − |x − y|)/2.",link:"ana-abs",sol:`<p>Si x ≥ y : |x − y| = x − y, donc (x + y + x − y)/2 = x = max et (x + y − x + y)/2 = y = min. Si x &lt; y : |x − y| = y − x, et on trouve y et x. Dans les deux cas, les formules sont vraies.</p>`},
+ {id:"1.13",s:2,t:"Partie entière",en:"(a) E(x + 1) = E(x) + 1. (b) E(a) + E(b) ≤ E(a + b) ≤ E(a) + E(b) + 1.",link:"ana-intervalles",sol:`<ol><li>E(x) ≤ x &lt; E(x) + 1 donne E(x) + 1 ≤ x + 1 &lt; E(x) + 2 ; E(x) + 1 est un entier : par unicité, E(x + 1) = E(x) + 1.</li><li>E(a) + E(b) ≤ a + b est un entier ≤ a + b, donc ≤ E(a + b). Et a + b &lt; E(a) + E(b) + 2, donc E(a + b) ≤ E(a) + E(b) + 1.</li></ol>`},
+ {id:"1.14",s:2,t:"Cocher les intervalles (CC 2020)",en:"{r² + 3 | r ∈ ℝ} ; {1/(t + 1) | t ∈ ℝ₊} ; {k/(k + 1) | k ∈ ℕ} ; [−√3, π/2[ ; ]−∞, 1] ∪ ℝ₊ ; ℝ ∖ {x | x² &gt; 2} ; {x | |x − 1| &gt; 2} ; {1, 3, 5, 7}.",link:"ana-intervalles",sol:`<p>Intervalles : [3, +∞[, ]0, 1], [−√3, π/2[, ℝ, [−√2, √2]. Pas des intervalles : {k/(k + 1)} (des points isolés), ]−∞, −1[ ∪ ]3, +∞[, {1, 3, 5, 7}.</p>`},
+ {id:"1.15",s:2,t:"Cocher les ensembles qui ont un sup (CC 2019)",en:"{1, 3, 5, 7} ; {k/(k + 1) | k ∈ ℕ} ; ℕ ; {1/t | t ∈ ℝ*₊} ; [−10, π] ∩ ℚ ; [−5, +∞[ ∩ ]−10, 3[ ; {x² − 2 | x ∈ ℝ₋}.",link:"ana-bornes",sol:`<p>Ont un sup : {1, 3, 5, 7} (7), {k/(k + 1)} (1), [−10, π] ∩ ℚ (π), [−5, 3[ (3). N'en ont pas (non majorés) : ℕ, {1/t}, {x² − 2 | x ≤ 0} = [−2, +∞[.</p>`},
+ {id:"2.1",s:1,t:"Écrire avec des quantificateurs",en:"(a) décroissante à partir d'un certain rang ; (b) périodique à partir d'un certain rang ; (c) minorée.",link:"ana-quantif",sol:`<ol><li>∃N₀ ∈ ℕ, ∀n ≥ N₀, uₙ₊₁ ≤ uₙ.</li><li>∃N₀ ∈ ℕ, ∃p ∈ ℕ*, ∀n ≥ N₀, uₙ₊ₚ = uₙ.</li><li>∃m ∈ ℝ, ∀n ∈ ℕ, uₙ ≥ m.</li></ol>`},
+ {id:"2.2",s:1,t:"Des exemples",en:"(a) décroissante positive qui ne tend pas vers 0 ; (b) bornée non convergente ; (c) positive non bornée qui ne tend pas vers +∞ ; (d) non monotone qui tend vers 0 ; (e) positive, tend vers 0, non décroissante.",link:"ana-limite",sol:`<ol><li>1 + 1/n.</li><li>(−1)ⁿ.</li><li>uₙ = n si n pair, 0 si n impair.</li><li>(−1)ⁿ/n.</li><li>(2 + (−1)ⁿ)/n.</li></ol>`},
+ {id:"2.3",s:2,t:"L'ordre des quantificateurs",en:"Suites vérifiant : (a) ∃c ∀n uₙ ≤ c ; (b) ∀n ∃c uₙ ≤ c ; (c) ∀c ∀n uₙ ≤ c ; (d) ∃c ∃n uₙ ≤ c ; (e) ∀c ∃n uₙ ≤ c ; (f) ∃n ∀c uₙ ≤ c.",link:"ana-quantif",sol:`<ol><li>Les suites majorées.</li><li>Toutes (c = uₙ).</li><li>Aucune (c = u₀ − 1).</li><li>Toutes.</li><li>Les suites non minorées.</li><li>Aucune.</li></ol>`},
+ {id:"2.4",s:2,t:"ε ≥ 0 et N avant ε",en:"(a) ∀ε ≥ 0, ∃N, ∀n ≥ N, |uₙ − ℓ| ≤ ε ; (b) ∃N, ∀ε &gt; 0, ∀n ≥ N, |uₙ − ℓ| ≤ ε.",link:"ana-quantif",sol:`<p>Dans les deux cas : les suites égales à ℓ à partir d'un certain rang. (a) avec ε = 0 ; (b) car |uₙ − ℓ| ≤ ε pour tout ε &gt; 0 force uₙ = ℓ.</p>`},
+ {id:"2.5",s:3,t:"Limites de suites",en:"(a) 3n − 7 + 2ⁿ ; (b) (2n² − 6n + 1)/(−n³ + 2n − 2) ; (c) (−2)ⁿ ; (d) √(3n² − n) ; (e) 5 + 2/n + 1/2ⁿ ; (f) n((1/3)ⁿ − 2) ; (g) (n + 1)/√(n³ − 2n + 1) ; (h) (aⁿ − bⁿ)/(aⁿ + bⁿ), 0 ≤ a &lt; b.",link:"ana-calcul",sol:`<ol><li>+∞.</li><li>0.</li><li>Pas de limite.</li><li>+∞.</li><li>5.</li><li>−∞.</li><li>0.</li><li>−1.</li></ol>`},
+ {id:"2.6",s:3,t:"Avec les définitions",en:"(a) 1/n² → 0 ; (b) n³ → +∞ ; (c) −8n → −∞.",link:"ana-limite",sol:`<ol><li>Soit ε &gt; 0, N = E(1/√ε) + 1 : pour n ≥ N, 1/n² ≤ 1/N² &lt; ε.</li><li>Soit A ∈ ℝ, N = max(1, E(A) + 1) : pour n ≥ N, n³ ≥ n ≥ N &gt; A.</li><li>Soit B ∈ ℝ, N = max(0, E(−B/8) + 1) : pour n ≥ N, −8n ≤ −8N &lt; B.</li></ol>`},
+ {id:"2.7",s:3,t:"Une suite récurrente",en:"u₀ ∈ ]0, 1], uₙ₊₁ = uₙ/2 + uₙ²/4 : bornes, monotonie, convergence.",link:"ana-monotone",sol:`<ol><li>Récurrence : 0 &lt; uₙ ≤ 1 ⇒ 0 &lt; uₙ₊₁ ≤ 3/4.</li><li>uₙ₊₁ − uₙ = (uₙ/4)(uₙ − 2) &lt; 0 : décroissante.</li><li>Décroissante minorée : converge ; ℓ(ℓ − 2) = 0 et ℓ ≤ 1, donc ℓ = 0.</li></ol>`},
+ {id:"2.8",s:3,t:"Deux suites couplées",en:"0 &lt; x₀ &lt; y₀, xₙ₊₁ = xₙ²/(xₙ + yₙ), yₙ₊₁ = yₙ²/(xₙ + yₙ).",link:"ana-adjacentes",sol:`<ol><li>xₙ₊₁ − yₙ₊₁ = xₙ − yₙ : constante.</li><li>xₙ₊₁ − xₙ = yₙ₊₁ − yₙ = −xₙyₙ/(xₙ + yₙ) &lt; 0 : décroissantes.</li><li>Minorées par 0, elles convergent : ℓ = 0 et ℓ′ = y₀ − x₀.</li></ol>`},
+ {id:"2.9",s:2,t:"ℓ &lt; ℓ′ ⇒ uₙ &lt; vₙ à partir d'un rang",en:"uₙ → ℓ, vₙ → ℓ′, ℓ &lt; ℓ′.",link:"ana-comparaison",sol:`<p>Soit ε = (ℓ′ − ℓ)/3 &gt; 0. Il existe N₁ tel que uₙ ≤ ℓ + ε pour n ≥ N₁, et N₂ tel que vₙ ≥ ℓ′ − ε pour n ≥ N₂. Pour n ≥ max(N₁, N₂) : uₙ ≤ ℓ + ε &lt; ℓ′ − ε ≤ vₙ.</p>`},
+ {id:"2.10",s:2,t:"Sous-suites paires et impaires",en:"(a) uₙ → ℓ ⇒ (u₂ₙ), (u₂ₙ₊₁) → ℓ ? (b) (u₂ₙ), (u₂ₙ₊₁) convergentes ⇒ (uₙ) convergente ? (c) même limite ℓ ⇒ uₙ → ℓ ?",link:"ana-extraites",sol:`<ol><li>Vrai (suites extraites).</li><li>Faux : (−1)ⁿ.</li><li>Vrai : pour ε donné, N₁ pour les pairs, N₂ pour les impairs ; N = max(2N₁, 2N₂ + 1).</li></ol>`},
+ {id:"2.15",s:2,t:"Borne sup d'un ensemble de termes",en:"uₙ = 2ⁿ si n pair, 2⁻ⁿ sinon ; A = {uₙ | n ∈ ℕ}.",link:"ana-bornes",sol:`<p>A n'est pas majorée (u₂ₖ = 4ᵏ) : pas de sup. Tous les termes sont &gt; 0 et les termes impairs 2⁻ⁿ tendent vers 0 : inf(A) = 0, sans min.</p>`},
+ {id:"3.1",s:1,t:"Remettre la définition dans l'ordre",en:"lim f(x) = ℓ en +∞ avec ∀, ∃, δ, A.",link:"ana-lim-fonction",sol:`<p>lim<sub>x→+∞</sub> f(x) = ℓ ⇔ ∀δ &gt; 0, ∃A &gt; 0, ∀x ∈ ℝ, x &gt; A ⇒ |f(x) − ℓ| &lt; δ.</p>`},
+ {id:"3.2",s:2,t:"Vrai ou faux (limites et valeurs)",en:"(a) limite en x₀ ⇒ limite épointée ; (b) f(0) = 0 ⇒ limite nulle en 0 ; (c) limite nulle en 0 et f définie en 0 ⇒ f(0) = 0 ; (d) x₀ dans le domaine ⇒ limite en x₀.",link:"ana-lim-fonction",sol:`<ol><li>Vrai.</li><li>Faux (f = 0 en 0 et 1 ailleurs).</li><li>Vrai (théorème du cours).</li><li>Faux.</li></ol>`},
+ {id:"3.4",s:2,t:"Vrai ou faux (inégalités)",en:"(a) f croissante ⇒ limites épointées à droite et à gauche partout ; (b) f ≤ g ⇒ ℓ ≤ ℓ′ ; (c) f &lt; g ⇒ ℓ &lt; ℓ′.",link:"ana-lim-calc",sol:`<ol><li>Vrai.</li><li>Vrai.</li><li>Faux : f = 0, g(x) = 1/(1 + x²).</li></ol>`},
+ {id:"3.5",s:1,t:"Nier une limite infinie",en:"f ne tend pas vers +∞ en +∞.",link:"ana-quantif",sol:`<p>∃A &gt; 0, ∀α &gt; 0, ∃x &gt; α, f(x) ≤ A.</p>`},
+ {id:"3.6",s:2,t:"Trouver un seuil",en:"f(x) = (3x + 1)/(x − 7), ε = 10⁻⁶ : un A tel que |f(x) − 3| &lt; ε pour x &lt; A.",link:"ana-lim-fonction",sol:`<p>f(x) − 3 = 22/(x − 7). Pour x &lt; 7 : |f(x) − 3| = 22/(7 − x) &lt; ε ⇔ x &lt; 7 − 22/ε. A = 7 − 22 × 10⁶ = −21 999 993.</p>`},
+ {id:"3.7",s:3,t:"Limites avec la définition",en:"(x + 1)/(x − 1) → 1 en +∞, → −∞ en 1⁻, → +∞ en 1⁺.",link:"ana-lim-fonction",sol:`<ol><li>α = 1 + 2/ε.</li><li>η = min(1, 1/A) : f(x) &lt; 1/(x − 1) &lt; −1/η ≤ −A.</li><li>η = min(1, 2/A) : f(x) &gt; 2/(x − 1) &gt; 2/η ≥ A.</li></ol>`},
+ {id:"3.10",s:3,t:"Calculs de limites",en:"(a) (x² + 2|x|)/x en 0 ; (b) sin²x/(1 + cos x) en π ; (c) (√(1 + x) − √(1 − x))/x en 0 ; (d) (∛(1 + x²) − 1)/x² en 0.",link:"ana-lim-calc",sol:`<ol><li>Pas de limite (2 à droite, −2 à gauche).</li><li>2.</li><li>1.</li><li>1/3.</li></ol>`},
+ {id:"3.11",s:2,t:"sin(1/x) en 0",en:"Montrer que x ↦ sin(1/x) n'a pas de limite en 0.",link:"ana-lim-calc",sol:`<p>xₙ = 1/(2πn) → 0 et sin(1/xₙ) = 0 ; yₙ = 1/(π/2 + 2πn) → 0 et sin(1/yₙ) = 1. Deux limites différentes : pas de limite.</p>`},
+ {id:"3.13",s:1,t:"cos(x)/√x en +∞",en:"Limite en +∞ de cos(x)/√x.",link:"ana-lim-calc",sol:`<p>|cos(x)/√x| ≤ 1/√x → 0 : limite 0 (gendarmes).</p>`}];
+
+/* ---------- annales ---------- */
+const ann=[
+ {src:"CC1 2024-2025 · Cours · 2 pts",t:"Point adhérent",en:"a) Définition de « x est adhérent à A ». b) Montrer que 1 est adhérent à [0, 1[.",go:"ana-sup",sol:`<ol><li>∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε.</li><li>uₙ = 1 − 1/n (n ≥ 1) est une suite d'éléments de [0, 1[ qui tend vers 1.</li></ol>`},
+ {src:"CC1 2024-2025 · Ex. 1 · 4 pts",t:"Une limite avec la définition",en:"Montrer avec la définition que n sin(n)/(n² + 2) → 0.",go:"ana-limite",sol:`<p>Soit ε &gt; 0, N = E(1/ε) + 1, donc 1/ε &lt; N. Pour n ≥ N : |n sin(n)/(n² + 2)| ≤ n/(n² + 2) ≤ 1/n ≤ 1/N &lt; ε. Donc ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |n sin(n)/(n² + 2) − 0| ≤ ε.</p>`},
+ {src:"CC1 2024-2025 · Ex. 2 · 6 pts",t:"Opérations, puis la suite de Héron",en:"1) uₙ → L &gt; 0, aₙ = uₙ/2, bₙ = 1/uₙ : limite de aₙ + bₙ ? 2) u₀ = 2, uₙ₊₁ = uₙ/2 + 1/uₙ : uₙ &gt; √2, (uₙ) strictement décroissante, limite.",go:"ana-monotone",sol:`<ol><li>aₙ → L/2, bₙ → 1/L (L ≠ 0), donc aₙ + bₙ → L/2 + 1/L.</li><li>Récurrence avec (uₙ − √2)² &gt; 0 ; uₙ₊₁/uₙ = 1/2 + 1/uₙ² &lt; 1 ; décroissante minorée par √2 : converge vers L ≥ √2, L = L/2 + 1/L donne L² = 2, donc L = √2.</li></ol>`},
+ {src:"CC1 2024-2025 · Partie 2 · 8 pts",t:"Vrai/faux et tableau",en:"Quantificateurs ; définitions de lim f(x) = 1 en 0 avec ε et η échangés ; tableau intervalle / inf / min / max / sup pour [0, 3] ∪ ]2, 4[, ℝ ∖ {1, 2}, ℚ ∩ ]√2, 2[, {x | |x − 1| &lt; 2}.",go:"ana-bornes",sol:`<ul><li>Définitions : la bonne est « ∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ ℝ, x ∈ ]−η, η[ ⇒ |f(x) − 1| &lt; ε » (ou avec f(x) ∈ ]1 − ε, 1 + ε[). Pièges : ε et η échangés ; x qui n'est pas dans un intervalle centré en 0 ; « |f(x)| &lt; ε » quand x est près de 1 (c'est « f tend vers 0 en 1 »).</li><li>Tableau : [0, 4[ (oui ; inf = min = 0 ; pas de max ; sup 4) ; ℝ ∖ {1, 2} (non ; rien) ; ℚ ∩ ]√2, 2[ (non ; inf √2, sup 2, ni min ni max) ; ]−1, 3[ (oui ; inf −1, sup 3, ni min ni max).</li></ul>`},
+ {src:"CC1 2025-2026 · Cours · 2 pts",t:"Caractériser la borne sup",en:"a) Caractérisation de la borne supérieure de A (non vide, majorée). b) Montrer que 1 = sup ]0, 1[.",go:"ana-sup",sol:`<ol><li>m = sup(A) ⇔ m est un majorant de A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a (pas la définition « plus petit des majorants »).</li><li>∀x ∈ ]0, 1[, x &lt; 1 : 1 majore. uₙ = 1 − 1/n (n ≥ 2) est dans ]0, 1[ et tend vers 1 : donc 1 = sup ]0, 1[.</li></ol>`},
+ {src:"CC1 2025-2026 · Ex. 1 · 4 pts",t:"Limite d'une fonction en +∞ et en 0",en:"f(x) = (2x + 1)/x si x ≠ 0, f(0) = 2. a) Limite en +∞, prouvée avec la définition. b) Limite en 0 ?",go:"ana-lim-fonction",sol:`<ol><li>f(x) − 2 = 1/x. Soit ε &gt; 0, α = 1/ε : pour x &gt; α, |f(x) − 2| = 1/x &lt; ε. Donc lim<sub>+∞</sub> f = 2.</li><li>f(x) = 2 + 1/x → +∞ à droite et −∞ à gauche : pas de limite en 0.</li></ol>`},
+ {src:"CC1 2025-2026 · Ex. 2 · 6 pts",t:"Deux suites adjacentes",en:"u₀ = 1, v₀ = 3, uₙ₊₁ = (3uₙ + vₙ)/4, vₙ₊₁ = (uₙ + 3vₙ)/4. a) u₁, u₂, v₁, v₂ ; b) (uₙ + vₙ) constante ; c) vₙ₊₁ − uₙ₊₁ = 1/2ⁿ ; d) uₙ ≤ uₙ₊₁ ≤ vₙ₊₁ ≤ vₙ ; e) convergence et limite.",go:"ana-adjacentes",sol:`<ol><li>u₁ = 3/2, v₁ = 5/2, u₂ = 7/4, v₂ = 9/4.</li><li>uₙ₊₁ + vₙ₊₁ = uₙ + vₙ = 4.</li><li>vₙ₊₁ − uₙ₊₁ = (vₙ − uₙ)/2 = (v₀ − u₀)/2ⁿ⁺¹ = 1/2ⁿ.</li><li>Récurrence (voir la leçon « Suites adjacentes »).</li><li>Adjacentes, même limite ℓ ; 2ℓ = 4 : ℓ = 2.</li></ol>`},
+ {src:"CC1 2025-2026 · Partie 2 · 8 pts",t:"Vrai/faux sur les limites et les suites",en:"f &lt; g ⇒ lim f &lt; lim g ? f(n) → L ⇒ lim f = L en +∞ ? (uₙ) décroissante, vₙ ≥ 0 : a) vₙ &lt; uₙ ⇒ (uₙ) converge ; b) (uₙ − vₙ) majorée ; c) (uₙ + vₙ) décroissante à partir d'un rang ; d) {vₙ} a un min ; e) (uₙ/vₙ) converge.",go:"ana-comparaison",sol:`<ul><li>Faux (on a seulement ≤) ; faux (sin(πx)).</li><li>a) Vrai (décroissante et minorée par 0). b) Vrai (uₙ − vₙ ≤ uₙ ≤ u₀). c) Faux (uₙ = 1/n, vₙ = n). d) Faux (vₙ = 1 + 1/n). e) Faux (uₙ = 1/n, vₙ = 1/n²).</li></ul>`}];
+
+/* ---------- quiz ---------- */
+const quiz=[
+ {q:"Négation de « ∀x, P(x) » ?",o:["∃x, non P(x)","∀x, non P(x)","∃x, P(x)"],a:0,e:"On échange ∀ et ∃ et on nie la fin.",link:"ana-quantif"},
+ {q:"Négation de « P ⇒ Q » ?",o:["P et non Q","non P ⇒ non Q","Q ⇒ P"],a:0,e:"Une implication est fausse quand P est vraie et Q fausse.",link:"ana-quantif"},
+ {q:"|x − 2| ≤ 3 ⇔ ?",o:["x ∈ [−1, 5]","x ∈ [−3, 3]","x ∈ ]−1, 5[","x ≤ 5"],a:0,e:"Centre 2, rayon 3.",link:"ana-abs"},
+ {q:"E(−0,5) = ?",o:["−1","0","−0,5"],a:0,e:"−1 ≤ −0,5 &lt; 0.",link:"ana-intervalles"},
+ {q:"[0, 1[ a-t-il un max ?",o:["Non","Oui, 1","Oui, 0"],a:0,e:"1 n'est pas dans [0, 1[.",link:"ana-bornes"},
+ {q:"sup [0, 1[ = ?",o:["1","0","n'existe pas"],a:0,e:"Le plus petit majorant.",link:"ana-bornes"},
+ {q:"Caractérisation de m = sup(A) ?",o:["m majore A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a","m ∈ A","m majore A et m ∈ A"],a:0,e:"Majorant + éléments de A au-dessus de m − ε.",link:"ana-sup"},
+ {q:"x adhérent à A ⇔ ?",o:["∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε","x ∈ A","∃ε &gt; 0, ∀a ∈ A, |x − a| &lt; ε"],a:0,e:"On trouve des points de A aussi près qu'on veut.",link:"ana-sup"},
+ {q:"uₙ → ℓ ⇔ ?",o:["∀ε &gt; 0, ∃N, ∀n ≥ N, |uₙ − ℓ| ≤ ε","∃N, ∀ε &gt; 0, ∀n ≥ N, |uₙ − ℓ| ≤ ε","∀ε &gt; 0, ∀N, ∃n ≥ N, |uₙ − ℓ| ≤ ε"],a:0,e:"N dépend de ε.",link:"ana-limite"},
+ {q:"Une suite convergente est…",o:["bornée","croissante","positive"],a:0,e:"Théorème du cours ; la réciproque est fausse.",link:"ana-limite"},
+ {q:"Quelle forme est indéterminée ?",o:["+∞ − ∞","+∞ + ∞","2 × (+∞)","1/(+∞)"],a:0,e:"Les autres valent +∞, +∞ et 0.",link:"ana-calcul"},
+ {q:"Croissante et majorée ⇒ ?",o:["converge","tend vers +∞","diverge"],a:0,e:"Théorème de la limite monotone.",link:"ana-monotone"},
+ {q:"uₙ &lt; vₙ, les deux convergent ⇒ ?",o:["lim uₙ ≤ lim vₙ","lim uₙ &lt; lim vₙ","rien"],a:0,e:"Les inégalités deviennent larges.",link:"ana-comparaison"},
+ {q:"Adjacentes : laquelle n'est pas une condition ?",o:["(uₙ) bornée par 1","(uₙ) croissante","vₙ − uₙ → 0","uₙ ≤ vₙ"],a:0,e:"Les conditions : ↗, ↘, uₙ ≤ vₙ, écart → 0.",link:"ana-adjacentes"},
+ {q:"(u₂ₙ) → 1 et (u₂ₙ₊₁) → −1. Alors (uₙ)…",o:["diverge","→ 0","→ 1"],a:0,e:"Deux sous-suites de limites différentes.",link:"ana-extraites"},
+ {q:"lim<sub>x→+∞</sub> f(x) = ℓ ⇔ ?",o:["∀ε &gt; 0, ∃α &gt; 0, ∀x, x &gt; α ⇒ |f(x) − ℓ| &lt; ε","∃α &gt; 0, ∀ε &gt; 0, x &gt; α ⇒ |f(x) − ℓ| &lt; ε","∀ε &gt; 0, ∃α, ∀x, |f(x) − ℓ| &lt; ε ⇒ x &gt; α"],a:0,e:"Comme pour les suites, avec x &gt; α.",link:"ana-lim-fonction"},
+ {q:"sin(1/x) en 0 :",o:["pas de limite","→ 0","→ 1"],a:0,e:"Deux suites donnent 0 et 1.",link:"ana-lim-calc"}];
+
+const infos=({sec})=>`<div class="title-row"><h1>Le CC1 d'analyse en bref</h1></div>
+ ${sec(1,"Quand et où",`<p>Lundi 23 novembre à 15h, amphi 5.01 (emploi du temps Prose ; il était prévu le 10/11 avant les blocages). 1 h, aucun document, aucune calculatrice.</p>`)}
+ ${sec(2,"Le poids",`<p>Note = 0,25 × CC1 + 0,25 × CC2 (mercredi 16 décembre, 15h) + 0,5 × examen de janvier. Coefficient 5.</p>`)}
+ ${sec(3,"Le programme",`<p>Pas encore annoncé. Le site couvre tout le cours vu d'ici le CC : chapitres 1 (les réels), 2 (les suites) et 3 (limites de fonctions), comme les CC1 de 2024 et 2025. TD 1 à 3.</p>`)}
+ ${sec(4,"La forme du sujet (2024 et 2025)",`<ul><li><b>Connaissance du cours (2 pts)</b> : une définition ou une caractérisation (point adhérent, borne sup), puis une petite preuve (1 = sup ]0, 1[, 1 adhérent à [0, 1[).</li><li><b>Exercice 1 (4 pts)</b> : prouver une limite avec la définition (ε et N, ou ε et α).</li><li><b>Exercice 2 (6 pts)</b> : étude d'une suite (récurrente, ou deux suites adjacentes).</li><li><b>Partie 2 (8 pts)</b> : vrai/faux sur des quantificateurs et des définitions (les mauvaises réponses peuvent enlever des points), et un tableau intervalle / inf / min / max / sup.</li></ul>`)}
+ ${sec(5,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["ana/chap1-reels.pdf","Chapitre 1"],["ana/chap2-suites.pdf","Chapitre 2"],["ana/chap3-limites.pdf","Chapitre 3"],["ana/td1-reels.pdf","TD 1"],["ana/td2-suites.pdf","TD 2"],["ana/td3-limites.pdf","TD 3"],["ana/annale-2526_CC1_correction.pdf","CC1 2025 corrigé"],["ana/annale-2425_CC1_correction.pdf","CC1 2024 corrigé"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
+const recettes=({sec})=>`<div class="title-row"><h1>Rédactions modèles</h1></div><p class="lead">Les quatre rédactions qui reviennent à chaque CC1. Apprends-les comme des recettes.</p>
+ ${sec(1,"Prouver uₙ → ℓ avec la définition",`<div class="recipe"><ol><li>Brouillon : majorer |uₙ − ℓ| par 1/n (ou 1/√n, 1/n²).</li><li>« Soit ε &gt; 0. On pose N = E(1/ε) + 1, de sorte que 1/ε &lt; N. »</li><li>« Pour tout n ≥ N : |uₙ − ℓ| ≤ … ≤ 1/n ≤ 1/N &lt; ε. »</li><li>« Ainsi ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε : uₙ → ℓ. »</li></ol></div>`)}
+ ${sec(2,"Prouver lim f(x) = ℓ en +∞",`<div class="recipe"><ol><li>Simplifier f(x) − ℓ (par exemple 1/x, ou 2/(x − 1)).</li><li>« Soit ε &gt; 0. On pose α = … » (1/ε, ou 1 + 2/ε).</li><li>« Pour tout x &gt; α : |f(x) − ℓ| = … &lt; ε. »</li><li>« Donc ∀ε &gt; 0, ∃α &gt; 0, ∀x, x &gt; α ⇒ |f(x) − ℓ| &lt; ε. »</li></ol></div>`)}
+ ${sec(3,"Étudier une suite récurrente uₙ₊₁ = f(uₙ)",`<div class="recipe"><ol><li>Bornes par récurrence : P(n), initialisation, hérédité, conclusion.</li><li>Monotonie : signe de uₙ₊₁ − uₙ, ou uₙ₊₁/uₙ face à 1 (termes &gt; 0).</li><li>« (uₙ) est décroissante et minorée, donc elle converge » (ou croissante majorée).</li><li>Passer à la limite : ℓ = f(ℓ) ; choisir la solution avec les bornes.</li></ol></div>`)}
+ ${sec(4,"Montrer que m = sup(A)",`<div class="recipe"><ol><li>« Pour tout a ∈ A, a ≤ m : m est un majorant de A. »</li><li>Exhiber une suite (aₙ) d'éléments de A qui tend vers m (par exemple m − 1/n), ou : « Soit ε &gt; 0 ; a = … ∈ A vérifie m − ε &lt; a. »</li><li>« D'après la caractérisation de la borne supérieure, m = sup(A). »</li></ol></div>`)}`;
+
+SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"rev-ana-v1",lang:"",from:"2026-11-14",
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-23",start:"15:00",end:"16:00",place:"amphi 5.01",dur:"1 h",share:0.25,unsure:"Programme pas encore annoncé : le site couvre les chapitres 1 à 3 (comme les CC1 de 2024 et 2025)."},
+        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"amphi 5.01",dur:"1 h",share:0.25,unsure:"Programme du CC2 pas encore annoncé ; ses leçons viendront après le CC1."}],
+ docs:"aucun, sans calculatrice",examMinutes:60,examMorning:"Récite les quatre rédactions modèles, relis les fiches « Borne sup avec ε » et « Limite avec ε », puis les cartes en rouge.",
+ prog:"Pas encore annoncé : chapitres 1 à 3 (les réels et la borne sup, les suites, les limites de fonctions), TD 1 à 3, comme aux CC1 de 2024 et 2025.",
+ chapters:{1:"1. Les réels : valeur absolue, intervalles, bornes",2:"2. Les suites",3:"3. Limites de fonctions"},
+ concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
+ tdIntro:"Les exercices des TD 1 à 3 les plus proches des CC (application du cours, exercices de TD, révisions), corrigés par moi d'après le cours. Les ★★★ ressemblent le plus aux CC. Dis-moi si tu veux les autres.",annIntro:"Les deux derniers CC1 en entier, d'après les corrigés officiels.",
+ pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Rédactions modèles",html:recettes}],
+ tasks:[
+ {id:"tdsuites",t:"Exercices de TD ★★★ sur les suites, sur papier",min:50,p:1,td:["2.5","2.6","2.7","2.8"],links:[["td","Exercices de TD"]]},
+ {id:"tdreels",t:"Exercices de TD sur les réels et les fonctions, sur papier",min:45,p:1,td:["1.6","1.8","3.7","3.10"],links:[["td","Exercices de TD"]]},
+ {id:"blanc",t:"Examen blanc : CC1 2025-2026 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Cours, limite avec ε, suites adjacentes, vrai/faux et tableau."},
+ {id:"blanc2",t:"Annale CC1 2024-2025 en 1 h",min:65,p:2,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+})();
+
+</script>
+<script>
 /* Leçons pas à pas de géométrie (HAX104X, CC1 du mardi 10 novembre).
    Programme : poly jusqu'à la fin du §3.2, feuille de TD 1, les 12 démos exigibles.
    Ordre choisi pour rapporter le plus de points d'abord (définitions, Thalès, symétrie centrale). */
@@ -6293,6 +6492,221 @@ LES.lin=[
 
 </script>
 <script>
+/* Leçons pas à pas d'analyse (HAX103X, Floriane Wozniak, poly de Simon Modeste). CC1 le lundi 23 novembre à 15h, 1 h,
+   aucun document. Programme retenu (rien d'annoncé pour l'instant) : tout le cours vu d'ici là, c'est-à-dire les
+   chapitres 1 (les réels), 2 (les suites) et 3 (limites de fonctions), comme aux CC1 de 2024 et 2025.
+   Forme des anciens CC1 : cours (2 pts), une limite à prouver avec ε (4 pts), une étude de suite (6 pts),
+   vrai/faux et tableau inf/min/max/sup (8 pts). */
+(function(){
+const LES=window.LESSONS=window.LESSONS||{};
+const L=(h,x,o)=>Object.assign({k:"learn",h,x},o||{});
+const Q=(q,o,a,e,x)=>Object.assign({k:"qcm",q,o,a,e},x||{});
+const S=(h,intro,s,x)=>Object.assign({k:"steps",h,intro,s},x||{});
+const P=(h,x,sol,check,min,o)=>Object.assign({k:"paper",h,x,sol,check,min},o||{});
+const K=(f,b)=>({k:"card",f,b});
+const box=s=>`<div class="formula">${s}</div>`;
+
+LES.ana=[
+/* ------------------------------------------------------------------ */
+{id:"a-quantif",t:"Lire et nier des quantificateurs",min:12,goal:"Comprendre ∀ et ∃, l'ordre des quantificateurs et la négation : la moitié du vrai/faux du CC (8 points).",steps:[
+ Q("« ∀x ∈ ℝ, x² ≥ 0 » se lit…",["Pour tout réel x, x² est positif ou nul","Il existe un réel x tel que x² ≥ 0","x² ≥ 0 pour un seul x"],0,"∀ se lit « pour tout » ; ∃ se lit « il existe »."),
+ L("∀ et ∃",`<ul><li><b>∀x ∈ E, P(x)</b> : « pour tout x de E, P(x) est vraie ». Pour la montrer : on prend un x <b>quelconque</b> (« Soit x ∈ E ») et on prouve P(x). Pour la réfuter : <b>un seul contre-exemple</b> suffit.</li><li><b>∃x ∈ E, P(x)</b> : « il existe (au moins) un x de E tel que P(x) ». Pour la montrer : <b>un seul exemple</b> suffit. Pour la réfuter : il faut montrer que P(x) est fausse pour tous les x.</li></ul><p>Exemple : « ∀x ∈ ℝ, x &gt; 2 ⇒ x &gt; 3 » est <b>fausse</b> : x = 2,5 est un contre-exemple.</p>`),
+ Q("« ∃x ∈ ℝ, x &lt; √x » est-elle vraie ?",["Oui : x = 1/4 donne 1/4 &lt; 1/2","Non : x ≥ √x pour tout x","On ne peut pas savoir"],0,"Un seul exemple suffit pour un ∃ : √(1/4) = 1/2 et 1/4 &lt; 1/2."),
+ L("L'ordre compte",`<p>Comparer, pour une suite (uₙ) :</p><ul><li><b>∃c ∈ ℝ, ∀n ∈ ℕ, uₙ ≤ c</b> : <b>un même</b> c marche pour tous les n. C'est « (uₙ) est majorée ».</li><li><b>∀n ∈ ℕ, ∃c ∈ ℝ, uₙ ≤ c</b> : pour chaque n, on peut choisir c (par exemple c = uₙ). C'est vrai pour <b>toutes</b> les suites.</li></ul><p>Règle : dans « ∀… ∃… », ce qui suit le ∃ peut <b>dépendre</b> de ce qui est avant. Dans la définition de la limite, « ∀ε &gt; 0, ∃N » : N dépend de ε.</p>`),
+ Q("Quelles suites vérifient « ∀c ∈ ℝ, ∃n ∈ ℕ, uₙ ≤ c » ?",["Les suites non minorées","Toutes les suites","Aucune suite","Les suites majorées"],0,"Quel que soit c, un terme passe sous c : aucun réel ne minore la suite (TD 2, ex. 3e)."),
+ L("Nier une phrase",`<p>Pour écrire le contraire (la <b>négation</b>), on échange ∀ et ∃, et on nie la fin :</p><ul><li>non(∀x, P(x)) = ∃x, non P(x) ;</li><li>non(∃x, P(x)) = ∀x, non P(x) ;</li><li>non(P ⇒ Q) = P <b>et</b> non Q ;</li><li>non(a &lt; b) = a ≥ b.</li></ul>${box("non( ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε )  =  ∃ε &gt; 0, ∀N ∈ ℕ, ∃n ≥ N, |uₙ − ℓ| &gt; ε")}<p>La seconde phrase dit « (uₙ) ne tend pas vers ℓ » : il y a un écart ε que la suite dépasse toujours plus loin.</p>`),
+ Q("Quelle est la négation de « ∀x ∈ ℝ, x² + x ≥ 0 ⇒ x ≥ 0 » ?",["∃x ∈ ℝ, x² + x ≥ 0 et x &lt; 0","∀x ∈ ℝ, x² + x &lt; 0 ⇒ x &lt; 0","∃x ∈ ℝ, x² + x &lt; 0 et x ≥ 0"],0,"∀ devient ∃, et non(P ⇒ Q) = P et non Q. Cette négation est vraie : x = −2 donne 4 − 2 = 2 ≥ 0 et −2 &lt; 0. La phrase de départ est donc fausse."),
+ Q("Avec ces règles, que dit « ∃A &gt; 0, ∀α &gt; 0, ∃x &gt; α, f(x) ≤ A » ?",["f ne tend pas vers +∞ en +∞","f tend vers +∞ en +∞","f est majorée"],0,"C'est la négation de « ∀A &gt; 0, ∃α &gt; 0, ∀x &gt; α, f(x) &gt; A » (TD 3, ex. 5)."),
+ K("Comment montrer, ou réfuter, un ∀ et un ∃ ?","∀ : « Soit x quelconque » puis preuve ; réfuter : un contre-exemple. ∃ : un exemple ; réfuter : montrer que ça échoue pour tous."),
+ K("Négation ?","∀ ↔ ∃, et on nie la fin. non(P ⇒ Q) = P et non Q. non(a &lt; b) = a ≥ b.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-abs",t:"Valeur absolue et distance",min:11,goal:"Manipuler |x − a| ≤ d et l'inégalité triangulaire, résoudre des (in)équations (TD 1, ex. 3 et 6).",steps:[
+ Q("Que vaut |−7| ?",["7","−7","0","49"],0,"|x| = x si x ≥ 0, et −x si x &lt; 0 : |−7| = 7."),
+ L("|x| et la distance",`<p>|x| vaut x si x ≥ 0 et −x si x &lt; 0. C'est la <b>distance entre x et 0</b>, et <b>|b − a| est la distance entre a et b</b>.</p>${box("|x − a| ≤ d  ⇔  a − d ≤ x ≤ a + d        |x − a| &lt; d  ⇔  a − d &lt; x &lt; a + d")}<p>Autrement dit, {x | |x − a| ≤ d} = [a − d, a + d] : l'intervalle de centre a et de rayon d. C'est la phrase qu'on utilise sans cesse avec ε.</p>`),
+ Q("Que vaut {x ∈ ℝ | |x + 3| ≤ 5} ?",["[−8, 2]","[−2, 8]","]−8, 2[","[2, 8]"],0,"|x + 3| = |x − (−3)| ≤ 5 : centre −3, rayon 5, donc −8 ≤ x ≤ 2 (TD 1, ex. 6b)."),
+ L("Inégalités triangulaires",`${box("||a| − |b|| ≤ |a + b| ≤ |a| + |b|        ||a| − |b|| ≤ |a − b|")}<p>Elles servent à <b>majorer</b> une valeur absolue compliquée par des morceaux simples. Exemple : |sin(n)| ≤ 1, donc |n sin(n)| ≤ n.</p><p>Attention : |a − b| ≤ |a| − |b| est <b>fausse</b> en général (a = 0, b = 1 : 1 ≤ −1 est faux).</p>`),
+ Q("Quelle inégalité est vraie pour tous réels a, b ?",["|a + b| ≤ |a| + |b|","|a − b| ≤ |a| − |b|","|a + b| = |a| + |b|","|a − b| ≥ |a| + |b|"],0,"C'est l'inégalité triangulaire. La deuxième est fausse pour a = 0, b = 1 (TD 1, ex. 3a)."),
+ S("Résoudre avec des valeurs absolues (TD 1, ex. 6)","Quatre cas typiques.",[
+  {w:"|x − 3| = 5 ⇔ x − 3 = 5 ou x − 3 = −5 ⇔ x = 8 ou x = −2.",why:"Distance 5 à 3 : deux points, de part et d'autre."},
+  {w:"|x + 3| ≤ 5 ⇔ −5 ≤ x + 3 ≤ 5 ⇔ −8 ≤ x ≤ 2 : S = [−8, 2].",why:"Distance au plus 5 de −3."},
+  {w:"|x + 2| &gt; 7 ⇔ x + 2 &gt; 7 ou x + 2 &lt; −7 ⇔ x &gt; 5 ou x &lt; −9 : S = ]−∞, −9[ ∪ ]5, +∞[.",why:"Plus loin que 7 de −2 : deux morceaux."},
+  {w:"|2x − 4| ≤ |x + 2| ⇔ (2x − 4)² ≤ (x + 2)² ⇔ 3x² − 20x + 12 ≤ 0 ⇔ x ∈ [2/3, 6].",why:"Deux nombres positifs sont rangés comme leurs carrés ; racines du trinôme : 2/3 et 6."}]),
+ Q("Que vaut {x | |x − 1| &lt; 2} ?",["]−1, 3[","[−1, 3]","]1, 3[","]−3, 1["],0,"Centre 1, rayon 2, inégalité stricte : intervalle ouvert ]−1, 3[ (CC1 2024-2025, tableau)."),
+ K("|x − a| ≤ d ⇔ ?","a − d ≤ x ≤ a + d : x est à distance au plus d de a. Avec &lt; : intervalle ouvert."),
+ K("Inégalités triangulaires ?","||a| − |b|| ≤ |a + b| ≤ |a| + |b|, et ||a| − |b|| ≤ |a − b|. Mais |a − b| ≤ |a| − |b| est fausse.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-intervalles",t:"Intervalles et partie entière",min:9,goal:"Reconnaître un intervalle (1ʳᵉ colonne du tableau du CC) et utiliser la partie entière.",steps:[
+ Q("[0, 3] ∪ ]2, 4[ est-il un intervalle ?",["Oui, c'est [0, 4[","Non, c'est une réunion","Oui, c'est [0, 4]"],0,"Les deux morceaux se chevauchent : la réunion est [0, 4[ (CC1 2024-2025)."),
+ L("Ce qu'est un intervalle",`<p>Un intervalle est un « morceau d'un seul tenant » de ℝ : [a, b], [a, b[, ]a, b], ]a, b[, [a, +∞[, ]a, +∞[, ]−∞, b], ]−∞, b[, ℝ ou ∅.</p><p><b>Critère</b> (convexité) : A est un intervalle si et seulement si <b>∀α, β ∈ A, [α, β] ⊂ A</b> : entre deux points de A, tout est dans A.</p><p>Donc, pour montrer que A <b>n'est pas</b> un intervalle : deux points de A et un point entre eux qui n'est pas dans A. ℝ ∖ {1, 2} : 0 et 3 y sont, mais pas 1.</p>`),
+ Q("ℚ est-il un intervalle ?",["Non : 1 et 2 sont dans ℚ, mais pas √2, qui est entre eux","Oui, ℚ contient tous les nombres","Oui, c'est ]−∞, +∞["],0,"Le critère échoue : [1, 2] ⊄ ℚ (TD 1, ex. 7a)."),
+ Q("{x ∈ ℝ | x² − 1 &gt; 0} est-il un intervalle ?",["Non : c'est ]−∞, −1[ ∪ ]1, +∞[","Oui : ]1, +∞[","Oui : ]−1, 1["],0,"−2 et 2 sont dedans, mais pas 0 qui est entre eux (TD 1, ex. 7g)."),
+ L("Partie entière",`<p>Pour tout réel x, il existe un <b>unique entier</b> n tel que <b>n ≤ x &lt; n + 1</b>. On le note E(x) : c'est l'entier juste en dessous (ou égal).</p><p>E(2,7) = 2 ; E(−2,7) = −3 (attention !) ; E(5) = 5. On a toujours <b>x − 1 &lt; E(x) ≤ x</b>.</p><p>Elle sert à <b>choisir un rang</b> dans les preuves avec ε : N = E(1/ε) + 1 est un entier qui vérifie N &gt; 1/ε.</p>`),
+ Q("Que vaut E(−2,7) ?",["−3","−2","2","−2,7"],0,"−3 ≤ −2,7 &lt; −2 : E(−2,7) = −3."),
+ Q("Pourquoi N = E(1/ε) + 1 vérifie-t-il N &gt; 1/ε ?",["Parce que 1/ε &lt; E(1/ε) + 1, par définition de la partie entière","Parce que E(1/ε) = 1/ε","Parce que ε &gt; 1"],0,"x &lt; E(x) + 1 pour tout x : avec x = 1/ε, on obtient 1/ε &lt; N."),
+ K("A est un intervalle ⇔ ?","∀α, β ∈ A, [α, β] ⊂ A. Pour dire non : deux points de A et un point entre eux hors de A."),
+ K("Partie entière E(x) ?","L'unique entier n tel que n ≤ x &lt; n + 1 ; x − 1 &lt; E(x) ≤ x. N = E(1/ε) + 1 est un entier &gt; 1/ε.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-bornes",t:"Majorant, maximum, borne supérieure",min:13,goal:"Remplir sans erreur le tableau inf / min / max / sup du CC (4 points en 2024 et en 2025).",steps:[
+ Q("[0, 1[ a-t-il un plus grand élément ?",["Non : 1 n'est pas dans [0, 1[, et tout x &lt; 1 est dépassé","Oui, 1","Oui, 0,999…"],0,"Pour tout x de [0, 1[, (x + 1)/2 est encore dans [0, 1[ et plus grand que x."),
+ L("Majorant et plus grand élément",`<ul><li>m est un <b>majorant</b> de A si ∀a ∈ A, a ≤ m. A est <b>majorée</b> si elle a un majorant. Un majorant n'est <b>pas forcément dans A</b>.</li><li>A a un <b>plus grand élément</b> (max) x si x ∈ A et ∀a ∈ A, a ≤ x : c'est un majorant <b>qui est dans A</b>.</li></ul><p>Pareil en bas : minorant, minorée, plus petit élément (min). Bornée = majorée et minorée.</p><p>Exemple : 5, 1 et 1,2 sont des majorants de [0, 1[ ; il n'a pas de max.</p>`),
+ Q("A = [−1, 0[. Lequel est vrai ?",["−1 = min(A) et A n'a pas de max","0 = max(A)","A n'a pas de min","A n'est pas majorée"],0,"−1 ∈ A et minore A : c'est le min. 0 majore A mais n'est pas dans A (TD 1, ex. 8)."),
+ L("La borne supérieure",`<p>Si A est <b>non vide et majorée</b>, l'ensemble de ses majorants a un plus petit élément : c'est la <b>borne supérieure</b>, sup(A), le <b>plus petit des majorants</b>. Dans ℝ, elle existe toujours dans ce cas.</p><ul><li>Si A a un max, alors sup(A) = max(A).</li><li>Si A n'est pas majorée, elle n'a pas de sup (dans ℝ).</li></ul><p>De même, inf(A) est le plus grand des minorants.</p>${box("[0, 1[ : sup = 1 (pas de max), inf = min = 0.    {1/n | n ∈ ℕ*} : sup = max = 1, inf = 0 (pas de min).")}`),
+ Q("Que dire de N = ℕ ?",["inf = min = 0 ; pas de sup ni de max","sup = +∞","inf = 1","Pas de borne inférieure"],0,"ℕ est minorée par 0, qui est dedans. Elle n'est pas majorée : pas de sup (TD 1, ex. 8)."),
+ S("Le tableau du CC1 2024-2025","Pour chaque ensemble : intervalle ? inf, min, max, sup (« non » s'ils n'existent pas).",[
+  {w:"[0, 3] ∪ ]2, 4[ = [0, 4[ : intervalle ; inf = min = 0 ; pas de max ; sup = 4.",why:"4 majore tout et on s'en approche, mais 4 n'est pas dedans."},
+  {w:"ℝ ∖ {1, 2} : pas un intervalle ; ni inf, ni min, ni max, ni sup.",why:"Ni majoré ni minoré."},
+  {w:"ℚ ∩ ]√2, 2[ : pas un intervalle ; inf = √2, pas de min ; pas de max, sup = 2.",why:"√2 et 2 sont les bornes, aucune n'est atteinte (√2 n'est pas rationnel, et 2 est exclu)."},
+  {w:"{x | |x − 1| &lt; 2} = ]−1, 3[ : intervalle ; inf = −1 et sup = 3, pas de min ni de max.",why:"Intervalle ouvert : bornes non atteintes."}]),
+ Q("F = {1/n − 1/p | n, p ∈ ℕ*}. Quelle est sa borne supérieure ?",["1, sans max","1 = max(F)","0","1/2"],0,"1/n − 1/p &lt; 1 toujours, et 1 − 1/p s'approche de 1 quand p grandit ; 1 n'est jamais atteint (TD 1, ex. 8)."),
+ K("Majorant, max, sup : les différences ?","Majorant : ≥ tous les éléments, pas forcément dans A. Max : un majorant dans A. Sup : le plus petit des majorants (existe si A non vide majorée) ; si le max existe, sup = max."),
+ K("[0, 1[ : inf, min, max, sup ?","inf = min = 0 ; pas de max ; sup = 1.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-carac-sup",t:"Borne sup avec ε, point adhérent",min:13,goal:"Réciter la caractérisation de la borne sup et prouver « 1 = sup ]0, 1[ » : la question de cours du CC (2 points).",steps:[
+ Q("Pour montrer que 1 est le plus petit majorant de ]0, 1[, que faut-il montrer en plus de « 1 est un majorant » ?",["Qu'aucun nombre plus petit que 1 n'est un majorant","Que 1 est dans ]0, 1[","Que 0 est un minorant"],0,"Le plus petit des majorants : tout nombre en dessous doit être dépassé par un élément de l'ensemble."),
+ L("Caractérisation avec ε",`<p>Soit A non vide et majorée, et m ∈ ℝ. Il y a équivalence entre :</p>${box("m = sup(A)   ⇔   m est un majorant de A  et  ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a")}<p>« Si on descend un tout petit peu sous m (de ε), on trouve encore un élément de A » : aucun nombre plus petit que m ne majore A.</p><p>Au CC 2025, la question « Donner une caractérisation de la borne supérieure » attendait <b>exactement</b> cette phrase (et pas la définition « plus petit des majorants »).</p>`),
+ Q("Quelle phrase est la caractérisation de m = sup(A) ?",["m majore A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a","m majore A et m ∈ A","∀ε &gt; 0, ∃a ∈ A, m + ε &lt; a","m est le plus grand élément de A"],0,"Majorant + « on trouve un élément de A au-dessus de m − ε »."),
+ L("Point adhérent",`<p>x est <b>adhérent</b> à A si on peut trouver des points de A aussi près de x qu'on veut :</p>${box("∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε")}<p><b>Théorème</b> : x est adhérent à A ⇔ il existe une suite (aₙ) d'éléments de A qui converge vers x.</p><p>Et une autre caractérisation : <b>m = sup(A) ⇔ m majore A et il existe une suite d'éléments de A qui converge vers m</b>.</p><p>Exemples : 1 est adhérent à [0, 1[ ; 0 est adhérent à ℝ* ; tout réel est adhérent à ℚ.</p>`),
+ Q("Pourquoi 1 est-il adhérent à [0, 1[ ?",["La suite uₙ = 1 − 1/n (n ≥ 1) est dans [0, 1[ et tend vers 1","Parce que 1 ∈ [0, 1[","Parce que 1 majore [0, 1["],0,"C'est la réponse officielle du CC1 2024-2025 : une suite d'éléments de A qui converge vers 1."),
+ S("Question de cours du CC1 2025-2026 : 1 = sup ]0, 1[","Rédaction attendue (2 points avec la caractérisation).",[
+  {w:"Pour tout x ∈ ]0, 1[, x &lt; 1 : donc 1 est un majorant de ]0, 1[.",why:"Première moitié de la caractérisation."},
+  {w:"Pour n ≥ 2, uₙ = 1 − 1/n est dans ]0, 1[ (car 0 &lt; 1/n &lt; 1), et uₙ → 1.",why:"On prend n ≥ 2 : pour n = 1, u₁ = 0 n'est pas dans ]0, 1[."},
+  {w:"1 majore ]0, 1[ et est limite d'une suite d'éléments de ]0, 1[ : donc 1 = sup ]0, 1[.",why:"On cite la caractérisation par les suites."},
+  {w:"Variante avec ε : soit ε ∈ ]0, 1[ ; a = 1 − ε/2 est dans ]0, 1[ et 1 − ε &lt; a. (Si ε ≥ 1, a = 1/2 convient.)",why:"La caractérisation avec ε marche aussi : on exhibe a."}]),
+ Q("Avec la caractérisation, pour montrer m = sup(A), que fait-on après « m est un majorant » ?",["« Soit ε &gt; 0 », puis on trouve un a ∈ A avec m − ε &lt; a","On montre que m ∈ A","On calcule le max"],0,"Un ∀ε : on fixe ε quelconque, puis on exhibe un élément de A (ou on utilise une suite qui converge vers m)."),
+ K("Caractérisation de m = sup(A) ?","m est un majorant de A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a. Ou : m majore A et une suite d'éléments de A converge vers m."),
+ K("x adhérent à A ?","∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε ; équivaut à : une suite d'éléments de A converge vers x. 1 est adhérent à [0, 1[ (uₙ = 1 − 1/n).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-suites",t:"Suites : le vocabulaire",min:9,goal:"Écrire avec des quantificateurs « croissante », « majorée », « à partir d'un certain rang » (TD 2, ex. 1 à 3).",steps:[
+ Q("Comment montre-t-on qu'une suite (uₙ) est croissante ?",["On montre uₙ₊₁ − uₙ ≥ 0 pour tout n","On calcule u₀ et u₁","On montre qu'elle tend vers +∞"],0,"(uₙ) est croissante si et seulement si ∀n ∈ ℕ, uₙ₊₁ ≥ uₙ."),
+ L("Les définitions",`<ul><li><b>Croissante</b> : ∀n ∈ ℕ, uₙ₊₁ ≥ uₙ. <b>Décroissante</b> : uₙ₊₁ ≤ uₙ. Monotone : l'un ou l'autre.</li><li><b>Majorée</b> : ∃M ∈ ℝ, ∀n ∈ ℕ, uₙ ≤ M. <b>Minorée</b> : ∃m, ∀n, uₙ ≥ m. <b>Bornée</b> : ∃C, ∀n, |uₙ| ≤ C.</li><li><b>À partir d'un certain rang</b> : on ajoute « ∃N₀ ∈ ℕ, ∀n ≥ N₀ » devant. Exemple : décroissante à partir d'un certain rang : ∃N₀ ∈ ℕ, ∀n ≥ N₀, uₙ₊₁ ≤ uₙ.</li></ul><p>Ne pas confondre la suite (uₙ) et l'ensemble de ses valeurs {uₙ | n ∈ ℕ}.</p>`),
+ Q("« (uₙ) est minorée » s'écrit…",["∃m ∈ ℝ, ∀n ∈ ℕ, uₙ ≥ m","∀n ∈ ℕ, ∃m ∈ ℝ, uₙ ≥ m","∀m ∈ ℝ, ∃n, uₙ ≥ m"],0,"Un même m pour tous les n : le ∃m vient avant le ∀n (TD 2, ex. 1c)."),
+ L("Méthodes pour la monotonie",`<ul><li><b>Différence</b> : étudier le signe de uₙ₊₁ − uₙ.</li><li><b>Quotient</b> (si tous les termes sont &gt; 0) : comparer uₙ₊₁/uₙ à 1.</li><li><b>Récurrence</b> : pour une suite définie par uₙ₊₁ = f(uₙ).</li></ul><p>Exemple : uₙ₊₁ = uₙ/2 + uₙ²/4 avec 0 &lt; uₙ ≤ 1 : uₙ₊₁ − uₙ = (uₙ/4)(uₙ − 2) &lt; 0, donc (uₙ) est décroissante (TD 2, ex. 7).</p>`),
+ Q("Si tous les uₙ sont &gt; 0 et uₙ₊₁/uₙ &lt; 1 pour tout n, la suite est…",["strictement décroissante","croissante","constante"],0,"uₙ₊₁ &lt; uₙ en multipliant par uₙ &gt; 0."),
+ Q("Laquelle est une suite bornée qui ne converge pas ?",["uₙ = (−1)ⁿ","uₙ = 1/n","uₙ = n","uₙ = 2"],0,"(−1)ⁿ vaut 1, −1, 1, … : bornée par 1, mais elle oscille (TD 2, ex. 2b)."),
+ K("Majorée, minorée, bornée ?","Majorée : ∃M, ∀n, uₙ ≤ M. Minorée : ∃m, ∀n, uₙ ≥ m. Bornée : ∃C, ∀n, |uₙ| ≤ C."),
+ K("« À partir d'un certain rang » ?","On écrit ∃N₀ ∈ ℕ, ∀n ≥ N₀, … devant la propriété.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-limite",t:"La limite d'une suite avec ε",min:15,goal:"Écrire la définition et prouver une limite avec ε, comme l'exercice 1 du CC1 2024-2025 (4 points).",steps:[
+ Q("« uₙ tend vers 0 », c'est…",["À partir d'un certain rang, uₙ est aussi près de 0 qu'on veut","uₙ = 0 pour un n","uₙ diminue toujours"],0,"C'est l'idée : pour toute précision ε, la suite finit par rester à moins de ε de 0."),
+ L("La définition",`${box("(uₙ) converge vers ℓ  ⇔  ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε")}<p>À lire : <b>quelle que soit la précision ε</b>, il existe un <b>rang N</b> à partir duquel <b>tous</b> les termes sont à distance au plus ε de ℓ. N dépend de ε : plus ε est petit, plus N est grand.</p><p>La limite est <b>unique</b>. Une suite qui converge est <b>bornée</b> (la réciproque est fausse : (−1)ⁿ).</p>`),
+ Q("Dans cette définition, de quoi dépend N ?",["De ε","De n","De rien, c'est toujours le même N"],0,"« ∀ε, ∃N » : on choisit N après ε, donc N peut dépendre de ε."),
+ L("Le modèle de rédaction",`<p>Pour prouver uₙ → ℓ :</p><ol><li><b>Majorer</b> |uₙ − ℓ| par quelque chose de simple qui tend vers 0, souvent 1/n.</li><li><b>« Soit ε &gt; 0. »</b> Choisir N = E(1/ε) + 1, de sorte que <b>1/ε &lt; N</b>.</li><li>Pour n ≥ N : |uₙ − ℓ| ≤ 1/n ≤ 1/N &lt; ε.</li><li>Conclure : ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε, donc uₙ → ℓ.</li></ol><p>Avec 1/n² à la place de 1/n : N = E(1/√ε) + 1 convient (TD 2, ex. 6a).</p>`),
+ S("CC1 2024-2025, exercice 1 (4 points)","Montrer avec la définition que n sin(n)/(n² + 2) → 0.",[
+  {w:"Majoration : pour n ≥ 1, |n sin(n)/(n² + 2)| ≤ n/(n² + 2) ≤ n/n² = 1/n.",why:"|sin(n)| ≤ 1, puis on agrandit la fraction en diminuant le dénominateur."},
+  {w:"Soit ε &gt; 0. On pose N = E(1/ε) + 1 : alors 1/ε &lt; N.",why:"Le rang est choisi après ε."},
+  {w:"Pour tout n ≥ N : |n sin(n)/(n² + 2) − 0| ≤ 1/n ≤ 1/N &lt; ε.",why:"1/n ≤ 1/N car n ≥ N, et 1/N &lt; ε car N &gt; 1/ε."},
+  {w:"Donc ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |n sin(n)/(n² + 2)| ≤ ε : la suite tend vers 0.",why:"On réécrit la définition, avec la limite."}]),
+ Q("Pour prouver 1/n² → 0, quel rang N convient pour un ε &gt; 0 donné ?",["N = E(1/√ε) + 1","N = E(ε) + 1","N = 1","N = E(1/ε²)"],0,"Pour n ≥ N : n² ≥ N² &gt; 1/ε, donc 1/n² &lt; ε."),
+ L("Tendre vers +∞",`${box("uₙ → +∞  ⇔  ∀A ∈ ℝ, ∃N ∈ ℕ, ∀n ≥ N, uₙ ≥ A")}<p>« Quel que soit le seuil A, la suite finit par rester au-dessus. » Une suite qui tend vers +∞ diverge (elle n'a pas de limite finie).</p><p>Exemple (TD 2, ex. 6b) : n³ → +∞. Soit A ∈ ℝ ; N = max(1, E(A) + 1). Pour n ≥ N : n³ ≥ n ≥ N &gt; A.</p><p>À connaître : qⁿ → +∞ si q &gt; 1, qⁿ → 0 si |q| &lt; 1 ; nᵖ → +∞ si p &gt; 0, nᵖ → 0 si p &lt; 0.</p>`),
+ Q("Quelle est la définition de « uₙ → −∞ » ?",["∀B ∈ ℝ, ∃N ∈ ℕ, ∀n ≥ N, uₙ ≤ B","∃B ∈ ℝ, ∀n, uₙ ≤ B","∀B ∈ ℝ, ∀n, uₙ ≤ B"],0,"Comme +∞, avec un seuil B sous lequel la suite finit par rester."),
+ P("TD 2, exercice 6, sur papier","Montrer avec les définitions : (a) 1/n² → 0 ; (b) n³ → +∞ ; (c) −8n → −∞.",`<ol><li>Soit ε &gt; 0, N = E(1/√ε) + 1 &gt; 1/√ε. Pour n ≥ N : n² ≥ N² &gt; 1/ε, donc |1/n² − 0| = 1/n² &lt; ε.</li><li>Soit A ∈ ℝ, N = max(1, E(A) + 1). Pour n ≥ N : n³ ≥ n ≥ N &gt; A.</li><li>Soit B ∈ ℝ, N = max(0, E(−B/8) + 1) &gt; −B/8. Pour n ≥ N : −8n ≤ −8N &lt; B.</li></ol>`,["« Soit ε &gt; 0 » (ou A, B) écrit d'abord","Le rang N donné explicitement","La chaîne d'inégalités pour n ≥ N","La phrase de conclusion avec les quantificateurs"],12),
+ K("Définition de uₙ → ℓ ?","∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε. N dépend de ε."),
+ K("Le modèle de preuve d'une limite ?","Majorer |uₙ − ℓ| par 1/n ; « Soit ε &gt; 0 », N = E(1/ε) + 1 ; pour n ≥ N, |uₙ − ℓ| ≤ 1/n ≤ 1/N &lt; ε ; conclure.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-calcul",t:"Calculer une limite de suite",min:12,goal:"Trouver une limite avec les opérations et lever les formes indéterminées (TD 2, ex. 5).",steps:[
+ Q("Limite de (2n² − 6n + 1)/(−n³ + 2n − 2) ?",["0","−2","+∞","2"],0,"Degré 2 en haut, 3 en bas : en factorisant par n³, on obtient (2/n − 6/n² + 1/n³)/(−1 + 2/n² − 2/n³) → 0/(−1) = 0."),
+ L("Opérations sur les limites",`<p>Si uₙ → ℓ et vₙ → ℓ′ (finies) : uₙ + vₙ → ℓ + ℓ′, λuₙ → λℓ, uₙvₙ → ℓℓ′, |uₙ| → |ℓ|, et 1/uₙ → 1/ℓ si ℓ ≠ 0.</p><p>Avec des infinis : ℓ + ∞ = +∞, +∞ + ∞ = +∞, ℓ × ∞ = ±∞ si ℓ ≠ 0 (règle des signes), 1/(0⁺) = +∞.</p><p><b>Formes indéterminées</b> (on ne peut rien dire sans transformer) : <b>+∞ − ∞</b>, <b>0 × ∞</b>, <b>∞/∞</b>, <b>0/0</b>.</p>`),
+ Q("uₙ → +∞ et vₙ → −∞. Que dire de uₙ + vₙ ?",["Forme indéterminée : on ne peut pas conclure sans transformer","+∞","0","−∞"],0,"+∞ − ∞ est indéterminé : n + (−n) → 0, mais 2n + (−n) → +∞."),
+ L("Les trois outils",`<ul><li><b>Factoriser par le terme dominant</b> : 3n − 7 + 2ⁿ = 2ⁿ(1 + (3n − 7)/2ⁿ) → +∞ ; √(3n² − n) = n√(3 − 1/n) → +∞.</li><li><b>Diviser par la plus grande puissance</b> : (aⁿ − bⁿ)/(aⁿ + bⁿ) avec 0 ≤ a &lt; b : on divise par bⁿ, ((a/b)ⁿ − 1)/((a/b)ⁿ + 1) → −1, car (a/b)ⁿ → 0.</li><li><b>Quantité conjuguée</b> pour une différence de racines : √(n + 1) − √n = 1/(√(n + 1) + √n) → 0.</li></ul>`),
+ Q("Limite de n((1/3)ⁿ − 2) ?",["−∞","0","−2","+∞"],0,"(1/3)ⁿ → 0, donc (1/3)ⁿ − 2 → −2, et n × (−2) → −∞ : ce n'est pas une forme indéterminée."),
+ Q("Que fait la suite (−2)ⁿ ?",["Elle n'a pas de limite : les termes pairs → +∞, les impairs → −∞","Elle tend vers +∞","Elle tend vers 0"],0,"(−2)²ᵏ = 4ᵏ → +∞ et (−2)²ᵏ⁺¹ = −2 · 4ᵏ → −∞ (TD 2, ex. 5c)."),
+ P("TD 2, exercice 5, sur papier","Limites de : (a) 3n − 7 + 2ⁿ ; (d) √(3n² − n) ; (e) 5 + 2/n + 1/2ⁿ ; (g) (n + 1)/√(n³ − 2n + 1) ; (h) (aⁿ − bⁿ)/(aⁿ + bⁿ) avec 0 ≤ a &lt; b.",`<ol><li>+∞ (2ⁿ domine).</li><li>n√(3 − 1/n) → +∞.</li><li>5.</li><li>(n + 1)/√(n³ − 2n + 1) = (1 + 1/n)/(√n · √(1 − 2/n² + 1/n³)) → 0.</li><li>On divise par bⁿ : → (0 − 1)/(0 + 1) = −1.</li></ol>`,["Le terme dominant repéré","La factorisation écrite","Les limites des morceaux annoncées","La conclusion « donc uₙ → … »"],12),
+ K("Les formes indéterminées ?","+∞ − ∞, 0 × ∞, ∞/∞, 0/0. On transforme : factoriser par le terme dominant, diviser par la plus grande puissance, quantité conjuguée."),
+ K("qⁿ quand n → +∞ ?","→ +∞ si q &gt; 1 ; → 0 si |q| &lt; 1 ; = 1 si q = 1 ; pas de limite si q ≤ −1.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-comparaison",t:"Comparaison et gendarmes",min:11,goal:"Utiliser les inégalités pour trouver une limite, et éviter les pièges du vrai/faux (TD 2, ex. 9).",steps:[
+ Q("Si uₙ &lt; vₙ pour tout n et que les deux convergent, a-t-on lim uₙ &lt; lim vₙ ?",["Non, seulement lim uₙ ≤ lim vₙ","Oui, toujours","On ne peut rien dire"],0,"uₙ = 0 &lt; vₙ = 1/n, et pourtant les deux limites valent 0 : les inégalités strictes deviennent larges."),
+ L("Passage à la limite et signe",`<ul><li><b>Passage à la limite</b> : si uₙ ≤ vₙ à partir d'un rang et que les deux convergent, alors lim uₙ ≤ lim vₙ. Avec « &lt; », on obtient seulement ≤.</li><li><b>Signe</b> : si uₙ → ℓ &gt; 0, alors uₙ &gt; 0 à partir d'un certain rang. Si uₙ ≥ 0 à partir d'un rang, alors ℓ ≥ 0.</li></ul><p>Exemple (TD 2, ex. 9) : si uₙ → ℓ, vₙ → ℓ′ et ℓ &lt; ℓ′, alors uₙ &lt; vₙ à partir d'un certain rang (prendre ε = (ℓ′ − ℓ)/3).</p>`),
+ Q("uₙ &gt; 0 pour tout n et uₙ → ℓ. Que peut-on dire de ℓ ?",["ℓ ≥ 0","ℓ &gt; 0","ℓ = 0","rien"],0,"La positivité passe à la limite en devenant large : uₙ = 1/n &gt; 0 tend vers 0."),
+ L("Le théorème des gendarmes",`${box("uₙ ≤ vₙ ≤ wₙ (à partir d'un rang), uₙ → ℓ et wₙ → ℓ  ⇒  vₙ converge et vₙ → ℓ")}<p>Version infinie : si uₙ ≤ vₙ et uₙ → +∞, alors vₙ → +∞ (et si vₙ → −∞, alors uₙ → −∞).</p><p>Très utile avec sin et cos, qui sont entre −1 et 1 : −1/n ≤ sin(n)/n ≤ 1/n, donc sin(n)/n → 0. Plus généralement, <b>|vₙ − ℓ| ≤ aₙ avec aₙ → 0</b> suffit.</p>`),
+ Q("Limite de cos(n)/√n ?",["0, par les gendarmes : |cos(n)/√n| ≤ 1/√n","1","Pas de limite, car cos oscille"],0,"cos oscille, mais on le divise par √n → +∞ : la suite est coincée entre −1/√n et 1/√n."),
+ Q("(uₙ) est décroissante et vₙ ≥ 0 pour tout n. Si vₙ &lt; uₙ pour tout n, (uₙ) converge-t-elle ?",["Oui : décroissante et minorée par 0","Non","Seulement si (vₙ) converge"],0,"uₙ &gt; vₙ ≥ 0 : (uₙ) est minorée par 0 et décroissante, donc elle converge (CC1 2025-2026, Q2a, réponse « vrai »)."),
+ K("Le théorème des gendarmes ?","uₙ ≤ vₙ ≤ wₙ à partir d'un rang, uₙ et wₙ → ℓ : alors vₙ → ℓ. Version infinie : uₙ ≤ vₙ et uₙ → +∞ donnent vₙ → +∞."),
+ K("Inégalité stricte et limites ?","uₙ &lt; vₙ donne seulement lim uₙ ≤ lim vₙ (les inégalités deviennent larges à la limite).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-monotone",t:"Suites monotones et suites récurrentes",min:16,goal:"Rédiger l'étude complète d'une suite récurrente, comme l'exercice 2 du CC1 2024-2025 (6 points).",steps:[
+ Q("Une suite croissante et majorée…",["converge","tend vers +∞","peut diverger"],0,"C'est le théorème de la limite monotone : elle converge (vers la borne sup de ses valeurs)."),
+ L("Théorème de la limite monotone",`<ul><li>(uₙ) croissante et <b>majorée</b> ⇒ elle <b>converge</b>. Croissante non majorée ⇒ elle tend vers +∞.</li><li>(uₙ) décroissante et <b>minorée</b> ⇒ elle <b>converge</b>. Décroissante non minorée ⇒ elle tend vers −∞.</li></ul><p>Ce théorème donne l'<b>existence</b> de la limite, pas sa valeur. Pour la valeur d'une suite uₙ₊₁ = f(uₙ), on <b>passe à la limite</b> dans la relation : ℓ = f(ℓ) (quand f est « gentille » en ℓ), puis on choisit la bonne solution grâce aux bornes.</p>`),
+ Q("(uₙ) est décroissante et uₙ ≥ √2 pour tout n. Que peut-on dire ?",["Elle converge, et sa limite ℓ vérifie ℓ ≥ √2","Elle tend vers −∞","Elle converge vers √2 forcément"],0,"Décroissante et minorée : elle converge. La minoration passe à la limite (≥). Sa valeur se trouve ensuite avec la relation de récurrence."),
+ L("La méthode en 4 étapes",`<ol><li><b>Bornes par récurrence</b> : P(n) : « … ≤ uₙ ≤ … ». Initialisation P(0), hérédité P(n) ⇒ P(n + 1), conclusion.</li><li><b>Monotonie</b> : signe de uₙ₊₁ − uₙ, ou uₙ₊₁/uₙ comparé à 1 (termes &gt; 0), en utilisant les bornes.</li><li><b>Convergence</b> : monotone et bornée du bon côté.</li><li><b>Valeur</b> : ℓ = f(ℓ), on résout, et on élimine les solutions incompatibles avec les bornes.</li></ol>`),
+ S("CC1 2024-2025, exercice 2.2 (u₀ = 2, uₙ₊₁ = uₙ/2 + 1/uₙ)","Montrer que uₙ &gt; √2, que (uₙ) est strictement décroissante, puis trouver sa limite.",[
+  {w:"P(n) : uₙ &gt; √2. P(0) : u₀ = 2 &gt; √2.",why:"Initialisation."},
+  {w:"Hérédité : si uₙ &gt; √2, alors uₙ₊₁ = (uₙ² + 2)/(2uₙ). Or (uₙ − √2)² &gt; 0 donne uₙ² + 2 &gt; 2√2 uₙ ; en divisant par 2uₙ &gt; 0 : uₙ₊₁ &gt; √2.",why:"L'astuce : un carré non nul est strictement positif."},
+  {w:"Monotonie : uₙ₊₁/uₙ = 1/2 + 1/uₙ² &lt; 1/2 + 1/2 = 1 (car uₙ² &gt; 2), et uₙ &gt; 0 : uₙ₊₁ &lt; uₙ.",why:"Termes positifs : on compare le quotient à 1."},
+  {w:"(uₙ) est strictement décroissante et minorée par √2 : elle converge vers ℓ ≥ √2.",why:"Théorème de la limite monotone."},
+  {w:"Passage à la limite : ℓ = ℓ/2 + 1/ℓ, donc ℓ/2 = 1/ℓ, ℓ² = 2 ; comme ℓ ≥ √2 &gt; 0 : ℓ = √2.",why:"On élimine −√2 grâce à la minoration."}]),
+ Q("Dans le passage à la limite, pourquoi garde-t-on ℓ = √2 et pas −√2 ?",["Parce que ℓ ≥ √2, la minoration passant à la limite","Parce que −√2 n'est pas un réel","Au hasard"],0,"uₙ &gt; √2 pour tout n donne ℓ ≥ √2."),
+ P("TD 2, exercice 7, sur papier","u₀ ∈ ]0, 1] et uₙ₊₁ = uₙ/2 + uₙ²/4. (a) Montrer 0 &lt; uₙ ≤ 1. (b) Montrer que (uₙ) est monotone. (c) En déduire qu'elle converge, et trouver sa limite.",`<ol><li>Récurrence : si 0 &lt; uₙ ≤ 1, alors uₙ₊₁ &gt; 0 et uₙ₊₁ ≤ 1/2 + 1/4 = 3/4 ≤ 1.</li><li>uₙ₊₁ − uₙ = uₙ²/4 − uₙ/2 = (uₙ/4)(uₙ − 2) &lt; 0 car 0 &lt; uₙ ≤ 1 : décroissante.</li><li>Décroissante et minorée par 0 : elle converge vers ℓ ∈ [0, 1]. ℓ = ℓ/2 + ℓ²/4 donne ℓ(ℓ − 2) = 0, donc ℓ = 0 (2 est exclu car ℓ ≤ 1).</li></ol>`,["Récurrence complète (initialisation, hérédité, conclusion)","Le signe de uₙ₊₁ − uₙ factorisé","Le théorème de la limite monotone cité","La solution ℓ = 2 éliminée avec une justification"],15),
+ K("Théorème de la limite monotone ?","Croissante majorée ⇒ converge ; décroissante minorée ⇒ converge. Sinon, elle tend vers ±∞."),
+ K("Étudier uₙ₊₁ = f(uₙ) ?","1. Bornes par récurrence. 2. Monotonie (différence ou quotient). 3. Convergence (monotone bornée). 4. ℓ = f(ℓ), et les bornes choisissent la solution.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-adjacentes",t:"Suites adjacentes",min:12,goal:"Reconnaître deux suites adjacentes et trouver leur limite commune, comme l'exercice 2 du CC1 2025-2026 (6 points).",steps:[
+ Q("Deux suites qui se rapprochent l'une de l'autre, l'une montant et l'autre descendant…",["ont la même limite","divergent","ont des limites différentes"],0,"Elles se rejoignent : c'est le théorème des suites adjacentes."),
+ L("Le théorème",`<p>Si :</p><ul><li>(uₙ) est <b>croissante</b>,</li><li>(vₙ) est <b>décroissante</b>,</li><li>∀n, <b>uₙ ≤ vₙ</b>,</li><li><b>vₙ − uₙ → 0</b>,</li></ul><p>alors (uₙ) et (vₙ) <b>convergent vers la même limite</b> ℓ (on dit qu'elles sont adjacentes), et uₙ ≤ ℓ ≤ vₙ pour tout n.</p><p>Pour trouver ℓ, on cherche une quantité qui ne bouge pas (uₙ + vₙ constante, par exemple).</p>`),
+ Q("Que faut-il vérifier pour dire que (uₙ) et (vₙ) sont adjacentes ?",["L'une croissante, l'autre décroissante, uₙ ≤ vₙ et vₙ − uₙ → 0","Seulement uₙ ≤ vₙ","Qu'elles sont bornées"],0,"Les quatre conditions du théorème."),
+ S("CC1 2025-2026, exercice 2",`u₀ = 1, v₀ = 3, uₙ₊₁ = (3uₙ + vₙ)/4 et vₙ₊₁ = (uₙ + 3vₙ)/4.`,[
+  {w:"u₁ = 3/2, v₁ = 5/2, u₂ = 7/4, v₂ = 9/4.",why:"(a) On applique les formules."},
+  {w:"uₙ₊₁ + vₙ₊₁ = (4uₙ + 4vₙ)/4 = uₙ + vₙ : la suite (uₙ + vₙ) est constante, égale à u₀ + v₀ = 4.",why:"(b) La quantité qui ne bouge pas."},
+  {w:"vₙ₊₁ − uₙ₊₁ = (2vₙ − 2uₙ)/4 = (vₙ − uₙ)/2, donc vₙ − uₙ = (v₀ − u₀)/2ⁿ = 2/2ⁿ, soit vₙ₊₁ − uₙ₊₁ = 1/2ⁿ.",why:"(c) L'écart est divisé par 2 à chaque étape."},
+  {w:"Récurrence P(n) : uₙ ≤ uₙ₊₁ ≤ vₙ₊₁ ≤ vₙ. P(0) : 1 ≤ 3/2 ≤ 5/2 ≤ 3. Hérédité : uₙ₊₂ − uₙ₊₁ = (vₙ₊₁ − uₙ₊₁)/4 ≥ 0 et vₙ₊₂ − vₙ₊₁ = (uₙ₊₁ − vₙ₊₁)/4 ≤ 0 ; et vₙ₊₂ − uₙ₊₂ = 1/2ⁿ⁺¹ ≥ 0.",why:"(d) Les trois inégalités se transmettent."},
+  {w:"(uₙ) croissante, (vₙ) décroissante, uₙ ≤ vₙ, vₙ − uₙ = 2/2ⁿ → 0 : elles sont adjacentes, de limite commune ℓ. Comme uₙ + vₙ = 4, 2ℓ = 4 : ℓ = 2.",why:"(e) Le théorème, puis la quantité constante donne ℓ."}]),
+ Q("Dans cet exercice, pourquoi ℓ = 2 ?",["Parce que uₙ + vₙ = 4 pour tout n, et donc ℓ + ℓ = 4","Parce que u₀ + v₀ = 4 ≠ 2ℓ","Parce que v₀ − u₀ = 2"],0,"On passe à la limite dans uₙ + vₙ = 4."),
+ P("TD 2, exercice 8, sur papier","0 &lt; x₀ &lt; y₀, xₙ₊₁ = xₙ²/(xₙ + yₙ), yₙ₊₁ = yₙ²/(xₙ + yₙ). (a) (xₙ − yₙ) est constante. (b) Les deux suites sont décroissantes. (c) Elles convergent : limites ?",`<ol><li>Par récurrence, xₙ, yₙ &gt; 0. xₙ₊₁ − yₙ₊₁ = (xₙ² − yₙ²)/(xₙ + yₙ) = xₙ − yₙ : constante, égale à x₀ − y₀.</li><li>xₙ₊₁ − xₙ = −xₙyₙ/(xₙ + yₙ) &lt; 0, et yₙ₊₁ − yₙ = −xₙyₙ/(xₙ + yₙ) &lt; 0.</li><li>Décroissantes et minorées par 0 : elles convergent vers ℓ et ℓ′ avec ℓ′ − ℓ = y₀ − x₀ &gt; 0. En passant à la limite dans xₙ₊₁(xₙ + yₙ) = xₙ² : ℓ(ℓ + ℓ′) = ℓ², donc ℓℓ′ = 0, et ℓ′ &gt; 0 donne ℓ = 0, ℓ′ = y₀ − x₀.</li></ol>`,["La positivité justifiée","La différence constante calculée","Le théorème de la limite monotone cité","Le passage à la limite justifié (ℓ + ℓ′ ≠ 0)"],15),
+ K("Suites adjacentes ?","(uₙ) croissante, (vₙ) décroissante, uₙ ≤ vₙ, vₙ − uₙ → 0 : elles convergent vers la même limite ℓ, et uₙ ≤ ℓ ≤ vₙ."),
+ K("Trouver la limite commune ?","Chercher une quantité constante (uₙ + vₙ = 4) et y passer à la limite (2ℓ = 4).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-extraites",t:"Suites extraites et valeurs d'adhérence",min:9,p:2,goal:"Prouver qu'une suite diverge avec deux sous-suites (TD 2, ex. 10).",steps:[
+ Q("(u₂ₙ), c'est…",["la suite des termes de rang pair : u₀, u₂, u₄, …","la suite multipliée par 2","u₂ répété"],0,"On ne garde que les termes d'indice pair."),
+ L("Suites extraites",`<p>Une <b>extraction</b> est une application φ : ℕ → ℕ strictement croissante. La suite (u<sub>φ(n)</sub>) est une <b>suite extraite</b> (sous-suite) : on garde certains termes, dans l'ordre. Exemples : (u₂ₙ) et (u₂ₙ₊₁).</p><ul><li>Si uₙ → ℓ (fini ou infini), <b>toute</b> suite extraite tend vers ℓ.</li><li>Donc : si deux suites extraites ont des limites <b>différentes</b>, (uₙ) <b>diverge</b>.</li></ul><p>Exemple : ((−1)ⁿ) : les termes pairs valent 1, les impairs −1 ; elle diverge.</p>`),
+ Q("(u₂ₙ) et (u₂ₙ₊₁) convergent. (uₙ) converge-t-elle forcément ?",["Non : ((−1)ⁿ) est un contre-exemple","Oui, toujours"],0,"Il faut en plus que les deux limites soient égales (TD 2, ex. 10b)."),
+ L("Valeur d'adhérence",`<p>ℓ est une <b>valeur d'adhérence</b> de (uₙ) s'il existe une sous-suite qui converge vers ℓ. Les valeurs d'adhérence de ((−1)ⁿ) sont 1 et −1.</p><p>Et si (u₂ₙ) et (u₂ₙ₊₁) tendent vers la <b>même</b> limite ℓ, alors uₙ → ℓ (TD 2, ex. 10c) : pour ε donné, on prend le plus grand des deux rangs.</p>`),
+ Q("Quelles sont les valeurs d'adhérence de ((−1)ⁿ) ?",["1 et −1","0","Il n'y en a pas"],0,"(u₂ₙ) → 1 et (u₂ₙ₊₁) → −1."),
+ K("Prouver qu'une suite diverge ?","Trouver deux suites extraites (souvent u₂ₙ et u₂ₙ₊₁) qui ont des limites différentes."),
+ K("(u₂ₙ) et (u₂ₙ₊₁) → ℓ ?","Alors uₙ → ℓ. Mais si leurs limites sont différentes, (uₙ) diverge.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-lim-fonction",t:"Limite d'une fonction : les définitions",min:15,goal:"Écrire et utiliser les définitions avec ε, comme l'exercice 1 du CC1 2025-2026 (4 points).",steps:[
+ Q("lim f(x) = ℓ quand x → +∞, c'est…",["f(x) est aussi près de ℓ qu'on veut dès que x est assez grand","f(+∞) = ℓ","f est croissante vers ℓ"],0,"Comme pour les suites, mais avec x réel au lieu de n entier."),
+ L("Les définitions",`<p>f est définie sur I ; x₀ est <b>adhérent</b> à I (on peut s'en approcher dans I).</p>${box("lim<sub>x→x₀</sub> f(x) = ℓ  ⇔  ∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε")}${box("lim<sub>x→+∞</sub> f(x) = ℓ  ⇔  ∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ I, x &gt; α ⇒ |f(x) − ℓ| &lt; ε")}${box("lim<sub>x→x₀</sub> f(x) = +∞  ⇔  ∀A &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ f(x) &gt; A")}<p>η (ou α) dépend de ε. Si x₀ ∈ I et que la limite existe, elle vaut f(x₀). Limite <b>à droite</b> : x ∈ [x₀, x₀ + η[ ; <b>épointée</b> : on enlève x₀.</p>`),
+ Q("Laquelle est la définition de lim<sub>x→0</sub> f(x) = 1 ?",["∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ ℝ, |x| &lt; η ⇒ |f(x) − 1| &lt; ε","∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ ℝ, |x| &lt; ε ⇒ |f(x) − 1| &lt; η","∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ ]1 − η, 1 + η[, |f(x)| &lt; ε"],0,"x près de 0 (à moins de η) ⇒ f(x) près de 1 (à moins de ε). La 2ᵉ échange ε et η ; la 3ᵉ dit « f tend vers 0 en 1 » (CC1 2024-2025)."),
+ L("Le modèle de rédaction en +∞",`<ol><li>Calculer et simplifier f(x) − ℓ.</li><li>« Soit ε &gt; 0. » Choisir α (en fonction de ε).</li><li>Pour x &gt; α : montrer |f(x) − ℓ| &lt; ε.</li><li>Conclure avec la définition complète.</li></ol><p>Exemple : f(x) = (x + 1)/(x − 1) → 1 en +∞ (TD 3, ex. 7). f(x) − 1 = 2/(x − 1). Soit ε &gt; 0, α = 1 + 2/ε. Pour x &gt; α : x − 1 &gt; 2/ε &gt; 0, donc 0 &lt; 2/(x − 1) &lt; ε.</p>`),
+ S("CC1 2025-2026, exercice 1",`f(x) = (2x + 1)/x si x ≠ 0, et f(0) = 2.`,[
+  {w:"Pour x ≠ 0 : f(x) − 2 = (2x + 1)/x − 2 = 1/x.",why:"On simplifie l'écart à la limite."},
+  {w:"Soit ε &gt; 0. On pose α = 1/ε. Pour tout réel x &gt; α : x &gt; 0 et 1/x &lt; 1/α = ε, donc |f(x) − 2| = 1/x &lt; ε.",why:"α est choisi pour que 1/x &lt; ε dès que x &gt; α."},
+  {w:"Donc ∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ ℝ, x &gt; α ⇒ |f(x) − 2| &lt; ε : lim<sub>x→+∞</sub> f(x) = 2.",why:"(a) On conclut avec la définition."},
+  {w:"En 0 : f(x) = 2 + 1/x tend vers +∞ quand x → 0⁺ et vers −∞ quand x → 0⁻. Les limites à droite et à gauche diffèrent : f n'a pas de limite en 0.",why:"(b) Deux limites latérales différentes : pas de limite."}]),
+ Q("f(x) = (3x + 1)/(x − 7) : f(x) − 3 vaut…",["22/(x − 7)","−20/(x − 7)","1/(x − 7)","(3x + 1)/(x − 7) − 3x"],0,"(3x + 1 − 3(x − 7))/(x − 7) = (3x + 1 − 3x + 21)/(x − 7) = 22/(x − 7) (TD 3, ex. 6)."),
+ P("TD 3, exercice 7, sur papier","Montrer avec la définition que f(x) = (x + 1)/(x − 1) tend vers 1 en +∞, puis vers −∞ quand x → 1⁻ et vers +∞ quand x → 1⁺.",`<ol><li>f(x) − 1 = 2/(x − 1). Soit ε &gt; 0, α = 1 + 2/ε : pour x &gt; α, 0 &lt; 2/(x − 1) &lt; ε.</li><li>En 1⁻ : soit A &gt; 0 et η = min(1, 1/A). Pour x ∈ ]1 − η, 1[ : x + 1 &gt; 1 et −η &lt; x − 1 &lt; 0, donc f(x) &lt; 1/(x − 1) &lt; −1/η ≤ −A.</li><li>En 1⁺ : soit A &gt; 0 et η = min(1, 2/A). Pour x ∈ ]1, 1 + η[ : x + 1 &gt; 2 et 0 &lt; x − 1 &lt; η, donc f(x) &gt; 2/(x − 1) &gt; 2/η ≥ A.</li></ol>`,["f(x) − 1 simplifié","« Soit ε &gt; 0 » puis α explicite","Pour les limites infinies : A puis η explicites","Chaque inégalité justifiée (signe du dénominateur)"],15),
+ K("Définition de lim<sub>x→x₀</sub> f(x) = ℓ ?","∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε."),
+ K("Définition de lim<sub>x→+∞</sub> f(x) = ℓ ?","∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ I, x &gt; α ⇒ |f(x) − ℓ| &lt; ε. Modèle : simplifier f(x) − ℓ, « Soit ε &gt; 0 », α explicite, conclure.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"a-lim-calc",t:"Limites de fonctions : calculs et pièges",min:12,p:2,goal:"Calculer des limites (conjuguée, identités remarquables) et montrer qu'une limite n'existe pas (TD 3, ex. 10 à 13).",steps:[
+ Q("Limite en 0 de (√(1 + x) − √(1 − x))/x ?",["1","0","2","+∞"],0,"Avec la quantité conjuguée : 2x/(x(√(1 + x) + √(1 − x))) = 2/(√(1 + x) + √(1 − x)) → 2/2 = 1."),
+ L("Les mêmes règles que pour les suites",`<p>Sommes, produits, quotients, valeur absolue : mêmes règles et mêmes formes indéterminées (+∞ − ∞, 0 × ∞, ∞/∞, 0/0) que pour les suites. On a aussi les <b>gendarmes</b> et le <b>passage à la limite</b> dans les inégalités (f ≤ g ⇒ lim f ≤ lim g ; avec f &lt; g, on garde seulement ≤).</p><p>Outils : quantité conjuguée (a − b)(a + b) = a² − b², et (a − b)(a² + ab + b²) = a³ − b³ pour les racines cubiques ; sin²x = 1 − cos²x = (1 − cos x)(1 + cos x).</p>`),
+ Q("Limite en π de sin²x/(1 + cos x) ?",["2","0","1","Pas de limite"],0,"sin²x = (1 − cos x)(1 + cos x), donc le quotient vaut 1 − cos x → 1 − (−1) = 2 (TD 3, ex. 10b)."),
+ L("Limites et suites",`<p>Si lim<sub>x→x₀</sub> f(x) = ℓ et si une suite (xₙ) d'éléments de I tend vers x₀, alors f(xₙ) → ℓ.</p><p>D'où la méthode pour montrer qu'une limite <b>n'existe pas</b> : trouver <b>deux suites</b> xₙ → x₀ et yₙ → x₀ telles que f(xₙ) et f(yₙ) ont des limites différentes.</p><p>Exemple (TD 3, ex. 11) : sin(1/x) en 0. xₙ = 1/(2πn) → 0 donne sin(1/xₙ) = 0 ; yₙ = 1/(π/2 + 2πn) → 0 donne sin(1/yₙ) = 1. Pas de limite.</p><p>Attention : f(n) → L ne prouve pas que f(x) → L quand x → +∞ (sin(πx) vaut 0 en chaque entier, mais n'a pas de limite).</p>`),
+ Q("Que dire de (x² + 2|x|)/x en 0 ?",["Pas de limite : à droite elle tend vers 2, à gauche vers −2","Elle tend vers 0","Elle tend vers 2"],0,"x &gt; 0 : (x² + 2x)/x = x + 2 → 2. x &lt; 0 : (x² − 2x)/x = x − 2 → −2 (TD 3, ex. 10a)."),
+ Q("f et g ont des limites finies en a, et f(x) &lt; g(x) pour tout x. A-t-on lim f &lt; lim g ?",["Non, seulement lim f ≤ lim g","Oui, toujours"],0,"Contre-exemple en +∞ : f = 0 &lt; g(x) = 1/(1 + x²), mais les deux limites valent 0 (CC1 2025-2026, Q1, réponse « faux »)."),
+ P("TD 3, ex. 9, 10 et 13, sur papier","(9) lim E(x)/x et lim xE(1/x) en +∞ ; (10c) lim en 0 de (√(1 + x) − √(1 − x))/x ; (10d) lim en 0 de (∛(1 + x²) − 1)/x² ; (13) lim en +∞ de cos(x)/√x.",`<ul><li>(9) x − 1 &lt; E(x) ≤ x donne (x − 1)/x &lt; E(x)/x ≤ 1 : limite 1 (gendarmes). Pour x &gt; 1, 0 &lt; 1/x &lt; 1, donc E(1/x) = 0 et xE(1/x) = 0 → 0.</li><li>(10c) 1, par la quantité conjuguée.</li><li>(10d) Avec a = ∛(1 + x²), a³ − 1 = x² = (a − 1)(a² + a + 1) : le quotient vaut 1/(a² + a + 1) → 1/3.</li><li>(13) |cos(x)/√x| ≤ 1/√x → 0 : limite 0.</li></ul>`,["L'encadrement de E(x) écrit","L'identité remarquable utilisée","Les gendarmes cités","Les limites des morceaux annoncées"],14),
+ K("Montrer qu'une limite de fonction n'existe pas ?","Deux suites xₙ → x₀ et yₙ → x₀ avec f(xₙ) et f(yₙ) de limites différentes ; ou des limites à droite et à gauche différentes."),
+ K("Les identités pour lever 0/0 avec des racines ?","(a − b)(a + b) = a² − b² (racines carrées) ; (a − b)(a² + ab + b²) = a³ − b³ (racines cubiques).")]}
+];
+})();
+
+</script>
+<script>
 /* « En clair » : avant le texte du cours, la même idée en mots simples, avec un exemple.
    Rattaché aux écrans « learn » par leur titre. Le texte du cours lui-même n'est pas modifié. */
 (function(){
@@ -6467,7 +6881,51 @@ lin:{
   "Somme et multiplication par un scalaire":`<p>Additionner deux matrices de même taille : on additionne case par case. Multiplier par un nombre : on multiplie chaque case.</p><p>Exemple : (1 2) + (3 4) = (4 6) et 3 · (1 2) = (3 6).</p>`,
   "Matrice fois colonne":`<p>Pour multiplier une matrice par une colonne, chaque ligne de la matrice « rencontre » la colonne : on multiplie terme à terme et on additionne.</p><p>Exemple : la ligne (1 2) avec la colonne (5, 6) donne 1 × 5 + 2 × 6 = 17. C'est exactement le calcul du premier membre d'une équation.</p>`,
   "Le produit AB":`<p>Pour la case (i, j) du produit, on prend la ligne i de A et la colonne j de B, on multiplie terme à terme et on additionne.</p><p>Il faut que la ligne de A et la colonne de B aient la même longueur : sinon, le produit n'existe pas.</p>`,
-  "Les règles qui marchent":`<p>Presque toutes les règles des nombres marchent, sauf une très importante : en général, AB n'est pas égal à BA. L'ordre compte, comme pour « mettre ses chaussettes puis ses chaussures ».</p><p>Conséquence : (A + B)² ne vaut pas A² + 2AB + B².</p>`}}};
+  "Les règles qui marchent":`<p>Presque toutes les règles des nombres marchent, sauf une très importante : en général, AB n'est pas égal à BA. L'ordre compte, comme pour « mettre ses chaussettes puis ses chaussures ».</p><p>Conséquence : (A + B)² ne vaut pas A² + 2AB + B².</p>`}},
+ana:{
+ "a-quantif":{
+  "∀ et ∃":`<p>∀ se lit « pour tout », ∃ se lit « il existe ». « ∀ élève, il a un stylo » demande que <b>chaque</b> élève en ait un ; « ∃ un élève qui a un stylo » se contente d'<b>un seul</b>.</p><p>Pour dire qu'une phrase « pour tout » est fausse, il suffit de montrer un seul cas qui ne marche pas.</p>`,
+  "L'ordre compte":`<p>« Il existe une clé qui ouvre toutes les portes » n'est pas la même chose que « chaque porte a sa clé ». Dans la première phrase, c'est la même clé pour toutes les portes.</p><p>C'est pareil ici : ∃c puis ∀n, c'est le même c pour tous les n.</p>`,
+  "Nier une phrase":`<p>Le contraire de « tous les élèves ont un stylo », ce n'est pas « aucun n'a de stylo » : c'est « il y a au moins un élève sans stylo ».</p><p>On échange donc « pour tout » et « il existe », et on dit le contraire de la fin.</p>`},
+ "a-abs":{
+  "|x| et la distance":`<p>|x|, c'est x sans son signe : |−5| = 5 et |5| = 5. C'est la distance entre x et 0 sur la droite.</p><p>|x − 3| est la distance entre x et 3. Donc « |x − 3| ≤ 2 » veut dire « x est à moins de 2 de 3 », c'est-à-dire x entre 1 et 5.</p>`,
+  "Inégalités triangulaires":`<p>C'est l'idée qu'un détour n'est jamais plus court : la distance de a à c ne dépasse pas celle de a à b plus celle de b à c.</p><p>Elle sert à remplacer une expression compliquée par une plus simple qui la dépasse.</p>`},
+ "a-intervalles":{
+  "Ce qu'est un intervalle":`<p>Un intervalle, c'est un morceau de droite sans trou. Si tu prends deux de ses points, tout ce qui est entre eux est dedans.</p><p>[0, 1] ∪ [2, 3] a un trou entre 1 et 2 : ce n'est pas un intervalle.</p>`,
+  "Partie entière":`<p>E(x), c'est l'entier juste en dessous de x (ou x lui-même s'il est entier). E(3,9) = 3, E(5) = 5.</p><p>Piège avec les négatifs : E(−1,2) = −2, car −2 est sous −1,2.</p>`},
+ "a-bornes":{
+  "Majorant et plus grand élément":`<p>Un majorant, c'est un plafond : tous les éléments de l'ensemble sont en dessous. Il peut être loin au-dessus, et il n'a pas besoin d'être dans l'ensemble.</p><p>Le plus grand élément, lui, est dans l'ensemble. [0, 1[ a plein de plafonds (1, 2, 10…) mais aucun plus grand élément.</p>`,
+  "La borne supérieure":`<p>La borne sup, c'est le plafond le plus bas possible, celui qui touche presque l'ensemble.</p><p>Pour [0, 1[, c'est 1 : tout nombre plus petit que 1 est dépassé par un élément de l'ensemble. Quand l'ensemble a un plus grand élément, c'est lui, la borne sup.</p>`},
+ "a-carac-sup":{
+  "Caractérisation avec ε":`<p>Pour vérifier que m est le plafond le plus bas, on descend un tout petit peu sous m (de ε) : si on trouve encore un élément de l'ensemble au-dessus, c'est que m ne pouvait pas être baissé.</p><p>Et ça doit marcher pour tous les ε, même minuscules.</p>`,
+  "Point adhérent":`<p>Un point est adhérent à un ensemble si on peut s'en approcher autant qu'on veut en restant dans l'ensemble, même sans jamais l'atteindre.</p><p>1 est adhérent à [0, 1[ : 0,9, puis 0,99, puis 0,999… s'en approchent.</p>`},
+ "a-suites":{
+  "Les définitions":`<p>Une suite, c'est une liste infinie de nombres u₀, u₁, u₂… Croissante : chaque terme est au moins aussi grand que le précédent. Majorée : il y a un plafond qu'elle ne dépasse jamais.</p><p>« À partir d'un certain rang » : la propriété peut être fausse au début, mais vraie à partir d'un moment.</p>`,
+  "Méthodes pour la monotonie":`<p>Pour savoir si une suite monte ou descend, on compare un terme au suivant : on regarde le signe de uₙ₊₁ − uₙ.</p><p>Si tous les termes sont positifs, on peut aussi regarder si uₙ₊₁/uₙ est plus grand ou plus petit que 1.</p>`},
+ "a-limite":{
+  "La définition":`<p>Imagine qu'on te donne une tolérance ε, aussi petite que tu veux. La suite tend vers ℓ si, à partir d'un certain moment, tous les termes restent à moins de ε de ℓ.</p><p>Plus la tolérance est petite, plus il faut attendre longtemps : c'est pour ça que N dépend de ε.</p>`,
+  "Le modèle de rédaction":`<p>On commence par un brouillon : « |uₙ − ℓ| est plus petit que 1/n ». Ensuite, on cherche à partir de quand 1/n est plus petit que ε : dès que n dépasse 1/ε.</p><p>La rédaction remet ces étapes dans l'ordre de la définition.</p>`,
+  "Tendre vers +∞":`<p>Tendre vers +∞, c'est dépasser n'importe quel seuil A et ne plus jamais redescendre en dessous.</p><p>Exemple : n³ finit par dépasser 1000, puis un million, puis n'importe quel nombre donné.</p>`},
+ "a-calcul":{
+  "Opérations sur les limites":`<p>Les limites se combinent comme les nombres : si uₙ → 2 et vₙ → 3, alors uₙ + vₙ → 5 et uₙvₙ → 6.</p><p>Mais avec l'infini, certains cas ne se devinent pas : ∞ − ∞ peut donner n'importe quoi. Ce sont les formes indéterminées.</p>`,
+  "Les trois outils":`<p>Devant une forme indéterminée, on cherche le terme qui « gagne » quand n est grand, et on le met en facteur.</p><p>Exemple : 2ⁿ − n². 2ⁿ grandit beaucoup plus vite, donc 2ⁿ(1 − n²/2ⁿ) → +∞.</p>`},
+ "a-comparaison":{
+  "Passage à la limite et signe":`<p>Si une suite est toujours plus petite qu'une autre, sa limite ne peut pas être plus grande.</p><p>Mais « strictement plus petite » ne passe pas toujours : 1/n reste toujours au-dessus de 0, et pourtant sa limite est 0.</p>`,
+  "Le théorème des gendarmes":`<p>Deux gendarmes qui marchent vers le même endroit emmènent le prisonnier coincé entre eux au même endroit.</p><p>Si vₙ est toujours entre uₙ et wₙ, et que uₙ et wₙ tendent vers ℓ, alors vₙ tend aussi vers ℓ.</p>`},
+ "a-monotone":{
+  "Théorème de la limite monotone":`<p>Une suite qui monte sans jamais dépasser un plafond finit forcément par se stabiliser quelque part : elle converge.</p><p>Le théorème dit qu'elle a une limite, mais pas laquelle : on la trouve ensuite avec la formule de la suite.</p>`,
+  "La méthode en 4 étapes":`<p>Pour une suite définie par uₙ₊₁ = f(uₙ), on suit toujours le même plan : on encadre les termes, on montre qu'elle monte (ou descend), on en déduit qu'elle converge, puis on trouve la limite.</p><p>Pour la limite, on remplace uₙ et uₙ₊₁ par ℓ dans la formule.</p>`},
+ "a-adjacentes":{
+  "Le théorème":`<p>Deux suites qui se rapprochent, l'une par en dessous en montant, l'autre par au-dessus en descendant, finissent par se rejoindre au même endroit.</p><p>C'est comme deux personnes qui marchent l'une vers l'autre jusqu'à se toucher.</p>`},
+ "a-extraites":{
+  "Suites extraites":`<p>Une suite extraite, c'est la même liste dont on ne garde que certains termes, par exemple un sur deux.</p><p>Si toute la suite va vers ℓ, n'importe quel morceau qu'on en garde y va aussi.</p>`,
+  "Valeur d'adhérence":`<p>Une valeur d'adhérence, c'est un endroit où la suite revient sans cesse, même si elle ne s'y arrête pas.</p><p>(−1)ⁿ fait 1, −1, 1, −1… Elle revient toujours à 1 et à −1 : ce sont ses deux valeurs d'adhérence.</p>`},
+ "a-lim-fonction":{
+  "Les définitions":`<p>C'est la même idée que pour les suites : on donne une tolérance ε sur f(x), et on cherche à quelle distance η de x₀ il faut se placer pour la respecter.</p><p>En +∞, on cherche plutôt un seuil α au-delà duquel la tolérance est respectée.</p>`,
+  "Le modèle de rédaction en +∞":`<p>D'abord, on calcule l'écart f(x) − ℓ et on le simplifie, par exemple en 1/x. Ensuite, on cherche à partir de quand cet écart est plus petit que ε.</p><p>Exemple : 1/x &lt; ε dès que x &gt; 1/ε.</p>`},
+ "a-lim-calc":{
+  "Les mêmes règles que pour les suites":`<p>Pour calculer une limite de fonction, on utilise les mêmes règles que pour les suites. Pour se débarrasser des racines, on multiplie en haut et en bas par l'expression « conjuguée » (avec le signe opposé).</p><p>Exemple : (√a − √b)(√a + √b) = a − b, il n'y a plus de racine.</p>`,
+  "Limites et suites":`<p>Si f a une limite en x₀, alors f(xₙ) tend vers cette limite pour n'importe quelle suite xₙ qui s'approche de x₀.</p><p>Donc, si deux chemins vers x₀ donnent deux résultats différents, la limite n'existe pas.</p>`}}};
 const LES=window.LESSONS||{};
 Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.id];if(!M)return;
   L.steps.forEach(s=>{if(s.k==="learn"&&M[s.h])s.clair=M[s.h];});}));
@@ -6704,7 +7162,7 @@ function drawCard(){
   badges();}
 
 /* ================= les morceaux du nouvel onglet ================= */
-const ART={geo:"triangle",algo:"algo",pf:"lambda",calc:"integrale",lin:"matrice"};
+const ART={geo:"triangle",algo:"algo",pf:"lambda",calc:"integrale",lin:"matrice",ana:"courbe"};
 const ico=(id,cls)=>`<svg class="${cls||"ico"}" aria-hidden="true"><use href="#${id}"/></svg>`;
 const artSVG=n=>`<svg class="art" viewBox="0 0 120 64" aria-hidden="true"><use href="#d-${n}" class="art__a"/><use href="#d-${n}" class="art__b"/><use href="#d-${n}" class="art__c"/></svg>`;
 const tart=id=>`<svg class="tart" viewBox="0 0 120 64" aria-hidden="true"><use href="#d-${ART[id]||"etoile"}"/></svg>`;
