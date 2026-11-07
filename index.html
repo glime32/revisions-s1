@@ -694,12 +694,12 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 .syqr svg{max-width:240px;height:auto;background:#fff;padding:8px;border-radius:10px}
 .src{display:grid;gap:4px;padding-left:1.2em}
 .nt li{margin:2px 0}
-.notsvg{max-width:420px;width:100%;height:auto}
+.notsvg{max-width:450px;width:100%;height:auto}
 .notsvg line,.notsvg path{stroke:var(--encre);stroke-width:2.2;fill:none}
-.notsvg .cob{stroke:var(--cobalt);stroke-width:3.2}
+.notsvg :is(line,path).cob{stroke:var(--cobalt);stroke-width:3.2}
 .notsvg circle{fill:var(--encre)}
-.notsvg text{fill:var(--encre);font:600 15px var(--f-sans)}
-.notsvg text.cob{fill:var(--cobalt)}
+.notsvg text{fill:var(--encre);font:600 15px var(--f-sans);stroke:none}
+.notsvg text.cob{fill:var(--cobalt);font-weight:750}
 .lsub{display:grid;gap:12px;padding:16px;border-radius:20px;border:2px solid color-mix(in srgb,var(--sc) 45%,transparent);background:#000;box-shadow:5px 6px 0 color-mix(in srgb,var(--sc) 30%,#000)}
 .lsub-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
 .lsub-h h2{font-size:1.45rem;color:var(--sc)}
@@ -709,6 +709,12 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 
 
 /* compléments */
+.prekick{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--ambre)}
+.opts button.picked{border-color:var(--ambre);background:color-mix(in srgb,var(--ambre) 12%,#000);color:#FFE7C2}
+.prefb{border-left:4px solid var(--ambre);padding:4px 0 4px 14px;animation:rise .3s var(--snap)}
+.prefb b{color:var(--ambre)}
+.look{border:2px dashed color-mix(in srgb,var(--ambre) 60%,transparent);border-radius:12px;padding:8px 12px;font-size:.95rem;color:#FFE7C2}
+.look b{color:var(--ambre)}
 .swatches.lead1>li:first-child{grid-column:1/-1}
 .group__grid.lessons{grid-template-columns:repeat(auto-fill,minmax(255px,1fr))}
 .piece__title,.swatch__name,.fiche span{overflow-wrap:break-word;hyphens:auto}
@@ -4787,7 +4793,7 @@ const D=(c,x)=>Object.assign({k:"demo",c},x||{});
 const P=(h,x,sol,check,min,o)=>Object.assign({k:"paper",h,x,sol,check,min},o||{});
 const K=(f,b)=>({k:"card",f,b});
 const an=s=>`<span class="ang">${s}</span>`, v=s=>`<span class="vec">${s}</span>`;
-const NOTSVG=`<svg class="notsvg" viewBox="0 0 420 170" role="img" aria-label="Le segment [AB], la demi-droite [AB) et la droite (AB)">
+const NOTSVG=`<svg class="notsvg" viewBox="0 0 450 170" role="img" aria-label="Le segment [AB], la demi-droite [AB) et la droite (AB)">
  <text x="4" y="34">[AB]</text><line class="cob" x1="80" y1="28" x2="250" y2="28"/><circle cx="80" cy="28" r="4"/><circle cx="250" cy="28" r="4"/><text x="74" y="52">A</text><text x="244" y="52">B</text><text x="270" y="34" class="cob">segment</text>
  <text x="4" y="94">[AB)</text><line class="cob" x1="80" y1="88" x2="330" y2="88"/><path class="cob" d="M322 82 L332 88 L322 94"/><circle cx="80" cy="88" r="4"/><circle cx="200" cy="88" r="4"/><text x="74" y="112">A</text><text x="194" y="112">B</text><text x="340" y="94" class="cob">demi-droite</text>
  <text x="4" y="154">(AB)</text><line class="cob" x1="56" y1="148" x2="330" y2="148"/><path class="cob" d="M64 142 L54 148 L64 154 M322 142 L332 148 L322 154"/><circle cx="130" cy="148" r="4"/><circle cx="250" cy="148" r="4"/><text x="124" y="168">A</text><text x="244" y="168">B</text><text x="340" y="154" class="cob">droite</text></svg>`;
@@ -5680,12 +5686,19 @@ function dueCards(){
   SIDS.forEach(id=>{const S=SUBJ[id];if(examStart(S)<=n)return;const st=ST[id],eve=(examStart(S)-n)<=36*3600e3;
     Object.entries(st.cards).forEach(([cid,c])=>{if(cardOf(id,cid)&&(c.due<=t||(eve&&c.last!==t)))out.push({sid:id,cid,box:c.box});});
     S.ORDER.forEach(c=>{if(st.review[c.id]&&c.q&&!c.out)out.push({sid:id,cid:"c:"+c.id,box:-1});});});
-  out.sort((a,b)=>(examStart(SUBJ[a.sid])-examStart(SUBJ[b.sid]))||(a.box-b.box));
+  out.forEach(o=>{o.rnd=Math.random();});
+  out.sort((a,b)=>(examStart(SUBJ[a.sid])-examStart(SUBJ[b.sid]))||(a.box-b.box)||(a.rnd-b.rnd));
   return out;}
 function badges(){const n=dueCards().length;document.querySelectorAll("[data-due]").forEach(b=>{b.textContent=n>99?"99+":String(n);b.hidden=!n;});}
 
 /* ================= le lecteur de leçon ================= */
 let LP=null,TIMER=null;
+/* « Devine d'abord » : quand une explication est suivie d'une question, on pose cette question une première fois
+   AVANT l'explication, sans correction ; on lit ensuite l'explication en y cherchant la réponse, puis on répond
+   pour de vrai (effet de pré-question : Pan et Carpenter, 2023). La devinette ne compte pas dans le score. */
+function flow(L){if(L.flow)return L.flow;const out=[];
+  L.steps.forEach((st,i)=>{const nx=L.steps[i+1];if(st.k==="learn"&&nx&&nx.k==="qcm"){out.push(Object.assign({},nx,{k:"pre"}));out.push(Object.assign({},st,{look:nx.q}));}else out.push(st);});
+  return L.flow=out;}
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
@@ -5694,9 +5707,9 @@ function lessonRoute(args){
 function mark(v,s){if(LP.got[LP.i]==null)LP.got[LP.i]=v;if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});}
 function drawStep(){
   clearInterval(TIMER);
-  const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],N=L.steps.length;
+  const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],F=flow(L),N=F.length;
   if(LP.i>=N)return finish();
-  const s=L.steps[LP.i];
+  const s=F[LP.i];
   const pct=Math.round(LP.i/N*100),from=LP.pp==null?pct:LP.pp,back=!!LP.back;LP.pp=pct;LP.back=false;
   $("#main").innerHTML=`<div class="lp s-${LP.sid}">
    <div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter la leçon">✕</a><div class="lp-bar" role="progressbar" aria-label="Avancement dans la leçon" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${LP.i}"><i style="width:${from}%"></i></div><span class="lp-n">${LP.i+1}/${N}</span></div>
@@ -5712,8 +5725,16 @@ function drawStep(){
 const code=(src,lang)=>W.code(src,lang||SUBJ[LP.sid].lang||"txt");
 const STEP={
  learn(s,body){
-  body.innerHTML=`${s.h?`<h2>${s.h}</h2>`:""}<div class="lx">${s.x||""}</div>${s.svg||""}${s.code?code(s.code,s.lang):""}<div class="lfig"></div>${s.after?`<div class="lx">${s.after}</div>`:""}`;
+  body.innerHTML=`${s.look?`<p class="look"><b>Tu cherches :</b> ${s.look}</p>`:""}${s.h?`<h2>${s.h}</h2>`:""}<div class="lx">${s.x||""}</div>${s.svg||""}${s.code?code(s.code,s.lang):""}<div class="lfig"></div>${s.after?`<div class="lx">${s.after}</div>`:""}`;
   if(s.fig){const c=SUBJ[LP.sid].BY[s.fig];if(c)mount(body.querySelector(".lfig"),c);}},
+ pre(s,body,next){
+  const ord=shuffle(s.o.map((_,i)=>i));
+  body.innerHTML=`<p class="prekick">Devine d'abord · ça ne compte pas</p><p class="lq">${s.q}</p>${s.code?code(s.code,s.lang):""}<div class="opts">${ord.map(i=>`<button data-o="${i}">${s.o[i]}</button>`).join("")}</div><div class="lfb" aria-live="polite"></div>`;
+  next.disabled=true;let done=false;
+  body.querySelector(".opts").addEventListener("click",e=>{const b=e.target.closest("[data-o]");if(!b||done)return;done=true;
+    body.querySelectorAll(".opts button").forEach(x=>{x.disabled=true;if(x===b)x.classList.add("picked");});
+    body.querySelector(".lfb").innerHTML=`<div class="prefb"><b>C'est noté.</b> Pas de correction tout de suite : la réponse est dans l'explication qui suit. Lis-la en la cherchant, la question revient juste après.</div>`;
+    next.disabled=false;next.focus();});},
  card(s,body){
   body.innerHTML=`<div class="kcard"><span class="kk">À retenir</span><p class="kq">${s.f}</p><div class="ka">${s.b}</div></div><p class="muted">Cette carte reviendra dans « Réviser » demain, puis quelques jours après : c'est en la retrouvant de mémoire plusieurs fois qu'elle tiendra jusqu'au CC.</p>`;},
  qcm(s,body,next){
@@ -5789,12 +5810,12 @@ function finish(){
 /* ================= Réviser : les cartes du jour ================= */
 let RV=null;
 function reviser(){
-  if(!RV||RV.end){const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,again:new Set(),ok:0,n:0,end:false,total:due.length};}
+  if(!RV||RV.end){const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length};}
   drawCard();}
 function drawCard(){
-  const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte.");
+  const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
   if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Entraînement mélangé (10 questions)</a></div></div></div>`;RV.end=true;return;}
-  if(RV.i>=RV.q.length){RV.end=true;const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Les cartes ratées reviendront plus tard : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Entraînement mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
+  if(RV.i>=RV.q.length){RV.end=true;const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Entraînement mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
   if(!c){RV.i++;return drawCard();}
   $("#main").innerHTML=`<div class="page">${top}
@@ -5806,8 +5827,9 @@ function drawCard(){
   document.querySelectorAll("[data-r]").forEach(b=>b.addEventListener("click",()=>{const r=+b.dataset.r;
     if(it.cid.indexOf("c:")===0){if(r===2)emit({k:"st",s:it.sid,c:it.cid.slice(2),v:"known"});}
     else emit({k:"card",s:it.sid,c:it.cid,r});
-    if(!RV.again.has(it.cid)){RV.n++;if(r===2)RV.ok++;}
-    if(r===0&&!RV.again.has(it.cid)){RV.again.add(it.cid);RV.q.push(it);}
+    const k=RV.tries[it.cid]=(RV.tries[it.cid]||0)+1;
+    if(k===1){RV.n++;if(r===2)RV.ok++;}
+    if(r===0&&k<3)RV.q.push(it);
     RV.i++;RV.flip=false;drawCard();}));
   badges();}
 
@@ -5937,8 +5959,10 @@ function methode(){
    ${sec(3,"L'exemple corrigé avant l'exercice",`<p>Quand on débute, étudier un exemple corrigé étape par étape apprend plus vite que chercher seul. Ensuite on retire les étapes une par une : textes à trous, puis exercice complet.</p><p><b>Sur le site</b> : « Afficher l'étape suivante » (essaie de la deviner avant), puis les trous à compléter, puis l'exercice sur papier.</p>`)}
    ${sec(4,"Remettre un programme dans l'ordre",`<p>Pour le code, remettre des lignes dans l'ordre (les « problèmes de Parsons ») apprend autant qu'écrire le programme en entier, en beaucoup moins de temps. C'est idéal pour les fin pour; et fin tq; au bon endroit.</p>`)}
    ${sec(5,"Une idée par écran, une question tout de suite",`<p>C'est la recette de Brilliant : une courte explication avec une figure, puis une question sur ce qu'on vient de voir. Math Academy y ajoute la révision espacée et le mélange des sujets : c'est le rôle de « Réviser » et de l'entraînement mélangé.</p>`)}
-   ${sec(6,"Les conditions du CC, et le sommeil",`<p>Fais au moins une annale par matière en 1 heure, sur papier. La veille d'un CC : les cartes du jour, les fiches en rouge, et une vraie nuit.</p>`)}
-   <section class="sec"><h2>Sources</h2><ul class="src"><li><a href="https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html" target="_blank" rel="noopener">Which Study Strategies Make the Grade? (Association for Psychological Science, sur Dunlosky et al. 2013)</a></li><li><a href="https://www.learningscientists.org/s/Spaced-Practice-esre.pdf" target="_blank" rel="noopener">Spaced Practice (The Learning Scientists)</a></li><li><a href="https://en.wikipedia.org/wiki/Worked-example_effect" target="_blank" rel="noopener">Worked-example effect (Wikipédia)</a></li><li><a href="https://hg.gatech.edu/node/603172" target="_blank" rel="noopener">Ericson : les problèmes de Parsons (Georgia Tech)</a></li><li><a href="https://brilliant.org/resources/choosing-brilliant/how-brilliant-teaches-math/" target="_blank" rel="noopener">How Brilliant teaches math</a></li><li><a href="https://mathacademy.com/pedagogy" target="_blank" rel="noopener">Math Academy : pedagogy</a></li></ul></section></div>`;badges();}
+   ${sec(6,"Deviner avant de lire",`<p>Essayer de répondre à une question <b>avant</b> d'avoir appris la réponse aide à retenir ce qu'on lit ensuite, même quand on se trompe, à condition de lire la bonne réponse juste après (synthèse de Pan et Carpenter, 2023). La question oriente la lecture : on lit en cherchant.</p><p><b>Sur le site</b> : avant chaque explication, « Devine d'abord » pose la question qui suit. Elle ne compte pas. Tu lis ensuite l'explication en cherchant la réponse, puis tu réponds pour de vrai.</p>`)}
+   ${sec(7,"Retrouver jusqu'à réussir, puis recommencer un autre jour",`<p>Ce qui marche le mieux pour un examen : se tester sur une notion jusqu'à la retrouver une fois sans aide, puis recommencer lors de plusieurs séances, à des jours différents. Dans une étude menée dans un vrai cours, les notes ont gagné environ une mention (Rawson, Dunlosky et Sciartelli, 2013).</p><p><b>Sur le site</b> : dans « Réviser », une carte ratée revient plus loin dans la séance jusqu'à ce que tu la retrouves (3 fois au plus), puis elle revient les jours suivants.</p>`)}
+   ${sec(8,"Les conditions du CC, et le sommeil",`<p>Fais au moins une annale par matière en 1 heure, sur papier. La veille d'un CC : les cartes du jour, les fiches en rouge, et une vraie nuit.</p>`)}
+   <section class="sec"><h2>Sources</h2><ul class="src"><li><a href="https://doi.org/10.1007/s10648-023-09814-5" target="_blank" rel="noopener">Pan et Carpenter (2023), Prequestioning and Pretesting Effects, Educational Psychology Review</a></li><li><a href="https://doi.org/10.1007/s10648-013-9240-4" target="_blank" rel="noopener">Rawson, Dunlosky et Sciartelli (2013), The Power of Successive Relearning, Educational Psychology Review</a></li><li><a href="https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html" target="_blank" rel="noopener">Which Study Strategies Make the Grade? (Association for Psychological Science, sur Dunlosky et al. 2013)</a></li><li><a href="https://www.learningscientists.org/s/Spaced-Practice-esre.pdf" target="_blank" rel="noopener">Spaced Practice (The Learning Scientists)</a></li><li><a href="https://en.wikipedia.org/wiki/Worked-example_effect" target="_blank" rel="noopener">Worked-example effect (Wikipédia)</a></li><li><a href="https://hg.gatech.edu/node/603172" target="_blank" rel="noopener">Ericson : les problèmes de Parsons (Georgia Tech)</a></li><li><a href="https://brilliant.org/resources/choosing-brilliant/how-brilliant-teaches-math/" target="_blank" rel="noopener">How Brilliant teaches math</a></li><li><a href="https://mathacademy.com/pedagogy" target="_blank" rel="noopener">Math Academy : pedagogy</a></li></ul></section></div>`;badges();}
 
 /* ================= synchronisation entre appareils (gist GitHub secret) ================= */
 const SKEY="rev-s1-synchro",FILE="revisions-s1-progression.json";
