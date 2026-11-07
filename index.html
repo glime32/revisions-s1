@@ -3980,7 +3980,7 @@ const infos=({sec,exam})=>`<div class="title-row"><h1>Le CC1 d'algorithmique en 
  ${sec(5,"Documents",`<p>Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment). Aucun matériel électronique. Prépare-la avec la page « Ma feuille A4 ».</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.32,key:"rev-algo-v1",lang:"pseudo",
- exam:{day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",unsure:"Heure supposée : ton TD d'algo de 15h."},
+ exam:{day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
  docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Pas de preuves, complexité ni tris.",
  chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",7:"Pas au CC1 (pas encore vu)"},
@@ -4289,7 +4289,7 @@ add(5,{id:"pf-erreurs",type:"meth",ref:"Synthèse",t:"Les erreurs classiques à 
  q:"Pourquoi f n - 1 ne calcule-t-il pas f (n − 1) ?",a:"L'application de fonction est prioritaire : f n - 1 se lit (f n) - 1. Dans une fonction récursive, cela boucle à l'infini.",rel:["pf-types","pf-rec","p/recettes"]});
 
 /* ---------- chapitre 6 : pas sûr que ça tombe ---------- */
-add(6,{id:"pf-match",type:"def",maybe:"Ton mail dit que le filtrage n'est pas sûr. Toutes les fonctions du site sont écrites sans match : apprends d'abord celles-là. Lis cette fiche s'il te reste du temps, pour savoir évaluer un match (TD ex. 32).",ref:"Cours p. 58, TD ex. 32 à 34",t:"Le filtrage : match … with",short:"Le filtrage (match)",
+add(7,{id:"pf-match",type:"def",out:"Pas au CC du 13/11 : le prof l'a écrit le 5/11, le contrôle porte sur tout jusqu'aux listes incluses, « sans le filtrage ». Garde cette fiche pour l'examen de janvier.",ref:"Cours p. 58, TD ex. 32 à 34",t:"Le filtrage : match … with",short:"Le filtrage (match)",
  plain:`match compare une valeur à ${hl("des motifs, de haut en bas")}, et prend le ${hl("premier qui correspond")}. Sur les listes, les deux motifs de base sont [] et x :: r. when ajoute une condition, _ attrape tout.`,
  fig:()=>matchLab,
  formal:`${M(`match e with
@@ -4432,7 +4432,7 @@ let rec suffixe : int list -> int list -> bool = fun l1 l2 ->
 
 let rec facteur : int list -> int list -> bool = fun l1 l2 ->
   prefixe l1 l2 || (l2 <> [] && facteur l1 (List.tl l2))`)},
- {id:"32",s:2,note:"filtrage, pas sûr",t:"Évaluer un match",en:"Valeur du match de l'exercice 32 pour n = 0, 6 et 3.",link:"pf-match",sol:`<p>n = 0 → 0 (pair : 0/2). n = 6 → 3. n = 3 → 4 (impair : 3 + 1) ; le cas « 3 » n'est jamais atteint.</p>`},
+ {id:"32",s:2,note:"filtrage",out:"pas au CC du 13/11 (sans filtrage)",t:"Évaluer un match",en:"Valeur du match de l'exercice 32 pour n = 0, 6 et 3.",link:"pf-match",sol:`<p>n = 0 → 0 (pair : 0/2). n = 6 → 3. n = 3 → 4 (impair : 3 + 1) ; le cas « 3 » n'est jamais atteint.</p>`},
  {id:"35",s:2,note:"pas sûr",t:"nbOcc",en:"Nombre d'occurrences d'une valeur dans une liste. nbOcc 3 [3;8;9;3;0] = 2.",link:"pf-lili",sol:M(`let rec nbOcc : int -> int list -> int = fun x li ->
   if li = [] then 0
   else (if List.hd li = x then 1 else 0) + nbOcc x (List.tl li)`)},
@@ -4562,15 +4562,15 @@ let rec div n i = if i = 0 then ... else if n mod i = 0 then ... else ...`)}<p>r
 </div>`;
 const types=({sec})=>`<div class="title-row"><h1>Entraînement : types et valeurs</h1></div><p class="lead">27 expressions tirées du TD et du partiel. Choisis le type, lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : c'est 3 points faciles au contrôle.</p><div id="drill"></div>`;
 const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation fonctionnelle en bref</h1></div>
- ${sec(1,"Quand et où",`<p>Le contrôle écrit d'1 h, prévu le 23 octobre, a été reporté. Tu dis qu'il a lieu vendredi : je l'ai placé à 10h, sur le cours magistral qui occupe deux amphis (5.03 et 5.01) dans ton emploi du temps. Corrige l'heure dans « Examens et coefficients » si besoin.</p>`)}
+ ${sec(1,"Quand et où",`<p>Vendredi 13 novembre à 9h45, d'après le mail de David Delahaye du 5 novembre. Amphi 5.01 si ton nom de famille commence par une lettre de A à M, amphi 5.03 de N à Z. L'épreuve dure 1 h (1 h 20 avec un tiers-temps).</p>`)}
  ${sec(2,"Le poids",`<p>Note finale = 0,30 × contrôle écrit + 0,03 × TP noté + 0,67 × examen de janvier. Coefficient 5 dans le semestre.</p>`)}
- ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment) : prépare-la avec la page « Ma feuille A4 ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme : jusqu'aux listes comprises (TD ex. 1 à 31). D'après le mail : pas de polymorphisme ; le filtrage (match) n'est pas sûr.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Tout le site écrit les fonctions sans match, avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, qui marche dans tous les cas.</li></ul>`)}
+ ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Le seul document autorisé est une feuille A4 recto-verso, écrite comme tu veux : prépare-la avec la page « Ma feuille A4 ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme (mail du prof du 5/11) : tout ce qui a été vu jusqu'aux listes incluses, <b>sans le filtrage</b> (TD ex. 1 à 31). Pas de polymorphisme.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Écris les fonctions sur les listes avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, comme partout sur le site.</li></ul>`)}
  ${sec(4,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["pf/cours.pdf","Cours complet"],["pf/td.pdf","Feuille de TD"],["pf/partiel_oct2021.pdf","Partiel 2021"],["pf/exam_jan2024_sujet.pdf","Examen 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:0.30,key:"rev-pf-v1",lang:"ml",
- exam:{day:"2026-11-13",start:"10:00",end:"11:00",place:"amphis 5.03 et 5.01",dur:"1 h",unsure:"Heure supposée : le cours magistral de 10h."},
- docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Refais l'entraînement « types et valeurs » une fois, relis ta feuille A4, puis les erreurs classiques.",
- prog:"Sur papier. OCaml jusqu'aux listes comprises (TD ex. 1 à 31) : types, fonctions et signatures, récursivité sur les entiers et les listes. Pas de polymorphisme ; filtrage pas sûr.",
+ exam:{day:"2026-11-13",start:"09:45",end:"10:45",place:"amphi 5.01 si ton nom commence par A à M, 5.03 sinon",dur:"1 h",unsure:""},
+ docs:"une feuille A4 recto-verso, écrite comme tu veux (seul document autorisé)",examMinutes:60,examMorning:"Refais l'entraînement « types et valeurs » une fois, relis ta feuille A4, puis les erreurs classiques.",
+ prog:"Sur papier. D'après le mail du prof (5/11) : tout ce qui a été vu jusqu'aux listes incluses, sans le filtrage (TD ex. 1 à 31). Types, fonctions et signatures, récursivité sur les entiers et les listes. Pas de polymorphisme.",
  chapters:{1:"1. Expressions et types",2:"2. Fonctions et signatures",3:"3. Récursivité sur les entiers",4:"4. Listes (TD ex. 22 à 31)",5:"5. À relire avant le contrôle",6:"Pas sûr qu'il tombe",7:"Pas au contrôle"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
@@ -5483,7 +5483,7 @@ FIN`)+"<p>cons ajoute devant : on parcourt le tableau à l'envers pour garder l'
 </script>
 <script>
 /* Leçons pas à pas de programmation fonctionnelle (HAI102I, OCaml, contrôle du vendredi 13 novembre, sur papier).
-   Programme : jusqu'aux listes comprises (TD ex. 1 à 31). Pas de polymorphisme ; le filtrage (match) n'est pas sûr.
+   Programme : jusqu'aux listes comprises (TD ex. 1 à 31). Pas de polymorphisme ; sans le filtrage (mail du prof du 5/11).
    Les fonctions sont écrites comme dans le cours : let rec f : type = function x -> if … then … else … */
 (function(){
 const LES=window.LESSONS=window.LESSONS||{};
@@ -5631,7 +5631,7 @@ let rec liDivInf : int -> int -> int list = fun n i ->
  K("Garder ou enlever des éléments ?","Base []. Garder : List.hd li :: g (List.tl li). Enlever : g (List.tl li).")]},
 
 /* ------------------------------------------------------------------ */
-{id:"p-match",t:"Au cas où : lire un filtrage (match)",min:8,p:3,goal:"Le mail dit que le filtrage n'est pas sûr : savoir au moins évaluer un match (TD, exercice 32).",steps:[
+{id:"p-match",ex:"ct",t:"Lire un filtrage (match)",min:8,p:3,goal:"Pour l'examen de janvier (le CC du 13/11 est sans filtrage, mail du prof) : savoir évaluer un match (TD, exercice 32).",steps:[
  L("match … with",`<p>match compare une valeur à des <b>motifs, de haut en bas</b>, et prend le <b>premier qui correspond</b>. when ajoute une condition, _ attrape tout. Sur les listes, x :: r donne un nom à la tête (x) et à la queue (r).</p><p>Tout le reste du site est écrit sans match : apprends d'abord la forme avec if.</p>`,{fig:"pf-match"}),
  Q("Avec le match de l'exercice 32, que vaut le résultat pour n = 6 ?",["3","7","0","2"],0,"6 n'est pas 1, n'est pas négatif, et il est pair : on prend n / 2 = 3.",{code:`match n with
 | 1 -> 1
@@ -5904,7 +5904,7 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
 "use strict";
 window.EXT={init(A){
 const {work,factor,measured,doneTodayMin}=A;
-const {$,SUBJ,SIDS,ST,LES,emit,today,NOW,addDays,dayName,exam,examStart,jx,hm,hh,sec,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,fixLinks,mount,cardIds}=A;
+const {$,SUBJ,SIDS,ST,LES,lesOf,emit,today,NOW,addDays,dayName,exam,examStart,jx,hm,hh,sec,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,fixLinks,mount,cardIds}=A;
 const esc=W.esc;
 const BYL={};SIDS.forEach(id=>{BYL[id]={};(LES[id]||[]).forEach((L,i)=>{L.i=i;L.sid=id;BYL[id][L.id]=L;});});
 const upcoming=()=>SIDS.filter(id=>examStart(SUBJ[id])>NOW()).sort((a,b)=>examStart(SUBJ[a])-examStart(SUBJ[b]));
@@ -6134,10 +6134,10 @@ const ruler=`<span class="ecrin__ruler" aria-hidden="true"></span>`;
 function sw(o){return `<li><a class="swatch ${o.c||"c-bleu"}${o.size?" swatch--"+o.size:""}${o.done?" is-done":""}" href="${o.href}"${o.ext?' target="_blank" rel="noopener"':""}><span class="swatch__tile" aria-hidden="true">${o.tile==null?ico("i-star"):o.tile}</span><span class="swatch__bar">${o.kicker?`<span class="swatch__kicker">${o.kicker}</span>`:""}<span class="swatch__name">${o.name}</span>${o.sub?`<span class="swatch__sub">${o.sub}</span>`:""}${ico("i-arrow","ico swatch__arrow")}</span></a></li>`;}
 const ttl=(t,lead)=>`<h1 class="stitle">${t}</h1>${lead?`<p class="hlead">${lead}</p>`:""}`;
 const tiroir=(t,body,cls)=>`<section class="tiroir${cls?" "+cls:""}"><h2 class="tiroir__title">${t}</h2>${body}</section>`;
-const lessonsDone=id=>(LES[id]||[]).filter(x=>isDone(id,SUBJ[id].TB["L-"+x.id])).length;
+const lessonsDone=id=>lesOf(id).filter(x=>isDone(id,SUBJ[id].TB["L-"+x.id])).length;
 const shortDay=S=>{const e=exam(S);return `${dayName(e.day,false,true)} · ${e.start.replace(":","h")}`;};
 function jxTag(S){const j=jx(S);return `<span class="tag${j==="demain"||j==="aujourd'hui"?" hot":""}">${j==="passé"?"CC passé":j==="aujourd'hui"?"CC aujourd'hui":j==="demain"?"CC demain":"CC "+j}</span>`;}
-function subjPiece(id){const S=SUBJ[id],n=(LES[id]||[]).length,d=lessonsDone(id),r=S.ORDER.filter(c=>ST[id].review[c.id]).length;
+function subjPiece(id){const S=SUBJ[id],n=lesOf(id).length,d=lessonsDone(id),r=S.ORDER.filter(c=>ST[id].review[c.id]).length;
   return `<li class="slot s-${id}"><a class="piece" href="#/${id}" data-zoom="Fiches, leçons, annales">${jxTag(S)}${spark}<span class="piece__paper">${artSVG(ART[id]||"etoile")}</span><span class="piece__text"><span class="piece__title">${S.name}</span><span class="piece__meta">${shortDay(S)}</span><span class="piece__sub">${d} ${plural(d,"leçon")} sur ${n}${r?` · <span class="r">${r} en rouge</span>`:""}</span></span><span class="piece__bar" aria-hidden="true"><i style="width:${n?Math.round(d/n*100):0}%"></i></span></a></li>`;}
 const ordered=()=>{const up=upcoming();return up.concat(SIDS.filter(id=>!up.includes(id)));};
 const dayBox=(title,sub,inner,open)=>`<details class="day"${open?" open":""}><summary><b>${title}</b><span>${sub}</span></summary>${inner}</details>`;
@@ -6158,11 +6158,11 @@ document.addEventListener("keydown",e=>{
 function nextTask(P){
   const t0=today(),n=NOW();P=P||plan();
   const keys=new Set(Object.keys(progAll()));SIDS.forEach(sid=>Object.keys((ST[sid]||{}).pos||{}).forEach(lid=>keys.add(sid+"/"+lid)));
-  let best=null;keys.forEach(k=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n)return;const g=progGet(sid,lid);if(g&&(!best||g.ts>best.ts))best={sid,lid,ts:g.ts,g};});
+  let best=null;keys.forEach(k=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n||!BYL[sid][lid]||!A.inScope(SUBJ[sid],BYL[sid][lid]))return;const g=progGet(sid,lid);if(g&&(!best||g.ts>best.ts))best={sid,lid,ts:g.ts,g};});
   if(best&&SUBJ[best.sid].TB["L-"+best.lid])return {sid:best.sid,t:SUBJ[best.sid].TB["L-"+best.lid],resume:best.g,today:true};
   const triedToday=(sid,t)=>t.lesson&&(ST[sid].les[t.lesson]||{}).on===t0;
   for(const b of P.blocks.filter(b=>b.day===t0)){const t=b.tasks.map(id=>SUBJ[b.sid].TB[id]).find(t=>t&&!isDone(b.sid,t)&&!triedToday(b.sid,t));if(t)return {sid:b.sid,t,today:true};}
-  for(const id of upcoming()){const L=(LES[id]||[]).find(x=>{const t=SUBJ[id].TB["L-"+x.id];return !isDone(id,t)&&!triedToday(id,t);});if(L)return {sid:id,t:SUBJ[id].TB["L-"+L.id],today:false};}
+  for(const id of upcoming()){const L=lesOf(id).find(x=>{const t=SUBJ[id].TB["L-"+x.id];return !isDone(id,t)&&!triedToday(id,t);});if(L)return {sid:id,t:SUBJ[id].TB["L-"+L.id],today:false};}
   return null;}
 
 /* ================= Aujourd'hui ================= */
@@ -6211,7 +6211,7 @@ function home(){
 /* ================= Apprendre : toutes les leçons ================= */
 function apprendre(){
   let h=`<div class="page wide">${ttl("Apprendre","Des leçons courtes, dans l'ordre de tes CC. Une question à chaque écran, la correction tout de suite. L'étoile marque la prochaine leçon ; celles ratées reviennent dans ton programme.")}`;
-  ordered().forEach((id,k)=>{const S=SUBJ[id],Ls=LES[id]||[],st=ST[id],d=lessonsDone(id);let firstTodo=null;
+  ordered().forEach((id,k)=>{const S=SUBJ[id],Ls=lesOf(id),st=ST[id],d=lessonsDone(id);let firstTodo=null;
     const items=Ls.map((L,i)=>{const r=st.les[L.id],dn=isDone(id,S.TB["L-"+L.id]),redo=!dn&&!!r,isNext=!dn&&!firstTodo;if(isNext)firstTodo=L;
       const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":L.p>1?" is-later":"";
       const pg=dn?null:progGet(id,L.id);
@@ -6222,7 +6222,7 @@ function apprendre(){
 
 /* ================= une matière : tout ce qu'il y a dedans ================= */
 function subject(sid){
-  const S=SUBJ[sid],st=ST[sid],P=plan(),t0=today(),e=exam(S),Ls=LES[sid]||[],d=lessonsDone(sid);
+  const S=SUBJ[sid],st=ST[sid],P=plan(),t0=today(),e=exam(S),Ls=lesOf(sid),d=lessonsDone(sid);
   const nextL=Ls.find(L=>!isDone(sid,S.TB["L-"+L.id]));
   const inProg=S.ORDER.filter(c=>!c.out),red=S.ORDER.filter(c=>st.review[c.id]).length,known=inProg.filter(c=>st.known[c.id]).length,tdk=S.td.filter(x=>st.td[x.id]).length,c="s-"+sid;
   let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`CC <b>${examLine(S)}</b> (${jx(S)}), ${e.place}, ${e.dur}. Documents : ${S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${S.prog}</p>`;
@@ -6359,7 +6359,7 @@ return {
 (function(){
 "use strict";
 const $=s=>document.querySelector(s);
-const SUBJ=window.SUBJ,SIDS=["geo","algo","pf","calc"].filter(id=>SUBJ[id]);
+const SUBJ=window.SUBJ,SIDS=["geo","algo","pf","calc","lin","ana","rai","usi","aut"].filter(id=>SUBJ[id]);
 const TYPE={def:["Définition","def"],ax:["Axiome","ax"],th:["Théorème","th"],demo:["Démo exigible","demo"],td:["Résultat de TD","th"],meth:["Méthode","th"],algo:["Algorithme","def"],code:["À savoir écrire","def"]};
 const an=s=>`<span class="ang">${s}</span>`;
 const LES=window.LESSONS||{};
@@ -6442,10 +6442,19 @@ const status=(sid,cid)=>{const st=ST[sid];return st.known[cid]?"known":st.review
 function setStatus(sid,cid,s){emit({k:"st",s:sid,c:cid,v:s});}
 
 /* ---------- examens ---------- */
-function exam(S){const o=hub.exams[S.id]||{};return Object.assign({},S.exam,o);}
+/* Une matière peut avoir plusieurs épreuves (CC1, CC2, examen de janvier) : la courante est la première qui n'est pas finie.
+   Chaque leçon, étape ou fiche dit pour quelle épreuve elle compte (champ ex, la première par défaut) ;
+   une épreuve couvre ses propres leçons, ou celles listées dans covers. */
+const examsOf=S=>S.exams||[Object.assign({id:"cc1"},S.exam)];
+const examKey=(S,i)=>i===0?S.id:S.id+"."+examsOf(S)[i].id;
+function examAt(S,i){const e=examsOf(S)[i];return Object.assign({label:"CC"},e,hub.exams[examKey(S,i)]||{},{idx:i});}
+function exam(S){const L=examsOf(S),n=NOW();for(let i=0;i<L.length;i++){const e=examAt(S,i);if(i===L.length-1||toD(e.day,mm(e.end||e.start))>n)return e;}}
+const exId=(S,x)=>x.ex||examsOf(S)[0].id;
+const inScope=(S,x)=>{const e=exam(S);return (e.covers||[e.id]).includes(exId(S,x));};
+const lesOf=id=>(LES[id]||[]).filter(L=>inScope(SUBJ[id],L));
 const examStart=S=>{const e=exam(S);return toD(e.day,mm(e.start));};
 function jx(S){const e=exam(S),n=NOW(),k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
-const weight=S=>S.coef*S.share;
+const weight=S=>{const e=exam(S);return S.coef*(e.share!=null?e.share:S.share);};
 const WMAX=Math.max(...SIDS.map(id=>weight(SUBJ[id])));
 
 /* ---------- thème : un seul, le noir du nouvel onglet ---------- */
@@ -6457,14 +6466,41 @@ const quizGoal=(S,t)=>{const n=activeQuiz(S).length;return t.quiz<=1?Math.ceil(t
 function isDone(sid,t){const st=ST[sid];if(t.lesson){const L=st.les[t.lesson];return !!L&&(L.best>=0.5||L.n>=2);}/* une leçon ratée (moins de 50 %) reste à refaire une fois */if(t.items)return t.items.every(id=>st.known[id]);if(t.td)return t.td.every(x=>st.td[x]);if(t.quiz)return st.best>=quizGoal(SUBJ[sid],t)||!!st.tasks[t.id];return !!st.tasks[t.id];}
 function doneOn(sid,t){const st=ST[sid];if(t.lesson)return (st.les[t.lesson]||{}).on||"";if(t.items)return t.items.map(id=>st.knownOn[id]||"").sort().pop();if(t.td)return t.td.map(x=>st.tdOn[x]||"").sort().pop();if(t.quiz)return st.quizOn||st.tasks[t.id]||"";return st.tasks[t.id]||"";}
 
-/* ---------- emploi du temps (semaine S46, d'après la photo) ---------- */
+/* ---------- emploi du temps : Prose (groupe Maths A + double licence), lu le 7/11/2026, jusqu'au 18/12 ----------
+   [début, fin, matière, détail, matière du site]. Les CC y sont aussi : tant que la matière n'est pas dans le site, ils comptent comme des heures prises. */
 const CLASSES={
- "2026-11-09":[["08:00","09:45","Géométrie","CM, amphi 5.03","geo"],["10:00","11:30","Algèbre","TD 2.02"],["11:30","13:00","Géométrie","TD 5.207","geo"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
- "2026-11-10":[["08:00","09:30","Analyse","TD 5.207"],["11:30","13:00","Calculus","TD 5.205","calc"],["15:00","16:30","Automates","CM, amphi 5.01"],["16:45","18:15","Calculus","TD 36.302","calc"]],
+ "2026-11-09":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["11:30","13:00","Géométrie","TD 5.207","geo"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
+ "2026-11-10":[["08:00","09:30","Analyse","TD 5.207","ana"],["11:30","13:00","Calculus","TD 5.205","calc"],["15:00","16:30","Automates","CM, amphi 5.01","aut"],["16:45","18:15","Calculus","TD 36.302","calc"]],
  "2026-11-11":[],
- "2026-11-12":[["08:00","09:30","Géométrie","TD 5.211","geo"],["10:00","11:30","Calculus","TD 5.207","calc"],["11:30","13:00","Algèbre","CM, amphi 5.01"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
- "2026-11-13":[["08:00","09:30","Automates","TD 2.09"],["10:00","11:30","Prog. fonctionnelle","CM, amphis 5.03 et 5.01","pf"],["11:30","13:00","Prog. fonctionnelle","TD 5.130","pf"],["15:00","16:30","Calculus","amphi 5.01","calc"]]};
+ "2026-11-12":[["08:00","09:30","Géométrie","TD 5.211","geo"],["09:45","11:15","Calculus","TD 5.207","calc"],["11:30","13:00","Algèbre","CM, amphi 5.01","lin"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
+ "2026-11-13":[["08:00","09:30","Automates","TD 2.09","aut"],["09:45","11:15","Prog. fonctionnelle","CM, amphis 5.03 et 5.01","pf"],["11:30","13:00","Prog. fonctionnelle","TD info 5.130","pf"],["15:00","16:30","Calculus","CC1, amphi 5.01","calc"]],
+ "2026-11-16":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["11:30","13:00","Algèbre","TD 2.02","lin"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
+ "2026-11-17":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Algèbre","CM, amphi 5.02","lin"]],
+ "2026-11-18":[["08:00","09:30","USI","CM, amphi 5.06","usi"],["09:45","11:15","USI","TD info 36.206","usi"],["11:30","13:00","USI","TD info 36.206","usi"],["15:00","16:30","Analyse","CM, amphi 5.04","ana"],["16:45","18:15","Analyse","TD 5.202","ana"]],
+ "2026-11-19":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.01","lin"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
+ "2026-11-20":[["08:00","09:30","Automates","TD 2.09","aut"],["09:45","11:15","Prog. fonctionnelle","CM, amphi 5.01","pf"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"],["15:00","16:30","Algèbre","CC1, amphi 5.06","lin"]],
+ "2026-11-23":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Analyse","CC1, amphi 5.01","ana"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
+ "2026-11-24":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Analyse","CM, amphi 5.03","ana"]],
+ "2026-11-25":[["09:45","11:15","USI","TD info 36.206","usi"],["11:30","13:00","USI","TD info 36.206","usi"],["15:00","16:30","Analyse","CM, amphi 5.04","ana"]],
+ "2026-11-26":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.03","lin"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
+ "2026-11-27":[["08:00","09:30","Automates","TD 2.09","aut"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"]],
+ "2026-11-30":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["11:30","13:00","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
+ "2026-12-01":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Géométrie","CM, amphi 5.03","geo"]],
+ "2026-12-02":[["15:00","16:30","Analyse","CM, amphi 5.01","ana"],["16:45","18:15","Analyse","TD 5.202","ana"]],
+ "2026-12-03":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.03","lin"],["15:00","16:30","Algorithmique 1","TD 36.310","algo"],["16:45","18:15","Algorithmique 1","TD 36.310","algo"]],
+ "2026-12-04":[["08:00","09:30","Automates","TD 2.09","aut"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"],["15:00","16:30","Raisonnement","CC2, amphi 5.05","rai"]],
+ "2026-12-07":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"]],
+ "2026-12-08":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Analyse","CM, amphi 5.06","ana"]],
+ "2026-12-09":[["15:00","16:30","Analyse","CM, amphi 5.06","ana"]],
+ "2026-12-10":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.06","lin"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
+ "2026-12-11":[["08:00","09:30","Automates","TD 2.09","aut"],["09:45","11:15","Géométrie","CC2, amphi Dumontet","geo"],["13:15","14:45","Calculus","CC2, amphi 5.02","calc"]],
+ "2026-12-14":[["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM","algo"]],
+ "2026-12-15":[["08:00","09:30","Analyse","TD 5.206","ana"],["09:45","11:15","Algèbre","CM, amphi 5.03","lin"]],
+ "2026-12-16":[["15:00","16:30","Analyse","CC2, amphi 5.01","ana"]],
+ "2026-12-17":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CC2, amphi 5.06","lin"]],
+ "2026-12-18":[]};
 const HOLIDAY={"2026-11-11":"11 novembre, férié"};
+["2026-12-21","2026-12-22","2026-12-23","2026-12-24","2026-12-25","2026-12-28","2026-12-29","2026-12-30","2026-12-31","2027-01-01"].forEach(d=>{HOLIDAY[d]="vacances de Noël";});
 const WIN=[[480,750],[840,1140],[1200,1350]];/* 8h-12h30, 14h-19h, 20h-22h30 */
 function busyOf(day){
   const b=[];(CLASSES[day]||[]).forEach(c=>{const isExam=SIDS.some(id=>{const e=exam(SUBJ[id]);return e.day===day&&Math.abs(mm(e.start)-mm(c[0]))<=20;});if(!isExam)b.push([mm(c[0]),mm(c[1])]);});
@@ -6488,7 +6524,7 @@ function freeBlocks(day,from,capOv){
 }
 
 /* ---------- le plan de la semaine ---------- */
-function pendingTasks(sid){return SUBJ[sid].tasks.filter(t=>!isDone(sid,t));}
+function pendingTasks(sid){const S=SUBJ[sid];return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t));}
 function buildPlan(){
   const n=NOW(),t0=ymd(n),nowMin=n.getHours()*60+n.getMinutes();
   const active=SIDS.filter(id=>examStart(SUBJ[id])>n&&pendingTasks(id).length);
@@ -6523,7 +6559,7 @@ function buildPlan(){
   for(let i=0;i<blocks.length;i++){
     const B=blocks[i],bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     let best=null,bestScore=-1;
-    active.forEach(id=>{if(!Q[id].length||be>dl(id))return;
+    active.forEach(id=>{if(!Q[id].length||be>dl(id)||B.day<(SUBJ[id].from||""))return;
       const finalWin=dl(id)-bs<=30*3600e3;
       const elig=Q[id].filter(t=>(!t.last||finalWin));if(!elig.some(t=>fitsIn(t,dur)))return;
       let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
@@ -6543,7 +6579,7 @@ function buildPlan(){
   const BQ={};active.forEach(id=>{BQ[id]=(plan.bonus[id]||[]).map(tid=>SUBJ[id].TB[tid]).concat(Q[id]).sort((x,y)=>(x.p-y.p)||(x.i-y.i));Q[id]=[];});
   for(let i=0;i<blocks.length;i++){const B=blocks[i];if(B.sid)continue;const bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     /* d'abord l'étape la plus importante (p le plus petit), puis la matière au plus fort coefficient dont le CC est le plus proche */
-    let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id))return;const f=BQ[id].filter(t=>!t.last&&fitsIn(t,dur));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
+    let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id)||B.day<(SUBJ[id].from||""))return;const f=BQ[id].filter(t=>!t.last&&fitsIn(t,dur));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
     if(!best)continue;const {tk,used}=fill(best,B,dur,BQ,false);if(tk.length)place(i,best,tk,used,dur,true);}
   plan.blocks.sort((x,y)=>x.day<y.day?-1:x.day>y.day?1:x.start-y.start);
   plan.assign={};plan.blocks.forEach((B,k)=>B.tasks.forEach(tid=>plan.assign[B.sid+":"+tid]=k));
@@ -6634,10 +6670,11 @@ function edt(){
 
 /* ---------- examens et coefficients ---------- */
 function examens(){
-  const rows=SIDS.map(id=>{const S=SUBJ[id],e=exam(S);return `<tr><td><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code}</span></td><td><input type="date" value="${e.day}" data-ex="${id}:day"> <input type="time" value="${e.start}" data-ex="${id}:start"><br><span class="muted">${e.place}, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}</td><td>${S.coef}</td><td>${Math.round(S.share*100)} %</td><td><b>${String(weight(S).toFixed(2)).replace(".",",")}</b></td><td>${S.docs}</td></tr>`;}).join("");
+  const n0=NOW(),rows=SIDS.map(id=>{const S=SUBJ[id],L=examsOf(S);return L.map((x,i)=>{const e=examAt(S,i),past=toD(e.day,mm(e.end||e.start))<=n0,sh=e.share!=null?e.share:S.share;
+    return `<tr${past?' class="muted"':""}>${i===0?`<td rowspan="${L.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":""}</td><td><input type="date" value="${e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted">${e.place}, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("");}).join("");
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Examens et coefficients</h1></div>
    <p class="lead">D'après le document officiel des modalités de contrôle 2026-2027 et les pages Moodle. Le poids d'un CC dans ta moyenne du semestre, c'est le coefficient de la matière multiplié par la part de ce CC dans sa note.</p>
-   <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Matière</th><th>Date et heure du CC</th><th>Coef</th><th>Part du CC</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
+   <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Matière</th><th>Épreuve</th><th>Date et heure</th><th>Part de la note</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
    <section class="check"><h2 style="font-size:1.1rem">Ton rythme de révision</h2><p class="muted">Le temps de révision prévu au maximum par jour. Le plan se recalcule tout de suite.</p><div class="filters" id="ry">${[["leger","Léger : 3 h de travail les jours libres, 1 h 30 les jours de cours"],["normal","Normal : 4 h 30 et 2 h 30"],["intensif","Intensif : 6 h et 3 h 30"]].map(r=>`<button class="btn" data-ry="${r[0]}" aria-pressed="${(hub.rythme||"normal")===r[0]}">${r[1]}</button>`).join("")}</div><p class="muted" id="ryout"></p><p class="muted" style="font-size:.9rem">Sans compter les pauses : 15 min au milieu de chaque séance de plus d'une heure, et 20 min entre deux séances.</p></section>
    <section class="check"><h2 style="font-size:1.1rem">Ta vitesse</h2><p class="muted">Combien de fois plus de temps qu'indiqué au départ une leçon te prend. Par défaut, le site la mesure sur tes leçons (pause comprise jusqu'à 20 min par écran). Tu peux la fixer toi-même si la mesure te semble fausse.</p><div class="filters" id="vi">${[["auto",(SIDS.some(id=>measured(id)==="mesuré")?"Mesurée : ×":"Automatique (estimée pour l'instant) : ×")+String(factor().toFixed(1)).replace(".",",")],["2","×2"],["3","×3"],["4","×4"],["5","×5"]].map(r=>`<button class="btn" data-vi="${r[0]}" aria-pressed="${(hub.vitesse||"auto")===r[0]}">${r[1]}</button>`).join("")}</div></section>
    <section class="usage"><h2>Ce que ça change</h2><p>Les coefficients ne sont pas tous égaux : l'algorithmique et la programmation fonctionnelle (coef 5) pèsent plus que la géométrie (coef 4) et le calculus (coef 3). Le planificateur s'en sert pour départager deux matières aussi urgentes, et pour choisir quoi laisser tomber s'il manque du temps.</p><p>Si une heure de CC change, corrige-la dans le tableau : le plan se recalcule tout seul.</p></section></div>`;
@@ -6891,7 +6928,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 APP.onChange=APP.ext.onChange||null;
 window.addEventListener("hashchange",route);
