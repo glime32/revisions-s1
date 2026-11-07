@@ -709,6 +709,11 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 
 
 /* compléments */
+body{overscroll-behavior-y:none}
+.resume{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:2px solid var(--cornflower);background:color-mix(in srgb,var(--cornflower) 10%,#000);border-radius:14px;padding:10px 12px;animation:rise .35s var(--snap)}
+.lp-left{color:var(--graphite);text-transform:none;letter-spacing:0;font-weight:700}
+.kbdhint{font-size:.8rem;color:var(--graphite);text-align:center;margin:0}
+@media (pointer:coarse){.kbdhint .kb{display:none}}
 .pausebar{border:2px solid var(--vert);background:color-mix(in srgb,var(--vert) 10%,#000);border-radius:14px;padding:12px 14px;display:grid;gap:8px;line-height:1.5;animation:rise .35s var(--snap)}
 .pausebar>b{color:var(--vert)}
 .bilan{border:2px dashed color-mix(in srgb,var(--violet-hi) 45%,transparent);border-radius:14px;padding:12px 14px;display:grid;gap:8px;line-height:1.55}
@@ -5721,12 +5726,21 @@ function flow(L){if(L.flow)return L.flow;const out=[],T=L.steps;
     if(st.k==="learn"&&nx&&nx.k==="qcm"&&!(i===1&&T[0].k==="qcm")){out.push(Object.assign({},nx,{k:"pre"}));out.push(Object.assign({},st,{look:nx.q}));}
     else out.push(st);});
   return L.flow=out;}
+/* reprendre une leçon là où on l'a laissée : après un rechargement, une fermeture de l'onglet, ou le téléphone qui recharge la page */
+const PKEY="rev-s1-lecons-en-cours";
+const sig=s=>s?s.k+":"+String(s.q||s.h||s.f||s.c||s.x||"").replace(/<[^>]+>/g,"").slice(0,60):"";
+function progAll(){try{const o=JSON.parse(localStorage.getItem(PKEY)||"{}");return o&&typeof o==="object"?o:{};}catch(e){return {};}}
+function progSave(){if(!LP)return;try{const all=progAll(),F=flow(BYL[LP.sid][LP.id]);all[LP.sid+"/"+LP.id]={i:LP.i,n:F.length,sig:sig(F[LP.i]),got:LP.got,t:LP.t||0,ss:LP.ss||{},ts:Date.now()};localStorage.setItem(PKEY,JSON.stringify(all));}catch(e){}}
+function progDrop(sid,lid){try{const all=progAll();delete all[sid+"/"+lid];localStorage.setItem(PKEY,JSON.stringify(all));}catch(e){}}
+function progGet(sid,lid){const p=progAll()[sid+"/"+lid];if(!p||!BYL[sid]||!BYL[sid][lid]||Date.now()-p.ts>14*864e5)return null;const F=flow(BYL[sid][lid]);let i=Math.min(p.i,F.length-1);
+  if(sig(F[i])!==p.sig){const j=F.findIndex(x=>sig(x)===p.sig);if(j>=0)i=j;}return i>0?Object.assign({},p,{i,n:F.length}):null;}
+const newLP=(sid,lid)=>({sid,id:lid,i:0,got:{},t:0,ss:{},last:Date.now()});
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
-  if(!LP||LP.sid!==sid||LP.id!==lid)LP={sid,id:lid,i:0,got:{},t:0,last:Date.now()};else LP.last=Date.now();
+  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid);LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;}}else LP.last=Date.now();
   drawStep();}
-function mark(v,s){if(LP.got[LP.i]==null)LP.got[LP.i]=v;if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});}
+function mark(v,s){if(LP.got[LP.i]==null){LP.got[LP.i]=v;progSave();}if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});}
 /* le temps de travail : compté écran par écran (20 min au plus par écran) ; une absence de plus de 10 min compte comme une pause */
 const WORK={acc:0,last:0,snooze:0};
 function tick(){const now=Date.now();if(LP){LP.t=(LP.t||0)+Math.min(now-(LP.last||now),20*60e3);LP.last=now;}
@@ -5739,18 +5753,21 @@ function drawStep(){
   if(LP.i>=N)return finish();
   const s=F[LP.i];
   const pct=Math.round(LP.i/N*100),from=LP.pp==null?pct:LP.pp,back=!!LP.back;LP.pp=pct;LP.back=false;
+  const est=(SUBJ[LP.sid].TB["L-"+LP.id]||{}).min||L.min,left=Math.max(1,Math.round(est*(N-LP.i)/N/5)*5),resumed=LP.resumed;LP.resumed=false;LP.ss=LP.ss||{};
   $("#main").innerHTML=`<div class="lp s-${LP.sid}">
    <div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter la leçon">✕</a><div class="lp-bar" role="progressbar" aria-label="Avancement dans la leçon" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${LP.i}"><i style="width:${from}%"></i></div><span class="lp-n">${LP.i+1}/${N}</span></div>
-   ${pauseBar()}<div class="lp-kicker">${S.name} · ${esc(L.t)}</div>
+   ${resumed?`<div class="resume" role="status"><span>Tu reprends là où tu t'étais arrêté : écran ${LP.i+1} sur ${N}.</span><button class="btn" id="lp-restart">Recommencer du début</button></div>`:""}${pauseBar()}<div class="lp-kicker">${S.name} · ${esc(L.t)}<span class="lp-left"> · encore ${left<60?`~${left} min`:"~"+hm(left)}</span></div>
    <div class="lp-body${back?" back":""}" id="lpb"></div>
-   <div class="lp-foot"><button class="btn" id="lp-prev"${LP.i?"":" hidden"}>Retour</button><button class="btn pri big" id="lp-next">Continuer</button></div></div>`;
+   <div class="lp-foot"><button class="btn" id="lp-prev"${LP.i?"":" hidden"}>Retour</button><button class="btn pri big" id="lp-next">Continuer</button></div>
+   <p class="kbdhint"><span class="kb">Clavier : 1, 2, 3, 4 pour répondre · Entrée pour continuer. </span>Ta position est gardée : tu peux fermer et reprendre plus tard.</p></div>`;
   const body=$("#lpb"),next=$("#lp-next");
   (STEP[s.k]||STEP.learn)(s,body,next,L);
   if(from!==pct){const bi=$(".lp-bar i");if(bi){void bi.offsetWidth;bi.style.width=pct+"%";}}
   $("#lp-prev").addEventListener("click",()=>{LP.i=Math.max(0,LP.i-1);LP.back=true;drawStep();});
   const pd=$("#pz-done"),pl=$("#pz-later");if(pd)pd.addEventListener("click",()=>{WORK.acc=0;WORK.last=Date.now();$(".pausebar").remove();});if(pl)pl.addEventListener("click",()=>{WORK.snooze=Date.now()+15*60e3;$(".pausebar").remove();});
   next.addEventListener("click",()=>{if(next.disabled)return;if(next.dataset.mode==="check"){next.dispatchEvent(new CustomEvent("check"));return;}LP.i++;drawStep();});
-  fixLinks(body,LP.sid);window.scrollTo(0,0);}
+  const rs=$("#lp-restart");if(rs)rs.addEventListener("click",()=>{progDrop(LP.sid,LP.id);LP=newLP(LP.sid,LP.id);drawStep();});
+  progSave();fixLinks(body,LP.sid);window.scrollTo(0,0);}
 const code=(src,lang)=>W.code(src,lang||SUBJ[LP.sid].lang||"txt");
 const STEP={
  learn(s,body){
@@ -5800,18 +5817,18 @@ const STEP={
     body.querySelector(".lfb").innerHTML=ok?`<div class="expl"><b>Exact.</b> ${s.e||""}</div>`:`<div class="expl no"><b>Pas tout à fait.</b> Les lignes en rouge ne sont pas à leur place. Le bon ordre :</div>${mono?code(lines.join("\n"),s.lang):`<ol class="par-sol">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ol>`}${s.e?`<p class="muted">${s.e}</p>`:""}`;
     mark(ok?1:0,s);next.dataset.mode="";next.textContent="Continuer";next.disabled=false;next.focus();},{once:true});},
  steps(s,body,next){
-  let k=0;const n=s.s.length;
+  const me=LP.i;let k=Math.min((LP.ss[me]||{}).k||0,s.s.length);const n=s.s.length;
   body.innerHTML=`${s.h?`<h2>${s.h}</h2>`:""}${s.intro?`<div class="enon">${s.intro}</div>`:""}<p class="muted">Avant d'afficher chaque étape, essaie de la trouver toi-même.</p><ol class="wex"></ol><button class="btn pri" id="wnext"></button>${s.after?`<div class="lx" id="wafter" hidden>${s.after}</div>`:""}`;
   next.disabled=true;
   const draw=()=>{body.querySelector(".wex").innerHTML=s.s.slice(0,k).map(x=>`<li><div>${x.w}</div>${x.why?`<div class="why">${x.why}</div>`:""}</li>`).join("");const b=body.querySelector("#wnext");if(k>=n){b.hidden=true;next.disabled=false;const af=body.querySelector("#wafter");if(af)af.hidden=false;}else b.textContent=`Afficher l'étape ${k+1} sur ${n}`;};
-  body.querySelector("#wnext").addEventListener("click",()=>{k++;draw();fixLinks(body,LP.sid);});draw();},
+  body.querySelector("#wnext").addEventListener("click",()=>{k++;LP.ss[me]=Object.assign({},LP.ss[me],{k});progSave();draw();fixLinks(body,LP.sid);});draw();},
  demo(s,body,next){
   const c=SUBJ[LP.sid].BY[s.c];if(!c||!c.steps){body.innerHTML=`<p>Démo introuvable.</p>`;return;}
-  let k=0;const n=c.steps.length;
+  const me=LP.i;let k=Math.min((LP.ss[me]||{}).k||0,c.steps.length);const n=c.steps.length;
   body.innerHTML=`<h2>${s.h||"Démo exigible : "+esc(c.ref)}</h2><div class="goal"><b>On suppose</b><span>${c.hyp}</span><b>On montre</b><span>${c.concl}</span></div><p class="idea"><b>L'idée :</b> ${c.idea}</p><div class="lfig"></div><p class="muted">Avant d'afficher chaque étape, essaie de la trouver. Regarde la figure changer.</p><ol class="wex"></ol><button class="btn pri" id="wnext"></button><div class="redac-box" hidden><h3>La preuve rédigée, à savoir refaire</h3><div class="redac">${c.redac||""}</div></div>`;
   const figs=mount(body.querySelector(".lfig"),c);next.disabled=true;
   const draw=()=>{figs.forEach(F=>{if(F.setStep)F.setStep(Math.max(0,k-1));});body.querySelector(".wex").innerHTML=c.steps.slice(0,k).map(x=>`<li><div>${x.w}</div><div class="why">${x.why}</div></li>`).join("");const b=body.querySelector("#wnext");if(k>=n){b.hidden=true;body.querySelector(".redac-box").hidden=false;next.disabled=false;}else b.textContent=`Afficher l'étape ${k+1} sur ${n}`;};
-  body.querySelector("#wnext").addEventListener("click",()=>{k++;draw();});draw();},
+  body.querySelector("#wnext").addEventListener("click",()=>{k++;LP.ss[me]=Object.assign({},LP.ss[me],{k});progSave();draw();});draw();},
  paper(s,body,next){
   const c=s.solc?SUBJ[LP.sid].BY[s.solc]:null;
   body.innerHTML=`<h2>${s.h}</h2><div class="enon">${s.x}</div><div class="paper"><b>Sur une feuille, sans regarder, comme au CC.</b> Compte environ ${s.min||10} minutes. Si tu bloques plus de 2 minutes, écris ce que tu sais et passe à la suite.</div>
@@ -5819,22 +5836,28 @@ const STEP={
    <button class="btn pri" id="psol">J'ai fini : voir la correction</button>
    <div id="pbox" hidden><h3>La correction</h3><div class="sol">${s.sol||""}${c&&c.redac?`<div class="redac">${c.redac}</div>`:""}${s.sol2||""}</div>${s.check?`<p><b>Vérifie ta copie point par point :</b></p><div class="pcheck">${s.check.map(x=>`<label><input type="checkbox"> ${x}</label>`).join("")}</div>`:""}<p><b>Alors, honnêtement ?</b></p><div class="acts" id="prate"><button class="btn rev" data-pr="0">Raté</button><button class="btn" data-pr="0.5">À moitié</button><button class="btn ok" data-pr="1">Réussi</button></div></div>`;
   next.disabled=true;
-  body.querySelector("#ptm").addEventListener("click",e=>{clearInterval(TIMER);const end=Date.now()+(s.min||10)*60e3,v=body.querySelector("#ptv");const tick=()=>{const r=Math.max(0,Math.round((end-Date.now())/1000));v.textContent=`${Math.floor(r/60)}:${String(r%60).padStart(2,"0")}`;if(!r){clearInterval(TIMER);v.textContent="Temps écoulé : regarde la correction.";}};tick();TIMER=setInterval(tick,1000);e.target.hidden=true;});
-  body.querySelector("#psol").addEventListener("click",e=>{clearInterval(TIMER);body.querySelector("#pbox").hidden=false;e.target.hidden=true;fixLinks(body,LP.sid);});
-  body.querySelector("#prate").addEventListener("click",e=>{const b=e.target.closest("[data-pr]");if(!b)return;mark(+b.dataset.pr,s);body.querySelectorAll("#prate button").forEach(x=>x.setAttribute("aria-pressed",x===b));next.disabled=false;});}
+  const me=LP.i,ss=()=>LP.ss[me]=LP.ss[me]||{},keep=o=>{Object.assign(ss(),o);progSave();};
+  const run=end=>{clearInterval(TIMER);const v=body.querySelector("#ptv");body.querySelector("#ptm").hidden=true;const t=()=>{const r=Math.max(0,Math.round((end-Date.now())/1000));v.textContent=`${Math.floor(r/60)}:${String(r%60).padStart(2,"0")}`;if(!r){clearInterval(TIMER);v.textContent="Temps écoulé : regarde la correction.";}};t();if(end>Date.now())TIMER=setInterval(t,1000);};
+  const open=()=>{clearInterval(TIMER);body.querySelector("#pbox").hidden=false;body.querySelector("#psol").hidden=true;fixLinks(body,LP.sid);};
+  const rate=b=>{body.querySelectorAll("#prate button").forEach(x=>x.setAttribute("aria-pressed",x===b));next.disabled=false;};
+  body.querySelector("#ptm").addEventListener("click",()=>{const end=Date.now()+(s.min||10)*60e3;keep({end});run(end);});
+  body.querySelector("#psol").addEventListener("click",()=>{keep({open:true});open();});
+  body.querySelector("#prate").addEventListener("click",e=>{const b=e.target.closest("[data-pr]");if(!b)return;keep({rate:b.dataset.pr});mark(+b.dataset.pr,s);rate(b);});
+  const st=LP.ss[me]||{};if(st.open)open();else if(st.end)run(st.end);if(st.rate!=null){const b=body.querySelector(`#prate [data-pr="${st.rate}"]`);if(b)rate(b);}}
 };
 function finish(){
   const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],sid=LP.sid,lid=LP.id;
   const vals=Object.values(LP.got),sc=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:1;
-  tick();emit({k:"les",s:sid,l:lid,sc:Math.round(sc*100)/100,dur:Math.max(1,Math.round(LP.t/60000))});
-  const nc=cardIds(sid,lid).length,nx=(LES[sid]||[]).find(x=>x.i>L.i&&!isDone(sid,SUBJ[sid].TB["L-"+x.id]));
+  tick();progDrop(sid,lid);emit({k:"les",s:sid,l:lid,sc:Math.round(sc*100)/100,dur:Math.max(1,Math.round(LP.t/60000))});
+  const nc=cardIds(sid,lid).length,nt=nextTask();
   const msg=sc>=0.8?"Bien joué.":sc>=0.5?"C'est en bonne voie.":"C'est normal de se tromper au début : c'est même en se trompant puis en voyant la correction qu'on retient le mieux.";
   const burst=sc>=0.5?`<div class="burst" aria-hidden="true">${[...Array(12)].map((_,i)=>{const a=i/12*Math.PI*2,r=120+(i*37)%60;return `<svg style="--bx:${Math.round(Math.cos(a)*r)}px;--by:${Math.round(Math.sin(a)*r*.7)}px;--dl:${(i%4)*50}ms"><use href="#i-star8"/></svg>`;}).join("")}</div>`:"";
   $("#main").innerHTML=`<div class="page lp-end s-${sid}">${burst}<p class="kick">${S.name}</p><h1>Leçon terminée</h1><p class="lead">${esc(L.t)}</p><p class="score" id="lsc">${Math.round(sc*100)} %</p><p>${msg}${sc<0.5?" Le plan te la reproposera : refais-la demain, à froid.":""}</p>${nc?`<p>${nc} ${plural(nc,"carte")} « À retenir » ${nc>1?"arrivent":"arrive"} dans « Réviser » : tu les reverras demain.</p>`:""}
-   <div class="acts">${nx?`<a class="btn pri big" href="#/lecon/${sid}/${nx.id}">Leçon suivante : ${esc(nx.t)}</a>`:""}<a class="btn" href="#/">Retour à aujourd'hui</a><button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
+   ${nt&&!nt.today?`<p class="allgood">C'est tout ce qui était prévu aujourd'hui. Repose-toi : c'est pendant le repos que ton cerveau range ce que tu viens d'apprendre.</p>`:""}
+   <div class="acts">${nt&&nt.today?`<a class="btn pri big" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:""}<a class="btn${nt&&nt.today?"":" pri"}" href="#/">Retour à aujourd'hui</a>${nt&&!nt.today?`<a class="btn" href="${hrefTask(nt.sid,nt.t)}">Avancer quand même : ${esc(nt.t.t)}</a>`:""}<button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
   const el=$("#lsc"),goal=Math.round(sc*100);
   if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/700),v=Math.round(goal*(1-Math.pow(1-k,3)));el.textContent=v+" %";if(k<1)requestAnimationFrame(f);};el.textContent="0 %";requestAnimationFrame(f);}
-  LP=null;$("#redo").addEventListener("click",()=>{LP={sid,id:lid,i:0,got:{},t:0,last:Date.now()};drawStep();});badges();}
+  LP=null;$("#redo").addEventListener("click",()=>{progDrop(sid,lid);LP=newLP(sid,lid);drawStep();});badges();}
 
 /* ================= Réviser : les cartes du jour ================= */
 let RV=null;
@@ -5850,7 +5873,7 @@ function drawCard(){
   $("#main").innerHTML=`<div class="page">${top}
    <div class="rv s-${it.sid}"><div class="rv-h"><span class="sdot" style="background:${S.color}"></span>${S.name}<span class="muted">· carte ${RV.i+1} sur ${RV.q.length}</span></div>
     <div class="lp-bar"><i style="width:${Math.round(RV.i/RV.q.length*100)}%"></i></div>
-    <div class="kcard${RV.flip?"":" fresh"}"><span class="tag">${esc(S.name)}</span><span class="kk">${RV.flip?"La réponse":"Retrouve de mémoire"}</span><p class="kq">${c.f}</p>${RV.flip?`<div class="ka">${c.b}</div><p class="muted" style="font-size:.85rem;margin:0">${esc(c.src)} · <a href="${c.link}">ouvrir</a></p>`:""}</div>
+    <p class="kbdhint"><span class="kb">Clavier : Espace pour retourner la carte · 1 raté, 2 difficile, 3 je savais.</span></p><div class="kcard${RV.flip?"":" fresh"}"><span class="tag">${esc(S.name)}</span><span class="kk">${RV.flip?"La réponse":"Retrouve de mémoire"}</span><p class="kq">${c.f}</p>${RV.flip?`<div class="ka">${c.b}</div><p class="muted" style="font-size:.85rem;margin:0">${esc(c.src)} · <a href="${c.link}">ouvrir</a></p>`:""}</div>
     ${RV.flip?`<p class="muted">Tu avais trouvé ?</p><div class="acts rate"><button class="btn rev" data-r="0">Raté</button><button class="btn mid" data-r="1">Difficile</button><button class="btn ok" data-r="2">Je savais</button></div>`:`<button class="btn pri big" id="rvflip">Voir la réponse</button>`}</div></div>`;
   const f=$("#rvflip");if(f)f.addEventListener("click",()=>{RV.flip=true;drawCard();});
   document.querySelectorAll("[data-r]").forEach(b=>b.addEventListener("click",()=>{const r=+b.dataset.r;
@@ -5881,14 +5904,32 @@ const ordered=()=>{const up=upcoming();return up.concat(SIDS.filter(id=>!up.incl
 const dayBox=(title,sub,inner,open)=>`<details class="day"${open?" open":""}><summary><b>${title}</b><span>${sub}</span></summary>${inner}</details>`;
 const todoBox=(sid,L)=>`<ol class="todo" style="padding:0 12px 12px">${L.map(t=>taskHTML(sid,t,false)).join("")}</ol>`;
 
+/* ================= raccourcis clavier (sur ordinateur) ================= */
+document.addEventListener("keydown",e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey||e.repeat)return;const tg=e.target;if(tg&&tg.closest&&tg.closest("input,textarea,select"))return;
+  const onBtn=tg&&tg.closest&&tg.closest("button,a");
+  if(location.hash.indexOf("#/lecon/")===0&&$("#lpb")){
+    if(/^[1-9]$/.test(e.key)){const o=[...document.querySelectorAll("#lpb .opts button")][+e.key-1];if(o&&!o.disabled){e.preventDefault();o.click();}return;}
+    if(e.key==="Enter"&&!onBtn){const nx=$("#lp-next");if(nx&&!nx.disabled&&!nx.hidden){e.preventDefault();nx.click();}}return;}
+  if(location.hash.indexOf("#/reviser")===0&&$(".rv")){
+    if((e.key===" "||e.key==="Enter")&&!onBtn){const f=$("#rvflip");if(f){e.preventDefault();f.click();}return;}
+    const m={"1":"0","2":"1","3":"2"}[e.key];if(m){const b=document.querySelector(`[data-r="${m}"]`);if(b){e.preventDefault();b.click();}}}});
+
+/* ================= la prochaine chose à faire ================= */
+function nextTask(P){
+  const t0=today(),n=NOW();P=P||plan();
+  let best=null;Object.entries(progAll()).forEach(([k,p])=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n)return;const g=progGet(sid,lid);if(g&&(!best||p.ts>best.ts))best={sid,lid,ts:p.ts,g};});
+  if(best&&SUBJ[best.sid].TB["L-"+best.lid])return {sid:best.sid,t:SUBJ[best.sid].TB["L-"+best.lid],resume:best.g,today:true};
+  const triedToday=(sid,t)=>t.lesson&&(ST[sid].les[t.lesson]||{}).on===t0;
+  for(const b of P.blocks.filter(b=>b.day===t0)){const t=b.tasks.map(id=>SUBJ[b.sid].TB[id]).find(t=>t&&!isDone(b.sid,t)&&!triedToday(b.sid,t));if(t)return {sid:b.sid,t,today:true};}
+  for(const id of upcoming()){const L=(LES[id]||[]).find(x=>{const t=SUBJ[id].TB["L-"+x.id];return !isDone(id,t)&&!triedToday(id,t);});if(L)return {sid:id,t:SUBJ[id].TB["L-"+L.id],today:false};}
+  return null;}
+
 /* ================= Aujourd'hui ================= */
 function home(){
   const t0=today(),n=NOW(),P=plan(),up=upcoming(),due=dueCards();
   const tb=P.blocks.filter(b=>b.day===t0);
-  let nextT=null;
-  const triedToday=(sid,t)=>t.lesson&&(ST[sid].les[t.lesson]||{}).on===t0;
-  for(const b of tb){const t=b.tasks.map(id=>SUBJ[b.sid].TB[id]).find(t=>t&&!isDone(b.sid,t)&&!triedToday(b.sid,t));if(t){nextT={sid:b.sid,t};break;}}
-  if(!nextT)for(const id of up){const L=(LES[id]||[]).find(x=>{const t=SUBJ[id].TB["L-"+x.id];return !isDone(id,t)&&!triedToday(id,t);});if(L){nextT={sid:id,t:SUBJ[id].TB["L-"+L.id]};break;}}
+  const nextT=nextTask(P);
   const doneToday=[];SIDS.forEach(id=>SUBJ[id].tasks.forEach(t=>{if(isDone(id,t)&&doneOn(id,t)===t0)doneToday.push({sid:id,t});}));
   const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0&&examStart(S)>n);
   const nx=up[0]?SUBJ[up[0]]:null,mixed=A.hub.mixOn===t0;
@@ -5897,7 +5938,9 @@ function home(){
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
   h+=`<ul class="swatches">`
    +sw({href:"#/reviser",c:due.length?"c-bleu":"c-vert",size:"big",tile:due.length?(due.length>99?"99+":String(due.length)):"✓",kicker:"D'abord · 5 à 15 min",name:due.length?`Réviser ${due.length} ${plural(due.length,"carte")}`:"Rien à réviser",sub:due.length?"Les cartes du jour, avant le nouveau.":"Les cartes arrivent avec les leçons.",done:!due.length})
-   +(nextT?sw({href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,size:"big",tile:nL?String(nL.i+1):ico("i-pen"),kicker:`Ensuite · ${nS.name} · ${hm(nextT.t.min)}`,name:esc(nextT.t.t),sub:nextT.t.lesson?"Leçon pas à pas":"Sur papier, comme au CC"}):"")
+   +(!nextT?"":nextT.resume?sw({href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,size:"big",tile:`${nextT.resume.i+1}/${nextT.resume.n}`,kicker:`Reprendre · ${nS.name}`,name:esc(nextT.t.t),sub:`Tu t'étais arrêté à l'écran ${nextT.resume.i+1} sur ${nextT.resume.n}.`})
+     :nextT.today?sw({href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,size:"big",tile:nL?String(nL.i+1):ico("i-pen"),kicker:`Ensuite · ${nS.name} · ${hm(nextT.t.min)}`,name:esc(nextT.t.t),sub:nextT.t.lesson?"Leçon pas à pas":"Sur papier, comme au CC"})
+     :sw({href:hrefTask(nextT.sid,nextT.t),c:"c-vert",size:"big",tile:"✓",done:true,kicker:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."} Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`}))
    +sw({href:"#/mix",c:"c-violet",size:"big",tile:mixed?"✓":ico("i-mix"),kicker:"En plus · 10 min",name:"10 questions mélangées",sub:mixed?`Fait aujourd'hui : ${A.hub.mixScore} sur 10.`:"Toutes les matières, comme le jour du CC.",done:mixed})
    +`</ul>`;
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
@@ -5926,7 +5969,8 @@ function apprendre(){
   ordered().forEach((id,k)=>{const S=SUBJ[id],Ls=LES[id]||[],st=ST[id],d=lessonsDone(id);let firstTodo=null;
     const items=Ls.map((L,i)=>{const r=st.les[L.id],dn=isDone(id,S.TB["L-"+L.id]),redo=!dn&&!!r,isNext=!dn&&!firstTodo;if(isNext)firstTodo=L;
       const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":L.p>1?" is-later":"";
-      const meta=dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${L.p>1?" · si tu as le temps":""}`;
+      const pg=dn?null:progGet(id,L.id);
+      const meta=pg?`En cours · écran ${pg.i+1} sur ${pg.n}`:dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${L.p>1?" · si tu as le temps":""}`;
       return `<li class="slot"><a class="piece lpiece${cls}" href="#/lecon/${id}/${L.id}">${isNext?`<span class="tag">Maintenant</span>`:""}${spark}<span class="lnum">${dn?"✓":redo?"!":i+1}</span><span class="piece__text"><span class="piece__title">${esc(L.t)}</span><span class="piece__meta">${meta}</span>${isNext&&L.goal?`<span class="lgoal">${L.goal}</span>`:""}</span></a></li>`;}).join("");
     h+=`<section class="ecrin s-${id}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">CC ${shortDay(S)} · ${jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul></div></div></section>`;});
   $("#main").innerHTML=h+`</div>`;badges();}
