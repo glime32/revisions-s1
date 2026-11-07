@@ -709,6 +709,9 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 
 
 /* compléments */
+.pausebar{border:2px solid var(--vert);background:color-mix(in srgb,var(--vert) 10%,#000);border-radius:14px;padding:12px 14px;display:grid;gap:8px;line-height:1.5;animation:rise .35s var(--snap)}
+.pausebar>b{color:var(--vert)}
+.bilan{border:2px dashed color-mix(in srgb,var(--violet-hi) 45%,transparent);border-radius:14px;padding:12px 14px;display:grid;gap:8px;line-height:1.55}
 .prekick{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--ambre)}
 .opts button.picked{border-color:var(--ambre);background:color-mix(in srgb,var(--ambre) 12%,#000);color:#FFE7C2}
 .prefb{border-left:4px solid var(--ambre);padding:4px 0 4px 14px;animation:rise .3s var(--snap)}
@@ -4935,7 +4938,7 @@ LES.geo=[
  K("La somme des angles d'un triangle (Prop 2.4.2) ?",`|Â| + |B̂| + |Ĉ| = π. Orienté : ${an("ABC")} + ${an("BCA")} + ${an("CAB")} = π [2π].`)]},
 
 /* ------------------------------------------------------------------ */
-{id:"g-axiomes",t:"Droites et distance : les axiomes I, II, III",min:15,goal:"Utiliser l'axiome I pour montrer que deux droites sont égales, et refaire la démo exigible de la Prop 1.1.1.",steps:[
+{id:"g-axiomes",t:"Droites et distance : les axiomes I, II, III",min:15,late:true,goal:"Utiliser l'axiome I pour montrer que deux droites sont égales, et refaire la démo exigible de la Prop 1.1.1.",steps:[
  Q("Par deux points distincts A et B, combien de droites passent ?",["Aucune","Exactement une","Deux","Une infinité"],1,"Axiome I : une et une seule. On la note (AB)."),
  L("L'axiome I",`<p><b>Axiome I.</b> Si A et B sont deux points distincts du plan, alors il existe une et une seule droite qui passe par A et B.</p><p>Le réflexe : pour montrer que deux droites sont <b>égales</b>, trouve deux points distincts qui sont sur les deux.</p><p>Des points sont <b>alignés</b> quand une même droite les contient tous.</p>`,{fig:"axiome-1"}),
  D("demo-1-1-1",{h:"Démo exigible : la Prop 1.1.1"}),
@@ -4952,7 +4955,7 @@ LES.geo=[
  K("L'axiome III, (d) et (e) ?","(d) A, B, C alignés ⇔ la plus grande distance est la somme des deux autres. (e) Sur une droite, exactement deux points à distance λ > 0 de A, un de chaque côté.")]},
 
 /* ------------------------------------------------------------------ */
-{id:"g-paralleles",t:"Parallèles : Cor 2.2.4, angles alternes-internes, perpendiculaire",min:15,goal:"Connaître et refaire les démos exigibles 2.2.4 et 2.3.1, et utiliser l'unicité de la perpendiculaire.",steps:[
+{id:"g-paralleles",t:"Parallèles : Cor 2.2.4, angles alternes-internes, perpendiculaire",min:15,late:true,goal:"Connaître et refaire les démos exigibles 2.2.4 et 2.3.1, et utiliser l'unicité de la perpendiculaire.",steps:[
  Q("ABCD : A, B, C, D non alignés, (AB) // (CD) et (AD) // (BC). Que peut-on conclure ?",["AB = CD et AD = BC, et [AC], [BD] ont le même milieu","Seulement AB = CD","ABCD est un rectangle","Rien de plus"],0,"C'est le Cor 2.2.4. Avec la Déf 3.1.1, cela dit : ABCD est un parallélogramme."),
  L("Le Cor 2.2.4",`<p>Soient A, B, C, D quatre points non alignés, avec (AB) // (CD) et (AD) // (BC). Alors AB = CD, AD = BC, et les segments [AC] et [BD] ont le même milieu.</p><p>L'idée de la preuve : la symétrie centrale de centre O, milieu de [BD], envoie C sur A.</p>`),
  D("demo-2-2-4"),
@@ -5679,6 +5682,7 @@ LES.calc=[
 (function(){
 "use strict";
 window.EXT={init(A){
+const {work,factor,measured,doneTodayMin}=A;
 const {$,SUBJ,SIDS,ST,LES,emit,today,NOW,addDays,dayName,exam,examStart,jx,hm,hh,sec,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,fixLinks,mount,cardIds}=A;
 const esc=W.esc;
 const BYL={};SIDS.forEach(id=>{BYL[id]={};(LES[id]||[]).forEach((L,i)=>{L.i=i;L.sid=id;BYL[id][L.id]=L;});});
@@ -5720,24 +5724,31 @@ function flow(L){if(L.flow)return L.flow;const out=[],T=L.steps;
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
-  if(!LP||LP.sid!==sid||LP.id!==lid)LP={sid,id:lid,i:0,got:{}};
+  if(!LP||LP.sid!==sid||LP.id!==lid)LP={sid,id:lid,i:0,got:{},t:0,last:Date.now()};else LP.last=Date.now();
   drawStep();}
 function mark(v,s){if(LP.got[LP.i]==null)LP.got[LP.i]=v;if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});}
+/* le temps de travail : compté écran par écran (20 min au plus par écran) ; une absence de plus de 10 min compte comme une pause */
+const WORK={acc:0,last:0,snooze:0};
+function tick(){const now=Date.now();if(LP){LP.t=(LP.t||0)+Math.min(now-(LP.last||now),20*60e3);LP.last=now;}
+  if(WORK.last&&now-WORK.last>10*60e3)WORK.acc=0;else if(WORK.last)WORK.acc+=Math.min(now-WORK.last,20*60e3);WORK.last=now;}
+function pauseBar(){if(WORK.acc<45*60e3||Date.now()<WORK.snooze)return "";const m=Math.round(WORK.acc/60000);
+  return `<div class="pausebar" role="status"><b>Ça fait ${m} min que tu travailles.</b> Fais une pause de 10 à 15 minutes : lève-toi, bois de l'eau, regarde au loin, sans écran. Ton cerveau range ce que tu viens d'apprendre pendant la pause. La leçon t'attend ici.<div class="acts"><button class="btn ok" id="pz-done">J'ai fait ma pause</button><button class="btn" id="pz-later">Encore 15 min</button></div></div>`;}
 function drawStep(){
-  clearInterval(TIMER);
+  clearInterval(TIMER);tick();
   const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],F=flow(L),N=F.length;
   if(LP.i>=N)return finish();
   const s=F[LP.i];
   const pct=Math.round(LP.i/N*100),from=LP.pp==null?pct:LP.pp,back=!!LP.back;LP.pp=pct;LP.back=false;
   $("#main").innerHTML=`<div class="lp s-${LP.sid}">
    <div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter la leçon">✕</a><div class="lp-bar" role="progressbar" aria-label="Avancement dans la leçon" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${LP.i}"><i style="width:${from}%"></i></div><span class="lp-n">${LP.i+1}/${N}</span></div>
-   <div class="lp-kicker">${S.name} · ${esc(L.t)}</div>
+   ${pauseBar()}<div class="lp-kicker">${S.name} · ${esc(L.t)}</div>
    <div class="lp-body${back?" back":""}" id="lpb"></div>
    <div class="lp-foot"><button class="btn" id="lp-prev"${LP.i?"":" hidden"}>Retour</button><button class="btn pri big" id="lp-next">Continuer</button></div></div>`;
   const body=$("#lpb"),next=$("#lp-next");
   (STEP[s.k]||STEP.learn)(s,body,next,L);
   if(from!==pct){const bi=$(".lp-bar i");if(bi){void bi.offsetWidth;bi.style.width=pct+"%";}}
   $("#lp-prev").addEventListener("click",()=>{LP.i=Math.max(0,LP.i-1);LP.back=true;drawStep();});
+  const pd=$("#pz-done"),pl=$("#pz-later");if(pd)pd.addEventListener("click",()=>{WORK.acc=0;WORK.last=Date.now();$(".pausebar").remove();});if(pl)pl.addEventListener("click",()=>{WORK.snooze=Date.now()+15*60e3;$(".pausebar").remove();});
   next.addEventListener("click",()=>{if(next.disabled)return;if(next.dataset.mode==="check"){next.dispatchEvent(new CustomEvent("check"));return;}LP.i++;drawStep();});
   fixLinks(body,LP.sid);window.scrollTo(0,0);}
 const code=(src,lang)=>W.code(src,lang||SUBJ[LP.sid].lang||"txt");
@@ -5815,7 +5826,7 @@ const STEP={
 function finish(){
   const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],sid=LP.sid,lid=LP.id;
   const vals=Object.values(LP.got),sc=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:1;
-  emit({k:"les",s:sid,l:lid,sc:Math.round(sc*100)/100});
+  tick();emit({k:"les",s:sid,l:lid,sc:Math.round(sc*100)/100,dur:Math.max(1,Math.round(LP.t/60000))});
   const nc=cardIds(sid,lid).length,nx=(LES[sid]||[]).find(x=>x.i>L.i&&!isDone(sid,SUBJ[sid].TB["L-"+x.id]));
   const msg=sc>=0.8?"Bien joué.":sc>=0.5?"C'est en bonne voie.":"C'est normal de se tromper au début : c'est même en se trompant puis en voyant la correction qu'on retient le mieux.";
   const burst=sc>=0.5?`<div class="burst" aria-hidden="true">${[...Array(12)].map((_,i)=>{const a=i/12*Math.PI*2,r=120+(i*37)%60;return `<svg style="--bx:${Math.round(Math.cos(a)*r)}px;--by:${Math.round(Math.sin(a)*r*.7)}px;--dl:${(i%4)*50}ms"><use href="#i-star8"/></svg>`;}).join("")}</div>`:"";
@@ -5823,7 +5834,7 @@ function finish(){
    <div class="acts">${nx?`<a class="btn pri big" href="#/lecon/${sid}/${nx.id}">Leçon suivante : ${esc(nx.t)}</a>`:""}<a class="btn" href="#/">Retour à aujourd'hui</a><button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
   const el=$("#lsc"),goal=Math.round(sc*100);
   if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/700),v=Math.round(goal*(1-Math.pow(1-k,3)));el.textContent=v+" %";if(k<1)requestAnimationFrame(f);};el.textContent="0 %";requestAnimationFrame(f);}
-  LP=null;$("#redo").addEventListener("click",()=>{LP={sid,id:lid,i:0,got:{}};drawStep();});badges();}
+  LP=null;$("#redo").addEventListener("click",()=>{LP={sid,id:lid,i:0,got:{},t:0,last:Date.now()};drawStep();});badges();}
 
 /* ================= Réviser : les cartes du jour ================= */
 let RV=null;
@@ -5890,20 +5901,22 @@ function home(){
    +sw({href:"#/mix",c:"c-violet",size:"big",tile:mixed?"✓":ico("i-mix"),kicker:"En plus · 10 min",name:"10 questions mélangées",sub:mixed?`Fait aujourd'hui : ${A.hub.mixScore} sur 10.`:"Toutes les matières, comme le jour du CC.",done:mixed})
    +`</ul>`;
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
-  const tot=tb.reduce((a,b)=>a+b.end-b.start,0);
+  const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
   /* un seul créneau ouvert : le prochain à faire ; les autres sont repliés */
   const openB=tb.find(b=>b.tasks.some(id=>{const t=SUBJ[b.sid].TB[id];return t&&!isDone(b.sid,t);}));
   const fold=b=>{const S=SUBJ[b.sid],T=b.tasks.map(id=>S.TB[id]).filter(Boolean),left=T.filter(t=>!isDone(b.sid,t)).length;
-    return `<details class="day blkfold" style="--sc:${S.color}"><summary><b>${hh(b.start)} – ${hh(b.end)}</b><span class="blk-s">${S.name}</span><span>${left?`${left} ${plural(left,"étape")} à faire`:"fait"} · ${hm(b.end-b.start)}</span></summary><div style="padding:0 12px 12px">${blockHTML(b,false)}</div></details>`;};
+    return `<details class="day blkfold" style="--sc:${S.color}"><summary><b>${hh(b.start)} – ${hh(b.end)}</b><span class="blk-s">${S.name}</span><span>${left?`${left} ${plural(left,"étape")} à faire`:"fait"} · ${hm(work(b.end-b.start))}</span></summary><div style="padding:0 12px 12px">${blockHTML(b,false)}</div></details>`;};
   let pg=tb.length?`<p class="muted">Placé autour de tes cours. Il se recalcule chaque fois que tu termines quelque chose : ce qui est fait disparaît, ce qui est en retard est replacé.</p>${tb.map(b=>b===openB?blockHTML(b,false):fold(b)).join("")}`:`<p class="muted">${P.blocks.length?"Plus de créneau de révision aujourd'hui. Regarde les jours suivants, ou avance dans « Apprendre ».":"Tout ce qui était prévu est fait."}</p>`;
   if(doneToday.length)pg+=dayBox("Fait aujourd'hui",`${doneToday.length} ${plural(doneToday.length,"étape")}`,`<ol class="todo" style="padding:0 12px 12px">${doneToday.map(o=>taskHTML(o.sid,o.t,false)).join("")}</ol>`,doneToday.length<=4);
-  h+=tiroir(`Ton programme d'aujourd'hui${tb.length?" · "+hm(tot):""}`,pg);
+  const fx=String((Math.round(F*10)/10)).replace(".",","),mes=SIDS.some(id=>measured(id)==="mesuré");
+  pg+=`<div class="bilan"><p><b>Ton rythme :</b> une leçon te prend environ <b>${fx} fois</b> le temps que j'avais prévu au départ, ${mes?"mesuré sur tes leçons":"estimé d'après ta première séance (le site le mesure sur tes prochaines leçons)"}. Les durées affichées en tiennent compte.${dt?` Aujourd'hui, tu as déjà travaillé environ <b>${hm(dt)}</b> : c'est retiré de ta journée.`:""}</p>${P.need?`<p>Pour l'essentiel (les leçons et un examen blanc par matière), il faudrait encore environ <b>${hm(P.need)}</b> ; d'ici tes CC, tu as environ <b>${hm(P.have)}</b> de travail possible${P.need>P.have?`. Tout ne tiendra pas : le plan garde, matière par matière, ce qui rapporte le plus de points avant chaque CC ; le reste est dans « Si tu as encore du temps ». Mieux vaut bien comprendre la moitié que survoler le tout.`:"."}</p>`:""}<p class="muted">Pauses comprises : 15 min au milieu de chaque séance de plus d'une heure, 20 min entre deux séances. Rythme et vitesse se règlent dans <a href="#/examens">Examens et rythme</a>.</p></div>`;
+  h+=tiroir(`Ton programme d'aujourd'hui${tb.length?" · "+hm(tot)+" de travail":""}`,pg);
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
   if(days.length)h+=tiroir("Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d),ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
     return dayBox(dayName(d,true),`${ex.length?`<span class="r">CC : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${hm(L.reduce((a,b)=>a+b.end-b.start,0))}`,`<div style="padding:0 12px 12px;display:grid;gap:12px">${L.map(b=>blockHTML(b,false)).join("")}</div>`);}).join(""));
   const bon=Object.entries(P.bonus);
   if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes rapportent le moins : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
-  h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, de 8h à 22h30`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
+  h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
   $("#main").innerHTML=h+`</div>`;
   bindTicks($("#main"),home);badges();}
 
@@ -5913,7 +5926,7 @@ function apprendre(){
   ordered().forEach((id,k)=>{const S=SUBJ[id],Ls=LES[id]||[],st=ST[id],d=lessonsDone(id);let firstTodo=null;
     const items=Ls.map((L,i)=>{const r=st.les[L.id],dn=isDone(id,S.TB["L-"+L.id]),redo=!dn&&!!r,isNext=!dn&&!firstTodo;if(isNext)firstTodo=L;
       const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":L.p>1?" is-later":"";
-      const meta=dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`${hm(L.min)}${L.p>1?" · si tu as le temps":""}`;
+      const meta=dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${L.p>1?" · si tu as le temps":""}`;
       return `<li class="slot"><a class="piece lpiece${cls}" href="#/lecon/${id}/${L.id}">${isNext?`<span class="tag">Maintenant</span>`:""}${spark}<span class="lnum">${dn?"✓":redo?"!":i+1}</span><span class="piece__text"><span class="piece__title">${esc(L.t)}</span><span class="piece__meta">${meta}</span>${isNext&&L.goal?`<span class="lgoal">${L.goal}</span>`:""}</span></a></li>`;}).join("");
     h+=`<section class="ecrin s-${id}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">CC ${shortDay(S)} · ${jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul></div></div></section>`;});
   $("#main").innerHTML=h+`</div>`;badges();}
@@ -5925,7 +5938,7 @@ function subject(sid){
   const inProg=S.ORDER.filter(c=>!c.out),red=S.ORDER.filter(c=>st.review[c.id]).length,known=inProg.filter(c=>st.known[c.id]).length,tdk=S.td.filter(x=>st.td[x.id]).length,c="s-"+sid;
   let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`CC <b>${examLine(S)}</b> (${jx(S)}), ${e.place}, ${e.dur}. Documents : ${S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${S.prog}</p>`;
   h+=`<ul class="swatches lead1">`
-   +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(nextL.min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
+   +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(S.TB["L-"+nextL.id].min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
    +sw({href:`#/${sid}/cartes`,c,tile:ico("i-cards"),kicker:"Se tester",name:"Cartes des fiches",sub:`${known} sur ${inProg.length} sues${red?`, <span class="r">${red} en rouge</span>`:""}`})
    +(S.quiz.length?sw({href:`#/${sid}/quiz`,c,tile:"?",kicker:"Se tester",name:"Quiz de cours",sub:`Meilleur score : ${st.best} sur ${A.activeQuiz(S).length}`}):"")
    +(S.td.length?sw({href:`#/${sid}/td`,c,tile:ico("i-pen"),kicker:"Sur papier",name:esc(S.tdTitle||"Exercices de TD"),sub:`${tdk} sur ${S.td.length} sus`}):"")
@@ -5979,7 +5992,7 @@ function methode(){
    ${sec(5,"Une idée par écran, une question tout de suite",`<p>C'est la recette de Brilliant : une courte explication avec une figure, puis une question sur ce qu'on vient de voir. Math Academy y ajoute la révision espacée et le mélange des sujets : c'est le rôle de « Réviser » et de l'entraînement mélangé.</p>`)}
    ${sec(6,"Deviner avant de lire",`<p>Essayer de répondre à une question <b>avant</b> d'avoir appris la réponse aide à retenir ce qu'on lit ensuite, même quand on se trompe, à condition de lire la bonne réponse juste après (synthèse de Pan et Carpenter, 2023). La question oriente la lecture : on lit en cherchant.</p><p><b>Sur le site</b> : la première question d'une leçon, et celle posée avant une explication, sont marquées « Devine d'abord ». Elles ne comptent pas. Tu lis ensuite l'explication en cherchant la réponse, puis tu réponds pour de vrai. Toutes les autres questions portent sur ce que la leçon t'a déjà montré.</p>`)}
    ${sec(7,"Retrouver jusqu'à réussir, puis recommencer un autre jour",`<p>Ce qui marche le mieux pour un examen : se tester sur une notion jusqu'à la retrouver une fois sans aide, puis recommencer lors de plusieurs séances, à des jours différents. Dans une étude menée dans un vrai cours, les notes ont gagné environ une mention (Rawson, Dunlosky et Sciartelli, 2013).</p><p><b>Sur le site</b> : dans « Réviser », une carte ratée revient plus loin dans la séance jusqu'à ce que tu la retrouves (3 fois au plus), puis elle revient les jours suivants.</p>`)}
-   ${sec(8,"Les conditions du CC, et le sommeil",`<p>Fais au moins une annale par matière en 1 heure, sur papier. La veille d'un CC : les cartes du jour, les fiches en rouge, et une vraie nuit.</p>`)}
+   ${sec(8,"Les conditions du CC, et le sommeil",`<p>Fais au moins une annale par matière en 1 heure, sur papier. La veille d'un CC : les cartes du jour, les fiches en rouge, et une vraie nuit.</p><p><b>Les pauses</b> : l'attention baisse après 45 minutes environ. Une pause de 10 à 15 minutes, sans écran, fait mieux retenir que de continuer en forçant. Le plan prévoit ces pauses, et le lecteur de leçon te les rappelle.</p>`)}
    <section class="sec"><h2>Sources</h2><ul class="src"><li><a href="https://doi.org/10.1007/s10648-023-09814-5" target="_blank" rel="noopener">Pan et Carpenter (2023), Prequestioning and Pretesting Effects, Educational Psychology Review</a></li><li><a href="https://doi.org/10.1007/s10648-013-9240-4" target="_blank" rel="noopener">Rawson, Dunlosky et Sciartelli (2013), The Power of Successive Relearning, Educational Psychology Review</a></li><li><a href="https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html" target="_blank" rel="noopener">Which Study Strategies Make the Grade? (Association for Psychological Science, sur Dunlosky et al. 2013)</a></li><li><a href="https://www.learningscientists.org/s/Spaced-Practice-esre.pdf" target="_blank" rel="noopener">Spaced Practice (The Learning Scientists)</a></li><li><a href="https://en.wikipedia.org/wiki/Worked-example_effect" target="_blank" rel="noopener">Worked-example effect (Wikipédia)</a></li><li><a href="https://hg.gatech.edu/node/603172" target="_blank" rel="noopener">Ericson : les problèmes de Parsons (Georgia Tech)</a></li><li><a href="https://brilliant.org/resources/choosing-brilliant/how-brilliant-teaches-math/" target="_blank" rel="noopener">How Brilliant teaches math</a></li><li><a href="https://mathacademy.com/pedagogy" target="_blank" rel="noopener">Math Academy : pedagogy</a></li></ul></section></div>`;badges();}
 
 /* ================= synchronisation entre appareils (gist GitHub secret) ================= */
@@ -6060,7 +6073,19 @@ const SUBJ=window.SUBJ,SIDS=["geo","algo","pf","calc"].filter(id=>SUBJ[id]);
 const TYPE={def:["Définition","def"],ax:["Axiome","ax"],th:["Théorème","th"],demo:["Démo exigible","demo"],td:["Résultat de TD","th"],meth:["Méthode","th"],algo:["Algorithme","def"],code:["À savoir écrire","def"]};
 const an=s=>`<span class="ang">${s}</span>`;
 const LES=window.LESSONS||{};
-SIDS.forEach(id=>{const S=SUBJ[id];S.tasks=(LES[id]||[]).map(L=>({id:"L-"+L.id,lesson:L.id,t:L.t,min:L.min,p:L.p||1,why:L.goal})).concat((S.tasks||[]).filter(t=>!t.items));});
+/* Les durées suivent ton rythme : le temps vraiment passé sur tes leçons est mesuré, et les estimations sont multipliées
+   d'autant (3,5 par défaut, d'après ta première séance de géométrie). Une leçon « late » passe après l'examen blanc. */
+const SPEED={def:3.5,by:{},all:[]};
+function factor(sid){const v=hub.vitesse;if(v&&v!=="auto"&&+v>0)return +v;const a=(sid&&SPEED.by[sid])||[];const pool=a.length>=2?a:SPEED.all;if(!pool.length)return SPEED.def;
+  const x=pool.slice(-6).sort((p,q)=>p-q),k=x.length;return Math.min(6,Math.max(1,k%2?x[(k-1)/2]:(x[k/2-1]+x[k/2])/2));}
+const measured=sid=>(hub.vitesse&&hub.vitesse!=="auto")?"manuel":((SPEED.by[sid]||[]).length>=2||SPEED.all.length)?"mesuré":"estimé";
+/* leçons : × vitesse ; annales et séries d'exercices : la moitié du surplus ; tâches courtes (quiz, veille, feuille A4) : telles quelles */
+function estMin(sid,t){const F=factor(sid);return Math.min(105,Math.round(t.base*(t.lesson?F:t.base>=40?1+(F-1)/2:1)));}
+SIDS.forEach(id=>{const S=SUBJ[id];
+  const les=(LES[id]||[]).map(L=>({id:"L-"+L.id,lesson:L.id,t:L.t,base:L.min,p:L.p||1,why:L.goal,late:!!L.late}));
+  const prac=(S.tasks||[]).filter(t=>!t.items).map(t=>Object.assign(t,{base:t.base||t.min}));
+  S.tasks=les.filter(t=>!t.late).concat(prac.filter(t=>!t.last),les.filter(t=>t.late),prac.filter(t=>t.last));
+  S.tasks.forEach(t=>{delete t.min;Object.defineProperty(t,"min",{get(){return estMin(id,t);},enumerable:true,configurable:true});});});
 SIDS.forEach(id=>{const S=SUBJ[id];S.id=id;S.BY={};S.concepts.forEach(c=>S.BY[c.id]=c);S.ORDER=S.concepts.slice().sort((a,b)=>a.ch-b.ch);S.TB={};S.tasks.forEach((t,i)=>{t.p=t.p||2;t.i=i;S.TB[t.id]=t;});S.quiz=S.quiz||[];S.td=S.td||[];S.ann=S.ann||[];S.pages=S.pages||[];});
 
 /* ---------- dates ---------- */
@@ -6081,7 +6106,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},rythme:"normal",mixOn:null,mixScore:0};
+const hub={theme:local.theme,exams:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -6091,17 +6116,18 @@ function cardIds(sid,lid){const L=(LES[sid]||[]).find(x=>x.id===lid);if(!L)retur
 function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{}};}
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;return;}
   const st=ST[e.s];if(!st)return;
   if(e.k==="st"){if(e.v==="known"){st.known[e.c]=true;delete st.review[e.c];st.knownOn[e.c]=day;st.seen[e.c]=true;}else if(e.v==="review"){st.review[e.c]=true;delete st.known[e.c];delete st.knownOn[e.c];st.seen[e.c]=true;}else if(e.v==="seen")st.seen[e.c]=true;}
   else if(e.k==="td"){if(e.v){st.td[e.x]=true;st.tdOn[e.x]=day;}else{delete st.td[e.x];delete st.tdOn[e.x];}}
   else if(e.k==="task"){if(e.v)st.tasks[e.x]=day;else delete st.tasks[e.x];}
   else if(e.k==="quiz"){if(e.n>st.best)st.best=e.n;if(e.goal&&!st.quizOn)st.quizOn=day;}
-  else if(e.k==="les"){const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;st.les[e.l]=L;cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
+  else if(e.k==="les"){const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;st.les[e.l]=L;
+    if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.mixOn=null;hub.mixScore=0;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -6154,12 +6180,19 @@ function busyOf(day){
   SIDS.forEach(id=>{const e=exam(SUBJ[id]);if(e.day===day)b.push([mm(e.start)-30,mm(e.end)+10]);});
   return b.sort((x,y)=>x[0]-y[0]);
 }
-function dayCap(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[240,120,150],normal:[360,180,210],intensif:[480,240,300]}[hub.rythme||"normal"]||[360,180,210];return Math.max(0,(free?R[0]:(CLASSES[day]&&CLASSES[day].length?R[1]:R[2]))-15);}/* 15 min gardées chaque jour pour « Réviser » */
-function freeBlocks(day,from){
+/* Une séance dure 1 h 50 au plus, avec 15 min de pause au milieu ; 20 min de pause entre deux séances.
+   Les plafonds par jour comptent le travail seulement, pauses non comprises. */
+const SEANCE=110,GAP=20,PAUSE=15;
+const work=len=>len>60?len-PAUSE:len;
+const lenFor=u=>u>45?u+PAUSE:u;
+function doneTodayMin(){const t0=today();let s=0;J.forEach(e=>{if(ymd(new Date(e.t))!==t0)return;const S=SUBJ[e.s];if(!S)return;
+  if(e.k==="les"){const T=S.TB["L-"+e.l];s+=e.dur||(T?T.min:15);}else if(e.k==="task"&&e.v){const T=S.TB[e.x];if(T)s+=T.min;}});return s;}
+function dayCap(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[180,90,120],normal:[270,150,180],intensif:[360,210,270]}[hub.rythme||"normal"]||[270,150,180];return Math.max(0,(free?R[0]:(CLASSES[day]&&CLASSES[day].length?R[1]:R[2]))-15);}/* 15 min gardées chaque jour pour « Réviser » */
+function freeBlocks(day,from,capOv){
   let iv=[];WIN.forEach(([a,b])=>{a=Math.max(a,from);if(b-a>=30)iv.push([a,b]);});
   busyOf(day).forEach(([s,e])=>{const out=[];iv.forEach(([a,b])=>{if(e+10<=a||s-10>=b){out.push([a,b]);return;}if(s-10-a>=30)out.push([a,s-10]);if(b-(e+10)>=30)out.push([e+10,b]);});iv=out;});
-  const blocks=[];iv.forEach(([a,b])=>{let t=a;while(b-t>=30){const len=Math.min(90,b-t);blocks.push([t,t+len]);t+=len+10;}});
-  let cap=dayCap(day);const res=[];for(const[a,b]of blocks){if(cap<30)break;const len=Math.min(b-a,cap);res.push([a,a+len]);cap-=len;}
+  const blocks=[];iv.forEach(([a,b])=>{let t=a;while(b-t>=30){const len=Math.min(SEANCE,b-t);blocks.push([t,t+len]);t+=len+GAP;}});
+  let cap=capOv==null?dayCap(day):capOv;const res=[];for(const[a,b]of blocks){if(cap<25)break;let len=b-a;if(work(len)>cap)len=cap>45?cap+PAUSE:cap;res.push([a,a+len]);cap-=work(len);}
   return res;
 }
 
@@ -6171,35 +6204,44 @@ function buildPlan(){
   const plan={day:t0,blocks:[],assign:{},bonus:{}};
   if(!active.length)return plan;
   const lastDay=ymd(new Date(Math.max(...active.map(id=>examStart(SUBJ[id]).getTime()))));
-  let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){freeBlocks(d,d===t0?Math.ceil((nowMin+10)/5)*5:0).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
+  let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){freeBlocks(d,d===t0?Math.ceil((nowMin+10)/5)*5:0,d===t0?Math.max(0,dayCap(t0)-doneTodayMin()):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
   const dl=id=>examStart(SUBJ[id]).getTime();
-  /* 1. Ce qu'on garde : l'essentiel de chaque matière d'abord, puis l'important à tour de rôle (coefficient le plus fort en premier),
-        tant que tout tient avant chaque CC (avec 8 % de marge). Le reste devient facultatif. */
-  const all=[];active.forEach(id=>{const P=pendingTasks(id),rank={};P.forEach(t=>{rank[t.p]=(rank[t.p]||0);all.push({id,t,r:t.last?-1:rank[t.p]++});});/* quiz et fiches en rouge (courts, la veille du CC) gardés en premier */});
-  all.sort((a,b)=>(a.t.p-b.t.p)||(a.r-b.r)||(weight(SUBJ[b.id])-weight(SUBJ[a.id])));
+  /* 1. Ce qu'on garde, quand tout ne tient pas : le temps est partagé entre les matières en proportion du poids de chaque CC
+        dans la moyenne (coefficient × part du CC), avec un bonus pour le prochain CC. On remplit d'abord l'essentiel (p = 1,
+        dans l'ordre du cours), en donnant chaque étape à la matière la moins servie, tant que tout tient avant chaque CC
+        (8 % de marge). Puis l'important (p = 2), puis le reste. Ce qui ne tient pas devient facultatif. */
   const dls=[...new Set(active.map(dl))].sort((a,b)=>a-b),cap={},load={};
-  dls.forEach(D=>{cap[D]=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=D?s+(b.end-b.start):s,0)*0.92;load[D]=0;});
-  const keep=new Set();
-  all.forEach(({id,t})=>{const d=dl(id);if(dls.every(D=>D<d||load[D]+t.min<=cap[D])){keep.add(id+":"+t.id);dls.forEach(D=>{if(D>=d)load[D]+=t.min;});}});
+  dls.forEach(D=>{cap[D]=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=D?s+work(b.end-b.start):s,0)*0.92;load[D]=0;});
+  const lastD=Math.max(...dls);plan.have=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=lastD?s+work(b.end-b.start):s,0);plan.need=active.reduce((s,id)=>s+pendingTasks(id).filter(t=>t.p===1).reduce((a,t)=>a+t.min,0),0);
+  const keep=new Set(),first=active.slice().sort((a,b)=>dl(a)-dl(b))[0],ew=id=>weight(SUBJ[id])*(id===first?1.5:1),got={},qs={};
+  active.forEach(id=>{got[id]=0;const P=pendingTasks(id);qs[id]=P.filter(t=>t.last).concat(P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(a.i-b.i)));});
+  const tier=t=>t.last?1:t.p;
+  [1,2,3].forEach(P=>{const ptr={},L={};active.forEach(id=>{ptr[id]=0;L[id]=qs[id].filter(t=>tier(t)===P);});
+    for(;;){let best=null;active.forEach(id=>{if(ptr[id]<L[id].length&&(best===null||got[id]/ew(id)<got[best]/ew(best)))best=id;});if(best===null)break;
+      const t=L[best][ptr[best]++],d=dl(best);
+      if(dls.every(D=>D<d||load[D]+t.min<=cap[D])){keep.add(best+":"+t.id);dls.forEach(D=>{if(D>=d)load[D]+=t.min;});got[best]+=t.min;}}});
   /* 2. File d'attente de chaque matière, dans l'ordre du cours ; quiz et fiches en rouge à la fin */
   const Q={};active.forEach(id=>{const P=pendingTasks(id).filter(t=>keep.has(id+":"+t.id));Q[id]=P.filter(t=>!t.last).concat(P.filter(t=>t.last));plan.bonus[id]=pendingTasks(id).filter(t=>!keep.has(id+":"+t.id)).map(t=>t.id);});
   /* 3. Affectation créneau par créneau : la matière la plus en retard sur son temps restant (bonus de coefficient).
         Une étape ne va que dans un créneau assez long. Le quiz et les fiches en rouge attendent les 30 h avant le CC. */
   const fitsIn=(t,room)=>t.min<=room+15;
   const fill=(id,B,dur,src,finalWin)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(t.lesson&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0)continue;/* leçon ratée aujourd'hui : on la refait demain */if(!fitsIn(t,dur-used))continue;tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
-  const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(used,30));
-    tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=35)blocks.splice(i+1,0,{day:B.day,start:B.end+5,end:full});};
+  const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(lenFor(used),30));
+    tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=30+GAP)blocks.splice(i+1,0,{day:B.day,start:B.end+GAP,end:full});};
   const freeIdx=[];
   for(let i=0;i<blocks.length;i++){
-    const B=blocks[i],bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=B.end-B.start;
+    const B=blocks[i],bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     let best=null,bestScore=-1;
     active.forEach(id=>{if(!Q[id].length||be>dl(id))return;
       const finalWin=dl(id)-bs<=30*3600e3;
       const elig=Q[id].filter(t=>(!t.last||finalWin));if(!elig.some(t=>fitsIn(t,dur)))return;
-      let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=blocks[j].end-blocks[j].start;}
+      let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
       const rem=elig.reduce((s,t)=>s+t.min,0);
       let sc=rem/Math.max(avail,1)*(1+0.3*weight(SUBJ[id])/WMAX);
       if(finalWin&&Q[id].some(t=>t.last))sc+=0.6;
+      /* une étape longue qui ne tiendra plus dans aucune séance libre avant son CC passe maintenant */
+      let mx=0;for(let j=i+1;j<blocks.length;j++){if(blocks[j].sid)continue;if(toD(blocks[j].day,blocks[j].end).getTime()<=dl(id))mx=Math.max(mx,work(blocks[j].end-blocks[j].start));}
+      if(elig.some(t=>!t.last&&fitsIn(t,dur)&&!fitsIn(t,mx)))sc+=5;
       if(sc>bestScore){bestScore=sc;best=id;}});
     if(!best){freeIdx.push(i);continue;}
     const {tk,used}=fill(best,B,dur,Q,dl(best)-bs<=30*3600e3);
@@ -6208,7 +6250,7 @@ function buildPlan(){
   }
   /* 4. Créneaux restés libres : on y place les étapes facultatives encore utiles avant leur CC */
   const BQ={};active.forEach(id=>{BQ[id]=(plan.bonus[id]||[]).map(tid=>SUBJ[id].TB[tid]).concat(Q[id]).sort((x,y)=>(x.p-y.p)||(x.i-y.i));Q[id]=[];});
-  for(let i=0;i<blocks.length;i++){const B=blocks[i];if(B.sid)continue;const bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=B.end-B.start;
+  for(let i=0;i<blocks.length;i++){const B=blocks[i];if(B.sid)continue;const bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     /* d'abord l'étape la plus importante (p le plus petit), puis la matière au plus fort coefficient dont le CC est le plus proche */
     let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id))return;const f=BQ[id].filter(t=>!t.last&&fitsIn(t,dur));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
     if(!best)continue;const {tk,used}=fill(best,B,dur,BQ,false);if(tk.length)place(i,best,tk,used,dur,true);}
@@ -6257,7 +6299,7 @@ function taskHTML(sid,t,full){
   return `<li class="task${done?" done":""}"><button class="tick" ${auto?"disabled":`data-task="${sid}:${t.id}"`} title="${auto?"Se coche toute seule quand la leçon ou les exercices sont faits":"Cocher"}" aria-label="${auto?"Se coche toute seule":"Cocher l'étape"}">${done?"✓":""}</button><div><div class="tt">${t.t}</div><div class="meta">${meta.join(", ")}</div>${t.why&&full&&!done?`<div class="meta">${t.why}</div>`:""}${chips}</div>${go}</li>`;
 }
 function bindTicks(root,rerender){root.querySelectorAll("[data-task]").forEach(b=>b.addEventListener("click",()=>{const[sid,id]=b.dataset.task.split(":");emit({k:"task",s:sid,x:id,v:!ST[sid].tasks[id]});rerender();renderSide();}));}
-function blockHTML(B,full){const S=SUBJ[B.sid];return `<div class="blk" style="--sc:${S.color}"><div class="blk-h"><b>${hh(B.start)} – ${hh(B.end)}</b><a href="#/${B.sid}">${S.name}</a><span class="muted">${hm(B.end-B.start)}</span></div><ol class="todo">${B.tasks.filter(tid=>S.TB[tid]).map(tid=>taskHTML(B.sid,S.TB[tid],full)).join("")}</ol></div>`;}
+function blockHTML(B,full){const S=SUBJ[B.sid];return `<div class="blk" style="--sc:${S.color}"><div class="blk-h"><b>${hh(B.start)} – ${hh(B.end)}</b><a href="#/${B.sid}">${S.name}</a><span class="muted">${hm(work(B.end-B.start))} de travail${B.end-B.start>60?", pause de 15 min au milieu":""}</span></div><ol class="todo">${B.tasks.filter(tid=>S.TB[tid]).map(tid=>taskHTML(B.sid,S.TB[tid],full)).join("")}</ol></div>`;}
 
 /* ---------- accueil : aujourd'hui ---------- */
 function hubHome(){
@@ -6305,10 +6347,12 @@ function examens(){
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Examens et coefficients</h1></div>
    <p class="lead">D'après le document officiel des modalités de contrôle 2026-2027 et les pages Moodle. Le poids d'un CC dans ta moyenne du semestre, c'est le coefficient de la matière multiplié par la part de ce CC dans sa note.</p>
    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Matière</th><th>Date et heure du CC</th><th>Coef</th><th>Part du CC</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
-   <section class="check"><h2 style="font-size:1.1rem">Ton rythme de révision</h2><p class="muted">Le temps de révision prévu au maximum par jour. Le plan se recalcule tout de suite.</p><div class="filters" id="ry">${[["leger","Léger : 4 h les jours libres, 2 h les jours de cours"],["normal","Normal : 6 h et 3 h"],["intensif","Intensif : 8 h et 4 h"]].map(r=>`<button class="btn" data-ry="${r[0]}" aria-pressed="${(hub.rythme||"normal")===r[0]}">${r[1]}</button>`).join("")}</div><p class="muted" id="ryout"></p></section>
+   <section class="check"><h2 style="font-size:1.1rem">Ton rythme de révision</h2><p class="muted">Le temps de révision prévu au maximum par jour. Le plan se recalcule tout de suite.</p><div class="filters" id="ry">${[["leger","Léger : 3 h de travail les jours libres, 1 h 30 les jours de cours"],["normal","Normal : 4 h 30 et 2 h 30"],["intensif","Intensif : 6 h et 3 h 30"]].map(r=>`<button class="btn" data-ry="${r[0]}" aria-pressed="${(hub.rythme||"normal")===r[0]}">${r[1]}</button>`).join("")}</div><p class="muted" id="ryout"></p><p class="muted" style="font-size:.9rem">Sans compter les pauses : 15 min au milieu de chaque séance de plus d'une heure, et 20 min entre deux séances.</p></section>
+   <section class="check"><h2 style="font-size:1.1rem">Ta vitesse</h2><p class="muted">Combien de fois plus de temps qu'indiqué au départ une leçon te prend. Par défaut, le site la mesure sur tes leçons (pause comprise jusqu'à 20 min par écran). Tu peux la fixer toi-même si la mesure te semble fausse.</p><div class="filters" id="vi">${[["auto",(SIDS.some(id=>measured(id)==="mesuré")?"Mesurée : ×":"Automatique (estimée pour l'instant) : ×")+String(factor().toFixed(1)).replace(".",",")],["2","×2"],["3","×3"],["4","×4"],["5","×5"]].map(r=>`<button class="btn" data-vi="${r[0]}" aria-pressed="${(hub.vitesse||"auto")===r[0]}">${r[1]}</button>`).join("")}</div></section>
    <section class="usage"><h2>Ce que ça change</h2><p>Les coefficients ne sont pas tous égaux : l'algorithmique et la programmation fonctionnelle (coef 5) pèsent plus que la géométrie (coef 4) et le calculus (coef 3). Le planificateur s'en sert pour départager deux matières aussi urgentes, et pour choisir quoi laisser tomber s'il manque du temps.</p><p>Si une heure de CC change, corrige-la dans le tableau : le plan se recalcule tout seul.</p></section></div>`;
-  const ryOut=()=>{const P=plan(),tot=P.blocks.reduce((s,b)=>s+b.end-b.start,0),nb=Object.values(P.bonus).reduce((s,L)=>s+L.length,0);$("#ryout").textContent=`Avec ce rythme : ${hm(tot)} de révision prévues jusqu'au dernier CC, ${nb} étape(s) facultative(s) non placée(s).`;};ryOut();
+  const ryOut=()=>{const P=plan(),tot=P.blocks.reduce((s,b)=>s+work(b.end-b.start),0),nb=Object.values(P.bonus).reduce((s,L)=>s+L.length,0);$("#ryout").textContent=`Avec ce rythme et cette vitesse : ${hm(tot)} de travail prévues jusqu'au dernier CC. Il faudrait ${hm(P.need||0)} pour l'essentiel (leçons et un examen blanc par matière)${nb?` : ${nb} étape(s) restent facultatives, faute de temps`:""}.`;};ryOut();
   $("#ry").addEventListener("click",e=>{const b=e.target.closest("[data-ry]");if(!b)return;emit({k:"set",key:"rythme",v:b.dataset.ry});document.querySelectorAll("#ry [data-ry]").forEach(x=>x.setAttribute("aria-pressed",x===b));ryOut();});
+  $("#vi").addEventListener("click",e=>{const b=e.target.closest("[data-vi]");if(!b)return;emit({k:"set",key:"vitesse",v:b.dataset.vi});document.querySelectorAll("#vi [data-vi]").forEach(x=>x.setAttribute("aria-pressed",x===b));ryOut();});
   $("#main").addEventListener("change",e=>{const k=e.target.dataset.ex;if(!k)return;const[id,f]=k.split(":");emit({k:"set",key:"exam:"+id+":"+f,v:e.target.value});topInfo();renderSide();});
 }
 
@@ -6553,9 +6597,10 @@ function route(){
   if(VIAZOOM){VIAZOOM=false;render(parts);deal();fadeZoom();FIRST=false;return;}
   closeZoom();
   if(FIRST||REDUCED||busy||tab===prev){render(parts);if(!lesson&&!REDUCED)deal();FIRST=false;return;}
-  wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{render(parts);if(!lesson)deal();});
+  /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
+  wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,emit,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,emit,work,factor,measured,doneTodayMin,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 APP.onChange=APP.ext.onChange||null;
 window.addEventListener("hashchange",route);
