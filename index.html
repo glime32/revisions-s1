@@ -243,12 +243,12 @@ main{padding:16px clamp(16px,3.4vw,44px) 96px;min-width:0;overflow-x:clip}
 .wipe.is-rev{scale:-1 1}
 .wipe.is-in,.wipe.is-out{visibility:visible}
 .wipe span{display:block;flex:var(--h) 1 0;margin-block:-1px;background-color:var(--wipe);background-image:repeating-linear-gradient(0deg,transparent 0 3px,color-mix(in srgb,var(--aqua) 7%,transparent) 3px 4px);transform:translateX(-103%);will-change:transform}
-.wipe.is-in span{animation:wipe-in .28s var(--cut) var(--d,0ms) both;box-shadow:6px 0 0 var(--wipe-edge)}
-.wipe.is-out span{animation:wipe-out .34s var(--cut) var(--d,0ms) both;box-shadow:-6px 0 0 var(--wipe-edge)}
+.wipe.is-in span{animation:wipe-in .16s var(--cut) var(--d,0ms) both;box-shadow:6px 0 0 var(--wipe-edge)}
+.wipe.is-out span{animation:wipe-out .2s var(--cut) var(--d,0ms) both;box-shadow:-6px 0 0 var(--wipe-edge)}
 @keyframes wipe-in{0%{transform:translateX(-103%)}72%{transform:translateX(2.5%)}86%{transform:translateX(-1.2%)}100%{transform:translateX(0)}}
 @keyframes wipe-out{0%{transform:translateX(0)}100%{transform:translateX(104%)}}
-main.is-enter :is(.piece,.swatch,.fiche,.task,.blk,details.ex,details.day,.kcard,.qbox,.fc,.check,.sec,.tiroir,.stitle,.hlead,.examcard,.examday){animation:deal .5s var(--snap) backwards;animation-delay:calc(var(--i,0) * 24ms + 30ms)}
-@keyframes deal{from{opacity:0;translate:0 34px;rotate:4deg}}
+main.is-enter :is(.piece,.swatch,.fiche,.task,.blk,details.ex,details.day,.kcard,.qbox,.fc,.check,.sec,.tiroir,.stitle,.hlead,.examcard,.examday){animation:deal .3s var(--snap) backwards;animation-delay:calc(var(--i,0) * 10ms)}
+@keyframes deal{from{opacity:0;translate:0 16px;rotate:1.5deg}}
 .zoom{position:fixed;inset:0;z-index:100;display:grid;place-items:center;cursor:progress;color:var(--c);
   background:repeating-linear-gradient(0deg,transparent 0 3px,color-mix(in srgb,var(--c) 6%,transparent) 3px 4px),radial-gradient(70% 70% at 50% 45%,color-mix(in srgb,var(--c-deep) 75%,#000),#000 85%)}
 .zoom__inner{display:grid;justify-items:center;gap:14px;text-align:center;padding:0 20px}
@@ -259,8 +259,8 @@ main.is-enter :is(.piece,.swatch,.fiche,.task,.blk,details.ex,details.day,.kcard
 .zoom__kicker{font-weight:800;font-size:.8rem;font-stretch:112%;letter-spacing:.12em;text-transform:uppercase;color:var(--c)}
 @keyframes pop{0%{scale:1}40%{scale:1.035}100%{scale:1}}
 @keyframes shake{20%{translate:-7px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:2px 0}}
-@keyframes step-in{from{opacity:0;translate:28px 0}}
-@keyframes step-back{from{opacity:0;translate:-28px 0}}
+@keyframes step-in{from{opacity:0;translate:16px 0}}
+@keyframes step-back{from{opacity:0;translate:-16px 0}}
 @keyframes rise{from{opacity:0;translate:0 14px}}
 @keyframes flip-in{from{opacity:0;transform:perspective(900px) rotateX(-70deg)}}
 @keyframes burst{0%{scale:0;rotate:-90deg;opacity:1}60%{opacity:1}100%{scale:1;rotate:0deg;opacity:0;translate:var(--bx) var(--by)}}
@@ -638,7 +638,7 @@ svg .grid{stroke:var(--trait);stroke-width:1}
 .lp-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 55%,#000),var(--sc));box-shadow:0 0 14px color-mix(in srgb,var(--sc) 70%,transparent);transition:width .55s var(--snap)}
 .lp-n{font-size:.85rem;font-weight:800;color:var(--graphite);font-variant-numeric:tabular-nums}
 .lp-kicker{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--sc)}
-.lp-body{display:grid;gap:16px;min-width:0;animation:step-in .38s var(--snap)}
+.lp-body{display:grid;gap:16px;min-width:0;animation:step-in .22s var(--snap)}
 .lp-body.back{animation-name:step-back}
 .lp-body>*{min-width:0}
 .lp-body h2{font-size:1.6rem;line-height:1.2}
@@ -709,6 +709,46 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 
 
 /* compléments */
+/* le gros bouton de l'accueil */
+.gobig{--tile:clamp(84px,11vh,104px);display:grid;grid-template-columns:var(--tile) minmax(0,1fr);gap:12px;position:relative;text-decoration:none;color:var(--head)}
+.gobig:hover{color:var(--head)}
+.gobig__tile,.gobig__bar{border-radius:24px;border:2px solid color-mix(in srgb,var(--c) 60%,var(--c-deep));box-shadow:0 7px 0 var(--c-deep);transition:translate .25s var(--snap),rotate .25s var(--snap),box-shadow .25s var(--snap)}
+.gobig__tile{height:var(--tile);display:grid;place-items:center;background:var(--c);color:#05040b;font:850 2rem var(--f-sans);font-stretch:94%}
+.gobig__tile .ico{width:40%;height:40%}
+.gobig__bar{display:grid;align-content:center;gap:3px;min-height:var(--tile);padding:14px 52px 14px 20px;background:color-mix(in srgb,var(--c-deep) 32%,#000)}
+.gobig__kick{font-weight:850;font-size:.78rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--c)}
+.gobig__name{font:400 clamp(1.5rem,1.1rem + 1.4vw,2.2rem)/1.1 var(--f-serif);color:var(--head)}
+.gobig__sub{font-size:.95rem;color:var(--icy);line-height:1.4}
+.gobig__arrow{position:absolute;right:20px;top:50%;width:26px;height:26px;margin-top:-13px;color:var(--c);transition:translate .25s var(--snap)}
+.gobig:is(:hover,:focus-visible) .gobig__bar{translate:6px -3px;box-shadow:-6px 9px 0 var(--c-deep)}
+.gobig:is(:hover,:focus-visible) .gobig__tile{translate:0 -3px;rotate:-3deg}
+.gobig:is(:hover,:focus-visible) .gobig__arrow{translate:4px -4px}
+.gobig:active .gobig__bar,.gobig:active .gobig__tile{translate:0 4px;box-shadow:0 2px 0 var(--c-deep)}
+.gobig.is-done .gobig__tile{background:var(--vert)}
+.gomore{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:.92rem;margin:-6px 0 0;color:var(--graphite)}
+.gomore a,.linkbtn{color:var(--cornflower);font-weight:700;text-decoration:underline;text-underline-offset:3px;background:none;border:0;padding:0;font-size:inherit}
+.gomore a:hover,.linkbtn:hover{color:var(--aqua)}
+/* les explications en mots simples, puis le cours */
+.clair{border:2px solid color-mix(in srgb,var(--vert) 45%,transparent);background:color-mix(in srgb,var(--vert) 7%,#000);border-radius:16px;padding:12px 16px;display:grid;gap:6px}
+.clair__t{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--vert)}
+.lxlab{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--sc);margin-bottom:-8px}
+/* entre deux parties d'une leçon */
+.cp{display:grid;gap:12px;padding:10px 0 20px;animation:rise .3s var(--snap)}
+.cp h2{font-size:clamp(1.6rem,1.2rem + 1.4vw,2.2rem)}
+.lp-bar{position:relative}
+.lp-mark{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#000;opacity:.85}
+/* le cours mis en forme : une idée par ligne, une couleur par rôle */
+.fmt{display:grid;gap:3px}
+.fmt .ln{display:block;padding:1px 0 1px 12px;border-left:3px solid color-mix(in srgb,var(--icy) 22%,transparent)}
+.fmt .l-hyp{border-left-color:var(--cornflower);color:#D3E0FF}
+.fmt .l-concl{border-left-color:var(--vert);color:#D7F8E4}
+.jref{color:var(--ambre);font-weight:650}
+.fmtleg{display:flex;flex-wrap:wrap;gap:4px 14px;font:750 .7rem/1.4 var(--f-sans);text-transform:uppercase;letter-spacing:.05em;color:var(--graphite);margin:0 0 4px}
+.fmtleg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.fmtleg .lg-h::before{background:var(--cornflower)}
+.fmtleg .lg-s::before{background:color-mix(in srgb,var(--icy) 35%,transparent)}
+.fmtleg .lg-r::before{background:var(--ambre)}
+.fmtleg .lg-c::before{background:var(--vert)}
 body{overscroll-behavior-y:none}
 .resume{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:2px solid var(--cornflower);background:color-mix(in srgb,var(--cornflower) 10%,#000);border-radius:14px;padding:10px 12px;animation:rise .35s var(--snap)}
 .lp-left{color:var(--graphite);text-transform:none;letter-spacing:0;font-weight:700}
@@ -792,6 +832,11 @@ details.chapd:not([open])>summary{margin-bottom:0}
   .score{font-size:2.5rem}
   .tag{right:-6px}
   .swatch--big{--tile:62px}
+  .gobig{--tile:68px;gap:8px}
+  .gobig__tile,.gobig__bar{border-radius:18px}
+  .gobig__tile{font-size:1.4rem}
+  .gobig__bar{padding:10px 40px 10px 14px}
+  .gobig__arrow{right:14px;width:20px;height:20px;margin-top:-10px}
   .swatch--big .swatch__tile{font-size:1.3rem;border-radius:16px}
   .swatch--big .swatch__bar{border-radius:16px;padding:8px 36px 8px 14px}
   .swatch--big .swatch__name{font-size:1.24rem}
@@ -5680,6 +5725,53 @@ LES.calc=[
 
 </script>
 <script>
+/* « En clair » : avant le texte du cours, la même idée en mots simples, avec un exemple.
+   Rattaché aux écrans « learn » par leur titre. Le texte du cours lui-même n'est pas modifié. */
+(function(){
+const an=s=>`<span class="ang">${s}</span>`,v=s=>`<span class="vec">${s}</span>`;
+const CLAIR={
+geo:{
+ "g-thales":{
+  "L'énoncé":`<p>Prends un triangle ABC et trace une droite <b>parallèle à (BC)</b>. Elle coupe les deux autres côtés en M et N, et découpe un petit triangle AMN : c'est une <b>réduction exacte</b> du grand triangle ABC.</p><p>Toutes les longueurs sont multipliées par le même nombre. Exemple : si AM = 2 et AB = 6, le petit triangle est 3 fois plus petit, donc AN = AC/3 et MN = BC/3.</p><p>Les trois rapports AM/AB, AN/AC et MN/BC sont donc égaux. La condition indispensable : (MN) parallèle à (BC).</p>`,
+  "L'idée de la preuve : comparer des aires":`<p>On ne mesure rien : on compare des <b>aires</b>.</p><p>Deux triangles qui ont la même hauteur ont des aires dans le même rapport que leurs bases : si la base est deux fois plus longue, l'aire est deux fois plus grande.</p><p>On écrit AM/AB comme un rapport d'aires, puis AN/AC aussi, et on montre que ces deux rapports d'aires sont les mêmes grâce au parallélisme.</p>`},
+ "g-reciproque":{
+  "Le théorème 2.5.2":`<p>Thalès va des parallèles vers les rapports : si (MN) // (BC), alors les rapports sont égaux. La <b>réciproque</b> fait le chemin inverse : si les rapports sont égaux, alors les droites sont parallèles.</p><p>Attention à la position des points : M doit être du côté de B en partant de A, et N du côté de C (sur les demi-droites ]AB) et ]AC)).</p><p>Exemple : AB = 6, AM = 2, AC = 9 et AN = 3. Alors AM/AB = 2/6 = 1/3 et AN/AC = 3/9 = 1/3 : les rapports sont égaux et les points sont du bon côté, donc (MN) // (BC).</p>`,
+  "Le théorème des milieux (Thm 2.5.3)":`<p>C'est Thalès avec deux <b>milieux</b> : les rapports valent 1/2.</p><p>Le segment qui joint les milieux de deux côtés est parallèle au troisième côté, et deux fois plus court. Exemple : si BC = 10 et que M et N sont les milieux de [AB] et [AC], alors MN = 5 et (MN) // (BC).</p><p>Le réflexe : dès que tu vois deux milieux dans un même triangle, pense à ce théorème.</p>`},
+ "g-symetrie":{
+  "Une isométrie":`<p>Une isométrie déplace les points <b>sans rien déformer</b> : toutes les distances restent les mêmes.</p><p>Pense à une figure découpée dans du carton, que tu fais glisser, tourner ou retourner. Si A et B sont à 5 cm l'un de l'autre, leurs images f(A) et f(B) sont encore à 5 cm.</p><p>Conséquences : l'image d'une droite est une droite, et les angles gardent la même ouverture.</p>`,
+  "La symétrie centrale":`<p>Pour trouver le symétrique A′ de A par rapport à O : tu pars de A, tu traverses O, et tu continues de la même longueur, sur la même droite. Ainsi O est le <b>milieu</b> de [AA′].</p><p>Exemple : si OA = 3 cm, alors A′ est sur la droite (OA), de l'autre côté de O, avec OA′ = 3 cm.</p><p>Le point O ne bouge pas, et faire deux fois la symétrie ramène au point de départ.</p>`,
+  "Le Thm 2.2.3 : trois propriétés":`<p>La symétrie centrale, c'est un <b>demi-tour</b> autour de O.</p><p>(1) Un demi-tour ne change pas les longueurs : c'est une isométrie.</p><p>(2) Une droite qui fait un demi-tour revient dans la même direction, juste décalée : son image lui est parallèle. Si la droite passe par O, elle revient sur elle-même.</p><p>(3) Un demi-tour fait tourner la figure sans la retourner comme un miroir : les angles orientés gardent leur valeur.</p>`},
+ "g-triangles":{
+  "L'axiome V":`<p>Deux triangles sont <b>isométriques</b> quand on peut poser l'un exactement sur l'autre : mêmes côtés, mêmes angles.</p><p>Pas besoin de tout vérifier : trois informations bien choisies suffisent.</p><ul class="nt"><li><b>CCC</b> : les trois côtés égaux deux à deux.</li><li><b>CAC</b> : deux côtés égaux et l'angle compris <b>entre</b> eux.</li><li><b>ACA</b> : un côté égal et les deux angles posés à ses bouts.</li></ul><p>Exemple : AB = A′B′ = 4, AC = A′C′ = 5, et l'angle en A vaut π/3 dans les deux triangles. C'est CAC : ils sont isométriques, donc on a aussi BC = B′C′.</p><p>Piège : deux côtés et un angle qui n'est pas entre eux ne suffisent pas.</p>`,
+  "La version orientée : l'axiome VI":`<p>Avec des angles orientés, on tient compte du sens de rotation. Deux triangles isométriques « dans le même sens » se superposent sans retourner la feuille.</p><p>Cette version sert surtout dans les démonstrations sur la symétrie centrale, qui ne retourne pas les figures.</p>`},
+ "g-angles":{
+  "L'axiome IV : ce qu'il faut retenir":`<p>Un angle orienté dit de combien il faut <b>tourner</b> pour passer de la demi-droite [OA) à la demi-droite [OB) : positif dans le sens inverse des aiguilles d'une montre, négatif dans l'autre sens.</p><p>Si [OA) et [OB) sont la même demi-droite, on ne tourne pas : 0. Si elles sont opposées (O entre A et B), c'est un demi-tour : π.</p><p>Chasles : tourner de [OA) vers [OB), puis de [OB) vers [OC), c'est tourner de [OA) vers [OC). On additionne : par exemple π/4 puis π/2 font 3π/4.</p>`,
+  "La bissectrice":`<p>La bissectrice coupe un angle en <b>deux angles égaux</b>. Exemple : si l'angle vaut π/2 (un angle droit), la bissectrice fait π/4 avec chacun des deux côtés.</p><p>La règle « entre » : si la demi-droite [OC) passe à l'intérieur de l'angle (elle coupe le segment [AB]), alors le grand angle est la somme des deux petits : |${an("AOB")}| = |${an("AOC")}| + |${an("COB")}|.</p>`,
+  "La médiatrice":`<p>La médiatrice de [AB] est la droite qui coupe [AB] en son <b>milieu</b>, à <b>angle droit</b>.</p><p>Tous ses points sont à la même distance de A et de B : si tu plantes un piquet sur la médiatrice, il faut la même longueur de corde pour aller à A et pour aller à B. Et inversement, un point à la même distance de A et de B est forcément sur la médiatrice.</p>`},
+ "g-aires":{
+  "L'axiome VIII et la Prop 1.6.1":`<p>L'aire mesure la place qu'occupe une figure. Trois règles de base :</p><ul class="nt"><li>un rectangle de côtés a et b a pour aire a × b ;</li><li>si on découpe une figure en morceaux qui ne se chevauchent pas, les aires s'additionnent ;</li><li>deux triangles superposables ont la même aire.</li></ul><p>Un segment n'a pas d'épaisseur : son aire est nulle. C'est la démo exigible 1.6.1.</p>`,
+  "La hauteur et l'aire":`<p>La hauteur issue de A est la droite qui passe par A et tombe <b>à angle droit</b> sur (BC). Son pied H<sub>A</sub> peut être en dehors du segment [BC], quand le triangle a un angle obtus en B ou en C.</p><p>L'aire vaut base × hauteur / 2, avec <b>n'importe quel côté</b> comme base : BC × AH<sub>A</sub> / 2 = AC × BH<sub>B</sub> / 2 = AB × CH<sub>C</sub> / 2. Exemple : BC = 6 et AH<sub>A</sub> = 4 donnent une aire de 12.</p><p>Écrire la même aire de deux façons est l'astuce de l'exercice 2 du CC1 2025.</p>`,
+  "La somme des angles":`<p>Dans n'importe quel triangle, les trois angles additionnés font <b>π</b>, c'est-à-dire un demi-tour (180°).</p><p>Exemple : si deux angles valent π/2 et π/6, le troisième vaut π − π/2 − π/6 = π/3.</p>`},
+ "g-axiomes":{
+  "L'axiome I":`<p>Par deux points différents, il passe <b>une seule</b> droite.</p><p>C'est l'outil pour montrer que deux droites sont la même : trouve deux points distincts qui sont sur les deux à la fois.</p>`,
+  "L'axiome II (Euclide)":`<p>Par un point, il passe <b>une seule</b> parallèle à une droite donnée.</p><p>Exemple d'utilisation : si deux droites sont parallèles à Δ et passent toutes les deux par le même point M, c'est forcément la même droite.</p>`,
+  "L'axiome III : la distance":`<p>Les règles des distances, avec des mots simples :</p><ul class="nt"><li>(a) passer par un autre point ne raccourcit jamais le trajet ;</li><li>(b) la distance de A à B est la même que de B à A ;</li><li>(c) une distance nulle veut dire que c'est le même point ;</li><li>(d) trois points sont alignés exactement quand la plus grande distance est la somme des deux autres ;</li><li>(e) sur une droite, il y a exactement deux points à une distance donnée de A, un de chaque côté.</li></ul><p>Exemple pour (d) : AB = 2, BC = 7 et AC = 9. Comme 2 + 7 = 9, les points sont alignés, et B est entre A et C.</p>`},
+ "g-paralleles":{
+  "Le Cor 2.2.4":`<p>Quand un quadrilatère ABCD a ses côtés opposés <b>parallèles</b> deux à deux, il a aussi ses côtés opposés de <b>même longueur</b>, et ses diagonales [AC] et [BD] ont le <b>même milieu</b>.</p><p>Pour le prouver, on utilise la symétrie de centre O, le milieu de [BD] : elle échange B et D, et on montre qu'elle envoie C sur A.</p>`,
+  "Les angles alternes-internes (Thm 2.3.1)":`<p>Deux droites Δ et Δ′ sont coupées par une troisième droite, la <b>sécante</b>. Deux angles alternes-internes sont de part et d'autre de la sécante, entre Δ et Δ′ : ils dessinent un « Z ».</p><p>Le théorème : ces angles sont égaux exactement quand Δ et Δ′ sont parallèles. Ça marche dans les deux sens : angles égaux ⇒ droites parallèles, et droites parallèles ⇒ angles égaux.</p>`,
+  "La perpendiculaire (Cor 2.3.2)":`<p>Par un point, il passe <b>une seule</b> droite perpendiculaire à une droite donnée.</p><p>Exemple d'utilisation : si deux droites sont perpendiculaires à Δ et passent par le même point M, c'est la même droite.</p>`},
+ "g-vecteurs":{
+  "La Déf 3.1.1 et la Prop 3.1.2":`<p>Attention : dans ce cours, la <b>définition</b> d'un parallélogramme n'est pas « côtés opposés parallèles ». ABCD est un parallélogramme quand ses diagonales [AC] et [BD] ont le <b>même milieu</b>.</p><p>Les côtés opposés parallèles et de même longueur en sont une conséquence, qu'on démontre : c'est la Prop 3.1.2.</p>`,
+  "Les vecteurs":`<p>Un vecteur, c'est un <b>déplacement</b> : une direction, un sens et une longueur, sans point de départ fixé.</p><p>Deux flèches ${v("AB")} et ${v("A′B′")} représentent le même vecteur quand on passe de l'une à l'autre en la faisant glisser sans la tourner : c'est ce que dit « ABB′A′ est un parallélogramme ».</p>`,
+  "La somme de deux vecteurs":`<p>Additionner deux vecteurs, c'est <b>enchaîner</b> les deux déplacements : on fait le premier, puis le second à partir du point d'arrivée.</p><p>Chasles : aller de A à B, puis de B à C, c'est aller de A à C : ${v("AB")} + ${v("BC")} = ${v("AC")}.</p>`}
+}};
+const LES=window.LESSONS||{};
+Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.id];if(!M)return;
+  L.steps.forEach(s=>{if(s.k==="learn"&&M[s.h])s.clair=M[s.h];});}));
+})();
+
+</script>
+<script>
 /* Apprendre : les leçons pas à pas, la révision espacée, la synchronisation entre appareils,
    et les pages pensées pour le téléphone (Aujourd'hui, Apprendre, Réviser, S'entraîner, Plus).
    Principes (voir la page « Comment réviser ») : se tester plutôt que relire, espacer,
@@ -5730,15 +5822,29 @@ function flow(L){if(L.flow)return L.flow;const out=[],T=L.steps;
 const PKEY="rev-s1-lecons-en-cours";
 const sig=s=>s?s.k+":"+String(s.q||s.h||s.f||s.c||s.x||"").replace(/<[^>]+>/g,"").slice(0,60):"";
 function progAll(){try{const o=JSON.parse(localStorage.getItem(PKEY)||"{}");return o&&typeof o==="object"?o:{};}catch(e){return {};}}
-function progSave(){if(!LP)return;try{const all=progAll(),F=flow(BYL[LP.sid][LP.id]);all[LP.sid+"/"+LP.id]={i:LP.i,n:F.length,sig:sig(F[LP.i]),got:LP.got,t:LP.t||0,ss:LP.ss||{},ts:Date.now()};localStorage.setItem(PKEY,JSON.stringify(all));}catch(e){}}
-function progDrop(sid,lid){try{const all=progAll();delete all[sid+"/"+lid];localStorage.setItem(PKEY,JSON.stringify(all));}catch(e){}}
-function progGet(sid,lid){const p=progAll()[sid+"/"+lid];if(!p||!BYL[sid]||!BYL[sid][lid]||Date.now()-p.ts>14*864e5)return null;const F=flow(BYL[sid][lid]);let i=Math.min(p.i,F.length-1);
+let posT=null,posPending=null;
+function posFlush(){if(posT){clearTimeout(posT);posT=null;}if(posPending){const e=posPending;posPending=null;emit(e);}}
+function progSave(){if(!LP)return;const F=flow(BYL[LP.sid][LP.id]),now=A.stamp(),rec={i:LP.i,n:F.length,sig:sig(F[LP.i]),got:LP.got,t:LP.t||0,ss:LP.ss||{},ts:now};LP.saved=now;
+  try{const all=progAll();all[LP.sid+"/"+LP.id]=rec;localStorage.setItem(PKEY,JSON.stringify(all));}catch(e){}
+  posPending={k:"pos",s:LP.sid,l:LP.id,at:rec.i,sig:rec.sig,got:rec.got,dur:rec.t,ss:rec.ss};clearTimeout(posT);posT=setTimeout(posFlush,1500);}
+function progDrop(sid,lid,reset){if(posPending&&posPending.s===sid&&posPending.l===lid){clearTimeout(posT);posT=null;posPending=null;}
+  try{const all=progAll();delete all[sid+"/"+lid];localStorage.setItem(PKEY,JSON.stringify(all));}catch(e){}if(reset&&ST[sid].pos[lid])emit({k:"pos",s:sid,l:lid,reset:true});}
+/* la position la plus récente : celle de cet appareil ou celle arrivée par la synchronisation ; rien si la leçon a été finie depuis */
+function progRaw(sid,lid){let a=progAll()[sid+"/"+lid];const b=((ST[sid]||{}).pos||{})[lid],done=(ST[sid].les[lid]||{}).ts||0;if(a&&a.ts<=done)a=null;if(a&&b)return a.ts>=b.ts?a:b;return a||b||null;}
+addEventListener("pagehide",posFlush);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")posFlush();});
+function progGet(sid,lid){const p=progRaw(sid,lid);if(!p||!BYL[sid]||!BYL[sid][lid]||A.stamp()-p.ts>14*864e5)return null;const F=flow(BYL[sid][lid]);let i=Math.min(p.i,F.length-1);
   if(sig(F[i])!==p.sig){const j=F.findIndex(x=>sig(x)===p.sig);if(j>=0)i=j;}return i>0?Object.assign({},p,{i,n:F.length}):null;}
 const newLP=(sid,lid)=>({sid,id:lid,i:0,got:{},t:0,ss:{},last:Date.now()});
+const W8={learn:1.2,pre:.4,qcm:.6,blanks:.8,order:1,steps:2,demo:2.5,card:.3};
+function stepMins(L,sid){const F=flow(L),est=(SUBJ[sid].TB["L-"+L.id]||{}).min||L.min,w=F.map(x=>x.k==="paper"?Math.max(2,(x.min||10)/4):(W8[x.k]||1)),W=w.reduce((a,b)=>a+b,0);return w.map(x=>x/W*est);}
+function parts(L,sid){const F=flow(L),m=stepMins(L,sid),st=[0];let cur=0,rest=m.reduce((a,b)=>a+b,0);
+  F.forEach((x,j)=>{const isB=x.k==="pre"||x.k==="steps"||x.k==="demo"||x.k==="paper"||(x.k==="learn"&&!(F[j-1]&&F[j-1].k==="pre"));
+    if(j>0&&isB&&cur>=10&&rest>=8){st.push(j);cur=0;}cur+=m[j];rest-=m[j];});return st;}
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
-  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid);LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;}}else LP.last=Date.now();
+  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid);LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}}
+  else{LP.last=Date.now();const p=progGet(sid,lid);if(p&&p.ts>(LP.saved||0)&&p.i!==LP.i){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;LP.cp=null;}}
   drawStep();}
 function mark(v,s){if(LP.got[LP.i]==null){LP.got[LP.i]=v;progSave();}if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});}
 /* le temps de travail : compté écran par écran (20 min au plus par écran) ; une absence de plus de 10 min compte comme une pause */
@@ -5753,10 +5859,19 @@ function drawStep(){
   if(LP.i>=N)return finish();
   const s=F[LP.i];
   const pct=Math.round(LP.i/N*100),from=LP.pp==null?pct:LP.pp,back=!!LP.back;LP.pp=pct;LP.back=false;
-  const est=(SUBJ[LP.sid].TB["L-"+LP.id]||{}).min||L.min,left=Math.max(1,Math.round(est*(N-LP.i)/N/5)*5),resumed=LP.resumed;LP.resumed=false;LP.ss=LP.ss||{};
+  const PT=parts(L,LP.sid),MN=stepMins(L,LP.sid),pk=PT.filter(x=>x<=LP.i).length,left=Math.max(1,Math.round(MN.slice(LP.i).reduce((a,b)=>a+b,0)/5)*5),resumed=LP.resumed;LP.resumed=false;LP.ss=LP.ss||{};
+  const marks=PT.slice(1).map(j=>`<span class="lp-mark" style="left:${j/N*100}%"></span>`).join("");
+  if(LP.cp===LP.i&&LP.i>0){const end=PT[pk]||N,pm=Math.max(5,Math.round(MN.slice(LP.i,end).reduce((a,b)=>a+b,0)/5)*5),vals=Object.values(LP.got),ok=vals.filter(v=>v>=1).length;
+    $("#main").innerHTML=`<div class="lp s-${LP.sid}"><div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter la leçon">✕</a><div class="lp-bar"><i style="width:${pct}%"></i>${marks}</div><span class="lp-n">${LP.i}/${N}</span></div>
+     <div class="cp"><p class="kick">${S.name} · ${esc(L.t)}</p><h2>Partie ${pk-1} sur ${PT.length} terminée</h2>${vals.length?`<p>${ok} ${plural(ok,"bonne réponse","bonnes réponses")} sur ${vals.length} depuis le début de la leçon.</p>`:""}
+      <p class="muted">Bon moment pour une pause si tu en as besoin : ta position est gardée, même si tu fermes le site ou si tu passes sur ton autre appareil.</p>
+      <div class="acts"><button class="btn pri big" id="cp-go">Continuer : partie ${pk} sur ${PT.length}, environ ${pm} min</button><a class="btn" href="#/">Faire une pause</a></div></div>
+     <div class="lp-foot"><button class="btn" id="lp-prev">Retour</button></div></div>`;
+    $("#cp-go").addEventListener("click",()=>{LP.cp=null;drawStep();});$("#lp-prev").addEventListener("click",()=>{LP.cp=null;LP.i=Math.max(0,LP.i-1);LP.back=true;drawStep();});
+    progSave();window.scrollTo(0,0);return;}
   $("#main").innerHTML=`<div class="lp s-${LP.sid}">
-   <div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter la leçon">✕</a><div class="lp-bar" role="progressbar" aria-label="Avancement dans la leçon" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${LP.i}"><i style="width:${from}%"></i></div><span class="lp-n">${LP.i+1}/${N}</span></div>
-   ${resumed?`<div class="resume" role="status"><span>Tu reprends là où tu t'étais arrêté : écran ${LP.i+1} sur ${N}.</span><button class="btn" id="lp-restart">Recommencer du début</button></div>`:""}${pauseBar()}<div class="lp-kicker">${S.name} · ${esc(L.t)}<span class="lp-left"> · encore ${left<60?`~${left} min`:"~"+hm(left)}</span></div>
+   <div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter la leçon">✕</a><div class="lp-bar" role="progressbar" aria-label="Avancement dans la leçon" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${LP.i}"><i style="width:${from}%"></i>${marks}</div><span class="lp-n">${LP.i+1}/${N}</span></div>
+   ${resumed?`<div class="resume" role="status"><span>Tu reprends là où tu t'étais arrêté : écran ${LP.i+1} sur ${N}.</span><button class="btn" id="lp-restart">Recommencer du début</button></div>`:""}${pauseBar()}<div class="lp-kicker">${S.name} · ${esc(L.t)}<span class="lp-left">${PT.length>1?` · partie ${pk} sur ${PT.length}`:""} · encore ${left<60?`~${left} min`:"~"+hm(left)}</span></div>
    <div class="lp-body${back?" back":""}" id="lpb"></div>
    <div class="lp-foot"><button class="btn" id="lp-prev"${LP.i?"":" hidden"}>Retour</button><button class="btn pri big" id="lp-next">Continuer</button></div>
    <p class="kbdhint"><span class="kb">Clavier : 1, 2, 3, 4 pour répondre · Entrée pour continuer. </span>Ta position est gardée : tu peux fermer et reprendre plus tard.</p></div>`;
@@ -5765,13 +5880,13 @@ function drawStep(){
   if(from!==pct){const bi=$(".lp-bar i");if(bi){void bi.offsetWidth;bi.style.width=pct+"%";}}
   $("#lp-prev").addEventListener("click",()=>{LP.i=Math.max(0,LP.i-1);LP.back=true;drawStep();});
   const pd=$("#pz-done"),pl=$("#pz-later");if(pd)pd.addEventListener("click",()=>{WORK.acc=0;WORK.last=Date.now();$(".pausebar").remove();});if(pl)pl.addEventListener("click",()=>{WORK.snooze=Date.now()+15*60e3;$(".pausebar").remove();});
-  next.addEventListener("click",()=>{if(next.disabled)return;if(next.dataset.mode==="check"){next.dispatchEvent(new CustomEvent("check"));return;}LP.i++;drawStep();});
-  const rs=$("#lp-restart");if(rs)rs.addEventListener("click",()=>{progDrop(LP.sid,LP.id);LP=newLP(LP.sid,LP.id);drawStep();});
-  progSave();fixLinks(body,LP.sid);window.scrollTo(0,0);}
+  next.addEventListener("click",()=>{if(next.disabled)return;if(next.dataset.mode==="check"){next.dispatchEvent(new CustomEvent("check"));return;}LP.i++;if(PT.includes(LP.i))LP.cp=LP.i;drawStep();});
+  const rs=$("#lp-restart");if(rs)rs.addEventListener("click",()=>{progDrop(LP.sid,LP.id,true);LP=newLP(LP.sid,LP.id);drawStep();});
+  A.fmtCourseIn(body);progSave();fixLinks(body,LP.sid);window.scrollTo(0,0);}
 const code=(src,lang)=>W.code(src,lang||SUBJ[LP.sid].lang||"txt");
 const STEP={
  learn(s,body){
-  body.innerHTML=`${s.look?`<p class="look"><b>Tu cherches :</b> ${s.look}</p>`:""}${s.h?`<h2>${s.h}</h2>`:""}<div class="lx">${s.x||""}</div>${s.svg||""}${s.code?code(s.code,s.lang):""}<div class="lfig"></div>${s.after?`<div class="lx">${s.after}</div>`:""}`;
+  body.innerHTML=`${s.look?`<p class="look"><b>Tu cherches :</b> ${s.look}</p>`:""}${s.h?`<h2>${s.h}</h2>`:""}${s.clair?`<div class="clair"><p class="clair__t">En clair</p><div class="lx">${s.clair}</div></div><p class="lxlab">Ce que dit le cours</p>`:""}<div class="lx">${s.x||""}</div>${s.svg||""}${s.code?code(s.code,s.lang):""}<div class="lfig"></div>${s.after?`<div class="lx">${s.after}</div>`:""}`;
   if(s.fig){const c=SUBJ[LP.sid].BY[s.fig];if(c)mount(body.querySelector(".lfig"),c);}},
  pre(s,body,next){
   const ord=shuffle(s.o.map((_,i)=>i));
@@ -5918,7 +6033,8 @@ document.addEventListener("keydown",e=>{
 /* ================= la prochaine chose à faire ================= */
 function nextTask(P){
   const t0=today(),n=NOW();P=P||plan();
-  let best=null;Object.entries(progAll()).forEach(([k,p])=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n)return;const g=progGet(sid,lid);if(g&&(!best||p.ts>best.ts))best={sid,lid,ts:p.ts,g};});
+  const keys=new Set(Object.keys(progAll()));SIDS.forEach(sid=>Object.keys((ST[sid]||{}).pos||{}).forEach(lid=>keys.add(sid+"/"+lid)));
+  let best=null;keys.forEach(k=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n)return;const g=progGet(sid,lid);if(g&&(!best||g.ts>best.ts))best={sid,lid,ts:g.ts,g};});
   if(best&&SUBJ[best.sid].TB["L-"+best.lid])return {sid:best.sid,t:SUBJ[best.sid].TB["L-"+best.lid],resume:best.g,today:true};
   const triedToday=(sid,t)=>t.lesson&&(ST[sid].les[t.lesson]||{}).on===t0;
   for(const b of P.blocks.filter(b=>b.day===t0)){const t=b.tasks.map(id=>SUBJ[b.sid].TB[id]).find(t=>t&&!isDone(b.sid,t)&&!triedToday(b.sid,t));if(t)return {sid:b.sid,t,today:true};}
@@ -5936,13 +6052,17 @@ function home(){
   let h=`<div class="page wide home">${ttl(dayName(t0,true),nx?`Prochain CC : <b>${nx.name}</b>, ${examLine(nx)} (${jx(nx)}).`:"Tous les CC sont passés.")}`;
   if(exToday.length)h+=`<div class="examday">${exToday.map(S=>`<p><b>CC de ${S.name} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, ${exam(S).place}. ${S.examMorning||""}</p>`).join("")}</div>`;
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
-  h+=`<ul class="swatches">`
-   +sw({href:"#/reviser",c:due.length?"c-bleu":"c-vert",size:"big",tile:due.length?(due.length>99?"99+":String(due.length)):"✓",kicker:"D'abord · 5 à 15 min",name:due.length?`Réviser ${due.length} ${plural(due.length,"carte")}`:"Rien à réviser",sub:due.length?"Les cartes du jour, avant le nouveau.":"Les cartes arrivent avec les leçons.",done:!due.length})
-   +(!nextT?"":nextT.resume?sw({href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,size:"big",tile:`${nextT.resume.i+1}/${nextT.resume.n}`,kicker:`Reprendre · ${nS.name}`,name:esc(nextT.t.t),sub:`Tu t'étais arrêté à l'écran ${nextT.resume.i+1} sur ${nextT.resume.n}.`})
-     :nextT.today?sw({href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,size:"big",tile:nL?String(nL.i+1):ico("i-pen"),kicker:`Ensuite · ${nS.name} · ${hm(nextT.t.min)}`,name:esc(nextT.t.t),sub:nextT.t.lesson?"Leçon pas à pas":"Sur papier, comme au CC"})
-     :sw({href:hrefTask(nextT.sid,nextT.t),c:"c-vert",size:"big",tile:"✓",done:true,kicker:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."} Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`}))
-   +sw({href:"#/mix",c:"c-violet",size:"big",tile:mixed?"✓":ico("i-mix"),kicker:"En plus · 10 min",name:"10 questions mélangées",sub:mixed?`Fait aujourd'hui : ${A.hub.mixScore} sur 10.`:"Toutes les matières, comme le jour du CC.",done:mixed})
-   +`</ul>`;
+  /* le gros bouton : une leçon commencée, sinon les cartes du jour, sinon la suite du programme, sinon du repos */
+  const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
+  let go,after="";
+  if(nextT&&nextT.resume){const L=BYL[nextT.sid][nextT.t.lesson],PT=parts(L,nextT.sid),pk=PT.filter(x=>x<=nextT.resume.i).length;
+    go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:"▶",kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:`Tu reprends à l'écran ${nextT.resume.i+1} sur ${nextT.resume.n}${PT.length>1?`, partie ${pk} sur ${PT.length}`:""}.`};}
+  else if(due.length){go={href:"#/reviser",c:"c-bleu",tile:due.length>99?"99+":String(due.length),kick:"Continuer · d'abord 5 à 15 min",name:`Réviser ${due.length} ${plural(due.length,"carte")}`,sub:"Les cartes du jour, avant d'apprendre du nouveau : c'est ce qui fait tenir ce que tu as déjà appris."};
+    if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
+  else if(nextT&&nextT.today)go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:nL?String(nL.i+1):ico("i-pen"),kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:lessonInfo(nextT.t)+"."};
+  else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
+  h+=`<a class="gobig ${go.c}${go.done?" is-done":""}" href="${go.href}"><span class="gobig__tile" aria-hidden="true">${go.tile}</span><span class="gobig__bar"><span class="gobig__kick">${go.kick}</span><span class="gobig__name">${go.name}</span><span class="gobig__sub">${go.sub}</span></span>${ico("i-arrow","ico gobig__arrow")}</a>`;
+  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}<a href="#/mix">${mixed?`10 questions mélangées : fait (${A.hub.mixScore} sur 10)`:"10 questions mélangées"}</a><button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
   /* un seul créneau ouvert : le prochain à faire ; les autres sont repliés */
@@ -5953,7 +6073,7 @@ function home(){
   if(doneToday.length)pg+=dayBox("Fait aujourd'hui",`${doneToday.length} ${plural(doneToday.length,"étape")}`,`<ol class="todo" style="padding:0 12px 12px">${doneToday.map(o=>taskHTML(o.sid,o.t,false)).join("")}</ol>`,doneToday.length<=4);
   const fx=String((Math.round(F*10)/10)).replace(".",","),mes=SIDS.some(id=>measured(id)==="mesuré");
   pg+=`<div class="bilan"><p><b>Ton rythme :</b> une leçon te prend environ <b>${fx} fois</b> le temps que j'avais prévu au départ, ${mes?"mesuré sur tes leçons":"estimé d'après ta première séance (le site le mesure sur tes prochaines leçons)"}. Les durées affichées en tiennent compte.${dt?` Aujourd'hui, tu as déjà travaillé environ <b>${hm(dt)}</b> : c'est retiré de ta journée.`:""}</p>${P.need?`<p>Pour l'essentiel (les leçons et un examen blanc par matière), il faudrait encore environ <b>${hm(P.need)}</b> ; d'ici tes CC, tu as environ <b>${hm(P.have)}</b> de travail possible${P.need>P.have?`. Tout ne tiendra pas : le plan garde, matière par matière, ce qui rapporte le plus de points avant chaque CC ; le reste est dans « Si tu as encore du temps ». Mieux vaut bien comprendre la moitié que survoler le tout.`:"."}</p>`:""}<p class="muted">Pauses comprises : 15 min au milieu de chaque séance de plus d'une heure, 20 min entre deux séances. Rythme et vitesse se règlent dans <a href="#/examens">Examens et rythme</a>.</p></div>`;
-  h+=tiroir(`Ton programme d'aujourd'hui${tb.length?" · "+hm(tot)+" de travail":""}`,pg);
+  h+=tiroir(`Ton programme d'aujourd'hui${tb.length?" · "+hm(tot)+" de travail":""}`,pg,"prog");
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
   if(days.length)h+=tiroir("Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d),ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
     return dayBox(dayName(d,true),`${ex.length?`<span class="r">CC : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${hm(L.reduce((a,b)=>a+b.end-b.start,0))}`,`<div style="padding:0 12px 12px;display:grid;gap:12px">${L.map(b=>blockHTML(b,false)).join("")}</div>`);}).join(""));
@@ -5961,6 +6081,7 @@ function home(){
   if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes rapportent le moins : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
   h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
   $("#main").innerHTML=h+`</div>`;
+  const tp=$("#toprog");if(tp)tp.addEventListener("click",()=>{const el=$(".tiroir.prog");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
   bindTicks($("#main"),home);badges();}
 
 /* ================= Apprendre : toutes les leçons ================= */
@@ -6057,7 +6178,8 @@ async function sync(){
     const added=A.mergeEvents(remote),loc=A.journal(),rs=new Set(remote.map(e=>e.i));
     if(loc.some(e=>!rs.has(e.i)))await gh("/gists/"+SY.gist,{method:"PATCH",body:JSON.stringify({files:{[FILE]:{content:JSON.stringify({v:1,ev:loc})}}})});
     SY.last=Date.now();SY.err=null;saveSY();
-    if(added){const p=A.cur().page;if(p!=="lecon"&&p!=="reviser"&&p!=="mix"&&p!=="quiz")A.route();}
+    if(added){const p=A.cur().page;if(p!=="lecon"&&p!=="reviser"&&p!=="mix"&&p!=="quiz")A.route();
+      else if(p==="lecon"&&LP){const q=progGet(LP.sid,LP.id);if(q&&q.ts>(LP.saved||0)&&q.i!==LP.i)lessonRoute([LP.sid,LP.id]);}}
   }catch(e){if(SY){SY.err=String(e&&e.message||e);saveSY();}}
   finally{syncing=false;syncBadge();if(pending){pending=false;setTimeout(sync,1500);}}}
 function syncBadge(t){const b=$("#syncb");if(!b)return;if(!SY||!SY.token){b.hidden=true;return;}b.hidden=false;
@@ -6101,7 +6223,7 @@ setInterval(()=>syncBadge(),60000);
 
 return {
   routes:{lecon:lessonRoute,apprendre,reviser:()=>{RV=null;reviser();},entrainer,plus,synchro,methode},
-  home,subject,badges,
+  home,subject,badges,partsOf:(sid,lid)=>{const L=BYL[sid]&&BYL[sid][lid];return L?parts(L,sid).length:1;},
   onChange(){badges();clearTimeout(deb);deb=setTimeout(sync,4000);}
 };
 }};
@@ -6157,7 +6279,7 @@ let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArr
 const persistJ=()=>{try{localStorage.setItem(JKEY,JSON.stringify(J));}catch(e){}};
 const ST={};
 function cardIds(sid,lid){const L=(LES[sid]||[]).find(x=>x.id===lid);if(!L)return [];const out=[];let n=0;L.steps.forEach(st=>{if(st.k==="card")out.push(lid+"#"+(n++));});return out;}
-function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{}};}
+function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{}};}
 function applyEv(e){
   const day=ymd(new Date(e.t));
   if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
@@ -6167,7 +6289,8 @@ function applyEv(e){
   else if(e.k==="td"){if(e.v){st.td[e.x]=true;st.tdOn[e.x]=day;}else{delete st.td[e.x];delete st.tdOn[e.x];}}
   else if(e.k==="task"){if(e.v)st.tasks[e.x]=day;else delete st.tasks[e.x];}
   else if(e.k==="quiz"){if(e.n>st.best)st.best=e.n;if(e.goal&&!st.quizOn)st.quizOn=day;}
-  else if(e.k==="les"){const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;st.les[e.l]=L;
+  else if(e.k==="pos"){st.pos[e.l]=e.reset||typeof e.at!=="number"?null:{i:e.at,sig:e.sig,got:e.got||{},t:e.dur||0,ss:e.ss||{},ts:e.t};}
+  else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;}
 }
@@ -6317,6 +6440,29 @@ let CUR={sid:null,page:"today"};
 function renderSide(){if(APP.ext&&APP.ext.badges)try{APP.ext.badges();}catch(e){}}
 function topInfo(){const n=NOW();const next=SIDS.map(id=>SUBJ[id]).filter(S=>examStart(S)>n).sort((a,b)=>examStart(a)-examStart(b))[0];const el=$("#jx");if(el){el.innerHTML=next?`${next.name} · <b>${jx(next)}</b>`:"CC passés";el.title=next?"Prochain CC":"";}}
 
+/* ---------- mise en forme du cours : une idée par ligne, et une couleur par rôle, sans changer un mot ----------
+   bleu : ce qu'on suppose ou ce qu'on introduit · orange : la justification (axiome, théorème, TD…) · vert : ce qu'on obtient */
+const JREF=/(r[ée]ciproque du th[ée]or[èe]me de Thal[èe]s|th[ée]or[èe]me de Thal[èe]s|th[ée]or[èe]me des milieux|relation de Chasles|in[ée]galit[ée] triangulaire|axiomes? [IVX]+(?: ?\([a-z]\))?|(?:Prop(?:osition)?|Thm|Th[ée]or[èe]me|Lemme|Cor(?:ollaire)?|D[ée]f(?:inition)?)\.? ?\d+(?:\.\d+)+|\bTD ?\d+(?:\.\d+)*|\bCCC\b|\bCAC\b|\bACA\b|\bChasles\b)/g;
+const jrefs=h=>h.split(/(<[^>]+>)/).map(x=>x.charAt(0)==="<"?x:x.replace(JREF,'<span class="jref">$1</span>')).join("");
+function splitLines(h){const out=[];let cur="",depth=0,i=0;
+  while(i<h.length){const ch=h[i];
+    if(ch==="<"){const j=h.indexOf(">",i);if(j<0){cur+=h.slice(i);break;}const tag=h.slice(i,j+1);if(tag.charAt(1)==="/")depth=Math.max(0,depth-1);else if(!/\/>$/.test(tag)&&!/^<(br|img|input|hr|wbr)\b/i.test(tag))depth++;cur+=tag;i=j+1;continue;}
+    cur+=ch;i++;if(depth)continue;const rest=h.slice(i);let m;
+    if(/[.!?]/.test(ch)&&(m=rest.match(/^\s+(?=[A-ZÀ-ÖØ-Þ«(<])/))){out.push(cur);cur="";i+=m[0].length;continue;}
+    if(ch===","&&(m=rest.match(/^\s+(?=(?:donc|d['’]où|alors|on en déduit|on obtient|ce qui donne)(?![A-Za-zÀ-ÖØ-öø-ÿ]))/))){out.push(cur);cur="";i+=m[0].length;continue;}}
+  if(cur.trim())out.push(cur);return out;}
+function lineKind(l){const t=l.replace(/<[^>]+>/g,"").trim();
+  if(/^(on suppose|supposons|soit\b|soient\b|on considère|on pose|notons|si\b|par hypothèse)/i.test(t))return "l-hyp";
+  if(/^(donc|d['’]où|ainsi|alors|on en déduit|on a donc|on a alors|par conséquent|finalement|ce qui|c'est donc|on obtient|on conclut)/i.test(t))return "l-concl";return "l-step";}
+const FMTLEG=`<p class="fmtleg" aria-hidden="true"><span class="lg-h">on suppose, on introduit</span><span class="lg-s">une étape</span><span class="lg-r">la justification</span><span class="lg-c">ce qu'on obtient</span></p>`;
+function fmtCourseIn(root){if(!root)return;
+  root.querySelectorAll(".redac,.cours,.lp-body .sol,.lp-body .lx,.fc .back").forEach(box=>{if(box.classList.contains("fmtd")||box.closest(".clair"))return;box.classList.add("fmtd");
+    if(!box.querySelector("p,li,div,pre,ol,ul")&&box.textContent.trim()){box.innerHTML=`<p>${box.innerHTML}</p>`;}
+    box.querySelectorAll("p").forEach(p=>{if(p.classList.contains("muted")||p.classList.contains("formula")||p.closest(".clair,.fmtleg"))return;const L=splitLines(p.innerHTML);
+      if(L.length>1||lineKind(L[0]||"")!=="l-step"){p.innerHTML=L.map(l=>`<span class="ln ${lineKind(l)}">${jrefs(l)}</span>`).join("");p.classList.add("fmt");}else p.innerHTML=jrefs(p.innerHTML);});
+    box.querySelectorAll("li").forEach(li=>{if(!li.querySelector("p,ul,ol"))li.innerHTML=jrefs(li.innerHTML);});
+    if(box.classList.contains("redac")&&box.querySelector(".fmt"))box.insertAdjacentHTML("afterbegin",FMTLEG);});}
+
 /* ---------- petits morceaux de page ---------- */
 const sec=(n,t,body)=>`<section class="sec"><h2><span class="num">${n}</span>${t}</h2>${body}</section>`;
 function badges(S,c){const t=TYPE[c.type]||["Fiche","def"];return `<span class="badge ${t[1]}">${t[0]}</span><span class="badge">${c.ref}</span>${c.cc?`<span class="badge cc">${c.cc}</span>`:""}${c.out?`<span class="badge out">Sans doute pas au CC</span>`:""}${c.maybe?`<span class="badge out">Peut-être au CC</span>`:""}`;}
@@ -6333,7 +6479,7 @@ function taskHTML(sid,t,full){
   const S=SUBJ[sid],st=ST[sid],done=isDone(sid,t);let meta=[hm(t.min)],go="",chips="";
   const L=x=>x.startsWith("#")||/\.pdf$/.test(x)?x:`#/${sid}/${x}`;
   if(t.items){const k=t.items.filter(id=>st.known[id]).length,r=t.items.filter(id=>st.review[id]).length;meta.push(`${k} sur ${t.items.length} fiches sues`);if(r)meta.push(`<span class="r">${r} en rouge</span>`);const nx=t.items.find(id=>!st.known[id]);if(nx&&!done)go=`<a class="btn pri go" href="#/${sid}/c/${nx}">${k?"Continuer":"Commencer"}</a>`;if(full)chips=`<div class="chips">${t.items.map(id=>chip(sid,id)).join("")}</div>`;}
-  if(t.lesson){const L=st.les[t.lesson];meta.push(L?(done?`faite, ${Math.round(L.best*100)} % de bonnes réponses`:`à refaire : ${Math.round(L.best*100)} % la première fois`):"leçon pas à pas");if(!done)go=`<a class="btn pri go" href="#/lecon/${sid}/${t.lesson}">Commencer</a>`;else if(full)go=`<a class="btn go" href="#/lecon/${sid}/${t.lesson}">Refaire</a>`;}
+  if(t.lesson){const L=st.les[t.lesson],np=APP.ext&&APP.ext.partsOf?APP.ext.partsOf(sid,t.lesson):1;meta.push(L?(done?`faite, ${Math.round(L.best*100)} % de bonnes réponses`:`à refaire : ${Math.round(L.best*100)} % la première fois`):"leçon pas à pas"+(np>1?`, en ${np} parties`:""));if(!done)go=`<a class="btn pri go" href="#/lecon/${sid}/${t.lesson}">Commencer</a>`;else if(full)go=`<a class="btn go" href="#/lecon/${sid}/${t.lesson}">Refaire</a>`;}
   if(t.td){const k=t.td.filter(x=>st.td[x]).length;meta.push(`${k} sur ${t.td.length} exercices sus`);}
   if(t.quiz)meta.push(`objectif ${quizGoal(S,t)} sur ${activeQuiz(S).length}, meilleur score : ${st.best}`);
   if(t.review){const R=S.ORDER.filter(c=>st.review[c.id]);meta.push(R.length?`<span class="r">${R.length} fiche(s) en rouge</span>`:"aucune fiche en rouge");if(full&&R.length)chips=`<div class="chips">${R.map(c=>chip(sid,c.id)).join("")}</div>`;}
@@ -6475,7 +6621,7 @@ function drawCard(sid){
    ${flip?`<div class="back"><p>${c.type==="demo"?`<b>Énoncé :</b> si ${c.hyp.replace(/\.$/,"")}, alors ${c.concl.charAt(0).toLowerCase()+c.concl.slice(1)}</p><p><b>L'idée :</b> ${c.idea}`:c.plain}</p>${c.type==="demo"?"":`<div class="cours" style="border-left-width:3px">${c.formal}</div>`}<p><a href="#/${sid}/c/${c.id}">Ouvrir la fiche complète</a></p></div>`:""}
    <div class="acts">${flip?`<button class="btn ok" data-k="1">Je sais (1)</button><button class="btn rev" data-k="0">À revoir (2)</button>`:`<button class="btn pri" data-flip>Retourner (espace)</button>`}</div></div>`;
   box.querySelector("[data-flip]")?.addEventListener("click",()=>{flip=true;drawCard(sid);});
-  box.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",()=>cardAnswer(sid,b.dataset.k==="1")));fixLinks(box,sid);
+  fmtCourseIn(box);box.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",()=>cardAnswer(sid,b.dataset.k==="1")));fixLinks(box,sid);
 }
 function cardAnswer(sid,ok){const c=deck[di];setStatus(sid,c.id,ok?"known":"review");di++;flip=false;drawCard(sid);renderSide();}
 document.addEventListener("keydown",e=>{if(!CUR.sid||!CUR.page.startsWith("cartes")||(e.target.closest&&e.target.closest("input,textarea,button,select")))return;if(e.key===" "&&!flip&&deck[di]){e.preventDefault();flip=true;drawCard(CUR.sid);}else if(flip&&(e.key==="1"||e.key==="2"))cardAnswer(CUR.sid,e.key==="1");});
@@ -6588,21 +6734,21 @@ const TABS=["today","apprendre","reviser","entrainer","plus"];
 const DEAL=".piece,.swatch,.fiche,.task,details.ex,details.day,.kcard,.qbox,.fc,.check,.stitle,.hlead,.examcard,.examday,.pager a";
 const WIPE=$("#wipe"),BANDS=WIPE?[...WIPE.children]:[];
 let busy=false,LASTTAB=null,FIRST=true,ZOOM=null,VIAZOOM=false;
-function deal(){if(REDUCED)return;const m=$("#main");m.querySelectorAll(DEAL).forEach((el,i)=>el.style.setProperty("--i",Math.min(i,28)));m.classList.remove("is-enter");void m.offsetWidth;m.classList.add("is-enter");clearTimeout(deal.t);deal.t=setTimeout(()=>m.classList.remove("is-enter"),1500);}
-function wipe(back,mid){if(!WIPE){mid();return;}busy=true;WIPE.dataset.to=back?"back":"";WIPE.classList.toggle("is-rev",back);BANDS.forEach(b=>b.style.setProperty("--d",Math.floor(Math.random()*50)+"ms"));
+function deal(){if(REDUCED)return;const m=$("#main");m.querySelectorAll(DEAL).forEach((el,i)=>el.style.setProperty("--i",Math.min(i,28)));m.classList.remove("is-enter");void m.offsetWidth;m.classList.add("is-enter");clearTimeout(deal.t);deal.t=setTimeout(()=>m.classList.remove("is-enter"),800);}
+function wipe(back,mid){if(!WIPE){mid();return;}busy=true;WIPE.dataset.to=back?"back":"";WIPE.classList.toggle("is-rev",back);BANDS.forEach(b=>b.style.setProperty("--d",Math.floor(Math.random()*30)+"ms"));
   WIPE.classList.remove("is-out");void WIPE.offsetWidth;WIPE.classList.add("is-in");
-  setTimeout(()=>{try{mid();}finally{WIPE.classList.remove("is-in");void WIPE.offsetWidth;WIPE.classList.add("is-out");setTimeout(()=>{WIPE.classList.remove("is-out");busy=false;},400);}},270);}
+  setTimeout(()=>{try{mid();}finally{WIPE.classList.remove("is-in");void WIPE.offsetWidth;WIPE.classList.add("is-out");setTimeout(()=>{WIPE.classList.remove("is-out");busy=false;},230);}},165);}
 function closeZoom(){if(ZOOM){ZOOM.remove();ZOOM=null;}}
-function fadeZoom(){const z=ZOOM;if(!z)return;ZOOM=null;const a=z.animate([{opacity:1},{opacity:0}],{duration:300,easing:"ease-out",fill:"both"});a.onfinish=()=>z.remove();setTimeout(()=>z.remove(),600);}
+function fadeZoom(){const z=ZOOM;if(!z)return;ZOOM=null;const a=z.animate([{opacity:1},{opacity:0}],{duration:180,easing:"ease-out",fill:"both"});a.onfinish=()=>z.remove();setTimeout(()=>z.remove(),600);}
 function openZoom(a){closeZoom();const r=a.getBoundingClientRect(),cs=getComputedStyle(a),z=document.createElement("div");z.className="zoom";z.setAttribute("aria-hidden","true");
   z.style.setProperty("--c",cs.getPropertyValue("--c").trim()||"#D980FF");z.style.setProperty("--c-deep",cs.getPropertyValue("--c-deep").trim()||"#610089");
   const inner=document.createElement("div");inner.className="zoom__inner";const art=a.querySelector(".art");if(art){const k=art.cloneNode(true);k.classList.add("zoom__icon");inner.append(k);}
   const t=a.querySelector(".piece__title"),p1=document.createElement("p"),p2=document.createElement("p");p1.className="zoom__title";p1.textContent=t?t.textContent:"";p2.className="zoom__kicker";p2.textContent=a.dataset.zoom||"Ouverture";inner.append(p1,p2);
   z.append(inner);z.addEventListener("click",closeZoom);document.body.append(z);ZOOM=z;
-  const W=innerWidth,H=innerHeight;z.animate([{clipPath:`inset(${r.top}px ${W-r.right}px ${H-r.bottom}px ${r.left}px round 20px)`},{clipPath:"inset(0px 0px 0px 0px round 0px)"}],{duration:480,easing:"cubic-bezier(.45,.05,.2,1)",fill:"both"});
-  inner.animate([{opacity:0,transform:"translateY(16px) scale(.94)"},{opacity:1,transform:"none"}],{duration:300,delay:200,easing:"cubic-bezier(.2,.9,.25,1)",fill:"both"});}
+  const W=innerWidth,H=innerHeight;z.animate([{clipPath:`inset(${r.top}px ${W-r.right}px ${H-r.bottom}px ${r.left}px round 20px)`},{clipPath:"inset(0px 0px 0px 0px round 0px)"}],{duration:300,easing:"cubic-bezier(.45,.05,.2,1)",fill:"both"});
+  inner.animate([{opacity:0,transform:"translateY(16px) scale(.94)"},{opacity:1,transform:"none"}],{duration:200,delay:110,easing:"cubic-bezier(.2,.9,.25,1)",fill:"both"});}
 document.addEventListener("click",e=>{if(REDUCED||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;const a=e.target.closest("a.piece[data-zoom]");if(!a)return;const h=a.getAttribute("href");if(!h||!h.startsWith("#"))return;
-  e.preventDefault();openZoom(a);setTimeout(()=>{VIAZOOM=true;if(location.hash===h)route();else location.hash=h;},430);});
+  e.preventDefault();openZoom(a);setTimeout(()=>{VIAZOOM=true;if(location.hash===h)route();else location.hash=h;},260);});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeZoom();});
 addEventListener("pageshow",e=>{if(e.persisted)closeZoom();});
 
@@ -6632,7 +6778,7 @@ function render(parts){
   document.body.classList.toggle("in-lesson",first==="lecon");
   const tab=tabOf(parts);
   document.querySelectorAll("#tabbar a,#topnav a").forEach(a=>{if(a.dataset.tab===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
-  renderSide();topInfo();window.scrollTo(0,0);
+  fmtCourseIn(main);renderSide();topInfo();window.scrollTo(0,0);
   const h1=$("#main h1");document.title=(h1?h1.textContent+" · ":"")+"Mes révisions";
 }
 function route(){
@@ -6644,7 +6790,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,emit,work,factor,measured,doneTodayMin,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,emit,fmtCourseIn,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 APP.onChange=APP.ext.onChange||null;
 window.addEventListener("hashchange",route);
