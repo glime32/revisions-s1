@@ -5365,22 +5365,162 @@ const recettes=({sec})=>`<div class="title-row"><h1>Méthodes pas à pas</h1></d
  ${sec(3,"Des équations à Vect",`<div class="recipe"><ol><li>Résous le système homogène par le pivot.</li><li>Écris le vecteur général en fonction des variables libres.</li><li>Regroupe : (…) = s·v₁ + t·v₂. Donc F = Vect(v₁, v₂).</li><li>Contrôle : v₁ et v₂ vérifient les équations.</li></ol></div>`)}
  ${sec(4,"De Vect à des équations",`<div class="recipe"><ol><li>« (x, y, z) ∈ Vect(u, v) ⇔ il existe α, β ∈ ℝ tels que αu + βv = (x, y, z). »</li><li>Écris ce système en α, β, avec x, y, z comme seconds membres.</li><li>Pivot : chaque ligne 0 = expression(x, y, z) est une équation.</li><li>« Donc Vect(u, v) = {(x, y, z) | … } ». Contrôle : u et v vérifient les équations.</li></ol></div>`)}`;
 
+/* ================== CC2 (jeudi 17 décembre, 11h30) ==================
+   Programme pas encore annoncé. Le poly 2026-2027 s'arrête pour l'instant au chapitre 5 (matrices).
+   Les CC2 de 2022, 2023 et 2024 portent tous sur : inverse d'une matrice, applications linéaires
+   (linéaire ?, matrice, noyau, image, injective, surjective, composée), bases, sous-espaces (F = G, F ∩ G),
+   et en 2024 projection et symétrie orthogonales. Tous les calculs vérifiés en fractions exactes
+   (scratchpad lin/cc2.py). Le CC2 reprend aussi le programme du CC1 : covers ["cc1","cc2"]. */
+const mab=(R,k)=>{const c=R[0].length;return `<span class="mat" style="--n:${c}">${R.map(r=>r.map((x,j)=>`<span${j===k?' class="au"':""}>${n(x)}</span>`).join("")).join("")}</span>`;};
+const cc2=o=>Object.assign(o,{ex:"cc2"});
+
+/* ---------- chapitre 5 : matrices inversibles ---------- */
+add(5,cc2({id:"lin-inverse",type:"def",ref:"Poly, 5.4 ; CC2 2023-2024, ex. 5",t:"Matrices inversibles",short:"A⁻¹",
+ plain:`Une matrice carrée A est ${hl("inversible")} s'il existe B telle que ${hl("AB = BA = Iₙ")}. Cette B est unique : on la note A⁻¹. Alors AX = Y se résout d'un coup : X = A⁻¹Y.`,
+ formal:`<ul><li>Pour des matrices carrées, AB = Iₙ suffit : on a alors aussi BA = Iₙ, et B = A⁻¹.</li><li>Si A et B sont inversibles, AB l'est et ${hl("(AB)⁻¹ = B⁻¹A⁻¹")} ; (A⁻¹)⁻¹ = A.</li><li>En taille 2 : ${mat([["a","b"],["c","d"]])} est inversible si et seulement si ad − bc ≠ 0, et son inverse est ${mat([["d","-b"],["-c","a"]])} divisée par ad − bc.</li><li>Une matrice qui a une ligne nulle, une colonne nulle ou deux lignes égales n'est pas inversible.</li></ul>`,
+ use:`<p>Pour montrer que B est l'inverse de A, il suffit de calculer AB et de trouver Iₙ.</p>`,
+ trap:`(AB)⁻¹ = B⁻¹A⁻¹, dans cet ordre. Et (A + B)⁻¹ n'a pas de formule.`,
+ q:"Inverse de (3 1 / 5 2) ?",a:"ad − bc = 6 − 5 = 1, donc l'inverse est (2 −1 / −5 3).",rel:["lin-gauss-inv","lin-inv-relation","lin-produit"]}));
+
+add(5,cc2({id:"lin-gauss-inv",type:"meth",ref:"Poly, 5.5 et 5.6 ; CC2 2022-2023 ex. 2, 2023-2024 ex. 4, 2024-2025 ex. 2",t:"Calculer A⁻¹ par le pivot de Gauss",short:"[A | Iₙ] → [Iₙ | A⁻¹]",cc:"un exercice à chaque CC2",
+ plain:`On écrit ${hl("A et Iₙ côte à côte")}, puis on fait les ${hl("mêmes opérations sur les lignes")} des deux côtés, jusqu'à obtenir Iₙ à gauche. À droite, on lit A⁻¹.`,
+ formal:`<p>CC2 2024-2025, ex. 2 :</p><div class="mrow">${mab([[1,-3,0,1,0,0],[-2,5,0,0,1,0],[0,1,1,0,0,1]],3)}</div><ol><li>L₂ ← L₂ + 2L₁ : (0 −1 0 | 2 1 0).</li><li>L₃ ← L₃ + L₂ : (0 0 1 | 2 1 1).</li><li>L₂ ← −L₂ : (0 1 0 | −2 −1 0).</li><li>L₁ ← L₁ + 3L₂ : (1 0 0 | −5 −3 0).</li></ol><div class="mrow">A⁻¹ = ${mat([[-5,-3,0],[-2,-1,0],[2,1,1]])}</div><ul><li>Si une ligne nulle apparaît à gauche, A n'est pas inversible.</li><li>A est inversible ⇔ sa forme échelonnée réduite est Iₙ ⇔ AX = 0 n'a que la solution X = 0.</li></ul>`,
+ use:`<p>Vérifie à la fin : la première ligne de A fois chaque colonne de A⁻¹ doit donner 1, 0, 0. Une seule vérification suffit souvent à repérer une erreur.</p>`,
+ trap:`On n'opère que sur les ${hl("lignes")}, et toujours sur les deux moitiés à la fois.`,
+ q:"Que veut dire une ligne nulle à gauche pendant le calcul ?",a:"A n'est pas inversible : sa forme échelonnée réduite ne peut pas être Iₙ.",rel:["lin-inverse","lin-pivot"]}));
+
+add(5,cc2({id:"lin-inv-relation",type:"meth",ref:"CC2 2022-2023 ex. 3 ; CC2 2023-2024 ex. 5 ; CC1 2024-2025 ex. 6 ; examen de janvier 2026 ex. 4",t:"Inverser grâce à une relation entre matrices",short:"A(A − 2I) = 3I",
+ plain:`Quand l'énoncé donne une relation comme ${hl("A² = 2A + 3I")}, on met A en facteur pour obtenir ${hl("A × (quelque chose) = I")} : ce quelque chose est A⁻¹. Aucun pivot à faire.`,
+ formal:`${F("A² = 2A + 3I  ⇒  A² − 2A = 3I  ⇒  A(A − 2I) = 3I  ⇒  A × ⅓(A − 2I) = I  ⇒  A⁻¹ = ⅓(A − 2I)")}<ul><li>I commute avec tout : A(A − 2I) = (A − 2I)A, donc les deux produits valent I.</li><li>Examen de janvier 2026 : si AB = A + B, alors (I − A)(I − B) = I − A − B + AB = I, donc I − A est inversible d'inverse I − B. Les deux inverses commutent : (I − B)(I − A) = I, ce qui donne BA = A + B = AB.</li></ul>`,
+ use:`<p>Écris toujours le résultat sous la forme « A × M = I », puis conclus : A est inversible et A⁻¹ = M.</p>`,
+ trap:`On ne « divise » jamais par une matrice : on multiplie par un inverse, du bon côté.`,
+ q:"A² − 3A + 2I = 0. A est-elle inversible ?",a:"Oui : A(3I − A) = 2I, donc A⁻¹ = ½(3I − A).",rel:["lin-inverse","lin-produit"]}));
+
+/* ---------- chapitre 6 : familles, bases, applications linéaires ---------- */
+add(6,cc2({id:"lin-libre",type:"def",ref:"Poly, 5.7 ; examen de janvier 2026, ex. 5",t:"Familles libres et liées",short:"Libre ou liée",
+ plain:`Une famille est ${hl("libre")} si la seule combinaison nulle est celle où tous les coefficients sont nuls. Sinon elle est ${hl("liée")} : un des vecteurs s'écrit avec les autres.`,
+ formal:`<ul><li>(v₁, …, vₖ) libre ⇔ (λ₁v₁ + … + λₖvₖ = 0 ⇒ λ₁ = … = λₖ = 0).</li><li>Test : on résout le système homogène dont les colonnes sont v₁, …, vₖ. Solution unique (tout nul) : libre. Une variable libre : liée, et une solution non nulle donne une ${hl("relation de dépendance")}.</li><li>Exemple : (1, 2, 1), (0, 1, 3), (1, 3, 4) est liée, car (1, 2, 1) + (0, 1, 3) − (1, 3, 4) = 0.</li><li>Si (v₁, …, vₖ) est libre et (v₁, …, vₖ, v) liée, alors v ∈ Vect(v₁, …, vₖ) (examen de janvier 2026).</li></ul>`,
+ use:`<p>Deux vecteurs : liés si et seulement s'ils sont colinéaires. Plus de n vecteurs dans ℝⁿ : toujours liés.</p>`,
+ trap:`Une famille qui contient le vecteur nul est toujours liée.`,
+ q:"(1, 0, 2), (2, 0, 4) : libre ou liée ?",a:"Liée : (2, 0, 4) = 2(1, 0, 2), donc 2v₁ − v₂ = 0.",rel:["lin-base","lin-cl"]}));
+
+add(6,cc2({id:"lin-base",type:"def",ref:"CC2 2022-2023 ex. 6 ; CC2 2023-2024 ex. 6",t:"Bases de ℝⁿ",short:"Base",
+ plain:`Une ${hl("base")} de ℝⁿ est une famille telle que ${hl("tout vecteur s'écrit d'une seule façon")} comme combinaison linéaire de ses vecteurs. Les coefficients sont alors les coordonnées dans cette base.`,
+ formal:`<ul><li>Base = famille libre et génératrice. Dans ℝⁿ, une base a toujours exactement n vecteurs.</li><li>Test pour n vecteurs de ℝⁿ : la matrice dont ils sont les colonnes a n pivots (elle est inversible) ⇔ le système « combinaison = w » a une unique solution pour tout w ⇔ base.</li><li>Base canonique de ℝ³ : e₁ = (1, 0, 0), e₂ = (0, 1, 0), e₃ = (0, 0, 1).</li></ul>`,
+ use:`<p>Avec la définition des CC2 (« tout vecteur s'écrit de manière unique ») : écris a·v₁ + b·v₂ + c·v₃ = (x, y, z), résous en a, b, c, et montre qu'il y a toujours exactement une solution.</p>`,
+ trap:`Trois vecteurs non colinéaires deux à deux ne forment pas forcément une base de ℝ³ : ils peuvent être dans un même plan.`,
+ q:"((0, 1, 1), (1, 0, 1), (1, 1, 0)) est-elle une base de ℝ³ ?",a:"Oui : le système a·v₁ + b·v₂ + c·v₃ = (x, y, z) a toujours une unique solution (3 pivots).",rel:["lin-libre","lin-vect"]}));
+
+add(6,cc2({id:"lin-applin",type:"def",ref:"CC2 2022-2023 ex. 4 ; 2023-2024 ex. 2 ; 2024-2025 ex. 3 ; examen de janvier 2026, ex. 1",t:"Applications linéaires et leur matrice",short:"f linéaire, Mat(f)",cc:"« Linéaire ou pas ? » à chaque CC2",
+ plain:`f : ℝⁿ → ℝᵐ est ${hl("linéaire")} si f(x + x′) = f(x) + f(x′) et f(λx) = λf(x). En pratique : chaque coordonnée de f(x) est une ${hl("combinaison des variables, sans constante, sans produit, sans carré")}.`,
+ formal:`<ul><li>Si f est linéaire, f(0) = 0. Donc f(0) ≠ 0 suffit à dire « pas linéaire » (une constante comme + 1).</li><li>Un produit xy, un carré, une exponentielle : pas linéaire. Prouve-le avec un contre-exemple : g(2(1, 1)) = g(2, 2) ≠ 2g(1, 1).</li><li>La ${hl("matrice de f")} a pour colonnes f(e₁), …, f(eₙ) : ses lignes sont les coefficients de chaque coordonnée. Alors f(X) = AX.</li></ul>${F("f(x, y, z) = (2x + y − 3z, −x − 2y + 5z)  :  Mat(f) = (2 1 −3 / −1 −2 5)")}`,
+ use:`<p>Pour justifier « linéaire » : écris f(X) = AX avec A, ou vérifie les deux égalités de la définition.</p>`,
+ trap:`(x + y − z, x − y + 2z + 1) n'est pas linéaire, à cause du « + 1 » : f(0, 0, 0) = (0, 1).`,
+ q:"g(x, y) = (2x − y, xy, 3x + 4y) est-elle linéaire ?",a:"Non : g(1, 1) = (1, 1, 7) mais g(2, 2) = (2, 4, 14) ≠ 2g(1, 1) = (2, 2, 14), à cause du produit xy.",rel:["lin-ker-im","lin-composee"]}));
+
+add(6,cc2({id:"lin-ker-im",type:"meth",ref:"CC2 2023-2024 ex. 3 ; 2024-2025 ex. 5 ; examen de janvier 2026, ex. 1 et 6",t:"Noyau, image, injective, surjective",short:"ker f, im f",cc:"un exercice à chaque CC2",
+ plain:`Le ${hl("noyau")} ker f, ce sont les X tels que f(X) = 0 : on résout AX = 0 et on l'écrit avec Vect. L'${hl("image")} im f, ce sont les Y atteints : on cherche à quelle condition AX = Y a une solution, ce qui donne des équations.`,
+ formal:`<ul><li>ker f = {X | AX = 0} : un sous-espace de l'espace de départ. On l'écrit Vect(…) avec le pivot.</li><li>im f = Vect(colonnes de A) : un sous-espace de l'espace d'arrivée. On l'écrit par des équations : pivot sur (A | Y), puis chaque ligne nulle à gauche donne une condition « … = 0 ».</li><li>${hl("f injective ⇔ ker f = {0}")}. f surjective ⇔ im f = ℝᵐ.</li><li>Exemple (CC2 2024-2025) : f(x, y, z) = (2x + y + z, y − z, x + y). ker f = Vect((−1, 1, 1)), donc pas injective. (a, b, c) ∈ im f ⇔ a + b − 2c = 0, donc pas surjective.</li></ul>`,
+ use:`<p>Fais le pivot une seule fois sur (A | Y) avec Y = (a, b, c) : la partie gauche donne le noyau, les lignes nulles donnent les équations de l'image.</p>`,
+ trap:`Le noyau vit au départ (ℝⁿ), l'image à l'arrivée (ℝᵐ). Une application de ℝ³ dans ℝ⁴ n'est jamais surjective.`,
+ q:"Pourquoi ker f = {0} donne-t-il f injective ?",a:"Si f(X) = f(X′), alors f(X − X′) = 0, donc X − X′ ∈ ker f = {0}, donc X = X′.",rel:["lin-applin","lin-vect-eq"]}));
+
+add(6,cc2({id:"lin-composee",type:"meth",ref:"CC2 2022-2023, ex. 5 ; examen de janvier 2026, ex. 1",t:"Composée d'applications linéaires",short:"Mat(f ∘ g) = Mat(f)Mat(g)",
+ plain:`f ∘ g veut dire « g d'abord, puis f ». Elle existe si ${hl("g arrive là où f part")}. Sa matrice est le ${hl("produit Mat(f) × Mat(g)")}, dans cet ordre.`,
+ formal:`<ul><li>g : ℝᵖ → ℝⁿ et f : ℝⁿ → ℝᵐ donnent f ∘ g : ℝᵖ → ℝᵐ, linéaire, de matrice Mat(f)Mat(g) (taille m × p).</li><li>CC2 2022-2023 : f : ℝ² → ℝ³, g : ℝ³ → ℝ². f ∘ g : ℝ³ → ℝ³ et g ∘ f : ℝ² → ℝ² existent toutes les deux, avec des matrices de tailles différentes.</li><li>Preuve de la linéarité : g ∘ f(x + x′) = g(f(x) + f(x′)) = g(f(x)) + g(f(x′)), et pareil pour λx.</li></ul>`,
+ use:`<p>Annonce d'abord les ensembles de départ et d'arrivée, puis la taille de la matrice : ça évite de multiplier dans le mauvais ordre.</p>`,
+ trap:`Mat(f ∘ g) = Mat(f) × Mat(g), pas Mat(g) × Mat(f).`,
+ q:"f : ℝ² → ℝ², g : ℝ² → ℝ³. Laquelle existe : f ∘ g ou g ∘ f ?",a:"g ∘ f (ℝ² → ℝ³), de matrice Mat(g)Mat(f), de taille 3 × 2. f ∘ g n'existe pas : g arrive dans ℝ³, f part de ℝ².",rel:["lin-applin","lin-produit"]}));
+
+add(6,cc2({id:"lin-projection",type:"meth",ref:"CC2 2024-2025, ex. 4 ; examen de janvier 2026, ex. 7",t:"Projection et symétrie par rapport à un plan",short:"Projection, symétrie",
+ plain:`Pour un plan P d'équation ax + by + cz = 0, le vecteur ${hl("n = (a, b, c)")} est normal à P. Tout v s'écrit ${hl("v = w + λn")} avec w dans P. La projection garde w ; la symétrie donne w − λn.`,
+ formal:`<ul><li>Pour v = (x, y, z) : λ = (ax + by + cz)/(a² + b² + c²), puis w = v − λn ∈ P.</li><li>Projection orthogonale : p(v) = v − λn. Symétrie orthogonale : s(v) = v − 2λn = 2p(v) − v.</li><li>Les matrices : Mat(s) = 2Mat(p) − I₃, et Mat(p)² = Mat(p).</li></ul>${F("P : x − y + z = 0, n = (1, −1, 1)  :  Mat(p) = ⅓ (2 1 −1 / 1 2 1 / −1 1 2) ;  Mat(s) = ⅓ (1 2 −2 / 2 1 2 / −2 2 1)")}`,
+ use:`<p>Unicité de l'écriture v = w + λn : si w + λn = w′ + λ′n, alors w − w′ = (λ′ − λ)n est à la fois dans P et colinéaire à n ; or n ∉ P (n·n ≠ 0), donc λ = λ′ et w = w′.</p>`,
+ trap:`La symétrie, c'est v − 2λn (on traverse le plan), pas v − λn (ça, c'est la projection).`,
+ q:"Plan P : x + z = 0. Matrice de la symétrie orthogonale ?",a:"n = (1, 0, 1), λ = (x + z)/2, s(x, y, z) = (−z, y, −x) : matrice (0 0 −1 / 0 1 0 / −1 0 0).",rel:["lin-applin","lin-sev"]}));
+
+add(3,cc2({id:"lin-inter",type:"meth",ref:"CC2 2024-2025, ex. 1 ; CC2 2022-2023 et 2023-2024, ex. 1",t:"Intersection et égalité de sous-espaces",short:"F ∩ G, F = G",
+ plain:`F ∩ G, ce sont les vecteurs qui vérifient ${hl("à la fois")} les conditions de F et celles de G : c'est encore un sous-espace. Pour montrer F = G, on montre ${hl("F ⊂ G et G ⊂ F")}.`,
+ formal:`<ul><li>F ∩ G est un sous-espace : 0 est dans F et dans G ; si x, y ∈ F ∩ G, alors x + y ∈ F (F est un sev) et x + y ∈ G, donc x + y ∈ F ∩ G ; pareil pour λx.</li><li>F ∪ G n'est pas un sous-espace en général (deux droites distinctes du plan).</li><li>G = Vect(g₁, g₂) ⊂ F : il suffit que g₁ et g₂ vérifient les équations de F.</li><li>F ⊂ G : on écrit chaque générateur de F comme combinaison de g₁, g₂.</li></ul>`,
+ use:`<p>Pour calculer F ∩ G avec G = Vect(u, v) : prends au + bv, impose les équations de F, trouve la relation entre a et b.</p>`,
+ trap:`G ⊂ F seul ne suffit pas pour F = G : il faut l'autre inclusion (ou un argument de taille, si le cours l'a donné).`,
+ q:"F : x + y + z = 0, G = Vect((1, −1, 0), (1, 1, 1)). F ∩ G ?",a:"a(1, −1, 0) + b(1, 1, 1) est dans F ⇔ 3b = 0 ⇔ b = 0 : F ∩ G = Vect((1, −1, 0)).",rel:["lin-sev","lin-vect-eq"]}));
+
+/* ---------- entraînements au format du CC2 (calculs vérifiés) ---------- */
+const E="entraînement CC2";
+td.push(
+ cc2({id:"E1",s:3,note:E,t:"Inverser une matrice 3 × 3 par le pivot",en:`Calculer l'inverse de A = ${mat([[1,2,0],[0,1,0],[2,3,1]])}.`,link:"lin-gauss-inv",sol:`<div class="mrow">${mab([[1,2,0,1,0,0],[0,1,0,0,1,0],[2,3,1,0,0,1]],3)}</div><ol><li>L₃ ← L₃ − 2L₁ : (0 −1 1 | −2 0 1).</li><li>L₃ ← L₃ + L₂ : (0 0 1 | −2 1 1).</li><li>L₁ ← L₁ − 2L₂ : (1 0 0 | 1 −2 0).</li></ol><div class="mrow">A⁻¹ = ${mat([[1,-2,0],[0,1,0],[-2,1,1]])}</div><p>Vérification : la 1re ligne de A, (1 2 0), fois les colonnes de A⁻¹ : 1 + 0 + 0 = 1 ; −2 + 2 + 0 = 0 ; 0 + 0 + 0 = 0.</p>`}),
+ cc2({id:"E2",s:2,note:E,t:"Inverse en taille 2, et une matrice non inversible",en:`(1) Inverser A = ${mat([[3,1],[5,2]])}. (2) Montrer par le pivot que B = ${mat([[2,4],[1,2]])} n'est pas inversible.`,link:"lin-inverse",sol:`<ol><li>ad − bc = 6 − 5 = 1 ≠ 0 : A⁻¹ = ${mat([[2,-1],[-5,3]])}. Vérification : AA⁻¹ = (6 − 5, −3 + 3 ; 10 − 10, −5 + 6) = I₂.</li><li>Sur (B | I₂) : L₁ ↔ L₂, puis L₂ ← L₂ − 2L₁ donne la ligne (0 0 | 1 −2) : une ligne nulle à gauche, donc B n'est pas inversible. (Aussi : ad − bc = 4 − 4 = 0, la 1re ligne vaut 2 fois la 2e.)</li></ol>`}),
+ cc2({id:"E3",s:3,note:E,t:"Inverser grâce à une relation",en:`A = ${mat([[0,1,1],[1,0,1],[1,1,0]])}. (1) Calculer A². (2) Trouver une relation entre A², A et I₃. (3) En déduire que A est inversible et donner A⁻¹.`,link:"lin-inv-relation",sol:`<ol><li>A² = ${mat([[2,1,1],[1,2,1],[1,1,2]])}.</li><li>A² = A + 2I₃ (la diagonale vaut 2 = 0 + 2, le reste 1 = 1 + 0).</li><li>A² − A = 2I₃, donc A(A − I₃) = 2I₃, donc A × ½(A − I₃) = I₃ : A est inversible et A⁻¹ = ½(A − I₃) = ½ ${mat([[-1,1,1],[1,-1,1],[1,1,-1]])}.</li></ol>`}),
+ cc2({id:"E4",s:3,note:E,t:"Libre ou liée ? Une base ?",en:"(1) La famille ((1, 2, 1), (0, 1, 3), (1, 3, 4)) est-elle libre ? Si non, donner une relation de dépendance. (2) Montrer que ((1, 0, 1), (1, 1, 0), (0, 1, 1)) est une base de ℝ³ et donner les coordonnées de (1, 1, 1) dans cette base.",link:"lin-base",sol:`<ol><li>a(1, 2, 1) + b(0, 1, 3) + c(1, 3, 4) = 0 donne a + c = 0, 2a + b + 3c = 0, a + 3b + 4c = 0. Le pivot laisse une variable libre : a = −c, b = −c. Avec c = 1 : −(1, 2, 1) − (0, 1, 3) + (1, 3, 4) = 0. La famille est liée.</li><li>a(1, 0, 1) + b(1, 1, 0) + c(0, 1, 1) = (x, y, z) s'écrit a + b = x, b + c = y, a + c = z : 3 pivots, une unique solution pour tout (x, y, z), donc c'est une base. Pour (1, 1, 1) : a = b = c = ½.</li></ol>`}),
+ cc2({id:"E5",s:3,note:E,t:"Linéaire ou pas ?",en:"Justifier : f(x, y) = (x + 2y, 3x) ; g(x, y) = (x + 1, y) ; h(x, y, z) = (x², y, z) ; k(x, y, z) = (x − z, 0).",link:"lin-applin",sol:`<ul><li>f est linéaire : f(X) = AX avec A = ${mat([[1,2],[3,0]])}.</li><li>g n'est pas linéaire : g(0, 0) = (1, 0) ≠ (0, 0).</li><li>h n'est pas linéaire : h(2, 0, 0) = (4, 0, 0) mais 2h(1, 0, 0) = (2, 0, 0).</li><li>k est linéaire : matrice ${mat([[1,0,-1],[0,0,0]])}.</li></ul>`}),
+ cc2({id:"E6",s:3,note:E,t:"Noyau et image",en:"f : ℝ³ → ℝ³, f(x, y, z) = (x + y, y + z, x + 2y + z). (1) Matrice de f. (2) ker f sous la forme Vect(…) ; f est-elle injective ? (3) Condition sur (a, b, c) pour être dans im f ; f est-elle surjective ?",link:"lin-ker-im",sol:`<ol><li>A = ${mat([[1,1,0],[0,1,1],[1,2,1]])}.</li><li>AX = 0 : L₃ ← L₃ − L₁ − L₂ donne une ligne nulle ; il reste x + y = 0 et y + z = 0, donc y = −z, x = z. ker f = Vect((1, −1, 1)) ≠ {0} : f n'est pas injective.</li><li>Sur (A | Y) avec Y = (a, b, c), la même opération donne la ligne (0 0 0 | c − a − b). Donc (a, b, c) ∈ im f ⇔ c = a + b. Par exemple (0, 0, 1) ∉ im f : f n'est pas surjective.</li></ol>`}),
+ cc2({id:"E7",s:2,note:E,t:"Composée",en:"f : ℝ² → ℝ², f(x, y) = (x − y, 2x) et g : ℝ² → ℝ³, g(x, y) = (x, x + y, y). Laquelle des composées f ∘ g, g ∘ f existe ? Donner sa matrice et sa formule.",link:"lin-composee",sol:`<p>f ∘ g n'existe pas : g arrive dans ℝ³ et f part de ℝ². g ∘ f : ℝ² → ℝ³ existe, de matrice Mat(g)Mat(f) = ${mat([[1,0],[1,1],[0,1]])}${mat([[1,-1],[2,0]])} = ${mat([[1,-1],[3,-1],[2,0]])}. Donc g ∘ f(x, y) = (x − y, 3x − y, 2x). Vérification : g(x − y, 2x) = (x − y, (x − y) + 2x, 2x).</p>`}),
+ cc2({id:"E8",s:2,note:E,t:"Projection et symétrie orthogonales",en:"P est le plan d'équation x + z = 0 dans ℝ³. (1) Un vecteur normal n. (2) Écrire v = (x, y, z) sous la forme w + λn avec w ∈ P. (3) Matrices de la projection orthogonale sur P et de la symétrie orthogonale par rapport à P.",link:"lin-projection",sol:`<ol><li>n = (1, 0, 1).</li><li>λ = (x + z)/2 et w = v − λn = ((x − z)/2, y, (z − x)/2), qui vérifie bien x + z = 0.</li><li>p(v) = w : Mat(p) = ${mat([["½",0,"-½"],[0,1,0],["-½",0,"½"]])}. s(v) = v − 2λn = (−z, y, −x) : Mat(s) = ${mat([[0,0,-1],[0,1,0],[-1,0,0]])} = 2Mat(p) − I₃.</li></ol>`}),
+ cc2({id:"E9",s:2,note:E,t:"Démonstrations de cours",en:"f : ℝⁿ → ℝᵖ linéaire. (1) Montrer que ker f est un sous-espace vectoriel de ℝⁿ. (2) Montrer que si ker f = {0}, alors f est injective.",link:"lin-ker-im",sol:`<ol><li>0 ∈ ker f car f(0) = 0. Si x, x′ ∈ ker f : f(x + x′) = f(x) + f(x′) = 0 + 0 = 0, donc x + x′ ∈ ker f. Si x ∈ ker f et λ ∈ ℝ : f(λx) = λf(x) = 0, donc λx ∈ ker f.</li><li>Soient x, x′ avec f(x) = f(x′). Alors f(x − x′) = f(x) − f(x′) = 0, donc x − x′ ∈ ker f = {0}, donc x = x′. (Corrigé officiel de janvier 2026, ex. 1.)</li></ol>`}),
+ cc2({id:"E10",s:2,note:E,t:"Intersection de deux sous-espaces",en:"F = {(x, y, z) ∈ ℝ³ | x + y + z = 0} et G = Vect((1, −1, 0), (1, 1, 1)). Déterminer F ∩ G.",link:"lin-inter",sol:`<p>Un vecteur de G s'écrit a(1, −1, 0) + b(1, 1, 1) = (a + b, −a + b, b). Il est dans F ⇔ (a + b) + (−a + b) + b = 0 ⇔ 3b = 0 ⇔ b = 0. Donc F ∩ G = {a(1, −1, 0)} = Vect((1, −1, 0)).</p>`}));
+
+/* ---------- annales du CC2 (énoncés sans corrigé officiel : corrigés écrits par moi, calculs vérifiés) ---------- */
+const MOI="Corrigé écrit par moi (pas de corrigé officiel), calculs vérifiés";
+ann.push(
+ {src:"CC2 2024-2025 · Ex. 2",t:"Inverser une matrice 3 × 3",en:`Inverser A = ${mat([[1,-3,0],[-2,5,0],[0,1,1]])}.`,go:"lin-gauss-inv",who:MOI,sol:`<p>(A | I₃) : L₂ ← L₂ + 2L₁ ; L₃ ← L₃ + L₂ ; L₂ ← −L₂ ; L₁ ← L₁ + 3L₂.</p><div class="mrow">A⁻¹ = ${mat([[-5,-3,0],[-2,-1,0],[2,1,1]])}</div>`},
+ {src:"CC2 2024-2025 · Ex. 3",t:"Linéaires ou pas ?",en:"f(x, y, z) = (y, z, x) ; g(x, y, z) = (2x + ey − z, xy, z) ; h(x, y, z) = (−x + 2y + z, x + yz, y).",go:"lin-applin",who:MOI,sol:`<ul><li>f est linéaire : matrice ${mat([[0,1,0],[0,0,1],[1,0,0]])}.</li><li>g n'est pas linéaire (produit xy) : g(1, 1, 0) = (2 + e, 1, 0) mais g(2, 2, 0) = (4 + 2e, 4, 0) ≠ 2g(1, 1, 0) = (4 + 2e, 2, 0). Le e (nombre d'Euler) devant y ne gêne pas.</li><li>h n'est pas linéaire (produit yz) : h(0, 1, 1) = (3, 1, 1) mais h(0, 2, 2) = (6, 4, 2) ≠ (6, 2, 2).</li></ul>`},
+ {src:"CC2 2024-2025 · Ex. 4",t:"Plan, vecteur normal, projection et symétrie",en:"P : x − y + z = 0 dans ℝ³. (1) Un vecteur n normal à P. (2) Montrer que tout v s'écrit de manière unique v = w + λn, w ∈ P, λ ∈ ℝ. (3) Matrices de la symétrie orthogonale par rapport à P et de la projection orthogonale sur P.",go:"lin-projection",who:MOI,sol:`<ol><li>n = (1, −1, 1).</li><li>Existence : λ = (x − y + z)/3 et w = v − λn ; alors w vérifie l'équation de P (on retire exactement la part normale). Unicité : si w + λn = w′ + λ′n, alors w − w′ = (λ′ − λ)n est dans P ; or n ∉ P (1 + 1 + 1 ≠ 0), donc λ = λ′ et w = w′.</li><li>p(v) = v − λn : Mat(p) = ⅓ ${mat([[2,1,-1],[1,2,1],[-1,1,2]])}. s(v) = v − 2λn : Mat(s) = ⅓ ${mat([[1,2,-2],[2,1,2],[-2,2,1]])}.</li></ol>`},
+ {src:"CC2 2024-2025 · Ex. 5",t:"Matrice, noyau, image",en:"f(x, y, z) = (2x + y + z, y − z, x + y). (1) Matrice de f. (2) ker f = Vect(v) ; f est-elle injective ? (3) À quelle condition w = (a, b, c) est-il dans im f ? f est-elle surjective ?",go:"lin-ker-im",who:MOI,sol:`<ol><li>A = ${mat([[2,1,1],[0,1,-1],[1,1,0]])}.</li><li>AX = 0 : y = z et x = −z, donc ker f = Vect((−1, 1, 1)) : pas injective.</li><li>Pivot sur (A | w) : L₁ ↔ L₃, L₃ ← L₃ − 2L₁, L₃ ← L₃ + L₂ ; la dernière ligne devient (0 0 0 | a + b − 2c). Donc w ∈ im f ⇔ a + b = 2c. Vérification : a + b = 2x + 2y = 2c. (0, 0, 1) ∉ im f : pas surjective.</li></ol>`},
+ {src:"CC2 2023-2024 · Ex. 2",t:"Linéaires ou pas ? (bis)",en:"f(x, y, z) = (2x + y − 3z, −x − 2y + 5z) ; g(x, y) = (x − y, xy, −2x + 3y) ; h(x, y, z) = (x − y + 3z, y − z, x, −3x + 2y − z + 1).",go:"lin-applin",who:MOI,sol:`<ul><li>f est linéaire : matrice ${mat([[2,1,-3],[-1,-2,5]])}.</li><li>g n'est pas linéaire : g(1, 1) = (0, 1, 1), g(2, 2) = (0, 4, 2) ≠ 2g(1, 1).</li><li>h n'est pas linéaire : h(0, 0, 0) = (0, 0, 0, 1) ≠ 0.</li></ul>`},
+ {src:"CC2 2023-2024 · Ex. 3",t:"De ℝ³ dans ℝ⁴ : noyau, image",en:"f(x, y, z) = (x + z, y − x, z + y, x + y + 2z). (1) Matrice. (2) Noyau avec Vect. (3) Image par un système homogène. (4) Surjective ? Injective ?",go:"lin-ker-im",who:MOI,sol:`<ol><li>A = ${mat([[1,0,1],[-1,1,0],[0,1,1],[1,1,2]])}.</li><li>AX = 0 donne x = −z, y = −z : ker f = Vect((−1, −1, 1)).</li><li>(a, b, c, d) ∈ im f ⇔ c = a + b et d = 2a + b.</li><li>Pas surjective (deux équations : im f ≠ ℝ⁴ ; de toute façon ℝ³ → ℝ⁴ ne peut pas l'être). Pas injective : ker f ≠ {0}.</li></ol>`},
+ {src:"CC2 2023-2024 · Ex. 4",t:"Inverser une matrice 3 × 3 (bis)",en:`Inverser A = ${mat([[0,1,2],[1,1,2],[0,2,3]])}.`,go:"lin-gauss-inv",who:MOI,sol:`<p>(A | I₃) : L₁ ↔ L₂, puis L₃ ← L₃ − 2L₂, L₃ ← −L₃, L₂ ← L₂ − 2L₃, L₁ ← L₁ − L₂ − 2L₃.</p><div class="mrow">A⁻¹ = ${mat([[-1,1,0],[-3,0,2],[2,0,-1]])}</div><p>Vérification : 1re ligne de A fois les colonnes : 0 − 3 + 4 = 1 ; 0 + 0 + 0 = 0 ; 0 + 2 − 2 = 0.</p>`},
+ {src:"CC2 2023-2024 · Ex. 5",t:"B = (Iₙ − A)(Iₙ + A)⁻¹",en:"Iₙ + A est inversible, B := (Iₙ − A)(Iₙ + A)⁻¹. (1) Montrer (Iₙ − A)(Iₙ + A) = (Iₙ + A)(Iₙ − A). (2) En déduire B = (Iₙ + A)⁻¹(Iₙ − A). (3) Calculer (Iₙ + A)(Iₙ + B), en déduire que Iₙ + B est inversible et son inverse.",go:"lin-inv-relation",who:MOI,sol:`<ol><li>Les deux produits valent Iₙ − A + A − A² = Iₙ − A².</li><li>Multiplie l'égalité (1) à gauche et à droite par (Iₙ + A)⁻¹ : (Iₙ + A)⁻¹(Iₙ − A) = (Iₙ − A)(Iₙ + A)⁻¹ = B.</li><li>(Iₙ + A)B = (Iₙ + A)(Iₙ + A)⁻¹(Iₙ − A) = Iₙ − A, donc (Iₙ + A)(Iₙ + B) = Iₙ + A + Iₙ − A = 2Iₙ. Ainsi (Iₙ + B) × ½(Iₙ + A) = Iₙ (matrices carrées) : Iₙ + B est inversible, d'inverse ½(Iₙ + A).</li></ol>`},
+ {src:"CC2 2023-2024 · Ex. 6",t:"Une base, avec la définition",en:"Une famille est une base de ℝⁿ si tout vecteur s'écrit de manière unique comme combinaison linéaire de ses vecteurs. ((1, −1, 0), (2, −1, 2), (1, 0, 1)) est-elle une base de ℝ³ ?",go:"lin-base",who:MOI,sol:`<p>a(1, −1, 0) + b(2, −1, 2) + c(1, 0, 1) = (x, y, z) s'écrit a + 2b + c = x, −a − b = y, 2b + c = z. Le pivot donne 3 pivots : une unique solution pour tout (x, y, z). C'est une base.</p>`},
+ {src:"CC2 2022-2023 · Ex. 2",t:"Inverser une matrice 3 × 3 (ter)",en:`Inverser A = ${mat([[1,0,1],[2,-1,1],[-1,1,1]])}.`,go:"lin-gauss-inv",who:MOI,sol:`<p>(A | I₃) : L₂ ← L₂ − 2L₁, L₃ ← L₃ + L₁, L₃ ← L₃ + L₂, L₂ ← −L₂, puis on remonte.</p><div class="mrow">A⁻¹ = ${mat([[2,-1,-1],[3,-2,-1],[-1,1,1]])}</div>`},
+ {src:"CC2 2022-2023 · Ex. 3",t:"A² et une relation (4 × 4)",en:"A = (0 1 1 1 / 1 0 1 1 / 1 1 0 1 / 1 1 1 0). (1) Calculer A². (2) Relation entre A², A et I₄. (3) En déduire que A est inversible et son inverse.",go:"lin-inv-relation",who:MOI,sol:`<ol><li>A² a des 3 sur la diagonale et des 2 ailleurs.</li><li>A² = 2A + 3I₄.</li><li>A(A − 2I₄) = 3I₄, donc A⁻¹ = ⅓(A − 2I₄) : des −⅔ sur la diagonale et des ⅓ ailleurs.</li></ol>`},
+ {src:"CC2 2022-2023 · Ex. 4",t:"Linéaires ou pas ? (ter)",en:"f(x, y, z) = (x + y − z, x − y + 2z + 1) ; g(x, y) = (2x − y, xy, 3x + 4y) ; h(x, y, z) = (2x − y + 3z, y − 2z, x, −5x + 2y − z).",go:"lin-applin",who:MOI,sol:`<ul><li>f n'est pas linéaire : f(0, 0, 0) = (0, 1).</li><li>g n'est pas linéaire (xy) : g(1, 1) = (1, 1, 7), g(2, 2) = (2, 4, 14) ≠ 2g(1, 1).</li><li>h est linéaire : matrice ${mat([[2,-1,3],[0,1,-2],[1,0,0],[-5,2,-1]])}.</li></ul>`},
+ {src:"CC2 2022-2023 · Ex. 5 et 6",t:"Composées ; une base",en:"f(x, y) = (x + y, 2x − y, 3x + 2y) de ℝ² dans ℝ³ et g(u, v, w) = (u − v + w, 2u + w) de ℝ³ dans ℝ². (1) f ∘ g et g ∘ f : existent-elles ? Départ, arrivée, matrice. (2) ((0, 1, 1), (1, 0, 1), (1, 1, 0)) est-elle une base de ℝ³ ?",go:"lin-composee",who:MOI,sol:`<ol><li>f ∘ g : ℝ³ → ℝ³, matrice ${mat([[1,1],[2,-1],[3,2]])}${mat([[1,-1,1],[2,0,1]])} = ${mat([[3,-1,2],[0,-2,1],[7,-3,5]])}. g ∘ f : ℝ² → ℝ², matrice ${mat([[2,4],[5,4]])}.</li><li>Oui : le système b + c = x, a + c = y, a + b = z a une unique solution pour tout (x, y, z) (3 pivots).</li></ol>`});
+
+/* ---------- quiz du CC2 (cachées avant le CC1 : elles visent des fiches du CC2) ---------- */
+quiz.push(
+ {q:"A est inversible si…",o:["il existe B avec AB = BA = Iₙ","A n'a pas de coefficient nul","A est carrée"],a:0,e:"La définition. Une matrice carrée peut ne pas être inversible.",link:"lin-inverse"},
+ {q:"(AB)⁻¹ = ?",o:["B⁻¹A⁻¹","A⁻¹B⁻¹","(BA)⁻¹ seulement si A = B"],a:0,e:"(AB)(B⁻¹A⁻¹) = A(BB⁻¹)A⁻¹ = AA⁻¹ = Iₙ.",link:"lin-inverse"},
+ {q:"Pendant le pivot sur (A | Iₙ), une ligne nulle apparaît à gauche. Donc…",o:["A n'est pas inversible","A⁻¹ a une ligne nulle","il faut échanger deux colonnes"],a:0,e:"La forme réduite de A ne peut plus être Iₙ.",link:"lin-gauss-inv"},
+ {q:"A² = 2A + 3I. Alors A⁻¹ =…",o:["⅓(A − 2I)","A − 2I","3(A − 2I)"],a:0,e:"A(A − 2I) = 3I, donc A × ⅓(A − 2I) = I.",link:"lin-inv-relation"},
+ {q:"Une famille qui contient le vecteur nul est…",o:["liée","libre","une base"],a:0,e:"1 × 0 = 0 est une combinaison nulle à coefficient non nul.",link:"lin-libre"},
+ {q:"Quatre vecteurs de ℝ³ peuvent-ils former une base de ℝ³ ?",o:["Non : une base de ℝ³ a exactement 3 vecteurs","Oui, s'ils sont libres","Oui, toujours"],a:0,e:"Quatre vecteurs de ℝ³ sont toujours liés.",link:"lin-base"},
+ {q:"f(x, y) = (x + y, 2x − 1) est-elle linéaire ?",o:["Non : f(0, 0) = (0, −1) ≠ 0","Oui","On ne peut pas savoir"],a:0,e:"Une application linéaire envoie 0 sur 0.",link:"lin-applin"},
+ {q:"Les colonnes de la matrice de f sont…",o:["f(e₁), …, f(eₙ)","les équations de f","les vecteurs du noyau"],a:0,e:"La colonne j est l'image du j-ième vecteur de la base canonique.",link:"lin-applin"},
+ {q:"f injective ⇔ …",o:["ker f = {0}","im f = {0}","ker f = ℝⁿ"],a:0,e:"Si f(X) = f(X′), alors X − X′ ∈ ker f.",link:"lin-ker-im"},
+ {q:"f : ℝ³ → ℝ⁴ linéaire peut-elle être surjective ?",o:["Non","Oui, si ker f = {0}","Oui, toujours"],a:0,e:"im f = Vect(3 colonnes) ne peut pas remplir ℝ⁴.",link:"lin-ker-im"},
+ {q:"g : ℝ³ → ℝ² et f : ℝ² → ℝ³. La matrice de f ∘ g est…",o:["Mat(f)Mat(g), de taille 3 × 3","Mat(g)Mat(f), de taille 2 × 2","Mat(f)Mat(g), de taille 2 × 2"],a:0,e:"g d'abord, puis f : on multiplie Mat(f) × Mat(g).",link:"lin-composee"},
+ {q:"Pour la symétrie orthogonale par rapport à P (normale n), s(v) =…",o:["v − 2λn","v − λn","λn"],a:0,e:"v − λn, c'est la projection ; la symétrie traverse le plan.",link:"lin-projection"},
+ {q:"F et G sont des sous-espaces. F ∩ G est…",o:["toujours un sous-espace","jamais un sous-espace","un sous-espace seulement si F = G"],a:0,e:"0 est dans les deux, et les deux sont stables par + et par λ·.",link:"lin-inter"});
+
+const infos2=({sec})=>`<div class="title-row"><h1>Le CC2 d'algèbre en bref</h1></div>
+ ${sec(1,"Quand et où",`<p>Jeudi 17 décembre à 11h30, amphi 5.06, 1 h (Prose). Les anciens CC2 duraient 70 minutes, sans document ni calculatrice. Il compte pour 20 % de la note, comme le CC1 ; l'examen de janvier compte pour 60 %.</p>`)}
+ ${sec(2,"Le programme",`<p>Pas encore annoncé, et le poly 2026-2027 s'arrête pour l'instant aux matrices. Le site prépare ce qui est tombé aux CC2 de 2022, 2023 et 2024 : ${hl("l'inverse d'une matrice")}, ${hl("les applications linéaires")} (linéaire ou pas, matrice, noyau, image, injective, surjective, composée), les familles libres et les bases, les sous-espaces (F = G, F ∩ G) et, en 2024, la projection et la symétrie orthogonales. Le CC2 reprend aussi le programme du CC1. Je resserrerai dès que le prof annoncera le programme.</p>`)}
+ ${sec(3,"La forme des anciens CC2",`<ul><li>Une question de cours (définition d'un sous-espace, F ∩ G).</li><li>Un sous-espace : générateurs, équations, F = G ?</li><li>Inverser une matrice 3 × 3, ou utiliser une relation comme A² = 2A + 3I.</li><li>« Linéaires ou pas ? » sur trois applications, à justifier.</li><li>Matrice, noyau, image d'une application linéaire.</li></ul>`)}`;
+
 SUBJ.lin={name:"Algèbre",code:"HAX102X",color:"#FF7AB8",coef:5,share:0.20,key:"rev-lin-v1",lang:"",from:"2026-11-14",
  exams:[{id:"cc1",label:"CC1",day:"2026-11-20",start:"15:00",end:"16:00",place:"amphi 5.06",dur:"1 h",share:0.20,unsure:"Programme pas encore annoncé : le site couvre tout le cours vu jusqu'au CC."},
-        {id:"cc2",label:"CC2",day:"2026-12-17",start:"11:30",end:"12:30",place:"amphi 5.06",dur:"1 h",share:0.20,unsure:"Programme du CC2 pas encore annoncé ; les leçons du CC2 viendront après le CC1."}],
+        {id:"cc2",label:"CC2",day:"2026-12-17",start:"11:30",end:"12:30",place:"amphi 5.06",dur:"1 h",share:0.20,covers:["cc1","cc2"],unsure:"Programme pas encore annoncé : le site prépare ce qui est tombé aux CC2 de 2022 à 2024 (inverses, applications linéaires, bases, sous-espaces, projections), en plus du programme du CC1.",prog:"Pas encore annoncé. Comme aux CC2 de 2022 à 2024 : matrices inversibles (pivot, relation A² = …), familles libres et bases, applications linéaires (linéaire ?, matrice, noyau, image, injective, surjective, composée), sous-espaces (F = G, F ∩ G), projection et symétrie orthogonales ; plus le programme du CC1."}],
  docs:"aucun (d'après les anciens sujets)",examMinutes:60,examMorning:"Refais un système par le pivot sans regarder, relis les fiches « Sous-espace vectoriel » et « Vect ⇄ équations », puis les cartes en rouge.",
  prog:"Pas encore annoncé : tout le cours vu d'ici le CC. Repères et ℝⁿ (TD 1), systèmes linéaires et pivot de Gauss (TD 2), sous-espaces vectoriels et affines (TD 3), début des matrices (produit).",
- chapters:{1:"1. Repères et vecteurs de ℝⁿ",2:"2. Systèmes linéaires",3:"3. Sous-espaces vectoriels et affines",4:"4. Matrices"},
+ chapters:{1:"1. Repères et vecteurs de ℝⁿ",2:"2. Systèmes linéaires",3:"3. Sous-espaces vectoriels et affines",4:"4. Matrices",5:"5. Matrices inversibles",6:"6. Familles, bases, applications linéaires"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
  tdIntro:"Les feuilles 1 à 3 de 2026-2027, corrigées par moi d'après le poly (calculs vérifiés). Les ★★★ ressemblent le plus aux CC. Fais-les sur papier, en écrivant chaque opération.",annIntro:"Les exercices des CC des années passées qui correspondent au programme de cette année, avec mes corrigés.",
- pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Méthodes pas à pas",html:recettes}],
+ pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Méthodes pas à pas",html:recettes}],
  tasks:[
  {id:"tdsys",t:"Exercices de TD ★★★ sur les systèmes, sur papier",min:45,p:1,td:["2.6","2.8","2.10","2.11"],links:[["td","Exercices de TD"]]},
  {id:"tdsev",t:"Exercices de TD ★★★ sur les sous-espaces, sur papier",min:45,p:1,td:["3.6","3.7","3.8","3.11"],links:[["td","Exercices de TD"]]},
  {id:"blanc",t:"Examen blanc : CC1 2023-2024 ex. 7 à 11 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Systèmes, sous-espaces, combinaisons linéaires : le cœur du CC1."},
  {id:"fg",t:"Annales « F = G ? » (CC2 2022-2023 et 2023-2024, ex. 1)",min:40,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
- {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
+ {id:"tdinv",ex:"cc2",t:"Entraînement ★★★ : inverses (pivot et relation), sur papier",min:40,p:1,td:["E1","E2","E3"],links:[["td","Exercices de TD"]]},
+ {id:"tdapp",ex:"cc2",t:"Entraînement ★★★ : linéaire ou pas, noyau, image, composée, sur papier",min:50,p:1,td:["E5","E6","E7"],links:[["td","Exercices de TD"]]},
+ {id:"tdbase",ex:"cc2",t:"Entraînement : familles libres, bases, intersection, projection, sur papier",min:45,p:1,td:["E4","E8","E9","E10"],links:[["td","Exercices de TD"]]},
+ {id:"blanc2",ex:"cc2",t:"Examen blanc : CC2 2024-2025 en 1 h 10, puis correction",min:80,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Inverse, linéarité, projection, noyau et image : la forme exacte du CC2."},
+ {id:"blanc3",ex:"cc2",t:"Annale CC2 2023-2024 en 1 h 10, puis correction",min:75,p:2,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"quiz2",ex:"cc2",t:"Quiz de cours, questions du CC2 comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"review2",ex:"cc2",t:"Veille du CC2 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 })();
 
 </script>
@@ -8112,6 +8252,162 @@ LES.lin=[
  K("Quand AB existe-t-il, et quelle est sa taille ?","Si A ∈ M<sub>n,p</sub>(ℝ) et B ∈ M<sub>p,q</sub>(ℝ) (colonnes de A = lignes de B) : AB ∈ M<sub>n,q</sub>(ℝ), (AB)<sub>ij</sub> = ligne i de A fois colonne j de B."),
  K("Les deux pièges du produit ?","AB ≠ BA en général (donc (A + B)² = A² + AB + BA + B²) ; AB = 0 est possible avec A ≠ 0 et B ≠ 0.")]}
 ];
+/* ================== leçons du CC2 (jeudi 17 décembre) ==================
+   D'après les CC2 de 2022 à 2024 et le chapitre 5 du poly ; calculs vérifiés en fractions exactes. */
+const mab=(R,k,o)=>{o=o||{};const c=R[0].length;return `<span class="mat" style="--n:${c}">${R.map((r,i)=>r.map((x,j)=>{const cl=[j===k?"au":"",(o.piv||[]).some(p=>p[0]===i&&p[1]===j)?"pv":""].join(" ").trim();return `<span${cl?` class="${cl}"`:""}>${n(x)}</span>`;}).join("")).join("")}</span>`;};
+const C2=o=>Object.assign(o,{ex:"cc2"});
+LES.lin.push(
+/* ------------------------------------------------------------------ */
+C2({id:"l2-inverse",t:"Matrices inversibles",min:12,goal:"Savoir ce qu'est A⁻¹, l'utiliser, et inverser une matrice 2 × 2 de tête (poly 5.4).",steps:[
+ Q(`Que vaut ${mat([[2,0],[0,3]])}${mat([["½",0],[0,"⅓"]])} ?`,[mat([[1,0],[0,1]]),mat([[2,0],[0,3]]),mat([["½",0],[0,"⅓"]])],0,"2 × ½ = 1 et 3 × ⅓ = 1 : on obtient I₂. Ces deux matrices sont inverses l'une de l'autre."),
+ L("Inverser une matrice",`<p>Une matrice carrée A ∈ Mₙ(ℝ) est <b>inversible</b> s'il existe B ∈ Mₙ(ℝ) telle que</p><div class="formula">AB = BA = Iₙ</div><ul><li>Cette B est unique : on la note <b>A⁻¹</b>.</li><li>Pour des matrices carrées, <b>AB = Iₙ suffit</b> : on a alors aussi BA = Iₙ.</li><li>Intérêt : le système AX = Y se résout d'un coup, X = A⁻¹Y.</li></ul>`),
+ Q("A est carrée et AB = Iₙ. Que peut-on dire ?",["B = A⁻¹, et BA = Iₙ aussi","Rien, tant qu'on n'a pas calculé BA","A = B"],0,"C'est un résultat du cours pour les matrices carrées : une seule égalité suffit."),
+ L("Taille 2, et les règles",`<p>En taille 2 :</p><div class="formula">${mat([["a","b"],["c","d"]])} est inversible ⇔ ad − bc ≠ 0, et son inverse est ${mat([["d","-b"],["-c","a"]])} ÷ (ad − bc)</div><ul><li>Si A et B sont inversibles : (AB)⁻¹ = <b>B⁻¹A⁻¹</b> (l'ordre s'inverse) et (A⁻¹)⁻¹ = A.</li><li>Pas inversible : une ligne nulle, une colonne nulle, deux lignes égales ou proportionnelles.</li></ul>`),
+ Q(`Inverse de ${mat([[3,1],[5,2]])} ?`,[mat([[2,-1],[-5,3]]),mat([[2,1],[5,3]]),mat([["⅓",1],[5,"½"]])],0,"ad − bc = 6 − 5 = 1 : on échange a et d, on change le signe de b et c."),
+ Q("(AB)⁻¹ = ?",["B⁻¹A⁻¹","A⁻¹B⁻¹","AB"],0,"(AB)(B⁻¹A⁻¹) = A(BB⁻¹)A⁻¹ = AA⁻¹ = Iₙ."),
+ Q(`${mat([[1,2],[2,4]])} est-elle inversible ?`,["Non : ad − bc = 4 − 4 = 0","Oui","Oui, d'inverse (4 −2 / −2 1)"],0,"La 2e ligne vaut 2 fois la 1re : pas inversible."),
+ S("Prouver qu'une matrice est l'inverse d'une autre",`A = ${mat([[1,1],[0,1]])} et B = ${mat([[1,-1],[0,1]])}.`,[
+  {w:`AB = ${mat([[1,0],[0,1]])} = I₂.`,why:"Ligne 1 de A fois colonne 2 de B : 1 × (−1) + 1 × 1 = 0."},
+  {w:"A et B sont carrées : AB = I₂ suffit. Donc A est inversible et A⁻¹ = B.",why:"C'est la phrase de conclusion attendue."}]),
+ K("Définition de A⁻¹ ?","AB = BA = Iₙ (pour des matrices carrées, AB = Iₙ suffit). A⁻¹ est unique. (AB)⁻¹ = B⁻¹A⁻¹."),
+ K("Inverse d'une matrice 2 × 2 ?","(a b / c d) est inversible ⇔ ad − bc ≠ 0 ; son inverse est (d −b / −c a) ÷ (ad − bc).")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-gauss-inv",t:"Calculer A⁻¹ par le pivot de Gauss",min:15,goal:"Inverser une matrice 3 × 3 sans erreur : l'exercice de chaque CC2 (poly 5.5 et 5.6).",steps:[
+ Q("Pour inverser A par le pivot, on part de…",["(A | Iₙ)","(Iₙ | A)","(A | 0)"],0,"A à gauche, l'identité à droite. On vise (Iₙ | A⁻¹)."),
+ L("La méthode",`<ol><li>On écrit <b>(A | Iₙ)</b>.</li><li>On fait le pivot de Gauss sur les <b>lignes</b>, en appliquant chaque opération aux deux moitiés.</li><li>Quand la gauche est devenue Iₙ, la droite est A⁻¹ : <b>(Iₙ | A⁻¹)</b>.</li></ol><p>Pourquoi ça marche : chaque opération sur les lignes revient à multiplier à gauche par une matrice inversible E. Si Eₖ…E₁A = Iₙ, alors Eₖ…E₁ = A⁻¹, et c'est ce produit qui s'est construit à droite.</p><p>Si une <b>ligne nulle</b> apparaît à gauche, A n'est pas inversible.</p>`),
+ S("CC2 2024-2025, ex. 2",`Inverser A = ${mat([[1,-3,0],[-2,5,0],[0,1,1]])}.`,[
+  {w:mab([[1,-3,0,1,0,0],[-2,5,0,0,1,0],[0,1,1,0,0,1]],3,{piv:[[0,0]]}),why:"On écrit (A | I₃). Premier pivot : le 1 en haut à gauche."},
+  {w:`L₂ ← L₂ + 2L₁ : ${mab([[1,-3,0,1,0,0],[0,-1,0,2,1,0],[0,1,1,0,0,1]],3,{piv:[[1,1]]})}`,why:"On annule le −2 sous le pivot, des deux côtés."},
+  {w:`L₃ ← L₃ + L₂ : ${mab([[1,-3,0,1,0,0],[0,-1,0,2,1,0],[0,0,1,2,1,1]],3)}`,why:"La gauche est échelonnée : il reste à remonter."},
+  {w:`L₂ ← −L₂, puis L₁ ← L₁ + 3L₂ : ${mab([[1,0,0,-5,-3,0],[0,1,0,-2,-1,0],[0,0,1,2,1,1]],3)}`,why:"On met des 1 sur la diagonale et des 0 au-dessus."},
+  {w:`A⁻¹ = ${mat([[-5,-3,0],[-2,-1,0],[2,1,1]])}`,why:"Vérification : la ligne 1 de A, (1 −3 0), fois la colonne 1 de A⁻¹ donne −5 + 6 + 0 = 1."}]),
+ Q("À la fin du calcul, la moitié droite contient…",["A⁻¹","A","Iₙ"],0,"(A | Iₙ) est devenu (Iₙ | A⁻¹)."),
+ Q(`On part de ${mab([[1,2,0,1,0,0],[0,1,0,0,1,0],[2,3,1,0,0,1]],3)}. Quelle opération fait un 0 sous le premier pivot ?`,["L₃ ← L₃ − 2L₁","L₃ ← L₃ + 2L₁","L₁ ← L₁ − 2L₃"],0,"2 − 2 × 1 = 0. On modifie la ligne du dessous avec la ligne du pivot."),
+ Q("Une ligne (0 0 0 | 1 −2 1) apparaît. Conclusion ?",["A n'est pas inversible","A⁻¹ a une ligne nulle","Il faut échanger deux colonnes"],0,"La gauche ne pourra jamais devenir Iₙ."),
+ L("Vérifier son résultat",`<p>Une erreur de signe arrive vite. Avant de rendre, multiplie <b>une ligne de A</b> par les colonnes de ta matrice : tu dois trouver 1, 0, 0 (puis 0, 1, 0…).</p><p>À retenir aussi : A est inversible ⇔ sa forme échelonnée réduite est Iₙ ⇔ AX = 0 n'a que la solution X = 0 ⇔ AX = Y a une unique solution pour tout Y.</p>`),
+ P("CC2 2023-2024, ex. 4, sur papier",`Calculer l'inverse de A = ${mat([[0,1,2],[1,1,2],[0,2,3]])}.`,`<p>L₁ ↔ L₂ (il faut un pivot non nul en haut), puis L₃ ← L₃ − 2L₂ donne (0 0 −1 | −2 0 1). L₃ ← −L₃, puis L₂ ← L₂ − 2L₃ et L₁ ← L₁ − L₂ − 2L₃.</p><div class="mrow">A⁻¹ = ${mat([[-1,1,0],[-3,0,2],[2,0,-1]])}</div><p>Vérification : (0 1 2) fois la colonne 1 : 0 − 3 + 4 = 1.</p>`,["(A | I₃) écrit en entier","Chaque opération notée (L₃ ← L₃ − 2L₂…)","Les deux moitiés modifiées à chaque fois","Une vérification d'une ligne"],12),
+ K("Méthode pour calculer A⁻¹ ?","(A | Iₙ) → (Iₙ | A⁻¹) par des opérations sur les lignes, des deux côtés. Ligne nulle à gauche : pas inversible. Vérifier une ligne de AA⁻¹.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-relation",t:"Inverser grâce à une relation entre matrices",min:12,goal:"Quand l'énoncé donne A² = 2A + 3I (ou AB = A + B), trouver l'inverse sans pivot (CC2 2022-2023 et 2023-2024, examen de janvier 2026).",steps:[
+ Q("A² = 2A + 3I. Que vaut A(A − 2I) ?",["3I","A²","0"],0,"A(A − 2I) = A² − 2A = (2A + 3I) − 2A = 3I."),
+ L("L'idée",`<p>On transforme la relation pour obtenir <b>A × (quelque chose) = I</b>.</p><div class="formula">A² = 2A + 3I ⇒ A² − 2A = 3I ⇒ A(A − 2I) = 3I ⇒ A × ⅓(A − 2I) = I</div><p>Conclusion : A est inversible et <b>A⁻¹ = ⅓(A − 2I)</b>.</p><ul><li>On peut factoriser car I commute avec tout : A(A − 2I) = (A − 2I)A.</li><li>On ne « divise » jamais par une matrice : on multiplie par un inverse.</li></ul>`),
+ S("CC2 2022-2023, ex. 3 (taille 4)","A a des 0 sur la diagonale et des 1 partout ailleurs.",[
+  {w:"A² : sur la diagonale, une ligne fois sa propre colonne donne 1 + 1 + 1 = 3 ; ailleurs, 2.",why:"Trois 1 face à trois 1 ; ailleurs, deux positions communes seulement."},
+  {w:"Relation : A² = 2A + 3I₄ (diagonale : 2 × 0 + 3 = 3 ; ailleurs : 2 × 1 + 0 = 2).",why:"On compare case par case."},
+  {w:"A(A − 2I₄) = 3I₄, donc A⁻¹ = ⅓(A − 2I₄).",why:"Des −⅔ sur la diagonale et des ⅓ ailleurs : aucun pivot sur une 4 × 4."}]),
+ Q("A² − 3A + 2I = 0. Alors A⁻¹ = …",["½(3I − A)","3I − A","½(A − 3I)"],0,"2I = 3A − A² = A(3I − A), donc A × ½(3I − A) = I."),
+ L("Examen de janvier 2026 : AB = A + B",`<p>Soient A et B telles que AB = A + B. Alors</p><div class="formula">(I − A)(I − B) = I − B − A + AB = I − B − A + (A + B) = I</div><p>Donc I − A est inversible, d'inverse I − B. Un inverse commute avec sa matrice : (I − B)(I − A) = I, soit I − A − B + BA = I, donc <b>BA = A + B = AB</b>.</p>`),
+ Q("AB = A + B. Que vaut (I − A)(I − B) ?",["I","0","I − AB"],0,"I − A − B + AB, et AB = A + B."),
+ P("CC2 2023-2024, ex. 5, sur papier","Iₙ + A est inversible et B := (Iₙ − A)(Iₙ + A)⁻¹. (1) Montrer que (Iₙ − A)(Iₙ + A) = (Iₙ + A)(Iₙ − A). (2) En déduire B = (Iₙ + A)⁻¹(Iₙ − A). (3) Calculer (Iₙ + A)(Iₙ + B) ; en déduire que Iₙ + B est inversible et son inverse.",`<ol><li>Les deux produits valent Iₙ − A + A − A² = Iₙ − A².</li><li>On multiplie (1) par (Iₙ + A)⁻¹ à gauche et à droite : (Iₙ + A)⁻¹(Iₙ − A) = (Iₙ − A)(Iₙ + A)⁻¹ = B.</li><li>(Iₙ + A)B = Iₙ − A d'après (2), donc (Iₙ + A)(Iₙ + B) = Iₙ + A + Iₙ − A = 2Iₙ. Ainsi (Iₙ + B) × ½(Iₙ + A) = Iₙ : Iₙ + B est inversible et (Iₙ + B)⁻¹ = ½(Iₙ + A).</li></ol>`,["Développement correct des deux produits","Multiplication du bon côté par (Iₙ + A)⁻¹","Une phrase « A × M = I, donc A⁻¹ = M »"],12),
+ K("A² = aA + bI avec b ≠ 0 : A⁻¹ ?","A(A − aI) = bI, donc A⁻¹ = (A − aI)/b.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-libre",t:"Familles libres et liées",min:12,goal:"Dire si une famille est libre et, si elle est liée, écrire une relation de dépendance (poly 5.7, examen de janvier 2026 ex. 5).",steps:[
+ Q("(1, 2) et (2, 4) sont…",["liés : (2, 4) = 2(1, 2)","libres","une base de ℝ²"],0,"2(1, 2) − (2, 4) = 0 avec des coefficients non nuls."),
+ L("Libre, liée",`<p>La famille (v₁, …, vₖ) est <b>libre</b> si</p><div class="formula">λ₁v₁ + … + λₖvₖ = 0  ⇒  λ₁ = … = λₖ = 0</div><p>Sinon elle est <b>liée</b> : il existe une combinaison nulle avec des coefficients pas tous nuls, appelée <b>relation de dépendance</b>. Alors un des vecteurs s'écrit avec les autres.</p><ul><li>Test : on résout le système homogène dont les colonnes sont v₁, …, vₖ. Solution unique (tout nul) : libre. Une variable libre : liée.</li><li>Une famille qui contient 0 est liée. Plus de n vecteurs de ℝⁿ : toujours liée.</li></ul>`),
+ S("Tester ((1, 2, 1), (0, 1, 3), (1, 3, 4))","On cherche a, b, c tels que a(1, 2, 1) + b(0, 1, 3) + c(1, 3, 4) = 0.",[
+  {w:sys("a + c = 0","2a + b + 3c = 0","a + 3b + 4c = 0"),why:"Une équation par coordonnée."},
+  {w:"Le pivot laisse c libre : a = −c et b = −c.",why:"Il y a d'autres solutions que (0, 0, 0) : la famille est liée."},
+  {w:"Avec c = 1 : −(1, 2, 1) − (0, 1, 3) + (1, 3, 4) = 0.",why:"La relation de dépendance : (1, 3, 4) = (1, 2, 1) + (0, 1, 3)."}]),
+ Q("Le système « combinaison nulle » n'a que la solution où tout est nul. La famille est…",["libre","liée","forcément une base"],0,"C'est exactement la définition. (Elle n'est une base que si elle engendre aussi tout l'espace.)"),
+ Q("Cinq vecteurs de ℝ⁴ sont…",["toujours liés","toujours libres","libres s'ils sont non nuls"],0,"Un système homogène de 4 équations à 5 inconnues a toujours une variable libre."),
+ L("Examen de janvier 2026, ex. 5",`<p>Si (v₁, …, vₖ) est libre et (v₁, …, vₖ, v) liée, alors v ∈ Vect(v₁, …, vₖ).</p><p>Preuve : il existe λ₁, …, λₖ, α non tous nuls avec λ₁v₁ + … + λₖvₖ + αv = 0. Si α valait 0, on aurait une relation entre les vᵢ seuls, avec des λᵢ non tous nuls : impossible, ils sont libres. Donc α ≠ 0, et v = −(λ₁/α)v₁ − … − (λₖ/α)vₖ.</p>`),
+ K("Famille libre ?","La seule combinaison nulle est celle à coefficients tous nuls. Test : système homogène des colonnes, solution unique.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-base",t:"Bases de ℝⁿ",min:12,goal:"Montrer qu'une famille est une base avec la définition des CC2, et calculer des coordonnées (CC2 2022-2023 et 2023-2024, ex. 6).",steps:[
+ Q("La base canonique de ℝ³, c'est…",["(1, 0, 0), (0, 1, 0), (0, 0, 1)","(1, 1, 1)","(1, 0, 0), (0, 1, 0)"],0,"Tout (x, y, z) s'écrit xe₁ + ye₂ + ze₃, d'une seule façon."),
+ L("Une base",`<p>Définition des CC2 : (e₁, e₂, …) est une <b>base</b> de ℝⁿ si <b>tout vecteur s'écrit de manière unique</b> comme combinaison linéaire des eᵢ. Les coefficients sont alors ses <b>coordonnées</b> dans cette base.</p><ul><li>Base = famille libre (unicité) et génératrice (existence).</li><li>Une base de ℝⁿ a toujours <b>n</b> vecteurs.</li><li>Test pour n vecteurs : le système « combinaison = (x, y, z) » a n pivots, donc une unique solution pour tout (x, y, z).</li></ul>`),
+ S("CC2 2022-2023, ex. 6 : ((0, 1, 1), (1, 0, 1), (1, 1, 0))","On cherche a, b, c avec a(0, 1, 1) + b(1, 0, 1) + c(1, 1, 0) = (x, y, z), pour un (x, y, z) quelconque.",[
+  {w:sys("b + c = x","a + c = y","a + b = z"),why:"Une équation par coordonnée."},
+  {w:"En additionnant les trois : 2(a + b + c) = x + y + z.",why:"Une astuce ; le pivot donne la même chose."},
+  {w:"a = (−x + y + z)/2, b = (x − y + z)/2, c = (x + y − z)/2.",why:"On retire chaque équation de la somme."},
+  {w:"Une solution, et une seule, pour tout (x, y, z) : c'est une base de ℝ³.",why:"Existence et unicité : exactement la définition."}]),
+ Q("Deux vecteurs de ℝ³ peuvent-ils former une base de ℝ³ ?",["Non : il en faut exactement 3","Oui, s'ils sont libres","Oui, s'ils sont orthogonaux"],0,"Deux vecteurs n'engendrent qu'un plan au plus."),
+ Q("Coordonnées de (1, 1, 1) dans la base ((1, 0, 1), (1, 1, 0), (0, 1, 1)) ?",["(½, ½, ½)","(1, 1, 1)","(1, 0, 0)"],0,"½(1, 0, 1) + ½(1, 1, 0) + ½(0, 1, 1) = (1, 1, 1)."),
+ P("CC2 2023-2024, ex. 6, sur papier","Avec la définition (tout vecteur s'écrit de manière unique comme combinaison), la famille ((1, −1, 0), (2, −1, 2), (1, 0, 1)) est-elle une base de ℝ³ ?",`<p>a(1, −1, 0) + b(2, −1, 2) + c(1, 0, 1) = (x, y, z) s'écrit a + 2b + c = x, −a − b = y, 2b + c = z. Le pivot donne 3 pivots, donc une unique solution pour tout (x, y, z) : c'est une base.</p>`,["Le système écrit avec un (x, y, z) quelconque","Le pivot mené jusqu'au bout","La conclusion « existence et unicité »"],8),
+ K("Base de ℝⁿ ?","n vecteurs tels que tout vecteur s'écrive de façon unique comme combinaison : libre et génératrice. Test : n pivots.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-applin",t:"Applications linéaires et leur matrice",min:14,goal:"Dire si une application est linéaire en le justifiant, et écrire sa matrice (« linéaires ou pas ? » à chaque CC2).",steps:[
+ Q("f(x, y) = (x + y, 2x − 1) est-elle linéaire ?",["Non : f(0, 0) = (0, −1) ≠ (0, 0)","Oui","Oui, car il n'y a pas de produit"],0,"Une application linéaire envoie toujours 0 sur 0."),
+ L("Définition",`<p>f : ℝⁿ → ℝᵐ est <b>linéaire</b> si, pour tous x, x′ ∈ ℝⁿ et λ ∈ ℝ :</p><div class="formula">f(x + x′) = f(x) + f(x′)   et   f(λx) = λf(x)</div><ul><li>Alors f(0) = 0. Donc <b>f(0) ≠ 0 ⇒ pas linéaire</b> (une constante comme « + 1 »).</li><li>En pratique, f est linéaire quand chaque coordonnée est une combinaison des variables : <b>pas de constante, pas de produit xy, pas de carré</b>.</li><li>Pour dire « pas linéaire », un contre-exemple chiffré suffit.</li></ul>`),
+ Q("Laquelle est linéaire ?",["(x − 2y, 3z, x)","(x + 1, y)","(xy, z)"],0,"(x + 1, y) a une constante, (xy, z) un produit."),
+ L("La matrice de f",`<p>Si f est linéaire, elle s'écrit <b>f(X) = AX</b>. Les colonnes de A sont f(e₁), …, f(eₙ) ; ses lignes sont les coefficients de chaque coordonnée.</p><div class="formula">f(x, y, z) = (2x + y − 3z, −x − 2y + 5z)  ⇒  A = ${mat([[2,1,-3],[-1,-2,5]])}</div><p>Taille : m lignes (l'arrivée), n colonnes (le départ).</p>`),
+ Q("Matrice de f(x, y, z) = (y, z, x) ?",[mat([[0,1,0],[0,0,1],[1,0,0]]),mat([[1,0,0],[0,1,0],[0,0,1]]),mat([[0,0,1],[1,0,0],[0,1,0]])],0,"1re coordonnée : y, donc (0 1 0) ; 2e : z, donc (0 0 1) ; 3e : x, donc (1 0 0)."),
+ S("Justifier « pas linéaire » (CC2 2024-2025, ex. 3)","g(x, y, z) = (2x + ey − z, xy, z), où e est le nombre d'Euler.",[
+  {w:"Le e devant y est une constante multiplicative : ça ne gêne pas. Le problème, c'est xy.",why:"On repère d'abord le morceau suspect."},
+  {w:"g(1, 1, 0) = (2 + e, 1, 0) et g(2, 2, 0) = (4 + 2e, 4, 0).",why:"On choisit un vecteur et son double."},
+  {w:"2g(1, 1, 0) = (4 + 2e, 2, 0) ≠ g(2, 2, 0) : g n'est pas linéaire.",why:"Un seul contre-exemple suffit."}]),
+ P("CC2 2022-2023, ex. 4, sur papier","Ces applications sont-elles linéaires ? Justifier. f(x, y, z) = (x + y − z, x − y + 2z + 1) ; g(x, y) = (2x − y, xy, 3x + 4y) ; h(x, y, z) = (2x − y + 3z, y − 2z, x, −5x + 2y − z).",`<ul><li>f : non, f(0, 0, 0) = (0, 1).</li><li>g : non, g(1, 1) = (1, 1, 7) et g(2, 2) = (2, 4, 14) ≠ 2g(1, 1).</li><li>h : oui, h(X) = AX avec A = ${mat([[2,-1,3],[0,1,-2],[1,0,0],[-5,2,-1]])}.</li></ul>`,["Un contre-exemple chiffré pour chaque « non »","La matrice (ou les deux égalités) pour « oui »"],8),
+ K("Reconnaître une application linéaire ?","Chaque coordonnée est une combinaison des variables : pas de constante, pas de produit, pas de carré. Sinon, un contre-exemple : f(0) ≠ 0, ou f(2x) ≠ 2f(x)."),
+ K("Colonnes de la matrice de f ?","f(e₁), …, f(eₙ). La ligne i contient les coefficients de la i-ème coordonnée. f(X) = AX.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-ker-im",t:"Noyau, image, injective, surjective",min:18,goal:"Calculer le noyau (avec Vect) et l'image (avec des équations), et conclure sur l'injectivité et la surjectivité (un exercice à chaque CC2).",steps:[
+ Q("ker f, c'est…",["l'ensemble des X tels que f(X) = 0","l'ensemble des f(X)","la matrice de f"],0,"L'ensemble des f(X), c'est l'image."),
+ L("Noyau et image",`<ul><li><b>ker f</b> = {X ∈ ℝⁿ | f(X) = 0} : un sous-espace du <b>départ</b>. On résout AX = 0 et on écrit Vect(…).</li><li><b>im f</b> = {f(X) | X ∈ ℝⁿ} = Vect(colonnes de A) : un sous-espace de l'<b>arrivée</b>. On le décrit par des équations.</li><li><b>f injective ⇔ ker f = {0}</b>.</li><li><b>f surjective ⇔ im f = ℝᵐ</b> (aucune équation).</li></ul>`),
+ S("CC2 2024-2025, ex. 5 : le noyau","f(x, y, z) = (2x + y + z, y − z, x + y).",[
+  {w:`A = ${mat([[2,1,1],[0,1,-1],[1,1,0]])} ; on résout AX = 0.`,why:"La matrice d'abord."},
+  {w:"L₁ ↔ L₃, L₃ ← L₃ − 2L₁, L₃ ← L₃ + L₂ : la dernière ligne devient nulle.",why:"Il restera une variable libre."},
+  {w:"Il reste x + y = 0 et y − z = 0 : y = z, x = −z.",why:"z est libre."},
+  {w:"ker f = {z(−1, 1, 1)} = Vect((−1, 1, 1)) ≠ {0} : f n'est pas injective.",why:"Exactement la forme demandée « ker f = Vect(v) »."}]),
+ S("Le même exercice : l'image",`On cherche à quelle condition w = (a, b, c) est atteint : on fait le même pivot sur (A | w).`,[
+  {w:mab([[1,1,0,"c"],[0,1,-1,"b"],[2,1,1,"a"]],3),why:"Après L₁ ↔ L₃."},
+  {w:mab([[1,1,0,"c"],[0,1,-1,"b"],[0,0,0,"a + b − 2c"]],3),why:"L₃ ← L₃ − 2L₁, puis L₃ ← L₃ + L₂."},
+  {w:"Le système a une solution ⇔ a + b − 2c = 0. Donc im f = {(a, b, c) | a + b − 2c = 0}.",why:"Une ligne nulle à gauche donne une équation."},
+  {w:"(0, 0, 1) ne vérifie pas l'équation : f n'est pas surjective.",why:"Un contre-exemple concret."}]),
+ Q("ker f = Vect((−1, 1, 1)). f est-elle injective ?",["Non : ker f ≠ {0}","Oui","On ne peut pas savoir"],0,"Par exemple f(−1, 1, 1) = f(0, 0, 0) = 0."),
+ Q("f : ℝ³ → ℝ⁴ linéaire. f peut-elle être surjective ?",["Non","Oui, si elle est injective","Oui"],0,"im f = Vect(3 colonnes) ne peut pas remplir ℝ⁴."),
+ L("Les deux preuves de cours",`<p><b>ker f est un sous-espace</b> : f(0) = 0 ; si f(x) = f(x′) = 0, alors f(x + x′) = 0 ; si f(x) = 0, alors f(λx) = λf(x) = 0.</p><p><b>ker f = {0} ⇒ f injective</b> : si f(x) = f(x′), alors f(x − x′) = f(x) − f(x′) = 0, donc x − x′ ∈ ker f = {0}, donc x = x′.</p><p>Ces deux preuves forment l'exercice 1 de l'examen de janvier 2026.</p>`),
+ P("CC2 2023-2024, ex. 3, sur papier","f : ℝ³ → ℝ⁴, f(x, y, z) = (x + z, y − x, z + y, x + y + 2z). (1) Matrice. (2) ker f avec Vect. (3) im f comme solutions d'un système homogène. (4) Surjective ? Injective ?",`<ol><li>A = ${mat([[1,0,1],[-1,1,0],[0,1,1],[1,1,2]])}.</li><li>AX = 0 donne x = −z, y = −z : ker f = Vect((−1, −1, 1)).</li><li>Pivot sur (A | (a, b, c, d)) : im f = {(a, b, c, d) | c − a − b = 0, d − 2a − b = 0}.</li><li>Pas surjective (deux équations) ; pas injective (ker f ≠ {0}).</li></ol>`,["Matrice 4 × 3 (4 lignes : l'arrivée)","Noyau écrit avec Vect","Deux équations pour l'image","Les deux conclusions justifiées"],15),
+ K("Calculer le noyau ?","Résoudre AX = 0 par le pivot, puis écrire les solutions avec Vect(…). ker f = {0} ⇔ f injective."),
+ K("Décrire l'image par des équations ?","Pivot sur (A | Y) : chaque ligne nulle à gauche donne une condition sur Y. im f = Vect(colonnes) ; im f = ℝᵐ ⇔ surjective.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-composee",t:"Composer des applications linéaires",min:10,goal:"Dire si f ∘ g existe et calculer sa matrice par un produit (CC2 2022-2023, ex. 5).",steps:[
+ Q("f ∘ g veut dire…",["g d'abord, puis f","f d'abord, puis g","f × g, coordonnée par coordonnée"],0,"(f ∘ g)(x) = f(g(x)) : on lit de droite à gauche."),
+ L("Composée et produit de matrices",`<ul><li>f ∘ g existe si <b>g arrive là où f part</b> : g : ℝᵖ → ℝⁿ et f : ℝⁿ → ℝᵐ donnent f ∘ g : ℝᵖ → ℝᵐ.</li><li>f ∘ g est linéaire, de matrice <b>Mat(f) × Mat(g)</b> (taille m × p).</li><li>Preuve : f ∘ g(x + x′) = f(g(x) + g(x′)) = f(g(x)) + f(g(x′)), et pareil pour λx.</li></ul>`),
+ S("CC2 2022-2023, ex. 5","f : ℝ² → ℝ³, f(x, y) = (x + y, 2x − y, 3x + 2y) ; g : ℝ³ → ℝ², g(u, v, w) = (u − v + w, 2u + w).",[
+  {w:"f ∘ g : g arrive dans ℝ², f part de ℝ² : elle existe, de ℝ³ dans ℝ³.",why:"On vérifie départ et arrivée."},
+  {w:`Mat(f ∘ g) = ${mat([[1,1],[2,-1],[3,2]])}${mat([[1,-1,1],[2,0,1]])} = ${mat([[3,-1,2],[0,-2,1],[7,-3,5]])}`,why:"Mat(f) d'abord, Mat(g) ensuite : 3 × 2 fois 2 × 3."},
+  {w:`g ∘ f : f arrive dans ℝ³, g part de ℝ³ : elle existe aussi, de ℝ² dans ℝ², de matrice ${mat([[2,4],[5,4]])}.`,why:"Mat(g)Mat(f) : 2 × 3 fois 3 × 2."}]),
+ Q("g : ℝ² → ℝ³ et f : ℝ² → ℝ². Laquelle existe ?",["g ∘ f","f ∘ g","les deux"],0,"f arrive dans ℝ², d'où g part. Mais g arrive dans ℝ³, et f part de ℝ²."),
+ Q("Mat(g ∘ f) = …",["Mat(g) × Mat(f)","Mat(f) × Mat(g)","Mat(f) + Mat(g)"],0,"La fonction appliquée en dernier est écrite à gauche."),
+ K("Matrice d'une composée ?","Mat(f ∘ g) = Mat(f) × Mat(g), g d'abord. f ∘ g existe si g arrive là où f part.")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-inter",t:"Intersection et égalité de sous-espaces",min:12,goal:"Prouver que F ∩ G est un sous-espace, le calculer, et montrer F = G par double inclusion (ex. 1 de chaque CC2).",steps:[
+ Q("Le vecteur nul est-il toujours dans F ∩ G ?",["Oui : il est dans tout sous-espace","Non","Seulement si F = G"],0,"0 ∈ F et 0 ∈ G, donc 0 ∈ F ∩ G."),
+ L("F ∩ G est un sous-espace",`<p>Question de cours du CC2 2024-2025 :</p><ul><li>0 ∈ F et 0 ∈ G, donc 0 ∈ F ∩ G.</li><li>Si x, y ∈ F ∩ G : x + y ∈ F (car F est un sous-espace) et x + y ∈ G, donc x + y ∈ F ∩ G.</li><li>Si x ∈ F ∩ G et λ ∈ ℝ : λx ∈ F et λx ∈ G, donc λx ∈ F ∩ G.</li></ul><p>Attention : F ∪ G n'est pas un sous-espace en général. Deux droites distinctes du plan : (1, 0) + (0, 1) = (1, 1) n'est sur aucune des deux.</p>`),
+ S("Calculer F ∩ G","F = {(x, y, z) | x + y + z = 0} et G = Vect((1, −1, 0), (1, 1, 1)).",[
+  {w:"Un vecteur de G s'écrit a(1, −1, 0) + b(1, 1, 1) = (a + b, −a + b, b).",why:"On part de la description la plus simple."},
+  {w:"Il est dans F ⇔ (a + b) + (−a + b) + b = 0 ⇔ 3b = 0 ⇔ b = 0.",why:"On impose l'équation de F."},
+  {w:"F ∩ G = {a(1, −1, 0)} = Vect((1, −1, 0)).",why:"Une droite."}]),
+ L("Montrer F = G",`<p>On montre <b>F ⊂ G</b> et <b>G ⊂ F</b>.</p><ul><li>G = Vect(g₁, g₂) ⊂ F : il suffit que g₁ et g₂ vérifient les équations de F (F est un sous-espace, il contient alors leurs combinaisons).</li><li>F ⊂ G : on écrit chaque générateur de F comme combinaison de g₁ et g₂.</li></ul>`),
+ S("CC2 2023-2024, ex. 1 : F = G ?","F : x + y + z + 2t = 0 et x + 2y − z + t = 0. G = Vect(g₁, g₂), g₁ = (−3, 0, −1, 2), g₂ = (0, 1, 1, −1).",[
+  {w:"Générateurs de F (pivot) : F = Vect((−3, 2, 1, 0), (−3, 1, 0, 1)).",why:"z et t sont libres."},
+  {w:"g₁ : −3 + 0 − 1 + 4 = 0 et −3 + 0 + 1 + 2 = 0. g₂ : 0 + 1 + 1 − 2 = 0 et 0 + 2 − 1 − 1 = 0. Donc G ⊂ F.",why:"Les générateurs de G vérifient les équations de F."},
+  {w:"(−3, 2, 1, 0) = g₁ + 2g₂ et (−3, 1, 0, 1) = g₁ + g₂. Donc F ⊂ G.",why:"Les générateurs de F sont des combinaisons de ceux de G."},
+  {w:"Conclusion : F = G.",why:"Double inclusion."}]),
+ Q("g₁ et g₂ vérifient les équations de F, avec G = Vect(g₁, g₂). On a montré…",["G ⊂ F","F = G","F ⊂ G"],0,"Il manque l'autre inclusion pour conclure F = G."),
+ K("Montrer F = G ?","Double inclusion : les générateurs de G vérifient les équations de F (G ⊂ F), et chaque générateur de F est une combinaison de ceux de G (F ⊂ G).")]}),
+
+/* ------------------------------------------------------------------ */
+C2({id:"l2-projection",t:"Projection et symétrie par rapport à un plan",min:14,goal:"Trouver un vecteur normal, décomposer v = w + λn, et écrire les matrices de la projection et de la symétrie orthogonales (CC2 2024-2025, ex. 4).",steps:[
+ Q("Le plan P : x − y + z = 0 a pour vecteur normal…",["(1, −1, 1)","(1, 1, 1)","(0, 0, 1)"],0,"Les coefficients de l'équation."),
+ L("Vecteur normal et décomposition",`<p>Pour P : ax + by + cz = 0, le vecteur <b>n = (a, b, c)</b> est normal à P. Tout v = (x, y, z) s'écrit de manière unique</p><div class="formula">v = w + λn,  avec w ∈ P  et  λ = (ax + by + cz) / (a² + b² + c²)</div><ul><li>Existence : avec ce λ, w = v − λn vérifie l'équation de P.</li><li>Unicité : si w + λn = w′ + λ′n, alors w − w′ = (λ′ − λ)n est dans P et colinéaire à n ; or n ∉ P, donc λ = λ′ et w = w′.</li></ul>`),
+ S("CC2 2024-2025, ex. 4 : la projection orthogonale sur P : x − y + z = 0","n = (1, −1, 1), a² + b² + c² = 3.",[
+  {w:"λ = (x − y + z)/3.",why:"La formule du cours."},
+  {w:"p(v) = v − λn = ((2x + y − z)/3, (x + 2y + z)/3, (−x + y + 2z)/3).",why:"Par exemple x − (x − y + z)/3 = (2x + y − z)/3."},
+  {w:`Mat(p) = ⅓ ${mat([[2,1,-1],[1,2,1],[-1,1,2]])}`,why:"Les coefficients de chaque coordonnée, divisés par 3."}]),
+ L("La symétrie",`<p>La symétrie orthogonale traverse le plan : <b>s(v) = w − λn = v − 2λn</b>. Donc s(v) = 2p(v) − v et</p><div class="formula">Mat(s) = 2Mat(p) − I₃ = ⅓ ${mat([[1,2,-2],[2,1,2],[-2,2,1]])}</div><p>Contrôles : p ∘ p = p (projeter deux fois ne change rien) et s ∘ s = id.</p>`),
+ Q("Mat(s) = …",["2Mat(p) − I₃","Mat(p) − I₃","2Mat(p)"],0,"s(v) = 2p(v) − v."),
+ P("Le plan x + z = 0, sur papier","P : x + z = 0. (1) Un vecteur normal n. (2) Écrire v = (x, y, z) = w + λn avec w ∈ P. (3) Matrices de la projection orthogonale sur P et de la symétrie orthogonale par rapport à P.",`<ol><li>n = (1, 0, 1).</li><li>λ = (x + z)/2, w = ((x − z)/2, y, (z − x)/2).</li><li>Mat(p) = ${mat([["½",0,"-½"],[0,1,0],["-½",0,"½"]])} ; s(x, y, z) = (−z, y, −x), Mat(s) = ${mat([[0,0,-1],[0,1,0],[-1,0,0]])}.</li></ol>`,["λ avec a² + b² + c² = 2 au dénominateur","w vérifie bien x + z = 0","Mat(s) = 2Mat(p) − I₃ vérifié"],10),
+ K("Projection et symétrie orthogonales sur P (normale n) ?","v = w + λn avec λ = (n·v)/(n·n). p(v) = v − λn ; s(v) = v − 2λn = 2p(v) − v.")]}));
+
 })();
 
 </script>
@@ -9140,6 +9436,34 @@ calc:{
   "Avec un second membre":`<p>Quand l'équation a un second membre, par exemple y′ + y = 3, on travaille en deux temps.</p><p>D'abord les solutions sans second membre : y′ + y = 0 donne C e^(−x). Ensuite <b>une</b> solution particulière, de la même forme que le second membre, ici une constante : y = 3 marche, car 0 + 3 = 3.</p><p>Toutes les solutions : y = C e^(−x) + 3. La condition initiale se calcule à la fin, sur cette expression complète.</p>`}
 },
 lin:{
+ "l2-inverse":{
+  "Inverser une matrice":`<p>Inverser un nombre, c'est trouver celui qui donne 1 quand on multiplie : l'inverse de 2 est ½. Pour une matrice, c'est pareil, avec la matrice identité à la place de 1.</p><p>Comme pour 0, certaines matrices n'ont pas d'inverse.</p>`,
+  "Taille 2, et les règles":`<p>En taille 2, il y a une formule toute faite : on échange les deux nombres de la diagonale, on change le signe des deux autres, et on divise par ad − bc. Si ad − bc = 0, pas d'inverse.</p><p>Pour un produit, on inverse dans l'ordre contraire, comme on enlève ses chaussures avant ses chaussettes.</p>`},
+ "l2-gauss-inv":{
+  "La méthode":`<p>On colle A et la matrice identité côte à côte, puis on fait le pivot habituel sur les lignes, mais sur la grande matrice entière. Quand la partie gauche est devenue l'identité, la partie droite est l'inverse.</p>`,
+  "Vérifier son résultat":`<p>Une erreur de signe et tout est faux. Avant de rendre la copie, multiplie une ligne de A par les colonnes de ton résultat : tu dois retrouver 1, puis des 0.</p>`},
+ "l2-relation":{
+  "L'idée":`<p>Si on sait que A × quelque chose = l'identité, alors ce quelque chose est l'inverse de A. On manipule donc la relation donnée pour faire apparaître « A × (…) = I ».</p><p>Exemple : A² = 2A + 3I devient A(A − 2I) = 3I, puis on divise par 3.</p>`,
+  "Examen de janvier 2026 : AB = A + B":`<p>On développe le produit (I − A)(I − B) comme en calcul ordinaire, en gardant l'ordre des lettres, puis on remplace AB par A + B : tout se simplifie et il reste I.</p>`},
+ "l2-libre":{
+  "Libre, liée":`<p>Une famille est liée quand l'un des vecteurs ne sert à rien, parce qu'on peut le fabriquer avec les autres. Elle est libre quand chacun apporte une direction nouvelle.</p><p>Exemple : (1, 2) et (2, 4) sont liés, le second est le double du premier.</p>`,
+  "Examen de janvier 2026, ex. 5":`<p>Si une famille libre devient liée quand on lui ajoute v, c'est que v est la cause du problème : on peut le fabriquer avec les vecteurs de départ.</p>`},
+ "l2-base":{
+  "Une base":`<p>Une base, c'est un jeu de directions qui permet d'atteindre tous les vecteurs, chacun d'une seule façon. Les nombres utilisés sont les coordonnées dans cette base.</p><p>Exemple : avec (1, 0, 0), (0, 1, 0), (0, 0, 1), le vecteur (2, 5, 7) s'écrit 2e₁ + 5e₂ + 7e₃.</p>`},
+ "l2-applin":{
+  "Définition":`<p>Une application linéaire respecte l'addition et la multiplication par un nombre : l'image d'une somme est la somme des images. Concrètement, ses formules n'ont que des « nombre × variable », sans constante ajoutée, sans produit de variables, sans carré.</p>`,
+  "La matrice de f":`<p>On range les coefficients des formules dans un tableau : une ligne par coordonnée d'arrivée, une colonne par variable. Ensuite, calculer f revient à multiplier ce tableau par la colonne (x, y, z).</p>`},
+ "l2-ker-im":{
+  "Noyau et image":`<p>Le noyau, ce sont les vecteurs que f écrase sur 0. L'image, ce sont tous les vecteurs que f peut atteindre.</p><p>Si f n'écrase que 0, deux vecteurs différents ne peuvent pas avoir la même image : f est injective.</p>`,
+  "Les deux preuves de cours":`<p>Les deux preuves utilisent seulement la définition : f d'une somme est la somme des f, et f(0) = 0. On les apprend presque par cœur, elles tombent en question de cours.</p>`},
+ "l2-composee":{
+  "Composée et produit de matrices":`<p>Composer, c'est enchaîner deux machines : la sortie de la première entre dans la seconde. Il faut donc que la sortie de l'une ait la bonne taille pour l'autre. La matrice de l'enchaînement est le produit des deux matrices, la dernière machine écrite à gauche.</p>`},
+ "l2-inter":{
+  "F ∩ G est un sous-espace":`<p>Ce qui est à la fois dans F et dans G garde les bonnes propriétés des deux : contenir 0, rester dedans quand on additionne, rester dedans quand on multiplie par un nombre.</p>`,
+  "Montrer F = G":`<p>Deux ensembles sont égaux quand chacun est contenu dans l'autre. On le vérifie dans un sens avec les équations, dans l'autre avec les générateurs.</p>`},
+ "l2-projection":{
+  "Vecteur normal et décomposition":`<p>Le vecteur normal pointe perpendiculairement au plan, comme un poteau planté dans le sol. Tout vecteur se découpe en un morceau couché dans le plan et un morceau le long du poteau.</p>`,
+  "La symétrie":`<p>La projection écrase le vecteur sur le plan, comme son ombre à midi. La symétrie est le reflet dans le plan vu comme un miroir : on enlève deux fois la partie le long du poteau.</p>`},
  "l-repere":{
   "Un repère, deux nombres":`<p>Un repère, c'est comme un plan de ville avec un point de départ (O) et deux directions de marche (${v("i")} et ${v("j")}).</p><p>« M a pour coordonnées (2 ; 1,5) » veut dire : pars de O, fais 2 pas dans la direction ${v("i")}, puis 1,5 pas dans la direction ${v("j")}, tu arrives en M. Les directions n'ont pas besoin d'être perpendiculaires.</p>`,
   "Vérifier qu'on a bien un repère":`<p>Avec deux directions qui vont dans le même sens (colinéaires), tu restes coincé sur une seule droite : tu ne peux pas atteindre tout le plan. Il faut donc deux directions vraiment différentes.</p><p>Le test rapide dans le plan : avec (a, b) et (c, d), calcule ad − bc. Si ça fait 0, c'est raté ; sinon, c'est un repère.</p>`,
