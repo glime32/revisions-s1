@@ -1139,7 +1139,7 @@ const KW={py:["def","return","for","in","range","while","if","else","elif","and"
  sh:["if","then","elif","else","fi","for","while","in","do","done","case","esac","function","return","echo","read","export","exit","local","let","test"],
  c:["#include","#define","int","char","float","double","void","unsigned","long","short","const","static","extern","struct","union","typedef","sizeof","return","if","else","for","while","NULL"],
  pseudo:["Fonction","Procédure","Début","Fin","FONCTION","PROCÉDURE","DÉBUT","FIN","SPÉCIFICATIONS","Renvoyer","Si","si","alors","sinon","finSi","Pour","pour","de","à","faire","finPour","fin","tq","Tant","tant","que","finTantQue","finTQ","Variable","Variables","Spécifications","par","pas","et","ou","non","cond","tete","tête","queue","cons","estVide","dans","empiler","depiler","enfiler","defiler"],
- ml:["let","rec","in","fun","function","match","with","when","if","then","else","and","true","false","not","List.hd","List.tl","int","float","bool","string","list","mod"]};
+ ml:["let","rec","in","fun","function","match","with","when","if","then","else","and","true","false","not","List.hd","List.tl","int","float","bool","string","list","mod","type","of","exception","raise","try","failwith","invalid_arg","as","List.map","List.filter","List.fold_left","List.fold_right","List.for_all","List.exists","List.iter","List.length"]};
 /* coloration en un seul passage : commentaires et chaînes d'abord, sur le texte d'origine,
    puis les mots-clés dans le reste ; on ne recolore jamais une balise déjà posée */
 function hlCode(src,lang){
@@ -4507,7 +4507,7 @@ add(5,{id:"pf-erreurs",type:"meth",ref:"Synthèse",t:"Les erreurs classiques à 
  q:"Pourquoi f n - 1 ne calcule-t-il pas f (n − 1) ?",a:"L'application de fonction est prioritaire : f n - 1 se lit (f n) - 1. Dans une fonction récursive, cela boucle à l'infini.",rel:["pf-types","pf-rec","p/recettes"]});
 
 /* ---------- chapitre 6 : pas sûr que ça tombe ---------- */
-add(7,{id:"pf-match",type:"def",out:"Pas au CC du 13/11 : le prof l'a écrit le 5/11, le contrôle porte sur tout jusqu'aux listes incluses, « sans le filtrage ». Garde cette fiche pour l'examen de janvier.",ref:"Cours p. 58, TD ex. 32 à 34",t:"Le filtrage : match … with",short:"Le filtrage (match)",
+add(7,{id:"pf-match",ex:"ct",type:"def",out:"Pas au CC du 13/11 : le prof l'a écrit le 5/11, le contrôle porte sur tout jusqu'aux listes incluses, « sans le filtrage ». Garde cette fiche pour l'examen de janvier.",ref:"Cours p. 58, TD ex. 32 à 34",t:"Le filtrage : match … with",short:"Le filtrage (match)",
  plain:`match compare une valeur à ${hl("des motifs, de haut en bas")}, et prend le ${hl("premier qui correspond")}. Sur les listes, les deux motifs de base sont [] et x :: r. when ajoute une condition, _ attrape tout.`,
  fig:()=>matchLab,
  formal:`${M(`match e with
@@ -4545,7 +4545,7 @@ let rec liSuff : int list -> int list list = function
  q:"Quel est le type de [[1; 2]; []; [8]] ?",a:"int list list.",rel:["pf-listes-rec"]});
 
 /* ---------- pas au contrôle ---------- */
-add(7,{id:"pf-poly",type:"def",out:"Ton mail le dit : pas de polymorphisme au contrôle. Dans tes réponses, écris les types de l'énoncé (int list). Garde cette fiche pour l'examen de janvier.",ref:"Cours, TD ex. 37 et suivants",t:"Le polymorphisme : le type 'a",short:"Polymorphisme ('a)",
+add(8,{id:"pf-poly",ex:"ct",type:"def",out:"Ton mail le dit : pas de polymorphisme au contrôle. Dans tes réponses, écris les types de l'énoncé (int list). Garde cette fiche pour l'examen de janvier.",ref:"Cours, TD ex. 37 et suivants",t:"Le polymorphisme : le type 'a",short:"Polymorphisme ('a)",
  plain:`Quand une fonction ne regarde pas vraiment le type des éléments, OCaml lui donne un type ${hl("'a")} (« alpha »), qui veut dire « n'importe quel type, mais le même partout ». Ainsi derListe marche sur des listes d'entiers, de chaînes, etc.`,
  fig:()=>h=>{h.innerHTML=M(`let rec derListe li = if List.tl li = [] then List.hd li else derListe (List.tl li)
 (* derListe : 'a list -> 'a *)
@@ -4785,15 +4785,502 @@ const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation f
  ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Le seul document autorisé est une feuille A4 recto-verso, écrite comme tu veux : prépare-la avec la page « Ma feuille A4 ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme (mail du prof du 5/11) : tout ce qui a été vu jusqu'aux listes incluses, <b>sans le filtrage</b> (TD ex. 1 à 31). Pas de polymorphisme.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Écris les fonctions sur les listes avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, comme partout sur le site.</li></ul>`)}
  ${sec(4,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["pf/cours.pdf","Cours complet"],["pf/td.pdf","Feuille de TD"],["pf/partiel_oct2021.pdf","Partiel 2021"],["pf/exam_jan2024_sujet.pdf","Examen 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
+/* ================== examen de janvier (CT, 67 % de la note, 2 h, une feuille A4 recto-verso) ==================
+   Programme : tout le cours (plan du PDF : expressions, fonctions, listes et filtrage, typage avancé — polymorphisme,
+   types sommes, enregistrements, abréviations —, exceptions, ordre supérieur et itérateurs, récursivité terminale).
+   Annales : janvier 2022, juin 2022 (session 2), janvier 2024 (corrigé officiel en .ml sur Moodle).
+   Le code est écrit comme le corrigé officiel de 2024 : fonctions curryfiées, function / match, sans signature. */
+const ML=(s,...v)=>W.code(String.raw(s,...v),"ml");
+const kc=(s,...v)=>`<code>${esc(String.raw(s,...v))}</code>`;
+const CT=o=>Object.assign(o,{ex:"ct"});
+
+/* ---------- 7. filtrage ---------- */
+add(7,CT({id:"pf-match-ecrire",type:"code",ref:"Cours p. 58 à 67 ; TD ex. 33 à 36 ; tous les examens de janvier",t:"Écrire une fonction avec le filtrage",short:"function | [] -> … | e :: tl -> …",
+ plain:`Avec le filtrage, on écrit ${hl("un cas par forme possible")} de la donnée : la liste vide, puis une liste « tête :: queue ». ${kc`function`} filtre directement le dernier paramètre.`,
+ formal:`${ML`let rec longueur = function
+  | [] -> 0
+  | _ :: tl -> 1 + longueur tl
+
+(* deux paramètres : le dernier est filtré par function *)
+let rec appartient x = function
+  | [] -> false
+  | e :: tl -> e = x || appartient x tl
+
+(* filtrer deux valeurs à la fois *)
+let rec fusion l1 l2 = match l1, l2 with
+  | [], l | l, [] -> l
+  | e1 :: t1, e2 :: t2 ->
+     if e1 <= e2 then e1 :: fusion t1 l2
+     else e2 :: fusion l1 t2`}<ul><li>Motifs : constantes (${kc`0`}, ${kc`true`}), noms (${kc`x`}), ${kc`_`}, couples ${kc`(a, b)`}, listes ${kc`[]`}, ${kc`e :: tl`}, ${kc`[x]`}, ${kc`x :: y :: tl`}.</li><li>${kc`when`} ajoute une condition : ${kc`| e :: tl when e mod 2 = 0 -> …`}.</li><li>${kc`as`} nomme le tout : ${kc`| e :: tl as l -> …`}.</li><li>Les cas sont testés de haut en bas : le cas général en dernier.</li></ul>`,
+ use:`<p>Écris toujours d'abord le cas ${kc`[]`}, puis ${kc`e :: tl`} avec l'appel récursif sur ${kc`tl`}.</p>`,
+ trap:`Un même nom ne peut pas apparaître deux fois dans un motif : ${kc`| (x, x) -> …`} est refusé ; écris ${kc`| (x, y) when x = y -> …`}.`,
+ q:"nbOcc x l (nombre de fois que x apparaît dans l) avec le filtrage ?",a:"let rec nbOcc x = function [] -> 0 | e :: tl -> (if e = x then 1 else 0) + nbOcc x tl",rel:["pf-match","pf-listes-rec"]}));
+
+/* ---------- 8. polymorphisme et types ---------- */
+add(8,CT({id:"pf-curry",type:"def",ref:"Cours p. 327 à 330 (fonctions curryfiées) ; consigne de tous les examens",t:"Fonctions curryfiées et application partielle",short:"f x y, add 1",
+ plain:`Les sujets l'exigent : ${hl("une fonction à plusieurs arguments s'écrit curryfiée")}, ${kc`let f x y = …`}, et s'appelle ${kc`f 3 4`}, pas ${kc`f (3, 4)`}. On peut ne donner que le premier argument : on obtient une fonction.`,
+ formal:`${ML`let add x y = x + y        (* int -> int -> int *)
+let succ = add 1             (* int -> int : application partielle *)
+let add_c (x, y) = x + y     (* int * int -> int : PAS curryfiée *)
+
+let comp f g x = f (g x)
+(* ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b *)
+let carre_succ = comp (fun x -> x * x) succ   (* carre_succ 1 = 4 *)`}<ul><li>${kc`fun x -> …`} : une fonction sans nom, à passer en paramètre.</li><li>${kc`let f x y = e`} est une écriture courte de ${kc`let f = fun x y -> e`}.</li><li>Le type ${kc`int -> int -> int`} se lit ${kc`int -> (int -> int)`}.</li></ul>`,
+ use:`<p>Pour lire un type de fonction : tout ce qui est avant la dernière flèche, ce sont les arguments, dans l'ordre ; après, le résultat.</p>`,
+ trap:`Le corrigé officiel de 2024 écrit ${kc`add_rat (Rat (1, 2), Rat (3, 4))`} avec un couple : la consigne demande pourtant la forme curryfiée. Écris ${kc`add_rat a b`}.`,
+ q:"Type de let add x y = x + y ? Et de add 1 ?",a:"int -> int -> int ; add 1 est de type int -> int.",rel:["pf-ordre-sup","pf-fonctions"]}));
+
+add(8,CT({id:"pf-somme",type:"def",ref:"Cours p. 286 à 297 ; TD ex. 41 et 42 ; examen de janvier 2024, ex. 2",t:"Types somme : définir, construire, filtrer",short:"type t = A | B of int",cc:"un exercice à chaque examen de janvier",
+ plain:`Un type somme liste ${hl("les formes possibles")} d'une valeur. Chaque forme a un ${hl("constructeur")} (avec une majuscule), qui porte éventuellement une donnée. On le lit avec un ${kc`match`}.`,
+ formal:`${ML`type couleur = Bleu | Blanc | Rouge          (* type énuméré *)
+type nombre =
+  | Ent of int
+  | Rat of (int * int)
+
+let x = Rat (1, 2)                           (* construire *)
+
+let est_nul = function                       (* filtrer *)
+  | Ent 0 -> true
+  | Rat (0, _) -> true
+  | _ -> false
+
+let add_number n1 n2 = match n1, n2 with     (* deux valeurs *)
+  | Ent a, Ent b -> Ent (a + b)
+  | Rat (a, b), Rat (c, d) -> Rat (a * d + c * b, b * d)
+  | Ent a, Rat (c, d) | Rat (c, d), Ent a -> Rat (a * d + c, d)`}<ul><li>Les motifs s'imbriquent : ${kc`Carte (Pique, _) :: tl`} filtre une liste, puis une carte, puis une enseigne.</li></ul>`,
+ use:`<p>Un cas du ${kc`match`} par constructeur. Pour une liste de valeurs du type : ${kc`| [] -> …`}, ${kc`| Ent e :: tl -> …`}, ${kc`| Rat (x, y) :: tl -> …`}.</p>`,
+ trap:`Un constructeur s'écrit avec une majuscule, et ses données entre parenthèses : ${kc`Rat (1, 2)`}, ${kc`Ent 3`}.`,
+ q:"Écrire inverse : nombre -> nombre (1/x), en levant Failure si x est nul ?",a:"let inverse = function | Ent 0 | Rat (0, _) -> failwith \"inverse\" | Ent e -> Rat (1, e) | Rat (a, b) -> Rat (b, a)",rel:["pf-rectype","pf-match-ecrire"]}));
+
+add(8,CT({id:"pf-rectype",type:"meth",ref:"Cours p. 294 à 297 ; TD ex. 43 et 44 ; examens 2022 (my_string, chaine) et 2024 ('a set)",t:"Types somme récursifs : entiers de Peano, chaînes maison, ensembles, arbres",short:"type 'a tree = Empty | Node of …",cc:"7 à 8 points en 2022 et 6 en 2024",
+ plain:`Un type somme peut ${hl("se contenir lui-même")} : c'est une liste maison. Les fonctions dessus sont ${hl("récursives, avec un cas par constructeur")}, exactement comme sur les listes.`,
+ formal:`${ML`type nat = O | S of nat                         (* 2 = S (S O) *)
+let rec add_nat n = function
+  | O -> n
+  | S p -> S (add_nat n p)
+
+type 'a set = Empty | Add of 'a * 'a set
+let rec mem x = function                        (* janvier 2024 *)
+  | Empty -> false
+  | Add (e, tl) -> e = x || mem x tl
+
+type 'a tree = Empty | Node of 'a * 'a tree * 'a tree
+let rec height = function                       (* TD ex. 44 *)
+  | Empty -> 0
+  | Node (_, g, d) -> 1 + max (height g) (height d)`}<p>Deux types qui ont un constructeur ${kc`Empty`} : c'est le dernier défini qui compte pour la suite. Dans un sujet, un seul est défini à la fois.</p>`,
+ use:`<p>Le cas de base est le constructeur sans argument (${kc`O`}, ${kc`Empty`}, ${kc`Vide`}) ; dans le cas récursif, on rappelle la fonction sur la partie du même type.</p>`,
+ trap:`${kc`type 'a tree = …`} : la variable de type ${kc`'a`} s'écrit avant le nom du type, avec une apostrophe.`,
+ q:"my_length : nombre de caractères d'une my_string (Empty | Cons of char * my_string) ?",a:"let rec my_length = function Empty -> 0 | Cons (_, r) -> 1 + my_length r",rel:["pf-somme","pf-match-ecrire"]}));
+
+add(8,CT({id:"pf-record",type:"def",ref:"Cours p. 298 à 306 ; TD ex. 46",t:"Enregistrements et abréviations de types",short:"{nom : string; age : int}",
+ plain:`Un enregistrement regroupe des données ${hl("nommées par des champs")}. On lit un champ avec un point : ${kc`p.age`}.`,
+ formal:`${ML`type personne = {nom : string; prenom : string; age : int}
+
+let p = {nom = "Church"; prenom = "Alonzo"; age = 92}
+let nom_complet p = p.prenom ^ " " ^ p.nom
+let vieillir p = {p with age = p.age + 1}    (* copie modifiée *)
+let nom2 = function {nom = n; prenom = pr} -> pr ^ " " ^ n
+
+type entier = int                             (* abréviation *)
+type prod = int * int`}`,
+ use:`<p>${kc`{p with champ = …}`} fabrique un nouvel enregistrement : rien n'est modifié sur place.</p>`,
+ trap:`Les champs s'écrivent avec ${kc`=`} à la construction et ${kc`:`} dans la définition du type.`,
+ q:"Fonction plus_age p1 p2 : p1 est-elle plus âgée que p2 ?",a:"let plus_age p1 p2 = p1.age > p2.age",rel:["pf-somme"]}));
+
+/* ---------- 9. exceptions ---------- */
+add(9,CT({id:"pf-exc",type:"meth",ref:"Cours p. 307 à 325 ; TD ex. 47 à 51 ; tous les examens de janvier",t:"Exceptions : lever, définir, rattraper",short:"raise, failwith, try … with",cc:"dans chaque examen de janvier",
+ plain:`Une exception ${hl("interrompt le calcul")}. On la ${hl("lève")} avec ${kc`raise`} (ou ${kc`failwith "message"`}), on la ${hl("rattrape")} avec ${kc`try … with`}.`,
+ formal:`${ML`exception Impossible                   (* sans argument *)
+exception Inversion of nombre          (* avec un argument *)
+
+let tete = function
+  | [] -> failwith "tete"              (* = raise (Failure "tete") *)
+  | e :: _ -> e
+
+let rec maxListe = function
+  | [] -> invalid_arg "maxListe"       (* = raise (Invalid_argument …) *)
+  | [x] -> x
+  | x :: tl -> max x (maxListe tl)
+
+let my_tl l = try List.tl l with Failure _ -> []`}<ul><li>Prédéfinies : ${kc`Failure of string`}, ${kc`Invalid_argument of string`}, ${kc`Not_found`}, ${kc`Division_by_zero`}, ${kc`Match_failure`}.</li><li>${kc`try e with | E1 -> e1 | E2 x -> e2`} : si ${kc`e`} lève une exception, on la filtre ; sinon le résultat est celui de ${kc`e`}. Une exception non filtrée continue de remonter.</li><li>${kc`raise`} a le type ${kc`exn -> 'a`} : il convient à n'importe quel type de résultat.</li></ul>`,
+ use:`<p>Pour arrêter un parcours dès qu'on a trouvé : ${kc`raise (Found e)`}, et ${kc`try … with Found e -> e`} autour de l'appel (TD ex. 51).</p>`,
+ trap:`${kc`try g n with Failure _ -> 0`} ne rattrape pas ${kc`Invalid_argument`} : l'exception passe à travers (TD ex. 47).`,
+ q:"Lever l'exception Not_found ? Définir une exception Trouve qui porte un int ?",a:"raise Not_found ; exception Trouve of int (puis raise (Trouve 3)).",rel:["pf-erreurs","pf-somme"]}));
+
+/* ---------- 10. ordre supérieur ---------- */
+add(10,CT({id:"pf-ordre-sup",type:"code",ref:"Cours p. 326 à 336 ; TD ex. 52 et 53 ; examens de janvier 2022 et juin 2022, ex. 3 et 1",t:"Fonctions d'ordre supérieur : map, filter, fold à la main",short:"f en paramètre",cc:"un exercice en 2022 (7 points)",
+ plain:`Une fonction peut ${hl("prendre une fonction en paramètre")}. On écrit alors une seule fois le parcours de liste, et la fonction décide du traitement de chaque élément.`,
+ formal:`${ML`let rec my_map f = function
+  | [] -> []
+  | e :: tl -> f e :: my_map f tl
+(* ('a -> 'b) -> 'a list -> 'b list *)
+
+let rec my_filter p = function
+  | [] -> []
+  | e :: tl -> if p e then e :: my_filter p tl else my_filter p tl
+
+let rec my_fold_right f l init = match l with
+  | [] -> init
+  | e :: tl -> f e (my_fold_right f tl init)
+
+(* janvier 2022 : (f a1) + … + (f an), avec List.hd et List.tl *)
+let rec map_sum f l =
+  if l = [] then 0 else f (List.hd l) + map_sum f (List.tl l)
+(* ('a -> int) -> 'a list -> int *)`}`,
+ use:`<p>Pour donner le type : regarde comment chaque paramètre est utilisé. ${kc`f e`} avec ${kc`e : 'a`} donne ${kc`f : 'a -> 'b`}.</p>`,
+ trap:`Dans ${kc`map_sum`}, le ${kc`+`} force le résultat de ${kc`f`} à être un ${kc`int`} : le type est ${kc`('a -> int) -> 'a list -> int`}, pas ${kc`('a -> 'b)`}.`,
+ q:"Type de let f g x = g x ?",a:"('a -> 'b) -> 'a -> 'b",rel:["pf-iter","pf-curry"]}));
+
+add(10,CT({id:"pf-iter",type:"code",ref:"Cours p. 335 à 347 ; TD ex. 57 à 59 ; examens 2022 et 2024",t:"Les itérateurs de List",short:"List.map, filter, fold_left, fold_right",cc:"imposé dans chaque examen",
+ plain:`Les itérateurs de ${kc`List`} font le parcours à ta place. Le plus demandé : ${hl("List.fold_right")} et ${hl("List.fold_left")}, qui accumulent un résultat.`,
+ formal:`${ML`List.map (fun e -> e + 1) [1; 2; 3]              (* [2; 3; 4] *)
+List.filter (fun e -> e >= 0) [1; -2; 3]        (* [1; 3] *)
+List.for_all (fun e -> e > 0) [1; 2]            (* true *)
+List.exists (fun e -> e < 0) [1; 2]             (* false *)
+List.fold_left (fun a e -> a + e) 0 [1; 2; 3]   (* ((0 + 1) + 2) + 3 *)
+List.fold_right (fun e a -> e :: a) [1; 2] []   (* 1 :: (2 :: []) *)
+
+(* janvier 2022 : map_sum avec fold_left *)
+let map_sum f l = List.fold_left (fun a e -> a + f e) 0 l
+(* juin 2022 : prodFonc avec fold_right *)
+let prodFonc f l = List.fold_right (fun e a -> f e * a) l 1`}<ul><li>${kc`List.fold_left f init l`} : la fonction reçoit ${hl("(accumulateur, élément)")}.</li><li>${kc`List.fold_right f l init`} : la fonction reçoit ${hl("(élément, accumulateur)")}, et la liste vient avant ${kc`init`}.</li></ul>`,
+ use:`<p>Pour fold, demande-toi : que vaut le résultat pour la liste vide (c'est ${kc`init`}) ? Comment l'élément suivant modifie-t-il l'accumulateur (c'est la fonction) ?</p>`,
+ trap:`L'ordre des arguments diffère : ${kc`List.fold_left f init l`} mais ${kc`List.fold_right f l init`}.`,
+ q:"Somme des entiers pairs d'une liste avec List.fold_left ?",a:"let somme_pairs l = List.fold_left (fun a e -> if e mod 2 = 0 then a + e else a) 0 l",rel:["pf-ordre-sup"]}));
+
+/* ---------- 11. récursivité terminale ---------- */
+add(11,CT({id:"pf-terminal",type:"meth",ref:"Cours p. 68 à 70 du chapitre « Types » et p. 348 à 392",t:"Récursivité terminale et accumulateurs",short:"Appel terminal, accumulateur",
+ plain:`Un appel est ${hl("terminal")} s'il est la toute dernière opération de la fonction. Pour rendre une fonction terminale, on ajoute un ${hl("accumulateur")} qui porte le résultat partiel.`,
+ formal:`${ML`let rec fact1 n = if n = 0 then 1 else n * fact1 (n - 1)
+(* pas terminale : il reste « n * … » à faire après l'appel *)
+
+let rec factI n a = if n = 0 then a else factI (n - 1) (n * a)
+let fact2 n = factI n 1                 (* terminale *)
+
+let inv l =                             (* inverser une liste *)
+  let rec aux l acc = match l with
+    | [] -> acc
+    | t :: q -> aux q (t :: acc)
+  in aux l []`}<p>Une fonction terminale ne garde pas de calculs en attente sur la pile : (fact2 n) n'utilise qu'une trame, quand (fact1 n) en empile n + 1.</p>`,
+ use:`<p>L'accumulateur part de la valeur du cas de base (1 pour un produit, 0 pour une somme, [] pour une liste).</p>`,
+ trap:`Une version avec accumulateur sur une liste rend souvent les éléments ${hl("à l'envers")} : c'est voulu pour ${kc`inv`}, à corriger sinon.`,
+ q:"Version terminale de la somme 1 + 2 + … + n ?",a:"let rec somI n a = if n = 0 then a else somI (n - 1) (a + n) ; let som n = somI n 0",rel:["pf-rec"]}));
+
+add(11,CT({id:"pf-sujets",type:"def",ref:"Examens de janvier 2022, juin 2022 et janvier 2024",t:"Les fonctions données dans les sujets",short:"String.sub, Char.escaped, **",
+ plain:`Les sujets rappellent les fonctions utiles, mais il faut ${hl("savoir les combiner")} : conversions int ↔ float, découpage de chaînes, caractère vers chaîne.`,
+ formal:`${ML`2. ** 3.                       (* 8. : puissance de flottants *)
+int_of_float (2. ** float_of_int n)   (* 2 puissance n, en int *)
+String.length "L1"             (* 2 *)
+String.get "L1" 0              (* 'L' *)
+String.sub "L1" 1 1            (* "1" : à partir de 1, longueur 1 *)
+Char.escaped 'L'               (* "L" *)
+"un" ^ "deux"                  (* "undeux" *)
+string_of_int 42               (* "42" *)
+[1; 2] @ [3]                   (* [1; 2; 3] *)
+fst (1, 'a'), snd (1, 'a')     (* 1 et 'a' *)
+List.nth [5; 6; 7] 1           (* 6 *)`}`,
+ use:`<p>Le reste d'une chaîne s sans son premier caractère : ${kc`String.sub s 1 (String.length s - 1)`}.</p>`,
+ trap:`${kc`2 ** 3`} est une erreur de type : ${kc`**`} ne prend que des ${kc`float`}.`,
+ q:"Le reste de s sans son premier caractère ?",a:"String.sub s 1 (String.length s - 1)",rel:["pf-rectype"]}));
+
+/* ---------- exercices de TD 33 à 59 (corrigés écrits pour le site) ---------- */
+td.push(
+ CT({id:"33",s:1,note:"filtrage",t:"z1, z2, z3",en:"Comparer : let z1 = function x -> if x = 0 then true else false ; let z2 = function x -> match x with 0 -> true | _ -> false ; let z3 = function 0 -> true | _ -> false.",link:"pf-match",sol:`<p>Les trois sont la même fonction ${kc`int -> bool`} : true pour 0, false sinon. z3 est l'écriture la plus courte : ${kc`function`} filtre directement le paramètre, sans le nommer.</p>`}),
+ CT({id:"37",s:2,note:"polymorphisme",t:"Inférer des types",en:"Types de : id x = x ; f e l = e :: l ; g c x l = if fst c then snd c :: l else [x] ; h c x y = function [] -> [] | e :: tl as l -> if c then (x, y) :: l else e :: (x, y) :: tl ; let rec j x = j x ; let rec k a = function [] -> a | e :: tl -> if e mod 2 = 0 then k a tl else failwith \"stop\".",link:"pf-poly",sol:`${ML`id : 'a -> 'a
+f : 'a -> 'a list -> 'a list
+g : bool * 'a -> 'a -> 'a list -> 'a list
+h : bool -> 'a -> 'b -> ('a * 'b) list -> ('a * 'b) list
+j : 'a -> 'b
+k : 'a -> int list -> 'a`}<p>Pour g : ${kc`fst c`} sert de condition, donc c est un couple dont la 1re composante est un bool ; ${kc`snd c :: l`} et ${kc`[x]`} ont le même type. Pour k : ${kc`e mod 2`} force des int.</p>`}),
+ CT({id:"38",s:1,note:"polymorphisme",t:"make_couple, proj1, proj2",en:"Écrire make_couple x y = (x, y), proj1 et proj2 (les deux composantes d'un couple). Types ?",link:"pf-poly",sol:`${ML`let make_couple x y = (x, y)      (* 'a -> 'b -> 'a * 'b *)
+let proj1 (a, _) = a               (* 'a * 'b -> 'a *)
+let proj2 (_, b) = b               (* 'a * 'b -> 'b *)`}`}),
+ CT({id:"39",s:3,note:"polymorphisme",t:"mem_assoc",en:"mem_assoc a l : true s'il existe un couple (a, b) dans la liste de couples l. Exemple : mem_assoc 2 [(1, 'a'); (2, 'b')] = true. Type ?",link:"pf-match-ecrire",sol:`${ML`let rec mem_assoc a = function
+  | [] -> false
+  | (k, _) :: tl -> k = a || mem_assoc a tl
+(* 'a -> ('a * 'b) list -> bool *)`}`}),
+ CT({id:"40",s:2,note:"polymorphisme",t:"dup_list",en:"dup_list n l : chaque élément de l répété n fois. dup_list 2 [1;2;3] = [1;1;2;2;3;3]. Type ? Que valent dup_list 2 [1;2;3;4;5] et dup_list 3 ['a';'b';'c'] ?",link:"pf-match-ecrire",sol:`${ML`let rec repete n x = if n <= 0 then [] else x :: repete (n - 1) x
+
+let rec dup_list n = function
+  | [] -> []
+  | e :: tl -> repete n e @ dup_list n tl
+(* int -> 'a list -> 'a list *)`}<p>[1;1;2;2;3;3;4;4;5;5] et ['a';'a';'a';'b';'b';'b';'c';'c';'c']. Si n = 0, repete rend [] : la liste résultat est vide.</p>`}),
+ CT({id:"41",s:3,note:"types sommes",t:"split_number_list",en:"type number = Int of int | Float of float. split_number_list : le couple (liste des Int, liste des Float). sum_split_number_list : le couple (somme des entiers, somme des flottants).",link:"pf-somme",sol:`${ML`let rec split_number_list = function
+  | [] -> ([], [])
+  | Int i :: tl ->
+     let (li, lf) = split_number_list tl in (Int i :: li, lf)
+  | Float f :: tl ->
+     let (li, lf) = split_number_list tl in (li, Float f :: lf)
+
+let rec sum_split_number_list = function
+  | [] -> (0, 0.)
+  | Int i :: tl ->
+     let (si, sf) = sum_split_number_list tl in (si + i, sf)
+  | Float f :: tl ->
+     let (si, sf) = sum_split_number_list tl in (si, sf +. f)`}<p>${kc`let (a, b) = … in`} récupère les deux morceaux du résultat récursif.</p>`}),
+ CT({id:"42",s:2,note:"types sommes",t:"Mains de poker",en:"type carte = Carte of enseigne * valeur. Une main est une liste de cartes. Tester : au moins un as ; au moins une carte de valeur v ; au moins deux as ; au moins une paire ; une couleur (5 cartes de même enseigne).",link:"pf-somme",sol:`${ML`let rec contient v = function
+  | [] -> false
+  | Carte (_, w) :: tl -> w = v || contient v tl
+
+let a_un_as main = contient As main
+
+let rec nb_valeur v = function
+  | [] -> 0
+  | Carte (_, w) :: tl -> (if w = v then 1 else 0) + nb_valeur v tl
+
+let deux_as main = nb_valeur As main >= 2
+
+let rec a_une_paire = function
+  | [] -> false
+  | Carte (_, v) :: tl -> contient v tl || a_une_paire tl
+
+let rec meme_enseigne e = function
+  | [] -> true
+  | Carte (e2, _) :: tl -> e2 = e && meme_enseigne e tl
+
+let couleur = function
+  | [] -> true
+  | Carte (e, _) :: tl -> meme_enseigne e tl`}`}),
+ CT({id:"43",s:2,note:"types sommes",t:"Entiers de Peano",en:"type nat = O | S of nat. to_dec, from_dec, et mul_nat avec mul_nat x O = O et mul_nat x (S y) = add_nat (mul_nat x y) x.",link:"pf-rectype",sol:`${ML`let rec to_dec = function
+  | O -> 0
+  | S n -> 1 + to_dec n
+
+let rec from_dec n = if n <= 0 then O else S (from_dec (n - 1))
+
+let rec add_nat n = function
+  | O -> n
+  | S p -> S (add_nat n p)
+
+let rec mul_nat x = function
+  | O -> O
+  | S y -> add_nat (mul_nat x y) x`}`}),
+ CT({id:"44",s:3,note:"types sommes",t:"Hauteur et équilibre d'un arbre",en:"type 'a tree = Empty | Node of 'a * 'a tree * 'a tree. height (l'arbre vide a pour hauteur 0) ; is_balanced : pour tout nœud, les deux fils ont la même hauteur.",link:"pf-rectype",sol:`${ML`let rec height = function
+  | Empty -> 0
+  | Node (_, g, d) -> 1 + max (height g) (height d)
+
+let rec is_balanced = function
+  | Empty -> true
+  | Node (_, g, d) ->
+     height g = height d && is_balanced g && is_balanced d`}`}),
+ CT({id:"46",s:1,note:"enregistrements",t:"Le type personne",en:"type personne = {nom : string; prenom : string; age : int}. afficher_personne, changer_nom, plus_age ; un type personne2 avec le sexe (type somme) et les conversions.",link:"pf-record",sol:`${ML`let afficher_personne p =
+  print_endline (p.prenom ^ " " ^ p.nom ^ " a "
+                 ^ string_of_int p.age ^ " ans")
+
+let changer_nom n p = {p with nom = n}
+let plus_age p1 p2 = p1.age > p2.age
+
+type sexe = Masculin | Feminin
+type personne2 = {nom2 : string; prenom2 : string; age2 : int; sexe : sexe}
+
+let p_vers_p2 s p = {nom2 = p.nom; prenom2 = p.prenom; age2 = p.age; sexe = s}
+let p2_vers_p p = {nom = p.nom2; prenom = p.prenom2; age = p.age2}`}<p>Des noms de champs différents (nom2…) évitent qu'OCaml confonde les deux types. p_vers_p2 a besoin du sexe en paramètre : personne ne le contient pas.</p>`}),
+ CT({id:"47",s:3,note:"exceptions",t:"Que rend f ?",en:"let g n = if n = -1 then failwith \"-1\" else if n > -10 then n else raise (Invalid_argument (string_of_int n)) ; let f n = match n with | i when i >= 0 -> 1 / i | i when i >= -10 && i <= -1 -> (try g n with Failure _ -> 0). Valeur de f pour 2, 0, -1, -5, -10, -11 ?",link:"pf-exc",sol:`<ul><li>f 2 = 1 / 2 = 0 (division entière).</li><li>f 0 : 1 / 0 lève Division_by_zero, non rattrapée.</li><li>f (-1) : g lève Failure "-1", rattrapée : 0.</li><li>f (-5) : g rend -5.</li><li>f (-10) : g lève Invalid_argument "-10" ; le with ne filtre que Failure : l'exception remonte.</li><li>f (-11) : aucun cas du match ne correspond : Match_failure.</li></ul>`}),
+ CT({id:"48",s:2,note:"exceptions",t:"som et maxListe qui lèvent des exceptions",en:"som n (somme des n premiers entiers) lève Failure si n < 0 ; maxListe lève Invalid_argument sur la liste vide. Type de maxListe ?",link:"pf-exc",sol:`${ML`let rec som n =
+  if n < 0 then failwith "som : entier négatif"
+  else if n = 0 then 0
+  else n + som (n - 1)
+
+let rec maxListe = function
+  | [] -> invalid_arg "maxListe : liste vide"
+  | [x] -> x
+  | x :: tl -> max x (maxListe tl)
+(* 'a list -> 'a *)`}`}),
+ CT({id:"49",s:2,note:"exceptions",t:"my_tl et my_nth",en:"my_tl : List.tl, mais [] pour la liste vide (rattraper Failure). my_nth l n : List.nth, mais le dernier élément si n est trop grand (Failure) et le premier si n est négatif (Invalid_argument).",link:"pf-exc",sol:`${ML`let my_tl l = try List.tl l with Failure _ -> []
+
+let my_nth l n =
+  try List.nth l n with
+  | Failure _ -> List.nth l (List.length l - 1)
+  | Invalid_argument _ -> List.hd l`}`}),
+ CT({id:"50",s:2,note:"exceptions",t:"somme_sous_liste (essais successifs)",en:"Une sous-liste de l dont la somme vaut s, en levant Impossible s'il n'y en a pas. Liste vide : [] si s = 0, sinon Impossible. Sinon e :: tl : essayer e avec une solution pour s - e dans tl, ou une solution pour s dans tl.",link:"pf-exc",sol:`${ML`exception Impossible
+
+let rec somme_sous_liste s = function
+  | [] -> if s = 0 then [] else raise Impossible
+  | e :: tl ->
+     try e :: somme_sous_liste (s - e) tl
+     with Impossible -> somme_sous_liste s tl`}`}),
+ CT({id:"51",s:3,note:"exceptions",t:"plus_petit_que avec l'exception Found",en:"plus_petit_que n l : le premier élément de l strictement plus petit que n, ou Not_found. En passant par plus_petit_que_exc qui lève Found e. Puis rendre aussi sa position.",link:"pf-exc",sol:`${ML`exception Found of int
+
+let rec plus_petit_que_exc n = function
+  | [] -> raise Not_found
+  | e :: tl -> if e < n then raise (Found e) else plus_petit_que_exc n tl
+
+let plus_petit_que n l = try plus_petit_que_exc n l with Found e -> e
+
+exception Found_pos of int * int
+
+let rec ppq_pos n i = function
+  | [] -> raise Not_found
+  | e :: tl -> if e < n then raise (Found_pos (e, i)) else ppq_pos n (i + 1) tl
+
+let plus_petit_que2 n l = try ppq_pos n 0 l with Found_pos (e, i) -> (e, i)`}<p>Not_found n'est pas rattrapée : elle remonte, comme demandé.</p>`}),
+ CT({id:"52",s:2,note:"ordre supérieur",t:"Types de fonctions d'ordre supérieur",en:"let f g x = g x ; let g f x y = f (x, y) ; let h f (x, y) = f x y. Types ? Que font-elles ?",link:"pf-ordre-sup",sol:`${ML`f : ('a -> 'b) -> 'a -> 'b          (* applique g à x *)
+g : ('a * 'b -> 'c) -> 'a -> 'b -> 'c  (* curryfie f *)
+h : ('a -> 'b -> 'c) -> 'a * 'b -> 'c  (* décurryfie f *)`}<p>Exemples : f succ 1 = 2 ; g fst 1 2 = 1 ; h (+) (1, 2) = 3.</p>`}),
+ CT({id:"53",s:3,note:"ordre supérieur",t:"my_map, my_filter, my_fold_right",en:"Sans les fonctions de List : my_map f [a1;…;an] = [f a1;…;f an] ; my_filter p l ; my_fold_right f [a1;…;an] init = f a1 (f a2 (… (f an init))).",link:"pf-ordre-sup",sol:`${ML`let rec my_map f = function
+  | [] -> []
+  | e :: tl -> f e :: my_map f tl
+
+let rec my_filter p = function
+  | [] -> []
+  | e :: tl -> if p e then e :: my_filter p tl else my_filter p tl
+
+let rec my_fold_right f l init = match l with
+  | [] -> init
+  | e :: tl -> f e (my_fold_right f tl init)`}`}),
+ CT({id:"54",s:2,note:"ordre supérieur",t:"Le type option",en:"fact_securisee : comme fact, mais Some (fact n), ou None si fact lève une exception. securiser_fonction f : transforme une fonction d'arité 1 de la même façon. Type ? Généraliser à une arité quelconque ?",link:"pf-exc",sol:`${ML`let fact_securisee n = try Some (fact n) with Failure _ -> None
+
+let securiser_fonction f = fun x -> try Some (f x) with _ -> None
+(* ('a -> 'b) -> 'a -> 'b option *)
+
+let fact_securisee2 = securiser_fonction fact`}<p>Pas pour une arité quelconque en une seule fonction : le nombre d'arguments fait partie du type. On écrit une version par arité, ou on regroupe les arguments dans un tuple pour revenir à l'arité 1.</p>`}),
+ CT({id:"57",s:3,note:"itérateurs",t:"Que font ces fonctions ?",en:"f l = List.fold_left (fun a e -> a ^ Char.escaped e) \"\" l ; g l = List.fold_right (fun e a -> e :: a) l [] ; h l = List.for_all (fun e -> e) (List.map (fun e -> e >= 0) l) ; i e l = List.length (List.filter (fun x -> x = e) l) ; j l = let l1, l2 = List.partition (fun e -> e >= 0) l in List.length l1 >= List.length l2.",link:"pf-iter",sol:`<ul><li>f : ${kc`char list -> string`}, colle les caractères : f ['a'; 'b'] = "ab".</li><li>g : ${kc`'a list -> 'a list`}, recopie la liste à l'identique.</li><li>h : ${kc`int list -> bool`}, tous les éléments sont-ils ≥ 0 ?</li><li>i : ${kc`'a -> 'a list -> int`}, le nombre d'occurrences de e (c'est nbOcc).</li><li>j : ${kc`int list -> bool`}, au moins autant d'éléments ≥ 0 que d'éléments négatifs ?</li></ul>`}),
+ CT({id:"58",s:2,note:"itérateurs",t:"tousPairs, exiPairs, liPairs, oterPairs avec des itérateurs",en:"Réécrire les fonctions de l'exercice 27 uniquement avec des itérateurs.",link:"pf-iter",sol:`${ML`let tousPairs l = List.for_all (fun x -> x mod 2 = 0) l
+let exiPairs l = List.exists (fun x -> x mod 2 = 0) l
+let liPairs l = List.filter (fun x -> x mod 2 = 0) l
+let oterPairs l = List.filter (fun x -> x mod 2 <> 0) l`}`}),
+ CT({id:"59",s:3,note:"itérateurs",t:"somme_pairs, union, est_triee",en:"Avec des itérateurs seulement : la somme des entiers pairs ; l'union de deux listes sans doublons ; tester si une liste est triée (fold_left avec un couple (réponse, dernier élément)).",link:"pf-iter",sol:`${ML`let somme_pairs l =
+  List.fold_left (fun a e -> if e mod 2 = 0 then a + e else a) 0 l
+
+let union l1 l2 =
+  l1 @ List.fold_left (fun acc e -> List.filter (fun x -> x <> e) acc) l2 l1
+
+let est_triee = function
+  | [] -> true
+  | e :: tl ->
+     fst (List.fold_left (fun (ok, prec) x -> (ok && prec <= x, x)) (true, e) tl)`}<p>union : on retire de l2 chaque élément de l1, puis on colle. est_triee : l'accumulateur garde la réponse et le dernier élément vu.</p>`}));
+
+/* les exercices 32, 35 et 36 existaient déjà : ils passent au programme de janvier */
+td.forEach(x=>{if(x.id==="32"){x.ex="ct";delete x.out;}});
+
+/* ---------- annales de l'examen de janvier ---------- */
+const MOI_PF="Corrigé écrit par moi (pas de corrigé officiel), dans le style du corrigé de 2024";
+ann.push(
+ {src:"Examen janvier 2024 · Ex. 1, question 2",t:"trouve_pytha et l'exception Not_found",en:"Étant donnés x et z, rendre l'entier y tel que (x, y, z) soit pythagoricien (x² + y² = z²), ou lever Not_found. trouve_pytha 3 5 = 4 ; trouve_pytha 2 8 lève Not_found.",go:"pf-exc",who:"Corrigé officiel, adapté : le corrigé rend le triplet (x, y, z), l'énoncé demande y",sol:`${ML`let rec trouve_aux x y z =
+  if y * y >= z * z then raise Not_found
+  else if est_pytha x y z then y
+  else trouve_aux x (y + 1) z
+
+let trouve_pytha x z = trouve_aux x 1 z`}`},
+ {src:"Examen janvier 2024 · Ex. 2 · 7 pts",t:"Le type nombre (entiers et rationnels)",en:"type nombre = Ent of int | Rat of (int * int). (1) add_rat : somme de deux Rat, sinon Failure \"add_rat\" (Rat (1, 2) et Rat (3, 4) donnent Rat (10, 8)). (2) somme_nombre : somme d'une liste de nombres, en Rat ([Ent 2; Rat (1, 2); Rat (3, 4)] donne Rat (26, 8)). (3) exception Inversion of nombre ; inverse_nombre : inverse chaque nombre, lève Inversion avec le nombre nul. (4) simplifie_nombre avec List.fold_right seulement : supprimer les nombres nuls, Rat (x, 1) devient Ent x.",go:"pf-somme",who:"Corrigé officiel (fichier .ml), écrit ici en forme curryfiée",sol:`${ML`let add_rat a b = match a, b with
+  | Rat (x1, y1), Rat (x2, y2) -> Rat (x1 * y2 + x2 * y1, y1 * y2)
+  | _ -> failwith "add_rat"
+
+let rec somme_nombre = function
+  | [] -> Rat (0, 1)
+  | Ent e :: tl -> add_rat (Rat (e, 1)) (somme_nombre tl)
+  | Rat r :: tl -> add_rat (Rat r) (somme_nombre tl)
+
+exception Inversion of nombre
+
+let rec inverse_nombre = function
+  | [] -> []
+  | Ent e :: tl ->
+     if e = 0 then raise (Inversion (Ent e))
+     else Rat (1, e) :: inverse_nombre tl
+  | Rat (x, y) :: tl ->
+     if x = 0 then raise (Inversion (Rat (x, y)))
+     else Rat (y, x) :: inverse_nombre tl
+
+let simplifie_nombre l =
+  List.fold_right (fun e a -> match e with
+    | Ent 0 -> a
+    | Rat (0, _) -> a
+    | Rat (x, 1) -> Ent x :: a
+    | _ -> e :: a) l []`}`},
+ {src:"Examen janvier 2024 · Ex. 3 · 6 pts",t:"Ensembles : mem, union, inter",en:"type 'a set = Empty | Add of 'a * 'a set. (1) mem x e ; quel est son type ? (2) union de deux ensembles. (3) inter de deux ensembles.",go:"pf-rectype",who:"Corrigé officiel (fichier .ml)",sol:`${ML`let rec mem x = function
+  | Empty -> false
+  | Add (e, tl) -> if x = e then true else mem x tl
+(* 'a -> 'a set -> bool *)
+
+let rec union e1 e2 = match e1 with
+  | Empty -> e2
+  | Add (e, tl) -> if mem e e2 then union tl e2 else Add (e, union tl e2)
+
+let rec inter e1 = function
+  | Empty -> Empty
+  | Add (e, tl) -> if mem e e1 then Add (e, inter e1 tl) else inter e1 tl`}`},
+ {src:"Examen janvier 2022 · Ex. 2 · 7 pts",t:"my_string : des chaînes maison",en:"type my_string = Empty | Cons of char * my_string. (1) to_my_string : string vers my_string (avec String.length, String.get, String.sub). (2) from_my_string : l'inverse (avec Char.escaped). (3) my_length. (4) my_get s i : le caractère d'indice i, ou Invalid_argument.",go:"pf-rectype",who:MOI_PF,sol:`${ML`let rec to_my_string s =
+  if String.length s = 0 then Empty
+  else Cons (String.get s 0,
+             to_my_string (String.sub s 1 (String.length s - 1)))
+
+let rec from_my_string = function
+  | Empty -> ""
+  | Cons (c, r) -> Char.escaped c ^ from_my_string r
+
+let rec my_length = function
+  | Empty -> 0
+  | Cons (_, r) -> 1 + my_length r
+
+let rec my_get s i = match s with
+  | Empty -> invalid_arg "my_get"
+  | Cons (c, r) -> if i = 0 then c else my_get r (i - 1)`}<p>Juin 2022, ex. 3 est le même exercice avec Vide, stringVersChaine, chaineVersString, longChaine et iemeCar.</p>`},
+ {src:"Examen janvier 2022 · Ex. 3 · 7 pts",t:"map_sum de trois façons",en:"map_sum f [a1; …; an] = (f a1) + … + (f an). (1) Avec List.hd et List.tl seulement ; signature ? (2) Avec le filtrage. (3) Avec List.fold_left seulement.",go:"pf-ordre-sup",who:MOI_PF,sol:`${ML`let rec map_sum f l =
+  if l = [] then 0 else f (List.hd l) + map_sum f (List.tl l)
+(* ('a -> int) -> 'a list -> int *)
+
+let rec map_sum2 f = function
+  | [] -> 0
+  | e :: tl -> f e + map_sum2 f tl
+
+let map_sum3 f l = List.fold_left (fun a e -> a + f e) 0 l`}`},
+ {src:"Examen juin 2022 (session 2) · Ex. 1 · 6 pts",t:"prodFonc de trois façons",en:"prodFonc f [e1; …; en] = (f e1) * … * (f en). (1) Avec List.hd et List.tl ; signature ? (2) Avec le filtrage. (3) Avec List.fold_right seulement.",go:"pf-iter",who:MOI_PF,sol:`${ML`let rec prodFonc f l =
+  if l = [] then 1 else f (List.hd l) * prodFonc f (List.tl l)
+(* ('a -> int) -> 'a list -> int *)
+
+let rec prodFonc2 f = function
+  | [] -> 1
+  | e :: tl -> f e * prodFonc2 f tl
+
+let prodFonc3 f l = List.fold_right (fun e a -> f e * a) l 1`}`},
+ {src:"Examen juin 2022 (session 2) · Ex. 2 · 7 pts",t:"Nombres de Mersenne",en:"Mₙ = 2ⁿ − 1 (n ≥ 1). (1) puis2 n avec ** et les conversions. (2) nbMersenne n. (3) estMersenneRec p n : existe-t-il un Mₖ = p avec k ≥ n ? puis estMersenne p. (4) listeMersenne n : les n premiers.",go:"pf-sujets",who:MOI_PF,sol:`${ML`let puis2 n = int_of_float (2. ** float_of_int n)
+
+let nbMersenne n = puis2 n - 1
+
+let rec estMersenneRec p n =
+  let m = nbMersenne n in
+  if m = p then true
+  else if m > p then false
+  else estMersenneRec p (n + 1)
+
+let estMersenne p = estMersenneRec p 1
+
+let rec listeMersenne n =
+  if n <= 0 then [] else nbMersenne n :: listeMersenne (n - 1)`}<p>Même schéma que les nombres de Fermat de janvier 2022.</p>`});
+
+/* ---------- quiz de l'examen de janvier (cachées avant le CC : elles visent des fiches de l'examen) ---------- */
+quiz.push(
+ {q:"Type de let add x y = x + y ?",o:["int -> int -> int","int * int -> int","int -> int"],a:0,e:"Forme curryfiée : deux flèches.",link:"pf-curry"},
+ {q:"add 1 (avec add x y = x + y) est…",o:["une fonction int -> int","une erreur","l'entier 1"],a:0,e:"Application partielle.",link:"pf-curry"},
+ {q:"Type de let id x = x ?",o:["'a -> 'a","int -> int","'a -> 'b"],a:0,e:"x peut être de n'importe quel type, et le résultat a le même.",link:"pf-poly"},
+ {q:"Un nom de constructeur…",o:["commence par une majuscule","commence par une minuscule","s'écrit entre guillemets"],a:0,e:"Ent, Rat, Empty, Node : c'est une contrainte de syntaxe.",link:"pf-somme"},
+ {q:"type 'a tree = Empty | Node of 'a * 'a tree * 'a tree. Hauteur de Node (1, Empty, Empty) ?",o:["1","0","2"],a:0,e:"1 + max 0 0.",link:"pf-rectype"},
+ {q:"failwith \"x\" est la même chose que…",o:["raise (Failure \"x\")","raise Not_found","invalid_arg \"x\""],a:0,e:"invalid_arg lève Invalid_argument.",link:"pf-exc"},
+ {q:"try List.tl [] with Failure _ -> [] vaut…",o:["[]","une exception","[[]]"],a:0,e:"List.tl [] lève Failure, rattrapée.",link:"pf-exc"},
+ {q:"Type de raise ?",o:["exn -> 'a","exn -> unit","'a -> exn"],a:0,e:"Le résultat est polymorphe : raise convient partout.",link:"pf-exc"},
+ {q:"List.fold_left (fun a e -> a + e) 0 [1; 2; 3] vaut…",o:["6","[1; 2; 3]","0"],a:0,e:"((0 + 1) + 2) + 3.",link:"pf-iter"},
+ {q:"Dans List.fold_right f l init, la fonction f reçoit…",o:["l'élément, puis l'accumulateur","l'accumulateur, puis l'élément","seulement l'élément"],a:0,e:"C'est l'inverse de fold_left.",link:"pf-iter"},
+ {q:"List.filter (fun e -> e > 0) [3; -1; 2] vaut…",o:["[3; 2]","[-1]","true"],a:0,e:"On garde les éléments qui vérifient le prédicat.",link:"pf-iter"},
+ {q:"Type de let rec my_map f = function [] -> [] | e :: tl -> f e :: my_map f tl ?",o:["('a -> 'b) -> 'a list -> 'b list","('a -> 'a) -> 'a list","'a list -> 'b list"],a:0,e:"f transforme un 'a en 'b.",link:"pf-ordre-sup"},
+ {q:"factI n a = if n = 0 then a else factI (n - 1) (n * a) est…",o:["récursive terminale","non terminale","incorrecte"],a:0,e:"L'appel récursif est la dernière opération.",link:"pf-terminal"},
+ {q:"String.sub \"bonjour\" 3 4 vaut…",o:["\"jour\"","\"njou\"","\"bon\""],a:0,e:"À partir de l'indice 3, longueur 4.",link:"pf-sujets"},
+ {q:"{p with age = 30}…",o:["crée une copie de p avec age = 30","modifie p","est une erreur"],a:0,e:"Rien n'est modifié sur place en OCaml fonctionnel.",link:"pf-record"});
+
+const infosCT=({sec})=>`<div class="title-row"><h1>L'examen de janvier en bref</h1></div>
+ ${sec(1,"Quand et où",`<p>En janvier, date pas encore dans Prose. Le site suppose le lundi 11 janvier 2027 de 9h à 11h (le 11 janvier en 2024) ; je corrigerai quand Prose l'affichera. 2 h, sur papier.</p><p>Seul document : ${hl("une feuille A4 recto-verso")}. Il compte pour ${hl("67 %")} de la note de l'UE (le CC 30 %, le TP 3 %).</p>`)}
+ ${sec(2,"Le programme",`<p>Tout le cours, en particulier ce qui n'était pas au CC : le filtrage, le polymorphisme, les types somme (dont récursifs : listes maison, ensembles, arbres), les enregistrements, les exceptions, l'ordre supérieur et les itérateurs de List, la récursivité terminale.</p>`)}
+ ${sec(3,"La forme des anciens sujets",`<ul><li>3 exercices, environ 7 points chacun.</li><li>Un exercice d'arithmétique (Fermat, Mersenne, Pythagore) avec une fonction auxiliaire récursive et une liste à générer.</li><li>Un type somme à manipuler (my_string, chaine, nombre, 'a set) : conversion, longueur, accès, exceptions.</li><li>Une même fonction écrite de trois façons : List.hd et List.tl, puis filtrage, puis un itérateur (fold_left ou fold_right).</li><li>Consigne de chaque sujet : les fonctions à plusieurs arguments s'écrivent ${hl("curryfiées")}.</li></ul>`)}`;
+
 SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:0.30,key:"rev-pf-v1",lang:"ml",
- exam:{day:"2026-11-13",start:"09:45",end:"10:45",place:"amphi 5.01 si ton nom commence par A à M, 5.03 sinon",dur:"1 h",unsure:""},
+ exams:[{id:"cc1",label:"CC",day:"2026-11-13",start:"09:45",end:"10:45",place:"amphi 5.01 si ton nom commence par A à M, 5.03 sinon",dur:"1 h",share:0.30,unsure:""},
+        {id:"ct",label:"Examen",day:"2027-01-11",start:"09:00",end:"11:00",place:"salle à confirmer",dur:"2 h",share:0.67,covers:["cc1","ct"],from:"2026-11-14",pace:{until:"2026-12-18",perDay:25},docs:"une feuille A4 recto-verso (seul document autorisé)",unsure:"Date supposée (l'examen était le 11 janvier en 2024) : je la corrigerai quand elle sera dans Prose.",prog:"Tout le cours : en plus du programme du CC, le filtrage, le polymorphisme, les types somme (dont récursifs), les enregistrements, les exceptions, l'ordre supérieur et les itérateurs de List, la récursivité terminale (TD ex. 32 à 59)."}],
  docs:"une feuille A4 recto-verso, écrite comme tu veux (seul document autorisé)",examMinutes:60,examMorning:"Refais l'entraînement « types et valeurs » une fois, relis ta feuille A4, puis les erreurs classiques.",
  prog:"Sur papier. D'après le mail du prof (5/11) : tout ce qui a été vu jusqu'aux listes incluses, sans le filtrage (TD ex. 1 à 31). Types, fonctions et signatures, récursivité sur les entiers et les listes. Pas de polymorphisme.",
- chapters:{1:"1. Expressions et types",2:"2. Fonctions et signatures",3:"3. Récursivité sur les entiers",4:"4. Listes (TD ex. 22 à 31)",5:"5. À relire avant le contrôle",6:"Pas sûr qu'il tombe",7:"Pas au contrôle"},
+ chapters:{1:"1. Expressions et types",2:"2. Fonctions et signatures",3:"3. Récursivité sur les entiers",4:"4. Listes (TD ex. 22 à 31)",5:"5. À relire avant le contrôle",6:"6. nbOcc et listes de listes",7:"7. Le filtrage",8:"8. Polymorphisme et types",9:"9. Exceptions",10:"10. Ordre supérieur et itérateurs",11:"11. Récursivité terminale et fonctions utiles"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
  annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h, aucun document). J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
- pages:[{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille A4",html:feuille}],
+ pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-ocaml.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"Autorisée (le prof de CM l'a dit) : imprimée ou manuscrite."},
  {id:"drill",t:"Entraînement « types et valeurs » sans faute",min:15,p:1,manual:true,links:[["p/types","Entraînement"]]},
@@ -4802,9 +5289,19 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  {id:"tdex2",t:"Exercices ★★★ de plus : derListe, prefixe et suffixe",min:40,p:2,td:["25","31"],links:[["td","Exercices de TD"]]},
  {id:"fermat",t:"Exercices d'examen : Fermat et Pythagore",min:40,p:3,manual:true,links:[["annales","Annales"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
- {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
+ {id:"ctfiltre",ex:"ct",t:"TD ★★★ du filtrage et du polymorphisme, sur papier",min:40,p:1,td:["39","40","41"],links:[["td","Exercices de TD"]]},
+ {id:"cttypes",ex:"ct",t:"TD ★★★ des types somme et des arbres, sur papier",min:45,p:1,td:["42","43","44"],links:[["td","Exercices de TD"]]},
+ {id:"ctexc",ex:"ct",t:"TD ★★★ des exceptions, sur papier",min:45,p:1,td:["47","48","50","51"],links:[["td","Exercices de TD"]]},
+ {id:"ctiter",ex:"ct",t:"TD ★★★ de l'ordre supérieur et des itérateurs, sur papier",min:50,p:1,td:["53","57","58","59"],links:[["td","Exercices de TD"]]},
+ {id:"ctblanc1",ex:"ct",t:"Examen blanc : janvier 2024 en 2 h, puis correction",min:130,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Exceptions, type nombre, fold_right, ensembles : la forme exacte de l'examen."},
+ {id:"ctblanc2",ex:"ct",t:"Annale de janvier 2022 en 2 h, puis correction",min:130,p:1,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"ctblanc3",ex:"ct",t:"Annale de juin 2022 en 2 h",min:120,p:2,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"ctfeuille",ex:"ct",t:"Compléter ta feuille A4 pour janvier (types somme, exceptions, itérateurs)",min:30,p:1,manual:true,links:[["p/feuille","Ma feuille A4"]]},
+ {id:"ctquiz",ex:"ct",t:"Quiz de cours, questions de janvier comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"ctreview",ex:"ct",t:"Veille de l'examen : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 /* la page d'entraînement monte l'exercice interactif */
-SUBJ.pf.pages[2].render=(root,ctx)=>{root.innerHTML=types(ctx);W.drill(root.querySelector("#drill"),DRILL,CHOICES);};
+SUBJ.pf.pages.find(p=>p.id==="types").render=(root,ctx)=>{root.innerHTML=types(ctx);W.drill(root.querySelector("#drill"),DRILL,CHOICES);};
 })();
 
 </script>
@@ -7774,6 +8271,246 @@ let rec liDivInf : int -> int -> int list = fun n i ->
  Q("Et pour n = 3 ?",["0","4","2"],1,"3 est impair : le cas « i when i mod 2 = 1 » passe avant « 3 », donc on obtient 3 + 1 = 4. Le cas « 3 » n'est jamais atteint."),
  K("Quel cas choisit un match ?","Le premier qui correspond, de haut en bas. Un cas placé après un cas plus général n'est jamais atteint.")]}
 ];
+/* ================== leçons de l'examen de janvier (ex:"ct") ==================
+   Tout le cours après les listes : filtrage, curryfication, polymorphisme, types somme et récursifs,
+   enregistrements, exceptions, ordre supérieur et itérateurs, récursivité terminale.
+   Le code suit le style du corrigé officiel de janvier 2024 (function / match, fonctions curryfiées). */
+const MLr=(s,...v)=>String.raw(s,...v);
+const kc=(s,...v)=>`<code>${W.esc(String.raw(s,...v))}</code>`;
+const CT=o=>Object.assign(o,{ex:"ct"});
+const St=(h,intro,s,x)=>Object.assign({k:"steps",h,intro,s},x||{});
+LES.pf.forEach(L=>{if(L.id==="p-match")L.p=1;});
+LES.pf.push(
+/* ------------------------------------------------------------------ */
+CT({id:"p2-match",t:"Écrire une fonction par filtrage",min:14,goal:"Écrire une fonction sur les listes avec function et match, comme dans les corrigés de janvier (TD ex. 33 à 36, 39).",steps:[
+ Q("Que vaut (function [] -> 0 | _ :: tl -> 1 + List.length tl) [4; 5; 6] ?",["3","2","[5; 6]"],0,"La liste n'est pas vide : 1 + longueur de [5; 6], soit 1 + 2."),
+ L("Un cas par forme",`<p>Une liste est soit <b>vide</b> ([]), soit <b>une tête suivie d'une queue</b> (e :: tl). Avec le filtrage, on écrit un cas pour chaque forme :</p>${M(MLr`let rec longueur = function
+  | [] -> 0
+  | _ :: tl -> 1 + longueur tl
+
+let rec appartient x = function
+  | [] -> false
+  | e :: tl -> e = x || appartient x tl`)}<ul><li>${kc`function`} filtre le dernier paramètre sans le nommer ; ${kc`match l with`} filtre une valeur nommée.</li><li>Les cas sont essayés de haut en bas : le premier qui correspond gagne.</li><li>${kc`_`} attrape tout sans donner de nom.</li></ul>`),
+ Q("Dans | e :: tl -> …, que vaut tl si la liste est [7] ?",["[]","7","[7]"],0,"[7] = 7 :: [] : la tête est 7, la queue est vide."),
+ L("Motifs utiles",`<ul><li>${kc`[x]`} : exactement un élément ; ${kc`x :: y :: tl`} : au moins deux.</li><li>${kc`(a, b) :: tl`} : une liste de couples, déjà découpés.</li><li>${kc`| e :: tl when e mod 2 = 0 -> …`} : une condition en plus.</li><li>${kc`| e :: tl as l -> …`} : l est la liste entière.</li><li>Deux valeurs à la fois : ${kc`match l1, l2 with | [], _ -> … | _ :: _, [] -> …`}.</li></ul><p>Un même nom ne peut pas apparaître deux fois dans un motif : ${kc`(x, x)`} est refusé, on écrit ${kc`(x, y) when x = y`}.</p>`),
+ B("Complète nbOcc (TD ex. 35)",MLr`let rec nbOcc x = function
+  | [[0]] -> 0
+  | e :: tl -> (if e = x then 1 else 0) + [[1]]`,[{o:["[]","[x]","_"],a:0},{o:["nbOcc x tl","nbOcc tl","nbOcc x e"],a:0}],"Le cas de base est la liste vide ; l'appel récursif garde x et avance sur tl."),
+ O("Remets mem_assoc dans l'ordre (TD ex. 39)",["let rec mem_assoc a = function","  | [] -> false","  | (k, _) :: tl -> k = a || mem_assoc a tl"],"Le motif (k, _) :: tl découpe directement le premier couple."),
+ Q("Que se passe-t-il si on écrit | n -> … avant | 0 -> … ?",["Le cas 0 n'est jamais atteint","OCaml les réordonne","Erreur de syntaxe"],0,"n attrape aussi 0. OCaml prévient : « this match case is unused »."),
+ P("Listes de couples et suffixes, sur papier","(1) somme_couples : la liste des sommes a + b d'une liste de couples [(1, 2); (3, 4)] → [3; 7]. (2) liSuff (TD ex. 36) : la liste des suffixes, liSuff [1; 2; 3] = [[1; 2; 3]; [2; 3]; [3]; []].",`${M(MLr`let rec somme_couples = function
+  | [] -> []
+  | (a, b) :: tl -> (a + b) :: somme_couples tl
+
+let rec liSuff = function
+  | [] -> [[]]
+  | _ :: tl as l -> l :: liSuff tl`)}`,["Un cas [] et un cas e :: tl","Le motif (a, b) pour lire un couple","liSuff [] = [[]] (la liste vide est un suffixe)"],8),
+ K("Squelette d'une fonction par filtrage sur une liste ?","let rec f … = function | [] -> cas de base | e :: tl -> … e … (f … tl) …"),
+ K("Ordre des cas d'un match ?","De haut en bas, le premier qui correspond. Les cas particuliers d'abord, le cas général (_ ou un nom) en dernier.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-curry",t:"Curryfication, fun et application partielle",min:10,goal:"Écrire les fonctions à plusieurs arguments sous forme curryfiée, comme l'exige chaque sujet, et lire leur type.",steps:[
+ Q("Les sujets demandent la forme curryfiée. Laquelle l'est ?",[kc`let add x y = x + y`,kc`let add (x, y) = x + y`,kc`let add = (x, y) -> x + y`],0,"Curryfiée : les arguments l'un après l'autre, sans couple. Appel : add 3 4."),
+ L("Curryfiée ou pas",`${M(MLr`let add x y = x + y        (* int -> int -> int *)
+let add_c (x, y) = x + y     (* int * int -> int *)`)}<ul><li>${kc`add`} prend x, puis y : type ${kc`int -> int -> int`}, qui se lit ${kc`int -> (int -> int)`}.</li><li>${kc`add_c`} prend <b>un seul</b> argument, un couple.</li><li>Appels : ${kc`add 3 4`} ; ${kc`add_c (3, 4)`}.</li></ul>`),
+ Q("Type de add 1, avec add x y = x + y ?",[kc`int -> int`,kc`int`,"une erreur"],0,"On n'a donné qu'un argument : il en manque un, le résultat est une fonction."),
+ L("fun et application partielle",`${M(MLr`let succ = add 1              (* application partielle *)
+let double = fun x -> 2 * x     (* fonction anonyme *)
+List.map (fun x -> x + 1) [1; 2; 3]   (* [2; 3; 4] *)
+
+let comp f g x = f (g x)
+(* ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b *)`)}<p>${kc`let f x y = e`} est une écriture courte de ${kc`let f = fun x y -> e`}.</p>`),
+ Q("Type de let comp f g x = f (g x) ?",[kc`('a -> 'b) -> ('c -> 'a) -> 'c -> 'b`,kc`'a -> 'b -> 'c`,kc`('a -> 'a) -> 'a`],0,"g prend un 'c et rend un 'a ; f prend ce 'a et rend un 'b."),
+ K("Fonction curryfiée ?","let f x y = … : type a -> b -> c, appel f x y. Avec un couple, let f (x, y) = …, type a * b -> c : pas curryfiée.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-poly",t:"Polymorphisme : deviner le type",min:12,goal:"Trouver le type d'une fonction avec des 'a (TD ex. 37 à 40), et écrire des fonctions qui marchent pour tout type de liste.",steps:[
+ Q("Type de let f e l = e :: l ?",[kc`'a -> 'a list -> 'a list`,kc`int -> int list -> int list`,kc`'a -> 'b -> 'a list`],0,"e devient la tête de l : ils sont du même type 'a."),
+ L("Les 'a",`<p>Quand rien n'impose un type précis, OCaml met une <b>variable de type</b> : ${kc`'a`}, ${kc`'b`}… La fonction marche alors pour <b>tous</b> les types.</p>${M(MLr`let id x = x                 (* 'a -> 'a *)
+let cons_last x l = l @ [x]  (* 'a -> 'a list -> 'a list *)
+let proj1 (a, _) = a         (* 'a * 'b -> 'a *)`)}<p>Méthode : un type par paramètre, puis chaque opération ajoute une contrainte. ${kc`e mod 2`} force int ; ${kc`if c then`} force bool ; ${kc`e :: l`} force « même type que les éléments de l ».</p>`),
+ Q("Type de let rec k a = function [] -> a | e :: tl -> if e mod 2 = 0 then k a tl else failwith \"stop\" ?",[kc`'a -> int list -> 'a`,kc`int -> int list -> int`,kc`'a -> 'a list -> 'a`],0,"e mod 2 force des int dans la liste ; a ne subit aucune contrainte, et c'est le résultat (TD ex. 37)."),
+ Q("Type de let g c x l = if fst c then snd c :: l else [x] ?",[kc`bool * 'a -> 'a -> 'a list -> 'a list`,kc`'a * 'b -> 'a -> 'b list`,kc`bool -> 'a -> 'a list -> 'a list`],0,"fst c sert de condition, donc c'est un couple (bool, 'a) ; snd c :: l et [x] ont le même type."),
+ P("TD ex. 40 : dup_list, sur papier","dup_list n l : chaque élément de l répété n fois (dup_list 2 [1; 2; 3] = [1; 1; 2; 2; 3; 3]). Donne aussi son type.",`${M(MLr`let rec repete n x = if n <= 0 then [] else x :: repete (n - 1) x
+
+let rec dup_list n = function
+  | [] -> []
+  | e :: tl -> repete n e @ dup_list n tl
+(* int -> 'a list -> 'a list *)`)}`,["Une fonction auxiliaire repete","@ pour coller deux listes","Le type avec 'a : ça marche aussi pour des char"],8),
+ K("Comment trouver le type d'une fonction ?","Un type inconnu par paramètre, puis chaque opération ajoute une contrainte (mod : int, if : bool, :: : même type). Ce qui reste libre devient 'a, 'b.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-somme",t:"Types somme : définir, construire, filtrer",min:15,goal:"Manipuler un type somme comme celui de l'examen de janvier 2024 (type nombre = Ent of int | Rat of (int * int)).",steps:[
+ Q("type nombre = Ent of int | Rat of (int * int). Lequel est une valeur de type nombre ?",[kc`Rat (1, 2)`,kc`Rat 1 2`,kc`rat (1, 2)`],0,"Le constructeur, puis sa donnée entre parenthèses. Majuscule obligatoire."),
+ L("Définir et construire",`${M(MLr`type couleur = Bleu | Blanc | Rouge   (* type énuméré *)
+
+type nombre =
+  | Ent of int
+  | Rat of (int * int)
+
+let a = Ent 3
+let b = Rat (1, 2)`)}<ul><li>Chaque cas a un <b>constructeur</b> (majuscule) ; ${kc`of`} indique la donnée qu'il porte.</li><li>Une valeur de type nombre est soit un ${kc`Ent`}, soit un ${kc`Rat`}.</li></ul>`),
+ L("Filtrer",`${M(MLr`let est_nul = function
+  | Ent 0 -> true
+  | Rat (0, _) -> true
+  | _ -> false
+
+let rec compte_rat = function          (* une liste de nombres *)
+  | [] -> 0
+  | Rat _ :: tl -> 1 + compte_rat tl
+  | Ent _ :: tl -> compte_rat tl`)}<p>Les motifs s'emboîtent : ${kc`Rat _ :: tl`} filtre une liste dont la tête est un Rat.</p>`),
+ B("Complète add_rat (janvier 2024, forme curryfiée)",MLr`let add_rat a b = match a, b with
+  | Rat (x1, y1), Rat (x2, y2) -> Rat ([[0]], y1 * y2)
+  | _ -> [[1]] "add_rat"`,[{o:["x1 * y2 + x2 * y1","x1 + x2","x1 * x2"],a:0},{o:["failwith","raise","invalid_arg"],a:0}],"a/b + c/d = (ad + cb)/(bd). failwith lève Failure \"add_rat\", comme demandé."),
+ Q("somme_nombre [Ent 2; Rat (1, 2); Rat (3, 4)] doit donner Rat (26, 8). Que vaut Rat (2, 1) + Rat (10, 8) avec add_rat ?",[kc`Rat (26, 8)`,kc`Rat (12, 9)`,kc`Rat (13, 4)`],0,"2 × 8 + 10 × 1 = 26 et 1 × 8 = 8 : add_rat ne simplifie pas."),
+ St("Janvier 2024, ex. 2.3 : inverse_nombre","Inverser chaque nombre d'une liste ; lever Inversion avec le nombre nul s'il y en a un.",[
+  {w:kc`exception Inversion of nombre`,why:"Une exception qui porte un nombre."},
+  {w:kc`| [] -> []`,why:"Rien à inverser."},
+  {w:kc`| Ent e :: tl -> if e = 0 then raise (Inversion (Ent e)) else Rat (1, e) :: inverse_nombre tl`,why:"L'inverse de l'entier e est 1/e."},
+  {w:kc`| Rat (x, y) :: tl -> if x = 0 then raise (Inversion (Rat (x, y))) else Rat (y, x) :: inverse_nombre tl`,why:"On échange numérateur et dénominateur."}]),
+ P("TD ex. 41 : split_number_list, sur papier","type number = Int of int | Float of float. split_number_list l rend le couple (liste des Int, liste des Float).",`${M(MLr`let rec split_number_list = function
+  | [] -> ([], [])
+  | Int i :: tl ->
+     let (li, lf) = split_number_list tl in (Int i :: li, lf)
+  | Float f :: tl ->
+     let (li, lf) = split_number_list tl in (li, Float f :: lf)`)}`,["Le cas [] rend un couple de listes vides","let (li, lf) = … in pour lire le résultat récursif","Int i :: tl filtre la tête et la queue"],10),
+ K("Type somme ?","type t = A | B of int | C of (int * int). Constructeurs avec une majuscule ; on construit B 3 ; on lit avec match, un cas par constructeur.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-rectype",t:"Types récursifs : chaînes maison, ensembles, arbres",min:16,goal:"Écrire les fonctions sur un type somme récursif : my_string, chaine (2022), 'a set (2024), arbres (TD ex. 44).",steps:[
+ Q("type my_string = Empty | Cons of char * my_string. Comment s'écrit \"L1\" ?",[kc`Cons ('L', Cons ('1', Empty))`,kc`Cons ("L1", Empty)`,kc`['L'; '1']`],0,"Un Cons par caractère, et Empty à la fin : c'est une liste maison."),
+ L("Une liste maison",`<p>Un type somme peut se contenir lui-même :</p>${M(MLr`type my_string = Empty | Cons of char * my_string
+type 'a set = Empty | Add of 'a * 'a set
+type 'a tree = Empty | Node of 'a * 'a tree * 'a tree`)}<p>Les fonctions s'écrivent <b>comme sur les listes</b> : Empty joue le rôle de [], et Cons (c, r) celui de c :: r.</p>${M(MLr`let rec my_length = function
+  | Empty -> 0
+  | Cons (_, r) -> 1 + my_length r`)}`),
+ B("Complète from_my_string (janvier 2022)",MLr`let rec from_my_string = function
+  | Empty -> [[0]]
+  | Cons (c, r) -> [[1]] c ^ from_my_string r`,[{o:["\"\"","Empty","[]"],a:0},{o:["Char.escaped","String.get","string_of_int"],a:0}],"Le résultat est une string : la chaîne vide pour Empty. Char.escaped transforme un char en string."),
+ St("Janvier 2022 : to_my_string","Transformer une string en my_string avec String.length, String.get et String.sub.",[
+  {w:kc`if String.length s = 0 then Empty`,why:"La chaîne vide devient Empty."},
+  {w:kc`else Cons (String.get s 0, …)`,why:"Le premier caractère devient la tête."},
+  {w:kc`to_my_string (String.sub s 1 (String.length s - 1))`,why:"Le reste : à partir de l'indice 1, de longueur la taille moins 1."}]),
+ O("Remets mem dans l'ordre (janvier 2024)",["let rec mem x = function","  | Empty -> false","  | Add (e, tl) -> if x = e then true else mem x tl"],"Le même schéma que appartient sur les listes."),
+ Q("type 'a tree = Empty | Node of 'a * 'a tree * 'a tree. Hauteur (vide = 0) ?",[kc`| Empty -> 0 | Node (_, g, d) -> 1 + max (height g) (height d)`,kc`| Empty -> 1 | Node (_, g, d) -> height g + height d`,kc`| Node (e, _, _) -> e`],0,"Un nœud compte 1, plus la plus grande des deux hauteurs."),
+ P("Janvier 2024, ex. 3.2 : union, sur papier","Avec type 'a set = Empty | Add of 'a * 'a set et la fonction mem, écrire union e1 e2 (sans doublon ajouté).",`${M(MLr`let rec union e1 e2 = match e1 with
+  | Empty -> e2
+  | Add (e, tl) -> if mem e e2 then union tl e2 else Add (e, union tl e2)`)}<p>Corrigé officiel. inter suit la même idée : on garde e seulement s'il est dans l'autre ensemble.</p>`,["Un match sur e1 (deux arguments)","mem pour éviter les doublons","Add (e, …) pour construire"],8),
+ K("Fonction sur un type récursif ?","Comme sur une liste : un cas par constructeur ; le constructeur sans donnée est le cas de base ; on rappelle la fonction sur la partie du même type.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-record",t:"Enregistrements",min:8,goal:"Définir un type enregistrement, lire un champ, fabriquer une copie modifiée (TD ex. 46).",steps:[
+ Q("p a le type {nom : string; age : int}. Comment lire son âge ?",[kc`p.age`,kc`age p`,kc`p[age]`],0,"Le nom du champ après un point."),
+ L("Champs nommés",`${M(MLr`type personne = {nom : string; prenom : string; age : int}
+
+let p = {nom = "Church"; prenom = "Alonzo"; age = 92}
+let nom_complet p = p.prenom ^ " " ^ p.nom
+let vieillir p = {p with age = p.age + 1}`)}<ul><li>Dans le type : ${kc`champ : type`} ; dans la valeur : ${kc`champ = valeur`}.</li><li>${kc`{p with age = …}`} crée une copie modifiée ; p ne change pas.</li><li>Un type abréviation donne un autre nom à un type : ${kc`type entier = int`}.</li></ul>`),
+ Q("Que fait {p with age = 30} ?",["Une copie de p avec age = 30","Modifie p","Une erreur"],0,"Rien n'est modifié sur place."),
+ K("Enregistrement ?","type t = {a : int; b : string} ; valeur {a = 1; b = \"x\"} ; lecture v.a ; copie modifiée {v with a = 2}.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-exc",t:"Exceptions : lever, définir, rattraper",min:16,goal:"Lever Failure, Invalid_argument, Not_found ou ta propre exception, et la rattraper avec try … with (TD ex. 47 à 51, tous les examens).",steps:[
+ Q("Que fait failwith \"vide\" ?",["Il lève l'exception Failure \"vide\"","Il affiche « vide »","Il rend la chaîne \"vide\""],0,"failwith s est une abréviation de raise (Failure s)."),
+ L("Lever une exception",`${M(MLr`let tete = function
+  | [] -> failwith "tete"            (* Failure "tete" *)
+  | e :: _ -> e
+
+let rec maxListe = function
+  | [] -> invalid_arg "maxListe"     (* Invalid_argument *)
+  | [x] -> x
+  | x :: tl -> max x (maxListe tl)
+
+exception Negatif of int             (* ta propre exception *)
+let verifie x = if x < 0 then raise (Negatif x) else x`)}<ul><li>Prédéfinies : Failure, Invalid_argument, Not_found, Division_by_zero, Match_failure.</li><li>Un nom d'exception commence par une majuscule ; ${kc`of`} pour un argument.</li><li>${kc`raise`} a le type ${kc`exn -> 'a`} : il convient à n'importe quel résultat.</li></ul>`),
+ L("Rattraper avec try … with",`${M(MLr`let my_tl l = try List.tl l with Failure _ -> []
+
+let plus_petit_que n l =
+  try plus_petit_que_exc n l with Found e -> e`)}<ul><li>Si l'expression du ${kc`try`} ne lève rien, c'est son résultat.</li><li>Sinon l'exception est filtrée par les cas du ${kc`with`} ; si aucun ne correspond, elle continue de remonter.</li></ul>`),
+ Q("f n = match n with i when i >= 0 -> 1 / i | i when i >= -10 && i <= -1 -> (try g n with Failure _ -> 0). g (-10) lève Invalid_argument. Que donne f (-10) ?",["L'exception Invalid_argument","0","-10"],0,"Le with ne filtre que Failure : Invalid_argument passe à travers (TD ex. 47)."),
+ Q("Et f (-11) ?",["Match_failure : aucun cas ne correspond","0","Invalid_argument"],0,"-11 n'est ni ≥ 0, ni entre -10 et -1."),
+ B("Complète somme_sous_liste (TD ex. 50)",MLr`exception Impossible
+
+let rec somme_sous_liste s = function
+  | [] -> if s = 0 then [] else [[0]] Impossible
+  | e :: tl ->
+     try e :: somme_sous_liste (s - e) tl
+     with [[1]] -> somme_sous_liste s tl`,[{o:["raise","failwith","try"],a:0},{o:["Impossible","Failure _","Not_found"],a:0}],"On essaie avec e ; si c'est impossible, on recommence sans lui."),
+ P("Janvier 2024, ex. 1.2 : trouve_pytha, sur papier","est_pytha x y z teste x² + y² = z². Écrire trouve_pytha x z qui rend y tel que (x, y, z) soit pythagoricien, ou lève Not_found. trouve_pytha 3 5 = 4.",`${M(MLr`let rec trouve_aux x y z =
+  if y * y >= z * z then raise Not_found
+  else if est_pytha x y z then y
+  else trouve_aux x (y + 1) z
+
+let trouve_pytha x z = trouve_aux x 1 z`)}`,["Une fonction auxiliaire qui essaie y = 1, 2, 3…","Un test d'arrêt (y² ≥ z²) qui lève Not_found","raise Not_found, sans failwith"],10),
+ K("Lever, définir, rattraper ?","raise E, failwith \"…\", invalid_arg \"…\" ; exception E of int ; try expr with E x -> … | Failure _ -> …"),
+ K("Que devient une exception que le with ne filtre pas ?","Elle continue de remonter jusqu'au try suivant (ou arrête le programme).")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-ordre-sup",t:"Ordre supérieur : map, filter, fold à la main",min:14,goal:"Écrire une fonction qui prend une fonction en paramètre et donner son type (TD ex. 52 et 53, examens 2022 : map_sum et prodFonc).",steps:[
+ Q("Type de let f g x = g x ?",[kc`('a -> 'b) -> 'a -> 'b`,kc`'a -> 'b -> 'c`,kc`('a -> 'a) -> 'a`],0,"g est appliquée à x : g prend le type de x et rend autre chose."),
+ L("Une fonction en paramètre",`${M(MLr`let rec my_map f = function
+  | [] -> []
+  | e :: tl -> f e :: my_map f tl
+(* ('a -> 'b) -> 'a list -> 'b list *)
+
+let rec my_filter p = function
+  | [] -> []
+  | e :: tl -> if p e then e :: my_filter p tl else my_filter p tl`)}<p>Le parcours est écrit une fois ; la fonction passée en paramètre décide du traitement : ${kc`my_map (fun x -> x * 2) [1; 2]`} = [2; 4].</p>`),
+ St("Janvier 2022, ex. 3.1 : map_sum avec List.hd et List.tl","map_sum f [a1; …; an] = (f a1) + … + (f an).",[
+  {w:kc`let rec map_sum f l =`,why:"Deux arguments : la fonction et la liste, curryfiés."},
+  {w:kc`if l = [] then 0`,why:"La somme vide vaut 0."},
+  {w:kc`else f (List.hd l) + map_sum f (List.tl l)`,why:"f sur la tête, plus la somme du reste."},
+  {w:`Type : ${kc`('a -> int) -> 'a list -> int`}`,why:"Le + force f à rendre des int."}]),
+ Q("Version filtrage de map_sum ?",[kc`let rec map_sum f = function [] -> 0 | e :: tl -> f e + map_sum f tl`,kc`let rec map_sum = function [] -> 0 | e :: tl -> e + map_sum tl`,kc`let map_sum f l = f l`],0,"Même calcul, avec un cas par forme de liste (question 2)."),
+ B("Complète my_fold_right (TD ex. 53)",MLr`let rec my_fold_right f l init = match l with
+  | [] -> [[0]]
+  | e :: tl -> f e ([[1]])`,[{o:["init","[]","0"],a:0},{o:["my_fold_right f tl init","my_fold_right f l init","f tl init"],a:0}],"f a1 (f a2 (… (f an init))) : init pour la liste vide."),
+ K("Fonction d'ordre supérieur ?","Elle prend une fonction en paramètre (ou en rend une). my_map f l, my_filter p l : le parcours est écrit une fois, f décide du traitement.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-iter",t:"Les itérateurs de List",min:16,goal:"Utiliser List.map, filter, for_all, exists, fold_left et fold_right, imposés dans chaque examen.",steps:[
+ Q("List.fold_left (fun a e -> a + e) 0 [1; 2; 3] vaut…",["6","[1; 2; 3]","0"],0,"((0 + 1) + 2) + 3."),
+ L("Les itérateurs",`${M(MLr`List.map (fun e -> e + 1) [1; 2; 3]            (* [2; 3; 4] *)
+List.filter (fun e -> e >= 0) [1; -2; 3]      (* [1; 3] *)
+List.for_all (fun e -> e > 0) [1; 2]          (* true *)
+List.exists (fun e -> e < 0) [1; 2]           (* false *)
+List.fold_left (fun a e -> a + e) 0 [1; 2; 3] (* 6 *)
+List.fold_right (fun e a -> e :: a) [1; 2] [] (* [1; 2] *)`)}`),
+ L("fold_left et fold_right",`<ul><li>${kc`List.fold_left f init [b1; …; bn]`} = f (… (f (f init b1) b2) …) bn : la fonction reçoit <b>(accumulateur, élément)</b>.</li><li>${kc`List.fold_right f [b1; …; bn] init`} = f b1 (f b2 (… (f bn init))) : la fonction reçoit <b>(élément, accumulateur)</b>, et la liste vient <b>avant</b> init.</li></ul><p>Méthode : init = le résultat pour la liste vide ; la fonction dit comment un élément change l'accumulateur.</p>`),
+ B("Janvier 2022, ex. 3.3 : map_sum avec List.fold_left",MLr`let map_sum f l = List.fold_left (fun a e -> [[0]]) [[1]] l`,[{o:["a + f e","f a + e","a + e"],a:0},{o:["0","1","[]"],a:0}],"L'accumulateur a garde la somme ; on lui ajoute f e."),
+ B("Juin 2022, ex. 1.3 : prodFonc avec List.fold_right",MLr`let prodFonc f l = List.fold_right (fun e a -> [[0]]) l [[1]]`,[{o:["f e * a","a * e","f a * e"],a:0},{o:["1","0","[]"],a:0}],"Un produit vide vaut 1 ; fold_right donne l'élément d'abord."),
+ Q("Que fait let i e l = List.length (List.filter (fun x -> x = e) l) ?",["Elle compte les occurrences de e dans l","Elle supprime e de l","Elle teste si e est dans l"],0,"filter garde les x égaux à e, length les compte (TD ex. 57)."),
+ St("Janvier 2024, ex. 2.4 : simplifie_nombre avec List.fold_right","Supprimer les nombres nuls ; Rat (x, 1) devient Ent x.",[
+  {w:kc`List.fold_right (fun e a -> match e with … ) l []`,why:"On reconstruit la liste de droite à gauche ; [] pour la liste vide."},
+  {w:kc`| Ent 0 -> a  | Rat (0, _) -> a`,why:"Un nombre nul : on ne l'ajoute pas."},
+  {w:kc`| Rat (x, 1) -> Ent x :: a`,why:"Dénominateur 1 : on le transforme en entier."},
+  {w:kc`| _ -> e :: a`,why:"Sinon on le garde tel quel."}]),
+ P("TD ex. 59 : somme_pairs et est_triee, sur papier","Avec des itérateurs seulement : (1) la somme des entiers pairs d'une liste ; (2) est_triee l (fold_left, l'accumulateur est le couple (réponse, dernier élément) ; la liste vide à part).",`${M(MLr`let somme_pairs l =
+  List.fold_left (fun a e -> if e mod 2 = 0 then a + e else a) 0 l
+
+let est_triee = function
+  | [] -> true
+  | e :: tl ->
+     fst (List.fold_left (fun (ok, prec) x -> (ok && prec <= x, x)) (true, e) tl)`)}`,["init correct (0, puis (true, e))","Ordre des arguments de la fonction de fold_left : a, puis e","fst pour sortir la réponse du couple"],12),
+ K("fold_left ou fold_right ?","List.fold_left (fun a e -> …) init l ; List.fold_right (fun e a -> …) l init. init = résultat pour la liste vide."),
+ K("Les autres itérateurs ?","List.map f l, List.filter p l, List.for_all p l, List.exists p l, List.iter f l (effets), List.length l.")]}),
+
+/* ------------------------------------------------------------------ */
+CT({id:"p2-terminal",t:"Récursivité terminale et accumulateurs",min:10,goal:"Reconnaître un appel terminal et écrire une version terminale avec un accumulateur (fin du cours).",steps:[
+ Q("Dans let rec fact n = if n = 0 then 1 else n * fact (n - 1), l'appel fact (n - 1) est-il terminal ?",["Non : il reste la multiplication par n après","Oui","Seulement pour n = 1"],0,"Terminal = dernière opération. Ici, on multiplie encore après l'appel."),
+ L("Appel terminal, accumulateur",`<p>Un appel est <b>terminal</b> s'il est la toute dernière opération : son résultat devient directement celui de la fonction, et rien ne reste en attente sur la pile.</p>${M(MLr`let rec factI n a = if n = 0 then a else factI (n - 1) (n * a)
+let fact2 n = factI n 1
+
+let inv l =
+  let rec aux l acc = match l with
+    | [] -> acc
+    | t :: q -> aux q (t :: acc)
+  in aux l []`)}<p>L'<b>accumulateur</b> porte le résultat partiel ; il part de la valeur du cas de base (1 pour un produit, 0 pour une somme, [] pour une liste).</p>`),
+ Q("fact2 3 = factI 3 1. Quel appel vient ensuite ?",[kc`factI 2 3`,kc`factI 2 1`,kc`3 * factI 2 1`],0,"n − 1 = 2 et n × a = 3 × 1 = 3. Puis factI 1 6, factI 0 6, résultat 6."),
+ P("Une somme terminale, sur papier","Écrire som n = 0 + 1 + … + n de façon récursive terminale.",`${M(MLr`let rec somI n a = if n = 0 then a else somI (n - 1) (a + n)
+let som n = somI n 0`)}`,["Un accumulateur initialisé à 0","L'appel récursif est la dernière opération"],5),
+ K("Récursivité terminale ?","L'appel récursif est la dernière opération. On y arrive avec un accumulateur initialisé à la valeur du cas de base : factI n a, puis fact n = factI n 1.")]}));
+
 })();
 
 </script>
@@ -9377,6 +10114,31 @@ algo:{
   "Piles et files":`<p>Une <b>pile</b>, c'est une pile d'assiettes : on pose sur le dessus, et on reprend celle du dessus. La dernière posée est la première reprise.</p><p>Une <b>file</b>, c'est la queue à la cantine : le premier arrivé est le premier servi.</p><p>Exemple : on empile 1, 2 puis 3 ; dépiler renvoie 3, puis 2, puis 1. Si on vide une pile dans une autre, l'ordre se retourne, comme une pile d'assiettes qu'on change de place une par une.</p>`}
 },
 pf:{
+ "p2-match":{
+  "Un cas par forme":`<p>Une liste n'a que deux formes possibles : vide, ou « un premier élément suivi du reste ». Le filtrage écrit un cas pour chacune, comme un aiguillage.</p><p>Exemple : la longueur de la liste vide est 0 ; sinon, c'est 1 de plus que la longueur du reste.</p>`,
+  "Motifs utiles":`<p>Un motif est un moule : on décrit la forme attendue et on donne des noms aux morceaux. Si la donnée rentre dans le moule, ses morceaux reçoivent ces noms.</p>`},
+ "p2-curry":{
+  "Curryfiée ou pas":`<p>Une fonction curryfiée prend ses arguments un par un, séparés par des espaces : add 3 4. L'autre façon les met ensemble dans un couple : add (3, 4). Les sujets veulent la première.</p>`,
+  "fun et application partielle":`<p>fun x -> … fabrique une fonction sans lui donner de nom, pour la passer directement à une autre fonction. Si on donne seulement le premier argument d'une fonction curryfiée, on obtient une nouvelle fonction qui attend la suite.</p>`},
+ "p2-poly":{
+  "Les 'a":`<p>'a veut dire « n'importe quel type ». Une fonction qui ne regarde pas le contenu des éléments (comme la longueur d'une liste) marche pour des listes d'entiers, de caractères, de tout.</p><p>Pour trouver le type, on regarde ce que la fonction fait de chaque paramètre.</p>`},
+ "p2-somme":{
+  "Définir et construire":`<p>Un type somme dit « une valeur est soit ceci, soit cela ». Un nombre est soit un entier, soit une fraction. Chaque possibilité a une étiquette avec une majuscule, le constructeur.</p>`,
+  "Filtrer":`<p>Pour savoir quelle étiquette porte une valeur, on fait un match avec un cas par étiquette. Le motif récupère au passage ce qu'il y a dedans.</p>`},
+ "p2-rectype":{
+  "Une liste maison":`<p>Ces types sont des listes déguisées : un constructeur pour « vide », un autre pour « un élément, puis la suite ». On écrit les fonctions exactement comme sur les listes, en changeant seulement les noms.</p>`},
+ "p2-record":{
+  "Champs nommés":`<p>Un enregistrement, c'est une fiche avec des cases nommées : nom, prénom, âge. On lit une case avec un point, comme p.age.</p>`},
+ "p2-exc":{
+  "Lever une exception":`<p>Lever une exception, c'est tirer l'alarme : le calcul s'arrête net. On le fait quand la fonction n'a pas de réponse possible, comme le premier élément d'une liste vide.</p>`,
+  "Rattraper avec try … with":`<p>try … with, c'est le filet de sécurité : si l'alarme sonne pendant le calcul, on donne une autre réponse. Si c'est une alarme que le filet ne prévoit pas, elle continue plus loin.</p>`},
+ "p2-ordre-sup":{
+  "Une fonction en paramètre":`<p>On peut donner une fonction à une autre fonction, comme on donne une recette à un cuisinier. my_map applique la recette à chaque élément ; my_filter garde ceux qui passent le test.</p>`},
+ "p2-iter":{
+  "Les itérateurs":`<p>Les itérateurs de List font le parcours de la liste à ta place. Tu ne donnes que ce qu'il faut faire à chaque élément, souvent avec un fun.</p>`,
+  "fold_left et fold_right":`<p>fold, c'est faire un cumul : on part d'une valeur de départ, et chaque élément vient la modifier, comme une somme qu'on tient à jour. fold_left va de gauche à droite, fold_right part de la fin.</p>`},
+ "p2-terminal":{
+  "Appel terminal, accumulateur":`<p>Une fonction terminale ne laisse rien « en attente » après son appel récursif : le résultat partiel voyage dans un paramètre en plus, l'accumulateur. C'est comme compter sur ses doigts au lieu de tout retenir pour la fin.</p>`},
  "p-types":{
   "Chaque expression a un type":`<p>En OCaml, chaque valeur a un <b>type</b>, et OCaml refuse de mélanger les types. Les quatre de base : <b>int</b> (les entiers : 3, −7), <b>float</b> (les nombres à virgule, toujours écrits avec un point : 3.0 ou 3.), <b>bool</b> (true ou false) et <b>string</b> (du texte entre guillemets).</p><p>Les opérations sur les float ont un point : 2.5 +. 1.0 vaut 3.5, alors que 2.5 + 1.0 est refusé. Et / entre deux int fait la division entière : 7 / 2 vaut 3.</p><p>Pour passer de l'un à l'autre, on convertit : float_of_int 3 vaut 3., et int_of_float 3.9 vaut 3 (on coupe les décimales).</p>`,
   "Entraîne-toi : 27 expressions du TD et du partiel":`<p>Pour chaque expression, regarde d'abord les <b>opérateurs</b> : ils imposent le type. + − * / veulent des int ; +. −. *. /. veulent des float ; &amp;&amp; et || veulent des bool ; ^ veut des string.</p><p>Exemple : dans 2 * 3.0, l'opérateur * veut deux int, mais 3.0 est un float : c'est une erreur de type, OCaml refuse avant même de calculer.</p>`},
@@ -10130,7 +10892,7 @@ SIDS.forEach(id=>{const S=SUBJ[id];
   S.tasks=les.filter(t=>!t.late).concat(prac.filter(t=>!t.last),les.filter(t=>t.late),prac.filter(t=>t.last));
   S.tasks.forEach(t=>{delete t.min;Object.defineProperty(t,"min",{get(){return estMin(id,t);},enumerable:true,configurable:true});});});
 /* matières à plusieurs épreuves : une fiche ou un exercice prévu pour une autre épreuve est « hors programme » pour l'épreuve courante */
-SIDS.forEach(id=>{const S=SUBJ[id];if(!S.exams)return;const dyn=x=>{if(x._dyn)return;Object.defineProperty(x,"_dyn",{value:1});const st=x.out;Object.defineProperty(x,"out",{get(){if(inScope(S,x))return false;const e=examsOf(S).find(e=>e.id===exId(S,x));return st||("Pour le "+((e&&e.label)||"prochain contrôle")+", pas pour l'épreuve qui vient.");},configurable:true,enumerable:true});};(S.concepts||[]).forEach(dyn);(S.td||[]).forEach(dyn);});
+SIDS.forEach(id=>{const S=SUBJ[id];if(!S.exams)return;const dyn=x=>{if(x._dyn)return;Object.defineProperty(x,"_dyn",{value:1});const st=x.out;Object.defineProperty(x,"out",{get(){if(inScope(S,x))return false;const e=examsOf(S).find(e=>e.id===exId(S,x));const lab=e&&e.label;return st||((lab?"Pour "+(/^CC/.test(lab)?"le "+lab:"l'"+lab.toLowerCase()):"Pour le prochain contrôle")+", pas pour l'épreuve qui vient.");},configurable:true,enumerable:true});};(S.concepts||[]).forEach(dyn);(S.td||[]).forEach(dyn);});
 SIDS.forEach(id=>{const S=SUBJ[id];S.id=id;S.BY={};S.concepts.forEach(c=>S.BY[c.id]=c);S.ORDER=S.concepts.slice().sort((a,b)=>a.ch-b.ch);S.TB={};S.tasks.forEach((t,i)=>{t.p=t.p||2;t.i=i;S.TB[t.id]=t;});S.quiz=S.quiz||[];S.td=S.td||[];S.ann=S.ann||[];S.pages=S.pages||[];});
 
 /* ---------- dates ---------- */
@@ -10308,6 +11070,8 @@ function buildPlan(){
   /* 3. Affectation créneau par créneau : la matière la plus en retard sur son temps restant (bonus de coefficient).
         Une étape ne va que dans un créneau assez long. Le quiz et les fiches en rouge attendent les 30 h avant le CC. */
   const fitsIn=(t,room)=>t.min<=room+15;
+  /* rythme réduit avant une date (exam.pace = {until, perDay}) : un peu chaque jour, sans passer devant les CC */
+  const dayUse={},paceLeft=(id,day)=>{const p=exam(SUBJ[id]).pace;if(!p||day>=p.until)return Infinity;return Math.max(0,p.perDay-(dayUse[id+"|"+day]||0));},useDay=(id,day,m)=>{dayUse[id+"|"+day]=(dayUse[id+"|"+day]||0)+m;};
   const fill=(id,B,dur,src,finalWin)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(t.lesson&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0)continue;/* leçon ratée aujourd'hui : on la refait demain */if(!fitsIn(t,dur-used))continue;tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
   const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(lenFor(used),30));
     tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=30+GAP)blocks.splice(i+1,0,{day:B.day,start:B.end+GAP,end:full});};
@@ -10315,9 +11079,10 @@ function buildPlan(){
   for(let i=0;i<blocks.length;i++){
     const B=blocks[i],bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     let best=null,bestScore=-1;
-    active.forEach(id=>{if(!Q[id].length||be>dl(id)||B.day<(SUBJ[id].from||""))return;
+    active.forEach(id=>{if(!Q[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||""))return;
+      const room=Math.min(dur,paceLeft(id,B.day));if(room<=0)return;
       const finalWin=dl(id)-bs<=30*3600e3;
-      const elig=Q[id].filter(t=>(!t.last||finalWin));if(!elig.some(t=>fitsIn(t,dur)))return;
+      const elig=Q[id].filter(t=>(!t.last||finalWin));if(!elig.some(t=>fitsIn(t,room)))return;
       let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
       const rem=elig.reduce((s,t)=>s+t.min,0);
       let sc=rem/Math.max(avail,1)*(1+0.3*weight(SUBJ[id])/WMAX);
@@ -10327,16 +11092,16 @@ function buildPlan(){
       if(elig.some(t=>!t.last&&fitsIn(t,dur)&&!fitsIn(t,mx)))sc+=5;
       if(sc>bestScore){bestScore=sc;best=id;}});
     if(!best){freeIdx.push(i);continue;}
-    const {tk,used}=fill(best,B,dur,Q,dl(best)-bs<=30*3600e3);
+    const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),Q,dl(best)-bs<=30*3600e3);
     if(!tk.length){freeIdx.push(i);continue;}
-    place(i,best,tk,used,dur,false);
+    useDay(best,B.day,used);place(i,best,tk,used,dur,false);
   }
   /* 4. Créneaux restés libres : on y place les étapes facultatives encore utiles avant leur CC */
   const BQ={};active.forEach(id=>{BQ[id]=(plan.bonus[id]||[]).map(tid=>SUBJ[id].TB[tid]).concat(Q[id]).sort((x,y)=>(x.p-y.p)||(x.i-y.i));Q[id]=[];});
   for(let i=0;i<blocks.length;i++){const B=blocks[i];if(B.sid)continue;const bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     /* d'abord l'étape la plus importante (p le plus petit), puis la matière au plus fort coefficient dont le CC est le plus proche */
-    let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id)||B.day<(SUBJ[id].from||""))return;const f=BQ[id].filter(t=>!t.last&&fitsIn(t,dur));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
-    if(!best)continue;const {tk,used}=fill(best,B,dur,BQ,false);if(tk.length)place(i,best,tk,used,dur,true);}
+    let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||"")||paceLeft(id,B.day)<=0)return;const f=BQ[id].filter(t=>!t.last&&fitsIn(t,Math.min(dur,paceLeft(id,B.day))));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
+    if(!best)continue;const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),BQ,false);if(tk.length){useDay(best,B.day,used);place(i,best,tk,used,dur,true);}}
   plan.blocks.sort((x,y)=>x.day<y.day?-1:x.day>y.day?1:x.start-y.start);
   plan.assign={};plan.blocks.forEach((B,k)=>B.tasks.forEach(tid=>plan.assign[B.sid+":"+tid]=k));
   active.forEach(id=>{plan.bonus[id]=BQ[id].map(t=>t.id);if(!plan.bonus[id].length)delete plan.bonus[id];});
