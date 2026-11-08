@@ -4778,7 +4778,7 @@ add(3,{id:"c-ed1-sm",type:"meth",ref:"TD 2, ex. 2 ; CC1 2023 ex. 2",t:"y′ + a 
  trap:`La condition initiale s'applique à la solution complète (homogène + particulière), jamais à la seule partie homogène.`,
  q:"Solution particulière de y′ + y = e⁻ˣ ?",a:"e⁻ˣ est solution de l'homogène, donc on essaie A x e⁻ˣ : on trouve A = 1, y_p = x e⁻ˣ.",rel:["c-ed1","p/recettes"]});
 
-add(5,{id:"c-ed2",out:"L'ordre 2 (TD 2, exercices 3 et 4) n'est pas au CC1 : le CC1 s'arrête à l'exercice 2 du TD 2. Garde cette fiche pour le CC2.",type:"meth",ref:"TD 2, ex. 3 et 4",t:"y″ + a y′ + b y = 0 : l'équation caractéristique",short:"Ordre 2",
+add(4,{id:"c-ed2",ex:"cc2",out:"L'ordre 2 (TD 2, exercices 3 et 4) n'est pas au CC1 : le CC1 s'arrête à l'exercice 2 du TD 2. Garde cette fiche pour le CC2.",type:"meth",ref:"TD 2, ex. 3 et 4",t:"y″ + a y′ + b y = 0 : l'équation caractéristique",short:"Ordre 2",
  plain:`On résout ${hl("r² + a r + b = 0")}. Selon le signe de Δ, les solutions sont des exponentielles (Δ > 0), une exponentielle multipliée par un polynôme de degré 1 (Δ = 0), ou des oscillations (Δ < 0). Change a et b.`,
  fig:()=>ed2Fig(),
  formal:`<ul><li>Δ > 0, racines r₁ ≠ r₂ : y = C₁ e^(r₁x) + C₂ e^(r₂x).</li><li>Δ = 0, racine double r : y = (C₁ + C₂ x) e^(rx).</li><li>Δ < 0, racines α ± iβ : y = e^(αx)(C₁ cos βx + C₂ sin βx).</li><li>Avec second membre : + une solution particulière (constante, polynôme, A e^(kx), α cos + β sin ; multiplier par x ou x² si k est racine simple ou double).</li></ul>${F("TD 2 : y″ − 3y′ + 2y = 0 → r = 1, 2 → y = C₁eˣ + C₂e²ˣ ; avec y(0) = y′(0) = 1 : y = eˣ.")}`,
@@ -4787,13 +4787,41 @@ add(5,{id:"c-ed2",out:"L'ordre 2 (TD 2, exercices 3 et 4) n'est pas au CC1 : le 
  q:"Solutions de y″ − 6y′ + 9y = 0 ?",a:"r² − 6r + 9 = (r − 3)² : racine double 3, donc y = (C₁ + C₂x) e^(3x).",rel:["c-ed1","c-ed1-sm"]});
 
 /* ---------- pas au CC1 : nombres complexes ---------- */
-add(5,{id:"c-complexes",out:"Les complexes (TD 3) ne sont pas au CC1. Garde cette fiche pour le CC2.",type:"def",ref:"TD 3",t:"Nombres complexes : formes algébrique et polaire",short:"Nombres complexes",
+add(6,{id:"c-complexes",ex:"cc2",out:"Les complexes (TD 3) ne sont pas au CC1. Garde cette fiche pour le CC2.",type:"def",ref:"TD 3",t:"Nombres complexes : formes algébrique et polaire",short:"Nombres complexes",
  plain:`z = a + ib se place dans le plan au point (a, b). Son ${hl("module")} |z| est la distance à O, son ${hl("argument")} l'angle avec l'axe des réels. Forme polaire : z = |z| e^(iθ). Déplace z.`,
  fig:()=>cplxFig(),
  formal:`<ul><li>Conjugué : z̄ = a − ib ; z z̄ = a² + b² = |z|².</li><li>Inverse : 1/z = z̄/|z|² (on multiplie par le conjugué).</li><li>|z| = √(a² + b²) ; cos θ = a/|z|, sin θ = b/|z|, θ ∈ ]−π, π] (argument principal).</li><li>Produit : modules multipliés, arguments additionnés.</li></ul>${F("1/(1 − i) = (1 + i)/2 ;  (2 + i)/(1 + i) = (3 − i)/2 ;  1 + i√3 = 2 e^(iπ/3)")}`,
- use:`<p>Probablement au CC2 plutôt qu'au CC1 (TD 3) : à faire seulement s'il te reste du temps.</p>`,
+ use:`<p>Forme algébrique : multiplie par le conjugué du dénominateur. Forme exponentielle : calcule |z|, puis cos θ = a/|z| et sin θ = b/|z|, et place le point pour choisir θ.</p>`,
  trap:`L'argument de −2 e^(iπ/7) n'est pas π/7 : −1 = e^(iπ), donc l'argument est π/7 − π = −6π/7.`,
- q:"Module et argument de 1 − i ?",a:"|1 − i| = √2 et arg = −π/4 : 1 − i = √2 e^(−iπ/4).",rel:[]});
+ q:"Module et argument de 1 − i ?",a:"|1 − i| = √2 et arg = −π/4 : 1 − i = √2 e^(−iπ/4).",rel:["c-cx-euler","c-cx-eq"]});
+
+add(6,{id:"c-cx-euler",ex:"cc2",type:"meth",ref:"TD 3, ex. 7 à 9",t:"Moivre et Euler",short:"Moivre et Euler",
+ plain:`Avec la forme exponentielle, ${hl("multiplier, c'est ajouter les angles")}. Ça donne cos 3θ en fonction de cos θ (Moivre), et cos³θ en fonction de cos 3θ et cos θ (Euler).`,
+ fig:()=>cplxFig(),
+ formal:`<ul><li>Moivre : (cos θ + i sin θ)ⁿ = cos(nθ) + i sin(nθ).</li><li>Euler : cos θ = (e^(iθ) + e^(−iθ))/2 ; sin θ = (e^(iθ) − e^(−iθ))/(2i).</li><li>(r e^(iθ))(r′ e^(iθ′)) = rr′ e^(i(θ + θ′)) ; (r e^(iθ))/(r′ e^(iθ′)) = (r/r′) e^(i(θ − θ′)).</li></ul>${F("cos 3θ = 4cos³θ − 3cos θ ; sin 3θ = 3 sin θ − 4 sin³θ ; cos³θ = (cos 3θ + 3 cos θ)/4 ; sin³θ = (3 sin θ − sin 3θ)/4")}`,
+ use:`<p>Pour cos(5π/12) : écrire z₁/z₂ de deux façons (forme exponentielle et forme algébrique) et identifier les parties réelles.</p>`,
+ trap:`(cos θ + i sin θ)³ se développe avec le binôme : i² = −1 et i³ = −i.`,
+ q:"cos 3θ en fonction de cos θ ?",a:"4cos³θ − 3cos θ (partie réelle de (cos θ + i sin θ)³, avec sin²θ = 1 − cos²θ).",rel:["c-complexes"]});
+add(6,{id:"c-cx-eq",ex:"cc2",type:"meth",ref:"TD 3, ex. 10 et 11",t:"Racines carrées et équations du second degré dans ℂ",short:"az² + bz + c = 0",
+ plain:`Dans ℂ, toute équation du second degré a des solutions : on calcule Δ, puis ${hl("une racine carrée δ de Δ")}, et z = (−b ± δ)/(2a).`,
+ formal:`<ul><li>Racine carrée de w = A + iB : chercher δ = x + iy avec x² − y² = A, 2xy = B et x² + y² = |w|.</li><li>Δ = b² − 4ac ; si δ² = Δ, les solutions sont (−b + δ)/(2a) et (−b − δ)/(2a).</li><li>Si Δ &lt; 0 réel : δ = i√(−Δ).</li></ul>${F("8 − 6i = (3 − i)² ; 5 + 12i = (3 + 2i)² ; z² + z + 1 = 0 : z = (−1 ± i√3)/2")}`,
+ use:`<p>Utilise l'équation x² + y² = |w| : elle donne x² et y² directement, puis le signe de 2xy choisit les signes.</p>`,
+ trap:`√(−4) n'a pas de sens : on dit « les racines carrées de −4 sont 2i et −2i ».`,
+ q:"Racines carrées de 5 + 12i ?",a:"±(3 + 2i) : x² − y² = 5, x² + y² = 13, donc x² = 9, y² = 4, et 2xy = 12 &gt; 0.",rel:["c-complexes","c-cx-racn"]});
+add(6,{id:"c-cx-racn",ex:"cc2",type:"meth",ref:"TD 3, ex. 12",t:"Racines n-ièmes",short:"zⁿ = w",
+ plain:`Pour zⁿ = w, on écrit tout en forme exponentielle : le module de z est la ${hl("racine n-ième du module")}, et il y a ${hl("n arguments")}, espacés de 2π/n.`,
+ fig:()=>cplxFig(),
+ formal:`${F("w = R e^(iφ) : zⁿ = w ⇔ z = R^(1/n) e^(i(φ + 2kπ)/n), k = 0, 1, …, n − 1")}<ul><li>z⁶ = −27 = 27 e^(iπ) : z = √3 e^(i(π/6 + kπ/3)), six solutions.</li><li>Équation bicarrée ou en z³ : poser Z = z² ou Z = z³, résoudre en Z, puis revenir à z.</li></ul>`,
+ use:`<p>Les n solutions forment un polygone régulier centré en 0 : vérifie que tu en as bien n.</p>`,
+ trap:`Oublier les k : z³ = 1 a trois solutions, pas une.`,
+ q:"Solutions de z³ = −1 ?",a:"−1 = e^(iπ) : z = e^(i(π + 2kπ)/3), soit e^(iπ/3), −1, e^(−iπ/3).",rel:["c-cx-eq"]});
+add(4,{id:"c-ed2-sm",ex:"cc2",type:"meth",ref:"TD 2, ex. 4 et 5",t:"Ordre 2 avec second membre",short:"Ordre 2, second membre",
+ plain:`Comme à l'ordre 1 : ${hl("solutions de l'homogène + une solution particulière")}, puis les deux conditions initiales donnent les deux constantes.`,
+ fig:()=>ed2Fig(),
+ formal:`<ul><li>Second membre constant ou polynôme : y_p polynôme de même degré (de degré + 1 si 0 est racine).</li><li>A e^(kx) : y_p = B e^(kx) si k n'est pas racine ; B x e^(kx) si racine simple ; B x² e^(kx) si racine double.</li><li>cos(ωx) ou sin(ωx) : y_p = α cos(ωx) + β sin(ωx) (si iω n'est pas racine).</li></ul>${F("y″ − 6y′ + 9y = e³ˣ : 3 est racine double, y_p = (x²/2) e³ˣ.   y″ + y = x : y_p = x.")}`,
+ use:`<p>Écris la solution générale complète avant d'utiliser y(0) et y′(0) : les constantes portent sur la solution complète, pas sur l'homogène seule.</p>`,
+ trap:`Si k est racine de l'équation caractéristique, B e^(kx) est solution de l'homogène : il faut multiplier par x (ou x²).`,
+ q:"Forme de y_p pour y″ + 2y′ − 3y = e⁴ˣ ?",a:"4 n'est pas racine de r² + 2r − 3 = (r − 1)(r + 3) : y_p = B e⁴ˣ, et on trouve B = 1/21.",rel:["c-ed2","c-ed1-sm"]});
 
 /* ---------- TD ---------- */
 const td=[
@@ -4810,10 +4838,22 @@ const td=[
   sol:`<ol><li>y = e^(−πx).</li><li>y = e^(−x⁴/4).</li><li>y = 1/√(1 + x²).</li><li>y = C e^(−eˣ), y(0) = C/e = 1, donc y = e^(1 − eˣ).</li></ol>`},
  {id:"2.2",s:3,t:"Ordre 1 avec second membre",en:"(a) y′ − 3y = e²ˣ ; (b) y′ + y = e⁻ˣ ; (c) y′ − 2y = −x² ; (d) y′ + y = cos x ; (e) y′ + x²y = −x², avec y(0) = 0.",link:"c-ed1-sm",
   sol:`<ol><li>y = C e³ˣ − e²ˣ ; y(0) = 0 : y = e³ˣ − e²ˣ.</li><li>y = (C + x) e⁻ˣ ; y(0) = 0 : y = x e⁻ˣ.</li><li>y = C e²ˣ + x²/2 + x/2 + 1/4 ; y(0) = 0 : C = −1/4.</li><li>y = C e⁻ˣ + (cos x + sin x)/2 ; y(0) = 0 : C = −1/2.</li><li>y = C e^(−x³/3) − 1 (y_p = −1) ; y(0) = 0 : C = 1.</li></ol>`},
- {id:"2.3",s:2,out:"pas au CC1",t:"Ordre 2 homogène",en:"(a) y″ − 3y′ + 2y ; (b) y″ + 2y′ − 3y ; (c) y″ − 5y′ + 6y ; (d) y″ − 6y′ + 9y ; (e) y″ − y ; (f) 2y″ − 2y′ − 4y, = 0, avec y(0) = y′(0) = 1.",link:"c-ed2",
+ {id:"2.3",s:3,ex:"cc2",t:"Ordre 2 homogène",en:"(a) y″ − 3y′ + 2y ; (b) y″ + 2y′ − 3y ; (c) y″ − 5y′ + 6y ; (d) y″ − 6y′ + 9y ; (e) y″ − y ; (f) 2y″ − 2y′ − 4y, = 0, avec y(0) = y′(0) = 1.",link:"c-ed2",
   sol:`<ol><li>r = 1, 2 : y = eˣ.</li><li>r = 1, −3 : y = eˣ.</li><li>r = 2, 3 : y = 2e²ˣ − e³ˣ.</li><li>r = 3 double : y = (1 − 2x) e³ˣ.</li><li>r = ±1 : y = eˣ.</li><li>r = 2, −1 : y = (2/3) e²ˣ + (1/3) e⁻ˣ.</li></ol>`},
- {id:"2.4",s:2,out:"pas au CC1",t:"Ordre 2 avec second membre",en:"(a) y″ − 3y′ + 2y = 1 ; (b) y″ + 2y′ − 3y = e⁴ˣ ; (d) y″ − 6y′ + 9y = e³ˣ ; (e) y″ + y = x, avec y(0) = y′(0) = 1.",link:"c-ed2",
-  sol:`<ol><li>y_p = 1/2 ; y = (e²ˣ + 1)/2.</li><li>y_p = e⁴ˣ/21 ; y = (11/12) eˣ + (1/28) e⁻³ˣ + e⁴ˣ/21.</li><li>3 racine double : y_p = (x²/2) e³ˣ ; y = (1 − 2x + x²/2) e³ˣ.</li><li>y_p = x ; y = cos x + x.</li></ol>`}];
+ {id:"2.4",s:3,ex:"cc2",t:"Ordre 2 avec second membre",en:"(a) y″ − 3y′ + 2y = 1 ; (b) y″ + 2y′ − 3y = e⁴ˣ ; (d) y″ − 6y′ + 9y = e³ˣ ; (e) y″ + y = x, avec y(0) = y′(0) = 1.",link:"c-ed2",
+  sol:`<ol><li>y_p = 1/2 ; y = (e²ˣ + 1)/2.</li><li>y_p = e⁴ˣ/21 ; y = (11/12) eˣ + (1/28) e⁻³ˣ + e⁴ˣ/21.</li><li>3 racine double : y_p = (x²/2) e³ˣ ; y = (1 − 2x + x²/2) e³ˣ.</li><li>y_p = x ; y = cos x + x.</li></ol>`},
+ {id:"2.5",s:2,ex:"cc2",t:"Un circuit RLC",en:"Li″ + Ri′ + i/C = v′(t) avec R = 300, C = 100 µF, L = 10 mH, v(t) = 2 V constant. Évolution de l'intensité ?",link:"c-ed2",sol:`<p>v′ = 0 : i″ + 30 000 i′ + 10⁶ i = 0. r² + 30 000 r + 10⁶ = 0 a deux racines réelles négatives (Δ = 8,96 × 10⁸ &gt; 0), r₁ ≈ −33,4 et r₂ ≈ −29 967. i(t) = C₁e^(r₁t) + C₂e^(r₂t) tend vers 0 : en courant continu, le condensateur finit par bloquer le courant.</p>`},
+ {id:"3.1",s:1,ex:"cc2",t:"Forme algébrique",en:"(4 − 3i) + (2 + 5i) ; (2 + i)(1 − 3i) ; 1/(1 − i) ; (2 + i)/(1 + i).",link:"c-complexes",sol:`<p>6 + 2i ; 5 − 5i ; (1 + i)/2 ; (3 − i)/2 (on multiplie par le conjugué du dénominateur).</p>`},
+ {id:"3.3",s:2,ex:"cc2",t:"Module et argument principal",en:"−1 ; i ; 1 − i ; 1 + √3 i ; √3 − i ; −2e^(iπ/7).",link:"c-complexes",sol:`<p>(1, π) ; (1, π/2) ; (√2, −π/4) ; (2, π/3) ; (2, −π/6) ; (2, −6π/7) car −1 = e^(iπ) et π/7 + π = 8π/7 ≡ −6π/7.</p>`},
+ {id:"3.4",s:3,ex:"cc2",t:"Formes polaires",en:"2 − 2i√3 ; 2 + 2i√3 ; −2 − 2i ; 3 − 3i ; −√6 − i√2 ; −√2 − i√6 ; −2 ; −5i.",link:"c-complexes",sol:`<p>4e^(−iπ/3) ; 4e^(iπ/3) ; 2√2 e^(−3iπ/4) ; 3√2 e^(−iπ/4) ; 2√2 e^(−5iπ/6) ; 2√2 e^(−2iπ/3) ; 2e^(iπ) ; 5e^(−iπ/2).</p>`},
+ {id:"3.5",s:2,ex:"cc2",t:"Identité du parallélogramme",en:"|z + z′|² + |z − z′|² = 2(|z|² + |z′|²).",link:"c-complexes",sol:`<p>|z + z′|² = (z + z′)(z̄ + z̄′) = |z|² + zz̄′ + z̄z′ + |z′|² ; |z − z′|² = |z|² − zz̄′ − z̄z′ + |z′|². On additionne : les termes croisés s'annulent.</p>`},
+ {id:"3.6",s:2,ex:"cc2",t:"z/(1 − z) réel",en:"Ensemble des z tels que z/(1 − z) ∈ ℝ.",link:"c-complexes",sol:`<p>Pour z ≠ 1 : si z/(1 − z) = t ∈ ℝ, alors z = t(1 − z), donc z(1 + t) = t, et z = t/(1 + t) est réel (t = −1 est impossible). Réciproquement, z réel donne un quotient réel. Réponse : ℝ ∖ {1}.</p>`},
+ {id:"3.7",s:3,ex:"cc2",t:"cos(5π/12) et sin(5π/12)",en:"z₁ = √2(1 + i), z₂ = (√3 − i)/2 : formes polaires de z₁, z₂, z₁/z₂ ; en déduire cos(5π/12) et sin(5π/12).",link:"c-cx-euler",sol:`<p>z₁ = 2e^(iπ/4), z₂ = e^(−iπ/6), z₁/z₂ = 2e^(i5π/12). Algébriquement, z₁/z₂ = (√2/2)((√3 − 1) + i(√3 + 1)). Donc cos(5π/12) = (√6 − √2)/4 et sin(5π/12) = (√6 + √2)/4.</p>`},
+ {id:"3.8",s:2,ex:"cc2",t:"cos 3θ et sin 3θ",en:"Avec la formule de Moivre.",link:"c-cx-euler",sol:`<p>(cos θ + i sin θ)³ = cos³θ + 3i cos²θ sin θ − 3cos θ sin²θ − i sin³θ. Partie réelle : cos 3θ = 4cos³θ − 3cos θ ; partie imaginaire : sin 3θ = 3 sin θ − 4 sin³θ.</p>`},
+ {id:"3.9",s:2,ex:"cc2",t:"Linéariser cos³θ et sin³θ",en:"Avec les formules d'Euler.",link:"c-cx-euler",sol:`<p>cos³θ = ((e^(iθ) + e^(−iθ))/2)³ = (2cos 3θ + 6cos θ)/8 = (cos 3θ + 3cos θ)/4. De même sin³θ = (3 sin θ − sin 3θ)/4.</p>`},
+ {id:"3.10",s:3,ex:"cc2",t:"Racines carrées",en:"3 ; −4 ; i ; 8 − 6i ; 5 + 12i ; 46 − 14i√3.",link:"c-cx-eq",sol:`<p>±√3 ; ±2i ; ±(√2/2)(1 + i) ; ±(3 − i) ; ±(3 + 2i) ; ±(7 − i√3).</p>`},
+ {id:"3.11",s:3,ex:"cc2",t:"Équations du second degré",en:"z² + z + 1 = 0 ; z² − (1 + 2i)z − 1 = 0 ; z⁴ + 2z² + 4 = 0.",link:"c-cx-eq",sol:`<ol><li>Δ = −3 : z = (−1 ± i√3)/2.</li><li>Δ = (1 + 2i)² + 4 = 1 + 4i. Une racine carrée δ = x + iy : x² − y² = 1, x² + y² = √17, xy &gt; 0, donc x = √((1 + √17)/2), y = √((√17 − 1)/2). z = (1 + 2i ± δ)/2 (les racines ne sont pas « jolies » : vérifie l'énoncé avec ton chargé de TD).</li><li>Z = z² : Z² + 2Z + 4 = 0, Z = −1 ± i√3 = 2e^(±2iπ/3), donc z = ±√2 e^(±iπ/3) : quatre solutions, ±(√2/2)(1 + i√3) et ±(√2/2)(1 − i√3).</li></ol>`},
+ {id:"3.12",s:2,ex:"cc2",t:"Racines n-ièmes",en:"z⁶ + 27 = 0 ; z³ = (−1 + i)/4 ; z⁶ − iz³ − 1 − i = 0.",link:"c-cx-racn",sol:`<ol><li>z = √3 e^(i(π/6 + kπ/3)), k = 0, …, 5.</li><li>(−1 + i)/4 = (√2/4) e^(3iπ/4) : z = (1/√2) e^(i(π/4 + 2kπ/3)), k = 0, 1, 2.</li><li>Z = z³ : Z² − iZ − (1 + i) = 0, Δ = 3 + 4i = (2 + i)², Z = 1 + i ou Z = −1. Puis z = 2^(1/6) e^(i(π/12 + 2kπ/3)) et z = e^(i(π/3 + 2kπ/3)), k = 0, 1, 2 : six solutions.</li></ol>`}];
 
 /* ---------- annales ---------- */
 const ann=[
@@ -4844,7 +4884,14 @@ const quiz=[
  {q:"Limite en +∞ de (1 + 5/x)/(1 + 1/x) ?",o:["5","1","0","+∞"],a:1,e:"CC1 2025.",link:"c-limites"},
  {q:"Limite en 0⁺ de x² ln x ?",o:["−∞","0","1","n'existe pas"],a:1,e:"Croissances comparées.",link:"c-limites"},
  {q:"∫ de −a à a d'une fonction impaire vaut…",o:["2∫₀ᵃ f","0","∫₀ᵃ f","on ne peut pas savoir"],a:1,e:"Les deux aires se compensent.",link:"c-integrale"},
- {q:"Module de 1 + i√3 ?",o:["√3","2","4","1 + √3"],a:1,e:"√(1 + 3) = 2.",link:"c-complexes"}];
+ {q:"Module de 1 + i√3 ?",o:["√3","2","4","1 + √3"],a:1,e:"√(1 + 3) = 2.",link:"c-complexes"},
+ {q:"Argument principal de −1 ?",o:["π","0","−π/2","π/2"],a:0,e:"−1 = e^(iπ), et π ∈ ]−π, π].",link:"c-complexes"},
+ {q:"1/(1 − i) = ?",o:["(1 + i)/2","1 + i","(1 − i)/2","−1 − i"],a:0,e:"On multiplie par le conjugué 1 + i : (1 + i)/((1 − i)(1 + i)) = (1 + i)/2.",link:"c-complexes"},
+ {q:"cos 3θ = ?",o:["4cos³θ − 3cos θ","3cos θ − 4cos³θ","cos³θ","3cos θ"],a:0,e:"Partie réelle de (cos θ + i sin θ)³ (Moivre).",link:"c-cx-euler"},
+ {q:"Les racines carrées de 8 − 6i ?",o:["±(3 − i)","±(3 + i)","±(2 − 3i)","±√(8 − 6i), sans autre forme"],a:0,e:"(3 − i)² = 9 − 6i − 1 = 8 − 6i.",link:"c-cx-eq"},
+ {q:"Combien de solutions a z⁶ = −27 dans ℂ ?",o:["6","1","2","3"],a:0,e:"Une équation zⁿ = w (w ≠ 0) a n solutions.",link:"c-cx-racn"},
+ {q:"y″ + y = 0 : solutions ?",o:["C₁cos x + C₂sin x","C₁eˣ + C₂e⁻ˣ","(C₁ + C₂x)eˣ","C e⁻ˣ"],a:0,e:"r² + 1 = 0, r = ±i : α = 0, β = 1.",link:"c-ed2"},
+ {q:"y″ − 6y′ + 9y = e³ˣ : forme de y_p ?",o:["B x² e³ˣ","B e³ˣ","B x e³ˣ","Bx + C"],a:0,e:"3 est racine double de r² − 6r + 9 : on multiplie par x².",link:"c-ed2-sm"}];
 
 const formulaire=({sec})=>`<div class="title-row"><h1>Formulaire de calculus</h1></div><p class="lead">Aucun document n'est autorisé au CC : ces formules doivent être sues par cœur. Les PDF officiels sont dans tes Téléchargements.</p>
  ${sec(1,"Dérivées",`<div style="overflow-x:auto"><table class="tbl"><tbody>${[["xⁿ","n xⁿ⁻¹"],["√x","1/(2√x)"],["1/x","−1/x²"],["eˣ","eˣ"],["ln x","1/x"],["sin x","cos x"],["cos x","−sin x"],["tan x","1 + tan²x"],["uv","u′v + uv′"],["u/v","(u′v − uv′)/v²"],["u(v(x))","v′(x) u′(v(x))"]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</tbody></table></div>`)}
@@ -4879,21 +4926,31 @@ const infos=({sec})=>`<div class="title-row"><h1>Le CC1 de calculus en bref</h1>
  ${sec(3,"Le programme",`<ul><li><b>Feuille de TD 1 en entier</b> : limites, domaines, dérivées, primitives, intégrales (par parties, changement de variable).</li><li><b>Feuille de TD 2, exercices 1 et 2 seulement</b> : équations différentielles d'ordre 1, sans puis avec second membre.</li><li>Pas au CC1 : l'ordre 2 (TD 2, ex. 3 et 4) et les complexes (TD 3).</li><li>Le CC1 2025 : une étude de fonction (5,5 pts), trois intégrales (8,5 pts), deux primitives (6 pts). En 2023 : une primitive, une équation d'ordre 1, une étude de fonction.</li></ul>`)}
  ${sec(4,"Comment gagner des points",`<p>Les trois recettes de la page <a href="#/p/recettes">Recettes pas à pas</a> couvrent presque tout le sujet. Apprends-les, puis refais le CC1 2025 en 1 heure sur papier.</p>`)}`;
 
+const infos2=({sec})=>`<div class="title-row"><h1>Le CC2 de calculus en bref</h1></div>
+ ${sec(1,"Quand et où",`<p>Vendredi 11 décembre à 13h15, amphi 5.02 (mail de Jonathan Chappelon du 6/11). Durée à confirmer (créneau d'1 h 30 dans Prose). Aucun document, aucune calculatrice au CC1 : sans doute pareil.</p>`)}
+ ${sec(2,"Le programme",`<p>Pas encore annoncé (« communiqué ultérieurement »). Le site prépare la <b>suite du cours</b> : les équations différentielles d'<b>ordre 2</b> (fin du TD 2 : ex. 3, 4, 5) et les <b>nombres complexes</b> (TD 3 en entier). Dès que le programme est annoncé, il sera resserré.</p>`)}
+ ${sec(3,"Ce qu'il faut savoir faire",`<ul><li>Résoudre y″ + ay′ + by = 0 avec l'équation caractéristique, dans les trois cas de Δ, puis avec un second membre et deux conditions initiales.</li><li>Passer de la forme algébrique à la forme exponentielle d'un complexe, et inversement.</li><li>Utiliser Moivre et Euler (cos 3θ, cos³θ).</li><li>Calculer une racine carrée complexe et résoudre une équation du second degré dans ℂ ; les racines n-ièmes.</li></ul>`)}`;
 SUBJ.calc={name:"Calculus",code:"HAX106X",color:"#FFB547",coef:3,share:0.25,key:"rev-calc-v1",lang:"",
- exam:{day:"2026-11-13",start:"15:00",end:"16:00",place:"amphi 5.01",dur:"1 h",unsure:""},
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-13",start:"15:00",end:"16:00",place:"amphi 5.01",dur:"1 h",unsure:""},
+        {id:"cc2",label:"CC2",day:"2026-12-11",start:"13:15",end:"14:45",place:"amphi 5.02",dur:"durée à confirmer (créneau de 1 h 30 dans Prose)",covers:["cc2"],docs:"aucun (comme au CC1)",unsure:"Programme pas encore annoncé (mail du 6/11) : le site prépare la suite du cours, ordre 2 (fin du TD 2) et nombres complexes (TD 3).",prog:"Pas encore annoncé : la suite du cours après le CC1, c'est-à-dire les équations différentielles d'ordre 2 (TD 2, ex. 3 à 5) et les nombres complexes (TD 3 en entier)."}],
  docs:"aucun",examMinutes:60,examMorning:"Relis le formulaire (dérivées, primitives usuelles) et les fiches en rouge.",
  prog:"TD 1 en entier (limites, dérivées, primitives, intégrales) et TD 2 jusqu'à l'exercice 2 (équations différentielles d'ordre 1). Pas d'ordre 2 ni de complexes.",
- chapters:{1:"1. Fonctions : domaine, limites, dérivées",2:"2. Primitives et intégrales",3:"3. Équations différentielles d'ordre 1",5:"Pas au CC1 (pour le CC2)"},
+ chapters:{1:"1. Fonctions : domaine, limites, dérivées",2:"2. Primitives et intégrales",3:"3. Équations différentielles d'ordre 1",4:"4. Équations différentielles d'ordre 2",6:"5. Nombres complexes"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
  tdIntro:"La feuille 1 et les exercices 1 et 2 de la feuille 2, corrigés par moi. Les ★★★ ressemblent le plus aux CC. Fais-les sur papier, sans calculatrice, comme au CC.",annIntro:"Corrigés officiels des CC1 2025 et 2023, réécrits avec le barème.",
- pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"formulaire",t:"Formulaire",html:formulaire}],
+ pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"formulaire",t:"Formulaire",html:formulaire}],
  tasks:[
  {id:"form",t:"Apprendre le formulaire (dérivées, primitives usuelles)",min:20,p:1,manual:true,links:[["p/formulaire","Formulaire"]]},
  {id:"cc25",t:"Examen blanc : CC1 2025 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Étude de fonction, intégrales, primitives : tout le CC1."},
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:2,td:["1.2","1.3","1.4","1.5","2.1","2.2"],links:[["td","Exercices de TD"]]},
  {id:"cc23",t:"Annale CC 2023 (ordre 1 et étude de fonction)",min:45,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
- {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
+ {id:"tded2",ex:"cc2",t:"TD 2, ex. 3 et 4 (ordre 2) sur papier",min:45,p:1,td:["2.3","2.4"],links:[["td","Exercices de TD"]]},
+ {id:"tdcx",ex:"cc2",t:"TD 3 ★★★ (complexes) sur papier",min:60,p:1,td:["3.4","3.7","3.10","3.11"],links:[["td","Exercices de TD"]]},
+ {id:"tdcx2",ex:"cc2",t:"TD 3, le reste (formes, Moivre, racines n-ièmes)",min:45,p:2,td:["3.1","3.3","3.5","3.6","3.8","3.9","3.12"],links:[["td","Exercices de TD"]]},
+ {id:"quiz2",ex:"cc2",t:"Quiz de cours (ordre 2 et complexes) : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"review2",ex:"cc2",t:"Veille du CC2 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 })();
 
 </script>
@@ -6378,7 +6435,86 @@ LES.calc=[
  B("TD 2.2 (d) : y′ + y = cos x. On cherche y_p = α cos x + β sin x.","En remplaçant : (α + β) cos x + (β − α) sin x = cos x, donc α = [[0]] et β = [[1]].",[{o:["1/2","1","0","−1/2"],a:0},{o:["1/2","1","0","−1/2"],a:0}],"α + β = 1 et β − α = 0 donnent α = β = 1/2 : y = C e^(−x) + (cos x + sin x)/2."),
  P("TD 2.2 (a), sur papier","Résous y′ − 3y = e^(2x) avec y(0) = 0.","<p>Homogène : y = C e^(3x). Particulière y_p = A e^(2x) : 2A e^(2x) − 3A e^(2x) = e^(2x), donc A = −1. Toutes les solutions : y = C e^(3x) − e^(2x). y(0) = C − 1 = 0, donc C = 1 : <b>y = e^(3x) − e^(2x)</b>.</p>",["La solution homogène","La forme de la particulière, A e^(2x)","A = −1 trouvé en remplaçant","La condition initiale sur la solution complète"],10),
  K("Solutions de y′ + a(x) y = 0 ?","y = C e^(−A(x)), où A est une primitive de a."),
- K("Résoudre y′ + a y = b(x) ?","Homogène + particulière de la même forme que b (polynôme, A e^(kx), α cos + β sin), puis la condition initiale sur le tout.")]}
+ K("Résoudre y′ + a y = b(x) ?","Homogène + particulière de la même forme que b (polynôme, A e^(kx), α cos + β sin), puis la condition initiale sur le tout.")]},
+/* ------------------------------------------------------------------ */
+/* CC2 du vendredi 11 décembre : programme pas encore annoncé ; la suite du cours (ordre 2, complexes). */
+{id:"c2-ed2",ex:"cc2",t:"Ordre 2 : l'équation caractéristique",min:14,goal:"Résoudre y″ + ay′ + by = 0 dans les trois cas, avec deux conditions initiales (TD 2, ex. 3).",steps:[
+ Q("Pour y″ − 3y′ + 2y = 0, on essaie y = e^(rx). Quelle équation doit vérifier r ?",["r² − 3r + 2 = 0","r − 3 + 2 = 0","r² + 3r + 2 = 0","2r − 3 = 0"],0,"y′ = r e^(rx) et y″ = r² e^(rx) : on obtient (r² − 3r + 2)e^(rx) = 0, et e^(rx) ne s'annule jamais."),
+ L("Les trois cas",`<p>Pour y″ + ay′ + by = 0 (a, b réels), on résout l'<b>équation caractéristique</b> r² + ar + b = 0, de discriminant Δ = a² − 4b.</p><ul><li><b>Δ &gt; 0</b>, deux racines r₁ ≠ r₂ : y = C₁ e^(r₁x) + C₂ e^(r₂x).</li><li><b>Δ = 0</b>, racine double r : y = (C₁ + C₂x) e^(rx).</li><li><b>Δ &lt; 0</b>, racines α ± iβ : y = e^(αx)(C₁ cos βx + C₂ sin βx).</li></ul><p>Sur la figure, change a et b pour passer d'un cas à l'autre.</p>`,{fig:"c-ed2"}),
+ Q("Solutions de y″ − 6y′ + 9y = 0 ?",["(C₁ + C₂x) e^(3x)","C₁e^(3x) + C₂e^(−3x)","C₁cos 3x + C₂sin 3x","C e^(3x)"],0,"r² − 6r + 9 = (r − 3)² : racine double 3."),
+ Q("Solutions de y″ + y = 0 ?",["C₁cos x + C₂sin x","C₁eˣ + C₂e⁻ˣ","(C₁ + C₂x)eˣ","C e⁻ˣ"],0,"r² + 1 = 0 : r = ±i, donc α = 0 et β = 1."),
+ L("Deux conditions initiales",`<p>Deux constantes, donc deux conditions : y(0) et y′(0). On calcule y′ <b>avant</b> de remplacer.</p><p>TD 2, ex. 3a : y″ − 3y′ + 2y = 0, r = 1 ou 2, y = C₁eˣ + C₂e²ˣ, y′ = C₁eˣ + 2C₂e²ˣ.</p><p>y(0) = 1 donne C₁ + C₂ = 1 ; y′(0) = 1 donne C₁ + 2C₂ = 1. Donc C₂ = 0, C₁ = 1 : <b>y = eˣ</b>.</p>`),
+ Q("2y″ − 2y′ − 4y = 0 : quelles sont les racines de l'équation caractéristique ?",["2 et −1","−2 et 1","1 et 2","4 et −2"],0,"On divise par 2 : r² − r − 2 = (r − 2)(r + 1)."),
+ P("TD 2, ex. 3 (c) et (d), sur papier","Résoudre avec y(0) = 1, y′(0) = 1 : (c) y″ − 5y′ + 6y = 0 ; (d) y″ − 6y′ + 9y = 0.","<ol><li>r = 2, 3 : y = C₁e^(2x) + C₂e^(3x). C₁ + C₂ = 1 et 2C₁ + 3C₂ = 1 : C₂ = −1, C₁ = 2. <b>y = 2e^(2x) − e^(3x)</b>.</li><li>r = 3 double : y = (C₁ + C₂x)e^(3x), y′ = (C₂ + 3C₁ + 3C₂x)e^(3x). C₁ = 1, C₂ + 3 = 1, donc C₂ = −2 : <b>y = (1 − 2x)e^(3x)</b>.</li></ol>",["L'équation caractéristique écrite","Le bon cas (deux racines ou racine double)","y′ calculée avant les conditions","Le système en C₁, C₂ résolu"],10),
+ K("y″ + ay′ + by = 0 : les trois cas ?","r² + ar + b = 0. Δ &gt; 0 : C₁e^(r₁x) + C₂e^(r₂x) ; Δ = 0 : (C₁ + C₂x)e^(rx) ; Δ &lt; 0 (α ± iβ) : e^(αx)(C₁cos βx + C₂sin βx)."),
+ K("Deux conditions initiales ?","Calculer y′ d'abord, puis y(0) et y′(0) donnent un système de deux équations en C₁ et C₂.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"c2-ed2-sm",ex:"cc2",t:"Ordre 2 avec second membre",min:14,goal:"Trouver une solution particulière selon le second membre (TD 2, ex. 4).",steps:[
+ Q("Pour y″ − 3y′ + 2y = 1, quelle solution particulière simple peut-on essayer ?",["Une constante c","c e^(x)","c x²","c sin x"],0,"Une constante a des dérivées nulles : 2c = 1, donc c = 1/2."),
+ L("Le principe et les formes",`<p>Comme à l'ordre 1 : <b>toutes les solutions = solutions de l'homogène + une solution particulière y_p</b>. On cherche y_p de la même forme que le second membre :</p><ul><li>constante ou polynôme : polynôme du même degré ;</li><li>B e^(kx) si k n'est pas racine de l'équation caractéristique ; <b>Bx e^(kx)</b> si k est racine simple ; <b>Bx² e^(kx)</b> si racine double ;</li><li>cos(ωx), sin(ωx) : α cos(ωx) + β sin(ωx).</li></ul><p>On remplace y_p dans l'équation et on identifie les coefficients.</p>`,{fig:"c-ed2"}),
+ Q("y″ − 6y′ + 9y = e^(3x) : quelle forme pour y_p ?",["B x² e^(3x)","B e^(3x)","B x e^(3x)","B"],0,"3 est racine double de r² − 6r + 9 : B e^(3x) et Bx e^(3x) sont solutions de l'homogène, il faut x²."),
+ S("TD 2, ex. 4 (b)",`y″ + 2y′ − 3y = e^(4x), y(0) = y′(0) = 1.`,[
+  {w:"Homogène : r² + 2r − 3 = (r − 1)(r + 3), y_h = C₁eˣ + C₂e^(−3x).",why:"On commence toujours par l'homogène."},
+  {w:"4 n'est pas racine : y_p = B e^(4x). Alors 16B + 8B − 3B = 21B = 1, donc B = 1/21.",why:"y_p′ = 4Be^(4x), y_p″ = 16Be^(4x)."},
+  {w:"y = C₁eˣ + C₂e^(−3x) + e^(4x)/21 ; y′ = C₁eˣ − 3C₂e^(−3x) + 4e^(4x)/21.",why:"Solution complète, puis sa dérivée."},
+  {w:"C₁ + C₂ = 20/21 et C₁ − 3C₂ = 17/21 : C₂ = 1/28, C₁ = 11/12. <b>y = (11/12)eˣ + (1/28)e^(−3x) + e^(4x)/21</b>.",why:"Les conditions portent sur la solution complète."}]),
+ Q("y″ + y = x : quelle est une solution particulière ?",["y_p = x","y_p = x²","y_p = sin x","y_p = 1"],0,"y_p = x donne y_p″ = 0, donc y_p″ + y_p = x. Avec y(0) = y′(0) = 1, on trouve y = cos x + x."),
+ K("Forme de y_p pour B e^(kx) au second membre ?","B e^(kx) si k n'est pas racine ; Bx e^(kx) si racine simple ; Bx² e^(kx) si racine double."),
+ K("Ordre 2 avec second membre et conditions initiales ?","y = y_h + y_p ; on dérive la solution complète, puis y(0) et y′(0) donnent C₁ et C₂.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"c2-cx-alg",ex:"cc2",t:"Complexes : la forme algébrique",min:11,goal:"Calculer avec z = a + ib : produits, quotients, conjugué, module (TD 3, ex. 1, 5, 6).",steps:[
+ Q("Que vaut (2 + i)(1 − 3i) ?",["5 − 5i","2 − 3i","−1 − 5i","5 + 5i"],0,"2 − 6i + i − 3i² = 2 − 5i + 3 = 5 − 5i, car i² = −1."),
+ L("Calculer avec i",`<p>Un complexe s'écrit z = a + ib (a, b réels), avec <b>i² = −1</b>. a est la partie réelle, b la partie imaginaire. On calcule comme avec des polynômes en i, en remplaçant i² par −1.</p><ul><li><b>Conjugué</b> : z̄ = a − ib. On a z z̄ = a² + b².</li><li><b>Module</b> : |z| = √(a² + b²), la distance de O au point (a, b).</li><li><b>Diviser</b> : on multiplie en haut et en bas par le conjugué du dénominateur, qui devient réel.</li></ul><div class="formula">(2 + i)/(1 + i) = (2 + i)(1 − i)/((1 + i)(1 − i)) = (3 − i)/2</div>`,{fig:"c-complexes"}),
+ Q("Que vaut 1/(1 − i) ?",["(1 + i)/2","1 + i","(1 − i)/2","1/2"],0,"(1 + i)/((1 − i)(1 + i)) = (1 + i)/(1 + 1)."),
+ Q("Quels z vérifient z/(1 − z) ∈ ℝ ?",["Les réels différents de 1","Tous les complexes","Les imaginaires purs","Aucun"],0,"Si z/(1 − z) = t réel, alors z = t/(1 + t) est réel ; et z réel (z ≠ 1) donne bien un réel (TD 3, ex. 6)."),
+ K("Diviser deux complexes ?","Multiplier en haut et en bas par le conjugué du dénominateur : (a + ib)(a − ib) = a² + b² est réel."),
+ K("|z|² avec le conjugué ?","|z|² = z z̄ = a² + b². C'est l'outil pour |z + z′|² = (z + z′)(z̄ + z̄′).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"c2-cx-exp",ex:"cc2",t:"Module, argument, forme exponentielle",min:13,goal:"Passer de a + ib à r e^(iθ) et inversement (TD 3, ex. 3 et 4).",steps:[
+ Q("Quel est le module de 1 + i√3 ?",["2","4","1 + √3","√3"],0,"√(1² + (√3)²) = √4 = 2."),
+ L("La forme exponentielle",`<p>Tout z ≠ 0 s'écrit <b>z = r e^(iθ) = r(cos θ + i sin θ)</b> avec r = |z| et θ un <b>argument</b>.</p><ol><li>r = √(a² + b²).</li><li>cos θ = a/r et sin θ = b/r : on reconnaît un angle connu (π/6, π/4, π/3…).</li><li><b>Argument principal</b> : celui de ]−π, π]. Place le point pour choisir le bon quadrant.</li></ol><p>Exemples : 1 + i√3 = 2e^(iπ/3) ; √3 − i = 2e^(−iπ/6) ; −2 − 2i = 2√2 e^(−3iπ/4).</p>`,{fig:"c-complexes"}),
+ Q("Argument principal de −2 − 2i ?",["−3π/4","π/4","3π/4","−π/4"],0,"cos θ = −√2/2 et sin θ = −√2/2 : point en bas à gauche, θ = −3π/4."),
+ L("Calculer en forme exponentielle",`<ul><li>Produit : r e^(iθ) × r′ e^(iθ′) = rr′ e^(i(θ + θ′)) : on <b>multiplie les modules</b> et on <b>ajoute les arguments</b>.</li><li>Quotient : on divise les modules et on <b>soustrait</b> les arguments.</li><li>Puissance : (r e^(iθ))ⁿ = rⁿ e^(inθ).</li></ul><p>Piège : −2e^(iπ/7) n'a pas pour argument π/7. Comme −1 = e^(iπ), c'est 2e^(i(π/7 + π)) = 2e^(i8π/7), d'argument principal 8π/7 − 2π = −6π/7.</p>`),
+ Q("z₁ = 2e^(iπ/4) et z₂ = e^(−iπ/6). Que vaut z₁/z₂ ?",["2e^(i5π/12)","2e^(iπ/12)","2e^(−i5π/12)","e^(i5π/12)"],0,"On soustrait les arguments : π/4 − (−π/6) = 3π/12 + 2π/12 = 5π/12 (TD 3, ex. 7)."),
+ P("TD 3, exercice 4, sur papier","Forme polaire de : 2 − 2i√3 ; −2 − 2i ; 3 − 3i ; −√6 − i√2 ; −√2 − i√6 ; −5i.","<ul><li>2 − 2i√3 = 4e^(−iπ/3).</li><li>−2 − 2i = 2√2 e^(−3iπ/4).</li><li>3 − 3i = 3√2 e^(−iπ/4).</li><li>−√6 − i√2 = 2√2 e^(−5iπ/6) (cos = −√3/2, sin = −1/2).</li><li>−√2 − i√6 = 2√2 e^(−2iπ/3) (cos = −1/2, sin = −√3/2).</li><li>−5i = 5e^(−iπ/2).</li></ul>",["Le module calculé d'abord","cos θ et sin θ écrits","Le quadrant vérifié sur un dessin","L'argument dans ]−π, π]"],12),
+ K("Forme exponentielle de z = a + ib ?","r = √(a² + b²), cos θ = a/r, sin θ = b/r, et z = r e^(iθ). Argument principal dans ]−π, π]."),
+ K("Produit et quotient en forme exponentielle ?","Modules multipliés (divisés), arguments ajoutés (soustraits). −1 = e^(iπ).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"c2-cx-euler",ex:"cc2",t:"Moivre et Euler",min:12,goal:"Calculer cos 3θ, linéariser cos³θ, et trouver cos(5π/12) (TD 3, ex. 7 à 9).",steps:[
+ Q("Que vaut (e^(iθ))³ ?",["e^(3iθ)","3e^(iθ)","e^(iθ³)","e^(iθ) + 3"],0,"On multiplie l'argument par 3 : c'est la formule de Moivre."),
+ L("Moivre",`<div class="formula">(cos θ + i sin θ)ⁿ = cos(nθ) + i sin(nθ)</div><p>On développe le membre de gauche avec le binôme, puis on identifie parties réelles et imaginaires.</p><p>Pour n = 3 : (c + is)³ = c³ + 3ic²s − 3cs² − is³. Partie réelle : cos 3θ = c³ − 3cs² = <b>4cos³θ − 3cos θ</b> (avec s² = 1 − c²). Partie imaginaire : sin 3θ = 3c²s − s³ = <b>3 sin θ − 4 sin³θ</b>.</p>`),
+ Q("Avec Moivre, cos 3θ = ?",["4cos³θ − 3cos θ","3cos θ − 4cos³θ","cos³θ − 3cos θ","3cos θ"],0,"Partie réelle de (cos θ + i sin θ)³, puis sin²θ = 1 − cos²θ."),
+ L("Euler : linéariser",`<div class="formula">cos θ = (e^(iθ) + e^(−iθ))/2        sin θ = (e^(iθ) − e^(−iθ))/(2i)</div><p>Pour linéariser cos³θ : (e^(iθ) + e^(−iθ))³/8 = (e^(3iθ) + 3e^(iθ) + 3e^(−iθ) + e^(−3iθ))/8 = (2cos 3θ + 6cos θ)/8.</p><p>Donc <b>cos³θ = (cos 3θ + 3cos θ)/4</b>, et de même <b>sin³θ = (3 sin θ − sin 3θ)/4</b>.</p>`),
+ Q("cos³θ = ?",["(cos 3θ + 3cos θ)/4","cos 3θ","(3cos θ − cos 3θ)/4","3cos θ/4"],0,"On regroupe e^(3iθ) + e^(−3iθ) = 2cos 3θ et e^(iθ) + e^(−iθ) = 2cos θ."),
+ S("TD 3, ex. 7 : cos(5π/12)","z₁ = √2(1 + i), z₂ = (√3 − i)/2.",[
+  {w:"z₁ = 2e^(iπ/4), z₂ = e^(−iπ/6), donc z₁/z₂ = 2e^(i5π/12) = 2cos(5π/12) + 2i sin(5π/12).",why:"Forme exponentielle."},
+  {w:"Algébriquement : z₁/z₂ = 2√2(1 + i)/(√3 − i) = 2√2(1 + i)(√3 + i)/4 = (√2/2)((√3 − 1) + i(√3 + 1)).",why:"On multiplie par le conjugué √3 + i."},
+  {w:"On identifie : 2cos(5π/12) = (√2/2)(√3 − 1), donc cos(5π/12) = (√6 − √2)/4, et sin(5π/12) = (√6 + √2)/4.",why:"Parties réelles et imaginaires de deux écritures du même nombre."}]),
+ K("Moivre ?","(cos θ + i sin θ)ⁿ = cos(nθ) + i sin(nθ) ; on développe et on identifie : cos 3θ = 4cos³θ − 3cos θ."),
+ K("Euler ?","cos θ = (e^(iθ) + e^(−iθ))/2, sin θ = (e^(iθ) − e^(−iθ))/(2i) : pour linéariser cos³θ = (cos 3θ + 3cos θ)/4.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"c2-cx-eq",ex:"cc2",t:"Racines carrées et équations du second degré",min:14,goal:"Trouver les racines carrées d'un complexe et résoudre az² + bz + c = 0 (TD 3, ex. 10 et 11).",steps:[
+ Q("Quelles sont les racines carrées de −4 ?",["2i et −2i","2 et −2","√−4","Il n'y en a pas"],0,"(2i)² = 4i² = −4, et (−2i)² aussi."),
+ L("Racine carrée d'un complexe",`<p>On cherche δ = x + iy tel que δ² = w = A + iB. Trois équations :</p><div class="formula">x² − y² = A        2xy = B        x² + y² = |w|</div><p>La 1ʳᵉ et la 3ᵉ donnent x² et y² ; le <b>signe de 2xy = B</b> dit si x et y ont le même signe. Il y a toujours deux racines opposées, ±δ.</p><p>Exemple : w = 5 + 12i, |w| = 13. x² = (13 + 5)/2 = 9, y² = (13 − 5)/2 = 4, xy &gt; 0 : δ = ±(3 + 2i).</p>`),
+ Q("Racines carrées de 8 − 6i ?",["±(3 − i)","±(3 + i)","±(1 − 3i)","±(2 − 2i)"],0,"|w| = 10 : x² = 9, y² = 1, et 2xy = −6 &lt; 0, donc x et y de signes contraires."),
+ L("Équation du second degré dans ℂ",`<p>Pour az² + bz + c = 0 (a ≠ 0), Δ = b² − 4ac. Si δ est une racine carrée de Δ :</p><div class="formula">z = (−b + δ)/(2a)   ou   z = (−b − δ)/(2a)</div><p>Si Δ est un réel négatif, δ = i√(−Δ). Exemple : z² + z + 1 = 0, Δ = −3, δ = i√3, z = (−1 ± i√3)/2.</p><p>Équation bicarrée z⁴ + 2z² + 4 = 0 : on pose Z = z², on résout en Z, puis on prend les racines carrées.</p>`),
+ Q("Solutions de z² + z + 1 = 0 ?",["(−1 ± i√3)/2","(1 ± i√3)/2","−1 et 1","Aucune"],0,"Δ = 1 − 4 = −3, δ = i√3."),
+ P("TD 3, ex. 10 et 11, sur papier","Racines carrées de i et de 46 − 14i√3 ; résoudre z⁴ + 2z² + 4 = 0.","<ul><li>i : |i| = 1, x² = y² = 1/2, xy &gt; 0 : ±(√2/2)(1 + i).</li><li>46 − 14i√3 : |w| = √(46² + 3 × 14²) = √2704 = 52, x² = (52 + 46)/2 = 49, y² = (52 − 46)/2 = 3, et 2xy = −14√3 &lt; 0 : ±(7 − i√3). Vérification : (7 − i√3)² = 49 − 14i√3 − 3 = 46 − 14i√3.</li><li>Z = z² : Z = −1 ± i√3 = 2e^(±2iπ/3), donc z = ±√2 e^(±iπ/3) : quatre solutions ±(√2/2)(1 ± i√3).</li></ul>",["Les trois équations x² − y², 2xy, x² + y²","Le signe de xy utilisé","Vérification en élevant au carré","Les quatre solutions de l'équation bicarrée"],14),
+ K("Racine carrée de w = A + iB ?","δ = x + iy avec x² − y² = A, x² + y² = |w|, et le signe de 2xy = B. Deux racines : ±δ."),
+ K("az² + bz + c = 0 dans ℂ ?","Δ = b² − 4ac, δ² = Δ, z = (−b ± δ)/(2a). Toujours des solutions dans ℂ.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"c2-cx-racn",ex:"cc2",t:"Racines n-ièmes",min:10,p:2,goal:"Résoudre zⁿ = w en forme exponentielle (TD 3, ex. 12).",steps:[
+ Q("Combien de solutions a z³ = 1 dans ℂ ?",["3","1","2","une infinité"],0,"1, e^(2iπ/3) et e^(−2iπ/3) : trois solutions."),
+ L("La méthode",`<p>On écrit w = R e^(iφ) et z = r e^(iθ). Alors zⁿ = rⁿ e^(inθ) = R e^(iφ) donne :</p><div class="formula">r = R^(1/n)        θ = (φ + 2kπ)/n,  k = 0, 1, …, n − 1</div><p>Il y a exactement <b>n solutions</b>, sur un cercle, espacées de 2π/n.</p><p>Exemple : z⁶ = −27 = 27e^(iπ). r = 27^(1/6) = √3, θ = π/6 + kπ/3 : six solutions.</p>`,{fig:"c-complexes"}),
+ Q("z³ = (−1 + i)/4. Quel est le module des solutions ?",["1/√2","√2/4","1/4","1"],0,"|(−1 + i)/4| = √2/4 = 2^(−3/2), dont la racine cubique est 2^(−1/2) = 1/√2."),
+ K("Résoudre zⁿ = R e^(iφ) ?","z = R^(1/n) e^(i(φ + 2kπ)/n), k = 0, …, n − 1 : n solutions."),
+ K("Équation en z³ (z⁶ − iz³ − 1 − i = 0) ?","Poser Z = z³, résoudre le second degré en Z, puis les racines cubiques de chaque Z.")]}
 ];
 })();
 
@@ -7145,6 +7281,24 @@ pf:{
   "match … with":`<p>match, c'est une liste de cas essayés <b>dans l'ordre</b>, de haut en bas ; on s'arrête au premier qui convient.</p><p>Exemple : match n with 0 -&gt; "zéro" | 1 -&gt; "un" | _ -&gt; "beaucoup". Pour n = 1, on obtient "un". Pour n = 7, aucun des premiers cas ne convient, et _ attrape tout le reste : "beaucoup".</p>`}
 },
 calc:{
+ "c2-ed2":{
+  "Les trois cas":`<p>On cherche des fonctions dont la dérivée seconde, la dérivée et elles-mêmes s'annulent ensemble. Les exponentielles e^(rx) marchent, à condition que r vérifie une équation du second degré.</p><p>Selon que cette équation a deux racines, une seule, ou des racines complexes, on obtient trois formes de solutions.</p>`,
+  "Deux conditions initiales":`<p>La solution générale contient deux constantes : il faut deux informations pour les trouver, la valeur de départ y(0) et la pente de départ y′(0).</p><p>C'est comme lancer une balle : il faut savoir d'où elle part et à quelle vitesse.</p>`},
+ "c2-ed2-sm":{
+  "Le principe et les formes":`<p>Avec un second membre, on fait comme à l'ordre 1 : on ajoute à la solution « sans second membre » une solution qui fabrique le second membre.</p><p>On la cherche de la même famille que lui : un polynôme pour un polynôme, une exponentielle pour une exponentielle.</p>`},
+ "c2-cx-alg":{
+  "Calculer avec i":`<p>Un nombre complexe, c'est un point du plan : a + ib, c'est le point (a, b). On calcule comme d'habitude, avec une seule règle en plus : i × i = −1.</p><p>Pour diviser, on fait disparaître i du dénominateur en multipliant par son « miroir », le conjugué.</p>`},
+ "c2-cx-exp":{
+  "La forme exponentielle":`<p>Au lieu de repérer le point par ses coordonnées (a, b), on donne sa distance à l'origine (le module) et son angle avec l'axe horizontal (l'argument).</p><p>C'est comme dire « 2 km vers le nord-est » au lieu de « 1,4 km à l'est et 1,4 km au nord ».</p>`,
+  "Calculer en forme exponentielle":`<p>En forme exponentielle, multiplier devient très simple : on multiplie les distances et on ajoute les angles.</p><p>Diviser : on divise les distances et on retranche les angles.</p>`},
+ "c2-cx-euler":{
+  "Moivre":`<p>Élever e^(iθ) à la puissance 3, c'est tourner trois fois de θ, donc tourner de 3θ.</p><p>En développant l'autre écriture, (cos θ + i sin θ)³, on obtient une formule pour cos 3θ.</p>`,
+  "Euler : linéariser":`<p>Les formules d'Euler expriment cos et sin avec des exponentielles. Ça permet de transformer une puissance comme cos³θ en une somme de cosinus simples, plus facile à intégrer.</p>`},
+ "c2-cx-eq":{
+  "Racine carrée d'un complexe":`<p>Chercher une racine carrée de w, c'est chercher un nombre δ tel que δ × δ = w. On l'écrit x + iy, et on obtient deux équations en x et y, plus une troisième avec le module.</p>`,
+  "Équation du second degré dans ℂ":`<p>C'est la même formule qu'au lycée, mais elle marche toujours : quand Δ est négatif, on prend une racine carrée complexe de Δ au lieu de dire « pas de solution ».</p>`},
+ "c2-cx-racn":{
+  "La méthode":`<p>Les solutions de zⁿ = w sont réparties régulièrement sur un cercle, comme les sommets d'un polygone régulier.</p><p>On trouve la taille du cercle avec le module, et les angles en partageant le tour en n parts égales.</p>`},
  "c-domaine":{
   "Ce qui est interdit":`<p>Le domaine, ce sont les x pour lesquels on <b>peut calculer</b> f(x). On cherche ce qui est interdit :</p><ul class="nt"><li>diviser par 0 ;</li><li>prendre le ln d'un nombre négatif ou nul ;</li><li>prendre la racine d'un nombre négatif.</li></ul><p>Exemple : f(x) = 1/(x − 3). On ne peut pas avoir x − 3 = 0, donc x ≠ 3 : D<sub>f</sub> = ℝ ∖ {3}. Autre exemple : ln(x − 1) demande x − 1 &gt; 0, donc x &gt; 1.</p>`},
  "c-limites":{
@@ -7627,7 +7781,7 @@ function subject(sid){
   const S=SUBJ[sid],st=ST[sid],P=plan(),t0=today(),e=exam(S),Ls=lesOf(sid),d=lessonsDone(sid);
   const nextL=Ls.find(L=>!isDone(sid,S.TB["L-"+L.id]));
   const inProg=S.ORDER.filter(c=>!c.out),red=S.ORDER.filter(c=>st.review[c.id]).length,known=inProg.filter(c=>st.known[c.id]).length,tdk=S.td.filter(x=>st.td[x.id]).length,c="s-"+sid;
-  let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`CC <b>${examLine(S)}</b> (${jx(S)}), ${e.place}, ${e.dur}. Documents : ${S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${S.prog}</p>`;
+  let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`CC <b>${examLine(S)}</b> (${jx(S)}), ${e.place}, ${e.dur}. Documents : ${e.docs||S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${e.prog||S.prog}</p>`;
   h+=`<ul class="swatches lead1">`
    +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(S.TB["L-"+nextL.id].min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
    +sw({href:`#/${sid}/cartes`,c,tile:ico("i-cards"),kicker:"Se tester",name:"Cartes des fiches",sub:`${known} sur ${inProg.length} sues${red?`, <span class="r">${red} en rouge</span>`:""}`})
@@ -7774,10 +7928,12 @@ const measured=sid=>(hub.vitesse&&hub.vitesse!=="auto")?"manuel":((SPEED.by[sid]
 /* leçons : × vitesse ; annales et séries d'exercices : la moitié du surplus ; tâches courtes (quiz, veille, feuille A4) : telles quelles */
 function estMin(sid,t){const F=factor(sid);return Math.min(105,Math.round(t.base*(t.lesson?F:t.base>=40?1+(F-1)/2:1)));}
 SIDS.forEach(id=>{const S=SUBJ[id];
-  const les=(LES[id]||[]).map(L=>({id:"L-"+L.id,lesson:L.id,t:L.t,base:L.min,p:L.p||1,why:L.goal,late:!!L.late}));
+  const les=(LES[id]||[]).map(L=>Object.assign({id:"L-"+L.id,lesson:L.id,t:L.t,base:L.min,p:L.p||1,why:L.goal,late:!!L.late},L.ex?{ex:L.ex}:{}));
   const prac=(S.tasks||[]).filter(t=>!t.items).map(t=>Object.assign(t,{base:t.base||t.min}));
   S.tasks=les.filter(t=>!t.late).concat(prac.filter(t=>!t.last),les.filter(t=>t.late),prac.filter(t=>t.last));
   S.tasks.forEach(t=>{delete t.min;Object.defineProperty(t,"min",{get(){return estMin(id,t);},enumerable:true,configurable:true});});});
+/* matières à plusieurs épreuves : une fiche ou un exercice prévu pour une autre épreuve est « hors programme » pour l'épreuve courante */
+SIDS.forEach(id=>{const S=SUBJ[id];if(!S.exams)return;const dyn=x=>{if(x._dyn)return;Object.defineProperty(x,"_dyn",{value:1});const st=x.out;Object.defineProperty(x,"out",{get(){if(inScope(S,x))return false;const e=examsOf(S).find(e=>e.id===exId(S,x));return st||("Pour le "+((e&&e.label)||"prochain contrôle")+", pas pour l'épreuve qui vient.");},configurable:true,enumerable:true});};(S.concepts||[]).forEach(dyn);(S.td||[]).forEach(dyn);});
 SIDS.forEach(id=>{const S=SUBJ[id];S.id=id;S.BY={};S.concepts.forEach(c=>S.BY[c.id]=c);S.ORDER=S.concepts.slice().sort((a,b)=>a.ch-b.ch);S.TB={};S.tasks.forEach((t,i)=>{t.p=t.p||2;t.i=i;S.TB[t.id]=t;});S.quiz=S.quiz||[];S.td=S.td||[];S.ann=S.ann||[];S.pages=S.pages||[];});
 
 /* ---------- dates ---------- */
@@ -8098,7 +8254,7 @@ function subjHome(sid){
   if(bon.length)body+=sec(k++,"Si tu as encore du temps",`<ol class="todo">${bon.map(id=>taskHTML(sid,S.TB[id],false)).join("")}</ol>`);
   if(done.length)body+=sec(k++,"Déjà fait",`<details class="day"><summary><b>${done.length} étape(s) terminée(s)</b><span>clique pour voir</span></summary><ol class="todo" style="padding:0 12px 12px">${done.map(t=>taskHTML(sid,t,false)).join("")}</ol></details>`);
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${S.name}</h1><span class="muted">${S.code}</span></div>
-   <div class="examcard" style="--sc:${S.color}"><div><b>CC ${dayName(e.day,false)} à ${e.start.replace(":","h")}</b> (${jx(S)}), ${e.place}, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}</div><div class="muted">${S.prog}</div><div class="muted">Documents : ${S.docs}. Coef ${S.coef}, ce CC compte pour ${Math.round(S.share*100)} % de la note.</div></div>
+   <div class="examcard" style="--sc:${S.color}"><div><b>CC ${dayName(e.day,false)} à ${e.start.replace(":","h")}</b> (${jx(S)}), ${e.place}, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}</div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ce CC compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
    ${body}</div>`;
   bindTicks($("#main"),()=>subjHome(sid));fixLinks($("#main"),sid);
 }
