@@ -2630,6 +2630,189 @@ window.REDAC=`
 
 </script>
 <script>
+/* Géométrie, CC2 du vendredi 11 décembre (programme pas encore annoncé) : la suite du cours après le CC1,
+   c'est-à-dire les chapitres 4 (Pythagore, trigonométrie, Al-Kashi, rotations, produit scalaire)
+   et 5 (cercles, angle au centre, angle inscrit) du poly. Chapitres 5 et 6 du site. */
+(function(){
+const {V,D,R,d,dpx,fl,fa,fr,ang,absang,mid,proj,rot,unit,perp,add,sub,mul,PI}=G;
+const an=s=>`<span class="ang">${s}</span>`, hl=s=>`<span class="hl">${s}</span>`, vc=s=>`<span class="vec">${s}</span>`;
+const C=window.CONCEPTS;
+const push=(ch,o)=>{o.ch=ch;o.ex="cc2";C.push(o);};
+const tri=(A,B,Cc,cl,fill)=>(fill?D.poly([A,B,Cc],fill):"")+D.pline([A,B,Cc,A],cl||"l-ink");
+const mod2pi=x=>{x=x%(2*PI);if(x>PI)x-=2*PI;if(x<=-PI)x+=2*PI;return x;};
+const modpi=x=>{x=x%PI;if(x>PI/2)x-=PI;if(x<=-PI/2)x+=PI;return x;};
+const onCircle=(O,r)=>(p)=>add(O,mul(unit(sub(p,O)),r));
+const sq=x=>fr(x*x);
+
+/* ---------------- Translations et homothéties (§3.3) ---------------- */
+push(5,{id:"g-homothetie",type:"def",ref:"Définition 3.3.1, théorèmes 3.3.2 et 3.3.4",t:"Translations et homothéties",short:"Translations, homothéties",cc:"définition de la translation demandée en 2025 (1 point)",
+ plain:`La translation de vecteur ${vc("u")} envoie M sur le point M′ tel que ${vc("MM′")} = ${vc("u")}. L'homothétie de centre K et de rapport λ envoie M sur M′ tel que ${vc("KM′")} = λ${vc("KM")} : elle ${hl("multiplie les distances par |λ|")} et envoie chaque droite sur une droite parallèle. Fais varier λ.`,
+ fig:()=>({w:560,h:300,P:{K:[90,200],A:[230,120],B:[250,230]},S:{l:1.7},labels:{K:"K"},
+   sliders:[{k:"l",label:"Rapport λ :",min:-2,max:2.4,step:0.05,fmt:v=>fr(v)}],
+   draw:(P,S)=>{const h=X=>add(P.K,mul(sub(X,P.K),S.l)),A2=h(P.A),B2=h(P.B);
+     return D.line(P.K,P.A,"l-cons")+D.line(P.K,P.B,"l-cons")+D.seg(P.A,P.B,"l-ink")+D.seg(A2,B2,"l-cob")+D.pt(A2,"A′",P.K,"p-cob","t-cob")+D.pt(B2,"B′",P.K,"p-cob","t-cob");},
+   info:(P,S)=>{const h=X=>add(P.K,mul(sub(X,P.K),S.l)),A2=h(P.A),B2=h(P.B);return R.m([["AB",fl(P.A,P.B)],["A′B′",fl(A2,B2)],["|λ| · AB",fr(Math.abs(S.l)*d(P.A,P.B))]])+R.v("A′B′ = |λ| AB et (A′B′) est parallèle à (AB). Avec λ &lt; 0, l'image passe de l'autre côté de K.","ok");},
+   hint:"Change λ : positif, négatif, puis −1 (c'est la symétrie centrale)."}),
+ formal:`<p><b>Définition 3.3.1.</b> La translation de vecteur ${vc("u")} est l'application t : P → P où t(M) est l'unique point M′ tel que ${vc("MM′")} = ${vc("u")}. Si ${vc("u")} = ${vc("AB")}, ABM′M est un parallélogramme.</p><p><b>Théorème 3.3.2.</b> Une translation préserve les distances, envoie une droite sur une droite parallèle et préserve les angles orientés.</p><p><b>Homothétie</b> de centre K et de rapport λ : h(M) est le point M′ tel que ${vc("KM′")} = λ${vc("KM")}.</p><p><b>Théorème 3.3.4.</b> Elle multiplie les distances par |λ| ; si λ ≠ 0, elle envoie une droite sur une droite parallèle et préserve les angles orientés. (Pour λ &gt; 0, c'est une reformulation de Thalès.)</p>`,
+ use:`<p>Deux homothéties de même centre K se composent en une homothétie de centre K (rapports multipliés), et l'ordre ne compte pas. C'est l'outil de l'exercice 2 du CC2 2025.</p>`,
+ trap:`L'image d'une droite par une homothétie est parallèle à elle, pas forcément égale (sauf si la droite passe par le centre).`,
+ q:"Définition de la translation de vecteur u ?",a:"L'application t : P → P qui à M associe l'unique point M′ tel que MM′ (vecteur) = u.",rel:["g-rotation"]});
+
+/* ---------------- Pythagore ---------------- */
+push(5,{id:"g-pythagore",type:"th",ref:"Théorème 4.1.1",t:"Théorème de Pythagore et sa réciproque",short:"Pythagore",cc:"5 points en 2024 (les deux démonstrations)",
+ plain:`ABC est rectangle en A ${hl("si et seulement si")} BC² = AB² + AC². Les deux sens se démontrent : le sens direct avec des triangles semblables, la réciproque avec un triangle isométrique. Déplace A : l'égalité n'est vraie que pour un angle droit.`,
+ fig:()=>({w:560,h:300,P:{A:[200,90],B:[90,240],C:[430,240]},
+   draw:(P)=>{const H=proj(P.A,P.B,P.C),right=Math.abs(absang(P.B,P.A,P.C)-PI/2)<0.02;
+     return tri(P.A,P.B,P.C,"l-ink",right?"f-ok":"f-cob")+D.seg(P.A,H,"l-cons")+(right?D.right(P.B,P.A,P.C,12,"l-ok"):"")+D.pt(H,"H",P.A,"p-fix");},
+   info:(P)=>{const a=d(P.B,P.C),b=d(P.A,P.C),c=d(P.A,P.B),right=Math.abs(absang(P.B,P.A,P.C)-PI/2)<0.02;
+     return R.m([["|Â|",fa(absang(P.B,P.A,P.C))],["BC²",sq(a)],["AB² + AC²",fr(b*b+c*c)]])+R.v(right?"Angle droit en A : BC² = AB² + AC².":"Pas d'angle droit en A : BC² ≠ AB² + AC². Si l'angle en A est obtus, BC² est plus grand ; s'il est aigu, plus petit.",right?"ok":"");},
+   hint:"Déplace A jusqu'à obtenir un angle droit."}),
+ formal:`<p><b>Théorème 4.1.1.</b> Soit ABC un triangle du plan. Les deux assertions suivantes sont équivalentes : le triangle ABC est rectangle en A ; BC² = AB² + AC².</p><p><b>Sens direct.</b> H est le pied de la hauteur issue de A ; H ∈ [BC] car les angles en B et C sont aigus, donc BH + HC = BC. Les triangles ACB et HAB sont semblables (un angle droit, l'angle en B commun), donc BC/BA = BA/BH, d'où AB² = BC · BH. De même AC² = BC · HC. Donc AB² + AC² = BC(BH + HC) = BC².</p><p><b>Réciproque.</b> Soit C′ sur la perpendiculaire à (AB) en A avec AC′ = AC. Par le sens direct dans ABC′ : BC′² = AB² + AC′² = AB² + AC² = BC², donc BC′ = BC. Les triangles ABC et ABC′ ont leurs trois côtés égaux : ils sont isométriques, donc |BAC| = |BAC′| = π/2.</p>`,
+ use:`<p>Au CC 2024, chaque sens valait 2,5 points : apprends les deux preuves (voir la leçon). Pour un calcul, écris toujours « ABC est rectangle en A, donc d'après le théorème de Pythagore… ».</p>`,
+ trap:`L'hypoténuse est le côté opposé à l'angle droit : BC² = AB² + AC² pour un angle droit en A, pas en B.`,
+ q:"Sur quoi repose la preuve du sens direct ?",a:"Sur les triangles semblables ACB et HAB (H pied de la hauteur issue de A) : AB² = BC · BH et AC² = BC · HC, puis on additionne.",rel:["g-trigo","g-alkashi"]});
+
+/* ---------------- Trigonométrie ---------------- */
+push(5,{id:"g-trigo",type:"def",ref:"Définition 4.2.1, propositions 4.2.2 et 4.2.3",t:"Cosinus, sinus et tangente",short:"cos, sin, tan",
+ plain:`Dans un triangle rectangle, cos = ${hl("adjacent / hypoténuse")}, sin = ${hl("opposé / hypoténuse")}, tan = opposé / adjacent (CAH-SOH-TOA). Ces rapports ne dépendent que de l'angle. Déplace B ou C.`,
+ fig:()=>({w:560,h:300,P:{A:[110,240],B:[430,240],C:[110,80]},
+   con:{B:(p,P)=>V(Math.max(P.A.x+40,p.x),P.A.y),C:(p,P)=>V(P.A.x,Math.min(P.A.y-40,p.y))},
+   draw:(P)=>tri(P.A,P.B,P.C,"l-ink","f-cob")+D.right(P.B,P.A,P.C,12,"l-thin")+D.marks(P.A,P.B,P.C,28,1,"l-amb")+D.seg(P.A,P.B,"l-amb")+D.seg(P.A,P.C,"l-cob"),
+   info:(P)=>{const AB=d(P.A,P.B),AC=d(P.A,P.C),BC=d(P.B,P.C),x=absang(P.A,P.B,P.C);
+     return R.m([["|B̂|",fa(x)],["cos B̂ = AB/BC",fr(AB/BC,3)],["sin B̂ = AC/BC",fr(AC/BC,3)],["tan B̂ = AC/AB",fr(AC/AB,3)],["cos² + sin²",fr((AB/BC)**2+(AC/BC)**2,3)]])+R.v("cos² B̂ + sin² B̂ = 1 : c'est le théorème de Pythagore divisé par BC².","ok");},
+   hint:"Allonge ou raccourcis les côtés : le rapport ne change que si l'angle change."}),
+ formal:`<p><b>Définition 4.2.1.</b> ABC rectangle en A : cos(|B̂|) = AB/BC, sin(|B̂|) = AC/BC, tan(|B̂|) = AC/AB.</p><p><b>Proposition 4.2.3.</b> Pour x ∈ ]0, π/2[ : cos²x + sin²x = 1 ; cos(π/2 − x) = sin x ; sin(π/2 − x) = cos x.</p><p>On prolonge ensuite cos et sin à ℝ (cercle trigonométrique) : cos(−x) = cos x, sin(−x) = −sin x, 2π-périodiques.</p>`,
+ use:`<p>Valeurs à connaître : cos(π/6) = √3/2, cos(π/4) = √2/2, cos(π/3) = 1/2 (et sin dans l'autre sens).</p>`,
+ trap:`Le cosinus de B̂ utilise le côté adjacent à B (AB), pas celui adjacent à C.`,
+ q:"Pourquoi cos²x + sin²x = 1 ?",a:"(AB/BC)² + (AC/BC)² = (AB² + AC²)/BC² = 1, par Pythagore.",rel:["g-pythagore","g-aire"]});
+
+/* ---------------- Aire ---------------- */
+push(5,{id:"g-aire",type:"th",ref:"Théorème 4.2.6",t:"Théorème de l'aire : ½ ab sin Ĉ",short:"Aire = ½ ab sin Ĉ",cc:"2 points en 2025 (la démonstration)",
+ plain:`L'aire d'un triangle, c'est ${hl("la moitié du produit de deux côtés par le sinus de l'angle entre eux")}. La preuve : la hauteur vaut AH = AC sin Ĉ.`,
+ fig:()=>({w:560,h:300,P:{A:[250,80],B:[90,240],C:[460,240]},
+   draw:(P)=>{const H=proj(P.A,P.B,P.C);return tri(P.A,P.B,P.C,"l-ink","f-cob")+D.seg(P.A,H,"l-amb")+D.right(P.A,H,P.C,10,"l-thin")+D.marks(P.A,P.C,P.B,30,1,"l-cob")+D.pt(H,"H",P.A,"p-fix");},
+   info:(P)=>{const H=proj(P.A,P.B,P.C),a=d(P.B,P.C),b=d(P.A,P.C),Cc=absang(P.A,P.C,P.B);
+     return R.m([["AH",fl(P.A,H)],["AC · sin Ĉ",fr(b*Math.sin(Cc))],["½ · BC · AH",fr(a*d(P.A,H)/2)],["½ · ab · sin Ĉ",fr(a*b*Math.sin(Cc)/2)]])+R.v("Les deux calculs de l'aire donnent le même nombre.","ok");},
+   hint:"Déplace les sommets : AH et AC · sin Ĉ restent égaux."}),
+ formal:`<p><b>Théorème 4.2.6.</b> Avec a = BC, b = AC, c = AB : Aire(ABC) = ½ ab sin(|Ĉ|) = ½ ac sin(|B̂|) = ½ bc sin(|Â|).</p><p><b>Démonstration.</b> Par symétrie, il suffit de traiter la première égalité. Soit H le pied de la hauteur issue de A. Par définition, Aire(ABC) = ½ AH · BC. Or AH = AC sin(|Ĉ|) (triangle AHC rectangle en H). D'où Aire(ABC) = ½ ab sin(|Ĉ|).</p>`,
+ use:`<p>Utile pour une bissectrice : l'aire de ABC est la somme des aires des deux petits triangles (CC2 2025, ex. 3).</p>`,
+ trap:`Si l'angle en C est obtus, H est hors de [BC] mais AH = AC sin(|Ĉ|) reste vrai (sin(π − x) = sin x).`,
+ q:"Démontre Aire(ABC) = ½ ab sin Ĉ en deux lignes.",a:"H pied de la hauteur issue de A : Aire = ½ AH · BC, et AH = AC sin Ĉ dans le triangle AHC rectangle en H.",rel:["g-trigo","g-alkashi"]});
+
+/* ---------------- Al-Kashi ---------------- */
+push(5,{id:"g-alkashi",type:"th",ref:"Théorème 4.3.1",t:"Théorème d'Al-Kashi (Pythagore généralisé)",short:"Al-Kashi",cc:"énoncé demandé en 2025 (1 point)",
+ plain:`Pour n'importe quel triangle : a² = b² + c² − 2bc cos Â. Quand Â est droit, ${hl("cos Â = 0")} et on retrouve Pythagore. Déforme le triangle.`,
+ fig:()=>({w:560,h:300,P:{A:[230,90],B:[90,240],C:[450,230]},
+   draw:(P)=>tri(P.A,P.B,P.C,"l-ink","f-cob")+D.marks(P.B,P.A,P.C,26,1,"l-amb"),
+   info:(P)=>{const a=d(P.B,P.C),b=d(P.A,P.C),c=d(P.A,P.B),A=absang(P.B,P.A,P.C);
+     return R.m([["|Â|",fa(A)],["a² = BC²",sq(a)],["b² + c² − 2bc cos Â",fr(b*b+c*c-2*b*c*Math.cos(A))],["cos Â = (b² + c² − a²)/(2bc)",fr((b*b+c*c-a*a)/(2*b*c),3)]])+R.v("Toujours égal : c'est Al-Kashi. Avec Â = π/2, c'est Pythagore.","ok");},
+   hint:"Essaie un angle en A aigu, droit, puis obtus."}),
+ formal:`<p><b>Théorème 4.3.1.</b> Pour tout triangle ABC : BC² = AB² + AC² − 2 AC · AB cos(BAC). Avec a = BC, b = AC, c = AB : <b>a² = b² + c² − 2bc cos Â</b>, soit cos Â = (b² + c² − a²)/(2bc).</p><p>Avec le produit scalaire : BC² = AB² + AC² − 2⟨${vc("AB")}, ${vc("AC")}⟩.</p><p><b>Idée de la preuve.</b> H pied de la hauteur issue de B, angle en C aigu. On calcule CH² = b² + AH² − 2bc cos Â (dans les deux cas Â aigu ou obtus), puis Pythagore dans BHC et BHA.</p>`,
+ use:`<p>Trois côtés connus → un angle (cos Â). Deux côtés et l'angle entre eux → le troisième côté.</p>`,
+ trap:`Le cosinus est celui de l'angle opposé au côté calculé (a est opposé à Â).`,
+ q:"Énonce Al-Kashi.",a:"Dans un triangle ABC, BC² = AB² + AC² − 2 AB · AC cos(BAC), soit a² = b² + c² − 2bc cos Â.",rel:["g-pythagore","g-scalaire"]});
+
+/* ---------------- Rotations ---------------- */
+push(5,{id:"g-rotation",type:"def",ref:"Définition 4.5.1, théorème 4.5.2",t:"Rotations",short:"Rotations",
+ plain:`La rotation de centre Z et d'angle α envoie M sur le point M′ ${hl("à la même distance de Z")}, avec ${an("MZM′")} = α. Elle conserve les distances et les angles orientés. Fais varier l'angle.`,
+ fig:()=>({w:560,h:300,P:{Z:[270,170],M:[400,130],N:[380,240]},S:{t:1.2},labels:{Z:"Z"},
+   sliders:[{k:"t",label:"Angle α :",min:-3.1,max:3.1,step:0.01,fmt:v=>G.piTxt(v)}],
+   draw:(P,S)=>{const M2=rot(P.M,P.Z,S.t),N2=rot(P.N,P.Z,S.t);
+     return D.seg(P.Z,P.M,"l-cons")+D.seg(P.Z,M2,"l-cons")+D.arc(P.M,P.Z,M2,34,"l-amb",true,"amb")+D.seg(P.M,P.N,"l-ink")+D.seg(M2,N2,"l-cob")+D.pt(M2,"M′",P.Z,"p-cob","t-cob")+D.pt(N2,"N′",P.Z,"p-cob","t-cob");},
+   info:(P,S)=>{const M2=rot(P.M,P.Z,S.t),N2=rot(P.N,P.Z,S.t);return R.m([["ZM",fl(P.Z,P.M)],["ZM′",fl(P.Z,M2)],["MN",fl(P.M,P.N)],["M′N′",fl(M2,N2)],[an("MZM′"),fa(ang(P.M,P.Z,M2),false)]])+R.v("ZM = ZM′ et MN = M′N′ : la rotation conserve les distances.","ok");},
+   hint:"Bouge M et N, puis l'angle."}),
+ formal:`<p><b>Définition 4.5.1.</b> Soit Z ∈ P et α ∈ ℝ/2πℤ. La rotation r = r<sub>Z,α</sub> associe à tout point M l'unique point r(M) tel que ZM = Zr(M) et ${an("MZr(M)")} = α (et r(Z) = Z).</p><p><b>Théorème 4.5.2.</b> Une rotation conserve les distances, envoie une droite sur une droite (l'angle entre elles est |α|) et conserve les angles orientés.</p>`,
+ use:`<p>Pour montrer qu'une rotation envoie A sur B : vérifier ZA = ZB et ${an("AZB")} = α. Au CC 2024, on composait une rotation et une homothétie de même centre (dans les deux ordres, le résultat est le même).</p>`,
+ trap:`La symétrie centrale est la rotation d'angle π ; une symétrie axiale n'est pas une rotation (elle change le signe des angles orientés).`,
+ q:"Définition de la rotation de centre Z et d'angle α ?",a:"r(Z) = Z, et pour M ≠ Z, r(M) est l'unique point tel que ZM = Zr(M) et (ZM, Zr(M)) = α [2π].",rel:["g-scalaire"]});
+
+/* ---------------- Produit scalaire ---------------- */
+push(5,{id:"g-scalaire",type:"def",ref:"Définition 4.6.2, proposition 4.6.3",t:"Produit scalaire",short:"Produit scalaire",
+ plain:`⟨${vc("u")}, ${vc("v")}⟩ = ‖${vc("u")}‖ · ‖${vc("v")}‖ · cos(angle). Dans un repère orthonormé, c'est ${hl("xx′ + yy′")}. Il est nul exactement quand les vecteurs sont orthogonaux.`,
+ fig:()=>({w:560,h:300,P:{O:[260,180],U:[400,120],W:[330,60]},labels:{O:"O",U:"u",W:"v"},
+   draw:(P)=>D.seg(V(40,P.O.y),V(520,P.O.y),"l-thin")+D.seg(V(P.O.x,20),V(P.O.x,290),"l-thin")+D.vec(P.O,P.U,"l-cob")+D.vec(P.O,P.W,"l-amb")+D.arc(P.U,P.O,P.W,30,"l-cons"),
+   info:(P)=>{const u=V((P.U.x-P.O.x)/40,(P.O.y-P.U.y)/40),w=V((P.W.x-P.O.x)/40,(P.O.y-P.W.y)/40),nu=Math.hypot(u.x,u.y),nw=Math.hypot(w.x,w.y),t=absang(P.U,P.O,P.W);
+     const ps=u.x*w.x+u.y*w.y;return R.m([["u",`(${fr(u.x,1)} ; ${fr(u.y,1)})`],["v",`(${fr(w.x,1)} ; ${fr(w.y,1)})`],["‖u‖ ‖v‖ cos θ",fr(nu*nw*Math.cos(t))],["xx′ + yy′",fr(ps)]])+R.v(Math.abs(ps)<0.15?"Produit scalaire nul : les vecteurs sont orthogonaux.":"Les deux formules donnent le même nombre.",Math.abs(ps)<0.15?"ok":"");},
+   hint:"Rends les deux vecteurs perpendiculaires : le produit scalaire s'annule."}),
+ formal:`<p><b>Définition 4.6.2.</b> ⟨${vc("u")}, ${vc("v")}⟩ = ‖${vc("u")}‖ · ‖${vc("v")}‖ · cos(angle(${vc("u")}, ${vc("v")})). Il est symétrique.</p><p><b>Proposition 4.6.3.</b> Dans un repère orthonormé, si P et Q ont pour coordonnées (x, y) et (x′, y′) : ⟨${vc("OP")}, ${vc("OQ")}⟩ = xx′ + yy′, et OP = √(x² + y²).</p><p>Al-Kashi s'écrit BC² = AB² + AC² − 2⟨${vc("AB")}, ${vc("AC")}⟩.</p>`,
+ use:`<p>Deux vecteurs non nuls sont orthogonaux si et seulement si leur produit scalaire est nul.</p>`,
+ trap:`xx′ + yy′ n'est valable que dans un repère orthonormé.`,
+ q:"Produit scalaire de (2, 1) et (−1, 2) dans un repère orthonormé ?",a:"2 × (−1) + 1 × 2 = 0 : les vecteurs sont orthogonaux.",rel:["g-alkashi"]});
+
+/* ---------------- Cercle et droite ---------------- */
+push(6,{id:"g-cercle-droite",type:"th",ref:"Théorèmes 5.1.1 et 5.1.2",t:"Cercle et droite, tangentes",short:"Cercle et droite",
+ plain:`On compare la distance OM du centre à la droite (M est le projeté de O) au rayon r : ${hl("OM > r")} pas d'intersection, ${hl("OM = r")} tangente, ${hl("OM < r")} deux points, dont M est le milieu.`,
+ fig:()=>({w:560,h:300,P:{O:[260,150],P1:[60,250],P2:[520,180]},S:{r:2.6},labels:{O:"O",P1:"",P2:"Δ"},
+   sliders:[{k:"r",label:"Rayon r :",min:0.8,max:3.6,step:0.05,fmt:v=>fr(v)}],
+   draw:(P,S)=>{const r=S.r*40,M=proj(P.O,P.P1,P.P2),om=dpx(P.O,M);let s=D.circ(P.O,r,"l-ink")+D.line(P.P1,P.P2,"l-cob")+D.seg(P.O,M,"l-amb")+D.pt(M,"M",P.O,"p-fix");
+     if(om<r-0.5){const k=Math.sqrt(r*r-om*om),u=unit(sub(P.P2,P.P1));s+=D.pt(add(M,mul(u,k)),"A",P.O,"p-cob","t-cob")+D.pt(add(M,mul(u,-k)),"B",P.O,"p-cob","t-cob");}
+     return s;},
+   info:(P,S)=>{const M=proj(P.O,P.P1,P.P2),om=d(P.O,M),r=S.r;const c=Math.abs(om-r)<0.06?"tangente":om>r?"extérieure":"sécante";
+     return R.m([["OM",fr(om)],["r",fr(r)]])+R.v(c==="tangente"?"OM = r : la droite est tangente en M, perpendiculaire à (OM).":c==="extérieure"?"OM > r : la droite ne coupe pas le cercle.":"OM < r : deux points A et B, et M est le milieu de [AB].",c==="tangente"?"ok":"");},
+   hint:"Change le rayon ou bouge la droite."}),
+ formal:`<p><b>Théorème 5.1.1.</b> M projeté orthogonal de O sur Δ : si OM > r, Δ ∩ C = ∅ ; si OM = r, Δ ∩ C = {M} (Δ tangente) ; si OM < r, deux points A et B et M est le milieu de [AB]. Preuve : OX² = OM² + XM² ≥ OM² (Pythagore dans OXM).</p><p><b>Théorème 5.1.2.</b> Si M ∈ C, la tangente en M est l'unique perpendiculaire à (OM) passant par M. Si M est extérieur, il y a deux tangentes, de points de contact T et T′, avec MT = MT′ = √(OM² − r²).</p>`,
+ use:`<p>Pour justifier une tangente : (OT) ⊥ (MT). Pour une longueur de tangente : Pythagore dans OMT rectangle en T.</p>`,
+ trap:`Une droite tangente touche le cercle en un seul point : ce n'est pas « une droite qui ne coupe pas ».`,
+ q:"Comment reconnaître la tangente en M ∈ C ?",a:"C'est l'unique droite passant par M et perpendiculaire à (OM).",rel:["g-angle-centre"]});
+
+/* ---------------- Angle au centre ---------------- */
+push(6,{id:"g-angle-centre",type:"th",ref:"Théorème 5.2.1",t:"Théorème de l'angle au centre",short:"Angle au centre",cc:"3 points en 2025 (la démonstration)",
+ plain:`Sur un cercle de centre O, pour A et B fixés : ${hl("l'angle au centre AOB est le double de l'angle inscrit AMB")}, quel que soit M sur le cercle (en angles orientés, modulo 2π). Déplace M sur le cercle.`,
+ fig:()=>({w:560,h:320,P:{O:[280,165],A:[180,240],B:[390,250],M:[300,40]},labels:{O:"O"},
+   con:{A:(p,P)=>onCircle(P.O,125)(p),B:(p,P)=>onCircle(P.O,125)(p),M:(p,P)=>onCircle(P.O,125)(p)},
+   after:(P,S,Fg)=>{if(!Fg._i){Fg._i=1;["A","B","M"].forEach(k=>{P[k]=onCircle(P.O,125)(P[k]);});Fg.render();}},
+   draw:(P)=>D.circ(P.O,125,"l-ink")+D.seg(P.O,P.A,"l-amb")+D.seg(P.O,P.B,"l-amb")+D.seg(P.M,P.A,"l-cob")+D.seg(P.M,P.B,"l-cob")+D.arc(P.A,P.O,P.B,26,"l-amb")+D.arc(P.A,P.M,P.B,30,"l-cob")+D.seg(P.O,P.M,"l-cons"),
+   info:(P)=>{const a=ang(P.A,P.O,P.B),b=ang(P.A,P.M,P.B);return R.m([[an("AOB"),fa(a,false)],[an("AMB"),fa(b,false)],["2 × "+an("AMB")+" (mod 2π)",fa(mod2pi(2*b),false)]])+R.v("L'angle au centre vaut le double de l'angle inscrit, modulo 2π.","ok");},
+   hint:"Fais glisser M sur le cercle : l'angle inscrit ne change pas (tant que M reste sur le même arc)."}),
+ formal:`<p><b>Théorème 5.2.1.</b> Soient C un cercle de centre O, A, B ∈ C distincts et M ∈ P ∖ {A, B}. Alors M ∈ C si et seulement si ${an("AOB")} = 2${an("AMB")} [2π].</p><p><b>Démonstration (sens direct).</b> AMO est isocèle en O, donc ${an("AOM")} + 2${an("OMA")} = π, soit ${an("AOM")} = π − 2${an("OMA")}. De même ${an("BOM")} = π − 2${an("OMB")}. D'où ${an("AOB")} = ${an("AOM")} − ${an("BOM")} = −2${an("OMA")} + 2${an("OMB")} = 2${an("AMO")} + 2${an("OMB")} = 2${an("AMB")}.</p><p><b>Corollaire 5.2.3 (angle inscrit).</b> Pour A, B ∈ C, l'angle ((MA), (MB)) ne dépend pas de M ∈ C ∖ {A, B} (modulo π).</p>`,
+ use:`<p>Au CC 2025, la preuve du sens direct valait 3 points : deux triangles isocèles, puis Chasles. Voir la leçon.</p>`,
+ trap:`En angles non orientés, il faut distinguer selon l'arc où se trouve M (petit ou grand arc).`,
+ q:"Quels triangles utilise la preuve de l'angle au centre ?",a:"Les triangles AMO et BMO, isocèles en O (OA = OM = OB) : la somme de leurs angles donne AOM = π − 2·OMA et BOM = π − 2·OMB.",rel:["g-cocycliques","g-cercle-droite"]});
+
+/* ---------------- Cocycliques ---------------- */
+push(6,{id:"g-cocycliques",type:"th",ref:"Corollaires 5.2.5 et 5.2.7",t:"Cercle de diamètre et points cocycliques",short:"Cocycliques",
+ plain:`M est sur le cercle de diamètre [AB] ${hl("si et seulement si")} AMB est rectangle en M. Et quatre points A, B, C, D sont cocycliques (ou alignés) si et seulement si ((CA), (CB)) = ((DA), (DB)) modulo π. Déplace D.`,
+ fig:()=>({w:560,h:320,P:{O:[280,165],A:[170,230],B:[400,240],C:[250,45],Dd:[420,90]},labels:{O:"O",Dd:"D"},
+   con:{A:(p,P)=>onCircle(P.O,125)(p),B:(p,P)=>onCircle(P.O,125)(p),C:(p,P)=>onCircle(P.O,125)(p)},
+   after:(P,S,Fg)=>{if(!Fg._i){Fg._i=1;["A","B","C"].forEach(k=>{P[k]=onCircle(P.O,125)(P[k]);});Fg.render();}},
+   draw:(P)=>D.circ(P.O,125,"l-ink")+D.seg(P.C,P.A,"l-cob")+D.seg(P.C,P.B,"l-cob")+D.seg(P.Dd,P.A,"l-amb")+D.seg(P.Dd,P.B,"l-amb"),
+   info:(P)=>{const c=modpi(ang(P.A,P.C,P.B)),dd=modpi(ang(P.A,P.Dd,P.B)),ok=Math.abs(modpi(c-dd))<0.03;
+     return R.m([["((CA), (CB))",fa(c,false)],["((DA), (DB))",fa(dd,false)]])+R.v(ok?"Égaux modulo π : A, B, C, D sont cocycliques (D est sur le cercle).":"Différents : D n'est pas sur le cercle de A, B, C.",ok?"ok":"");},
+   hint:"Amène D sur le cercle : les deux angles deviennent égaux."}),
+ formal:`<p><b>Corollaire 5.2.5.</b> O milieu de [AB], M ≠ A, B : M est sur le cercle de diamètre [AB] si et seulement si AMB est rectangle en M.</p><p><b>Corollaire 5.2.7.</b> A, B, C, D distincts sont cocycliques ou alignés si et seulement si ((CA), (CB)) = ((DA), (DB)) [π].</p>`,
+ use:`<p>Pour montrer que quatre points sont sur un même cercle : comparer deux angles de droites qui « voient » [AB] (modulo π).</p>`,
+ trap:`L'égalité est modulo π (angles de droites), pas modulo 2π.`,
+ q:"Comment montrer que M est sur le cercle de diamètre [AB] ?",a:"Montrer que le triangle AMB est rectangle en M.",rel:["g-angle-centre"]});
+
+/* ---------------- quiz du CC2 ---------------- */
+(window.QUIZ=window.QUIZ||[]).push(
+ {q:"L'image d'une droite par une homothétie de rapport λ ≠ 0 est…",o:["une droite parallèle","la même droite","un cercle"],a:0,e:"Théorème 3.3.4.",link:"g-homothetie"},
+ {q:"ABC est rectangle en A si et seulement si…",o:["BC² = AB² + AC²","AB² = BC² + AC²","AC² = AB² + BC²"],a:0,e:"L'hypoténuse est opposée à l'angle droit.",link:"g-pythagore"},
+ {q:"cos B̂ dans ABC rectangle en A ?",o:["AB/BC","AC/BC","AC/AB"],a:0,e:"Adjacent sur hypoténuse.",link:"g-trigo"},
+ {q:"Aire(ABC) = ?",o:["½ ab sin Ĉ","ab sin Ĉ","½ ab cos Ĉ"],a:0,e:"a = BC et b = AC entourent l'angle en C.",link:"g-aire"},
+ {q:"Al-Kashi : a² = ?",o:["b² + c² − 2bc cos Â","b² + c² + 2bc cos Â","b² + c² − 2bc sin Â"],a:0,e:"Avec Â droit, on retrouve Pythagore.",link:"g-alkashi"},
+ {q:"Une rotation conserve…",o:["les distances et les angles orientés","seulement les distances","seulement les angles"],a:0,e:"Théorème 4.5.2.",link:"g-rotation"},
+ {q:"⟨u, v⟩ = 0 avec u, v non nuls signifie…",o:["u et v orthogonaux","u et v colinéaires","u = v"],a:0,e:"cos = 0.",link:"g-scalaire"},
+ {q:"OM = r (M projeté de O sur Δ) :",o:["Δ est tangente","Δ ne coupe pas le cercle","Δ coupe en deux points"],a:0,e:"Théorème 5.1.1.",link:"g-cercle-droite"},
+ {q:"Angle au centre et angle inscrit :",o:["AOB = 2 AMB [2π]","AMB = 2 AOB","AOB = AMB"],a:0,e:"Théorème 5.2.1.",link:"g-angle-centre"},
+ {q:"M sur le cercle de diamètre [AB] ⇔ ?",o:["AMB rectangle en M","AMB isocèle en M","M milieu de [AB]"],a:0,e:"Corollaire 5.2.5.",link:"g-cocycliques"});
+
+/* ---------------- annales du CC2 ---------------- */
+(window.ANN=window.ANN||[]).push(
+ {src:"CC2 2025 · Cours · 7 pts",t:"Al-Kashi, translation, aire, angle au centre",en:"(1) Énoncer Al-Kashi [1]. (2) Définition d'une translation [1]. (3) Montrer Aire(ABC) = ½ ab sin Ĉ [2]. (4) A, B ∈ C de centre O, M ∈ C ∖ {A, B} : montrer AOB = 2AMB [2π] [3].",
+  sol:`<ol><li>BC² = AB² + AC² − 2 AB · AC cos(BAC).</li><li>t(M) est l'unique point M′ tel que MM′ (vecteur) = u.</li><li>H pied de la hauteur issue de A : Aire = ½ AH · BC et AH = AC sin Ĉ.</li><li>AMO et BMO isocèles en O : AOM = π − 2OMA et BOM = π − 2OMB, puis AOB = AOM − BOM = 2AMB (voir la leçon « Angle au centre »).</li></ol>`},
+ {src:"CC2 2025 · Ex. 1 · 4 pts",t:"Orthocentre et triangle isocèle",en:"ABC non dégénéré, H son orthocentre. On suppose BH = CH. Montrer que ABC est isocèle en A.",
+  sol:`<p>BH = CH : H est sur la médiatrice de [BC], qui est perpendiculaire à (BC). H est aussi sur la hauteur issue de A, perpendiculaire à (BC). Par H passe une seule perpendiculaire à (BC) : la hauteur issue de A est donc la médiatrice de [BC]. A est sur cette médiatrice, donc AB = AC : ABC est isocèle en A.</p>`},
+ {src:"CC2 2025 · Ex. 2 · 5 pts",t:"Deux homothéties de même centre",en:"A, B, C ∈ Δ, A′, B′, C′ ∈ Δ′, Δ et Δ′ sécantes en K, (AB′) ∥ (BA′) et (BC′) ∥ (CB′). Montrer que (AC′) ∥ (CA′).",
+  sol:`<ol><li>Avec Thalès, l'homothétie h₁ de centre K qui envoie A sur B envoie la droite (AB′) sur la parallèle passant par B, c'est-à-dire (BA′) ; elle envoie Δ′ sur Δ′ (droite passant par K), donc B′ sur A′. De même h₂ envoie B sur C et C′ sur B′.</li><li>h₃ = h₂ ∘ h₁ est une homothétie de centre K ; deux homothéties de même centre commutent. h₃(A) = h₂(B) = C et h₃(C′) = h₁(h₂(C′)) = h₁(B′) = A′.</li><li>h₃ envoie la droite (AC′) sur (CA′), qui lui est donc parallèle.</li></ol>`},
+ {src:"CC2 2025 · Ex. 3 · 4 pts",t:"Longueur d'une bissectrice",en:"ABC rectangle en A, AB = 3, AC = 4, BC = 5. D est sur [BC] et sur la bissectrice issue de A. Calculer AD.",
+  sol:`<p>Aire(ABC) = ½ · 3 · 4 = 6. Elle vaut aussi Aire(ABD) + Aire(ADC) = ½ · 3 · AD · sin(π/4) + ½ · 4 · AD · sin(π/4) = (7√2/4) AD. Donc AD = 24/(7√2) = <b>12√2/7</b> ≈ 2,42.</p>`},
+ {src:"CC2 2024 · Cours · 5 pts",t:"Les deux sens de Pythagore",en:"(a) Si ABC est rectangle en A, alors BC² = AB² + AC². (b) Si BC² = AB² + AC², alors ABC est rectangle en A.",
+  sol:`<p>(a) Triangles semblables ACB et HAB (H pied de la hauteur) : AB² = BC · BH, AC² = BC · HC, on additionne. (b) C′ sur la perpendiculaire à (AB) en A avec AC′ = AC : BC′ = BC, donc ABC et ABC′ sont isométriques et l'angle en A est droit. Détails dans la leçon « Pythagore ».</p>`});
+})();
+
+</script>
+<script>
 /* Les preuves à savoir refaire (démos exigibles) : le texte du cours, mot pour mot,
    avec une phrase par ligne et les points et droites clés de la même couleur que sur la figure.
    k1 cyan · k2 orange · k3 violet · k4 bleu · k5 rose (les classes lk*, pk*, tk* des figures). */
@@ -2705,22 +2888,33 @@ const infos=({sec})=>`<div class="title-row"><h1>Le CC1 de géométrie en bref</
  ${sec(3,"Comment c'est noté",`<ul><li>Questions de cours : 5 à 7 points. Exercices : 13 à 15 points sur 2 à 4 exercices.</li><li>En 2025 : définition du segment (1), symétrie centrale (2), démo de Thalès (4), puis exercices de 3, 2 et 8 points.</li><li>En 2024 : énoncé de Thalès (2), démo de la réciproque (3), nom du résultat (1), puis un exercice de 14 points.</li></ul>`)}
  ${sec(4,"Les documents du prof",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["HAX104X_poly.pdf","Poly du cours"],["HAX104X_cc1_2025_corr.pdf","Corrigé CC1 2025"],["HAX104X_cc1_2024_corr.pdf","Corrigé CC1 2024"],["HAX104X_redaction.pdf","Guide de rédaction"]].map(f=>`<a class="btn" href="../HAX104X/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
+const infos2=({sec})=>`<div class="title-row"><h1>Le CC2 de géométrie en bref</h1></div>
+ ${sec(1,"Quand et où",`<p>Vendredi 11 décembre à 9h45, amphi Dumontet, 1 h 30 (mail de Sylvain Brochard du 27/10 ; 2 h avec un tiers-temps). Aucun document.</p>`)}
+ ${sec(2,"Le poids",`<p>CC1 30 %, CC2 30 %, examen final 40 % (2 h, en janvier). Coefficient 4.</p>`)}
+ ${sec(3,"Le programme",`<p>Pas encore annoncé. Le site prépare la suite du poly après le CC1 : translations et homothéties (§3.3), le chapitre 4 (Pythagore et sa réciproque, trigonométrie, aire ½ ab sin Ĉ, Al-Kashi, rotations, produit scalaire) et le chapitre 5 (cercles, angle au centre, angle inscrit).</p>`)}
+ ${sec(4,"La forme des CC2 de 2024 et 2025",`<ul><li>Des questions de cours : énoncer Al-Kashi, définir une translation, et surtout <b>démontrer</b> (Pythagore dans les deux sens en 2024, 5 points ; l'aire ½ ab sin Ĉ et l'angle au centre en 2025, 5 points).</li><li>Des exercices : orthocentre et triangle isocèle, composée d'homothéties, longueur d'une bissectrice ; en 2024, un long problème sur un carré avec une rotation et une homothétie.</li></ul>`)}`;
 SUBJ.geo={name:"Géométrie",code:"HAX104X",color:"#D980FF",coef:4,share:0.30,key:"geo-cc1-dossier-v1",lang:"",
- exam:{day:"2026-11-10",start:"09:45",end:"10:45",place:"amphi Dumontet",dur:"1 h",unsure:""},
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-10",start:"09:45",end:"10:45",place:"amphi Dumontet",dur:"1 h",unsure:""},
+        {id:"cc2",label:"CC2",day:"2026-12-11",start:"09:45",end:"11:15",place:"amphi Dumontet",dur:"1 h 30",covers:["cc2"],unsure:"Programme pas encore annoncé : le site prépare la suite du poly après le CC1 (§3.3 à la fin du chapitre 5).",prog:"Pas encore annoncé : la suite du poly après le CC1, c'est-à-dire translations et homothéties (§3.3), Pythagore et sa réciproque, trigonométrie, aire ½ ab sin Ĉ, Al-Kashi, rotations, produit scalaire (chapitre 4), cercles, angle au centre et angle inscrit (chapitre 5). Les CC2 de 2024 et 2025 demandaient ces démonstrations."}],
  docs:"aucun",examMinutes:60,examMorning:"Relis les fiches en rouge et les 8 fautes de « Bien rédiger ». Carte d'étudiant.",
  prog:"Poly jusqu'au §3.2, feuille de TD 1, et les 12 démos exigibles. Thalès est tombé les deux dernières années (4 à 6 points).",
- chapters:{1:"1. Les axiomes du plan",2:"2. Parallélisme et Thalès",3:"3. Parallélogrammes et vecteurs",4:"4. Résultats de TD"},
+ chapters:{1:"1. Les axiomes du plan",2:"2. Parallélisme et Thalès",3:"3. Parallélogrammes et vecteurs",4:"4. Résultats de TD",5:"5. Transformations, Pythagore, trigonométrie",6:"6. Cercles"},
  concepts:window.CONCEPTS,quiz:window.QUIZ,td:window.TDX,ann:window.ANN,tdTitle:"Feuille de TD 1",
  tdIntro:"Les exercices du CC sont « dans l'esprit de la feuille 1 ». Les ★★★ ressemblent le plus aux annales. Cherche sur papier avant d'ouvrir l'indice.",
  quizIntro:"Des questions dans le style des questions de cours du CC, dont l'« intrus » donné en exemple par le prof sur Moodle.",
  annIntro:"Les corrigés sont ceux du prof (Moodle), réécrits plus simplement, avec le barème réel.",
- pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"notations",t:"Les notations",render:notations},{id:"redaction",t:"Bien rédiger",html:window.REDAC}],
+ pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"notations",t:"Les notations",render:notations},{id:"redaction",t:"Bien rédiger",html:window.REDAC}],
  tasks:[
  {id:"cc25",t:"Examen blanc : annale 2025 en 1 h, puis correction",min:75,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus récent, dans les conditions du CC : 1 h, aucun document."},
  {id:"tdex",t:"TD 1 : 4 exercices ★★★ sur papier",min:60,p:2,td:["1.5","1.6","1.7","1.13"],links:[["td","Feuille de TD 1"]]},
  {id:"cc24",t:"Annale 2024 en 1 h, puis correction",min:75,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
- {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
+ {id:"demos2",ex:"cc2",t:"Réciter sur papier les 3 démonstrations du CC2 (Pythagore dans les deux sens, aire, angle au centre)",min:40,p:1,manual:true,links:[["#/apprendre","Leçons"]],why:"Elles ont valu 5 points en 2024 et 5 points en 2025."},
+ {id:"cc2-25",ex:"cc2",t:"Examen blanc : CC2 2025 en 1 h 30, puis correction",min:100,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Questions de cours, orthocentre, homothéties, bissectrice."},
+ {id:"cc2-24",ex:"cc2",t:"CC2 2024 (Pythagore et le carré) en 1 h 30",min:100,p:2,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"quiz2",ex:"cc2",t:"Quiz de cours du CC2 : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"review2",ex:"cc2",t:"Veille du CC2 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 window.CONCEPTS=[];
 })();
 
@@ -5760,7 +5954,106 @@ LES.geo=[
   {w:"Le côté [AC] est commun aux triangles ABC et CDA.",why:"On cherche deux triangles qui contiennent les deux angles."},
   {w:"Par CCC, les triangles ABC et CDA sont isométriques.",why:"Axiome V."},
   {w:`Donc |${an("ABC")}| = |${an("CDA")}|.`,why:"B correspond à D dans cette isométrie. Le corrigé exige cette démonstration : citer un résultat ne suffit pas."}]),
- K("Les règles de rédaction qui coûtent le plus de points ?","Introduire chaque objet (« Soit … »), justifier chaque étape, écrire « donc » et pas ⇒, écrire AM/AB et jamais [AM]/[AB], refaire la preuve quand on la demande.")]}
+ K("Les règles de rédaction qui coûtent le plus de points ?","Introduire chaque objet (« Soit … »), justifier chaque étape, écrire « donc » et pas ⇒, écrire AM/AB et jamais [AM]/[AB], refaire la preuve quand on la demande.")]},
+/* ------------------------------------------------------------------ */
+/* CC2 du vendredi 11 décembre (1 h 30) : la suite du poly après le CC1 (§3.3 à 3.5, chapitres 4 et 5). */
+{id:"g2-transfo",ex:"cc2",t:"Translations et homothéties",min:12,goal:"Définitions et propriétés, et composer deux homothéties de même centre (CC2 2025 : définition 1 point, exercice 5 points).",steps:[
+ Q("L'homothétie de centre K et de rapport 2 envoie M sur…",["le point M′ tel que KM′ = 2 KM (vecteurs)","le milieu de [KM]","le symétrique de M par rapport à K"],0,"Le vecteur KM est multiplié par 2 : M′ est sur la demi-droite [KM), deux fois plus loin."),
+ L("Les deux définitions",`<ul><li><b>Translation</b> de vecteur ${v("u")} : t(M) est l'unique point M′ tel que ${v("MM′")} = ${v("u")} (Déf 3.3.1). Si ${v("u")} = ${v("AB")}, ABM′M est un parallélogramme.</li><li><b>Homothétie</b> de centre K et de rapport λ : h(M) est le point M′ tel que ${v("KM′")} = λ${v("KM")}.</li></ul><p>Propriétés : une translation conserve les distances ; une homothétie les <b>multiplie par |λ|</b>. Les deux envoient une droite sur une <b>droite parallèle</b> et conservent les angles orientés (λ ≠ 0).</p>`,{fig:"g-homothetie"}),
+ Q("Une homothétie de rapport −3 multiplie les distances par…",["3","−3","1/3","9"],0,"Par |λ| = 3 ; le signe dit seulement que l'image passe de l'autre côté du centre."),
+ S("CC2 2025, ex. 2 : (AC′) ∥ (CA′)","A, B, C sur Δ, A′, B′, C′ sur Δ′, Δ et Δ′ sécantes en K, (AB′) ∥ (BA′) et (BC′) ∥ (CB′).",[
+  {w:"Soit h₁ l'homothétie de centre K qui envoie A sur B (K, A, B sont alignés sur Δ).",why:"Une homothétie de centre K envoie A sur n'importe quel point de la droite (KA) (sauf K)."},
+  {w:"h₁ envoie la droite (AB′) sur la droite parallèle passant par h₁(A) = B, c'est-à-dire (BA′). Elle envoie Δ′ (qui passe par K) sur Δ′. Donc h₁(B′) est sur (BA′) et sur Δ′ : h₁(B′) = A′.",why:"Image d'une droite : une droite parallèle."},
+  {w:"De même, h₂ de centre K envoie B sur C et C′ sur B′.",why:"Même raisonnement avec (BC′) ∥ (CB′)."},
+  {w:"h₃ = h₂ ∘ h₁ est une homothétie de centre K, et h₂ ∘ h₁ = h₁ ∘ h₂. Donc h₃(A) = h₂(B) = C et h₃(C′) = h₁(h₂(C′)) = h₁(B′) = A′.",why:"Deux homothéties de même centre commutent."},
+  {w:"h₃ envoie la droite (AC′) sur la droite (CA′), qui lui est donc parallèle.",why:"Conclusion par la propriété des homothéties."}]),
+ K("Translation de vecteur u ?","t(M) est l'unique point M′ tel que MM′ (vecteur) = u. Elle conserve distances et angles orientés, et envoie une droite sur une droite parallèle."),
+ K("Homothétie de centre K, rapport λ ?","KM′ = λKM (vecteurs). Distances multipliées par |λ| ; droites envoyées sur des parallèles ; deux homothéties de même centre commutent.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"g2-pythagore",ex:"cc2",t:"Pythagore : les deux démonstrations",min:14,goal:"Démontrer le théorème de Pythagore et sa réciproque, comme au CC2 2024 (5 points).",steps:[
+ Q("Pour démontrer « ABC rectangle en A ⇒ BC² = AB² + AC² », le poly utilise…",["des triangles semblables, avec la hauteur issue de A","un repère et des coordonnées","Al-Kashi"],0,"Al-Kashi vient après et se démontre avec Pythagore : on ne peut pas s'en servir ici."),
+ L("Le théorème",`<p><b>Théorème 4.1.1.</b> Soit ABC un triangle. Les deux assertions sont équivalentes : <b>ABC est rectangle en A</b> ; <b>BC² = AB² + AC²</b>.</p><p>Il y a deux sens à démontrer, et chacun a sa méthode : le sens direct avec des <b>triangles semblables</b>, la réciproque avec un <b>triangle isométrique</b> construit exprès.</p>`,{fig:"g-pythagore"}),
+ S("Sens direct","On suppose ABC rectangle en A.",[
+  {w:"Soit H le pied de la hauteur issue de A. Les angles en B et C sont aigus, donc H ∈ [BC] et BH + HC = BC.",why:"On introduit H et on justifie sa position."},
+  {w:"Les triangles ACB et HAB sont semblables : ils ont un angle droit (en A et en H) et l'angle en B en commun.",why:"Deux angles égaux suffisent."},
+  {w:"D'après le théorème 2.6.2, BC/BA = BA/BH, d'où AB² = BC · BH.",why:"Rapports de côtés de triangles semblables."},
+  {w:"De même AC² = BC · HC.",why:"Avec les triangles ABC et HAC."},
+  {w:"Donc AB² + AC² = BC · (BH + HC) = BC · BC = BC².",why:"On additionne et on utilise BH + HC = BC."}]),
+ Q("Dans le sens direct, pourquoi BH + HC = BC ?",["Parce que H ∈ [BC], les angles en B et C étant aigus","Parce que H est le milieu de [BC]","Toujours vrai pour tout point H"],0,"C'est la définition du segment : H ∈ [BC] ⇔ BH + HC = BC."),
+ S("Réciproque","On suppose BC² = AB² + AC².",[
+  {w:"Soit C′ le point de la perpendiculaire à (AB) passant par A tel que AC′ = AC.",why:"On construit un triangle rectangle « modèle »."},
+  {w:"ABC′ est rectangle en A, donc par le sens direct BC′² = AB² + AC′² = AB² + AC² = BC², d'où BC′ = BC.",why:"On utilise le sens déjà démontré."},
+  {w:"Les triangles ABC et ABC′ ont leurs trois côtés égaux (AB commun, AC = AC′, BC = BC′) : ils sont isométriques.",why:"Cas d'isométrie par les trois côtés."},
+  {w:"Leurs angles en A sont donc égaux : |BAC| = |BAC′| = π/2. ABC est rectangle en A.",why:"Une isométrie conserve les angles."}]),
+ Q("Dans la réciproque, à quoi sert le point C′ ?",["À fabriquer un triangle rectangle de mêmes côtés, puis à comparer","À placer le milieu de [BC]","À tracer la hauteur"],0,"ABC′ est rectangle par construction ; on montre ensuite que ABC lui est isométrique."),
+ K("Pythagore, sens direct : l'idée ?","H pied de la hauteur issue de A ; ACB et HAB semblables donnent AB² = BC·BH, de même AC² = BC·HC ; on additionne."),
+ K("Pythagore, réciproque : l'idée ?","C′ sur la perpendiculaire à (AB) en A avec AC′ = AC ; le sens direct donne BC′ = BC ; ABC et ABC′ isométriques, donc l'angle en A est droit.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"g2-trigo",ex:"cc2",t:"Cosinus, sinus, tangente",min:11,goal:"Définitions dans le triangle rectangle, cos² + sin² = 1, valeurs à connaître (poly 4.2).",steps:[
+ Q("Dans ABC rectangle en A, que vaut cos B̂ ?",["AB/BC","AC/BC","AC/AB","BC/AB"],0,"Côté adjacent à B (AB) sur l'hypoténuse (BC)."),
+ L("Les définitions",`<p><b>Définition 4.2.1.</b> ABC rectangle en A : cos(|B̂|) = AB/BC, sin(|B̂|) = AC/BC, tan(|B̂|) = AC/AB. Moyen mnémotechnique : <b>CAH-SOH-TOA</b> (Cosinus = Adjacent/Hypoténuse, Sinus = Opposé/Hypoténuse, Tangente = Opposé/Adjacent).</p><p>Ces rapports ne dépendent que de l'angle (proposition 4.2.2 : deux triangles rectangles avec le même angle sont semblables).</p>`,{fig:"g-trigo"}),
+ Q("Pourquoi cos²x + sin²x = 1 ?",["C'est Pythagore divisé par BC²","C'est une définition","C'est Al-Kashi"],0,"(AB/BC)² + (AC/BC)² = (AB² + AC²)/BC² = BC²/BC² = 1."),
+ L("Valeurs et symétries",`<ul><li>cos(π/2 − x) = sin x et sin(π/2 − x) = cos x (échanger B et C échange adjacent et opposé).</li><li>Valeurs : cos(π/6) = √3/2, cos(π/4) = √2/2, cos(π/3) = 1/2 ; sin(π/6) = 1/2, sin(π/4) = √2/2, sin(π/3) = √3/2.</li><li>On prolonge à ℝ : cos(−x) = cos x, sin(−x) = −sin x, et les deux sont 2π-périodiques.</li></ul><p>Formules d'addition (à savoir par cœur) : sin(x + y) = sin x cos y + cos x sin y, cos(x + y) = cos x cos y − sin x sin y.</p>`),
+ Q("sin(π/3) = ?",["√3/2","1/2","√2/2","1"],0,"Dans le triangle équilatéral coupé en deux, le côté opposé à l'angle π/3 vaut (√3/2) fois l'hypoténuse."),
+ K("CAH-SOH-TOA ?","cos = adjacent/hypoténuse, sin = opposé/hypoténuse, tan = opposé/adjacent (triangle rectangle)."),
+ K("Formules d'addition ?","sin(x + y) = sin x cos y + cos x sin y ; cos(x + y) = cos x cos y − sin x sin y.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"g2-aire-alkashi",ex:"cc2",t:"Aire ½ ab sin Ĉ et Al-Kashi",min:14,goal:"Démontrer la formule de l'aire (2 points en 2025), énoncer Al-Kashi (1 point) et calculer une bissectrice (4 points).",steps:[
+ Q("Aire d'un triangle de côtés 3 et 4 qui forment un angle droit ?",["6","12","7","3,5"],0,"½ × 3 × 4 × sin(π/2) = 6."),
+ L("Le théorème de l'aire",`<p><b>Théorème 4.2.6.</b> Avec a = BC, b = AC, c = AB : <b>Aire(ABC) = ½ ab sin(|Ĉ|) = ½ ac sin(|B̂|) = ½ bc sin(|Â|)</b>.</p><p>« La moitié du produit de deux côtés par le sinus de l'angle qu'ils forment. »</p>`,{fig:"g-aire"}),
+ S("La démonstration (CC2 2025, 2 points)","Soit ABC un triangle.",[
+  {w:"Par symétrie des rôles, il suffit de montrer la première égalité.",why:"Les autres s'obtiennent en renommant les sommets."},
+  {w:"Soit H le pied de la hauteur issue de A. Par définition, Aire(ABC) = ½ AH · BC.",why:"Base × hauteur / 2."},
+  {w:"Dans le triangle AHC rectangle en H, AH = AC sin(|Ĉ|).",why:"Sinus = opposé / hypoténuse."},
+  {w:"D'où Aire(ABC) = ½ BC · AC sin(|Ĉ|) = ½ ab sin(|Ĉ|).",why:"On remplace AH."}]),
+ L("Al-Kashi",`<p><b>Théorème 4.3.1.</b> Pour tout triangle ABC : <b>BC² = AB² + AC² − 2 AC · AB cos(BAC)</b>, c'est-à-dire a² = b² + c² − 2bc cos Â.</p><p>Si Â est droit, cos Â = 0 : c'est Pythagore. On en tire cos Â = (b² + c² − a²)/(2bc).</p>`,{fig:"g-alkashi"}),
+ Q("Triangle de côtés b = 2, c = 3 et Â = π/3. Que vaut a² ?",["7","13","19","1"],0,"a² = 4 + 9 − 2 × 2 × 3 × (1/2) = 13 − 6 = 7."),
+ S("CC2 2025, ex. 3 : la bissectrice","ABC rectangle en A, AB = 3, AC = 4 ; D est sur [BC] et sur la bissectrice de l'angle en A.",[
+  {w:"Aire(ABC) = ½ · AB · AC = 6.",why:"Triangle rectangle en A."},
+  {w:"La bissectrice coupe l'angle droit en deux angles de π/4 : Aire(ABD) = ½ · 3 · AD · sin(π/4) et Aire(ADC) = ½ · 4 · AD · sin(π/4).",why:"Théorème de l'aire dans les deux petits triangles."},
+  {w:"Aire(ABD) + Aire(ADC) = Aire(ABC) : (7/2) · AD · (√2/2) = 6.",why:"Les deux petits triangles recouvrent le grand."},
+  {w:"AD = 24/(7√2) = 12√2/7 ≈ 2,42.",why:"On isole AD."}]),
+ K("Aire d'un triangle avec un angle ?","Aire(ABC) = ½ ab sin Ĉ. Preuve : H pied de la hauteur issue de A, Aire = ½ AH · BC et AH = AC sin Ĉ."),
+ K("Énoncé d'Al-Kashi ?","BC² = AB² + AC² − 2 AB · AC cos(BAC) ; a² = b² + c² − 2bc cos Â.")]},
+
+/* ------------------------------------------------------------------ */
+{id:"g2-rotation-scalaire",ex:"cc2",t:"Rotations et produit scalaire",min:12,goal:"Définir une rotation et calculer un produit scalaire (poly 4.5 et 4.6).",steps:[
+ Q("Une rotation conserve-t-elle les distances ?",["Oui","Non","Seulement si l'angle vaut π"],0,"C'est une isométrie (théorème 4.5.2)."),
+ L("Rotations",`<p><b>Définition 4.5.1.</b> La rotation de centre Z et d'angle α associe à M ≠ Z l'unique point r(M) tel que <b>ZM = Zr(M)</b> et <b>${an("MZr(M)")} = α</b> [2π] ; r(Z) = Z.</p><p><b>Théorème 4.5.2.</b> Elle conserve les distances et les angles orientés, et envoie une droite sur une droite (l'angle entre les deux est |α|). La symétrie centrale est la rotation d'angle π.</p>`,{fig:"g-rotation"}),
+ Q("r rotation de centre Z, d'angle π/2. Que vaut l'angle entre une droite Δ et son image r(Δ) ?",["π/2","0","π","π/4"],0,"L'angle entre une droite et son image est |α|."),
+ L("Produit scalaire",`<p><b>Définition 4.6.2.</b> ⟨${v("u")}, ${v("v")}⟩ = ‖${v("u")}‖ · ‖${v("v")}‖ · cos(angle(${v("u")}, ${v("v")})).</p><p><b>Proposition 4.6.3.</b> Dans un repère <b>orthonormé</b>, si ${v("u")} = (x, y) et ${v("v")} = (x′, y′) : ⟨${v("u")}, ${v("v")}⟩ = xx′ + yy′ et ‖${v("u")}‖ = √(x² + y²).</p><p>Deux vecteurs non nuls sont orthogonaux si et seulement si leur produit scalaire est nul.</p>`,{fig:"g-scalaire"}),
+ Q("⟨(3, 1), (−1, 3)⟩ dans un repère orthonormé ?",["0","6","−3","10"],0,"3 × (−1) + 1 × 3 = 0 : les vecteurs sont orthogonaux."),
+ K("Rotation de centre Z, d'angle α ?","r(M) est l'unique point tel que ZM = Zr(M) et (ZM, Zr(M)) = α [2π]. Conserve distances et angles orientés."),
+ K("Produit scalaire ?","‖u‖‖v‖cos(angle) ; en repère orthonormé xx′ + yy′ ; nul ⇔ orthogonaux (vecteurs non nuls).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"g2-cercle",ex:"cc2",t:"Cercle, droite et tangentes",min:11,goal:"Les trois positions d'une droite par rapport à un cercle, et la tangente (poly 5.1).",steps:[
+ Q("Une droite à distance 3 du centre d'un cercle de rayon 5…",["coupe le cercle en deux points","est tangente","ne le coupe pas"],0,"3 &lt; 5 : la droite est sécante."),
+ L("Les trois cas",`<p><b>Théorème 5.1.1.</b> C de centre O et rayon r, M le projeté orthogonal de O sur Δ :</p><ul><li>OM &gt; r : Δ ne coupe pas C (extérieure) ;</li><li>OM = r : Δ ∩ C = {M}, Δ est <b>tangente</b> en M ;</li><li>OM &lt; r : deux points A et B, et <b>M est le milieu de [AB]</b>.</li></ul><p>Preuve : pour X ∈ Δ, OX² = OM² + XM² ≥ OM² (Pythagore dans OXM).</p>`,{fig:"g-cercle-droite"}),
+ Q("Comment trouver la tangente en un point T du cercle ?",["La perpendiculaire à (OT) passant par T","La parallèle à (OT) passant par T","La médiatrice de [OT]"],0,"Théorème 5.1.2 (i)."),
+ L("Les tangentes depuis un point extérieur",`<p><b>Théorème 5.1.2.</b> Si M est extérieur à C, il y a exactement deux tangentes passant par M, de points de contact T et T′, avec <b>MT = MT′ = √(OM² − r²)</b>, et [MO) est la bissectrice de l'angle ${an("TMT′")}.</p><p>Le triangle OMT est rectangle en T : c'est Pythagore qui donne MT.</p>`),
+ Q("O centre, r = 3, OM = 5 : longueur MT de la tangente ?",["4","2","√34","8"],0,"MT² = OM² − r² = 25 − 9 = 16."),
+ K("Cercle et droite : les trois cas ?","Comparer OM (M projeté de O sur Δ) au rayon r : &gt; r extérieure, = r tangente en M, &lt; r deux points dont M est le milieu."),
+ K("Tangente en T ?","La perpendiculaire à (OT) en T. Depuis M extérieur : MT = √(OM² − r²).")]},
+
+/* ------------------------------------------------------------------ */
+{id:"g2-angle-centre",ex:"cc2",t:"Angle au centre et angle inscrit",min:15,goal:"Démontrer le théorème de l'angle au centre, comme au CC2 2025 (3 points), et utiliser l'angle inscrit.",steps:[
+ Q("A et B sont sur un cercle de centre O. Si l'angle inscrit AMB vaut π/6, que vaut l'angle au centre AOB ?",["π/3","π/6","π/12","π"],0,"L'angle au centre est le double de l'angle inscrit."),
+ L("L'énoncé",`<p><b>Théorème 5.2.1.</b> Soient C un cercle de centre O, A, B ∈ C distincts et M ∈ P ∖ {A, B}. Alors M ∈ C si et seulement si <b>${an("AOB")} = 2${an("AMB")} [2π]</b>.</p><p><b>Corollaire 5.2.3 (angle inscrit).</b> Pour A, B ∈ C, l'angle de droites ((MA), (MB)) ne dépend pas du point M ∈ C ∖ {A, B} (modulo π).</p>`,{fig:"g-angle-centre"}),
+ S("La démonstration du sens direct (CC2 2025, 3 points)","On suppose M ∈ C. Tous les angles sont orientés, modulo 2π.",[
+  {w:`OA = OM (rayons) : le triangle AMO est isocèle en O, donc ${an("OMA")} = ${an("MAO")}.`,why:"Triangle isocèle : angles à la base égaux."},
+  {w:`La somme des angles de AMO donne ${an("AOM")} + 2${an("OMA")} = π, soit ${an("AOM")} = π − 2${an("OMA")}.`,why:"Somme des angles d'un triangle."},
+  {w:`De même, BMO est isocèle en O : ${an("BOM")} = π − 2${an("OMB")}.`,why:"Même raisonnement avec B."},
+  {w:`Par Chasles : ${an("AOB")} = ${an("AOM")} + ${an("MOB")} = ${an("AOM")} − ${an("BOM")} = −2${an("OMA")} + 2${an("OMB")}.`,why:"On remplace les deux angles."},
+  {w:`= 2${an("AMO")} + 2${an("OMB")} = 2${an("AMB")} [2π].`,why:"Chasles encore : AMO + OMB = AMB."}]),
+ Q("Dans la preuve, pourquoi le triangle AMO est-il isocèle ?",["Parce que OA = OM, deux rayons du cercle","Parce que AM = AO","Parce que l'angle en M est droit"],0,"A et M sont sur le cercle de centre O."),
+ L("Ce qu'on en déduit",`<ul><li><b>Cercle de diamètre</b> (Cor. 5.2.5) : M est sur le cercle de diamètre [AB] si et seulement si AMB est rectangle en M.</li><li><b>Points cocycliques</b> (Cor. 5.2.7) : A, B, C, D sont cocycliques ou alignés si et seulement si ((CA), (CB)) = ((DA), (DB)) [π].</li></ul>`,{fig:"g-cocycliques"}),
+ Q("AMB est rectangle en M. Où est M ?",["Sur le cercle de diamètre [AB]","Sur la médiatrice de [AB]","Au milieu de [AB]"],0,"Corollaire 5.2.5 (l'angle au centre AOB vaut π)."),
+ K("Angle au centre ?","M ∈ C ⇔ AOB = 2AMB [2π]. Preuve : AMO et BMO isocèles en O, AOM = π − 2OMA, BOM = π − 2OMB, puis Chasles."),
+ K("Cocycliques ?","A, B, C, D cocycliques ou alignés ⇔ ((CA), (CB)) = ((DA), (DB)) [π]. M sur le cercle de diamètre [AB] ⇔ AMB rectangle en M.")]}
 ];
 })();
 
@@ -7185,6 +7478,25 @@ LES.rai=[
 const an=s=>`<span class="ang">${s}</span>`,v=s=>`<span class="vec">${s}</span>`;
 const CLAIR={
 geo:{
+ "g2-transfo":{
+  "Les deux définitions":`<p>Une translation fait glisser toute la figure d'un même déplacement, sans la tourner ni la déformer. Une homothétie l'agrandit ou la rétrécit depuis un point fixe K, comme un zoom.</p><p>Avec un rapport négatif, le zoom passe en plus de l'autre côté de K.</p>`},
+ "g2-pythagore":{
+  "Le théorème":`<p>Dans un triangle rectangle, le carré du grand côté (en face de l'angle droit) est égal à la somme des carrés des deux autres. Et inversement : si cette égalité est vraie, le triangle est rectangle.</p><p>Exemple : 3, 4, 5, car 9 + 16 = 25.</p>`},
+ "g2-trigo":{
+  "Les définitions":`<p>Dans un triangle rectangle, le cosinus, le sinus et la tangente d'un angle sont des rapports de longueurs de côtés. Ils ne dépendent que de l'angle, pas de la taille du triangle.</p>`,
+  "Valeurs et symétries":`<p>Quelques angles reviennent tout le temps (π/6, π/4, π/3) : leurs cosinus et sinus sont à connaître par cœur.</p><p>Le cosinus d'un angle est le sinus de l'angle complémentaire, et inversement.</p>`},
+ "g2-aire-alkashi":{
+  "Le théorème de l'aire":`<p>L'aire d'un triangle, c'est « base × hauteur / 2 ». Quand on ne connaît pas la hauteur, on la remplace par un côté fois le sinus de l'angle : c'est la formule ½ ab sin Ĉ.</p>`,
+  "Al-Kashi":`<p>Al-Kashi, c'est Pythagore pour un triangle quelconque : on ajoute un terme correctif −2bc cos Â qui disparaît quand l'angle est droit.</p>`},
+ "g2-rotation-scalaire":{
+  "Rotations":`<p>Une rotation fait tourner toute la figure autour d'un point fixe, d'un même angle. Les longueurs et les angles ne changent pas.</p>`,
+  "Produit scalaire":`<p>Le produit scalaire de deux vecteurs est un nombre qui mesure à quel point ils vont dans la même direction : positif s'ils vont dans le même sens, nul s'ils sont perpendiculaires, négatif s'ils sont opposés.</p>`},
+ "g2-cercle":{
+  "Les trois cas":`<p>Une droite peut passer loin d'un cercle, le toucher en un seul point, ou le traverser. Tout se décide en comparant la distance du centre à la droite avec le rayon.</p>`,
+  "Les tangentes depuis un point extérieur":`<p>Depuis un point à l'extérieur d'un cercle, on peut tracer exactement deux tangentes, de la même longueur. Le rayon qui arrive au point de contact est perpendiculaire à la tangente : c'est ce qui permet d'utiliser Pythagore.</p>`},
+ "g2-angle-centre":{
+  "L'énoncé":`<p>Si on regarde une même corde [AB] depuis le centre du cercle, on la voit sous un angle deux fois plus grand que depuis n'importe quel point du cercle.</p>`,
+  "Ce qu'on en déduit":`<p>Cas particulier : si [AB] est un diamètre, l'angle au centre vaut un demi-tour, donc l'angle depuis un point du cercle est droit. C'est pour ça qu'un triangle inscrit dans un demi-cercle est rectangle.</p>`},
  "g-notations":{
   "Quatre écritures, quatre objets différents":`<p>Les crochets et les parenthèses ne sont pas décoratifs : ils disent de <b>quel objet</b> on parle.</p><p>[AB] : le morceau de droite entre A et B, avec ses deux bouts. (AB) : la droite entière, qui continue des deux côtés. [AB) : la demi-droite, qui part de A et continue après B. Et AB tout seul, sans rien autour : une longueur, donc un nombre.</p><p>Exemple : « AB = 5 » a un sens (une longueur vaut 5) ; « [AB] = 5 » n'en a pas.</p>`,
   "Deux sortes d'angles":`<p>Un angle <b>orienté</b>, c'est un trajet : de combien on tourne pour aller de [OA) à [OB), et dans quel sens. Il peut être négatif.</p><p>Un angle <b>non orienté</b>, c'est seulement l'ouverture, sans sens : toujours entre 0 et π.</p><p>Exemple : si on tourne d'un quart de tour dans le sens inverse des aiguilles d'une montre pour aller de [OA) à [OB), l'angle orienté vaut π/2 ; de [OB) à [OA), il vaut −π/2. L'ouverture, elle, vaut π/2 dans les deux cas.</p>`,
