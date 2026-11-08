@@ -4197,15 +4197,113 @@ const infos=({sec,exam})=>`<div class="title-row"><h1>Le CC1 d'algorithmique en 
  ${sec(4,"Le conseil de tes camarades",`<p>« Apprends bien comment écrire du pseudo-code : ne pas oublier la signature, et mettre fin pour, fin tant que au bon endroit. » Commence par la fiche <a href="#/c/a-pseudo">Écrire un algorithme sans faute</a> et la page <a href="#/p/recettes">Recettes pas à pas</a>.</p>`)}
  ${sec(5,"Documents",`<p>Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment). Aucun matériel électronique. Prépare-la avec la page « Ma feuille A4 ».</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
+/* ================== CC2 et CC3 (dates pas encore annoncées) ==================
+   MCC 2026-2027 : 3 CC de 1 h (34 %, 34 %, 32 %), pas d'examen en janvier. Dates supposées (choix de l'utilisateur) :
+   CC2 jeudi 3/12 et CC3 jeudi 10/12 à 15h, créneaux du TD (le dernier TD d'Algo dans Prose est le 10/12).
+   Partage supposé : CC2 = preuves et complexité (TD 6 à 8), CC3 = recherche et tris (TD 9 et 10) ; chacun reprend aussi ce qui précède. */
+const P2=o=>Object.assign(o,{ex:"cc2"}),P3=o=>Object.assign(o,{ex:"cc3"});
+const EX2={"a-preuve":1,"a-complexite":1,"a-calcul-complexite":1};
+concepts.forEach(c=>{if(OUT_IDS.includes(c.id)){delete c.out;c.ex=EX2[c.id]?"cc2":"cc3";c.ch=EX2[c.id]?6:7;}});
+
+/* ---------- TD 6 à 10, corrigés écrits pour le site ---------- */
+/* les exercices 24 et 34 existaient (cachés « pas au CC1 ») : ils passent au CC2 */
+const SOL24=`<table class="tbl"><thead><tr><th>tour</th><th>i</th><th>r</th><th>x</th></tr></thead><tbody><tr><td>début</td><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>1</td><td>0</td><td>3</td></tr><tr><td>2</td><td>2</td><td>1</td><td>6</td></tr><tr><td>3</td><td>3</td><td>4</td><td>9</td></tr><tr><td>4</td><td>4</td><td>9</td><td>12</td></tr><tr><td>5</td><td>5</td><td>16</td><td>15</td></tr></tbody></table><ul><li>Invariants : x = 3i et r = (i − 1)².</li><li>Équations de récurrence : i<sub>k+1</sub> = i<sub>k</sub> + 1, r<sub>k+1</sub> = r<sub>k</sub> + x<sub>k</sub> − i<sub>k+1</sub>, x<sub>k+1</sub> = x<sub>k</sub> + 3.</li><li>Initialisation : x = 0 = 3 × 0 et r = 1 = (0 − 1)².</li><li>Hérédité : x<sub>k+1</sub> = 3i<sub>k</sub> + 3 = 3i<sub>k+1</sub> ; r<sub>k+1</sub> = (i<sub>k</sub> − 1)² + 3i<sub>k</sub> − (i<sub>k</sub> + 1) = i<sub>k</sub>² = (i<sub>k+1</sub> − 1)².</li><li>À la sortie i = n, donc r = (n − 1)² : g calcule (n − 1)².</li></ul>`;
+td.forEach(x=>{if(x.id==="24"){x.ex="cc2";delete x.out;x.sol=SOL24;}if(x.id==="34"){x.ex="cc2";delete x.out;}});
+td.push(
+ P2({id:"25",s:2,note:"preuves",t:"Somme d'un tableau : itératif, récursif, preuves",en:"(1) Algorithme itératif qui calcule la somme des éléments de T. (2) Le prouver. (3) Version récursive somme des T[0..n−1]. (4) La prouver. (5) Avec quel n l'appeler pour tout le tableau ?",link:"a-preuve",sol:`${C(`Fonction : somme (E T : tableau d'entiers) : entier
+Variables : i, s : entier
+Début
+  s ← 0
+  Pour i de 0 à taille(T)-1 faire
+    s ← s + T[i]
+  finPour
+  Renvoyer s
+Fin
+
+Fonction : sommeRec (E T : tableau d'entiers, E n : entier) : entier
+Spécifications : 0 ≤ n ≤ taille(T). Renvoie T[0] + … + T[n-1].
+Début
+  Renvoyer cond(n = 0, 0, sommeRec(T, n-1) + T[n-1])
+Fin`)}<ul><li>Itératif : invariant « après le tour i, s = T[0] + … + T[i] ». Vrai après le tour 0 (s = T[0]) ; héréditaire car s<sub>i+1</sub> = s<sub>i</sub> + T[i+1]. Après le dernier tour, s est la somme de tout T. La boucle Pour s'arrête.</li><li>Récursif, par récurrence sur n : sommeRec(T, 0) = 0 ; si sommeRec(T, n − 1) = T[0] + … + T[n−2], alors sommeRec(T, n) ajoute T[n−1]. Terminaison : n diminue de 1 jusqu'à 0.</li><li>Pour tout le tableau : sommeRec(T, taille(T)).</li></ul>`}),
+ P2({id:"26",s:2,note:"preuves",t:"Fibonacci itératif : quel invariant, que renvoyer ?",en:"i, r1, r2 ← 0, 0, 1 ; Tant que i < n : r3 ← r1 ; r1 ← r2 ; r2 ← r3 + r2 ; i ← i + 1. Lesquelles sont des invariants : r1 = i ; r1 = i − 1 ; r1 = fib(i) ; r2 = r1 + 1 (si i ≠ 1) ; r2 = fib(i + 1) ? Que faut-il renvoyer ?",link:"a-preuve",sol:`<p>Invariants : <b>r1 = fib(i)</b> et <b>r2 = fib(i + 1)</b>. Au départ r1 = 0 = fib(0), r2 = 1 = fib(1). Après un tour : le nouveau r1 vaut l'ancien r2 = fib(i + 1), le nouveau r2 vaut fib(i) + fib(i + 1) = fib(i + 2), et i augmente de 1. Les autres sont faux (par exemple i = 4 : r1 = 3 ≠ 4, et r2 = 5 ≠ r1 + 1). À la sortie i = n : il faut renvoyer <b>r1</b>.</p>`}),
+ P2({id:"27",s:2,note:"preuves",t:"logEntier",en:"i, p, q ← 0, 1, 2 ; Tant que q ≤ a : p ← q ; q ← p + p ; i ← i + 1 ; Renvoyer i. (1) Trace pour a = 18. (2) Invariants liant p et i, q et i. (3) Les montrer. (4) Montrer que 2^i ≤ a < 2^(i+1) à la fin.",link:"a-preuve",sol:`<p>Trace a = 18 : (i, p, q) = (0, 1, 2) → (1, 2, 4) → (2, 4, 8) → (3, 8, 16) → (4, 16, 32) ; 32 > 18 : on renvoie 4.</p><ul><li>Invariants : p = 2<sup>i</sup> et q = 2<sup>i+1</sup>. Vrais au départ ; un tour fait p ← q = 2<sup>i+1</sup>, q ← 2p = 2<sup>i+2</sup>, i ← i + 1.</li><li>À la sortie, q > a, donc a < 2<sup>i+1</sup>. Et p ≤ a : soit p = 1 au départ (a ≥ 1), soit p est un ancien q qui vérifiait q ≤ a. Donc 2<sup>i</sup> ≤ a < 2<sup>i+1</sup>.</li><li>Terminaison : q double à chaque tour, il finit par dépasser a.</li></ul>`}),
+ P2({id:"28",s:1,note:"preuves",t:"La procédure h (n vers 7)",en:"n ← N ; f ← 7! ; Tant que n ≠ 7 : si n > 7 alors (f ← f × n ; n ← n − 1) sinon (n ← n + 1 ; f ← f / n). Que vaut f à la fin ? Le prouver avec un invariant.",link:"a-preuve",sol:`<p>Invariant : f = N! × 7! / n!. Au départ n = N et f = 7! : vrai. Si n > 7 : f × n = N!·7!/(n − 1)!, et n devient n − 1. Si n < 7 : n devient n + 1 et f / (n + 1) = N!·7!/(n + 1)!. À la sortie n = 7, donc <b>f = N!</b>. Terminaison : |n − 7| diminue de 1 à chaque tour.</p>`}),
+ P2({id:"29",s:3,note:"complexité",t:"Ranger des suites par domination",en:"aₙ = 0,001n² − 100000n ; bₙ = 2^(n/2) ; cₙ = log(n² + 1) ; dₙ = n² ; eₙ = n²(log(3n) + 5) ; fₙ = 3000n + 28 ; gₙ = 2ⁿ + 1 ; hₙ = 3ⁿ − 2ⁿ.",link:"a-complexite",sol:`<p>cₙ = Θ(log n) ≺ fₙ = Θ(n) ≺ aₙ = Θ(n²) et dₙ = Θ(n²) (même ordre) ≺ eₙ = Θ(n² log n) ≺ bₙ = Θ((√2)ⁿ) ≺ gₙ = Θ(2ⁿ) ≺ hₙ = Θ(3ⁿ).</p><p>On garde le terme qui grandit le plus vite et on oublie les constantes : 0,001n² finit par dépasser 100000n ; log(n² + 1) ≈ 2 log n.</p>`}),
+ P2({id:"30",s:3,note:"complexité",t:"A en Θ(n²), B en Θ(n log n)",en:"A met 1 s pour n = 100, B met 10 s pour n = 100. (1) Pourquoi faut-il plus d'informations ? (2) Avec des temps proportionnels à n² et n log n, les coefficients ? (3) Lequel pour n = 1000 ? (4) Pour n = 10000 ?",link:"a-complexite",sol:`<ol><li>Θ cache les constantes et les termes plus petits : il faut savoir comment le temps varie réellement.</li><li>T<sub>A</sub>(n) = 10⁻⁴ n² (car 1 = c × 100²) ; T<sub>B</sub>(n) = 10 × n log n / (100 log 100).</li><li>n = 1000 : T<sub>A</sub> = 100 s ; T<sub>B</sub> = 10 × 10 × log 1000 / log 100 = 150 s : on choisit A.</li><li>n = 10000 : T<sub>A</sub> = 10⁴ s ; T<sub>B</sub> = 10 × 100 × 2 = 2000 s : on choisit B.</li></ol><p>Le rapport log 1000 / log 100 = 3/2 ne dépend pas de la base du logarithme.</p>`}),
+ P2({id:"31",s:2,note:"complexité",t:"Un ordinateur 100 fois plus rapide",en:"X traite une taille n₀ en 1 minute ; Y est 100 fois plus rapide. Quelle taille Y traite-t-il en 1 minute si le temps est proportionnel à n² ? À 2ⁿ ?",link:"a-complexite",sol:`<ul><li>n² : Y fait 100 fois plus d'opérations, n² = 100 n₀², donc n = 10 n₀.</li><li>2ⁿ : 2ⁿ = 100 × 2<sup>n₀</sup>, donc n = n₀ + log₂(100) ≈ n₀ + 6,6 : à peine 6 de plus.</li></ul>`}),
+ P2({id:"32",s:1,note:"complexité",t:"Tri à bulles ou tri fusion, avec 1 Go",en:"Bulles : environ n²/2 opérations, pas de mémoire en plus. Fusion : environ n log₂ n, mais un tableau auxiliaire de n valeurs. Une valeur = 2 octets ; au plus 1 Go de mémoire. Quel tri selon n ?",link:"a-complexite",sol:`<p>Avec le tableau lui-même (2n octets) : la fusion demande 4n octets, donc n ≤ 2,5 × 10⁸ ; les bulles 2n octets, donc n ≤ 5 × 10⁸. Conclusion : jusqu'à 2,5 × 10⁸ valeurs, le tri fusion (bien plus rapide) ; entre 2,5 × 10⁸ et 5 × 10⁸, seul le tri à bulles tient en mémoire ; au-delà, aucun des deux.</p>`}),
+ P2({id:"35",s:2,note:"complexité",t:"Équations de récurrence",en:"Algorithme 1 : F(n) = 1 si n = 0, sinon F(n−1) + F(n−1). Algorithme 2 : G fait une boucle de n tours puis un appel sur n div 2. Algorithme 3 : H fait la somme des appels sur 0, 1, …, n − 1. Trouver les équations sur Tₙ et les résoudre.",link:"a-calcul-complexite",sol:`<ul><li>Algorithme 1 : Tₙ = 2Tₙ₋₁ + c (deux appels). Avec l'indication (c = 6), Uₙ = Tₙ + 6 vérifie Uₙ = 2Uₙ₋₁ : Tₙ = (T₀ + 6)2ⁿ − 6, donc Θ(2ⁿ). Garder F(n−1) dans une variable donne Θ(n).</li><li>Algorithme 2 (l'appel est sur n div 2) : Tₙ = T<sub>n/2</sub> + Θ(n). Master theorem (a = 1, b = 2, d = 1, a &lt; b<sup>d</sup>) : Θ(n).</li><li>Algorithme 3 : Tₙ₊₁ − Tₙ = Tₙ + c, donc Tₙ₊₁ = 2Tₙ + c : Θ(2ⁿ) (avec l'indication, Uₙ = Tₙ + 4 est géométrique de raison 2).</li></ul><p>Dans l'énoncé, les appels « F(n div 2) » et « F(i−1) » des algorithmes 2 et 3 sont sans doute des appels à G et H eux-mêmes : c'est ce que demandent les indications.</p>`}),
+ P3({id:"37",s:3,note:"recherche",t:"Dérouler la dichotomie",en:"RechDic(e, T) : deb, fin ← 0, len(T) − 1 ; tant que deb ≤ fin : mil ← (deb + fin) // 2 ; si T[mil] < e alors deb ← mil + 1 sinon fin ← mil − 1 ; à la fin, renvoyer deb si deb < len(T) et T[deb] = e, sinon −1. Valeurs de deb et fin pour e = 5 dans (a) [1, 3, 5] (b) [5, 5, 5, 9] (c) [1, 3, 7, 9] (d) [1, 2, 3, 4] (e) [6, 7, 8, 9]. (2) Une seule recherche : linéaire, ou trier puis dichotomie ?",link:"a-recherche",sol:`<ul><li>(a) (0, 2) → mil 1 : 3 &lt; 5, deb = 2 → mil 2 : 5 n'est pas &lt; 5, fin = 1. Renvoie 2.</li><li>(b) (0, 3) → mil 1 : fin = 0 → mil 0 : fin = −1. Renvoie 0 (la première occurrence).</li><li>(c) (0, 3) → mil 1 : deb = 2 → mil 2 : 7, fin = 1. T[2] = 7 ≠ 5 : renvoie −1.</li><li>(d) deb passe à 2, 3, puis 4 = len(T) : renvoie −1.</li><li>(e) fin passe à 0, puis −1 ; T[0] = 6 ≠ 5 : renvoie −1.</li></ul><p>(2) Pour une seule recherche, la linéaire (Θ(n)) bat « trier puis chercher » (Θ(n log n) + Θ(log n)).</p>`}),
+ P3({id:"39",s:2,note:"tris",t:"La médiane",en:"(1) nbInf(tab, e) : nombre de valeurs strictement inférieures à e. (2) mediane1 avec nbInf ; complexité ? (3) mediane2 en triant d'abord ; complexité ? (4) Conclure.",link:"a-tri-selection",sol:`${C(`Fonction : nbInf (E tab : tableau d'entiers, E e : entier) : entier
+Variables : i, c : entier
+Début
+  c ← 0
+  Pour i de 0 à taille(tab)-1 faire
+    Si tab[i] < e alors c ← c + 1 finSi
+  finPour
+  Renvoyer c
+Fin`)}<ul><li>mediane1 : pour chaque i, si nbInf(tab, tab[i]) = taille(tab) div 2, renvoyer tab[i]. Jusqu'à n appels en Θ(n) : Θ(n²).</li><li>mediane2 : trier (Θ(n log n) avec un bon tri), puis renvoyer la case du milieu (Θ(1)).</li><li>Conclusion : trier d'abord est plus rapide, à condition d'utiliser un tri en n log n.</li></ul>`}),
+ P3({id:"40",s:2,note:"tris",t:"k recherches : trier d'abord ?",en:"(1) k recherches linéaires dans n entiers : complexité ? (2) Trier puis k recherches dichotomiques ? (3) Quand vaut-il mieux trier d'abord ?",link:"a-recherche",sol:`<ol><li>Θ(kn).</li><li>Θ(n log n + k log n).</li><li>Quand kn est beaucoup plus grand que n log n, c'est-à-dire quand k grandit plus vite que log n.</li></ol>`}),
+ P3({id:"42",s:3,note:"tris",t:"Tri par sélection : algorithme, complexité, preuve",en:"Chercher le plus petit et l'échanger avec tab[0], puis le plus petit des n − 1 suivants avec tab[1], etc. (1) Algorithme. (2) Complexité. (3) Validité.",link:"a-tri-selection",sol:`${C(`Procédure : triSelection (ES tab : tableau d'entiers)
+Variables : i, j, m, x : entier
+Début
+  Pour i de 0 à taille(tab)-2 faire
+    m ← i
+    Pour j de i+1 à taille(tab)-1 faire
+      Si tab[j] < tab[m] alors m ← j finSi
+    finPour
+    x ← tab[i] ; tab[i] ← tab[m] ; tab[m] ← x
+  finPour
+Fin`)}<ul><li>Complexité : (n − 1) + (n − 2) + … + 1 = n(n − 1)/2 comparaisons, Θ(n²), dans tous les cas.</li><li>Invariant : après le tour i, tab[0..i] contient les i + 1 plus petites valeurs, triées. Héréditaire car on y ajoute le minimum de ce qui reste, qui est plus grand ou égal. À la fin (i = n − 2), tout est trié.</li></ul>`}),
+ P3({id:"43",s:3,note:"tris",t:"Tri par insertion : algorithme, complexité, preuve",en:"Insérer chaque valeur tab[k] parmi tab[0..k−1] déjà triées. (1) Algorithme. (2) Complexité. (3) Validité.",link:"a-tri-insertion",sol:`${C(`Procédure : triInsertion (ES tab : tableau d'entiers)
+Variables : k, j, x : entier
+Début
+  Pour k de 1 à taille(tab)-1 faire
+    x ← tab[k]
+    j ← k - 1
+    Tant que j ≥ 0 et tab[j] > x faire
+      tab[j+1] ← tab[j]
+      j ← j - 1
+    finTantQue
+    tab[j+1] ← x
+  finPour
+Fin`)}<ul><li>Complexité : pire cas (tableau à l'envers) 1 + 2 + … + (n − 1) décalages, Θ(n²) ; meilleur cas (déjà trié) Θ(n).</li><li>Invariant : avant le tour k, tab[0..k−1] contient les k premières valeurs de départ, triées. Le tour k insère tab[k] à sa place. À la fin, tout est trié.</li></ul>`}));
+
+/* ---------- annales des CC2 et CC3 ---------- */
+ann.push(
+ {src:"CC1 novembre 2024 · Cours, questions 2 à 5",t:"Tri par voisins, dichotomie, Θ, équations de récurrence",en:"(2) Luc ne peut que permuter deux vaisseaux voisins : peut-il les ranger avec un tri du cours ? (3) 128 chevaux rangés par taille : combien de mesures pour trouver Neptune ? (4) Un algorithme en Θ(n³) peut-il être un million de fois plus lent qu'un autre en Θ(n³) ? (5) Dans une preuve de validité, à quoi servent les équations de récurrence ?",go:"a-complexite",sol:`<ol start="2"><li>Oui : le tri à bulles ne fait que permuter des voisins.</li><li>Dichotomie : chaque mesure divise par 2 les candidats ; 128 = 2⁷, donc 7 mesures au pire.</li><li>Oui : 1 000 000 n³ et n³ sont tous les deux en Θ(n³).</li><li>Elles traduisent le fonctionnement de l'algorithme en relations entre les variables, et servent à montrer qu'un invariant est héréditaire.</li></ol>`},
+ {src:"Examen janvier 2023 · Ex. 2 · 3 pts",t:"Un ordinateur 200 fois plus rapide (n log n)",en:"Temps proportionnel à n log₁₀(n). A traite n = 100 en 1 minute ; B est 200 fois plus rapide. Quelle taille B traite-t-il en 1 minute ? (n log₁₀ n vaut 200 pour n = 100, 3000 pour 1000, 40000 pour 10000.)",go:"a-complexite",sol:`<p>1 = k × 100 log₁₀ 100 = 200k, donc k = 1/200. Pour B : 1 = (k/200) × n log₁₀ n, donc n log₁₀ n = 200 × 200 = 40000, soit <b>n = 10000</b>.</p>`},
+ {src:"Examen janvier 2023 · Ex. 3 · 8,5 pts",t:"F(n) = F(n−1) / (1 + F(n−1)) et le master theorem",en:"F(n) renvoie 1 si n = 0, sinon F(n−1) / (1 + F(n−1)). (1) Prouver par récurrence que F termine et renvoie 1/(n + 1). (2) Tₙ = nombre d'opérations arithmétiques : équation et formule (Uₙ = Tₙ + 4 est géométrique). (3) Ordre de complexité ; un algorithme radicalement plus efficace. (5) G(n, d) affiche n fois d, puis appelle G(n div 2, d) et G(n div 2, d + 1) : complexité par le master theorem.",go:"a-calcul-complexite",who:"Corrigé officiel, réécrit",sol:`<ol><li>Base : F(0) = 1 = 1/(0 + 1). Hérédité : si F(n − 1) = 1/n, alors F(n) = (1/n)/(1 + 1/n) = 1/(n + 1), et F(n) termine car F(n − 1) termine. Conclusion pour tout n.</li><li>T₀ = 0 et Tₙ = 2Tₙ₋₁ + 4 (deux appels, une addition, une division, et le calcul de n − 1 deux fois). Uₙ = Tₙ + 4 = 2Uₙ₋₁ et U₀ = 4 : Tₙ = 4 × 2ⁿ − 4.</li><li>Θ(2ⁿ). Bien mieux : « Renvoyer 1/(n + 1) », en Θ(1).</li><li value="5">Tₙ = Θ(n) + 2T<sub>n/2</sub> : master theorem avec a = 2, b = 2, d = 1, b<sup>d</sup> = a : Θ(n log n).</li></ol>`},
+ {src:"Examen janvier 2023 · Ex. 4, question 1",t:"Trier un tableau de chiffres : quelles complexités sont possibles ?",en:"Trier un tableau de n chiffres (0 à 9). Anakin le fait en Θ(n²), Leia en Θ(n log n), Chewbacca en Θ(n), Luke en Θ(1). Lesquelles sont impossibles ? Quel tri du cours donne la meilleure ?",go:"a-tri-valeurs",who:"Corrigé officiel, réécrit",sol:`<p>Luke est impossible : il faut au moins lire tout le tableau, donc Ω(n). Chewbacca est possible : un chiffre ne prend que 10 valeurs, le <b>tri par valeurs</b> (on compte les 0, les 1…) est en Θ(n). Anakin et Leia sont possibles, mais moins bons.</p>`});
+
+/* ---------- quiz ---------- */
+quiz.push(
+ {q:"Un invariant de boucle doit être…",o:["vrai avant la boucle et conservé par chaque tour","vrai seulement à la fin","faux au départ"],a:0,e:"Initialisation et hérédité, comme une récurrence.",link:"a-preuve"},
+ {q:"Pour prouver qu'un Tant que s'arrête, on utilise…",o:["une quantité entière qui diminue strictement","l'invariant","la trace"],a:0,e:"Par exemple N − i, ou a + b.",link:"a-preuve"},
+ {q:"Si a = Θ(b), alors…",o:["a = O(b)","a = o(b)","a ne peut pas être Ω(b)"],a:0,e:"Θ = à la fois O et Ω.",link:"a-complexite"},
+ {q:"Combien d'additions fait « Pour i de 1 à n, Pour j de 1 à i : som ← som + 1 » ?",o:["n(n + 1)/2","n²","2n"],a:0,e:"1 + 2 + … + n.",link:"a-calcul-complexite"},
+ {q:"T(n) = 2T(n − 1) + c donne…",o:["Θ(2ⁿ)","Θ(n)","Θ(n log n)"],a:0,e:"Le nombre d'appels double à chaque niveau.",link:"a-calcul-complexite"},
+ {q:"T(n) = 2T(n/2) + Θ(n) donne…",o:["Θ(n log n)","Θ(n²)","Θ(log n)"],a:0,e:"Master theorem avec a = b<sup>d</sup> = 2.",link:"a-calcul-complexite"},
+ {q:"Combien d'essais au plus pour une dichotomie dans 1024 éléments triés ?",o:["10 (ou 11 selon la façon de compter)","1024","512"],a:0,e:"1024 = 2¹⁰ : chaque essai divise par 2.",link:"a-recherche"},
+ {q:"Le tri par insertion sur un tableau déjà trié est en…",o:["Θ(n)","Θ(n²)","Θ(1)"],a:0,e:"Aucun décalage : un seul test par élément.",link:"a-tri-insertion"},
+ {q:"Le tri par sélection est en…",o:["Θ(n²) dans tous les cas","Θ(n) si le tableau est trié","Θ(n log n)"],a:0,e:"Il cherche toujours le minimum de tout ce qui reste.",link:"a-tri-selection"});
+
+const infos23=({sec})=>`<div class="title-row"><h1>Les CC2 et CC3 en bref</h1></div>
+ ${sec(1,"Quand",`<p>Les dates ne sont ni dans Prose ni dans tes mails. Le site suppose le <b>jeudi 3 décembre</b> (CC2) et le <b>jeudi 10 décembre</b> (CC3), à 15h, sur le créneau de ton TD (le 10/12 est le dernier TD d'Algo dans Prose). Dès qu'une date est annoncée, je la corrige.</p><p>Modalités 2026-2027 : 3 CC d'1 h, 34 %, 34 % et 32 % de la note, pas d'examen en janvier. Une feuille A4 autorisée aux CC des années passées.</p>`)}
+ ${sec(2,"Le programme supposé",`<p>CC2 : preuves de validité (invariants, terminaison) et complexité (O, Ω, Θ, compter les opérations, équations de récurrence, master theorem) : TD 6 à 8. CC3 : recherche (dichotomie) et tris (sélection, insertion, bulles, par valeurs) : TD 9 et 10. Chaque CC peut aussi reprendre ce qui précède.</p>`)}
+ ${sec(3,"Ce qui tombe aux annales",`<ul><li>Des questions de cours : « Θ(n³) peut-il être un million de fois plus lent ? », « à quoi servent les équations de récurrence ? », « combien de mesures par dichotomie ? ».</li><li>Une preuve : trace, invariant, terminaison.</li><li>Un calcul de complexité, un temps d'exécution sur un ordinateur plus rapide.</li><li>Un tri à écrire, avec sa complexité.</li></ul>`)}`;
+
 SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.32,key:"rev-algo-v1",lang:"pseudo",
- exam:{day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.34,unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
+        {id:"cc2",label:"CC2",day:"2026-12-03",start:"15:00",end:"16:00",place:"salle de TD (36.310 ce jour-là dans Prose)",dur:"1 h",share:0.34,covers:["cc1","cc2"],unsure:"Date supposée (créneau de ton TD) : ni Prose ni les mails ne l'annoncent. Programme supposé : preuves et complexité (TD 6 à 8).",prog:"Supposé : preuves de validité (invariants, terminaison) et complexité (O, Ω, Θ, compter les opérations, équations de récurrence, master theorem), TD 6 à 8, plus ce qui précède."},
+        {id:"cc3",label:"CC3",day:"2026-12-10",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,covers:["cc1","cc2","cc3"],unsure:"Date supposée (dernier TD d'Algo dans Prose) : ni Prose ni les mails ne l'annoncent. Programme supposé : recherche et tris (TD 9 et 10).",prog:"Supposé : recherche séquentielle et dichotomique, tris (sélection, insertion, bulles, par valeurs) avec leur complexité et leur preuve, TD 9 et 10, plus ce qui précède."}],
  docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Pas de preuves, complexité ni tris.",
- chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",7:"Pas au CC1 (pas encore vu)"},
+ chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",6:"6. Preuves et complexité (CC2)",7:"7. Recherche et tris (CC3)"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD, ex.",
  tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne.",
  annIntro:"Le CC PEIP 2023 a exactement le programme de cette année (corrigé par moi). Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
- pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
+ pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
@@ -4213,7 +4311,16 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  {id:"cc24",t:"Annale CC1 2024, exercices 1 à 3",min:50,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"tdex2",t:"Autres exercices de TD sur papier",min:50,p:2,td:["2","3","7","13","16","TP2"],links:[["td","Exercices de TD"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
- {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+ {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
+ {id:"td6",ex:"cc2",t:"TD 6 ★★★ : preuves (g, logEntier, Fibonacci), sur papier",min:45,p:1,td:["24","26","27"],links:[["td","Exercices de TD"]]},
+ {id:"td78",ex:"cc2",t:"TD 7 et 8 ★★★ : complexité, sur papier",min:45,p:1,td:["29","30","34","35"],links:[["td","Exercices de TD"]]},
+ {id:"ann2",ex:"cc2",t:"Annales : janvier 2023, ex. 2 et 3, en 40 min",min:50,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Temps d'exécution, preuve par récurrence, équation de récurrence, master theorem."},
+ {id:"quiz2",ex:"cc2",t:"Quiz de cours, questions des CC2 et CC3 comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
+ {id:"review2",ex:"cc2",t:"Veille du CC2 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
+ {id:"td910",ex:"cc3",t:"TD 9 et 10 ★★★ : dichotomie et tris, sur papier",min:50,p:1,td:["37","42","43"],links:[["td","Exercices de TD"]]},
+ {id:"td910b",ex:"cc3",t:"TD 10 : médiane et k recherches",min:30,p:2,td:["39","40"],links:[["td","Exercices de TD"]]},
+ {id:"ann3",ex:"cc3",t:"Annales : questions de cours du CC1 2024 et tri de chiffres (janvier 2023)",min:25,p:1,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"review3",ex:"cc3",t:"Veille du CC3 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 })();
 
 </script>
@@ -8106,6 +8213,91 @@ FIN`)+"<p>cons ajoute devant : on parcourt le tableau à l'envers pour garder l'
  K("Pile ou file ?","Pile : dernier arrivé, premier sorti (empiler, depiler). File : premier arrivé, premier sorti (enfiler, defiler)."),
  K("Ce qui est interdit sur une pile ?","Un indice P[1], tête, queue, cons, et empiler(P, x) : l'ordre est empiler(élément, pile).")]}
 ];
+/* ================== leçons des CC2 (preuves, complexité) et CC3 (recherche, tris) ================== */
+const A2=o=>Object.assign(o,{ex:"cc2"}),A3=o=>Object.assign(o,{ex:"cc3"});
+LES.algo.push(
+/* ------------------------------------------------------------------ */
+A2({id:"a2-invariant",t:"Prouver une boucle : trace, invariant, terminaison",min:14,goal:"Faire la preuve de validité d'un algorithme itératif : trace, équations de récurrence, invariant, sortie, terminaison (TD 6, CC 2022 et 2024).",steps:[
+ Q("Un invariant de boucle, c'est…",["une propriété vraie avant la boucle et conservée par chaque tour","la condition du Tant que","la valeur renvoyée"],0,"Comme une récurrence : vrai au départ, et si c'est vrai avant un tour, c'est vrai après."),
+ L("Les quatre étapes",`<ol><li><b>La trace</b> : un tableau avec une colonne par variable, une ligne par tour. Elle donne l'idée.</li><li><b>Les équations de récurrence</b> : on traduit un tour, par exemple i<sub>k+1</sub> = i<sub>k</sub> + 1, x<sub>k+1</sub> = x<sub>k</sub> + 3.</li><li><b>L'invariant</b> : une égalité entre les variables, vraie à chaque tour (x = 3i). On la prouve par récurrence : vraie au départ, puis conservée grâce aux équations.</li><li><b>La sortie</b> : quand la boucle s'arrête, on remplace dans l'invariant la condition de sortie (i = n) : on obtient le résultat.</li></ol><p>Et la <b>terminaison</b> à part : une quantité entière qui diminue strictement à chaque tour (n − i), sinon la boucle pourrait tourner pour toujours.</p>`,{fig:"a-preuve"}),
+ S("TD 6, ex. 24 : g(n)","i, r, x ← 0, 1, 0 ; Tant que i ≠ n : i ← i + 1 ; r ← r + x − i ; x ← x + 3 ; Renvoyer r.",[
+  {w:"Trace pour n = 5 : (i, r, x) = (0, 1, 0), (1, 0, 3), (2, 1, 6), (3, 4, 9), (4, 9, 12), (5, 16, 15).",why:"x vaut 3 fois i ; r a l'air d'être un carré."},
+  {w:"Invariants devinés : x = 3i et r = (i − 1)².",why:"0, 1, 4, 9, 16 = (i − 1)²."},
+  {w:"Départ : x = 0 = 3 × 0 et r = 1 = (0 − 1)².",why:"L'initialisation."},
+  {w:"Hérédité : x<sub>k+1</sub> = 3i<sub>k</sub> + 3 = 3i<sub>k+1</sub> ; r<sub>k+1</sub> = (i<sub>k</sub> − 1)² + 3i<sub>k</sub> − (i<sub>k</sub> + 1) = i<sub>k</sub>² = (i<sub>k+1</sub> − 1)².",why:"On utilise les équations de récurrence et l'hypothèse."},
+  {w:"Sortie : i = n, donc r = (n − 1)² : g calcule (n − 1)². Terminaison : n − i diminue de 1 à chaque tour.",why:"On remplace i par n dans l'invariant."}]),
+ Q("À quoi servent les équations de récurrence ? (CC1 2024)",["À montrer qu'un invariant est héréditaire","À prouver que la boucle s'arrête","À choisir les variables"],0,"Elles traduisent un tour de boucle en relations entre les variables."),
+ Q("Pour prouver qu'un Tant que s'arrête, on cherche…",["une quantité entière qui diminue strictement","un invariant","la valeur finale"],0,"Une quantité entière ≥ 0 ne peut pas diminuer indéfiniment."),
+ Q("Fibonacci itératif : i, r1, r2 ← 0, 0, 1 ; tant que i < n : r3 ← r1 ; r1 ← r2 ; r2 ← r3 + r2 ; i ← i + 1. Que renvoyer ?",["r1, car r1 = fib(i) et i = n à la fin","r2","i"],0,"Invariants r1 = fib(i), r2 = fib(i + 1) (TD 6, ex. 26)."),
+ P("TD 6, ex. 27 : logEntier, sur papier","i, p, q ← 0, 1, 2 ; Tant que q ≤ a : p ← q ; q ← p + p ; i ← i + 1 ; Renvoyer i. (1) Trace pour a = 18. (2) Invariants liant p et i, q et i. (3) Les prouver. (4) Montrer qu'à la fin 2^i ≤ a < 2^(i+1).",`<p>Trace : (0, 1, 2), (1, 2, 4), (2, 4, 8), (3, 8, 16), (4, 16, 32) : renvoie 4. Invariants p = 2<sup>i</sup> et q = 2<sup>i+1</sup> (vrais au départ ; un tour fait p ← 2<sup>i+1</sup>, q ← 2<sup>i+2</sup>, i ← i + 1). À la sortie q > a ; p ≤ a (p = 1 ≤ a au départ, sinon c'est un ancien q ≤ a). Donc 2<sup>i</sup> ≤ a < 2<sup>i+1</sup>. Terminaison : q double et finit par dépasser a.</p>`,["Un tableau de trace propre","Initialisation et hérédité des deux invariants","La sortie : q > a et p ≤ a","Une phrase de terminaison"],12),
+ K("Les étapes d'une preuve de validité ?","Trace, équations de récurrence, invariant (initialisation + hérédité), sortie (condition d'arrêt dans l'invariant), et terminaison (quantité entière qui décroît)."),
+ K("À quoi servent les équations de récurrence ?","À traduire un tour de boucle en relations entre les variables, pour montrer qu'un invariant est héréditaire.")]}),
+
+/* ------------------------------------------------------------------ */
+A2({id:"a2-notations",t:"O, Ω, Θ : comparer des complexités",min:12,goal:"Utiliser O, Ω, Θ, o, ranger des suites, et estimer un temps d'exécution (TD 7, CC 2022 et 2024).",steps:[
+ Q("Un algorithme en Θ(n³) peut-il être un million de fois plus lent qu'un autre en Θ(n³) ?",["Oui : 1 000 000 n³ et n³ sont tous deux en Θ(n³)","Non, ils ont la même vitesse","Seulement si n est petit"],0,"Θ ignore les constantes multiplicatives (CC1 2024)."),
+ L("Les notations",`<ul><li><b>a = O(b)</b> : a ≤ C·b à partir d'un rang (« au plus »).</li><li><b>a = Ω(b)</b> : a ≥ c·b à partir d'un rang, c > 0 (« au moins »).</li><li><b>a = Θ(b)</b> : les deux (« même ordre de grandeur »).</li><li><b>a = o(b)</b> : a/b tend vers 0 (« négligeable »).</li></ul><p>Pour trouver l'ordre : on garde le terme qui grandit le plus vite et on oublie les constantes. Ordre à connaître : log n ≺ n ≺ n log n ≺ n² ≺ n³ ≺ 2ⁿ ≺ 3ⁿ.</p>`,{fig:"a-complexite"}),
+ Q("Si a = Θ(b), alors…",["a = O(b)","a = o(b)","a n'est pas Ω(b)"],0,"Θ veut dire à la fois O et Ω (QCM du CC 2022)."),
+ Q("Ordre de 0,001n² − 100000n ?",["Θ(n²)","Θ(n)","Θ(1)"],0,"Le n² finit par l'emporter, quelle que soit la constante."),
+ S("TD 7, ex. 30 : A en Θ(n²), B en Θ(n log n)","A met 1 s et B 10 s pour n = 100. Lequel choisir pour n = 1000 ? pour n = 10000 ?",[
+  {w:"T<sub>A</sub>(n) = c n² avec 1 = c × 100², donc c = 10⁻⁴.",why:"On suppose les temps proportionnels à n² et n log n."},
+  {w:"n = 1000 : T<sub>A</sub> = 100 s ; T<sub>B</sub> = 10 × (1000 log 1000)/(100 log 100) = 10 × 10 × 1,5 = 150 s : A.",why:"log 1000 / log 100 = 3/2, quelle que soit la base."},
+  {w:"n = 10000 : T<sub>A</sub> = 10⁴ s ; T<sub>B</sub> = 10 × 100 × 2 = 2000 s : B.",why:"Pour n assez grand, l'ordre plus faible finit toujours par gagner."}]),
+ Q("Un ordinateur 100 fois plus rapide, temps proportionnel à n². En 1 minute, il traite…",["10 fois plus de données","100 fois plus","2 fois plus"],0,"n² = 100 n₀², donc n = 10 n₀ (TD 7, ex. 31)."),
+ K("O, Ω, Θ, o ?","O : au plus (à une constante près). Ω : au moins. Θ : les deux, même ordre. o : négligeable. Θ ignore les constantes."),
+ K("Ordre de croissance à connaître ?","log n ≺ n ≺ n log n ≺ n² ≺ n³ ≺ 2ⁿ ≺ 3ⁿ.")]}),
+
+/* ------------------------------------------------------------------ */
+A2({id:"a2-compter",t:"Compter les opérations : boucles et récursivité",min:15,goal:"Calculer la complexité de boucles imbriquées et d'algorithmes récursifs (TD 8, examen de janvier 2023).",steps:[
+ Q("Combien d'additions fait « Pour i de 1 à n, Pour j de 1 à n : som ← som + 1 » ?",["n²","2n","n"],0,"n tours, et n additions à chaque tour."),
+ L("Les boucles",`<ul><li>Une boucle de n tours avec un travail constant : <b>n</b>.</li><li>Deux boucles imbriquées de n tours : <b>n²</b>.</li><li>« Pour j de 1 à i » : 1 + 2 + … + n = <b>n(n + 1)/2</b>, donc Θ(n²).</li><li>Une boucle qui divise par 2 à chaque tour : <b>log₂ n</b> tours.</li></ul><p>Sommes utiles : Σ 1 = n ; Σ i = n(n + 1)/2 ; Σ i² = n(n + 1)(2n + 1)/6.</p>`,{fig:"a-calcul-complexite"}),
+ Q("« Pour i de 1 à n, Pour j de i à n : som ← som + 1 » fait…",["n(n + 1)/2 additions","n² additions","n additions"],0,"n + (n − 1) + … + 1 (TD 8, ex. 34.5)."),
+ L("Les algorithmes récursifs",`<p>On écrit une <b>équation de récurrence</b> sur Tₙ, le nombre d'opérations pour la taille n.</p><ul><li>Tₙ = Tₙ₋₁ + c → Θ(n).</li><li>Tₙ = 2Tₙ₋₁ + c → Θ(2ⁿ) : deux appels de taille n − 1.</li><li>Tₙ = T<sub>n/2</sub> + c → Θ(log n) (dichotomie).</li><li>Tₙ = 2T<sub>n/2</sub> + Θ(n) → Θ(n log n).</li></ul><p><b>Master theorem</b> : Tₙ = a T<sub>n/b</sub> + Θ(n<sup>d</sup>) donne Θ(n<sup>d</sup>) si a &lt; b<sup>d</sup>, Θ(n<sup>d</sup> log n) si a = b<sup>d</sup>, Θ(n<sup>log_b a</sup>) si a &gt; b<sup>d</sup>.</p>`),
+ S("Examen de janvier 2023, ex. 3 : F(n) = F(n−1) / (1 + F(n−1))","Tₙ = nombre d'opérations arithmétiques.",[
+  {w:"T₀ = 0 ; pour n > 0 : deux appels F(n − 1), une addition, une division, et deux calculs de n − 1 : Tₙ = 2Tₙ₋₁ + 4.",why:"On compte ce que fait un appel, plus les appels qu'il lance."},
+  {w:"Uₙ = Tₙ + 4 vérifie Uₙ = 2Tₙ₋₁ + 8 = 2Uₙ₋₁ : suite géométrique, U₀ = 4.",why:"L'indication du sujet."},
+  {w:"Uₙ = 4 × 2ⁿ, donc Tₙ = 4 × 2ⁿ − 4 : Θ(2ⁿ).",why:"On revient à T."},
+  {w:"Bien mieux : F(n) = 1/(n + 1), donc « Renvoyer 1/(n+1) » en Θ(1).",why:"Garder F(n − 1) dans une variable donnerait seulement Θ(n) (−0,5 au barème)."}]),
+ Q("Tₙ = 2T<sub>n/2</sub> + Θ(n) donne…",["Θ(n log n)","Θ(n²)","Θ(log n)"],0,"a = 2, b = 2, d = 1 : a = b<sup>d</sup>."),
+ P("TD 8, ex. 34, sur papier","Nombre d'additions de : (1) Pour i de 1 à n : som ← som + 1. (2) i et j de 1 à n. (3) i de 1 à n, j de 1 à n², k de 1 à n³. (4) i de 1 à n, j de 1 à i. (6) i de 1 à n : som ← som + 1, puis dans la même boucle j de 1 à n : som ← som + 1.",`<ol><li>n.</li><li>n².</li><li>n⁶.</li><li>n(n + 1)/2, Θ(n²).</li><li value="6">n(1 + n) = n² + n, Θ(n²).</li></ol>`,["Une somme écrite pour chaque cas","Le résultat simplifié, puis l'ordre Θ"],8),
+ K("Complexité de boucles imbriquées ?","On multiplie les nombres de tours ; si la boucle intérieure dépend de i, on fait la somme (Σ i = n(n + 1)/2)."),
+ K("Tₙ = 2Tₙ₋₁ + c ? Tₙ = 2T(n/2) + n ?","Θ(2ⁿ) ; Θ(n log n) (master theorem, a = b^d).")]}),
+
+/* ------------------------------------------------------------------ */
+A3({id:"a3-dicho",t:"Recherche séquentielle et dichotomique",min:10,goal:"Dérouler une recherche dichotomique et dire combien d'essais elle demande (TD 9, CC1 2024).",steps:[
+ Q("128 chevaux rangés par taille. Combien de mesures au plus pour trouver Neptune ?",["7","128","64"],0,"Chaque mesure divise les candidats par 2 ; 128 = 2⁷ (CC1 2024)."),
+ L("Le principe",`<p>Dans un tableau <b>trié</b>, on regarde la case du milieu : si elle est trop petite, on garde la moitié droite, sinon la moitié gauche. Il reste deux fois moins de cases à chaque essai : environ <b>log₂ n</b> essais, au lieu de n pour une recherche séquentielle.</p><p>Doubler n n'ajoute qu'<b>un</b> essai : log₂(2n) = log₂ n + 1.</p>`,{fig:"a-recherche"}),
+ S("TD 9, ex. 37 : chercher 5 dans [1, 3, 5]","deb, fin ← 0, 2 ; tant que deb ≤ fin : mil ← (deb + fin) div 2 ; si T[mil] < e alors deb ← mil + 1 sinon fin ← mil − 1.",[
+  {w:"mil = 1 : T[1] = 3 < 5, donc deb = 2.",why:"5 est à droite."},
+  {w:"mil = 2 : T[2] = 5 n'est pas < 5, donc fin = 1.",why:"On continue à gauche pour trouver la première occurrence."},
+  {w:"deb = 2 > fin = 1 : fin de boucle. T[2] = 5 : on renvoie 2.",why:"deb s'arrête sur la première case ≥ e."}]),
+ Q("12 000 légos triés demandent au plus 14 essais. Et 24 000 ?",["15","28","14"],0,"Un essai de plus coupe 24 000 en deux paquets de 12 000 (CC1 2024)."),
+ Q("Une seule recherche dans un tableau non trié : mieux vaut…",["une recherche séquentielle, Θ(n)","trier puis chercher par dichotomie","on ne peut pas chercher"],0,"Trier coûte déjà Θ(n log n) (TD 9, ex. 37.2)."),
+ K("Recherche dichotomique ?","Tableau trié ; on compare au milieu, on garde une moitié. Θ(log n) essais. Doubler n ajoute un essai.")]}),
+
+/* ------------------------------------------------------------------ */
+A3({id:"a3-tris",t:"Tris : sélection, insertion, bulles, par valeurs",min:16,goal:"Écrire un tri du cours, donner sa complexité et l'idée de sa preuve (TD 10, CC1 2024, examen de janvier 2023).",steps:[
+ Q("Quel tri n'échange que des éléments voisins ?",["Le tri à bulles","Le tri par sélection","Le tri par valeurs"],0,"C'est la réponse au problème des vaisseaux de Luc (CC1 2024)."),
+ L("Trois tris en Θ(n²)",`<ul><li><b>Sélection</b> : on cherche le plus petit élément restant et on l'échange avec la première case non triée. Θ(n²) dans tous les cas.</li><li><b>Insertion</b> : on insère chaque élément parmi ceux de gauche, déjà triés, en décalant les plus grands. Θ(n²) au pire, Θ(n) si le tableau est déjà trié.</li><li><b>Bulles</b> : on échange deux voisins dans le désordre ; chaque passage pousse le plus grand au bout. Θ(n²).</li></ul><p>Invariant commun : « la partie gauche (ou droite pour les bulles) est triée et à sa place définitive ».</p>`,{fig:"a-tri-insertion"}),
+ O("Remets le tri par sélection dans l'ordre",["Pour i de 0 à taille(tab)-2 faire","  m ← i","  Pour j de i+1 à taille(tab)-1 faire","    Si tab[j] < tab[m] alors m ← j finSi","  finPour","  échanger tab[i] et tab[m]","finPour"],"On cherche l'indice du minimum, puis on échange une seule fois par tour."),
+ Q("Combien de comparaisons fait le tri par sélection sur n éléments ?",["n(n − 1)/2","n","n log n"],0,"(n − 1) + (n − 2) + … + 1."),
+ L("Le tri par valeurs",`<p>Quand les valeurs possibles sont peu nombreuses (des chiffres de 0 à 9), on <b>compte</b> combien il y a de 0, de 1, … puis on réécrit le tableau : Θ(n).</p><p>Examen de janvier 2023 : trier n chiffres en Θ(1) est impossible (il faut au moins tout lire : Ω(n)) ; en Θ(n), c'est possible avec le tri par valeurs.</p>`),
+ Q("Trier n chiffres (0 à 9) en Θ(1) ?",["Impossible : il faut au moins lire les n cases","Possible avec le tri par valeurs","Possible avec la dichotomie"],0,"Tout tri est en Ω(n)."),
+ P("TD 10, ex. 43 : le tri par insertion, sur papier","Écrire le tri par insertion, donner sa complexité au pire et au mieux, et un invariant.",`${C(`Procédure : triInsertion (ES tab : tableau d'entiers)
+Variables : k, j, x : entier
+Début
+  Pour k de 1 à taille(tab)-1 faire
+    x ← tab[k]
+    j ← k - 1
+    Tant que j ≥ 0 et tab[j] > x faire
+      tab[j+1] ← tab[j]
+      j ← j - 1
+    finTantQue
+    tab[j+1] ← x
+  finPour
+Fin`)}<p>Pire cas Θ(n²) (tableau à l'envers), meilleur cas Θ(n) (déjà trié). Invariant : avant le tour k, tab[0..k−1] est trié.</p>`,["La valeur x mise de côté avant de décaler","La condition j ≥ 0 en premier","Les deux complexités","L'invariant"],12),
+ K("Complexités des tris du cours ?","Sélection Θ(n²) toujours ; insertion Θ(n²) au pire, Θ(n) si déjà trié ; bulles Θ(n²) ; par valeurs Θ(n) quand les valeurs possibles sont peu nombreuses.")]}));
+
 })();
 
 </script>
@@ -10088,6 +10280,18 @@ geo:{
   "La somme de deux vecteurs":`<p>Additionner deux vecteurs, c'est <b>enchaîner</b> les deux déplacements : on fait le premier, puis le second à partir du point d'arrivée.</p><p>Chasles : aller de A à B, puis de B à C, c'est aller de A à C : ${v("AB")} + ${v("BC")} = ${v("AC")}.</p>`}
 },
 algo:{
+ "a2-invariant":{
+  "Les quatre étapes":`<p>Prouver une boucle, c'est montrer qu'une phrase reste vraie à chaque tour, comme « x vaut toujours 3 fois i ». Quand la boucle s'arrête, cette phrase, avec la condition d'arrêt, donne le résultat.</p><p>Pour l'arrêt, on montre qu'un compteur entier descend à chaque tour : il ne peut pas descendre indéfiniment.</p>`},
+ "a2-notations":{
+  "Les notations":`<p>On compare des algorithmes quand les données deviennent énormes. Θ(n²) veut dire « grandit comme n² » : les constantes devant ne comptent pas. O veut dire « au plus comme », Ω « au moins comme ».</p>`},
+ "a2-compter":{
+  "Les boucles":`<p>On compte combien de fois l'opération est faite. Deux boucles imbriquées de n tours font n × n fois l'opération. Si la boucle du dedans va de 1 à i, on additionne 1 + 2 + … + n.</p>`,
+  "Les algorithmes récursifs":`<p>Pour une fonction récursive, le travail total = le travail d'un appel + le travail des appels qu'il lance. Deux appels sur n − 1, c'est un arbre qui double à chaque étage : 2ⁿ.</p>`},
+ "a3-dicho":{
+  "Le principe":`<p>C'est comme chercher un mot dans le dictionnaire : on ouvre au milieu, on regarde si le mot est avant ou après, et on recommence dans la bonne moitié. À chaque essai, il reste deux fois moins de pages.</p>`},
+ "a3-tris":{
+  "Trois tris en Θ(n²)":`<p>Sélection : on va chercher le plus petit et on le met devant. Insertion : on range chaque nouvelle carte à sa place dans sa main déjà triée. Bulles : on échange les voisins mal rangés, et les grands remontent au bout.</p>`,
+  "Le tri par valeurs":`<p>S'il n'y a que dix valeurs possibles, on n'a pas besoin de comparer : on compte combien de fois chaque valeur apparaît, puis on réécrit le tableau dans l'ordre.</p>`},
  "a-forme":{
   "Le squelette, toujours le même":`<p>Un algorithme, c'est une <b>recette</b> écrite toujours dans le même ordre : son nom et ce qu'il reçoit (la signature), une phrase qui dit ce qu'il fait (les spécifications), ses brouillons (les variables), puis les instructions entre DÉBUT et FIN.</p><p>Deux sortes : une <b>FONCTION</b> calcule un résultat et le renvoie ; une <b>PROCÉDURE</b> fait une action, par exemple afficher, sans rien renvoyer. Le E devant un paramètre veut dire « donné en entrée ».</p><p>Chaque bloc ouvert se referme juste en dessous de son ouverture : un si par fin si;, un pour par fin pour;, un tant que par fin tq;.</p>`},
  "a-expressions":{
