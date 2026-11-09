@@ -10885,6 +10885,15 @@ function nextTask(P){
   return null;}
 
 /* ================= Aujourd'hui ================= */
+/* #/continuer (le « Mode révision » du nouvel onglet) : va là où mène le gros bouton
+   de l'accueil, dans le même ordre que home() : leçon commencée, cartes du jour, suite du programme */
+function suite(){
+  const nextT=nextTask(plan());
+  if(nextT&&nextT.resume)return hrefTask(nextT.sid,nextT.t);
+  if(dueCards().length)return "#/reviser";
+  return nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre";
+}
+
 function home(){
   const t0=today(),n=NOW(),P=plan(),up=upcoming(),due=dueCards();
   const tb=P.blocks.filter(b=>b.day===t0);
@@ -11065,7 +11074,7 @@ setInterval(()=>{if(document.visibilityState==="visible")sync();},180000);
 setInterval(()=>syncBadge(),60000);
 
 return {
-  routes:{lecon:lessonRoute,apprendre,reviser:()=>{RV=null;reviser();},entrainer,plus,synchro,methode},
+  routes:{lecon:lessonRoute,apprendre,reviser:()=>{RV=null;reviser();},entrainer,plus,synchro,methode,continuer:()=>location.replace(suite())},
   home,subject,badges,partsOf:(sid,lid)=>{const L=BYL[sid]&&BYL[sid][lid];return L?parts(L,sid).length:1;},
   onChange(){badges();clearTimeout(deb);deb=setTimeout(sync,4000);}
 };
