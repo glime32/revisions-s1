@@ -5638,8 +5638,8 @@ const td=[
   sol:`<ol><li>[2√t − t]₁⁴ = 0 − 1 = −1.</li><li>u = eˣ : e − 1 − ln((1 + e)/2).</li><li>[(ln t)ⁿ⁺¹/(n + 1)]₁ᵉ = 1/(n + 1).</li><li>u = t + 1 : 8/3.</li><li>u = √t, dt = 2u du : ∫ de π à 2π de 2u cos u du = [2u sin u + 2 cos u] = 2 − (−2) = 4.</li></ol>`},
  {id:"2.1",s:3,t:"Ordre 1 homogène",en:"y′ + πy = 0 ; y′ + x³y = 0 ; y′ + x/(1 + x²) y = 0 ; y′ + eˣy = 0, avec y(0) = 1.",link:"c-ed1",
   sol:`<ol><li>y = e^(−πx).</li><li>y = e^(−x⁴/4).</li><li>y = 1/√(1 + x²).</li><li>y = C e^(−eˣ), y(0) = C/e = 1, donc y = e^(1 − eˣ).</li></ol>`},
- {id:"2.2",s:3,t:"Ordre 1 avec second membre",en:"(a) y′ − 3y = e²ˣ ; (b) y′ + y = e⁻ˣ ; (c) y′ − 2y = −x² ; (d) y′ + y = cos x ; (e) y′ + x²y = −x², avec y(0) = 0.",link:"c-ed1-sm",
-  sol:`<ol><li>y = C e³ˣ − e²ˣ ; y(0) = 0 : y = e³ˣ − e²ˣ.</li><li>y = (C + x) e⁻ˣ ; y(0) = 0 : y = x e⁻ˣ.</li><li>y = C e²ˣ + x²/2 + x/2 + 1/4 ; y(0) = 0 : C = −1/4.</li><li>y = C e⁻ˣ + (cos x + sin x)/2 ; y(0) = 0 : C = −1/2.</li><li>y = C e^(−x³/3) − 1 (y_p = −1) ; y(0) = 0 : C = 1.</li></ol>`},
+ {id:"2.2",s:3,t:"Ordre 1 avec second membre",en:"(a) y′ − 3y = e²ˣ ; (b) y′ + y = e⁻ˣ ; (c) y′ − 2y = −x² ; (d) y′ + y = cos x ; (e) y′ + x²y = −x² ; (f) y′ − (2/x) y = x/2. Toutes les solutions, puis celles qui vérifient y(0) = 0, puis y(1) = 1.",link:"c-ed1-sm",
+  sol:`<ol><li>y = C e³ˣ − e²ˣ ; y(0) = 0 : C = 1, y = e³ˣ − e²ˣ ; y(1) = 1 : C = (1 + e²)/e³.</li><li>y = (C + x) e⁻ˣ ; y(0) = 0 : y = x e⁻ˣ ; y(1) = 1 : C = e − 1.</li><li>y = C e²ˣ + x²/2 + x/2 + 1/4 ; y(0) = 0 : C = −1/4 ; y(1) = 1 : C = −1/(4e²).</li><li>y = C e⁻ˣ + (cos x + sin x)/2 ; y(0) = 0 : C = −1/2 ; y(1) = 1 : C = e(2 − cos 1 − sin 1)/2.</li><li>y = C e^(−x³/3) − 1 (y_p = −1) ; y(0) = 0 : C = 1 ; y(1) = 1 : C = 2e^(1/3).</li><li>On travaille sur ]0, +∞[ (l'équation n'a pas de sens en 0, donc pas de condition y(0)). A(x) = −2 ln x, e^(−A(x)) = x². Variation de la constante : une primitive de (x/2)·x⁻² = 1/(2x) est c(x) = (ln x)/2, d'où y_p = (x²/2) ln x. y = C x² + (x²/2) ln x ; y(1) = 1 : C = 1, y = x² + (x²/2) ln x.</li></ol>`},
  {id:"2.3",s:3,ex:"cc2",t:"Ordre 2 homogène",en:"(a) y″ − 3y′ + 2y ; (b) y″ + 2y′ − 3y ; (c) y″ − 5y′ + 6y ; (d) y″ − 6y′ + 9y ; (e) y″ − y ; (f) 2y″ − 2y′ − 4y, = 0, avec y(0) = y′(0) = 1.",link:"c-ed2",
   sol:`<ol><li>r = 1, 2 : y = eˣ.</li><li>r = 1, −3 : y = eˣ.</li><li>r = 2, 3 : y = 2e²ˣ − e³ˣ.</li><li>r = 3 double : y = (1 − 2x) e³ˣ.</li><li>r = ±1 : y = eˣ.</li><li>r = 2, −1 : y = (2/3) e²ˣ + (1/3) e⁻ˣ.</li></ol>`},
  {id:"2.4",s:3,ex:"cc2",t:"Ordre 2 avec second membre",en:"(a) y″ − 3y′ + 2y = 1 ; (b) y″ + 2y′ − 3y = e⁴ˣ ; (d) y″ − 6y′ + 9y = e³ˣ ; (e) y″ + y = x, avec y(0) = y′(0) = 1.",link:"c-ed2",
@@ -8195,6 +8195,37 @@ FIN`)+"<p>On peut aussi écrire deux fonctions séparées. Avec [[1, 2], [4, 8]]
  K("Les règles du jeu de la vie ?","Vivante : survit avec 2 ou 3 voisines vivantes, sinon meurt. Morte : naît avec exactement 3 voisines. On calcule la génération suivante dans un nouveau tableau.")]},
 
 /* ------------------------------------------------------------------ */
+{id:"a-dicos",t:"Les dictionnaires : clé, valeur, compareDicos",min:9,goal:"Déclarer, lire et parcourir un dictionnaire en pseudo-code, et refaire l'exercice compareDicos du cours (p. 34 à 37).",steps:[
+ Q("Dans un tableau, une valeur est repérée par sa position. Et dans un dictionnaire ?",["Par une chaîne de caractères, la clé","Par sa position aussi","Par sa valeur"],0,"Cours p. 34 : chaque valeur est repérée par une clé, une chaîne de caractères."),
+ L("Le dictionnaire",`<p>Un <b>dictionnaire</b> représente une donnée qui a plusieurs composantes. Chaque valeur est repérée par une <b>clé</b> (une chaîne de caractères), et non par une position. Une clé avec sa valeur forme un <b>champ</b>. Les valeurs n'ont pas forcément le même type, contrairement à un tableau.</p><p>En pseudo-code (cours p. 35) :</p>${C(`D : dictionnaire('taille': nombre, 'age': entier, 'majeur': booléen)
+D['taille'] ← 168
+pour k dans D faire
+    ...
+fin pour;
+si k dans D alors
+    ...
+fin si;`)}<p>D['taille'] donne 168. « pour k dans D » parcourt les <b>clés</b>. « k dans D » teste si la clé k existe.</p>`),
+ Q("Que parcourt « pour k dans D faire » ?",["Les clés de D","Les valeurs de D","Les positions 0, 1, 2…"],0,"k prend chaque clé ; la valeur associée s'écrit D[k]."),
+ B("Cours p. 36 : complète compareDicos, qui renvoie Vrai si les deux dictionnaires sont identiques.",`FONCTION : compareDicos (E D1, D2 : dictionnaires) : booléen
+SPÉCIFICATIONS : Renvoie True si les deux dictionnaires sont identiques et faux sinon
+DÉBUT
+    pour k dans D1 faire
+        si non(k dans [[0]]) ou non(D1[k] = [[1]]) alors
+            Renvoyer False
+        fin si;
+    fin pour;
+    pour k dans [[2]] faire
+        si non(k dans D1) alors
+            Renvoyer False
+        fin si;
+    fin pour;
+    Renvoyer True
+FIN`,[{o:["D1","D2"],a:1},{o:["D2[k]","D1[k]","k"],a:0},{o:["D1","D2"],a:1}],"Première boucle : chaque clé de D1 existe dans D2, avec la même valeur. Deuxième boucle : D2 n'a pas de clé en plus (sinon D1 serait seulement « inclus » dans D2)."),
+ Q("Pourquoi faut-il la deuxième boucle de compareDicos ?",["Pour vérifier que D2 n'a pas de clé absente de D1","Pour vérifier les valeurs une deuxième fois","Elle ne sert à rien"],0,"Après la première boucle, on sait seulement que D1 est contenu dans D2. Le prof l'a noté : « D2 a des clés en plus de D1 »."),
+ K("Dictionnaire : les quatre écritures du cours ?","Déclaration D : dictionnaire('taille': nombre, …) ; modification D['taille'] ← 168 ; parcours des clés « pour k dans D faire … fin pour; » ; test « si k dans D alors »."),
+ K("compareDicos : l'idée ?","Pour chaque clé de D1 : elle est dans D2 avec la même valeur. Puis pour chaque clé de D2 : elle est dans D1. Sinon Renvoyer False ; à la fin Renvoyer True.")]},
+
+/* ------------------------------------------------------------------ */
 {id:"a-listes",t:"Les listes : tête, queue, cons, et le schéma récursif",min:16,goal:"Évaluer des expressions sur les listes (TD 5) et écrire une fonction récursive sur une liste : 2,5 à 4 points à chaque CC.",steps:[
  Q("Que vaut tête(queue([2, 3, 2, 4])) ?",["2","3","[3, 2, 4]","erreur"],1,"queue([2, 3, 2, 4]) = [3, 2, 4], dont la tête est 3."),
  L("Les quatre opérations",`<ul><li><b>tête(L)</b> : le premier élément (un élément, pas une liste). Erreur si L est vide.</li><li><b>queue(L)</b> : la liste sans son premier élément. Erreur si L est vide.</li><li><b>cons(x, L)</b> : une nouvelle liste avec x devant.</li><li><b>estVide(L)</b> : vrai si L = [ ].</li></ul><p>Pas d'indice L[2] sur une liste : on n'y accède que par le début. Essaie, puis fais l'exercice du cours pas à pas.</p>`,{fig:"a-listes"}),
@@ -8228,7 +8259,7 @@ FIN`)+"<p>cons ajoute devant : on parcourt le tableau à l'envers pour garder l'
  K("Garder l'ordre d'un tableau dans une liste ?","Parcourir le tableau à l'envers (pour i de taille(T)-1 à 0 par pas de -1) et faire L ← cons(T[i], L).")]},
 
 /* ------------------------------------------------------------------ */
-{id:"a-piles",t:"Piles et files : le casse-tête du cours",min:12,p:2,goal:"Calculer l'état d'une pile après chaque instruction, en repérant les instructions interdites (cours p. 44 et 46).",steps:[
+{id:"a-piles",t:"Piles et files : le casse-tête du cours",min:12,goal:"Calculer l'état d'une pile après chaque instruction, en repérant les instructions interdites (cours p. 44 et 46).",steps:[
  Q("On empile 1, puis 2, puis 3, puis on dépile une fois. Que renvoie depiler ?",["1","2","3","[1, 2]"],2,"Une pile : dernier arrivé, premier sorti. On reprend l'assiette posée en dernier."),
  L("Piles et files",`<ul><li>Pile : <b>empiler(E élément, ES pile)</b>, <b>depiler(ES pile) : élément</b> (enlève le sommet et le renvoie), <b>estVide(E pile)</b>.</li><li>File : <b>enfiler(E élément, ES file)</b>, <b>defiler(ES file) : élément</b> (le premier arrivé), estVide.</li><li>Interdit sur une pile : un indice P[1], tête, queue ou cons.</li></ul><p>Vider une pile dans une autre (un <b>transvasement</b>) inverse l'ordre de ses éléments. Fais le casse-tête du cours pas à pas.</p>`,{fig:"a-piles-files"}),
  Q("P contient 1, 2, 3 (3 au sommet). Que fait « empiler(P[1], P) » ?",["Empile 2","Empile 1","C'est une erreur : pas d'indice sur une pile"],2,"On n'a accès qu'au sommet, avec depiler. C'est un des pièges de la page 44 du cours."),
@@ -8834,7 +8865,7 @@ LES.calc=[
  K("Une intégrale de a à b ?","F(b) − F(a) avec F une primitive. C'est une aire algébrique : elle peut être négative.")]},
 
 /* ------------------------------------------------------------------ */
-{id:"c-ed1",t:"Équations différentielles d'ordre 1",min:16,goal:"Résoudre y′ + a(x)y = b(x) avec une condition initiale : TD 2, exercices 1 et 2, et le CC 2023.",steps:[
+{id:"c-ed1",t:"Équations différentielles d'ordre 1",min:22,goal:"Résoudre y′ + a(x)y = b(x) avec une condition initiale, y compris par variation de la constante : TD 2, exercices 1 et 2 (dont le (f)), et le CC 2023.",steps:[
  Q("Quelles sont les solutions de y′ + 3y = 0 ?",["C e^(3x)","C e^(−3x)","3Cx","C e^(x³)"],1,"y′ + a y = 0 avec a = 3 : y = C e^(−3x), C réel."),
  L("L'équation sans second membre",`<p class="formula">y′ + a(x) y = 0 ⇔ y(x) = C e^(−A(x)), C ∈ ℝ, où A est une primitive de a.</p><p>La condition initiale (par exemple y(0) = 1) fixe C. Déplace le point de départ.</p>`,{fig:"c-ed1"}),
  Q("Solution de y′ + x³y = 0 avec y(0) = 1 ?",["e^(−x⁴/4)","e^(x⁴/4)","e^(−3x²)","1 − x⁴/4"],0,"A(x) = x⁴/4 est une primitive de x³ : y = C e^(−x⁴/4), et y(0) = C = 1."),
@@ -8848,7 +8879,16 @@ LES.calc=[
   {w:"y(0) = λ = 1, donc y = −t + e^(4t).",why:"Vérification : y′ − 4y = −1 + 4e^(4t) + 4t − 4e^(4t) = 4t − 1."}]),
  B("TD 2.2 (d) : y′ + y = cos x. On cherche y_p = α cos x + β sin x.","En remplaçant : (α + β) cos x + (β − α) sin x = cos x, donc α = [[0]] et β = [[1]].",[{o:["1/2","1","0","−1/2"],a:0},{o:["1/2","1","0","−1/2"],a:0}],"α + β = 1 et β − α = 0 donnent α = β = 1/2 : y = C e^(−x) + (cos x + sin x)/2."),
  P("TD 2.2 (a), sur papier","Résous y′ − 3y = e^(2x) avec y(0) = 0.","<p>Homogène : y = C e^(3x). Particulière y_p = A e^(2x) : 2A e^(2x) − 3A e^(2x) = e^(2x), donc A = −1. Toutes les solutions : y = C e^(3x) − e^(2x). y(0) = C − 1 = 0, donc C = 1 : <b>y = e^(3x) − e^(2x)</b>.</p>",["La solution homogène","La forme de la particulière, A e^(2x)","A = −1 trouvé en remplaçant","La condition initiale sur la solution complète"],10),
+ L("Quand on ne devine pas : la variation de la constante (Prop 4.2)",`<p>Si le second membre b(x) n'a pas une forme simple, ou si a(x) n'est pas constant, on utilise la méthode du cours :</p><p class="formula">si c est une primitive de b(x) e^(A(x)), alors y_p(x) = c(x) e^(−A(x)) est une solution particulière.</p><p>Puis, comme avant : toutes les solutions = C e^(−A(x)) + y_p(x). Le corrigé officiel du CC 2023 l'utilise comme « troisième méthode ».</p>`),
+ S("Exemple corrigé : TD 2.2 (f), y′ − (2/x) y = x/2 avec y(1) = 1","On travaille sur ]0, +∞[ : l'équation n'a pas de sens en x = 0.",[
+  {w:"a(x) = −2/x, donc A(x) = −2 ln x, e^(A(x)) = x⁻² et e^(−A(x)) = x².",why:"A est une primitive de a ; e^(−2 ln x) = x⁻²."},
+  {w:"Homogène : y = C x².",why:"y = C e^(−A(x))."},
+  {w:"b(x) e^(A(x)) = (x/2) · x⁻² = 1/(2x). Une primitive : c(x) = (ln x)/2.",why:"Prop 4.2."},
+  {w:"y_p(x) = c(x) e^(−A(x)) = (x²/2) ln x.",why:"Vérification : y_p′ = x ln x + x/2, et (2/x) y_p = x ln x, la différence vaut x/2."},
+  {w:"Toutes les solutions : y = C x² + (x²/2) ln x. y(1) = C = 1, donc y = x² + (x²/2) ln x.",why:"ln 1 = 0."}]),
+ Q("Variation de la constante : de quelle fonction prend-on une primitive c ?",["b(x) e^(A(x))","b(x) e^(−A(x))","a(x) e^(A(x))","b(x)/A(x)"],0,"Prop 4.2 : c primitive de b e^A, puis y_p = c e^(−A). Les signes s'inversent entre les deux exponentielles."),
  K("Solutions de y′ + a(x) y = 0 ?","y = C e^(−A(x)), où A est une primitive de a."),
+ K("La variation de la constante (Prop 4.2) ?","c primitive de b(x) e^(A(x)) ; alors y_p = c(x) e^(−A(x)) est solution. Toutes les solutions : C e^(−A(x)) + y_p."),
  K("Résoudre y′ + a y = b(x) ?","Homogène + particulière de la même forme que b (polynôme, A e^(kx), α cos + β sin), puis la condition initiale sur le tout.")]},
 /* ------------------------------------------------------------------ */
 /* CC2 du vendredi 11 décembre : programme pas encore annoncé ; la suite du cours (ordre 2, complexes). */
@@ -10341,6 +10381,8 @@ algo:{
   "Trois schémas qui couvrent presque tout":`<p>Un tableau T, c'est une rangée de cases numérotées <b>à partir de 0</b> : T[0], T[1], et ainsi de suite jusqu'à T[taille(T) − 1].</p><ul class="nt"><li><b>Accumuler</b> : une variable qui grossit au fil de la boucle. Exemple, la somme de [4, 1, 5] : som vaut 0, puis 4, 5 et 10.</li><li><b>Chercher</b> : on s'arrête dès qu'on sait. Pour « tous les éléments sont positifs », on renvoie faux au premier négatif, et vrai seulement après avoir tout regardé.</li><li><b>Fabriquer</b> : on crée un nouveau tableau R et on remplit ses cases une par une.</li></ul>`},
  "a-tableaux2d":{
   "Deux boucles imbriquées":`<p>Un tableau 2D, c'est une grille : T[i][j] est la case de la <b>ligne i</b> et de la <b>colonne j</b>. Le nombre de lignes est taille(T) ; le nombre de colonnes est taille(T[i]), la longueur d'une ligne.</p><p>Pour visiter toutes les cases : une boucle sur les lignes, et dedans une boucle sur les colonnes. Pour 2 lignes et 3 colonnes, on visite (0, 0), (0, 1), (0, 2), puis (1, 0), (1, 1), (1, 2).</p><p>Le jeu de la vie : chaque case compte ses voisines vivantes parmi les 8 cases autour d'elle.</p>`},
+ "a-dicos":{
+  "Le dictionnaire":`<p>Un dictionnaire, c'est comme une fiche d'identité : chaque case a une <b>étiquette</b> (« taille », « âge », « majeur ») au lieu d'un numéro.</p><p>D['age'] ← 19 remplit la case « age ». Ensuite D['age'] vaut 19. On ne demande jamais « la case numéro 2 ».</p>`},
  "a-listes":{
   "Les quatre opérations":`<p>Une liste, c'est comme un train : on n'accède qu'au premier wagon. tête(L) donne le premier élément ; queue(L) donne la liste sans lui ; cons(x, L) accroche x devant.</p><p>Exemple avec L = [7, 2, 9] : tête(L) = 7, queue(L) = [2, 9], et cons(5, L) = [5, 7, 2, 9].</p><p>Attention aux types : tête(L) est un élément (ici un nombre), queue(L) est une liste.</p>`,
   "Le schéma récursif":`<p>Pour traiter toute une liste, on s'occupe du premier élément et on laisse l'appel récursif traiter le reste. La liste raccourcit à chaque appel, jusqu'à la liste vide : le cas de base.</p><p>Exemple, la somme de [3, 5, 2] : 3 + somme([5, 2]) = 3 + 5 + somme([2]) = 3 + 5 + 2 + somme([ ]) = 10 + 0 = 10.</p>`,
@@ -10430,7 +10472,8 @@ calc:{
   "Le changement de variable":`<p>Changer de variable, c'est <b>renommer</b> un morceau compliqué pour que l'intégrale devienne simple. Il faut tout remplacer : la fonction, dx, et les bornes.</p><p>Exemple : ∫₀¹ 2x(x² + 1)³ dx. On pose u = x² + 1, donc du = 2x dx. Les bornes : x = 0 donne u = 1, et x = 1 donne u = 2. L'intégrale devient ∫₁² u³ du = [u⁴/4]₁² = 4 − 1/4 = 15/4.</p>`},
  "c-ed1":{
   "L'équation sans second membre":`<p>Une équation différentielle a pour inconnue une <b>fonction</b> y, et relie y à sa dérivée y′.</p><p>Exemple : y′ = 2y, c'est-à-dire y′ − 2y = 0. La fonction y = e^(2x) marche : sa dérivée est 2e^(2x), c'est bien 2y. Toutes les solutions sont y = C e^(2x), avec C un réel quelconque.</p><p>La condition initiale choisit une seule solution parmi elles : avec y(0) = 5, on trouve C = 5.</p>`,
-  "Avec un second membre":`<p>Quand l'équation a un second membre, par exemple y′ + y = 3, on travaille en deux temps.</p><p>D'abord les solutions sans second membre : y′ + y = 0 donne C e^(−x). Ensuite <b>une</b> solution particulière, de la même forme que le second membre, ici une constante : y = 3 marche, car 0 + 3 = 3.</p><p>Toutes les solutions : y = C e^(−x) + 3. La condition initiale se calcule à la fin, sur cette expression complète.</p>`}
+  "Avec un second membre":`<p>Quand l'équation a un second membre, par exemple y′ + y = 3, on travaille en deux temps.</p><p>D'abord les solutions sans second membre : y′ + y = 0 donne C e^(−x). Ensuite <b>une</b> solution particulière, de la même forme que le second membre, ici une constante : y = 3 marche, car 0 + 3 = 3.</p><p>Toutes les solutions : y = C e^(−x) + 3. La condition initiale se calcule à la fin, sur cette expression complète.</p>`,
+  "Quand on ne devine pas : la variation de la constante (Prop 4.2)":`<p>Quand tu ne trouves pas de solution particulière « de la même forme », la variation de la constante marche à tous les coups : c'est une recette à appliquer.</p><p>Exemple : y′ − y = eˣ. Ici A(x) = −x, b(x) e^(A(x)) = eˣ · e⁻ˣ = 1, une primitive est c(x) = x, donc y_p = x eˣ. Vérification : (x eˣ)′ − x eˣ = eˣ.</p>`}
 },
 lin:{
  "l2-inverse":{
