@@ -672,6 +672,12 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 .par-ans{border-style:solid;border-color:color-mix(in srgb,var(--sc) 60%,transparent);background:color-mix(in srgb,var(--sc) 5%,#000)}
 .par-line{text-align:left;background:var(--voile);border:2px solid var(--trait);border-radius:10px;padding:9px 11px;color:var(--encre);font-size:.98rem;line-height:1.4;min-height:44px;animation:rise .22s var(--snap);transition:border-color .2s}
 .par-line:hover{border-color:var(--sc)}
+.par-line{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}
+.par-line:disabled{cursor:default}
+.par-line.drag-src{opacity:.3}
+.par-ghost{position:fixed;z-index:9999;pointer-events:none;margin:0;animation:none;border-color:var(--sc,var(--cobalt));box-shadow:0 12px 30px rgba(0,0,0,.75);cursor:grabbing}
+.par-drop{height:4px;margin:-2px 0;border-radius:3px;background:var(--sc,var(--cobalt))}
+.is-dragging,.is-dragging *{cursor:grabbing!important;user-select:none;-webkit-user-select:none}
 .par-line.mono{font:14px/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
 .par-line.ok{border-color:var(--vert);background:var(--vert-voile)}
 .par-line.bad{border-color:var(--rouge);background:var(--rouge-voile);animation:shake .42s}
@@ -10708,8 +10714,18 @@ const hrefTask=(sid,t)=>t.lesson?`#/lecon/${sid}/${t.lesson}`:t.td?`#/${sid}/td`
 const A4={algo:"feuilles/feuille-a4-algo.pdf",pf:"feuilles/feuille-a4-ocaml.pdf"};
 
 /* ================= les cartes « À retenir » et la révision espacée ================= */
+/* empreinte courte d'une question : elle retrouve la question même si la leçon gagne ou perd des écrans */
+const qh=s=>{let h=2166136261;const t=s.k+":"+String(s.q||"")+"|"+String(s.code||(s.lines||[]).join("\n"));for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);};
 function cardOf(sid,cid){
   if(cid.indexOf("c:")===0){const c=SUBJ[sid].BY[cid.slice(2)];return c?{f:c.q,b:c.a,src:`Fiche : ${c.short||c.t}`,link:`#/${sid}/c/${c.id}`}:null;}
+  if(cid.indexOf("m:")===0){/* une question ratée dans une leçon : la question d'un côté, la bonne réponse et l'explication de l'autre */
+    const [ml,mq]=cid.slice(2).split("#"),ML=BYL[sid][ml],s=ML&&ML.steps.find(x=>(x.k==="qcm"||x.k==="blanks"||x.k==="order")&&qh(x)===mq);if(!s)return null;
+    const lang=s.lang||SUBJ[sid].lang||"txt",src=`Question ratée · leçon : ${ML.t}`,link=`#/lecon/${sid}/${ml}`,ex=s.e?`<p>${s.e}</p>`:"";
+    if(s.k==="qcm")return {f:`${s.q}${s.code?W.code(s.code,lang):""}`,b:`<p><b>${s.o[s.a]}</b></p>${ex}`,src,link};
+    if(s.k==="blanks"){const fill=g=>s.code.replace(/\[\[(\d+)\]\]/g,g),show=t=>s.prose?`<p>${esc(t)}</p>`:W.code(t,lang);
+      return {f:`${s.q}${show(fill(()=>"____"))}`,b:`${show(fill((m,n)=>s.b[+n].o[s.b[+n].a]))}${ex}`,src,link};}
+    if(s.k==="order")return {f:`${s.q}<p class="muted">Écris-le sur une feuille, sans regarder.</p>`,b:`${s.lang==="txt"?`<ol class="par-sol">${s.lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ol>`:W.code(s.lines.join("\n"),lang)}${ex}`,src,link};
+    return null;}
   const [lid,n]=cid.split("#"),L=BYL[sid][lid];if(!L)return null;let k=0;
   for(const s of L.steps)if(s.k==="card"){if(k===+n)return {f:s.f,b:s.b,src:`Leçon : ${L.t}`,link:`#/lecon/${sid}/${lid}`};k++;}
   return null;}
@@ -10724,15 +10740,17 @@ function dueCards(){
 function badges(){const n=dueCards().length;document.querySelectorAll("[data-due]").forEach(b=>{b.textContent=n>99?"99+":String(n);b.hidden=!n;});}
 
 /* ================= le lecteur de leçon ================= */
-let LP=null,TIMER=null;
+let LP=null,TIMER=null,DND=null;
 /* « Devine d'abord » : quand une explication est suivie d'une question, on pose cette question une première fois
    AVANT l'explication, sans correction ; on lit ensuite l'explication en y cherchant la réponse, puis on répond
    pour de vrai (effet de pré-question : Pan et Carpenter, 2023). La devinette ne compte pas dans le score. */
 function flow(L){if(L.flow)return L.flow;const out=[],T=L.steps;
-  T.forEach((st,i)=>{const nx=T[i+1];
+  T.forEach((st,i)=>{const nx=T[i+1];st.oi=i;
     /* la question d'ouverture vient avant tout cours : c'est une devinette, corrigée tout de suite, hors score */
     if(i===0&&st.k==="qcm"){out.push(Object.assign({},st,{open:true}));return;}
-    if(st.k==="learn"&&nx&&nx.k==="qcm"&&!(i===1&&T[0].k==="qcm")){out.push(Object.assign({},nx,{k:"pre"}));out.push(Object.assign({},st,{look:nx.q}));}
+    /* une explication suivie d'une question : la question est seulement annoncée en haut de l'écran (« Tu cherches »),
+       puis posée une seule fois, après l'explication */
+    if(st.k==="learn"&&nx&&nx.k==="qcm"&&!st.nolook&&!(i===1&&T[0].k==="qcm"))out.push(Object.assign({},st,{look:nx.q}));
     else out.push(st);});
   return L.flow=out;}
 /* reprendre une leçon là où on l'a laissée : après un rechargement, une fermeture de l'onglet, ou le téléphone qui recharge la page */
@@ -10763,7 +10781,9 @@ function lessonRoute(args){
   if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid);LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}}
   else{LP.last=Date.now();const p=progGet(sid,lid);if(p&&p.ts>(LP.saved||0)&&p.i!==LP.i){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;LP.cp=null;}}
   drawStep();}
-function mark(v,s){if(LP.got[LP.i]==null){LP.got[LP.i]=v;progSave();}if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});}
+function mark(v,s){const first=LP.got[LP.i]==null;if(first){LP.got[LP.i]=v;progSave();}if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});
+  /* une question ratée revient dans « Réviser », le jour même puis les jours suivants */
+  if(first&&v<1&&s&&(s.k==="qcm"||s.k==="blanks"||s.k==="order"))emit({k:"miss",s:LP.sid,l:LP.id,q:qh(s)});}
 /* le temps de travail : compté écran par écran (20 min au plus par écran) ; une absence de plus de 10 min compte comme une pause */
 const WORK={acc:0,last:0,snooze:0};
 function tick(){const now=Date.now();if(LP){LP.t=(LP.t||0)+Math.min(now-(LP.last||now),20*60e3);LP.last=now;}
@@ -10771,7 +10791,7 @@ function tick(){const now=Date.now();if(LP){LP.t=(LP.t||0)+Math.min(now-(LP.last
 function pauseBar(){if(WORK.acc<45*60e3||Date.now()<WORK.snooze)return "";const m=Math.round(WORK.acc/60000);
   return `<div class="pausebar" role="status"><b>Ça fait ${m} min que tu travailles.</b> Fais une pause de 10 à 15 minutes : lève-toi, bois de l'eau, regarde au loin, sans écran. Ton cerveau range ce que tu viens d'apprendre pendant la pause. La leçon t'attend ici.<div class="acts"><button class="btn ok" id="pz-done">J'ai fait ma pause</button><button class="btn" id="pz-later">Encore 15 min</button></div></div>`;}
 function drawStep(){
-  clearInterval(TIMER);tick();
+  clearInterval(TIMER);tick();if(DND){DND.abort();DND=null;document.documentElement.classList.remove("is-dragging");document.querySelectorAll(".par-ghost").forEach(g=>g.remove());}
   const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],F=flow(L),N=F.length;
   if(LP.i>=N)return finish();
   const s=F[LP.i];
@@ -10837,12 +10857,41 @@ const STEP={
  order(s,body,next){
   const lines=s.lines,mono=s.lang!=="txt";let pool=shuffle(lines.map((_,i)=>i)),ans=[];
   if(pool.every((v,i)=>lines[v]===lines[i])&&lines.length>1)pool.reverse();
-  body.innerHTML=`<p class="lq">${s.q}</p><p class="muted">Touche les lignes dans le bon ordre. Touche une ligne de ta réponse pour la remettre en bas.</p><div class="par-ans" id="pa"></div><div class="par-pool" id="pp"></div><div class="lfb" aria-live="polite"></div>`;
-  const draw=()=>{$("#pa").innerHTML=ans.length?ans.map((i,k)=>`<button class="par-line${mono?" mono":""}" data-a="${k}">${esc(lines[i])}</button>`).join(""):`<span class="muted">Ta réponse s'écrit ici.</span>`;
-    $("#pp").innerHTML=pool.length?pool.map((i,k)=>`<button class="par-line${mono?" mono":""}" data-p="${k}">${esc(lines[i])}</button>`).join(""):`<span class="muted">Toutes les lignes sont placées : vérifie.</span>`;
+  body.innerHTML=`<p class="lq">${s.q}</p><p class="muted">Fais glisser les lignes pour les ranger dans le bon ordre (sur téléphone : garde le doigt appuyé un instant sur la ligne, puis glisse). Tu peux aussi les toucher une par une : une ligne touchée monte dans ta réponse, ou redescend.</p><div class="par-ans" id="pa"></div><div class="par-pool" id="pp"></div><div class="lfb" aria-live="polite"></div>`;
+  const PA=body.querySelector("#pa"),PP=body.querySelector("#pp");
+  const draw=()=>{PA.innerHTML=ans.length?ans.map((i,k)=>`<button class="par-line${mono?" mono":""}" data-a="${k}">${esc(lines[i])}</button>`).join(""):`<span class="muted">Ta réponse s'écrit ici.</span>`;
+    PP.innerHTML=pool.length?pool.map((i,k)=>`<button class="par-line${mono?" mono":""}" data-p="${k}">${esc(lines[i])}</button>`).join(""):`<span class="muted">Toutes les lignes sont placées : vérifie.</span>`;
     if(next.dataset.mode==="check")next.disabled=pool.length>0;};
   next.dataset.mode="check";next.textContent="Vérifier";
-  body.addEventListener("click",e=>{if(next.dataset.mode!=="check")return;const a=e.target.closest("[data-a]"),p=e.target.closest("[data-p]");if(p){ans.push(pool.splice(+p.dataset.p,1)[0]);draw();}else if(a){pool.push(ans.splice(+a.dataset.a,1)[0]);draw();}});
+  let D=null,skipClick=0,raf=0;
+  body.addEventListener("click",e=>{if(next.dataset.mode!=="check")return;if(Date.now()<skipClick)return;const a=e.target.closest("[data-a]"),p=e.target.closest("[data-p]");if(p){ans.push(pool.splice(+p.dataset.p,1)[0]);draw();}else if(a){pool.push(ans.splice(+a.dataset.a,1)[0]);draw();}});
+  /* glisser-déposer : à la souris dès qu'on bouge ; au doigt après un quart de seconde d'appui (sinon le doigt fait défiler la page).
+     On peut déposer une ligne n'importe où dans la réponse, la déplacer dans la réponse, ou la redescendre. */
+  if(DND)DND.abort();DND=new AbortController();const sig={signal:DND.signal};
+  const mk=document.createElement("div");mk.className="par-drop";
+  const aim=()=>{const ra=PA.getBoundingClientRect(),rp=PP.getBoundingClientRect();
+    if(D.y<(ra.bottom+rp.top)/2){const it=[...PA.querySelectorAll(".par-line")];let k=it.length;for(let i=0;i<it.length;i++){const r=it[i].getBoundingClientRect();if(D.y<r.top+r.height/2){k=i;break;}}
+      D.zone="a";D.k=k;if(it[k])PA.insertBefore(mk,it[k]);else PA.appendChild(mk);}
+    else{D.zone="p";mk.remove();}};
+  const follow=()=>{D.g.style.left=(D.x-D.dx)+"px";D.g.style.top=(D.y-D.dy)+"px";aim();};
+  const edge=()=>{if(!D||!D.on)return;if(D.y<70)scrollBy(0,-9);else if(D.y>innerHeight-70)scrollBy(0,9);aim();raf=requestAnimationFrame(edge);};
+  const begin=()=>{const el=D.el,r=el.getBoundingClientRect(),g=el.cloneNode(true);g.classList.add("par-ghost");g.style.width=r.width+"px";g.style.setProperty("--sc",getComputedStyle(el).getPropertyValue("--sc"));document.body.appendChild(g);
+    el.classList.add("drag-src");document.documentElement.classList.add("is-dragging");D.on=true;D.g=g;D.dx=D.x0-r.left;D.dy=D.y0-r.top;follow();raf=requestAnimationFrame(edge);};
+  const drop=ok=>{const d=D;D=null;if(!d)return;clearTimeout(d.t);cancelAnimationFrame(raf);if(!d.on)return;
+    d.g.remove();mk.remove();document.documentElement.classList.remove("is-dragging");skipClick=Date.now()+400;
+    if(ok&&next.dataset.mode==="check"){
+      if(d.zone==="a"){if(d.from==="a"){const v=ans.splice(d.idx,1)[0];ans.splice(d.k>d.idx?d.k-1:d.k,0,v);}else ans.splice(d.k,0,pool.splice(d.idx,1)[0]);}
+      else if(d.from==="a")pool.push(ans.splice(d.idx,1)[0]);}
+    draw();};
+  body.addEventListener("pointerdown",e=>{if(next.dataset.mode!=="check"||D||e.button>0)return;const el=e.target.closest(".par-line");if(!el)return;
+    D={el,from:el.dataset.a!=null?"a":"p",idx:+(el.dataset.a!=null?el.dataset.a:el.dataset.p),x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,id:e.pointerId,on:false,touch:e.pointerType==="touch"};
+    if(D.touch)D.t=setTimeout(()=>{if(D&&!D.on)begin();},230);},sig);
+  addEventListener("pointermove",e=>{if(!D||e.pointerId!==D.id)return;D.x=e.clientX;D.y=e.clientY;
+    if(!D.on){if(Math.hypot(D.x-D.x0,D.y-D.y0)<=7)return;if(D.touch){clearTimeout(D.t);D=null;return;}begin();}
+    follow();},sig);
+  addEventListener("pointerup",e=>{if(D&&e.pointerId===D.id)drop(true);},sig);
+  addEventListener("pointercancel",e=>{if(D&&e.pointerId===D.id)drop(false);},sig);
+  document.addEventListener("touchmove",e=>{if(D&&D.on)e.preventDefault();},{passive:false,signal:DND.signal});
   draw();
   next.addEventListener("check",()=>{const got=ans.map(i=>lines[i]).join("\n"),ok=got===lines.join("\n")||(s.alt||[]).some(o=>o.map(i=>lines[i]).join("\n")===got);
     $("#pa").querySelectorAll(".par-line").forEach((b,k)=>{b.classList.add(ok||lines[ans[k]]===lines[k]?"ok":"bad");b.disabled=true;});
@@ -10881,10 +10930,11 @@ function finish(){
   const L=BYL[LP.sid][LP.id],S=SUBJ[LP.sid],sid=LP.sid,lid=LP.id;
   const vals=Object.values(LP.got),sc=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:1;
   tick();progDrop(sid,lid);emit({k:"les",s:sid,l:lid,sc:Math.round(sc*100)/100,dur:Math.max(1,Math.round(LP.t/60000))});
+  const F0=flow(L),nm=Object.entries(LP.got).filter(([i,v])=>v<1&&F0[i]&&["qcm","blanks","order"].includes(F0[i].k)).length;
   const nc=cardIds(sid,lid).length,nt=nextTask();
   const msg=sc>=0.8?"Bien joué.":sc>=0.5?"C'est en bonne voie.":"C'est normal de se tromper au début : c'est même en se trompant puis en voyant la correction qu'on retient le mieux.";
   const burst=sc>=0.5?`<div class="burst" aria-hidden="true">${[...Array(12)].map((_,i)=>{const a=i/12*Math.PI*2,r=120+(i*37)%60;return `<svg style="--bx:${Math.round(Math.cos(a)*r)}px;--by:${Math.round(Math.sin(a)*r*.7)}px;--dl:${(i%4)*50}ms"><use href="#i-star8"/></svg>`;}).join("")}</div>`:"";
-  $("#main").innerHTML=`<div class="page lp-end s-${sid}">${burst}<p class="kick">${S.name}</p><h1>Leçon terminée</h1><p class="lead">${esc(L.t)}</p><p class="score" id="lsc">${Math.round(sc*100)} %</p><p>${msg}${sc<0.5?" Le plan te la reproposera : refais-la demain, à froid.":""}</p>${nc?`<p>${nc} ${plural(nc,"carte")} « À retenir » ${nc>1?"arrivent":"arrive"} dans « Réviser » : tu les reverras demain.</p>`:""}
+  $("#main").innerHTML=`<div class="page lp-end s-${sid}">${burst}<p class="kick">${S.name}</p><h1>Leçon terminée</h1><p class="lead">${esc(L.t)}</p><p class="score" id="lsc">${Math.round(sc*100)} %</p><p>${msg}${sc<0.5?" Le plan te la reproposera : refais-la demain, à froid.":""}</p>${nc?`<p>${nc} ${plural(nc,"carte")} « À retenir » ${nc>1?"arrivent":"arrive"} dans « Réviser » : tu les reverras demain.</p>`:""}${nm?`<p>${nm} ${plural(nm,"question ratée","questions ratées")} ${nm>1?"t'attendent":"t'attend"} aussi dans « Réviser » : c'est en retrouvant plus tard ce qu'on a raté qu'on le retient.</p>`:""}
    ${nt&&!nt.today?`<p class="allgood">C'est tout ce qui était prévu aujourd'hui. Repose-toi : c'est pendant le repos que ton cerveau range ce que tu viens d'apprendre.</p>`:""}
    <div class="acts">${nt&&nt.today?`<a class="btn pri big" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:""}<a class="btn${nt&&nt.today?"":" pri"}" href="#/">Retour à aujourd'hui</a>${nt&&!nt.today?`<a class="btn" href="${hrefTask(nt.sid,nt.t)}">Avancer quand même : ${esc(nt.t.t)}</a>`:""}<button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
   const el=$("#lsc"),goal=Math.round(sc*100);
@@ -10897,7 +10947,7 @@ function reviser(){
   if(!RV||RV.end){const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length};}
   drawCard();}
 function drawCard(){
-  const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
+  const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, les questions que tu as ratées dans tes leçons, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
   if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Entraînement mélangé (10 questions)</a></div></div></div>`;RV.end=true;return;}
   if(RV.i>=RV.q.length){RV.end=true;const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Entraînement mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
@@ -11004,7 +11054,7 @@ function home(){
   if(days.length)h+=tiroir("Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d),ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
     return dayBox(dayName(d,true),`${ex.length?`<span class="r">${ex.every(S=>exW(S)==="CC")?"CC":ex.length>1?"Épreuves":exW(ex[0])} : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${hm(L.reduce((a,b)=>a+b.end-b.start,0))}`,`<div style="padding:0 12px 12px;display:grid;gap:12px">${L.map(b=>blockHTML(b,false)).join("")}</div>`);}).join(""));
   const bon=Object.entries(P.bonus);
-  if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes rapportent le moins : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
+  if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes passent après les autres : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
   h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
   $("#main").innerHTML=h+`</div>`;
   const tp=$("#toprog");if(tp)tp.addEventListener("click",()=>{const el=$(".tiroir.prog");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
@@ -11055,7 +11105,7 @@ function subject(sid){
 
 /* ================= S'entraîner : sur papier, comme au CC ================= */
 function entrainer(){
-  let h=`<div class="page wide">${ttl("S'entraîner","Tes CC sont sur papier, en 1 heure : rien ne remplace un sujet fait en temps réel. Fais au moins une annale par matière avec le chrono, puis corrige-toi avec la grille « Avant de rendre ta copie » des pages Recettes.")}`;
+  let h=`<div class="page wide">${ttl("S'entraîner","Tes épreuves sont sur papier, en temps limité : rien ne remplace un sujet fait en temps réel. Fais au moins une annale par matière avec le chrono, puis corrige-toi avec la grille « Avant de rendre ta copie » des pages Recettes.")}`;
   ordered().forEach((id,k)=>{const S=SUBJ[id],T=S.tasks.filter(t=>!t.lesson),c="s-"+id;
     const L=[[`#/${id}/annales`,"Annales et chrono",ico("i-doc")],[`#/${id}/td`,S.tdTitle||"Exercices de TD",ico("i-pen")]];
     if(S.quiz.length)L.push([`#/${id}/quiz`,"Quiz de cours","?"]);
@@ -11081,8 +11131,8 @@ function methode(){
    ${sec(3,"L'exemple corrigé avant l'exercice",`<p>Quand on débute, étudier un exemple corrigé étape par étape apprend plus vite que chercher seul. Ensuite on retire les étapes une par une : textes à trous, puis exercice complet.</p><p><b>Sur le site</b> : « Afficher l'étape suivante » (essaie de la deviner avant), puis les trous à compléter, puis l'exercice sur papier.</p>`)}
    ${sec(4,"Remettre un programme dans l'ordre",`<p>Pour le code, remettre des lignes dans l'ordre (les « problèmes de Parsons ») apprend autant qu'écrire le programme en entier, en beaucoup moins de temps. C'est idéal pour les fin pour; et fin tq; au bon endroit.</p>`)}
    ${sec(5,"Une idée par écran, une question tout de suite",`<p>C'est la recette de Brilliant : une courte explication avec une figure, puis une question sur ce qu'on vient de voir. Math Academy y ajoute la révision espacée et le mélange des sujets : c'est le rôle de « Réviser » et de l'entraînement mélangé.</p>`)}
-   ${sec(6,"Deviner avant de lire",`<p>Essayer de répondre à une question <b>avant</b> d'avoir appris la réponse aide à retenir ce qu'on lit ensuite, même quand on se trompe, à condition de lire la bonne réponse juste après (synthèse de Pan et Carpenter, 2023). La question oriente la lecture : on lit en cherchant.</p><p><b>Sur le site</b> : la première question d'une leçon, et celle posée avant une explication, sont marquées « Devine d'abord ». Elles ne comptent pas. Tu lis ensuite l'explication en cherchant la réponse, puis tu réponds pour de vrai. Toutes les autres questions portent sur ce que la leçon t'a déjà montré.</p>`)}
-   ${sec(7,"Retrouver jusqu'à réussir, puis recommencer un autre jour",`<p>Ce qui marche le mieux pour un examen : se tester sur une notion jusqu'à la retrouver une fois sans aide, puis recommencer lors de plusieurs séances, à des jours différents. Dans une étude menée dans un vrai cours, les notes ont gagné environ une mention (Rawson, Dunlosky et Sciartelli, 2013).</p><p><b>Sur le site</b> : dans « Réviser », une carte ratée revient plus loin dans la séance jusqu'à ce que tu la retrouves (3 fois au plus), puis elle revient les jours suivants.</p>`)}
+   ${sec(6,"Deviner avant de lire",`<p>Essayer de répondre à une question <b>avant</b> d'avoir appris la réponse aide à retenir ce qu'on lit ensuite, même quand on se trompe, à condition de lire la bonne réponse juste après (synthèse de Pan et Carpenter, 2023). La question oriente la lecture : on lit en cherchant.</p><p><b>Sur le site</b> : la première question d'une leçon est marquée « Devine d'abord » ; elle ne compte pas. Ensuite, quand une explication est suivie d'une question, cette question est affichée en haut de l'écran (« Tu cherches ») : tu lis l'explication en cherchant la réponse, puis tu réponds une seule fois. Toutes les questions portent sur ce que la leçon t'a déjà montré.</p>`)}
+   ${sec(7,"Retrouver jusqu'à réussir, puis recommencer un autre jour",`<p>Ce qui marche le mieux pour un examen : se tester sur une notion jusqu'à la retrouver une fois sans aide, puis recommencer lors de plusieurs séances, à des jours différents. Dans une étude menée dans un vrai cours, les notes ont gagné environ une mention (Rawson, Dunlosky et Sciartelli, 2013).</p><p><b>Sur le site</b> : dans « Réviser », une carte ratée revient plus loin dans la séance jusqu'à ce que tu la retrouves (3 fois au plus), puis elle revient les jours suivants. Une question ratée dans une leçon y revient aussi, le jour même puis les jours suivants. Et à la fin d'un quiz, tu vois la liste de tes erreurs avec leur correction.</p>`)}
    ${sec(8,"Les conditions du CC, et le sommeil",`<p>Fais au moins une annale par matière en 1 heure, sur papier. La veille d'un CC : les cartes du jour, les fiches en rouge, et une vraie nuit.</p><p><b>Les pauses</b> : l'attention baisse après 45 minutes environ. Une pause de 10 à 15 minutes, sans écran, fait mieux retenir que de continuer en forçant. Le plan prévoit ces pauses, et le lecteur de leçon te les rappelle.</p>`)}
    <section class="sec"><h2>Sources</h2><ul class="src"><li><a href="https://doi.org/10.1007/s10648-023-09814-5" target="_blank" rel="noopener">Pan et Carpenter (2023), Prequestioning and Pretesting Effects, Educational Psychology Review</a></li><li><a href="https://doi.org/10.1007/s10648-013-9240-4" target="_blank" rel="noopener">Rawson, Dunlosky et Sciartelli (2013), The Power of Successive Relearning, Educational Psychology Review</a></li><li><a href="https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html" target="_blank" rel="noopener">Which Study Strategies Make the Grade? (Association for Psychological Science, sur Dunlosky et al. 2013)</a></li><li><a href="https://www.learningscientists.org/s/Spaced-Practice-esre.pdf" target="_blank" rel="noopener">Spaced Practice (The Learning Scientists)</a></li><li><a href="https://en.wikipedia.org/wiki/Worked-example_effect" target="_blank" rel="noopener">Worked-example effect (Wikipédia)</a></li><li><a href="https://hg.gatech.edu/node/603172" target="_blank" rel="noopener">Ericson : les problèmes de Parsons (Georgia Tech)</a></li><li><a href="https://brilliant.org/resources/choosing-brilliant/how-brilliant-teaches-math/" target="_blank" rel="noopener">How Brilliant teaches math</a></li><li><a href="https://mathacademy.com/pedagogy" target="_blank" rel="noopener">Math Academy : pedagogy</a></li></ul></section></div>`;badges();}
 
@@ -11220,6 +11270,7 @@ function applyEv(e){
   else if(e.k==="pos"){st.pos[e.l]=e.reset||typeof e.at!=="number"?null:{i:e.at,sig:e.sig,got:e.got||{},t:e.dur||0,ss:e.ss||{},ts:e.t};}
   else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
+  else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;}
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;}
 }
 function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
@@ -11473,7 +11524,7 @@ function edt(){
    <div class="edt-legend">${SIDS.map(id=>`<span><i class="sdot" style="background:${SUBJ[id].color}"></i>${SUBJ[id].name}</span>`).join("")}<span><i class="sdot" style="background:var(--graphite)"></i>cours</span><span><i class="sdot" style="background:var(--rouge)"></i>CC</span></div>
    <div class="edt-wrap"><div class="edt" style="grid-template-columns:44px repeat(${days.length},minmax(128px,1fr));min-width:${44+days.length*128}px"><div></div>${days.map(d=>`<div class="edt-h${d===t0?" today":""}">${dayName(d,true,true)}${HOLIDAY[d]?`<small>férié</small>`:""}</div>`).join("")}
     <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
-   <p class="muted" style="font-size:.9rem">L'emploi du temps vient de ta photo de la semaine du 9 novembre. Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p></div>`;
+   <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p></div>`;
 }
 
 /* ---------- examens et coefficients ---------- */
@@ -11573,19 +11624,23 @@ function cardAnswer(sid,ok){const c=deck[di];setStatus(sid,c.id,ok?"known":"revi
 document.addEventListener("keydown",e=>{if(!CUR.sid||!CUR.page.startsWith("cartes")||(e.target.closest&&e.target.closest("input,textarea,button,select")))return;if(e.key===" "&&!flip&&deck[di]){e.preventDefault();flip=true;drawCard(CUR.sid);}else if(flip&&(e.key==="1"||e.key==="2"))cardAnswer(CUR.sid,e.key==="1");});
 
 /* ---------- quiz ---------- */
-let qOrder=[],qi=0,qScore=0,qAns=null;
+let qOrder=[],qi=0,qScore=0,qAns=null,qPerm={},qMiss=[];
+/* les réponses changent de place à chaque passage : on ne peut pas retenir « c'est la deuxième » */
+const perm=n=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+/* à la fin d'un quiz : la liste des erreurs, avec la bonne réponse et l'explication */
+const missHTML=L=>L.length?`<h2 style="font-size:1.15rem;margin:8px 0 0">Tes erreurs (${L.length})</h2><p class="muted" style="margin:0">Relis chaque correction, puis recommence : les réponses changent de place à chaque fois.</p>${L.map(m=>`<div class="expl no"><p class="qtxt" style="font-size:1rem;margin:0 0 4px">${m.q.q}</p>${m.q.code?W.code(m.q.code,m.q.lang||SUBJ[m.sid].lang):""}<p style="margin:0"><span class="r">Ta réponse : ${m.q.o[m.a]}</span><br><span style="color:var(--vert);font-weight:700">La bonne réponse : ${m.q.o[m.q.a]}</span></p><p class="muted" style="margin:4px 0 0">${m.q.e||""}${m.q.link&&SUBJ[m.sid].BY[m.q.link]?` <a href="#/${m.sid}/c/${m.q.link}">Voir la fiche</a>`:""}</p></div>`).join("")}`:"";
 function quiz(sid){
   const S=SUBJ[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):null;
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Quiz de cours</h1></div><p class="lead">${S.quizIntro||"Des questions dans le style des questions de cours du CC."}${goal?` Objectif du plan : au moins ${goal} sur ${activeQuiz(S).length}.`:""}</p><div class="qbox" id="qbox" aria-live="polite"></div></div>`;
-  qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;drawQ(sid);
-  $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;const qq=S.quiz[qOrder[qi]];if(qAns===qq.a)qScore++;else if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;drawQ(sid);}if(id==="qre")quiz(sid);});
+  qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;qPerm={};qMiss=[];drawQ(sid);
+  $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;const qq=S.quiz[qOrder[qi]];if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;drawQ(sid);}if(id==="qre")quiz(sid);});
 }
 function drawQ(sid){
   const S=SUBJ[sid],Q=S.quiz,n=qOrder.length,box=$("#qbox"),st=ST[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):n;
-  if(qi>=n){if(qScore>st.best)emit({k:"quiz",s:sid,n:qScore,goal:qScore>=goal});box.innerHTML=`<p class="muted">Résultat</p><p class="score">${qScore} sur ${n}</p><p>${qScore>=goal?"Objectif atteint : l'étape « Quiz » de ton plan est cochée.":"Relis les fiches des questions ratées, puis recommence."}</p><button class="btn pri" id="qre" style="justify-self:start">Recommencer</button>`;return;}
-  const q=Q[qOrder[qi]];
+  if(qi>=n){if(qScore>st.best)emit({k:"quiz",s:sid,n:qScore,goal:qScore>=goal});box.innerHTML=`<p class="muted">Résultat</p><p class="score">${qScore} sur ${n}</p><p>${qScore>=goal?"Objectif atteint : l'étape « Quiz » de ton plan est cochée.":"Relis tes erreurs ci-dessous, puis recommence."}</p><button class="btn pri" id="qre" style="justify-self:start">Recommencer</button>${missHTML(qMiss)}`;return;}
+  const q=Q[qOrder[qi]],ord=qPerm[qOrder[qi]]||(qPerm[qOrder[qi]]=perm(q.o.length));
   box.innerHTML=`<p class="muted">Question ${qi+1} sur ${n}. Score : ${qScore}</p><div class="bar"><i style="width:${qi/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
-   <div class="opts">${q.o.map((o,i)=>{let c="";if(qAns!==null){if(i===q.a)c="good";else if(i===qAns)c="bad";}return `<button data-o="${i}" class="${c}" ${qAns!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
+   <div class="opts">${ord.map(i=>{const o=q.o[i];let c="";if(qAns!==null){if(i===q.a)c="good";else if(i===qAns)c="bad";}return `<button data-o="${i}" class="${c}" ${qAns!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
    ${qAns!==null?`<div class="expl${qAns===q.a?"":" no"}"><b>${qAns===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="qn" style="justify-self:start">${qi<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
 }
 
@@ -11638,18 +11693,19 @@ function mix(){
   const n=NOW(),act=SIDS.filter(id=>examStart(SUBJ[id])>n),near=act.slice().sort((a,b)=>examStart(SUBJ[a])-examStart(SUBJ[b]))[0];
   const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id];activeQuiz(S).forEach(q=>{let w=1;if(q.link){if(st.review[q.link])w=4;else if(!st.known[q.link])w=2;}if(id===near)w*=2;pool.push({sid:id,q,w});});});
   const pick=[];for(let k=0;k<10&&pool.length;k++){let t=Math.random()*pool.reduce((s,x)=>s+x.w,0),j=0;for(;j<pool.length-1;j++){t-=pool[j].w;if(t<=0)break;}pick.push(pool.splice(j,1)[0]);}
-  mx={q:pick,i:0,score:0,ans:null};
+  pick.forEach(it=>{it.ord=perm(it.q.o.length);});
+  mx={q:pick,i:0,score:0,ans:null,miss:[]};
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Entraînement mélangé</h1></div><p class="lead">10 questions de toutes tes matières, surtout ton prochain CC et les notions que tu rates. Réponds avant de regarder les choix si tu peux. Chaque erreur met la fiche en rouge : elle reviendra dans « Révision du jour ».</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
   drawMix();
-  $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&mx.ans===null){const it=mx.q[mx.i];mx.ans=+o.dataset.o;if(mx.ans===it.q.a)mx.score++;else if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}drawMix();$("#mxn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;drawMix();}if(id==="mxre")mix();});
+  $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&mx.ans===null){const it=mx.q[mx.i];mx.ans=+o.dataset.o;if(mx.ans===it.q.a)mx.score++;else{mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}drawMix();$("#mxn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;drawMix();}if(id==="mxre")mix();});
 }
 function drawMix(){
   const box=$("#mxbox"),n=mx.q.length;
   if(!n){box.innerHTML=`<p>Aucune question : tous tes CC sont passés.</p>`;return;}
-  if(mx.i>=n){emit({k:"mix",n:mx.score});box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${mx.score===n?"Parfait.":"Les notions ratées sont en rouge. Ouvre leur fiche maintenant, ou retrouve-les demain dans « Révision du jour »."}</p><div class="acts"><button class="btn pri" id="mxre">10 autres questions</button><a class="btn" href="#/">Retour à aujourd'hui</a></div>`;return;}
+  if(mx.i>=n){emit({k:"mix",n:mx.score});box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${mx.score===n?"Parfait.":"Les notions ratées sont en rouge. Ouvre leur fiche maintenant, ou retrouve-les demain dans « Révision du jour »."}</p><div class="acts"><button class="btn pri" id="mxre">10 autres questions</button><a class="btn" href="#/">Retour à aujourd'hui</a></div>${missHTML(mx.miss||[])}`;return;}
   const it=mx.q[mx.i],q=it.q,S=SUBJ[it.sid];
   box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
-   <div class="opts">${q.o.map((o,i)=>{let c="";if(mx.ans!==null){if(i===q.a)c="good";else if(i===mx.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${mx.ans!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
+   <div class="opts">${(it.ord||q.o.map((_,i)=>i)).map(i=>{const o=q.o[i];let c="";if(mx.ans!==null){if(i===q.a)c="good";else if(i===mx.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${mx.ans!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
    ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
 }
 function methode(){
