@@ -4903,26 +4903,97 @@ List.hd                    (* 'a list -> 'a *)`);},
 /* ---------- TD ---------- */
 const td=[
  {id:"1",s:3,t:"Types et valeurs d'expressions",en:"Vérifier si les expressions sont correctes, et donner leur type et leur valeur (exercice 1).",link:"pf-types",sol:`<p>Fais l'entraînement interactif de la fiche « Types et opérateurs ». Points clés : / et mod sont pour les int, /. pour les float ; not veut un bool ; un if sans else doit être de type unit ; les deux branches d'un if ont le même type.</p>`},
- {id:"3",s:2,t:"let … in et let … and",en:"Types et valeurs de : let x=5 in x*x ; let a=2 and b=true in b && (a>0) ; let a=2 and b=5 in a+2*b ; let a=5 and b=a+1 in a+2*b ; let a=3 and b=5 in (a<b) && ((a>b)/2) ; let a=1 and b=1 and c=2 in a=b=c.",link:"pf-let",
-  sol:`<ol><li>int, 25</li><li>bool, true</li><li>int, 12</li><li>erreur : a n'est pas encore défini pour b (ou l'ancien a s'il existe)</li><li>erreur : (a>b) est un bool</li><li>erreur : (a=b)=c compare true à 2</li></ol>`},
+ {id:"2",s:3,note:"comme la question 1 du partiel",t:"Bien typée ou non ? Avec f : int -> bool et g : int * bool -> int",en:"Soient f : int -> bool et g : int * bool -> int. Dire si chaque expression est bien typée et, si oui, donner son type : 2+f(3) ; f(3)||f(4) ; g(2,f(2)) ; f(g(2,f(2))) ; f(2,g(3)) ; g(2,f(2))+f(2) ; if f(2) then g(1,true) else 3/4 ; if f(2) then f(2) else g(2,f(2)) ; if g(1,true)/2 &gt; 5 then f(2) else 5/3&lt;2.",link:"pf-signature",idea:"Remplace chaque appel par le type de son résultat : f(…) est un bool, g(…, …) est un int. Puis regarde ce que chaque opérateur attend.",
+  sol:`<ol><li>2+f(3) : <b>erreur</b>. f(3) est un bool, et + veut deux int.</li><li>f(3)||f(4) : <b>bool</b>.</li><li>g(2,f(2)) : <b>int</b>. g reçoit bien un couple (int, bool).</li><li>f(g(2,f(2))) : <b>bool</b>. g(…) est un int, que f accepte.</li><li>f(2,g(3)) : <b>erreur</b>. g attend un couple, pas un seul int ; et f attend un int, pas un couple.</li><li>g(2,f(2))+f(2) : <b>erreur</b>. On additionne un int et un bool.</li><li>if f(2) then g(1,true) else 3/4 : <b>int</b>. Les deux branches sont des int.</li><li>if f(2) then f(2) else g(2,f(2)) : <b>erreur</b>. Une branche est un bool, l'autre un int.</li><li>if g(1,true)/2 &gt; 5 then f(2) else 5/3&lt;2 : <b>bool</b>. La condition compare deux int ; les deux branches sont des bool.</li></ol><p>Vérifié dans OCaml, avec deux fonctions f et g de ces types.</p>`},
+ {id:"3",s:2,t:"let … in et let … and",en:"Types et valeurs de : let x=5 in x*x ; let a=2 and b=true in b &amp;&amp; (a&gt;0) ; let a=2 and b=5 in a+2*b ; let a=5 and b=a+1 in a+2*b ; let a=3 and b=5 in (a&lt;b) &amp;&amp; ((a&gt;b)/2) ; let a=1 and b=1 and c=2 in a=b=c.",link:"pf-let",
+  sol:`<ol><li>int, 25</li><li>bool, true</li><li>int, 12</li><li>erreur : a n'est pas encore défini pour b (ou l'ancien a s'il existe)</li><li>erreur : (a&gt;b) est un bool, on ne peut pas le diviser par 2</li><li>erreur : (a=b)=c compare true à 2</li></ol>`},
+ {id:"4",s:2,t:"Une seule racine, trois multiplications",en:"1. Écrire en OCaml l'expression √2,5 / (√2,5 + 1) en n'utilisant qu'une fois la fonction sqrt (racine carrée). 2. Écrire x² + x⁴ + x⁵ en n'utilisant que 3 multiplications ; x est de type entier.",link:"pf-let",idea:"Donne un nom au résultat que tu veux réutiliser, avec let … in.",
+  sol:`${M(`let r = sqrt 2.5 in r /. (r +. 1.)
+
+let x2 = x * x in
+let x4 = x2 * x2 in
+x2 + x4 + x4 * x`)}<p>sqrt est une fonction float -> float : on écrit 2.5, et les opérateurs prennent un point. La première expression vaut environ 0,6126. Dans la seconde, les trois multiplications sont x * x, x2 * x2 et x4 * x.</p>`},
+ {id:"5",s:3,note:"comme la question 1 du partiel",t:"Quel type pour x et y ? Quelle signature pour f et g ?",en:"1. De quel type doivent être x et y pour que chaque expression soit bien typée : x+1 ; x||y ; (x+1)||y ; x=y ; (x=y)||(x=y+1) ; if x then y else 3 ; not(x)||((x mod 2)=0). 2. Quelle doit être la signature de f et de g : f(1)+1 ; g(1,true)&amp;&amp;f(1) ; f(f(1)) ; f(true)+.g(2) ; g(1+f(3)) ; f(x) || (f(x)=0).",link:"pf-signature",idea:"Chaque opérateur impose le type de ce qu'il reçoit : + veut des int, || veut des bool, +. veut des float.",
+  sol:`<p><b>1.</b></p><ol><li>x+1 : x est un int.</li><li>x||y : x et y sont des bool.</li><li>(x+1)||y : <b>impossible</b>. x+1 est un int, et || veut un bool.</li><li>x=y : x et y du même type, n'importe lequel.</li><li>(x=y)||(x=y+1) : x et y sont des int, à cause de y+1.</li><li>if x then y else 3 : x est un bool, y un int (les deux branches ont le même type).</li><li>not(x)||((x mod 2)=0) : <b>impossible</b>. x devrait être à la fois un bool (not) et un int (mod).</li></ol><p><b>2.</b></p><ol><li>f(1)+1 : f : int -> int.</li><li>g(1,true)&amp;&amp;f(1) : g : int * bool -> bool et f : int -> bool.</li><li>f(f(1)) : f : int -> int (son résultat lui est redonné).</li><li>f(true)+.g(2) : f : bool -> float et g : int -> float.</li><li>g(1+f(3)) : f : int -> int ; g prend un int, et son résultat peut être de n'importe quel type.</li><li>f(x) || (f(x)=0) : <b>impossible</b>. f(x) devrait être à la fois un bool et un int.</li></ol><p>Vérifié dans OCaml.</p>`},
+ {id:"6",s:3,note:"comme la question 2 du partiel",t:"Définir f, g et cube",en:"Écrire les définitions OCaml de : f : ℤ → ℤ, x ↦ 2x + 1 ; g : ℝ × ℝ → bool, (x, y) ↦ x &lt; y/2 ; cube : ℝ → ℝ, x ↦ x³.",link:"pf-signature",idea:"ℤ se traduit par int, ℝ par float, et ℝ × ℝ par float * float.",
+  sol:`${M(`let f : int -> int = function
+  x -> 2 * x + 1
+
+let g : float * float -> bool = function
+  (x, y) -> x < y /. 2.
+
+let cube : float -> float = function
+  x -> x *. x *. x`)}<p>Sur les float, tous les opérateurs prennent un point, et 2 s'écrit 2. ; la comparaison &lt;, elle, marche sur tous les types.</p>`},
  {id:"7",s:2,t:"Signatures de f1 et f2",en:"let f1 = function (x, y) -> if y then x+1 else 2*x ;; let f2 = function (x, y) -> if x > y then x > y else y > 2*x",link:"pf-signature",sol:`<p>f1 : int * bool -> int. f2 : int * int -> bool.</p>`},
+ {id:"8",s:2,t:"Périmètre d'un cercle, même signe",en:"1. Écrire la fonction qui calcule le périmètre d'un cercle de rayon r, sous forme mathématique puis en OCaml (prendre 3.14 pour π). 2. Même chose pour la fonction qui vérifie si deux entiers sont de même signe.",link:"pf-signature",
+  sol:`<p>perimetre : ℝ → ℝ, r ↦ 2πr. memeSigne : ℤ × ℤ → bool, (a, b) ↦ vrai si a et b sont tous deux positifs ou tous deux négatifs.</p>${M(`let perimetre : float -> float = function
+  r -> 2. *. 3.14 *. r
+
+let memeSigne : int * int -> bool = function
+  (a, b) -> (a >= 0 && b >= 0) || (a < 0 && b < 0)`)}<p>Ici 0 est compté avec les positifs : dis-le dans ta réponse.</p>`},
+ {id:"9",s:2,t:"Valeur absolue, maximum, médiane",en:"Définir les fonctions qui calculent : la valeur absolue d'un entier ; le maximum de deux entiers ; le maximum de trois entiers ; la valeur médiane de trois entiers.",link:"pf-if",idea:"Réutilise max2 pour écrire max3. La médiane, c'est la somme des trois moins le plus grand et le plus petit.",
+  sol:`${M(`let valAbs : int -> int = function
+  x -> if x >= 0 then x else -x
+
+let max2 : int * int -> int = function
+  (a, b) -> if a >= b then a else b
+
+let max3 : int * int * int -> int = function
+  (a, b, c) -> max2 (a, max2 (b, c))
+
+let min2 : int * int -> int = function
+  (a, b) -> if a <= b then a else b
+
+let mediane : int * int * int -> int = function
+  (a, b, c) -> a + b + c - max3 (a, b, c) - min2 (a, min2 (b, c))`)}<p>mediane (3, 9, 7) = 19 − 9 − 3 = 7. Les fonctions abs et max existent déjà en OCaml (note du TD).</p>`},
+ {id:"10",s:2,t:"Trois réels : triangle équilatéral, triangle",en:"Définir les fonctions qui testent si trois réels sont les mesures : d'un triangle équilatéral ; d'un triangle.",link:"pf-if",idea:"Trois longueurs forment un triangle quand chacune est plus petite que la somme des deux autres.",
+  sol:`${M(`let equilateral : float * float * float -> bool = function
+  (a, b, c) -> a > 0. && a = b && b = c
+
+let triangle : float * float * float -> bool = function
+  (a, b, c) -> a < b +. c && b < a +. c && c < a +. b`)}<p>triangle (3., 4., 5.) vaut true ; triangle (1., 2., 5.) vaut false. Pas besoin de if : la comparaison est déjà un bool.</p>`},
+ {id:"11",s:2,t:"L'implication",en:"Définir la fonction implication : elle vaut false seulement quand a est true et b est false. Donner une définition avec if … then … else, et une avec seulement not, || et &amp;&amp;.",link:"pf-if",
+  sol:`${M(`let implication : bool * bool -> bool = function
+  (a, b) -> if a then b else true
+
+let implication : bool * bool -> bool = function
+  (a, b) -> not a || b`)}<p>Si a est vrai, le résultat est b ; si a est faux, le résultat est toujours vrai.</p>`},
  {id:"12",s:2,t:"f(n) = 5 si n = 0, 2n + f(n−1) sinon",en:"Calculer f(1), f(2), f(3), trouver f(n), écrire f en OCaml.",link:"pf-rec",sol:`<p>f(1) = 7, f(2) = 11, f(3) = 17 ; f(n) = n(n+1) + 5.</p>${M(`let rec f : int -> int = function
   n -> if n = 0 then 5 else 2 * n + f (n - 1)`)}`},
+ {id:"13",s:3,t:"som : 0 + 1 + 2 + … + n",en:"Définir par récurrence la fonction som : ℕ → ℕ, n ↦ 0 + 1 + 2 + … + n. Donner le cas de base, la récurrence, puis la traduction en OCaml.",link:"pf-rec",
+  sol:`<p>Cas de base : som(0) = 0. Récurrence, pour n &gt; 0 : som(n) = n + som(n − 1).</p>${M(`let rec som : int -> int = function
+  n -> if n = 0 then 0 else n + som (n - 1)`)}<p>som 4 = 4 + 3 + 2 + 1 + 0 = 10.</p>`},
+ {id:"14",s:2,t:"somInt : la somme des entiers de a à b",en:"Écrire somInt : ℕ × ℕ → ℕ, (a, b) ↦ la somme des entiers de l'intervalle [a ; b].",link:"pf-rec",idea:"On met a de côté, et on demande la somme de a + 1 à b. Quand a dépasse b, l'intervalle est vide : la somme vaut 0.",
+  sol:`${M(`let rec somInt : int * int -> int = function
+  (a, b) -> if a > b then 0 else a + somInt (a + 1, b)`)}<p>somInt (3, 6) = 3 + 4 + 5 + 6 = 18.</p>`},
  {id:"15",s:2,t:"mul sans multiplication",en:"Produit de deux entiers naturels avec additions et soustractions, par récurrence sur a.",link:"pf-rec",sol:M(`let rec mul : int * int -> int = function
   (a, b) -> if a = 0 then 0 else b + mul (a - 1, b)`)},
  {id:"16",s:2,t:"carre sans multiplication",en:"carre(n) en fonction de carre(n−1), en développant (n−1)².",link:"pf-rec",sol:`<p>(n − 1)² = n² − 2n + 1, donc n² = (n − 1)² + 2n − 1.</p>${M(`let rec carre : int -> int = function
   n -> if n = 0 then 0 else carre (n - 1) + n + n - 1`)}`},
+ {id:"17",s:2,t:"estPair sans division",en:"Écrire la fonction estPair, qui teste si un entier naturel est pair, sans utiliser de division (ni mod, ni /).",link:"pf-rec",idea:"0 est pair, et n est pair quand n − 1 ne l'est pas.",
+  sol:`${M(`let rec estPair : int -> bool = function
+  n -> if n = 0 then true else not (estPair (n - 1))`)}<p>C'est la solution envoyée par ton chargé de TD (9/11). Autre possibilité : deux cas de base, n = 0 (true) et n = 1 (false), puis estPair (n - 2).</p>`},
  {id:"18",s:3,t:"Puissance de 10",en:"Tester si n est une puissance de 10, sans log.",link:"pf-rec-ex",sol:`<p>La plus petite est 1 ; une puissance de 10 plus grande est un multiple de 10 dont le quotient par 10 est encore une puissance de 10.</p>${M(`let rec estPuis10 : int -> bool = function
   n -> n = 1 || (n > 0 && n mod 10 = 0 && estPuis10 (n / 10))`)}`},
- {id:"19",s:2,t:"Répartir n objets dans b boîtes",en:"nbrep(n, b) : première boîte vide, ou au moins un objet dedans.",link:"pf-rec-ex",sol:`<p>nbrep(n, b) = nbrep(n, b − 1) + nbrep(n − 1, b). Cas de base : b = 0 → 1 si n = 0, sinon 0 ; n = 0 → 1.</p>${M(`let rec nbrep : int * int -> int = function
+ {id:"19",s:2,t:"Répartir n objets dans b boîtes",en:"nbrep(n, b) : le nombre de façons de répartir n objets dans b boîtes différentes, qui peuvent être vides (4 façons pour 3 objets et 2 boîtes). On distingue : la première boîte est vide, ou elle contient au moins un objet. Puis : comment ne compter que les répartitions où aucune boîte n'est vide (2 façons pour 3 objets et 2 boîtes) ?",link:"pf-rec-ex",sol:`<p>nbrep(n, b) = nbrep(n, b − 1) + nbrep(n − 1, b). Cas de base : b = 0 → 1 si n = 0, sinon 0 ; n = 0 → 1.</p>${M(`let rec nbrep : int * int -> int = function
   (n, b) -> if b = 0 then (if n = 0 then 1 else 0)
             else if n = 0 then 1
             else nbrep (n, b - 1) + nbrep (n - 1, b)
-(* nbrep (3, 2) = 4 *)`)}`},
+(* nbrep (3, 2) = 4 *)`)}<p><b>Boîtes non vides.</b> On pose d'abord un objet dans chaque boîte, puis on répartit librement les n − b objets qui restent.</p>${M(`let nbrepNV : int * int -> int = function
+  (n, b) -> if n < b then 0 else nbrep (n - b, b)
+(* nbrepNV (3, 2) = nbrep (1, 2) = 2 *)`)}<p>Attention : dans le fichier TD_Ocaml.zip de ton chargé de TD (mail du 9/11), la fonction pour les boîtes non vides renvoie 3 pour 3 objets et 2 boîtes, alors que l'énoncé annonce 2. Garde la version ci-dessus (vérifiée dans OCaml).</p>`},
+ {id:"20",s:3,note:"la forme curryfiée",t:"De g à gg : la forme curryfiée, min, somInt",en:`<p>1. g : ℝ × ℝ → bool, (x, y) ↦ x &lt; y/2 peut aussi s'écrire comme une fonction à un seul paramètre :</p>${M(`let gg : float -> float -> bool = function
+  x -> function
+    y -> x < (y /. 2.)`)}<p>Quel est le type de gg 3.2 ? Quelle expression avec gg donne la valeur de g(3.2, 4.4) ?</p><p>2. Définir min, de signature int -> int -> int. 3. Définir somInt (exercice 14) avec la signature int -> int -> int.</p>`,link:"pf-signature",
+  sol:`<p>1. gg 3.2 est de type <b>float -> bool</b> : c'est une fonction, qui attend encore y. La valeur de g(3.2, 4.4) s'obtient avec <b>gg 3.2 4.4</b>, qui vaut false (3.2 n'est pas plus petit que 2.2). On écrit plus simplement : let gg : float -> float -> bool = fun x y -> x &lt; (y /. 2.).</p>${M(`let min : int -> int -> int = fun
+  x y -> if x > y then y else x
+
+let rec somInt : int -> int -> int = fun
+  a b -> if a > b then 0 else a + somInt (a + 1) b`)}<p>Dans l'appel récursif curryfié, chaque argument a ses parenthèses : somInt (a + 1) b.</p>`},
  {id:"21",s:3,t:"nbDiv et estPremier",en:"nbDiv n i : nombre de diviseurs de n inférieurs ou égaux à i. Puis estPremier.",link:"pf-rec-ex",sol:M(`let rec nbDiv : int -> int -> int = fun n i ->
   if i = 0 then 0
   else (if n mod i = 0 then 1 else 0) + nbDiv n (i - 1)
-let estPremier : int -> bool = function n -> nbDiv n n = 2`)},
+let estPremier : int -> bool = function n -> nbDiv n n = 2`)+`<p>Attention : dans le fichier TD_Ocaml.zip de ton chargé de TD (mail du 9/11), le cas de base de nbDiv est écrit « if n = 1 ». Avec lui, nbDiv 6 6 finit par diviser par 0 (i descend jusqu'à 0). Le cas de base doit porter sur i, comme ici.</p>`},
  {id:"22",s:3,t:"Évaluer des expressions sur [2; 3; 2; 4]",en:"List.tl(List.tl li) ; List.hd(List.tl(List.tl li)) ; List.hd de 4 List.tl ; 7::li ; 7::List.tl li ; List.hd li :: List.tl li ; List.hd(List.tl li) :: List.tl li ; List.hd [\"liste\";\"entiers\"] :: [\"chaines\"].",link:"pf-listes",
   sol:`<ol><li>[2; 4]</li><li>2</li><li>erreur à l'exécution : après 4 List.tl la liste est vide, List.hd [] échoue</li><li>[7; 2; 3; 2; 4]</li><li>[7; 3; 2; 4]</li><li>[2; 3; 2; 4]</li><li>[3; 3; 2; 4]</li><li>["liste"; "chaines"] : string list</li></ol>`},
  {id:"23",s:2,t:"inverserElem",en:"Inverser l'ordre des deux premiers éléments d'une liste d'entiers de longueur au moins deux.",link:"pf-listes",
@@ -4974,7 +5045,7 @@ let liDiv : int -> int list = function n -> liDivInf n n`)},
  {id:"29",s:2,t:"ajouFin",en:"Ajouter un élément à la fin d'une liste. ajouFin 4 [5;4;2] = [5;4;2;4].",link:"pf-listes-construire",
   sol:M(`let rec ajouFin : int -> int list -> int list = fun x li ->
   if li = [] then [x]
-  else List.hd li :: ajouFin x (List.tl li)`)},
+  else List.hd li :: ajouFin x (List.tl li)`)+`<p>L'énoncé du TD ajoute que le type de l'élément peut être quelconque (ajouFin "deux" ["un"] = ["un"; "deux"]). Le corps ne change pas : seule la signature devient 'a -> 'a list -> 'a list. C'est du polymorphisme : d'après ce que tu sais, il ne sera pas au CC.</p>`},
  {id:"30",s:2,t:"inverseLi",en:"Inverser l'ordre des éléments d'une liste. inverseLi [1;4;2] = [2;4;1].",link:"pf-listes-construire",
   hint:"Inverse la queue, puis mets la tête à la fin avec ajouFin.",
   sol:M(`let rec inverseLi : int list -> int list = function
@@ -5028,6 +5099,32 @@ let g = fun x y -> x < List.hd(y)`)}`,who:"Mon corrigé",
   if li = [] || n = 0 then []
   else List.hd li :: prefLong (List.tl li) (n - 1)
 (* deux cas de base : la liste est finie, ou on a pris assez d'éléments *)`)},
+ /* ----- sujet blanc n° 2 : inventé sur le modèle du partiel 2021, corrigé exécuté dans OCaml ----- */
+ {src:"Sujet blanc n° 2 (inventé, modèle du partiel 2021) · Q1 · 3 pts",t:"Types, valeurs et signatures",en:`<p>1. Types et valeurs de : List.tl [4; 2] ; (7 mod 3) :: [8 / 3] ; List.hd [3.5; 1.] &gt; 2.</p><p>2. Signatures de :</p>${M(`let f = function (x, y) -> if x then y + 1 else y
+let h = fun x y -> x ^ string_of_int (List.hd y)
+let g = function (x, y) -> x *. 2. < y`)}<p>(string_of_int : int -> string transforme un entier en texte.)</p>`,go:"pf-signature",who:"Sujet et corrigé écrits par moi (vérifiés dans OCaml)",
+  sol:`<p>1. int list, [2] ; int list, [1; 2] ; bool, true (3.5 est plus grand que 2.).</p><p>2. f : bool * int -> int. h : string -> int list -> string (^ impose une string, List.hd y passé à string_of_int impose une liste d'int). g : float * float -> bool.</p>`},
+ {src:"Sujet blanc n° 2 (inventé, modèle du partiel 2021) · Q2 · 3 pts",t:"divise",en:"Définir en OCaml la fonction divise : ℕ* × ℕ → bool, qui vérifie si a divise b. Exemples : divise(3, 12) vaut true ; divise(5, 12) vaut false. Donner la signature.",go:"pf-signature",who:"Sujet et corrigé écrits par moi (vérifiés dans OCaml)",
+  sol:M(`let divise : int * int -> bool = function
+  (a, b) -> b mod a = 0`)},
+ {src:"Sujet blanc n° 2 (inventé, modèle du partiel 2021) · Q3 · 3 pts",t:"sommeChiffres",en:"Définir la fonction sommeChiffres : ℕ → ℕ, qui calcule la somme des chiffres de l'écriture décimale d'un entier naturel. Exemples : sommeChiffres(4097) vaut 20 ; sommeChiffres(7) vaut 7. Donner la signature.",go:"pf-rec-ex",who:"Sujet et corrigé écrits par moi (vérifiés dans OCaml)",hint:"Le dernier chiffre est n mod 10 ; le reste du nombre est n / 10. Cas de base : un seul chiffre.",
+  sol:M(`let rec sommeChiffres : int -> int = function
+  n -> if n < 10 then n
+       else n mod 10 + sommeChiffres (n / 10)`)},
+ {src:"Sujet blanc n° 2 (inventé, modèle du partiel 2021) · Q4 · 4 pts",t:"sommeDiv",en:"Définir la fonction sommeDiv qui, étant donnés deux entiers naturels non nuls n et i, calcule la somme des diviseurs de n inférieurs ou égaux à i. Exemples : (sommeDiv 12 5) vaut 10 car les diviseurs de 12 inférieurs ou égaux à 5 sont 1, 2, 3 et 4 ; (sommeDiv 45 7) vaut 9. Donner la signature.",go:"pf-rec-ex",who:"Sujet et corrigé écrits par moi (vérifiés dans OCaml)",hint:"Même forme que prodDiv, mais avec une somme : le cas de base vaut 0.",
+  sol:M(`let rec sommeDiv : int -> int -> int = fun n i ->
+  if i = 0 then 0
+  else if n mod i = 0 then i + sommeDiv n (i - 1)
+  else sommeDiv n (i - 1)`)},
+ {src:"Sujet blanc n° 2 (inventé, modèle du partiel 2021) · Q5 · 3 pts",t:"nbPairs",en:"Définir la fonction nbPairs qui calcule le nombre d'éléments pairs d'une liste d'entiers. Exemples : nbPairs [6; 9; 4] vaut 2 ; nbPairs [3] vaut 0 ; nbPairs [] vaut 0. Donner la signature.",go:"pf-listes-rec",who:"Sujet et corrigé écrits par moi (vérifiés dans OCaml)",
+  sol:M(`let rec nbPairs : int list -> int = function
+  li -> if li = [] then 0
+        else if List.hd li mod 2 = 0 then 1 + nbPairs (List.tl li)
+        else nbPairs (List.tl li)`)},
+ {src:"Sujet blanc n° 2 (inventé, modèle du partiel 2021) · Q6 · 4 pts",t:"oterPremiers",en:"Définir la fonction oterPremiers qui, étant donnés une liste li et un entier naturel n, calcule la liste li privée de ses n premiers éléments. Si li a moins de n éléments, le résultat est la liste vide. Exemples : (oterPremiers [3;2;4] 0) vaut [3;2;4] ; (oterPremiers [3;2;4] 2) vaut [4] ; (oterPremiers [3;2;4] 5) vaut []. Donner la signature.",go:"pf-listes-rec",who:"Sujet et corrigé écrits par moi (vérifiés dans OCaml)",hint:"Deux cas de base : la liste est vide, ou il n'y a plus rien à enlever. Dans les deux cas, on renvoie li.",
+  sol:M(`let rec oterPremiers : int list -> int -> int list = fun li n ->
+  if li = [] || n = 0 then li
+  else oterPremiers (List.tl li) (n - 1)`)},
  {src:"Examen janvier 2022 · Ex. 1 · 7 pts sur 21",t:"Nombres de Fermat",en:`<p>F<sub>n</sub> = 2^(2^n) + 1 : F₀ = 3, F₁ = 5, F₂ = 17, F₃ = 257. Forme curryfiée dès qu'il y a deux arguments.</p><ol><li>pow x y calcule xʸ avec x ** y (sur des float), float_of_int et int_of_float.</li><li>fermat_nbr n rend F<sub>n</sub>.</li><li>is_fermat_rec p n teste s'il existe un nombre de Fermat égal à p de rang ≥ n (is_fermat_rec 15 2 = false car F₂ = 17 > 15), puis is_fermat p.</li><li>fermat_list n rend la liste des n premiers nombres de Fermat (ordre libre).</li></ol>`,who:"Mon corrigé (examen de janvier, mais ces questions sont dans ton programme)",go:"pf-rec-ex",
   hint:"Pour is_fermat_rec : calcule f = fermat_nbr n avec un let … in. Si f > p, c'est perdu ; sinon f = p, ou on essaie le rang n + 1.",
   sol:M(`let pow : int -> int -> int = fun x y ->
@@ -5621,13 +5718,15 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  chapters:{1:"1. Expressions et types",2:"2. Fonctions et signatures",3:"3. Récursivité sur les entiers",4:"4. Listes (TD ex. 22 à 31)",5:"5. À relire avant le contrôle",6:"6. nbOcc et listes de listes",7:"7. Le filtrage",8:"8. Polymorphisme et types",9:"9. Exceptions",10:"10. Ordre supérieur et itérateurs",11:"11. Récursivité terminale et fonctions utiles"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
- annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h, aucun document). J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
+ annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h ; en 2021 sans document, cette année avec ta feuille A4). Le sujet blanc n° 2 est inventé par moi sur le même modèle, pour t'entraîner une deuxième fois. J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
  pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-ocaml.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"Autorisée (le prof de CM l'a dit) : imprimée ou manuscrite."},
  {id:"drill",t:"Entraînement « types et valeurs » sans faute",min:15,p:1,manual:true,links:[["p/types","Entraînement"]]},
- {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["18","21","24","26","27","28"],links:[["td","Exercices de TD"]]},
  {id:"p21",t:"Examen blanc : partiel 2021 en 1 h, puis correction",min:65,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Exactement le format de ton contrôle."},
+ {id:"tdtypes",t:"TD sur les types et les signatures (exercices 2, 5 et 6)",min:30,p:1,td:["2","5","6"],links:[["td","Exercices de TD"]],why:"Ils ressemblent aux questions 1 et 2 du partiel 2021 (6 points)."},
+ {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["18","21","24","26","27","28"],links:[["td","Exercices de TD"]]},
+ {id:"blanc2",t:"Deuxième sujet blanc (inventé sur le modèle du partiel 2021), en 1 h",min:65,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Un deuxième entraînement complet, avec d'autres fonctions que celles du partiel."},
  {id:"tdex2",t:"Exercices ★★★ de plus : derListe, prefixe et suffixe",min:40,p:2,td:["25","31"],links:[["td","Exercices de TD"]]},
  {id:"fermat",t:"Exercices d'examen : Fermat et Pythagore",min:40,p:3,manual:true,links:[["annales","Annales"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
@@ -8626,21 +8725,30 @@ const M=s=>W.code(s,"ml");
 
 LES.pf=[
 /* ------------------------------------------------------------------ */
-{id:"p-types",t:"Types et opérateurs",min:12,goal:"Donner le type et la valeur d'une expression, ou « erreur » : 3 points au partiel 2021.",steps:[
+{id:"p-types",t:"Types et opérateurs",min:16,goal:"Donner le type et la valeur d'une expression, ou « erreur » : 3 points au partiel 2021.",steps:[
  Q("Que vaut 7 / 2 en OCaml ?",["3.5","3","4","erreur"],1,"Avec deux int, / est la division entière : 7 / 2 = 3. Pour obtenir 3.5, il faut des float : 7. /. 2."),
- L("Chaque expression a un type",`<ul><li><b>int</b> (3, −7) : + − * / (division entière) mod.</li><li><b>float</b> (3.0, 3., 2.5) : <b>+. −. *. /.</b> avec un point.</li><li><b>bool</b> (true, false) : &amp;&amp; || not.</li><li><b>string</b> ("bonjour") : ^ pour coller.</li><li>Comparaisons = &lt;&gt; &lt; &gt; &lt;= &gt;= entre deux valeurs <b>du même type</b>, résultat bool.</li></ul><p>OCaml ne mélange jamais int et float : on convertit avec float_of_int et int_of_float (qui tronque).</p><p>L'application d'une fonction passe <b>avant</b> les opérations : int_of_float 2.5 + 1 se lit (int_of_float 2.5) + 1, qui vaut 3.</p>`),
- L("Entraîne-toi : 27 expressions du TD et du partiel",`<p>Choisis le type, puis lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : ce sont des points faciles.</p>`,{fig:"pf-types"}),
+ L("OCaml répond un type, puis une valeur",`<p>Les expressions de OCaml sont <b>typées</b>. Un type est défini par un domaine (l'ensemble des valeurs que peuvent prendre les objets du type) et des opérations (les fonctions et opérations qu'on peut appliquer aux valeurs du type).</p><p><b>Typage statique</b> : avant d'évaluer une expression, OCaml vérifie si son typage est correct, c'est-à-dire si l'application des fonctions et opérateurs est conforme à leur signature (cours p. 11).</p><p>Quand tu donnes une expression à OCaml, il répond son type, puis sa valeur :</p>`,{code:`# 7 / 3;;
+- : int = 2
+# 7 mod 3;;
+- : int = 1
+# 2.3 +. 3.1;;
+- : float = 5.4
+# 2.3 + 3.1;;
+Error: This expression has type float but an expression was expected of type int`,after:`<p>Une <b>erreur de type</b>, c'est quand OCaml refuse l'expression avant même de la calculer : elle n'a alors ni type ni valeur. Le cours dit : « ne pas confondre erreur et false ». not true vaut false, alors que not 1 n'a pas de sens, et donc pas de valeur.</p>`}),
+ Q("Que répond OCaml à 2.3 + 3.1 ?",["Une erreur : + veut deux int, il faut écrire 2.3 +. 3.1","5.4","5"],0,"Le + sans point est l'addition des int. Pour des float, l'opérateur s'écrit avec un point : 2.3 +. 3.1 vaut 5.4."),
+ L("Chaque expression a un type",`<ul><li><b>int</b> : les entiers relatifs, comme 3 ou −7. Opérations : + − * / mod. Attention : / et mod désignent le quotient et le reste de la division entière. 7 / 3 vaut 2 et 7 mod 3 vaut 1.</li><li><b>float</b> : les réels. Le point est obligatoire : 2 est de type int et 2. de type float. Opérations : <b>+. −. *. /.</b> avec un point (et ** pour la puissance). 2.3 + 3.1 n'est pas correct.</li><li><b>bool</b> : true et false. Opérations : not (non), &amp;&amp; (et), || (ou).</li><li><b>string</b> : les chaînes de caractères, entre guillemets. Opération : ^ (concaténation). "au" ^ "semestre 1" vaut "ausemestre 1".</li><li><b>Comparaisons</b> : = &lt;&gt; (différent) &lt; &gt; &lt;= &gt;=. Le résultat est un bool ; les deux opérandes sont <b>du même type</b>. 1 &lt;&gt; 4 vaut true ; "trois" &lt; "un" vaut true (ordre alphabétique) ; 4 = 4.0 et "un" = 1 ne sont pas corrects.</li></ul><p><b>Conversions</b> : les types int et float sont disjoints. float_of_int : int → float ; int_of_float : float → int, la valeur plancher : int_of_float(4.7) vaut 4. Ainsi 3.2 *. float_of_int(2) est correct.</p><p>L'application d'une fonction passe <b>avant</b> les opérations : int_of_float 2.5 + 1 se lit (int_of_float 2.5) + 1, qui vaut 3.</p>`),
  Q("Que vaut 3 * 4. ?",["12.","12","erreur de type"],2,"* veut deux int, et 4. est un float. On écrirait 3. *. 4. = 12."),
  Q("Que vaut float_of_int 3 +. 1.5 ?",["4.5","4","erreur"],0,"L'application passe avant les opérations : (float_of_int 3) +. 1.5 = 3. +. 1.5 = 4.5."),
  Q("Que vaut int_of_float 2.9 ?",["3","2","erreur"],1,"int_of_float tronque : il enlève la partie décimale, sans arrondir."),
  Q("Que vaut true = \"true\" ?",["true","false","erreur de type"],2,"= compare deux valeurs du même type ; ici un bool et une string."),
+ L("Entraîne-toi : 27 expressions du TD et du partiel",`<p>Choisis le type, puis lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : ce sont des points faciles.</p>`,{fig:"pf-types",nolook:true}),
  K("Les opérateurs int et float ?","int : + − * / (division entière) mod. float : +. −. *. /. avec un point. Jamais de mélange : float_of_int, int_of_float (tronque)."),
  K("Que vaut 7 / 2 ? Et 7. /. 2. ?","7 / 2 = 3 (int, division entière). 7. /. 2. = 3.5 (float).")]},
 
 /* ------------------------------------------------------------------ */
 {id:"p-iflet",t:"if, let … in et let … and",min:10,goal:"Savoir qu'un if a un type, et lire un let … and sans se faire piéger.",steps:[
  Q("Pourquoi « if 3/2 < 2 then 4 < 5 else 4 + 5 » est-il refusé ?",["3/2 n'est pas un entier","Les deux branches n'ont pas le même type","Il manque des parenthèses"],1,"then donne un bool (4 < 5), else un int (4 + 5). Les deux branches d'un if doivent avoir le même type."),
- L("if est une expression, let donne un nom",`<p><b>if c then e1 else e2</b> : c est un bool, e1 et e2 ont le même type, qui est le type du if. Le else est obligatoire (sauf type unit).</p><p><b>let x = e1 in e2</b> : x vaut e1, seulement dans e2. Avec <b>and</b>, les définitions sont faites en même temps : l'une ne voit pas l'autre.</p><p>Les comparaisons se lisent de gauche à droite : x = y = z se lit (x = y) = z. On compare d'abord x et y, ce qui donne un bool, puis ce bool à z.</p>`,{code:`if 1 < 2 then 3 + 1 else 5 / 2      (* int, 4 *)
+ L("if est une expression, let donne un nom",`<p><b>if c then e1 else e2</b> : c est un bool, e1 et e2 ont le même type, qui est le type du if. Le else est obligatoire, sauf si le then est de type unit.</p><p><b>unit</b> est le type des expressions qui ne calculent rien, comme un affichage ; il n'a qu'une valeur, notée (). C'est pourquoi « if 3/2 &lt; 2 then 4.1 », sans else, est une erreur : 4.1 est un float, pas un unit.</p><p><b>let x = e1 in e2</b> : x vaut e1, seulement dans e2. Avec <b>and</b>, les définitions sont faites en même temps : l'une ne voit pas l'autre.</p><p>Les comparaisons se lisent de gauche à droite : x = y = z se lit (x = y) = z. On compare d'abord x et y, ce qui donne un bool, puis ce bool à z.</p>`,{code:`if 1 < 2 then 3 + 1 else 5 / 2      (* int, 4 *)
 let x = 5 in x * x                  (* 25 *)
 let a = 2 and b = 5 in a + 2 * b    (* 12 *)
 let a = 5 in let b = a + 1 in a + b (* 11 : ici b voit a *)`,lang:"ml"}),
@@ -8652,10 +8760,16 @@ let a = 5 in let b = a + 1 in a + b (* 11 : ici b voit a *)`,lang:"ml"}),
  K("let … and ou let … in let ?","let a = … and b = … : définitions simultanées, b ne voit pas a. let a = … in let b = … : b voit a.")]},
 
 /* ------------------------------------------------------------------ */
-{id:"p-fonctions",t:"Fonctions et signatures",min:14,goal:"Écrire une fonction à un ou plusieurs arguments, et donner sa signature : demandé à chaque question du partiel.",steps:[
+{id:"p-fonctions",t:"Fonctions et signatures",min:18,goal:"Écrire une fonction à un ou plusieurs arguments, et donner sa signature : demandé à chaque question du partiel.",steps:[
  Q("Quelle est la signature de function (x, y) -> if y then x + 1 else 2 * x ?",["int -> bool -> int","int * bool -> int","bool * int -> int","'a * 'b -> int"],1,"if y impose y : bool ; x + 1 impose x : int ; le résultat est un int. Avec un couple, on écrit int * bool -> int."),
- L("Deux façons d'écrire une fonction à deux paramètres",`<p>Avec un <b>couple</b> : function (x, y) -> …, de type t1 * t2 -> t, appelée f (a, b). <b>Curryfiée</b> : fun x y -> …, de type t1 -> t2 -> t, appelée f a b. L'examen de janvier 2024 l'exige : « dès qu'une fonction prendra plusieurs arguments, vous écrirez la fonction sous sa forme curryfiée ».</p><p>Dans le cours, la signature s'écrit dans la définition : <code>let f : int -> int = function n -> 2 * n + 1</code>. C'est la meilleure façon de ne pas l'oublier sur ta copie.</p><p><b>Application partielle</b> : une fonction curryfiée peut recevoir ses arguments un par un. Si f : int -> int -> int, alors f 1 est une fonction de type int -> int, qui attend encore le deuxième argument.</p>`,{fig:"pf-fonctions"}),
- L("Trouver une signature",`<p>Lis le corps de la fonction et note ce que <b>chaque opérateur impose</b> : x + 1 force x : int ; if y force y : bool ; List.hd y force y : liste ; +. force des float.</p>`,{fig:"pf-signature"}),
+ L("Définir une fonction, puis l'appeler",`<p>Pour définir la fonction f : A → B, qui à x associe r, on écrit (cours p. 26) :</p>`,{code:`let f : A -> B = function
+  x -> r`,after:`<p>f est le nom de la fonction ; x est son paramètre ; A et B sont des noms de type ; r est une expression. <b>Le type d'une fonction est sa signature</b> : ici A -> B.</p><p>Exemple du cours :</p>${M(`# let double : int -> int = function x -> 2 * x;;
+val double : int -> int = <fun>
+# double (3);;
+- : int = 6`)}<p>La signature n'est pas obligatoire : si elle manque, OCaml la calcule à partir des opérations utilisées. Mais le cours demande de l'écrire, et le partiel aussi (« vous devez donner la signature de la fonction »).</p><p>Pour appeler une fonction : son nom, puis l'argument. double (3) et double 3 veulent dire la même chose.</p>`}),
+ Q("Avec let cube : float -> float = function x -> x *. x *. x, que vaut cube 2. ?",["8.","8","6.","une erreur"],0,"cube 2. = 2. *. 2. *. 2. = 8. La signature dit float -> float : le résultat est un float, écrit avec un point."),
+ L("Deux façons d'écrire une fonction à deux paramètres",`<p>Un <b>couple</b> (v1, v2) range deux valeurs ensemble. Son type se note avec une étoile : (1, true) est de type int * bool (cours p. 28).</p><p>Avec un <b>couple</b> : function (x, y) -> …, de type t1 * t2 -> t, appelée f (a, b). <b>Curryfiée</b> : fun x y -> …, de type t1 -> t2 -> t, appelée f a b. L'examen de janvier 2024 l'exige : « dès qu'une fonction prendra plusieurs arguments, vous écrirez la fonction sous sa forme curryfiée ».</p><p>Dans le cours, la signature s'écrit dans la définition : <code>let f : int -> int = function n -> 2 * n + 1</code>. C'est la meilleure façon de ne pas l'oublier sur ta copie.</p><p><b>Au contrôle, l'énoncé décide.</b> Au partiel 2021, memeParite(4,6) est écrite avec un couple (signature int * int -> bool), et (prodDiv 45 7) est curryfiée (int -> int -> int). Regarde comment l'énoncé appelle la fonction.</p><p><b>Application partielle</b> : une fonction curryfiée peut recevoir ses arguments un par un. Si f : int -> int -> int, alors f 1 est une fonction de type int -> int, qui attend encore le deuxième argument.</p>`,{fig:"pf-fonctions"}),
+ L("Trouver une signature",`<p>Lis le corps de la fonction et note ce que <b>chaque opérateur impose</b> : x + 1 force x : int ; if y force y : bool ; +. force des float ; List.hd y force y à être une liste (les listes sont expliquées dans une leçon plus loin).</p>`,{fig:"pf-signature"}),
  Q("Quelle est la signature de fun x y -> x + 2 * y ?",["int -> int -> int","int * int -> int","float -> float -> float"],0,"fun x y : forme curryfiée, une flèche par paramètre. + et * imposent des int."),
  Q("g : int * int -> bool. Comment l'appeler avec 2 et 3 ?",["g 2 3","g (2, 3)","g [2; 3]"],1,"Une fonction qui prend un couple s'appelle avec un couple. g 2 3 serait pour une fonction curryfiée."),
  Q("h : int -> int -> int. Que vaut h 2, sans deuxième argument ?",["Une erreur","Une fonction de type int -> int","Le nombre 2"],1,"C'est l'application partielle : h 2 attend encore un int."),
@@ -10675,12 +10789,14 @@ pf:{
  "p2-terminal":{
   "Appel terminal, accumulateur":`<p>Une fonction terminale ne laisse rien « en attente » après son appel récursif : le résultat partiel voyage dans un paramètre en plus, l'accumulateur. C'est comme compter sur ses doigts au lieu de tout retenir pour la fin.</p>`},
  "p-types":{
+  "OCaml répond un type, puis une valeur":`<p>OCaml est le langage du cours. Tu lui écris un calcul, et il te répond deux choses : la <b>sorte</b> de résultat (le type), puis le résultat (la valeur).</p><p>Exemple : pour 7 / 3, il répond « int = 2 » : un entier, qui vaut 2.</p><p>S'il y a un mélange interdit, par exemple un nombre à virgule avec le + des entiers, il ne calcule rien : il affiche une erreur. Dans les exercices « type et valeur », la bonne réponse est alors « erreur ».</p>`,
   "Chaque expression a un type":`<p>En OCaml, chaque valeur a un <b>type</b>, et OCaml refuse de mélanger les types. Les quatre de base : <b>int</b> (les entiers : 3, −7), <b>float</b> (les nombres à virgule, toujours écrits avec un point : 3.0 ou 3.), <b>bool</b> (true ou false) et <b>string</b> (du texte entre guillemets).</p><p>Les opérations sur les float ont un point : 2.5 +. 1.0 vaut 3.5, alors que 2.5 + 1.0 est refusé. Et / entre deux int fait la division entière : 7 / 2 vaut 3.</p><p>Pour passer de l'un à l'autre, on convertit : float_of_int 3 vaut 3., et int_of_float 3.9 vaut 3 (on coupe les décimales).</p>`,
   "Entraîne-toi : 27 expressions du TD et du partiel":`<p>Pour chaque expression, regarde d'abord les <b>opérateurs</b> : ils imposent le type. + − * / veulent des int ; +. −. *. /. veulent des float ; &amp;&amp; et || veulent des bool ; ^ veut des string.</p><p>Exemple : dans 2 * 3.0, l'opérateur * veut deux int, mais 3.0 est un float : c'est une erreur de type, OCaml refuse avant même de calculer.</p>`},
  "p-iflet":{
   "if est une expression, let donne un nom":`<p>En OCaml, <b>if</b> ne fait pas qu'aiguiller : il <b>calcule une valeur</b>. if 2 &lt; 3 then 10 else 20 vaut 10. Comme ce résultat doit avoir un type précis, les deux branches, then et else, doivent avoir le même type.</p><p><b>let</b> donne un nom à une valeur : let x = 4 in x + x vaut 8. Le nom x n'existe que dans ce qui suit le in.</p><p>Avec <b>and</b>, plusieurs noms sont créés en même temps : ils ne peuvent pas se servir les uns des autres.</p>`,
   "Entraîne-toi":`<p>Pour calculer une expression avec des let, remplace chaque nom par sa valeur, dans l'ordre où ils sont définis.</p><p>Exemple : let a = 3 in let b = a * 2 in a + b. D'abord a vaut 3, puis b vaut 6, donc le résultat est 9.</p>`},
  "p-fonctions":{
+  "Définir une fonction, puis l'appeler":`<p>Une fonction, c'est une règle de calcul qui a un nom.</p><p><b>let double = function x -> 2 * x</b> se lit : « double est la fonction qui, à x, associe 2 fois x ». Sa signature <b>int -> int</b> dit : elle prend un int, elle rend un int.</p><p>Pour s'en servir, on écrit son nom puis la valeur : double 3 vaut 6, double 10 vaut 20.</p>`,
   "Deux façons d'écrire une fonction à deux paramètres":`<p>Une fonction à deux paramètres peut les recevoir <b>dans un couple</b>, ou <b>l'un après l'autre</b>.</p><ul class="nt"><li>Avec un couple : let f = function (x, y) -&gt; x + y, qu'on appelle f (2, 3). Son type : int * int -&gt; int.</li><li>Curryfiée : let f = fun x y -&gt; x + y, qu'on appelle f 2 3. Son type : int -&gt; int -&gt; int, une flèche par paramètre.</li></ul><p>Au contrôle, le prof veut la forme curryfiée dès qu'il y a plusieurs paramètres.</p>`,
   "Trouver une signature":`<p>La signature, c'est le mode d'emploi d'une fonction : le type de ce qu'elle reçoit, puis le type de ce qu'elle renvoie. Pour la trouver, chaque opérateur laisse un indice.</p><p>Exemple : fun x y -&gt; if y then x *. 2. else x. Le if y oblige y à être un bool ; x *. 2. oblige x à être un float ; le résultat est un float. Signature : float -&gt; bool -&gt; float.</p>`},
  "p-rec":{
@@ -11002,7 +11118,7 @@ function flow(L){if(L.flow)return L.flow;const out=[],T=L.steps;
     if(i===0&&st.k==="qcm"){out.push(Object.assign({},st,{open:true}));return;}
     /* une explication suivie d'une question : la question est seulement annoncée en haut de l'écran (« Tu cherches »),
        puis posée une seule fois, après l'explication */
-    if(st.k==="learn"&&nx&&nx.k==="qcm"&&!st.nolook&&!(i===1&&T[0].k==="qcm"))out.push(Object.assign({},st,{look:nx.q}));
+    if(st.k==="learn"&&nx&&nx.k==="qcm"&&!st.nolook&&!/^Entraîne-toi/.test(st.h||"")&&!(i===1&&T[0].k==="qcm"))out.push(Object.assign({},st,{look:nx.q}));
     else out.push(st);});
   return L.flow=out;}
 /* reprendre une leçon là où on l'a laissée : après un rechargement, une fermeture de l'onglet, ou le téléphone qui recharge la page */
