@@ -3808,6 +3808,19 @@ SPÉCIFICATIONS : n ∈ ℕ. Renvoie la somme des impairs inférieurs ou égaux 
 DÉBUT
     Renvoyer cond(n ≤ 0, 0, cond(n mod 2 = 1, n + sommeImpairs(n - 2), sommeImpairs(n - 1)))
 FIN`)},
+ {id:"11",s:1,note:"supplémentaire",t:"plusPetitDiv et nombre premier",en:"Compléter l'algorithme plusPetitDiv(E a : entier, E b : entier) : entier, où a et b sont deux entiers naturels tels que a ≤ b : il renvoie le plus petit entier d tel que a ≤ d ≤ b et d divise b. L'utiliser pour tester si un nombre est premier, c'est-à-dire s'il a exactement 2 diviseurs, 1 et lui-même.",link:"a-recursif",idea:"Si a divise b, c'est lui. Sinon, on cherche à partir de a + 1.",
+  sol:`${C(`FONCTION : plusPetitDiv (E a : entier, E b : entier) : entier
+SPÉCIFICATIONS : a et b sont deux entiers naturels tels que 1 ≤ a ≤ b.
+    Renvoie le plus petit entier d tel que a ≤ d ≤ b et d divise b.
+DÉBUT
+    Renvoyer cond(b mod a = 0, a, plusPetitDiv(a + 1, b))
+FIN
+
+FONCTION : estPremier (E n : entier) : booléen
+SPÉCIFICATIONS : n ∈ ℕ. Renvoie vrai si n a exactement 2 diviseurs, 1 et lui-même.
+DÉBUT
+    Renvoyer n ≥ 2 et plusPetitDiv(2, n) = n
+FIN`)}<p>L'appel s'arrête toujours : au pire a arrive à b, et b divise b. n est premier quand son plus petit diviseur à partir de 2 est n lui-même. Exemple : plusPetitDiv(2, 15) = 3, donc 15 n'est pas premier.</p>`},
  {id:"12",s:2,t:"Multiplication du paysan russe",en:"mul(a, b) avec seulement des additions, la multiplication par 2 et la division par 2, en exprimant mul(a, b) à partir de mul(a div 2, b).",link:"a-recursif",idea:"Si a est pair, a × b = 2 × ((a div 2) × b). Si a est impair, on ajoute encore b.",
   sol:C(`FONCTION : mul (E a : entier, E b : entier) : entier
 SPÉCIFICATIONS : a, b ∈ ℕ. Renvoie a × b.
@@ -4101,6 +4114,178 @@ DÉBUT
     fin pour;
     Renvoyer L
 FIN`)},
+ /* ----- CC PEIP février 2023 : les trois autres sujets du même PDF (pages 2 à 4) ----- */
+ {src:"CC PEIP février 2023, sujet 2 · Cours · 2 pts",t:"cond ou si-alors-sinon ; tableau ou liste",en:"1. Quelle est la différence entre cond et si-alors-sinon ? 2. Citer un cas où il est préférable d'utiliser un tableau plutôt qu'une liste.",who:"Mon corrigé",go:"a-expressions",
+  sol:`<ol><li>cond(a, b, c) est une <b>expression</b> : elle a une valeur (b si a est vrai, c si a est faux), et b et c doivent être du même type. si … alors … sinon … fin si; est une <b>instruction</b> : elle n'a pas de valeur, elle fait exécuter un bloc de lignes ou l'autre, et le sinon est facultatif.</li><li>Quand il faut accéder directement à un élément par sa position : T[i] donne n'importe quelle case (la dernière, celle du milieu, une case d'une grille). Sur une liste, on n'accède qu'à la tête : le cours dit « pas de L[2] sur une liste ».</li></ol>`},
+ {src:"CC PEIP février 2023, sujet 2 · Ex. 1 · 4 pts",t:"Qu'affiche G(12, 0) ?",en:`${C(`PROCÉDURE : G (E n : entier, E d : entier)
+SPÉCIFICATIONS : n ∈ ℕ.
+DÉBUT
+    si n ≠ 0 alors
+        G(n div 3, d)
+        pour i de 1 à n faire affiche(d) fin pour;
+        aLaLigne()
+    fin si;
+FIN`)}<p>affiche(d) écrit d à l'écran sans retour à la ligne ; aLaLigne() passe à la ligne.</p>`,go:"a-arbre-appels",who:"Mon corrigé",hint:"G(12, 0) appelle G(4, 0), qui appelle G(1, 0), puis G(0, 0) qui n'affiche rien. Ici d ne change pas : il vaut toujours 0.",
+  sol:`<p>Les affichages se font en remontant : G(1, 0) affiche un 0 ; G(4, 0) quatre 0 ; G(12, 0) douze 0.</p>${C(`0
+0000
+000000000000`,"txt")}`},
+ {src:"CC PEIP février 2023, sujet 2 · Ex. 2 · 2 pts",t:"L a-t-elle au moins 3 éléments ?",en:"L est une liste d'entiers. Écrire une expression qui vaut vrai si L contient au moins 3 éléments, faux sinon.",go:"a-listes",who:"Mon corrigé",
+  sol:`${C(`non estVide(L) et non estVide(queue(L)) et non estVide(queue(queue(L)))`)}<p>Le « et » est paresseux : si L est vide, queue(L) n'est jamais calculé. Il n'y a donc pas d'erreur.</p>`},
+ {src:"CC PEIP février 2023, sujet 2 · Ex. 3 · 4 pts",t:"Le motif GrandV, sans récursivité",en:`<p>Avec affU() (un U), affB() (un espace) et alaligne(), écrire une procédure non récursive GrandV qui affiche un V de n lignes. Pour n = 5 :</p>${C(`U       U
+ U     U
+  U   U
+   U U
+    U`,"txt")}`,go:"a-motifs",who:"Mon corrigé",hint:"Ligne k (de 0 à n − 1) : k espaces, un U, puis, sauf sur la dernière ligne, 2(n − 1 − k) − 1 espaces et un second U.",
+  sol:`${C(`PROCÉDURE : GrandV (E n : entier)
+SPÉCIFICATIONS : n ≥ 1. Affiche un V de n lignes, sans récursivité.
+DÉBUT
+    pour k de 0 à n-1 faire
+        pour j de 1 à k faire
+            affB()
+        fin pour;
+        affU()
+        si k < n-1 alors
+            pour j de 1 à 2*(n-1-k)-1 faire
+                affB()
+            fin pour;
+            affU()
+        fin si;
+        alaligne()
+    fin pour;
+FIN`)}<p>Vérification pour n = 5 : ligne 0, 0 espace, U, 7 espaces, U ; ligne 3, 3 espaces, U, 1 espace, U ; ligne 4, 4 espaces et un seul U.</p>`},
+ {src:"CC PEIP février 2023, sujet 2 · Ex. 4 · 4 pts",t:"UnPos",en:"Écrire une fonction UnPos qui, étant donné un tableau T d'entiers, renvoie vrai si T contient au moins un entier positif, faux sinon.",go:"a-tableaux",who:"Mon corrigé",
+  sol:`${C(`FONCTION : UnPos (E T : tableau d'entiers) : booléen
+SPÉCIFICATIONS : renvoie vrai si T contient au moins un entier positif, faux sinon.
+DÉBUT
+    pour i de 0 à taille(T)-1 faire
+        si T[i] > 0 alors
+            Renvoyer vrai
+        fin si;
+    fin pour;
+    Renvoyer faux
+FIN`)}<p>C'est le schéma « il existe » : vrai dès qu'on en trouve un, faux après la boucle. Si pour ton prof 0 est positif, écris T[i] ≥ 0 et dis-le dans les spécifications.</p>`},
+ {src:"CC PEIP février 2023, sujet 2 · Ex. 5 · 4 pts",t:"touslesPos : d'une liste à une liste",en:"Écrire une fonction touslesPos qui, étant donné une liste L d'entiers, renvoie la liste des éléments positifs de L, dans le même ordre que dans L.",go:"a-listes-rec",who:"Mon corrigé",hint:"Le schéma récursif : liste vide, sinon on garde ou non la tête, et on rappelle sur la queue.",
+  sol:`${C(`FONCTION : touslesPos (E L : liste d'entiers) : liste d'entiers
+SPÉCIFICATIONS : renvoie la liste des éléments positifs de L, dans le même ordre.
+DÉBUT
+    si estVide(L) alors
+        Renvoyer [ ]
+    sinon si tête(L) > 0 alors
+        Renvoyer cons(tête(L), touslesPos(queue(L)))
+    sinon
+        Renvoyer touslesPos(queue(L))
+    fin si;
+FIN`)}<p>En récursif, l'ordre est gardé tout seul : la tête est remise devant le résultat de la queue.</p>`},
+ {src:"CC PEIP février 2023, sujet 3 · Cours · 2 pts",t:"Variables dans un récursif ; cond ou si-alors-sinon",en:"1. Une fonction récursive peut-elle utiliser des variables ? 2. Quelle est la différence entre cond et si-alors-sinon ?",who:"Mon corrigé",go:"a-bases",
+  sol:`<ol><li>Oui : rien ne l'interdit. Par exemple, elle peut ranger le résultat de l'appel récursif dans une variable pour ne pas le calculer deux fois.</li><li>cond(a, b, c) est une expression, qui a une valeur ; si … alors … sinon est une instruction, qui fait exécuter un bloc ou l'autre (voir le sujet 2).</li></ol>`},
+ {src:"CC PEIP février 2023, sujet 3 · Ex. 1 · 4 pts",t:"Qu'affiche G(5, 0) ?",en:`${C(`PROCÉDURE : G (E n : entier, E d : entier)
+SPÉCIFICATIONS : n ∈ ℕ.
+DÉBUT
+    si n ≠ 0 alors
+        G(n-1, d+1)
+        pour i de 1 à n faire affiche(n-d) fin pour;
+        aLaLigne()
+    fin si;
+FIN`)}<p>affiche(d) écrit d à l'écran sans retour à la ligne ; aLaLigne() passe à la ligne.</p>`,go:"a-arbre-appels",who:"Mon corrigé",hint:"Les appels : G(5, 0), G(4, 1), G(3, 2), G(2, 3), G(1, 4), G(0, 5). Chacun affiche n fois le nombre n − d.",
+  sol:`<p>En remontant : G(1, 4) affiche une fois 1 − 4 = −3 ; G(2, 3) deux fois −1 ; G(3, 2) trois fois 1 ; G(4, 1) quatre fois 3 ; G(5, 0) cinq fois 5.</p>${C(`-3
+-1-1
+111
+3333
+55555`,"txt")}`},
+ {src:"CC PEIP février 2023, sujet 3 · Ex. 2 · 2 pts",t:"La somme des 3 premiers est-elle paire ?",en:"L est une liste d'entiers d'au moins 3 éléments. Écrire une expression qui vaut vrai si la somme des 3 premiers éléments de L est paire, faux sinon.",go:"a-listes",who:"Mon corrigé",
+  sol:C(`(tête(L) + tête(queue(L)) + tête(queue(queue(L)))) mod 2 = 0`)},
+ {src:"CC PEIP février 2023, sujet 3 · Ex. 3 · 4 pts",t:"Le motif GrandSup, sans récursivité",en:`<p>Avec affX() (un X), affB() (un espace) et alaligne(), écrire une procédure non récursive GrandSup qui affiche un « &gt; » de n lignes. Pour n = 5 :</p>${C(`X
+ X
+  X
+ X
+X`,"txt")}<p>Pour n = 4 :</p>${C(`X
+ X
+ X
+X`,"txt")}`,go:"a-motifs",who:"Mon corrigé",hint:"Ligne i (de 1 à n) : le plus petit de i − 1 et n − i espaces, puis un X.",
+  sol:`${C(`PROCÉDURE : GrandSup (E n : entier)
+SPÉCIFICATIONS : n ≥ 1. Affiche un « > » de n lignes, sans récursivité.
+DÉBUT
+    pour i de 1 à n faire
+        pour j de 1 à cond(i-1 < n-i, i-1, n-i) faire
+            affB()
+        fin pour;
+        affX()
+        alaligne()
+    fin pour;
+FIN`)}<p>Le nombre d'espaces monte puis redescend : c'est le plus petit de i − 1 et n − i. Pour n = 5 : 0, 1, 2, 1, 0. Pour n = 4 : 0, 1, 1, 0.</p>`},
+ {src:"CC PEIP février 2023, sujet 3 · Ex. 4 · 4 pts",t:"palindrome",en:"Écrire une fonction palindrome qui, étant donné un tableau T d'entiers, renvoie vrai si T peut être lu dans les deux sens. palindrome([2, 3, 3, 2]) et palindrome([2, 3, 2]) renvoient vrai, palindrome([1, 2, 3, 4]) renvoie faux.",go:"a-tableaux",who:"Mon corrigé",hint:"Compare la case i avec la case symétrique, taille(T) − 1 − i.",
+  sol:`${C(`FONCTION : palindrome (E T : tableau d'entiers) : booléen
+SPÉCIFICATIONS : renvoie vrai si T se lit de la même façon dans les deux sens.
+DÉBUT
+    pour i de 0 à taille(T)-1 faire
+        si T[i] ≠ T[taille(T)-1-i] alors
+            Renvoyer faux
+        fin si;
+    fin pour;
+    Renvoyer vrai
+FIN`)}<p>S'arrêter à la moitié du tableau suffit, mais aller jusqu'au bout est juste aussi, et plus simple à écrire.</p>`},
+ {src:"CC PEIP février 2023, sujet 3 · Ex. 5 · 4 pts",t:"inverse(n) = [n, n − 1, …, 0], en récursif",en:"Écrire une fonction récursive inverse qui, étant donné un entier n, renvoie la liste [n, n−1, …, 0].",go:"a-listes-rec",who:"Mon corrigé",hint:"C'est listeEntiers, l'exercice 18 du TD.",
+  sol:C(`FONCTION : inverse (E n : entier) : liste d'entiers
+SPÉCIFICATIONS : n ∈ ℕ. Renvoie la liste [n, n-1, …, 1, 0].
+DÉBUT
+    Renvoyer cond(n = 0, cons(0, [ ]), cons(n, inverse(n - 1)))
+FIN`)},
+ {src:"CC PEIP février 2023, sujet 4 · Cours · 2 pts",t:"tant que et pour ; tableau ou liste",en:"1. Pourquoi dit-on que la boucle tant que est plus générale que la boucle pour ? 2. Citer un cas où il est préférable d'utiliser un tableau plutôt qu'une liste.",who:"Mon corrigé",go:"a-boucles",
+  sol:`<ol><li>Toute boucle pour s'écrit avec un tant que (en gérant le compteur à la main), mais pas l'inverse : avec tant que, on n'a pas besoin de connaître le nombre de tours à l'avance.</li><li>Quand il faut accéder directement à un élément par sa position, T[i] (voir le sujet 2).</li></ol>`},
+ {src:"CC PEIP février 2023, sujet 4 · Ex. 1 · 4 pts",t:"Qu'affiche G(11, 0) ? (le piège)",en:`${C(`PROCÉDURE : G (E n : entier, E d : entier)
+SPÉCIFICATIONS : n ∈ ℕ.
+DÉBUT
+    si n ≠ 0 alors
+        pour i de 1 à n faire affiche(d) fin pour;
+        G(n div 2, d+1)
+        aLaLigne()
+    fin si;
+FIN`)}<p>affiche(d) écrit d à l'écran sans retour à la ligne ; aLaLigne() passe à la ligne.</p>`,go:"a-arbre-appels",who:"Mon corrigé",hint:"Ici l'affichage se fait AVANT l'appel récursif, et le retour à la ligne après.",
+  sol:`<p>G(11, 0) affiche onze 0, puis appelle G(5, 1) qui affiche cinq 1, puis G(2, 2) deux 2, puis G(1, 3) un 3, puis G(0, 4) qui ne fait rien. Aucun retour à la ligne n'a encore eu lieu : tout est sur la même ligne. Ensuite seulement, les quatre aLaLigne() s'exécutent en remontant.</p>${C(`0000000000011111223
+(puis trois lignes vides)`,"txt")}`},
+ {src:"CC PEIP février 2023, sujet 4 · Ex. 2 · 2 pts",t:"Un des 3 premiers est-il négatif ?",en:"L est une liste d'entiers d'au moins 3 éléments. Écrire une expression qui vaut vrai si au moins un des trois premiers éléments de L est négatif, faux sinon.",go:"a-listes",who:"Mon corrigé",
+  sol:C(`tête(L) < 0 ou tête(queue(L)) < 0 ou tête(queue(queue(L))) < 0`)},
+ {src:"CC PEIP février 2023, sujet 4 · Ex. 3 · 4 pts",t:"Le motif Tribord, sans récursivité",en:`<p>Avec affO() (un O), affB() (un espace) et alaligne(), écrire une procédure non récursive Tribord qui affiche ce motif de n lignes. Pour n = 5 :</p>${C(`    O
+   OO
+  OOO
+ OOOO
+OOOOO`,"txt")}`,go:"a-motifs",who:"Mon corrigé",hint:"Ligne i (de 1 à n) : n − i espaces, puis i fois O.",
+  sol:C(`PROCÉDURE : Tribord (E n : entier)
+SPÉCIFICATIONS : n ≥ 1. Ligne i : n − i espaces, puis i fois O.
+DÉBUT
+    pour i de 1 à n faire
+        pour j de 1 à n-i faire
+            affB()
+        fin pour;
+        pour j de 1 à i faire
+            affO()
+        fin pour;
+        alaligne()
+    fin pour;
+FIN`)},
+ {src:"CC PEIP février 2023, sujet 4 · Ex. 4 · 4 pts",t:"tousIdentiques",en:"Écrire une fonction tousIdentiques qui, étant donné un tableau T d'entiers, renvoie vrai si toutes les valeurs de T sont les mêmes, faux sinon.",go:"a-tableaux",who:"Mon corrigé",hint:"Compare chaque case à la première.",
+  sol:C(`FONCTION : tousIdentiques (E T : tableau d'entiers) : booléen
+SPÉCIFICATIONS : renvoie vrai si toutes les valeurs de T sont les mêmes, faux sinon.
+DÉBUT
+    pour i de 1 à taille(T)-1 faire
+        si T[i] ≠ T[0] alors
+            Renvoyer faux
+        fin si;
+    fin pour;
+    Renvoyer vrai
+FIN`)},
+ {src:"CC PEIP février 2023, sujet 4 · Ex. 5 · 4 pts",t:"table(n) : les 10 premiers multiples, en récursif",en:"Écrire une fonction récursive table qui, étant donné un entier n, renvoie la liste des 10 premiers multiples de n dans l'ordre. Par exemple, table(3) renvoie [0, 3, 6, 9, 12, 15, 18, 21, 24, 27].",go:"a-listes-rec",who:"Mon corrigé",hint:"Il faut un compteur k qui va de 0 à 9 : écris une fonction auxiliaire récursive à deux paramètres, que table appelle avec k = 0.",
+  sol:`${C(`FONCTION : multiples (E n : entier, E k : entier) : liste d'entiers
+SPÉCIFICATIONS : 0 ≤ k ≤ 10. Renvoie la liste [k×n, (k+1)×n, …, 9×n].
+DÉBUT
+    Renvoyer cond(k = 10, [ ], cons(k * n, multiples(n, k + 1)))
+FIN
+
+FONCTION : table (E n : entier) : liste d'entiers
+SPÉCIFICATIONS : renvoie la liste des 10 premiers multiples de n, dans l'ordre.
+DÉBUT
+    Renvoyer multiples(n, 0)
+FIN`)}<p>multiples(3, 8) = cons(24, multiples(3, 9)) = cons(24, cons(27, [ ])) = [24, 27].</p>`},
  {src:"CC1 novembre 2024 · Cours, question 1",t:"Un récursif sans cas de base",en:"Que se passe-t-il si un algorithme récursif n'a pas de cas de base ? (Les questions 2 à 5 de ce CC portaient sur les tris, la dichotomie, la complexité et les preuves, pas encore vus cette année.)",
   sol:`<p>Il se rappelle récursivement à l'infini, sans pouvoir s'arrêter.</p>`},
  {src:"CC1 novembre 2024 · Ex. 1 · 2,5 pts",t:"avantdernier(L) en pseudo-code",en:"Écrire un algorithme en pseudo-code qui renvoie l'avant-dernière valeur d'une liste d'entiers.",go:"a-listes-rec",
@@ -4127,11 +4312,54 @@ FONCTION : NbCamionsMin (E L, W, H : tableaux de nombres, E Vmax : nombre) : ent
 DÉBUT
     Renvoyer ⌈Volume(L, W, H) / Vmax⌉
 FIN`)}<p>3. Volume total 6 m³, Vmax = 3 m³ : la fonction dit 2 camions, mais un carton de 2 m³ ne se coupe pas, donc il en faut 3.</p>`},
- {src:"CC1 octobre 2022 · Ex. 1 et 2",t:"Arya, Bran et insereFin",en:"Ex. 1 : F(T, N) renvoie la liste des N premiers éléments du tableau T. Solution d'Arya (boucle avec cons) et de Bran (récursive) : laquelle marche ? Ex. 2 : insereFin(L, x). (L'exercice 3 portait sur un invariant, pas encore vu cette année.)",go:"a-listes-rec",
-  sol:`<p>Ex. 1 : Arya ne renvoie rien de correct car L n'est pas initialisée (avec L ← [ ], elle renverrait [4, 12, 15], à l'envers). Bran renvoie [4, 12, 15]. Correction : L ← [ ] puis « pour i de N−1 à 0 par pas de −1 faire L ← cons(T[i], L) fin pour; ».</p><p>Ex. 2 : Renvoyer cond(estVide(L), cons(x, [ ]), cons(tête(L), insereFin(queue(L), x))).</p>`}];
+ {src:"CC1 octobre 2022 · Cours · 3 questions sur 5",t:"Fonction et procédure, récursif et itératif, variable et paramètre",en:"1. Quelle est la différence entre une fonction et une procédure ? 2. Un algorithme peut-il être à la fois récursif et itératif ? Justifier brièvement. 3. Citer une différence entre une variable d'algorithme et un paramètre d'algorithme. (Les questions 4 et 5 portaient sur la complexité, pas encore vue cette année.)",go:"a-bases",
+  sol:`<ol><li>Une fonction est un algorithme qui renvoie un résultat principal. Une procédure est un algorithme qui n'en renvoie pas.</li><li>Oui, s'il contient au moins une boucle et au moins un appel récursif.</li><li>Une variable d'algorithme est une mémoire à l'intérieur d'un algorithme. Un paramètre d'algorithme est une mémoire à l'interface de l'intérieur et de l'extérieur de l'algorithme, qui lui permet d'échanger des informations avec l'extérieur. Autres différences : déclarations séparées, initialisations séparées, le paramètre peut être en lecture seule ou en écriture seule.</li></ol>`},
+ {src:"CC1 octobre 2022 · Ex. 1 · 6 pts",t:"Arya et Bran : les N premiers éléments d'un tableau",en:`<p>On veut un algorithme F qui, étant donnés un tableau de nombres T et un entier N (avec 0 ≤ N ≤ taille(T)), renvoie une liste contenant les N premiers éléments de T dans le même ordre. Par exemple, F([15, 12, 4, 9, 7], 3) renvoie la liste [15, 12, 4].</p><p>1. Donner la signature de F.</p><p>2. Arya et Bran proposent chacun un corps pour cet algorithme.</p>${C(`Solution d'Arya :
+Variable : L : liste de nombres
+DÉBUT
+    pour i de 0 à N-1 faire
+        L ← cons(T[i], L)
+    fin pour;
+    Renvoyer L
+FIN
+
+Solution de Bran :
+DÉBUT
+    Renvoyer cond(N = 0, [ ], cons(T[N-1], F(T, N-1)))
+FIN`)}<p>(a) L'algorithme d'Arya renvoie-t-il un résultat ? Si non, pourquoi ? Si oui, que renvoie F([15, 12, 4, 9, 7], 3) ? (b) Mêmes questions pour Bran.</p><p>3. Corriger l'algorithme d'Arya pour qu'il renvoie le bon résultat.</p>`,go:"a-listes-rec",hint:"Regarde si L a une valeur avant le premier cons. Puis déroule Bran : F(T, 3) = cons(T[2], F(T, 2)).",
+  sol:`<p>1. ${C(`FONCTION : F (E T : tableau de nombres, E N : entier) : liste de nombres`)}</p><p>2. (a) La solution d'Arya ne renvoie pas de résultat : la liste L n'est pas initialisée, donc pour i = 0, cons(T[i], L) ne fonctionne pas. Si L était initialisée avec la liste vide, elle renverrait [4, 12, 15], à l'envers.</p><p>(b) L'algorithme de Bran renvoie [4, 12, 15] : F(T, 3) = cons(T[2], F(T, 2)) = cons(4, cons(12, cons(15, [ ]))). C'est aussi à l'envers.</p><p>3. cons ajoute devant : il faut parcourir le tableau en partant de la fin.</p>${C(`Variable : L : liste de nombres
+DÉBUT
+    L ← [ ]
+    pour i de N-1 à 0 par pas de -1 faire
+        L ← cons(T[i], L)
+    fin pour;
+    Renvoyer L
+FIN`)}`},
+ {src:"CC1 octobre 2022 · Ex. 2 · 4 pts",t:"insereFin, en récursif et en itératif",en:"Écrire un algorithme en pseudo-code insereFin qui, étant donnés une liste de nombres L et un nombre x, renvoie une nouvelle liste constituée des éléments de L suivis de x. Par exemple, insereFin([3, 5, 9], 12) renvoie [3, 5, 9, 12]. Seules les fonctions du cours sont permises : tête, queue, cons, estVide. La liste vide est notée [ ]. (L'exercice 3 portait sur un invariant, pas encore vu cette année.)",go:"a-listes-rec",hint:"Récursif : si L est vide, la réponse est la liste [x] ; sinon on garde la tête et on insère x à la fin de la queue.",
+  sol:`${C(`FONCTION : insereFin (E L : liste de nombres, E x : nombre) : liste de nombres
+SPÉCIFICATIONS : renvoie la liste des éléments de L suivis de x.
+DÉBUT
+    Renvoyer cond(estVide(L), cons(x, [ ]), cons(tête(L), insereFin(queue(L), x)))
+FIN`)}<p>Version itérative du corrigé officiel : on renverse L dans Q, on met x devant, puis on renverse à nouveau.</p>${C(`Variable : P, Q : listes de nombres
+DÉBUT
+    P, Q ← L, [ ]
+    tant que non estVide(P) faire
+        Q ← cons(tête(P), Q)
+        P ← queue(P)
+    fin tq;
+    Q ← cons(x, Q)
+    tant que non estVide(Q) faire
+        P ← cons(tête(Q), P)
+        Q ← queue(Q)
+    fin tq;
+    Renvoyer P
+FIN`)}`}];
 
 /* ---------- quiz ---------- */
 const quiz=[
+ {q:"Quelle est la différence entre cond et si-alors-sinon ?",o:["cond est une expression, qui a une valeur ; si-alors-sinon est une instruction","Aucune : ce sont deux écritures de la même chose","cond ne marche qu'avec des entiers","si-alors-sinon a une valeur, cond n'en a pas"],a:0,e:"PEIP 2023, sujets 2 et 3. cond(a, b, c) vaut b ou c ; si … alors … sinon fait exécuter un bloc ou l'autre.",link:"a-expressions"},
+ {q:"Dans quel cas un tableau est-il préférable à une liste ?",o:["Quand il faut accéder directement à l'élément numéro i","Quand on veut ajouter un élément devant","Quand on ne se sert que du premier élément","Jamais : une liste fait tout ce que fait un tableau"],a:0,e:"PEIP 2023, sujets 2 et 4. T[i] donne n'importe quelle case ; sur une liste, on n'accède qu'à la tête.",link:"a-listes"},
+ {q:"Quelle est la différence entre une variable et un paramètre d'algorithme ?",o:["La variable est une mémoire à l'intérieur de l'algorithme ; le paramètre échange des informations avec l'extérieur","Aucune","Le paramètre se déclare dans la ligne « Variable : »","Une variable est toujours un entier"],a:0,e:"CC 2022, question 3.",link:"a-bases"},
  {q:"Que se passe-t-il si un algorithme récursif n'a pas de cas de base ?",o:["Il renvoie 0","Il se rappelle à l'infini","Il devient itératif","Il renvoie une erreur de type"],a:1,e:"CC1 2024, question 1.",link:"a-recursif"},
  {q:"Quelle est la différence entre une fonction et une procédure ?",o:["Une fonction a des paramètres, pas une procédure","Une fonction renvoie un résultat principal, une procédure non","Une procédure est récursive","Aucune"],a:1,e:"CC 2022, question 1.",link:"a-bases"},
  {q:"Un algorithme peut-il être à la fois récursif et itératif ?",o:["Non, jamais","Oui, s'il contient une boucle et un appel récursif","Seulement en Python","Seulement s'il n'a pas de cas de base"],a:1,e:"CC 2022, question 2.",link:"a-recursif"},
@@ -4300,20 +4528,21 @@ const infos23=({sec})=>`<div class="title-row"><h1>Les CC2 et CC3 en bref</h1></
  ${sec(3,"Ce qui tombe aux annales",`<ul><li>Des questions de cours : « Θ(n³) peut-il être un million de fois plus lent ? », « à quoi servent les équations de récurrence ? », « combien de mesures par dichotomie ? ».</li><li>Une preuve : trace, invariant, terminaison.</li><li>Un calcul de complexité, un temps d'exécution sur un ordinateur plus rapide.</li><li>Un tri à écrire, avec sa complexité.</li></ul>`)}`;
 
 SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.32,key:"rev-algo-v1",lang:"pseudo",
- exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.34,unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
         {id:"cc2",label:"CC2",day:"2026-12-03",start:"15:00",end:"16:00",place:"salle de TD (36.310 ce jour-là dans Prose)",dur:"1 h",share:0.34,covers:["cc1","cc2"],unsure:"Date supposée (créneau de ton TD) : ni Prose ni les mails ne l'annoncent. Programme supposé : preuves et complexité (TD 6 à 8).",prog:"Supposé : preuves de validité (invariants, terminaison) et complexité (O, Ω, Θ, compter les opérations, équations de récurrence, master theorem), TD 6 à 8, plus ce qui précède."},
-        {id:"cc3",label:"CC3",day:"2026-12-10",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,covers:["cc1","cc2","cc3"],unsure:"Date supposée (dernier TD d'Algo dans Prose) : ni Prose ni les mails ne l'annoncent. Programme supposé : recherche et tris (TD 9 et 10).",prog:"Supposé : recherche séquentielle et dichotomique, tris (sélection, insertion, bulles, par valeurs) avec leur complexité et leur preuve, TD 9 et 10, plus ce qui précède."}],
+        {id:"cc3",label:"CC3",day:"2026-12-10",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.34,covers:["cc1","cc2","cc3"],unsure:"Date supposée (dernier TD d'Algo dans Prose) : ni Prose ni les mails ne l'annoncent. Programme supposé : recherche et tris (TD 9 et 10).",prog:"Supposé : recherche séquentielle et dichotomique, tris (sélection, insertion, bulles, par valeurs) avec leur complexité et leur preuve, TD 9 et 10, plus ce qui précède."}],
  docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Pas de preuves, complexité ni tris.",
  chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",6:"6. Preuves et complexité (CC2)",7:"7. Recherche et tris (CC3)"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD, ex.",
  tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne.",
- annIntro:"Le CC PEIP 2023 a exactement le programme de cette année (corrigé par moi). Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
+ annIntro:"Le CC PEIP 2023 a exactement le programme de cette année : ses quatre sujets sont là (corrigés par moi). Le sujet 1 sert d'examen blanc ; prends dans les trois autres les exercices du type que tu rates. Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
  pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
- {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
  {id:"peip",t:"Examen blanc : CC PEIP 2023 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus proche de ton programme."},
+ {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:1,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
+ {id:"peip2",t:"CC PEIP 2023, sujets 2, 3 et 4 : les exercices du type que tu rates",min:60,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Trois autres sujets au format exact du tien : 15 exercices corrigés."},
  {id:"cc24",t:"Annale CC1 2024, exercices 1 à 3",min:50,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"tdex2",t:"Autres exercices de TD sur papier",min:50,p:2,td:["2","3","7","13","16","TP2"],links:[["td","Exercices de TD"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
@@ -7889,14 +8118,16 @@ FIN`;
 
 LES.algo=[
 /* ------------------------------------------------------------------ */
-{id:"a-forme",t:"La forme d'un algorithme : signature, variables, fin pour",min:15,goal:"Écrire un algorithme sans faute de forme : le conseil de tes camarades, et des points faciles sur chaque question.",steps:[
+{id:"a-forme",t:"La forme d'un algorithme : signature, variables, fin pour",min:18,goal:"Écrire un algorithme sans faute de forme : le conseil de tes camarades, et des points faciles sur chaque question.",steps:[
  Q("Quelle est la bonne signature d'une fonction qui renvoie le plus grand de deux entiers ?",["FONCTION : max2 (E a : entier, E b : entier) : entier","PROCÉDURE : max2 (E a : entier, E b : entier) : entier","FONCTION : max2 (a, b)","FONCTION : max2 : entier"],0,"Une fonction : le mot FONCTION, son nom, chaque paramètre avec E (ou S, ES) et son type, puis le type du résultat après la parenthèse. Une procédure n'a pas de type de résultat."),
  L("Le squelette, toujours le même",`<ul><li><b>FONCTION</b> si l'algorithme renvoie un résultat (avec son type à la fin de la signature), <b>PROCÉDURE</b> s'il affiche ou modifie un paramètre ES.</li><li>Chaque paramètre : E (entrée), S (sortie) ou ES (entrée-sortie), son nom, son type.</li><li><b>SPÉCIFICATIONS</b> : ce qu'on suppose et ce qu'on renvoie, en une phrase.</li><li><b>Variable</b> : les mémoires de travail avec leur type. Ni les paramètres, ni l'indice d'une boucle pour (cours p. 11).</li><li>Chaque si, pour, tant que se ferme par <b>fin si;</b>, <b>fin pour;</b>, <b>fin tq;</b>, aligné sous son ouverture.</li><li><b>Renvoyer</b> une seule fois, après la boucle, sauf pour une recherche (« dès que je trouve, je renvoie »).</li></ul>`,{code:SQUEL}),
+ L("Lire cet algorithme ligne par ligne",`<p>Reprends l'algorithme de l'écran précédent. Voici ce que dit chaque ligne.</p><ul><li><b>FONCTION : nom (E x : entier, E T : tableau d'entiers) : booléen</b>. L'algorithme s'appelle nom. Il reçoit un entier x et un tableau d'entiers T. Il renvoie un booléen : true (vrai) ou false (faux).</li><li><b>Variable : cpt : entier</b>. cpt est une mémoire de travail, qui contient un entier.</li><li><b>cpt ← 0</b>. La flèche se lit « reçoit » : cpt vaut maintenant 0.</li><li><b>pour i de 0 à taille(T)-1 faire … fin pour;</b>. On répète les lignes du bloc pour i = 0, puis 1, puis 2… taille(T) est le nombre de cases du tableau. Ses cases sont numérotées à partir de 0 : la dernière porte le numéro taille(T) − 1.</li><li><b>si T[i] = x alors … fin si;</b>. T[i] est la case numéro i. Le bloc n'est fait que si elle vaut x. Ici, « = » compare : il ne range rien.</li><li><b>cpt ← cpt + 1</b>. cpt augmente de 1.</li><li><b>Renvoyer cpt &gt; 0</b>. L'algorithme donne son résultat et s'arrête. Ici : true si x a été trouvé au moins une fois.</li></ul>`),
+ Q("Avec T = [4, 7, 4] et x = 4, que vaut cpt quand la boucle est finie ?",["2","1","3","0"],0,"i = 0 : T[0] = 4, cpt passe à 1. i = 1 : T[1] = 7, rien ne change. i = 2 : T[2] = 4, cpt passe à 2. L'algorithme renvoie donc 2 > 0, c'est-à-dire true."),
  Q("« Afficher un triangle d'étoiles de côté n » : fonction ou procédure ?",["Procédure : elle affiche, elle ne renvoie rien","Fonction : elle renvoie un triangle"],0,"Ce qui est affiché n'est pas renvoyé. Pas de Renvoyer, pas de type de résultat : PROCÉDURE."),
  Q("Dans « pour i de 0 à taille(T)-1 faire », faut-il écrire i dans la ligne « Variable : » ?",["Oui","Non : l'indice d'une boucle pour n'est pas une variable"],1,"Le cours le dit page 11. En revanche, dans une boucle tant que, le compteur est une vraie variable : on le déclare, on l'initialise et on l'augmente soi-même."),
  O("Remets compteEgaux dans l'ordre, indentation comprise.",["FONCTION : compteEgaux (E e : entier, E T : tableau d'entiers) : entier","SPÉCIFICATIONS : renvoie le nombre d'éléments de T égaux à e.","Variable : cpt : entier","DÉBUT","    cpt ← 0","    pour i de 0 à taille(T)-1 faire","        si T[i] = e alors","            cpt ← cpt + 1","        fin si;","    fin pour;","    Renvoyer cpt","FIN"],"L'initialisation avant la boucle, le test dans la boucle, Renvoyer après fin pour;."),
  L("Trouve les erreurs",`<p>Six algorithmes contiennent des fautes typiques : signature incomplète, variable non déclarée, fin pour; mal placé… Clique sur les lignes fausses, puis vérifie. Fais-en au moins trois.</p>`,{fig:"a-pseudo"}),
- B("Ferme chaque bloc.",`tant que m ≥ 10 faire
+ B("Ferme chaque bloc. (div : le quotient de la division entière. afficher écrit à l'écran. affEtoile() est une procédure qui affiche une étoile.)",`tant que m ≥ 10 faire
     m ← m div 10
     c ← c + 1
 [[0]]
@@ -7922,13 +8153,22 @@ FIN`),["FONCTION, le nom, (E T : tableau d'entiers) et « : entier » à la fin"
  K("Que déclare-t-on dans « Variable : » ?","Les mémoires de travail avec leur type. Pas les paramètres, pas l'indice d'une boucle pour. Le compteur d'un tant que, oui.")]},
 
 /* ------------------------------------------------------------------ */
-{id:"a-expressions",t:"Types, expressions et cond",min:12,goal:"Trouver le type et la valeur d'une expression, ou dire « erreur » : l'exercice 1 du TD 1.",steps:[
+{id:"a-expressions",t:"Types, expressions et cond",min:17,goal:"Trouver le type et la valeur d'une expression, ou dire « erreur » : l'exercice 1 du TD 1.",steps:[
  Q("Que valent 5 / 2 et 5 div 2 en pseudo-code ?",["2,5 et 2","2 et 2,5","2 et 2","2,5 et 2,5"],0,"/ est la division : le résultat est un nombre. div donne le quotient entier, mod le reste : 5 mod 2 = 1."),
- L("Les opérateurs du cours (p. 12)",`<ul><li>Calcul : + − * / ^ (puissance), <b>div</b> (quotient entier), <b>mod</b> (reste).</li><li>Comparaison : = ≠ &lt; ≤ &gt; ≥. Le résultat est un booléen.</li><li>Logique : non, et, ou. <b>Évaluation paresseuse</b> : dans « a et b », si a est faux, b n'est pas calculé ; dans « a ou b », si a est vrai, b n'est pas calculé.</li><li><b>cond(a, b, c)</b> vaut b si a est vrai, c sinon. b et c doivent avoir <b>le même type</b>.</li><li>Affectation : variable ← expression.</li></ul>`),
- L("Entraîne-toi sur 18 expressions",`<p>Les expressions de l'exercice 1 du TD 1 et de la page 13 du cours. proche?(a, b) teste |a − b| &lt; 2 ; reste(x) est le reste de x par 2.</p>`,{fig:"a-expressions"}),
- Q("Que vaut cond(1 < 3, reste(3), true) ?",["1","true","erreur"],2,"Les deux valeurs possibles de cond doivent avoir le même type ; ici un entier, reste(3) = 1, et un booléen."),
+ L("Les types : entier, nombre, booléen, chaîne",`<p><b>Type d'une valeur</b> (cours p. 10) : entier, nombre, chaîne, booléen, tableau…</p><ul><li><b>entier</b> : un nombre sans virgule, comme 5, 0 ou −3.</li><li><b>nombre</b> : un nombre qui peut avoir une virgule, comme 2,5. Un entier est aussi un nombre.</li><li><b>booléen</b> : une valeur de vérité. Il n'y en a que deux : true (vrai) et false (faux).</li><li><b>chaîne</b> : du texte entre guillemets, comme "Peachy".</li></ul><p><b>Expression</b> (cours p. 10) : formule contenant constantes, noms de variables, paramètres, appels d'algorithmes et opérations. Exemple : 1 + 5 * 2.</p><p>Trouver le <b>type d'une expression</b>, c'est dire de quelle sorte est sa valeur, une fois le calcul fait.</p>`),
+ Q("Quel est le type de l'expression 3 < 5 ?",["booléen","entier","nombre","erreur"],0,"3 < 5 est une comparaison : sa valeur est true. C'est un booléen."),
+ L("Les opérateurs du cours (p. 12)",`<ul><li>Opérateurs de calcul : + − * / ^ (puissance), <b>div</b> (quotient), <b>mod</b> (reste).</li><li>Opérateurs de comparaison : = ≠ &lt; ≤ &gt; ≥.</li><li>Opérateurs logiques : non, et, ou. <b>Évaluation paresseuse</b> : dans « a et b », si a est faux, b n'est pas évalué ; dans « a ou b », si a est vrai, b n'est pas évalué.</li><li>Opérateur conditionnel : <b>cond(a, b, c)</b> vaut b si a est vrai, c si a est faux. b et c doivent être <b>du même type</b>. Utilise l'évaluation paresseuse.</li><li>Affectation : variable ← expression.</li></ul><p><b>Le type du résultat.</b> Entre deux entiers, + − * div et mod donnent un entier. / donne un nombre : 5 / 2 = 2,5. Une comparaison donne un booléen. « et », « ou », « non » prennent des booléens et donnent un booléen.</p>`),
  Q("Que vaut true ou (5/0 = 1) ?",["erreur : division par zéro","true","false"],1,"Évaluation paresseuse : true ou … vaut true sans calculer la suite."),
- Q("Que vaut proche?(1, 2, 3) ?",["true","false","erreur"],2,"proche? attend deux paramètres : un appel avec trois arguments est une erreur."),
+ Q("Que vaut cond(5 mod 2 = 1, 8, 15) ?",["8","15","true","erreur"],0,"5 mod 2 = 1 est vrai : le reste de 5 par 2 vaut bien 1. cond prend donc la première valeur, 8. Son type est entier."),
+ L("Appeler une fonction donnée par l'énoncé : proche? et reste",`<p><b>Appel d'algorithme</b> (cours p. 10) : nom de l'algorithme suivi de valeurs, les arguments, entre parenthèses. Si l'algorithme est une fonction, l'appel renvoie son résultat principal.</p><p>L'exercice 1 du TD 1 te donne deux fonctions. Tu ne vois pas leur corps : seulement leur signature et leurs spécifications.</p>`,{code:`FONCTION : proche? (E a : nombre, E b : nombre) : booléen
+SPÉCIFICATIONS : renvoie true si |a-b| < 2, false sinon.
+
+FONCTION : reste (E x : entier) : entier
+SPÉCIFICATIONS : x est un entier naturel. Renvoie le reste de la division de x par 2.`,after:`<p>Pour calculer un appel :</p><ol><li><b>Compte les arguments.</b> proche? en veut 2, reste en veut 1. Un de trop ou un de moins : c'est une erreur.</li><li><b>Vérifie leur type.</b> reste veut un entier ; proche? veut deux nombres.</li><li><b>Applique les spécifications</b>, en commençant par l'intérieur des parenthèses.</li></ol><p>|a − b| est l'écart entre a et b : |1 − 4| = 3 et |4 − 2| = 2. Le type de l'appel est écrit à la fin de la signature : proche?(1, 2) est un booléen, reste(5) est un entier.</p>`}),
+ Q("Que vaut proche?(reste(5), 2) ?",["true","false","1","erreur"],0,"On calcule d'abord l'intérieur : reste(5) = 1. Puis proche?(1, 2) : l'écart |1 − 2| vaut 1, et 1 < 2, donc true."),
+ Q("Que vaut proche?(1, 2, 3) ?",["true","false","erreur"],2,"proche? attend deux arguments : un appel avec trois arguments est une erreur."),
+ Q("Que vaut cond(1 < 3, reste(3), true) ?",["1","true","erreur"],2,"Les deux valeurs possibles de cond doivent avoir le même type. Ici reste(3) = 1 est un entier, et true est un booléen : erreur."),
+ L("Entraîne-toi sur 18 expressions",`<p>Les expressions de l'exercice 1 du TD 1 et de la page 13 du cours. Pour chacune : compte les arguments, regarde les types, puis calcule.</p><p>Rappel : proche?(a, b) vaut true si |a − b| &lt; 2 ; reste(x) est le reste de la division de x par 2.</p>`,{fig:"a-expressions",nolook:true}),
  B("TD 1, exercice 2 : max3 avec cond seulement.",`FONCTION : max3 (E a : nombre, E b : nombre, E c : nombre) : nombre
 SPÉCIFICATIONS : renvoie le plus grand des trois nombres.
 DÉBUT
@@ -7943,7 +8183,9 @@ FIN
 Sans cond :   Renvoyer (a et non b) ou (non a et b)`),["La signature complète, avec les types booléen","La version cond : si a est vrai, il faut b faux","La version sans cond avec et, ou, non"],6),
  K("Que valent /, div et mod ?","/ : la division, un nombre (5/2 = 2,5). div : le quotient entier (5 div 2 = 2). mod : le reste (5 mod 2 = 1)."),
  K("cond(a, b, c) : la règle ?","Vaut b si a est vrai, c sinon. b et c doivent avoir le même type, sinon c'est une erreur."),
- K("L'évaluation paresseuse ?","Dans « a et b », si a est faux, b n'est pas calculé ; dans « a ou b », si a est vrai, b n'est pas calculé. Ainsi true ou (5/0 = 1) vaut true.")]},
+ K("L'évaluation paresseuse ?","Dans « a et b », si a est faux, b n'est pas calculé ; dans « a ou b », si a est vrai, b n'est pas calculé. Ainsi true ou (5/0 = 1) vaut true."),
+ K("Les quatre types à connaître ?","entier (5), nombre (2,5), booléen (true ou false), chaîne (\"Peachy\"). / donne un nombre ; une comparaison donne un booléen."),
+ K("Comment calculer un appel comme proche?(reste(5), 2) ?","1. Compter les arguments (sinon : erreur). 2. Vérifier leur type. 3. Calculer en partant de l'intérieur : reste(5) = 1, puis proche?(1, 2) = true, car |1 − 2| = 1 < 2.")]},
 
 /* ------------------------------------------------------------------ */
 {id:"a-boucles",t:"Boucles pour et tant que, et la trace",min:14,goal:"Prévoir ce que renvoie ou affiche une boucle, en faisant une trace comme au CC.",steps:[
@@ -8100,7 +8342,7 @@ FIN`}),
   {w:"G(2) : G(0), puis **, puis G(1). Donc ** puis *.",why:"On réutilise G(1)."},
   {w:"G(3) : G(1), puis ***, puis G(2). Donc * / *** / ** / *.",why:"On réutilise G(1) et G(2)."},
   {w:"G(4) : G(2), puis ****, puis G(3). Donc ** / * / **** / * / *** / ** / *.",why:"Sept lignes, dans l'ordre des instructions."}]),
- Q("CC PEIP 2023 : qu'affiche G(9, 0) ?",["3 / 22 / 1111 / 000000000","000000000 / 1111 / 22 / 3","0 / 11 / 222 / 3333","9 / 4 / 2 / 1"],0,"G(9, 0) appelle G(4, 1), qui appelle G(2, 2), puis G(1, 3), puis G(0, 4) qui n'affiche rien. Les affichages se font en remontant : une fois 3, deux fois 2, quatre fois 1, neuf fois 0.",{code:`PROCÉDURE : G (E n : entier, E d : entier)
+ Q("CC PEIP 2023 : qu'affiche G(9, 0) ? (affiche(d) écrit d à l'écran sans passer à la ligne ; aLaLigne() passe à la ligne ; n div 2 est le quotient entier de n par 2.)",["3 / 22 / 1111 / 000000000","000000000 / 1111 / 22 / 3","0 / 11 / 222 / 3333","9 / 4 / 2 / 1"],0,"G(9, 0) appelle G(4, 1), qui appelle G(2, 2), puis G(1, 3), puis G(0, 4) qui n'affiche rien. Les affichages se font en remontant : une fois 3, deux fois 2, quatre fois 1, neuf fois 0.",{code:`PROCÉDURE : G (E n : entier, E d : entier)
 SPÉCIFICATIONS : n ∈ ℕ.
 DÉBUT
     si n ≠ 0 alors
@@ -8109,7 +8351,7 @@ DÉBUT
         aLaLigne()
     fin si;
 FIN`}),
- Q("TD 2, exercice 13 : trajet(n) fait trajet(n−1), trajet(n−2), puis deplacerPingouin(n), si 0 ≤ n ≤ 3. Quels déplacements fait trajet(2) ?",["0 1 0 2","2 1 0","0 1 2","1 0 2"],0,"trajet(0) = 0 ; trajet(1) = trajet(0) puis 1 = 0 1 ; trajet(2) = trajet(1), trajet(0), puis 2 = 0 1 0 2."),
+ Q("TD 2, exercice 13 : trajet(n) fait trajet(n−1), trajet(n−2), puis deplacerPingouin(n), si 0 ≤ n ≤ 3. deplacerPingouin(n) déplace le pingouin d'une case dans la direction numéro n. Quels déplacements fait trajet(2) ?",["0 1 0 2","2 1 0","0 1 2","1 0 2"],0,"trajet(0) = 0 ; trajet(1) = trajet(0) puis 1 = 0 1 ; trajet(2) = trajet(1), trajet(0), puis 2 = 0 1 0 2."),
  P("CC1 2024, sujet B, sur papier","Cette fois G(n) fait : si n > 0, G(n−1), puis afficher n étoiles, puis G(n−2). Qu'affiche G(4) ? Écris G(1), G(2), G(3) avant.","<p>G(1) : * · G(2) : G(1) puis ** puis G(0), donc * / ** · G(3) : G(2), ***, G(1), donc * / ** / *** / * · G(4) : G(3), ****, G(2), donc <b>* / ** / *** / * / **** / * / **</b>.</p>",["G(1), G(2) et G(3) écrits avant G(4)","L'ordre des instructions respecté","7 lignes au total"],8),
  K("Comment trouver ce qu'affiche une procédure récursive ?","Calculer G(1), G(2), G(3) dans l'ordre des instructions, puis assembler G(n) en remplaçant chaque appel par son affichage."),
  K("L'ordre des instructions compte-t-il ?","Oui : « G(n−2) ; afficher ; G(n−1) » et « G(n−1) ; afficher ; G(n−2) » ne donnent pas le même affichage.")]},
@@ -8120,7 +8362,7 @@ FIN`}),
  L("Trois schémas qui couvrent presque tout",`<p><b>Accumuler</b> (somme, produit, compteur) : initialiser avant la boucle, mettre à jour dedans, renvoyer après. <b>Chercher</b> (« tous », « il existe ») : renvoyer dès qu'on a la réponse, et l'autre réponse après la boucle. <b>Fabriquer</b> un nouveau tableau : le déclarer, le remplir case par case, le renvoyer.</p><p>Déroule la recherche du maximum : m garde le plus grand vu jusqu'ici.</p>`,{fig:"a-tableaux"}),
  O("CC PEIP 2023, exercice 4 : remets tousDiv3 dans l'ordre.",["FONCTION : tousDiv3 (E T : tableau d'entiers) : booléen","SPÉCIFICATIONS : renvoie vrai si tous les éléments de T sont divisibles par 3.","DÉBUT","    pour i de 0 à taille(T)-1 faire","        si T[i] mod 3 ≠ 0 alors","            Renvoyer faux","        fin si;","    fin pour;","    Renvoyer vrai","FIN"],"Le schéma « tous » : faux dès le premier contre-exemple, vrai après la boucle."),
  Q("Dans tousDiv3, que se passe-t-il si on ajoute « sinon Renvoyer vrai » dans la boucle ?",["Rien ne change","L'algorithme répond après avoir regardé seulement T[0]","Il ne s'arrête jamais"],1,"Renvoyer arrête tout l'algorithme. Le « vrai » ne peut être sûr qu'après avoir tout parcouru."),
- B("TD 3 : le tableau inversé.",`FONCTION : inverse (E T : tableau de nombres) : tableau de nombres
+ B("TD 3 : le tableau inversé. (La ligne « Variable : R : tableau de taille(T) nombres » déclare un nouveau tableau R, de la même taille que T.)",`FONCTION : inverse (E T : tableau de nombres) : tableau de nombres
 SPÉCIFICATIONS : renvoie un nouveau tableau avec les valeurs de T en ordre inverse.
 Variable : R : tableau de taille(T) nombres
 DÉBUT
@@ -8242,7 +8484,7 @@ SPÉCIFICATIONS : renvoie la longueur de la liste L.
 DÉBUT
     Renvoyer cond(estVide(L), [[0]], 1 + [[1]])
 FIN`,[{o:["0","1","[ ]"],a:0},{o:["longueurR(queue(L))","longueurR(L)","queue(L)"],a:0}],"La liste vide a 0 élément ; sinon un de plus que sa queue."),
- O("CC1 2024, sujet B : remets plusgrand dans l'ordre.",["FONCTION : plusgrand (E L : liste d'entiers) : entier","SPÉCIFICATIONS : L non vide. Renvoie le plus grand élément de L.","DÉBUT","    si estVide(queue(L)) alors","        Renvoyer tête(L)","    sinon","        Renvoyer max(tête(L), plusgrand(queue(L)))","    fin si;","FIN"],"Le cas de base est la liste à un seul élément : estVide(queue(L))."),
+ O("CC1 2024, sujet B : remets plusgrand dans l'ordre. (max(a, b) renvoie le plus grand de a et b.)",["FONCTION : plusgrand (E L : liste d'entiers) : entier","SPÉCIFICATIONS : L non vide. Renvoie le plus grand élément de L.","DÉBUT","    si estVide(queue(L)) alors","        Renvoyer tête(L)","    sinon","        Renvoyer max(tête(L), plusgrand(queue(L)))","    fin si;","FIN"],"Le cas de base est la liste à un seul élément : estVide(queue(L))."),
  Q("CC1 2024, sujet A : avantdernier(L), L ayant au moins 2 éléments. Quel est le cas de base ?",["estVide(L)","estVide(queue(L))","estVide(queue(queue(L))) : alors l'avant-dernier est tête(L)","tête(L) = 0"],2,"Si L a exactement deux éléments, l'avant-dernier est le premier. Sinon : avantdernier(queue(L))."),
  L("D'un tableau à une liste",`<p>cons ajoute <b>devant</b>. Si on parcourt le tableau dans l'ordre, la liste sort à l'envers : le dernier élément ajouté se retrouve en tête.</p><p>Pour garder l'ordre du tableau, on le parcourt <b>à l'envers</b> :</p>`,{code:`L ← [ ]
 pour i de taille(T)-1 à 0 par pas de -1 faire
@@ -8270,10 +8512,16 @@ FIN`)+"<p>cons ajoute devant : on parcourt le tableau à l'envers pour garder l'
  L("Piles et files",`<ul><li>Pile : <b>empiler(E élément, ES pile)</b>, <b>depiler(ES pile) : élément</b> (enlève le sommet et le renvoie), <b>estVide(E pile)</b>.</li><li>File : <b>enfiler(E élément, ES file)</b>, <b>defiler(ES file) : élément</b> (le premier arrivé), estVide.</li><li>Interdit sur une pile : un indice P[1], tête, queue ou cons.</li></ul><p>Vider une pile dans une autre (un <b>transvasement</b>) inverse l'ordre de ses éléments. Fais le casse-tête du cours pas à pas.</p>`,{fig:"a-piles-files"}),
  Q("P contient 1, 2, 3 (3 au sommet). Que fait « empiler(P[1], P) » ?",["Empile 2","Empile 1","C'est une erreur : pas d'indice sur une pile"],2,"On n'a accès qu'au sommet, avec depiler. C'est un des pièges de la page 44 du cours."),
  Q("Pour inverser l'ordre de P avec deux piles auxiliaires Q et R, combien de transvasements faut-il ?",["1","2","3","4"],2,"Chaque transvasement inverse l'ordre : P vers Q, Q vers R, puis R vers P. Il en faut un nombre impair pour finir dans P, inversée."),
- O("Cours p. 45 : remets doublePile dans l'ordre.",["PROCÉDURE : doublePile (ES P : pile d'entier)","SPÉCIFICATIONS : double les valeurs de P.","Variable : Q : pile d'entier","DÉBUT","    Q ← [ ]","    tant que non estVide(P) faire","        empiler(2*depiler(P), Q)","    fin tq;","    tant que non estVide(Q) faire","        empiler(depiler(Q), P)","    fin tq;","FIN"],"Le premier transvasement double et inverse ; le second remet dans l'ordre."),
+ O("Cours p. 45 : remets doublePile dans l'ordre. (Q ← [ ] crée une pile vide.)",["PROCÉDURE : doublePile (ES P : pile d'entier)","SPÉCIFICATIONS : double les valeurs de P.","Variable : Q : pile d'entier","DÉBUT","    Q ← [ ]","    tant que non estVide(P) faire","        empiler(2*depiler(P), Q)","    fin tq;","    tant que non estVide(Q) faire","        empiler(depiler(Q), P)","    fin tq;","FIN"],"Le premier transvasement double et inverse ; le second remet dans l'ordre."),
  K("Pile ou file ?","Pile : dernier arrivé, premier sorti (empiler, depiler). File : premier arrivé, premier sorti (enfiler, defiler)."),
  K("Ce qui est interdit sur une pile ?","Un indice P[1], tête, queue, cons, et empiler(P, x) : l'ordre est empiler(élément, pile).")]}
 ];
+/* Ordre des leçons du CC1 : d'abord ce qui rapporte le plus de points dans les sujets 2022 à 2024 (tableaux 4 à 6 points,
+   affichage récursif 4, listes 2 à 6, motifs 4), les leçons dont elles ont besoin juste avant.
+   Tableaux 2D, dictionnaires et piles ne sont dans aucun sujet : ils passent après l'examen blanc (late). */
+const ORDRE_CC1=["a-forme","a-expressions","a-boucles","a-tableaux","a-recursif","a-affichage","a-listes","a-motifs","a-tableaux2d","a-dicos","a-piles"];
+LES.algo.sort((a,b)=>ORDRE_CC1.indexOf(a.id)-ORDRE_CC1.indexOf(b.id));
+LES.algo.forEach(L=>{if(["a-tableaux2d","a-dicos","a-piles"].includes(L.id))L.late=true;});
 /* ================== leçons des CC2 (preuves, complexité) et CC3 (recherche, tris) ================== */
 const A2=o=>Object.assign(o,{ex:"cc2"}),A3=o=>Object.assign(o,{ex:"cc3"});
 LES.algo.push(
@@ -10370,10 +10618,14 @@ algo:{
   "Trois tris en Θ(n²)":`<p>Sélection : on va chercher le plus petit et on le met devant. Insertion : on range chaque nouvelle carte à sa place dans sa main déjà triée. Bulles : on échange les voisins mal rangés, et les grands remontent au bout.</p>`,
   "Le tri par valeurs":`<p>S'il n'y a que dix valeurs possibles, on n'a pas besoin de comparer : on compte combien de fois chaque valeur apparaît, puis on réécrit le tableau dans l'ordre.</p>`},
  "a-forme":{
+  "Lire cet algorithme ligne par ligne":`<p>Lire un algorithme, c'est le faire tourner dans sa tête avec un exemple.</p><p>Prends T = [4, 7, 4] et x = 4. cpt part de 0. La boucle regarde les cases une par une : la case 0 contient 4, c'est x, cpt passe à 1 ; la case 1 contient 7, rien ne change ; la case 2 contient 4, cpt passe à 2.</p><p>À la fin, cpt vaut 2. Comme 2 &gt; 0, l'algorithme renvoie true : « oui, x est dans le tableau ».</p>`,
+  "Trouve les erreurs":`<p>Ce sont les fautes qui font perdre des points faciles. Cherche dans cet ordre : la signature (FONCTION ou PROCÉDURE ? chaque paramètre a son E et son type ? le type du résultat est écrit ?), puis la ligne « Variable : », puis la fermeture de chaque bloc (fin si; fin pour; fin tq;).</p>`,
   "Le squelette, toujours le même":`<p>Un algorithme, c'est une <b>recette</b> écrite toujours dans le même ordre : son nom et ce qu'il reçoit (la signature), une phrase qui dit ce qu'il fait (les spécifications), ses brouillons (les variables), puis les instructions entre DÉBUT et FIN.</p><p>Deux sortes : une <b>FONCTION</b> calcule un résultat et le renvoie ; une <b>PROCÉDURE</b> fait une action, par exemple afficher, sans rien renvoyer. Le E devant un paramètre veut dire « donné en entrée ».</p><p>Chaque bloc ouvert se referme juste en dessous de son ouverture : un si par fin si;, un pour par fin pour;, un tant que par fin tq;.</p>`},
  "a-expressions":{
+  "Les types : entier, nombre, booléen, chaîne":`<p>Le type, c'est la <b>sorte</b> de valeur. Quatre sortes à connaître : un nombre sans virgule (entier), un nombre avec ou sans virgule (nombre), un vrai ou faux (booléen), un texte (chaîne).</p><p>Exemples : 7 est un entier ; 7 / 2 vaut 3,5, c'est un nombre ; 7 &gt; 2 vaut true, c'est un booléen ; "sept" est une chaîne.</p><p>Dans les énoncés, true et false s'écrivent aussi vrai et faux : c'est la même chose.</p>`,
+  "Appeler une fonction donnée par l'énoncé : proche? et reste":`<p>Une fonction, c'est une machine : tu lui donnes des valeurs (les arguments), elle te rend un résultat. L'énoncé ne montre pas l'intérieur de la machine, seulement sa notice : ce qu'elle prend et ce qu'elle rend.</p><p><b>proche?(a, b)</b> répond à la question « a et b sont-ils à moins de 2 l'un de l'autre ? ». proche?(1, 2) vaut true (écart 1) ; proche?(4, 2) vaut false (écart 2, ce n'est pas moins de 2). Le « ? » fait partie du nom.</p><p><b>reste(x)</b> rend ce qui reste quand on range x par paquets de 2 : reste(5) = 1, reste(4) = 0.</p>`,
   "Les opérateurs du cours (p. 12)":`<p>Trois familles d'opérateurs :</p><ul class="nt"><li><b>calcul</b> : + − * / et ^ (puissance) ; div donne le quotient entier et mod le reste. Exemple : 17 div 5 = 3 et 17 mod 5 = 2, car 17 = 3 × 5 + 2 ;</li><li><b>comparaison</b> : = ≠ &lt; ≤ &gt; ≥ ; le résultat est vrai ou faux (un booléen) ;</li><li><b>logique</b> : non, et, ou, pour combiner des vrai ou faux.</li></ul><p>« Paresseux » veut dire qu'on s'arrête dès qu'on connaît la réponse : « faux et … » est faux sans lire la suite, « vrai ou … » est vrai.</p><p>cond(a, b, c), c'est un « si » en une ligne : si a est vrai on prend b, sinon c. Exemple : cond(3 &gt; 2, 10, 20) vaut 10.</p>`,
-  "Entraîne-toi sur 18 expressions":`<p>Pour chaque expression, cherche d'abord son <b>type</b> (entier, réel, booléen, ou erreur), puis sa valeur.</p><p>Une erreur arrive quand on mélange des types qui ne vont pas ensemble, ou quand une fonction reçoit le mauvais nombre de paramètres. Exemple : 3 * true est une erreur, on ne multiplie pas un booléen.</p>`},
+  "Entraîne-toi sur 18 expressions":`<p>Pour chaque expression, cherche d'abord son <b>type</b> (entier, nombre, booléen, ou erreur), puis sa valeur.</p><p>Une erreur arrive quand on mélange des types qui ne vont pas ensemble, ou quand une fonction reçoit le mauvais nombre de paramètres. Exemple : 3 * true est une erreur, on ne multiplie pas un booléen.</p>`},
  "a-boucles":{
   "La syntaxe du cours":`<p><b>pour</b> : quand tu sais à l'avance combien de tours faire. « pour i de 1 à 4 » fait 4 tours, avec i = 1, 2, 3 puis 4 : les deux bornes sont comprises.</p><p><b>tant que</b> : quand tu ne sais pas combien de tours. On recommence tant que la condition est vraie, donc la boucle doit changer quelque chose dans la condition, sinon elle tourne pour toujours.</p><p><b>si … sinon si … sinon</b> : un seul des cas est exécuté, le premier dont la condition est vraie.</p>`,
   "Déroule une boucle pas à pas":`<p>Faire une <b>trace</b>, c'est jouer l'ordinateur sur papier : un tableau avec une colonne par variable, et une ligne par tour de boucle.</p><p>Exemple avec m ← 345 puis « tant que m ≥ 10 : m ← m div 10 » : m vaut 345, puis 34, puis 3 ; comme 3 &lt; 10, on s'arrête.</p><p>Dans le TD, « c, m ← 1, n » veut dire : c reçoit 1 et m reçoit n, en même temps.</p>`},
