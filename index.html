@@ -9866,7 +9866,7 @@ FIN`)+"<p>« som, prod, nb ← 0, 1, 0 » range 0 dans som, 1 dans prod et 0 dan
  K("Les règles du jeu de la vie ?","Vivante : survit avec 2 ou 3 voisines vivantes, sinon meurt. Morte : naît avec exactement 3 voisines. On calcule la génération suivante dans un nouveau tableau.")]},
 
 /* ------------------------------------------------------------------ */
-{id:"a-dicos",t:"Les dictionnaires : clé, valeur, compareDicos",min:9,goal:"Déclarer, lire et parcourir un dictionnaire en pseudo-code, et refaire l'exercice compareDicos du cours (p. 34 à 37).",steps:[
+{id:"a-dicos",t:"Les dictionnaires : clé, valeur, compareDicos",min:13,goal:"Déclarer, lire et parcourir un dictionnaire en pseudo-code, et refaire l'exercice compareDicos du cours (p. 34 à 37).",steps:[
  Q("Dans un tableau, une valeur est repérée par sa position. Et dans un dictionnaire ?",["Par une chaîne de caractères, la clé","Par sa position aussi","Par sa valeur"],0,"Cours p. 34 : chaque valeur est repérée par une clé, une chaîne de caractères."),
  L("Le dictionnaire",`<p>Un <b>dictionnaire</b> représente une donnée qui a plusieurs composantes. Chaque valeur est repérée par une <b>clé</b> (une chaîne de caractères), et non par une position. Une clé avec sa valeur forme un <b>champ</b>. Les valeurs n'ont pas forcément le même type, contrairement à un tableau.</p><p>En pseudo-code (cours p. 35) :</p>${C(`D : dictionnaire('taille': nombre, 'age': entier, 'majeur': booléen)
 D['taille'] ← 168
@@ -9893,6 +9893,29 @@ DÉBUT
     Renvoyer True
 FIN`,[{o:["D1","D2"],a:1},{o:["D2[k]","D1[k]","k"],a:0},{o:["D1","D2"],a:1}],"Première boucle : chaque clé de D1 existe dans D2, avec la même valeur. Deuxième boucle : D2 n'a pas de clé en plus (sinon D1 serait seulement « inclus » dans D2)."),
  Q("Pourquoi faut-il la deuxième boucle de compareDicos ?",["Pour vérifier que D2 n'a pas de clé absente de D1","Pour vérifier les valeurs une deuxième fois","Elle ne sert à rien"],0,"Après la première boucle, on sait seulement que D1 est contenu dans D2. Le prof l'a noté : « D2 a des clés en plus de D1 »."),
+ P("Deux fonctions sur un dictionnaire, sur papier","<p>(Entraînement écrit par moi : la feuille de TD n'a pas d'exercice sur les dictionnaires, et ils ne sont dans aucun ancien sujet de CC1.)</p><ol><li>Écris la fonction sommeValeurs (E D : dictionnaire) : nombre, qui renvoie la somme des valeurs de D. On suppose que toutes les valeurs de D sont des nombres.</li><li>Écris la fonction nbClesCommunes (E D1, D2 : dictionnaires) : entier, qui renvoie le nombre de clés de D1 qui sont aussi des clés de D2.</li></ol>",C(`FONCTION : sommeValeurs (E D : dictionnaire) : nombre
+SPÉCIFICATIONS : toutes les valeurs de D sont des nombres ; renvoie leur somme.
+Variable : s : nombre
+DÉBUT
+    s ← 0
+    pour k dans D faire
+        s ← s + D[k]
+    fin pour;
+    Renvoyer s
+FIN
+
+FONCTION : nbClesCommunes (E D1, D2 : dictionnaires) : entier
+SPÉCIFICATIONS : renvoie le nombre de clés de D1 qui sont aussi des clés de D2.
+Variable : n : entier
+DÉBUT
+    n ← 0
+    pour k dans D1 faire
+        si k dans D2 alors
+            n ← n + 1
+        fin si;
+    fin pour;
+    Renvoyer n
+FIN`),["« pour k dans D faire » : k prend chaque clé","La valeur s'écrit D[k], pas k","s ← 0 (ou n ← 0) avant la boucle, Renvoyer après","Le test « k dans D2 » pour savoir si une clé existe","Les deux signatures complètes, avec E devant les paramètres"],6),
  K("Dictionnaire : les quatre écritures du cours ?","Déclaration D : dictionnaire('taille': nombre, …) ; modification D['taille'] ← 168 ; parcours des clés « pour k dans D faire … fin pour; » ; test « si k dans D alors »."),
  K("compareDicos : l'idée ?","Pour chaque clé de D1 : elle est dans D2 avec la même valeur. Puis pour chaque clé de D2 : elle est dans D1. Sinon Renvoyer False ; à la fin Renvoyer True.")]},
 
@@ -9930,12 +9953,37 @@ FIN`)+"<p>cons ajoute devant : on parcourt le tableau à l'envers pour garder l'
  K("Garder l'ordre d'un tableau dans une liste ?","Parcourir le tableau à l'envers (pour i de taille(T)-1 à 0 par pas de -1) et faire L ← cons(T[i], L).")]},
 
 /* ------------------------------------------------------------------ */
-{id:"a-piles",t:"Piles et files : le casse-tête du cours",min:12,goal:"Calculer l'état d'une pile après chaque instruction, en repérant les instructions interdites (cours p. 44 et 46).",steps:[
+{id:"a-piles",t:"Piles et files : le casse-tête du cours",min:17,goal:"Calculer l'état d'une pile après chaque instruction, en repérant les instructions interdites (cours p. 44 et 46).",steps:[
  Q("On empile 1, puis 2, puis 3, puis on dépile une fois. Que renvoie depiler ?",["1","2","3","[1, 2]"],2,"Une pile : dernier arrivé, premier sorti. On reprend l'assiette posée en dernier."),
  L("Piles et files",`<ul><li>Pile : <b>empiler(E élément, ES pile)</b>, <b>depiler(ES pile) : élément</b> (enlève le sommet et le renvoie), <b>estVide(E pile)</b>.</li><li>File : <b>enfiler(E élément, ES file)</b>, <b>defiler(ES file) : élément</b> (le premier arrivé), estVide.</li><li>Interdit sur une pile : un indice P[1], tête, queue ou cons.</li></ul><p>Vider une pile dans une autre (un <b>transvasement</b>) inverse l'ordre de ses éléments. Fais le casse-tête du cours pas à pas.</p>`,{fig:"a-piles-files"}),
- Q("P contient 1, 2, 3 (3 au sommet). Que fait « empiler(P[1], P) » ?",["Empile 2","Empile 1","C'est une erreur : pas d'indice sur une pile"],2,"On n'a accès qu'au sommet, avec depiler. C'est un des pièges de la page 44 du cours."),
+ Q("P contient 1, 2, 3 (3 au sommet). Que fait « afficher tête(P) » ?",["Affiche 3","Affiche 1","C'est une erreur : tête est réservé aux listes"],2,"Sur une pile, on n'a que empiler, depiler et estVide. Pour connaître le sommet, il faut le dépiler."),
  Q("Pour inverser l'ordre de P avec deux piles auxiliaires Q et R, combien de transvasements faut-il ?",["1","2","3","4"],2,"Chaque transvasement inverse l'ordre : P vers Q, Q vers R, puis R vers P. Il en faut un nombre impair pour finir dans P, inversée."),
  O("Cours p. 45 : la procédure doublePile double chaque valeur d'une pile P d'entiers, sans changer leur ordre. Remets-la dans l'ordre. (Q ← [ ] crée une pile vide Q ; depiler(P) enlève le sommet de P et le renvoie ; empiler(x, Q) pose x sur Q.)",["PROCÉDURE : doublePile (ES P : pile d'entier)","SPÉCIFICATIONS : double les valeurs de P.","Variable : Q : pile d'entier","DÉBUT","    Q ← [ ]","    tant que non estVide(P) faire","        empiler(2*depiler(P), Q)","    fin tq;","    tant que non estVide(Q) faire","        empiler(depiler(Q), P)","    fin tq;","FIN"],"Le premier transvasement double et inverse ; le second remet dans l'ordre."),
+ P("Cours, diapo 44 : la pile après chaque étape, sur papier",`<p>« À vous de jouer ! Calculer la valeur de la pile P après chaque étape »</p>${C(`Variable : P : pile d'entiers
+P ← []
+Pour i de 1 à 3 faire
+   empiler(i,P)
+finPour
+empiler(depiler(P),P)
+empiler(P[1],P)
+empiler(P,4)
+P ← cons(3,P)
+depiler(P)
+depiler(P)
+depiler(P)
+depiler(P)`)}<p>(Précisions de ma part : écris la pile entre crochets, le sommet à droite, comme [1, 2, 3]. Quand une instruction est interdite, écris ERREUR et passe à la suivante sans changer la pile.)</p>`,`<p>Réponses du prof (cours annoté) :</p>${C(`Variable : P : pile d'entiers      ?  (pas encore de valeur)
+P ← []                             [ ]
+Pour i de 1 à 3 faire
+   empiler(i,P)                    [1] puis [1, 2] puis [1, 2, 3]
+finPour
+empiler(depiler(P),P)              [1, 2, 3]
+empiler(P[1],P)                    ERREUR
+empiler(P,4)                       ERREUR
+P ← cons(3,P)                      ERREUR
+depiler(P)                         [1, 2]
+depiler(P)                         [1]
+depiler(P)                         [ ]
+depiler(P)                         ERREUR`)}<ul><li>empiler(depiler(P),P) : depiler(P) vaut 3 et P vaut [1, 2] ; puis on exécute « empiler(3, [1, 2]) ». La pile redevient [1, 2, 3].</li><li>empiler(P[1],P) : un indice comme P[1], c'est pour les tableaux seulement.</li><li>empiler(P,4) : les paramètres sont dans le mauvais ordre. L'ordre est empiler(élément, pile).</li><li>P ← cons(3,P) : cons, c'est pour les listes seulement.</li><li>Le dernier depiler(P) : la pile est vide, il n'y a plus rien à dépiler.</li></ul>`,["La boucle donne trois valeurs : [1], [1, 2], [1, 2, 3]","empiler(depiler(P), P) : la pile ne change pas à la fin","Trois ERREUR au milieu : l'indice, l'ordre des paramètres, cons","Un dernier ERREUR : on dépile une pile vide"],7),
  K("Pile ou file ?","Pile : dernier arrivé, premier sorti (empiler, depiler). File : premier arrivé, premier sorti (enfiler, defiler)."),
  K("Ce qui est interdit sur une pile ?","Un indice P[1], tête, queue, cons, et empiler(P, x) : l'ordre est empiler(élément, pile).")]}
 ];
