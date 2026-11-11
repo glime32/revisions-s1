@@ -3163,6 +3163,16 @@ SUBJ.geo={name:"Géométrie",code:"HAX104X",color:"#D980FF",coef:4,share:0.30,ke
  quizIntro:"Des questions dans le style des questions de cours du CC, dont l'« intrus » donné en exemple par le prof sur Moodle.",
  annIntro:"D'abord les deux derniers CC2 en entier (énoncés recopiés, corrigés officiels, barème du prof), puis les CC1 de 2025 et 2024.",
  pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"notations",t:"Les notations",render:notations},{id:"redaction",t:"Bien rédiger",html:window.REDAC}],
+ /* thèmes du CC2, d'après les barèmes des CC2 de 2024 et de 2025 (moyenne sur 20) */
+ themes:[
+  {id:"triangles",ex:"cc2",t:"Triangles isométriques, isocèles, points de concours (vus avant le CC1, réutilisés)",pts:5.5,src:"4 points en 2025, la moitié de l'exercice en 2024",tasks:["tdcc2b"]},
+  {id:"transfo",ex:"cc2",t:"Translations et homothéties",pts:4.5,src:"6 points en 2025, environ 4 en 2024",les:["g2-transfo"],fiches:["g-homothetie"]},
+  {id:"aire",ex:"cc2",t:"Aire ½ ab sin Ĉ et Al-Kashi",pts:3,src:"environ 6 points en 2025 : un énoncé, une démonstration, un exercice",les:["g2-aire-alkashi"],fiches:["g-aire","g-alkashi"]},
+  {id:"pythagore",ex:"cc2",t:"Pythagore : les deux démonstrations",pts:2.5,src:"5 points en 2024",les:["g2-pythagore"],fiches:["g-pythagore"]},
+  {id:"rotation",ex:"cc2",t:"Rotations et produit scalaire",pts:2,src:"environ 4 points en 2024",les:["g2-rotation-scalaire"],fiches:["g-rotation","g-scalaire"]},
+  {id:"centre",ex:"cc2",t:"Angle au centre, angle inscrit, points cocycliques",pts:1.5,src:"3 points en 2025",les:["g2-angle-centre"],fiches:["g-angle-centre","g-cocycliques"]},
+  {id:"trigo",ex:"cc2",t:"Cosinus, sinus, tangente",pts:0.5,src:"jamais un exercice à part",les:["g2-trigo"],fiches:["g-trigo"]},
+  {id:"cercle",ex:"cc2",t:"Cercle, droite et tangentes",pts:0.5,src:"pas tombé en 2024 ni en 2025",les:["g2-cercle"],fiches:["g-cercle-droite"]}],
  tasks:[
  {id:"cc25",t:"Examen blanc : annale 2025 en 1 h, puis correction",min:75,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus récent, dans les conditions du CC : 1 h, aucun document."},
  {id:"tdex",t:"TD 1 : 4 exercices ★★★ sur papier",min:60,p:2,td:["1.5","1.6","1.7","1.13"],links:[["td","Feuille de TD 1"]]},
@@ -5428,7 +5438,17 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
   {id:"forme",t:"La forme du pseudo-code, les expressions, les questions de cours",pts:2,src:"1,5 à 3 points",les:["a-forme","a-expressions"],fiches:["a-pseudo","a-bases","a-expressions"],self0:2},
   {id:"boucles",t:"Boucles pour et tant que",pts:1,src:"dans tous les exercices",les:["a-boucles"],fiches:["a-boucles"],self0:2},
   {id:"motifs",t:"Motifs d'étoiles",pts:1,src:"4 points en 2023, rien les autres années",les:["a-motifs"],fiches:["a-motifs"],self0:2},
-  {id:"reste",t:"Tableaux 2D, dictionnaires, piles et files",pts:0.5,src:"jamais tombés",les:["a-tableaux2d","a-dicos","a-piles"],fiches:["a-tableaux-2d","a-dicos","a-piles-files"],self0:2}],
+  {id:"reste",t:"Tableaux 2D, dictionnaires, piles et files",pts:0.5,src:"jamais tombés",les:["a-tableaux2d","a-dicos","a-piles"],fiches:["a-tableaux-2d","a-dicos","a-piles-files"],self0:2},
+  /* CC2 et CC3 : programme et barème pas annoncés. Points estimés d'après les exercices de ces chapitres
+     dans l'examen de janvier 2023, l'examen PEIP de mai 2023 et le CC de 2022. */
+  {id:"preuves",ex:"cc2",t:"Prouver un algorithme : une boucle (trace, arrêt, invariant) ou une récursivité (récurrence)",pts:8.5,src:"5 points au CC de 2022 et à l'examen PEIP de 2023, la moitié de l'exercice à 8,5 points de janvier 2023",les:["a2-invariant","a2-recursif"],tasks:["td6"],fiches:["a-preuve"]},
+  {id:"compter",ex:"cc2",t:"Compter les opérations, équation de complexité",pts:4.5,src:"dans l'exercice à 8,5 points de janvier 2023",les:["a2-compter"],tasks:["td78"],fiches:["a-calcul-complexite"]},
+  {id:"notations",ex:"cc2",t:"Ordres de complexité : θ, o, ω, O, Ω",pts:4,src:"3 points en janvier 2023 et à l'examen PEIP de 2023",les:["a2-notations"],fiches:["a-complexite"]},
+  {id:"master",ex:"cc2",t:"Boucles imbriquées et master theorem",pts:3,src:"une question de cours en 2022, une question en janvier 2023",les:["a2-boucles"]},
+  {id:"tris",ex:"cc3",t:"Tri par sélection et tri par insertion",pts:6,src:"estimé : le TD 10",les:["a3-tris"],tasks:["td910"],fiches:["a-tri-selection","a-tri-insertion"]},
+  {id:"dicho",ex:"cc3",t:"Recherche linéaire et recherche dichotomique",pts:6,src:"estimé : le TD 9, et une question de cours au CC1 de 2024",les:["a3-dicho"],fiches:["a-recherche"]},
+  {id:"fusion",ex:"cc3",t:"Tri à bulles et tri fusion",pts:5,src:"estimé : 3 points à l'examen PEIP de 2023",les:["a3-fusion"],fiches:["a-tri-bulles","a-tri-fusion"]},
+  {id:"valeurs",ex:"cc3",t:"Tri par valeurs et borne inférieure d'un tri",pts:3,src:"5 points en janvier 2023",les:["a3-valeurs"],fiches:["a-tri-valeurs"]}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
  {id:"amphia4",ex:"cc1x",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille A4",min:15,p:2,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille A4, recopier suffit pour répondre."},
@@ -6670,7 +6690,15 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
   {id:"rec",t:"Récursivité sur les entiers : chiffres, diviseurs",pts:7,src:"queDesUn et prodDiv au partiel 2021",les:["p-rec","p-chiffres"],fiches:["pf-rec","pf-rec-ex"]},
   {id:"listes",t:"Listes : schéma récursif, fabriquer, tester",pts:7,src:"somElem et prefLong au partiel 2021",les:["p-listes","p-schema","p-fabriquer"],fiches:["pf-listes","pf-listes-rec","pf-listes-construire","pf-listes-tests"]},
   {id:"types",t:"Types et valeurs d'une expression, if, let",pts:3,src:"question 1 du partiel 2021",les:["p-types","p-iflet"],tasks:["drill","tdtypes"],fiches:["pf-types","pf-if","pf-let","pf-erreurs"]},
-  {id:"fonctions",t:"Écrire une fonction et sa signature",pts:3,src:"memeParite au partiel 2021, et la signature à chaque question",les:["p-fonctions"],fiches:["pf-fonctions","pf-signature"]}],
+  {id:"fonctions",t:"Écrire une fonction et sa signature",pts:3,src:"memeParite au partiel 2021, et la signature à chaque question",les:["p-fonctions"],fiches:["pf-fonctions","pf-signature"]},
+  /* examen de janvier : barèmes de janvier 2022, juin 2022 et janvier 2024. Environ 6 points sur 20 viennent encore
+     de la récursivité sur les entiers (Fermat, Mersenne, Pythagore), qui est dans les thèmes du CC. */
+  {id:"somme",ex:"ct",t:"Types somme et types récursifs : chaînes maison, ensembles, arbres",pts:5.5,src:"13 points en janvier 2024, 7 sur 21 en janvier 2022",les:["p2-somme","p2-rectype"],tasks:["cttypes"],fiches:["pf-somme","pf-rectype"]},
+  {id:"ordre",ex:"ct",t:"Ordre supérieur, itérateurs de List, récursivité terminale (« de trois façons »)",pts:4.5,src:"7 points sur 21 en janvier 2022, 6 en juin 2022",les:["p2-ordre-sup","p2-iter","p2-terminal"],tasks:["ctiter"],fiches:["pf-ordre-sup","pf-iter","pf-terminal"]},
+  {id:"filtrage",ex:"ct",t:"Filtrage : lire et écrire un match",pts:2,src:"dans presque toutes les questions",les:["p-match","p2-match"],tasks:["ctfiltre"],fiches:["pf-match","pf-match-ecrire"]},
+  {id:"exceptions",ex:"ct",t:"Exceptions : lever, définir, rattraper",pts:1,src:"une question en janvier 2024",les:["p2-exc"],tasks:["ctexc"],fiches:["pf-exc"]},
+  {id:"curry",ex:"ct",t:"Curryfication, fun et polymorphisme",pts:0.5,src:"jamais une question à part",les:["p2-curry","p2-poly"],fiches:["pf-curry","pf-poly"]},
+  {id:"record",ex:"ct",t:"Enregistrements",pts:0.5,src:"jamais une question à part",les:["p2-record"],fiches:["pf-record"]}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-ocaml.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"Autorisée (le prof de CM l'a dit) : imprimée ou manuscrite."},
  {id:"drill",t:"Entraînement « types et valeurs » sans faute",min:15,p:1,manual:true,links:[["p/types","Entraînement"]]},
@@ -7080,7 +7108,14 @@ SUBJ.calc={name:"Calculus",code:"HAX106X",color:"#FFB547",coef:3,share:0.25,key:
   {id:"primitives",t:"Primitives : reconnaître la forme",pts:2.5,src:"5 points en 2025",les:["c-primitives"],fiches:["c-primitives"],self0:2},
   {id:"ed1",t:"Équations différentielles d'ordre 1",pts:2,src:"4 points en 2023, au programme cette année",les:["c-ed0","c-ed1"],fiches:["c-ed1","c-ed1-sm"],self0:0},
   {id:"domaine",t:"Domaine de définition",pts:1.5,src:"1 à 2 points",les:["c-domaine"],fiches:["c-domaine"],self0:2},
-  {id:"integrales",t:"Changement de variable et calcul d'intégrales",pts:1.5,src:"3 points en 2025",les:["c-integrales"],fiches:["c-chgt-var","c-integrale"],self0:2}],
+  {id:"integrales",t:"Changement de variable et calcul d'intégrales",pts:1.5,src:"3 points en 2025",les:["c-integrales"],fiches:["c-chgt-var","c-integrale"],self0:2},
+  /* CC2 : aucun ancien CC2 trouvé. Points estimés d'après la place de chaque chapitre dans les TD 2 et 3. */
+  {id:"cxalg",ex:"cc2",t:"Complexes : forme algébrique, module, argument, forme exponentielle",pts:5,src:"estimé : 7 exercices du TD 3",les:["c2-cx-alg","c2-cx-exp"],tasks:["tdcx"],fiches:["c-complexes"]},
+  {id:"ed2",ex:"cc2",t:"Équations différentielles d'ordre 2 : l'équation caractéristique",pts:4,src:"estimé : TD 2, exercice 3",les:["c2-ed2"],tasks:["tded2"],fiches:["c-ed2"]},
+  {id:"ed2sm",ex:"cc2",t:"Ordre 2 avec second membre et conditions initiales",pts:4,src:"estimé : TD 2, exercice 4",les:["c2-ed2-sm"],fiches:["c-ed2-sm"]},
+  {id:"euler",ex:"cc2",t:"Moivre et Euler",pts:2.5,src:"estimé : TD 3, exercices 8 et 9",les:["c2-cx-euler"],fiches:["c-cx-euler"]},
+  {id:"cxeq",ex:"cc2",t:"Racines carrées et équations du second degré dans ℂ",pts:2.5,src:"estimé : TD 3, exercices 10 et 11",les:["c2-cx-eq"],fiches:["c-cx-eq"]},
+  {id:"racn",ex:"cc2",t:"Racines n-ièmes",pts:2,src:"estimé : TD 3, exercice 12",les:["c2-cx-racn"],fiches:["c-cx-racn"]}],
  tasks:[
  {id:"form",first:true,t:"Revoir le formulaire : dérivées, primitives, intégrales, limites, équations différentielles",min:20,p:1,manual:true,links:[["p/formulaire","Formulaire"]],why:"Aucun document au CC. Cache la colonne de droite et récite ; note ce qui ne sort pas tout seul."},
  {id:"cc25",t:"Examen blanc : CC1 2025 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Étude de fonction, intégrales, primitives : tout le CC1."},
@@ -7534,7 +7569,16 @@ SUBJ.lin={name:"Algèbre",code:"HAX102X",color:"#FF7AB8",coef:5,share:0.20,key:"
   {id:"vect",t:"Combinaisons linéaires et Vect",pts:5,src:"estimé : 3 exercices sur 12",les:["l-colineaire","l-vect","l-vect-eq"],fiches:["lin-colin","lin-cl","lin-vect","lin-vect-eq"]},
   {id:"sev",t:"Sous-espaces vectoriels : prouver ou réfuter",pts:3.5,src:"estimé : 2 exercices sur 12",les:["l-sev"],fiches:["lin-sev"]},
   {id:"bases",t:"Repères et vecteurs de ℝⁿ",pts:0.5,src:"jamais un exercice à part",les:["l-repere","l-rn"],fiches:["lin-repere","lin-rn"]},
-  {id:"affine",t:"Sous-espaces affines",pts:0.5,src:"jamais tombé au CC1",les:["l-affine"],fiches:["lin-affine"]}],
+  {id:"affine",t:"Sous-espaces affines",pts:0.5,src:"jamais tombé au CC1",les:["l-affine"],fiches:["lin-affine"]},
+  /* CC2 : pas de barème non plus. Points estimés d'après les 17 exercices des CC2 de 2022 à 2024 ;
+     2 de ces exercices (inverse grâce à une relation) sont dans le thème « Matrices » du CC1. */
+  {id:"pivotinv",ex:"cc2",t:"Calculer A⁻¹ par le pivot de Gauss",pts:3.5,src:"estimé : un exercice à chaque CC2",les:["l2-gauss-inv"],tasks:["tdinv"],fiches:["lin-gauss-inv"]},
+  {id:"applin",ex:"cc2",t:"Applications linéaires : linéaire ou pas, matrice",pts:3.5,src:"estimé : un exercice à chaque CC2",les:["l2-applin"],fiches:["lin-applin"]},
+  {id:"inter",ex:"cc2",t:"Intersection et égalité de sous-espaces (F = G ?)",pts:3.5,src:"estimé : un exercice à chaque CC2",les:["l2-inter"],fiches:["lin-inter"]},
+  {id:"kerim",ex:"cc2",t:"Noyau, image, injective, surjective",pts:2.5,src:"estimé : un exercice en 2023 et en 2024",les:["l2-ker-im"],tasks:["tdapp"],fiches:["lin-ker-im"]},
+  {id:"base",ex:"cc2",t:"Familles libres et bases",pts:2.5,src:"estimé : un exercice en 2022 et en 2023",les:["l2-libre","l2-base"],tasks:["tdbase"],fiches:["lin-libre","lin-base"]},
+  {id:"composee",ex:"cc2",t:"Composer des applications linéaires",pts:1,src:"estimé : une question en 2022",les:["l2-composee"],fiches:["lin-composee"]},
+  {id:"projection",ex:"cc2",t:"Projection et symétrie par rapport à un plan",pts:1,src:"estimé : un exercice en 2024",les:["l2-projection"],fiches:["lin-projection"]}],
  tasks:[
  {id:"tdsys",t:"Exercices de TD ★★★ sur les systèmes, sur papier",min:45,p:1,td:["2.6","2.8","2.10","2.11"],links:[["td","Exercices de TD"]]},
  {id:"tdsev",t:"Exercices de TD ★★★ sur les sous-espaces, sur papier",min:45,p:1,td:["3.6","3.7","3.8","3.11"],links:[["td","Exercices de TD"]]},
@@ -8219,6 +8263,17 @@ SUBJ.rai={name:"Raisonnement",code:"HAX101X",color:"#C8F560",coef:2,share:0.55,k
  tdIntro:"Les trois feuilles de TD en entier (66 exercices), énoncés recopiés tels quels. Le corrigé officiel est recopié quand il existe (TD 3 : exercices 4, 5, 6, 8, 9, 10 et 15 ; TD 2 : exercices 18 et 20, posés en CC) : c'est écrit au-dessus du corrigé. Les autres corrigés sont rédigés par moi. Les ★★★ ressemblent le plus aux CC. Fais-les sur papier avant d'ouvrir le corrigé.",annIntro:"Les trois derniers CC de novembre (2025, 2024 et 2023) en entier, puis le CC1 d'octobre 2025, le CC2 de novembre 2022 et les CC1 d'octobre 2024 et 2023 : énoncés recopiés, corrigés officiels. Cette année le CC1 a été neutralisé : ce qu'il aurait contrôlé (logique, négation, récurrence) peut tomber au CC2. Les sujets de 2022 et d'octobre 2024 ont une partie à cocher ; ceux de 2023 et de 2025 n'en ont pas.",
  quizIntro:"Des questions de cours, puis des questions tirées des feuilles de TD et des anciens CC.",
  pages:[{id:"infos",t:"Le CC2 en bref",html:infos},{id:"recettes",t:"Débuts de preuves",html:recettes}],
+ /* thèmes du CC2 : barèmes des CC2 de 2022 et 2023, parts estimées pour ceux de 2024 et 2025 (sans barème).
+    Le CC1 est neutralisé cette année, donc ce CC porte sur tout le cours : 30 % du poids vient des anciens CC1. */
+ themes:[
+  {id:"injective",t:"Injective, surjective, bijective",pts:4,src:"4 à 5 points à chaque CC2",les:["r-injective"],fiches:["rai-injective"]},
+  {id:"image",t:"Image directe et image réciproque",pts:3.5,src:"3 à 8 points à chaque CC2",les:["r-image"],fiches:["rai-image"]},
+  {id:"ensembles",t:"Ensembles : ∈, ⊂, réunion, intersection, différence symétrique",pts:3,src:"4 points en 2023 et en 2024",les:["r-ensembles","r-operations"],fiches:["rai-ensembles","rai-operations"]},
+  {id:"quantif",t:"Quantificateurs : traduire, nier, prouver",pts:2.5,src:"6 points en 2023, 2,5 en 2022",les:["r-quantif","r-preuves"],fiches:["rai-quantif"]},
+  {id:"recurrence",t:"La récurrence",pts:2.5,src:"4 à 5 points une année sur deux",les:["r-recurrence"],fiches:["rai-recurrence"]},
+  {id:"composition",t:"Composition d'applications",pts:2,src:"dans l'exercice sur les applications, 3 à 4 points",les:["r-composition"],fiches:["rai-composition"]},
+  {id:"raisonnements",t:"Contraposée, absurde, disjonction de cas",pts:1.5,src:"un exercice en 2025",les:["r-contraposee"],fiches:["rai-raisonnements"]},
+  {id:"logique",t:"Connecteurs et tables de vérité",pts:1,src:"2 points au QCM de 2022, plus dans les CC1",les:["r-logique"],fiches:["rai-logique"]}],
  tasks:[
  {id:"tdapp",t:"Exercices de TD sur les applications, sur papier",min:45,p:1,td:["3.6","3.7","3.14","3.17"],links:[["td","Exercices de TD"]],why:"Le cœur des derniers CC : images, antécédents, injective ou surjective, à justifier."},
  {id:"tdpreuves",t:"Exercices de TD sur les preuves et les ensembles, sur papier",min:45,p:1,td:["2.7","2.11","2.23","2.24"],links:[["td","Exercices de TD"]],why:"Contraposée, absurde, récurrence forte, égalités d'ensembles : des exercices qui ne sont pas dans les leçons."},
@@ -9745,6 +9800,16 @@ SUBJ.usi={name:"USI",code:"HAI103I",color:"#5BF29A",coef:4,share:1,key:"rev-usi-
  tdIntro:"Toute la feuille de TD/TP de Meynard (sauf les exercices 6, 15 et 41, qui ne se font que sur les machines de la fac), les exercices et exemples de son cours, les TP et le poly Python de Pompidor, puis des entraînements au format de l'examen. Les énoncés sont recopiés des feuilles. Les corrigés sont écrits par moi, sauf ceux qui portent une étiquette : les réponses de Meynard au TD 4 (exercices 45, 46, 53, 54) et celles de son cours. Tous les codes ont été essayés. Les ★★★ ressemblent le plus à l'examen.",
  annIntro:"Ce sont les sujets de Pompidor, sa moitié de l'examen (10 points), recopiés mot pour mot avec ses corrigés officiels : fais chaque session en 1 h. Quand le corrigé officiel a une erreur ou une coquille, c'est écrit dessous. Pour la moitié de Meynard, aucun ancien sujet : travaille ses exercices corrigés.",
  pages:[{id:"infos",t:"L'examen en bref",html:infos},{id:"memo",t:"Aide-mémoire",html:memo}],
+ /* thèmes de l'examen. Moitié Pompidor : barèmes de 2023 à 2026. Moitié Meynard : aucun ancien sujet,
+    points estimés d'après la place de chaque chapitre dans son cours et ses TD. */
+ themes:[
+  {id:"python",t:"Python : dictionnaires, fichiers CSV, parcours récursif de dossiers",pts:5,src:"4,5 à 6 points à chaque examen",les:["u-py1","u-py2","u-py3"],tasks:["tdpy"],fiches:["usi-py-bases","usi-py-classiques","usi-py-dico","usi-py-fichiers","usi-py-parcours"]},
+  {id:"fichiers",t:"Fichiers : chemins, droits, umask, inodes, liens, taille maximale",pts:4.5,src:"estimé : pas d'ancien sujet de cette moitié",les:["u-chemins","u-droits","u-umask","u-inodes","u-taille"],tasks:["tdsgf","tdcoh"],fiches:["usi-chemins","usi-types","usi-utilisateur","usi-droits","usi-umask","usi-inode","usi-liens","usi-taille"]},
+  {id:"processus",t:"Processus, redirections, tubes et filtres",pts:3,src:"estimé : pas d'ancien sujet de cette moitié",les:["u-processus","u-redir"],tasks:["tdproc"],fiches:["usi-processus","usi-fork","usi-redir","usi-filtres"]},
+  {id:"bash",t:"Scripts Bash",pts:2.5,src:"2 à 2,5 points à chaque examen",les:["u-bash1","u-bash2"],tasks:["tdbash"],fiches:["usi-bash-var","usi-bash-ctrl","usi-bash-scripts"]},
+  {id:"recherche",t:"find et expressions régulières",pts:2.5,src:"2 à 3 points à chaque examen",les:["u-find","u-regex"],tasks:["tdrech"],fiches:["usi-find","usi-regex"]},
+  {id:"c",t:"Le C sous Unix : compiler, argc et argv, mémoire",pts:2,src:"estimé : pas d'ancien sujet de cette moitié",les:["u-c"],tasks:["tdc"],fiches:["usi-c-compil","usi-c-memoire"]},
+  {id:"intro",t:"Le système d'exploitation et Unix : le vocabulaire",pts:0.5,src:"estimé",les:["u-intro"],fiches:["usi-se"]}],
  tasks:[
  {id:"tdsgf",t:"Exercices ★★★ sur les droits, le umask et la taille des fichiers, sur papier",min:40,p:1,td:["16","17","25","B1"],links:[["td","Exercices corrigés"]]},
  {id:"tdproc",t:"Exercices ★★★ sur les processus, les redirections et les scripts",min:35,p:1,td:["30","36","39","42","C1"],links:[["td","Exercices corrigés"]]},
