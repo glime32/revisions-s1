@@ -4829,24 +4829,57 @@ Renvoyer R`},
  {q:"Pour prouver qu'une boucle s'arrête, on utilise…",o:["l'invariant","une quantité entière qui décroît strictement","le cas de base","le master theorem"],a:1,e:"Exemple : si i augmente de 1 à chaque tour jusqu'à N, la quantité N − i est un entier qui décroît strictement ; la boucle s'arrête quand elle atteint 0.",link:"a-preuve"}];
 
 /* ---------- pages ---------- */
-const feuille=`<div class="title-row"><h1>Ma feuille A4</h1><button class="btn pri" onclick="window.print()">Imprimer cette feuille</button></div>
-<p class="lead no-print">Une feuille A4 est autorisée au CC d'algo (tes camarades le confirment), et tu y écris ce que tu veux. Voici l'essentiel sur une page. Recopie-la à la main plutôt que de l'imprimer : la réécrire t'oblige à la reformuler, et c'est ça qui fait retenir.</p>
-<div class="a4">
-<div><h3>La forme</h3>${C(`FONCTION : f (E x : entier, E T : tableau d'entiers) : booléen
-SPÉCIFICATIONS : ce qu'on suppose, ce qu'on renvoie.
-Variable : cpt : entier
-DÉBUT
-    cpt ← 0
-    pour i de 0 à taille(T)-1 faire
-        si T[i] = x alors cpt ← cpt + 1 fin si;
-    fin pour;
-    tant que cond faire … fin tq;
-    Renvoyer cpt > 0
-FIN`)}<p>PROCÉDURE : pas de type de résultat. E entrée, S sortie, ES modifié. Indice de pour et paramètres : pas dans Variable. Renvoyer après la boucle, sauf recherche.</p></div>
-<div><h3>Expressions</h3><p>/ nombre, div quotient, mod reste, ^ puissance. et, ou paresseux. cond(a, b, c) : b et c même type. Erreur : mauvais nombre d'arguments, booléen dans un calcul, entier dans et/ou.</p><h3>Récursivité</h3><p>Cas de base sans appel + appel sur plus petit. Méthode : f(0) = … ; f(n) = … f(n−1) … ; puis cond.</p><p><b>Affichage</b> : calcule G(1), G(2), G(3) puis assemble dans l'ordre des instructions.</p><h3>Motifs</h3><p>Ligne i : nb d'espaces, nb d'étoiles en fonction de i, n. pour i [espaces] [étoiles] affRL() fin pour;</p></div>
-<div><h3>Tableaux</h3><p>Indices 0 à taille(T) − 1. 2D : T[i][j], lignes taille(T), colonnes taille(T[i]) (= taille(T[0])), deux pour imbriqués. Accumuler (0 ou 1 avant, mise à jour dedans, Renvoyer après). Tous : Renvoyer false dans la boucle, Renvoyer true après. Voisins : tester a ≥ 0 et a &lt; taille(G) avant G[a][b]. Nouveau tableau H pour la génération suivante.</p><h3>Dictionnaires</h3><p>D['clé'], pour k dans D faire, si k dans D alors.</p></div>
-<div><h3>Listes</h3><p>tête(L) élément, queue(L) liste, cons(x, L) ajout devant, estVide(L), pas de L[2]. 1 élément : estVide(queue(L)). Récursif : cond(estVide(L), base, … tête(L) … f(queue(L))). Itératif : M ← L ; tant que non estVide(M) … M ← queue(M) fin tq;. Garder l'ordre d'un tableau : parcourir de la fin, cons.</p><h3>Piles et files</h3><p>empiler(e, P), depiler(P) renvoie et enlève le sommet, estVide(P). Pas de P[i], pas de cons. Vider une pile dans une autre inverse l'ordre : inverser P = 3 transvasements. File : enfiler(e, F), defiler(F) (premier arrivé).</p><h3>Python</h3><p>pour i de a à b → for i in range(a, b+1). ← → =, = → ==, div → //, mod → %.</p></div>
-</div>`;
+const feuille=({sec})=>`<div class="title-row"><h1>Ma feuille à recopier</h1></div>
+<p class="lead">Pas d'imprimante : cette feuille est faite pour être recopiée à la main, en écrivant gros. Chaque ligne du modèle est une ligne de ta feuille (32 caractères au plus).</p>
+${sec(1,"Quel format",`<p>Ce n'est pas sûr. Tes camarades disent A5 ; les anciens sujets disent « feuille A4 autorisée » ; aucun mail ne le précise. Fais-la en <b>A5</b> : elle passe dans les deux cas. Une A5, c'est une feuille A4 pliée en deux, tenue en hauteur.</p><p>Recto seul ou recto-verso : pas sûr non plus. La face 1 suffit pour le CC. La face 2 va au verso si le verso est permis : demande-le avant d'écrire dessus, ou écris-la sur une deuxième feuille que tu ne sors que si c'est permis.</p>`)}
+${sec(2,"Face 1 : l'indispensable (24 lignes)",C(`FONCTION: f(E x: entier): entier
+SPÉCIFICATIONS: ce que f renvoie
+Variable: s: entier
+ (ni paramètres, ni i du pour)
+DÉBUT ... Renvoyer s FIN
+PROCÉDURE: ni type ni Renvoyer
+si c alors .. sinon .. fin si;
+pour i de a à b faire..fin pour;
+tant que c faire .. fin tq;
+cond(a,b,c) = b si a, sinon c
+ (b et c du même type)
+7 div 2=3  7 mod 2=1  7/2=3,5
+T: indices 0 à taille(T)-1
+somme: s←0 avant, Renvoyer après
+tous: Renvoyer false dans la
+ boucle, Renvoyer true après
+tête(L) queue(L) cons(x,L)
+estVide(L)
+1 seul élt: estVide(queue(L))
+f(L)=cond(estVide(L), base,
+   ..tête(L)..f(queue(L)))
+récursif: cas de base + appel
+ sur plus petit (n-1, queue)
+affiche: fais G(1),G(2),G(3)`,"txt"))}
+${sec(3,"Face 2 : si le verso est permis (23 lignes)",C(`NOUVEAU TABLEAU
+Variable: R: tableau de
+ taille(T) nombres
+pour i.. R[i] ← ..  Renvoyer R
+2D: T[i][j]  lignes: taille(T)
+ colonnes: taille(T[0])
+DICO: D['clé']
+ pour k dans D faire..fin pour;
+ si k dans D alors
+PILE: empiler(e,P) depiler(P)
+ dernier arrivé, 1er sorti
+FILE: enfiler(e,F) defiler(F)
+ 1er arrivé, 1er sorti
+MOTIF ligne i: nb d'espaces et
+ d'étoiles selon i et n, puis
+ passer à la ligne
+E entrée  S sortie  ES modifié
+true ou (5/0=1) vaut true
+LISTE avec une boucle:
+ M←L; tant que non estVide(M)
+ faire .. M←queue(M) fin tq;
+tableau→liste, même ordre:
+ de la fin, L←cons(T[i],L)`,"txt"))}
+${sec(4,"Comment la lire",`<p>« .. » remplace ce que tu écris toi-même. « f(L)=cond(…) » est le modèle d'une fonction récursive sur une liste : la valeur du cas de base, puis un calcul avec le premier élément et l'appel sur le reste. « affiche » : pour trouver ce qu'affiche une procédure récursive G, calcule d'abord G(1), G(2), G(3) dans l'ordre des instructions.</p><p>S'il te reste de la place, la page <a href="#/algo/p/aucasou">Au cas où</a> donne trois blocs sur les preuves et la complexité.</p>`)}`;
 const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></div><p class="lead">Le CC est sur papier. Ces étapes te font gagner les points de forme, même quand tu n'es pas sûr du fond.</p>
  ${sec(1,"Écrire un algorithme en 6 étapes",`<div class="recipe"><ol>
   <li><b>La signature.</b> FONCTION ou PROCÉDURE ? Les paramètres : E, S ou ES, nom, type. Le type du résultat (fonction seulement). <a href="#/c/a-pseudo">Fiche</a></li>
@@ -4866,16 +4899,16 @@ const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></di
   <tr><td>une liste dans l'ordre d'un tableau</td><td>pour i de taille(T)-1 à 0 par pas de -1 faire L ← cons(T[i], L) fin pour;</td></tr>
   <tr><td>une figure d'étoiles</td><td>ligne i : combien d'espaces, combien d'étoiles ; une boucle par morceau, affRL() à la fin de la ligne</td></tr></tbody></table></div>`)}
  ${sec(4,"Avant de rendre ta copie",`<div class="paper"><b>Pour chaque algorithme, vérifie :</b><ul><li>la signature complète (E/S, types, type du résultat pour une fonction, rien pour une procédure) ;</li><li>les spécifications ;</li><li>chaque variable déclarée et initialisée avant d'être utilisée ;</li><li>chaque si, pour, tant que fermé au bon endroit (fin si; fin pour; fin tq;) ;</li><li>dans un tant que, la variable du test change bien dans la boucle ;</li><li>les indices de 0 à taille(T) − 1 ;</li><li>le Renvoyer au bon endroit (après la boucle, sauf recherche) ;</li><li>en récursif : un cas de base, et un appel sur plus petit.</li></ul></div>`)}`;
-const aucasou=({sec})=>`<div class="title-row"><h1>Au cas où : preuves et complexité</h1></div><p class="lead">Faits en amphi, pas en TD. Les CC de 2022 et de 2024 avaient des questions de cours dessus ; je ne sais pas si ça tombe demain. La feuille A4 est autorisée : recopie ces blocs à la main, et tu pourras répondre.</p>
- ${sec(1,"À recopier sur ta feuille A4",`<div class="paper"><p><b>Preuve d'une boucle.</b> 1. Équations d'itération (vérité). 2. Invariant Inv<sub>i</sub> (hypothèse). 3. Récurrence : initialisation (i = 0), récurrence (Inv<sub>i−1</sub> vrai donne Inv<sub>i</sub> vrai, avec les équations), conclusion. 4. À la fin des itérations : la valeur renvoyée. Arrêt d'un tant que : une quantité entière décroît strictement à chaque itération (ou la variable du test part de …, augmente de …), le tant que s'arrête quand elle vaut … : nombre fini d'itérations, donc l'algorithme se termine.</p><p><b>Ordre de complexité.</b> T<sub>n</sub>/R<sub>n</sub> → a > 0 : θ. → 0 : o. → +∞ : ω. O = o ou θ. Ω = ω ou θ. Ordre : 1, log n, n, n log n, n², n³, 2<sup>n</sup>, n!. 1000000n³ = θ(n³).</p><p><b>Master theorem.</b> T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>) : O(n<sup>d</sup>) si b<sup>d</sup> > a ; O(n<sup>d</sup> log n) si b<sup>d</sup> = a ; O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a. a : nombre d'appels, b : diviseur de la taille, n<sup>d</sup> : opérations hors appels. Sert à estimer la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</p></div>`)}
+const aucasou=({sec})=>`<div class="title-row"><h1>Au cas où : preuves et complexité</h1></div><p class="lead">Faits en amphi, pas en TD. Les CC de 2022 et de 2024 avaient des questions de cours dessus ; je ne sais pas si ça tombe demain. Une feuille est autorisée (voir « Ma feuille à recopier ») : s'il t'y reste de la place, recopie ces blocs à la main, et tu pourras répondre.</p>
+ ${sec(1,"À recopier s'il te reste de la place",`<div class="paper"><p><b>Preuve d'une boucle.</b> 1. Équations d'itération (vérité). 2. Invariant Inv<sub>i</sub> (hypothèse). 3. Récurrence : initialisation (i = 0), récurrence (Inv<sub>i−1</sub> vrai donne Inv<sub>i</sub> vrai, avec les équations), conclusion. 4. À la fin des itérations : la valeur renvoyée. Arrêt d'un tant que : une quantité entière décroît strictement à chaque itération (ou la variable du test part de …, augmente de …), le tant que s'arrête quand elle vaut … : nombre fini d'itérations, donc l'algorithme se termine.</p><p><b>Ordre de complexité.</b> T<sub>n</sub>/R<sub>n</sub> → a > 0 : θ. → 0 : o. → +∞ : ω. O = o ou θ. Ω = ω ou θ. Ordre : 1, log n, n, n log n, n², n³, 2<sup>n</sup>, n!. 1000000n³ = θ(n³).</p><p><b>Master theorem.</b> T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>) : O(n<sup>d</sup>) si b<sup>d</sup> > a ; O(n<sup>d</sup> log n) si b<sup>d</sup> = a ; O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a. a : nombre d'appels, b : diviseur de la taille, n<sup>d</sup> : opérations hors appels. Sert à estimer la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</p></div>`)}
  ${sec(2,"Les questions déjà tombées, avec la réponse du corrigé officiel",`<ul><li><b>« Dans une preuve de validité d'un algorithme itératif, à quoi servent les équations de récurrence ? »</b> (2024 ; cette année le cours dit « équations d'itération »)<br>Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables. Elles permettent de montrer qu'un invariant est héréditaire, c'est à dire que s'il est vrai à l'itération n, alors il est vrai à l'itération n+1.</li><li><b>« Un algorithme de complexité Θ(n³) peut-il être un million de fois plus lent qu'un autre algorithme de complexité Θ(n³) ? Justifier. »</b> (2024)<br>Oui, si par exemple le premier fait 1000000n³ opérations et le deuxième n³ opérations.</li><li><b>« À quoi sert le master theorem ? »</b> (2022)<br>Il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</li><li><b>QCM de 2022</b> : « si a<sub>n</sub> = θ(b<sub>n</sub>) alors a<sub>n</sub> = O(b<sub>n</sub>) » est vrai. Faux : « si a = o(b) alors a = Ω(b) », « si a = Ω(b) alors a = θ(b) », « si a = O(b) alors a = Ω(b) ».</li><li><b>« Prouver que l'algorithme se termine »</b> (2022, boucle « Tant que i&lt;N » avec i ← i+1)<br>i est initialisé à 0 et augmente de 1 à chaque itération. Après N itérations, i = N donc la boucle se termine et l'algorithme aussi.</li><li><b>« En admettant que cet invariant soit correct, expliquez pourquoi l'algorithme renvoie le bon résultat »</b> (2022, invariant k<sub>i</sub> = (i + 1)²)<br>À la fin du TantQue, i = N donc l'algorithme renvoie k<sub>N</sub> = (N + 1)².</li></ul>`)}
  ${sec(3,"Pour comprendre, si tu as le temps",`<p>Deux leçons : <a href="#/lecon/algo/a-amphi-preuve">prouver une boucle</a> (avec l'exercice de 2022) et <a href="#/lecon/algo/a-amphi-complexite">complexité et master theorem</a>.</p>`)}`;
 const infos=({sec,exam})=>`<div class="title-row"><h1>Le CC1 d'algorithmique en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Jeudi 12 novembre. L'heure n'est pas sur Moodle : je l'ai placé à 15h, sur ton premier créneau de TD d'algo. Corrige-la dans « Examens et coefficients » si besoin. Sur papier.</p>`)}
  ${sec(2,"Le poids",`<p>Contrôle continu intégral : 3 CC à 32 %, 34 % et 34 %, sans rattrapage. Coefficient 5 dans le semestre : c'est l'une des matières qui comptent le plus.</p>`)}
- ${sec(3,"Le programme",`<ul><li>D'après tes camarades : « tout ce qu'on a fait », jusqu'au TD 5 et au casse-tête des piles du cours.</li><li>TD 1 (expressions, cond, motifs), TD 2 (récursivité), TD 3 (tableaux 1D), TD 4 (tableaux 2D, jusqu'à l'exercice 15 compris), TD 5 (listes). TP : le jeu de la vie et le pendu.</li><li>Cours : jusqu'aux piles et aux files (p. 43 à 51).</li><li><b>Appris le 11 novembre</b> : le prof a déposé sur Moodle son cours annoté jusqu'à la diapo 86. La validité (prouver une boucle) et la complexité (θ, O, master theorem) ont donc été faites en amphi, mais pas en TD. Les CC de 2022 et de 2024 avaient des questions de cours sur ces chapitres, et celui de 2022 un exercice de 5 points. <b>Je ne sais pas si ça tombe cette année</b> (d'après toi, la complexité n'est pas au programme du CC1) : la page <a href="#/p/aucasou">Au cas où</a> donne 3 blocs à recopier sur ta feuille A4 (15 minutes), et deux leçons les expliquent si tu as le temps.</li><li>Pas encore vu en amphi : recherche dichotomique, tris. Ces fiches sont rangées à part.</li></ul>`)}
+ ${sec(3,"Le programme",`<ul><li>D'après tes camarades : « tout ce qu'on a fait », jusqu'au TD 5 et au casse-tête des piles du cours.</li><li>TD 1 (expressions, cond, motifs), TD 2 (récursivité), TD 3 (tableaux 1D), TD 4 (tableaux 2D, jusqu'à l'exercice 15 compris), TD 5 (listes). TP : le jeu de la vie et le pendu.</li><li>Cours : jusqu'aux piles et aux files (p. 43 à 51).</li><li><b>Appris le 11 novembre</b> : le prof a déposé sur Moodle son cours annoté jusqu'à la diapo 86. La validité (prouver une boucle) et la complexité (θ, O, master theorem) ont donc été faites en amphi, mais pas en TD. Les CC de 2022 et de 2024 avaient des questions de cours sur ces chapitres, et celui de 2022 un exercice de 5 points. <b>Je ne sais pas si ça tombe cette année</b> (d'après toi, la complexité n'est pas au programme du CC1) : la page <a href="#/p/aucasou">Au cas où</a> donne 3 blocs à recopier sur ta feuille s'il y reste de la place (15 minutes), et deux leçons les expliquent si tu as le temps.</li><li>Pas encore vu en amphi : recherche dichotomique, tris. Ces fiches sont rangées à part.</li></ul>`)}
  ${sec(4,"Le conseil de tes camarades",`<p>« Apprends bien comment écrire du pseudo-code : ne pas oublier la signature, et mettre fin pour, fin tant que au bon endroit. » Commence par la fiche <a href="#/c/a-pseudo">Écrire un algorithme sans faute</a> et la page <a href="#/p/recettes">Recettes pas à pas</a>.</p>`)}
- ${sec(5,"Documents",`<p>Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment). Aucun matériel électronique. Prépare-la avec la page « Ma feuille A4 ».</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
+ ${sec(5,"Documents",`<p>Une feuille écrite comme tu veux. Son format n'est pas sûr : A5 d'après tes camarades, A4 sur les anciens sujets, et aucun mail ne le dit. Une A5 passe dans les deux cas. Aucun matériel électronique. Prépare-la avec la page « Ma feuille à recopier ».</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 /* ================== CC2 et CC3 (dates pas encore annoncées) ==================
    MCC 2026-2027 : 3 CC de 1 h (34 %, 34 %, 32 %), pas d'examen en janvier. Dates supposées (choix de l'utilisateur) :
@@ -5449,13 +5482,13 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,covers:["cc1","cc1x"],unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
         {id:"cc2",label:"CC2",day:"2026-12-03",start:"15:00",end:"16:00",place:"salle de TD (36.310 ce jour-là dans Prose)",dur:"1 h",share:0.34,covers:["cc1","cc2"],unsure:"Date supposée (créneau de ton TD) : ni Prose ni les mails ne l'annoncent. Programme supposé : preuves et complexité (TD 6 à 8).",prog:"Supposé : preuves de validité (invariants, terminaison) et complexité (O, Ω, Θ, compter les opérations, équations de récurrence, master theorem), TD 6 à 8, plus ce qui précède."},
         {id:"cc3",label:"CC3",day:"2026-12-10",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.34,covers:["cc1","cc2","cc3"],unsure:"Date supposée (dernier TD d'Algo dans Prose) : ni Prose ni les mails ne l'annoncent. Programme supposé : recherche et tris (TD 9 et 10).",prog:"Supposé : recherche séquentielle et dichotomique, tris (sélection, insertion, bulles, par valeurs) avec leur complexité et leur preuve, TD 9 et 10, plus ce qui précède."}],
- docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
+ docs:"une feuille écrite comme tu veux (A5 d'après tes camarades, A4 sur les anciens sujets : pas confirmé)",examMinutes:60,examMorning:"Relis ta feuille, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Preuves et complexité : faites en amphi seulement, deux leçons « au cas où ». Pas de recherche dichotomique ni de tris.",
  chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",6:"6. Preuves et complexité (CC2)",7:"7. Recherche et tris (CC3)"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD, ex.",
  tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne. Pour le CC2 : les TD 6 à 8 en entier (exercices 24 à 36), corrigés avec la méthode de preuve et le comptage du cours. Pour le CC3 : les TD 9 et 10 en entier (exercices 37 à 43).",
  annIntro:"Le CC PEIP 2023 a exactement le programme de cette année : ses quatre sujets sont là (corrigés par moi). Le sujet 1 sert d'examen blanc ; prends dans les trois autres les exercices du type que tu rates. Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits). En bas de la liste, pour les CC2 et CC3 : le CC de 2022 et l'examen de janvier 2023 (corrigés officiels), l'examen PEIP de mai 2023 (corrigés écrits par moi).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
- pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"aucasou",t:"Au cas où : preuves et complexité",html:aucasou},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
+ pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"aucasou",t:"Au cas où : preuves et complexité",html:aucasou},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille à recopier",html:feuille}],
  /* thèmes du CC1 et leur poids moyen dans les sujets de 2022, PEIP 2023 et 2024 (sur 20).
     self0 : ce qu'il a dit le 11/11 (« presque tout juste » sur l'entraînement) ; il peut le changer dans « Où j'en suis ». */
  themes:[
@@ -5478,8 +5511,8 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
   {id:"fusion",ex:"cc3",t:"Tri à bulles et tri fusion",pts:5,src:"estimé : 3 points à l'examen PEIP de 2023",les:["a3-fusion"],fiches:["a-tri-bulles","a-tri-fusion"]},
   {id:"valeurs",ex:"cc3",t:"Tri par valeurs et borne inférieure d'un tri",pts:3,src:"5 points en janvier 2023",les:["a3-valeurs"],fiches:["a-tri-valeurs"]}],
  tasks:[
- {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
- {id:"amphia4",ex:"cc1x",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille A4",min:15,p:2,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille A4, recopier suffit pour répondre."},
+ {id:"feuille",t:"Recopier ta feuille à la main (A5, en écrivant gros) et la relire",min:30,p:1,manual:true,links:[["p/feuille","Ma feuille à recopier"]],why:"Pas d'imprimante : la page donne la feuille ligne par ligne. Format A5 d'après tes camarades (pas confirmé) : une A5 passe aussi si c'est A4."},
+ {id:"amphia4",ex:"cc1x",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille, s'il reste de la place",min:15,p:2,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille, recopier suffit pour répondre."},
  {id:"peip",t:"Examen blanc : CC PEIP 2023 en 1 h, puis correction",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus proche de ton programme."},
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:2,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
  {id:"peip2",t:"CC PEIP 2023, sujets 2, 3 et 4 : les exercices du type que tu rates",min:60,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Trois autres sujets au format exact du tien : 15 exercices corrigés."},
@@ -6194,27 +6227,87 @@ const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></di
   <tr><td>les diviseurs de n jusqu'à i</td><td><code>if i = 0 then …</code></td><td><code>if n mod i = 0 then … f n (i - 1) else f n (i - 1)</code></td></tr></tbody></table></div>`)}
  ${sec(3,"Trouver un type ou une valeur",`<div class="recipe"><ol><li>Regarde les opérateurs : + - * / mod veulent des int, +. -. *. /. des float, && || not des bool, ^ des string.</li><li>Les deux branches d'un if ont le même type ; la condition est un bool.</li><li>À droite de ::, une liste ; à gauche, un élément du même type que ceux de la liste.</li><li>Calcule la valeur étape par étape, en écrivant chaque résultat intermédiaire.</li></ol><p>Entraîne-toi avec <a href="#/p/types">l'entraînement types et valeurs</a>.</p></div>`)}
  ${sec(4,"Avant de rendre ta copie",`<div class="paper"><b>Pour chaque fonction, vérifie :</b><ul><li>le mot <code>rec</code> si la fonction s'appelle elle-même ;</li><li>la signature écrite (et cohérente : int list, pas int) ;</li><li>la forme curryfiée dès qu'il y a deux paramètres ;</li><li>des parenthèses autour de chaque argument calculé : <code>f (List.tl li)</code>, <code>f (n - 1)</code> ;</li><li>un <code>else</code> pour chaque <code>if</code>, et le même type dans les deux branches ;</li><li>pas de List.hd sans avoir testé que la liste n'est pas vide ;</li><li>les opérateurs à point pour les float : <code>+.</code>, <code>*.</code>.</li></ul></div>`)}`;
-const feuille=`<div class="title-row"><h1>Ma feuille A4</h1><button class="btn pri" onclick="window.print()">Imprimer cette feuille</button></div>
-<p class="lead no-print">Une feuille A4 est autorisée au contrôle (tes camarades le confirment). Voici l'essentiel sur une page. Recopie-la à la main : la réécrire t'oblige à la reformuler, et c'est ça qui fait retenir.</p>
-<div class="a4">
-<div><h3>Types et opérateurs</h3><p>int : + - * / (division entière) mod. float : +. -. *. /. (avec un point), 3.0 ou 3. ; float_of_int, int_of_float (tronque). bool : && || not. string : ^. Comparaisons = &lt;&gt; &lt; &gt; &lt;= &gt;= entre deux valeurs du même type. Jamais de mélange int/float.</p><p><b>if c then a else b</b> : c bool, a et b même type, else obligatoire. <b>let x = e1 in e2</b> ; avec <b>and</b>, les définitions ne se voient pas entre elles.</p></div>
-<div><h3>Fonctions et signatures</h3>${M(`let f : int -> int = function n -> 2 * n + 1
-let g : int * int -> bool = function (x, y) -> x < y      (* couple *)
-let h : int -> int -> int = fun a b -> a + b             (* curryfiée *)
-h 2 3        g (2, 3)        f (n - 1)`)}<p>Signature : types des paramètres puis du résultat. Une flèche par paramètre (curryfiée), une étoile dans un couple. Deux paramètres ou plus : forme curryfiée.</p></div>
-<div><h3>Récursivité</h3>${M(`let rec f : int -> int = function
-  n -> if n = 0 then (cas de base) else ... f (n - 1) ...
-let rec chiffres n = if n < 10 then ... else ... n mod 10 ... (n / 10)
-let rec div n i = if i = 0 then ... else if n mod i = 0 then ... else ...`)}<p>rec obligatoire. f (n - 1) entre parenthèses. Somme, compte : base 0. Produit : base 1.</p></div>
-<div><h3>Listes</h3>${M(`let rec g : int list -> int = function
-  li -> if li = [] then (base)
-        else ... List.hd li ... g (List.tl li) ...`)}<p>[2; 3] avec des points-virgules. x :: li ajoute devant ; li @ [x] à la fin. Somme : base 0, +. Tous : base true, &&. Il existe : base false, ||. Garder : List.hd li :: g (List.tl li), sinon g (List.tl li). Liste non vide (max, dernier) : if List.tl li = [] then List.hd li.</p><p><b>Au cas où (match)</b> : match li with [] -> … | x :: r -> … : x = List.hd li, r = List.tl li.</p></div>
-</div>`;
+const feuille=({sec})=>`<div class="title-row"><h1>Ma feuille à recopier</h1></div>
+<p class="lead">Pas d'imprimante : cette feuille est faite pour être recopiée à la main, en écrivant gros. Chaque ligne du modèle est une ligne de ta feuille.</p>
+${sec(1,"Quel format",`<p>Le mail du prof (5 novembre) le dit : « Le seul document autorisé est une feuille A4 recto-verso. » Donc une feuille <b>A4</b>, écrite des deux côtés, tenue en hauteur. Ce n'est pas A5 : tu as deux fois plus de place qu'en algo.</p>`)}
+${sec(2,"Recto : les règles (36 lignes)",W.code(`TYPES
+int: + - * / mod      7/2 = 3
+float: +. -. *. /.    2. et 3.5
+jamais int et float mélangés
+float_of_int 3 = 3.   int_of_float 2.9 = 2
+bool: && || not     = <> < > <= >=
+string: "ab" ^ "c"
+if c then a else b : c bool, a b même type
+let a = 1 and b = 2 in ..  (b ne voit pas a)
+FONCTIONS
+function x -> ..   1 paramètre ou 1 couple
+fun x y -> ..      plusieurs paramètres
+let f : int -> int = function n -> 2*n + 1
+let g : int * int -> bool =
+  function (x, y) -> x < y       g (2, 3)
+let h : int -> int -> int =
+  fun a b -> a + b               h 2 3
+signature: types paramètres -> résultat
+RÉCURSIVITÉ  (let rec)
+let rec f : int -> int = function n ->
+  if n = 0 then base else .. f (n - 1) ..
+f (n - 1) avec parenthèses
+base: somme 0, produit 1, liste [],
+  tous true, existe false
+chiffres: n mod 10 dernier chiffre,
+  n / 10 le reste, base n < 10
+LISTES  [2; 3; 5]   [] vide
+x :: li devant    li @ [x] à la fin
+List.hd li premier   List.tl li le reste
+let rec g : int list -> int = function li ->
+  if li = [] then base
+  else .. List.hd li .. g (List.tl li) ..
+garder: List.hd li :: g (List.tl li)
+enlever: g (List.tl li)
+tous: test && g (..)  existe: test || g (..)
+liste non vide: base List.tl li = []`,"txt"))}
+${sec(3,"Verso : des modèles complets (36 lignes)",W.code(`MODÈLES (partiel 2021)
+let memeParite : int * int -> bool =
+  function (a, b) -> a mod 2 = b mod 2
+let rec queDesUn : int -> bool = function n ->
+  if n < 10 then n = 1
+  else n mod 10 = 1 && queDesUn (n / 10)
+(* produit des diviseurs de n qui sont <= i *)
+let rec prodDiv : int -> int -> int = fun n i ->
+  if i = 0 then 1
+  else if n mod i = 0 then i * prodDiv n (i - 1)
+  else prodDiv n (i - 1)
+let rec somElem : int list -> int =
+  function li -> if li = [] then 0
+  else List.hd li + somElem (List.tl li)
+let rec liPairs : int list -> int list =
+  function li -> if li = [] then []
+  else if List.hd li mod 2 = 0
+  then List.hd li :: liPairs (List.tl li)
+  else liPairs (List.tl li)
+(* les n premiers éléments de li *)
+let rec prefLong : int list -> int -> int list =
+  fun li n -> if li = [] || n = 0 then []
+  else List.hd li ::
+       prefLong (List.tl li) (n - 1)
+TYPE ET VALEUR
+(8/3) :: (8 mod 3) :: []    int list  [2; 2]
+List.hd [3.5; 1.] > 2.      bool  true
+3 * 4.     erreur: int et float
+if x then y else 3 : int (x bool, y int)
+function (x, y) -> if y then x+1 else 2*x
+     int * bool -> int
+PIÈGES
+oublier rec ; f n - 1 sans parenthèses
+[2, 3] = un seul élément (un couple)
+if sans else ; = pour comparer (pas ==)
+2 paramètres ou plus : curryfiée (fun)`,"txt"))}
+${sec(4,"Comment la lire",`<p>« .. » remplace ce que tu écris toi-même, « base » la valeur du cas de base. Les modèles du verso sont les fonctions du partiel de 2021, avec mes corrigés : le jour du contrôle, cherche celui qui ressemble le plus à la question (un test sur les chiffres : queDesUn ; un calcul sur les diviseurs : prodDiv ; une somme sur une liste : somElem ; une liste à fabriquer : liPairs ou prefLong) et adapte-le.</p>`)}`;
 const types=({sec})=>`<div class="title-row"><h1>Entraînement : types et valeurs</h1></div><p class="lead">27 expressions tirées du TD et du partiel. Choisis le type, lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : c'est 3 points faciles au contrôle.</p><div id="drill"></div>`;
 const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation fonctionnelle en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Vendredi 13 novembre à 9h45, d'après le mail de David Delahaye du 5 novembre. Amphi 5.01 si ton nom de famille commence par une lettre de A à M, amphi 5.03 de N à Z. L'épreuve dure 1 h (1 h 20 avec un tiers-temps).</p>`)}
  ${sec(2,"Le poids",`<p>Note finale = 0,30 × contrôle écrit + 0,03 × TP noté + 0,67 × examen de janvier. Coefficient 5 dans le semestre.</p>`)}
- ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Le seul document autorisé est une feuille A4 recto-verso, écrite comme tu veux : prépare-la avec la page « Ma feuille A4 ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme (mail du prof du 5/11) : tout ce qui a été vu jusqu'aux listes incluses, <b>sans le filtrage</b> (TD ex. 1 à 31). Pas de polymorphisme.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Écris les fonctions sur les listes avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, comme partout sur le site.</li></ul>`)}
+ ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Le seul document autorisé est une feuille A4 recto-verso, écrite comme tu veux : prépare-la avec la page « Ma feuille à recopier ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme (mail du prof du 5/11) : tout ce qui a été vu jusqu'aux listes incluses, <b>sans le filtrage</b> (TD ex. 1 à 31). Pas de polymorphisme.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Écris les fonctions sur les listes avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, comme partout sur le site.</li></ul>`)}
  ${sec(4,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["pf/cours.pdf","Cours complet"],["pf/td.pdf","Feuille de TD"],["pf/partiel_oct2021.pdf","Partiel 2021"],["pf/exam_jan2024_sujet.pdf","Examen 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 /* ================== examen de janvier (CT, 67 % de la note, 2 h, une feuille A4 recto-verso) ==================
@@ -6712,7 +6805,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
  annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h ; en 2021 sans document, cette année avec ta feuille A4). Le sujet blanc n° 2 est inventé par moi sur le même modèle, pour t'entraîner une deuxième fois. J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
- pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille A4",html:feuille}],
+ pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille à recopier",html:feuille}],
  /* thèmes du CC et leur poids dans le partiel d'octobre 2021 (sur 20) */
  themes:[
   {id:"rec",t:"Récursivité sur les entiers : chiffres, diviseurs",pts:7,src:"queDesUn et prodDiv au partiel 2021",les:["p-rec","p-chiffres"],fiches:["pf-rec","pf-rec-ex"]},
@@ -6728,7 +6821,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
   {id:"curry",ex:"ct",t:"Curryfication, fun et polymorphisme",pts:0.5,src:"jamais une question à part",les:["p2-curry","p2-poly"],fiches:["pf-curry","pf-poly"]},
   {id:"record",ex:"ct",t:"Enregistrements",pts:0.5,src:"jamais une question à part",les:["p2-record"],fiches:["pf-record"]}],
  tasks:[
- {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-ocaml.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"Autorisée (le prof de CM l'a dit) : imprimée ou manuscrite."},
+ {id:"feuille",t:"Recopier à la main ta feuille A4 recto-verso et la relire",min:30,p:1,manual:true,links:[["p/feuille","Ma feuille à recopier"]],why:"Mail du prof (5/11) : « le seul document autorisé est une feuille A4 recto-verso ». Pas d'imprimante : la page la donne ligne par ligne."},
  {id:"drill",t:"Entraînement « types et valeurs » sans faute",min:15,p:1,manual:true,links:[["p/types","Entraînement"]]},
  {id:"p21",t:"Examen blanc : partiel 2021 en 1 h, puis correction",min:65,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Exactement le format de ton contrôle."},
  {id:"tdtypes",t:"TD sur les types et les signatures (exercices 2, 5 et 6)",min:30,p:1,td:["2","5","6"],links:[["td","Exercices de TD"]],why:"Ils ressemblent aux questions 1 et 2 du partiel 2021 (6 points)."},
@@ -6745,7 +6838,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  {id:"ctblanc1",ex:"ct",t:"Examen blanc : janvier 2024 en 2 h, puis correction",min:130,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Exceptions, type nombre, fold_right, ensembles : la forme exacte de l'examen."},
  {id:"ctblanc2",ex:"ct",t:"Annale de janvier 2022 en 2 h, puis correction",min:130,p:1,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"ctblanc3",ex:"ct",t:"Annale de juin 2022 en 2 h",min:120,p:2,manual:true,links:[["annales","Annales et chrono"]]},
- {id:"ctfeuille",ex:"ct",t:"Compléter ta feuille A4 pour janvier (types somme, exceptions, itérateurs)",min:30,p:1,manual:true,links:[["p/feuille","Ma feuille A4"]]},
+ {id:"ctfeuille",ex:"ct",t:"Compléter ta feuille A4 pour janvier (types somme, exceptions, itérateurs)",min:30,p:1,manual:true,links:[["p/feuille","Ma feuille à recopier"]]},
  {id:"ctquiz",ex:"ct",t:"Quiz de cours, questions de janvier comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
  {id:"ctreview",ex:"ct",t:"Veille de l'examen : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 /* la page d'entraînement monte l'exercice interactif */
@@ -10778,7 +10871,7 @@ defiler(F)                         ERREUR`)}<ul><li>enfiler(defiler(F),F) : defi
 /* Validité et complexité : faites en amphi (cours annoté déposé le 9/11, diapos 52 à 86), pas en TD.
    Les CC de 2022 et 2024 avaient des questions dessus : deux leçons « au cas où », après l'examen blanc. */
 {id:"a-amphi-preuve",t:"Au cas où : prouver une boucle (vu en amphi)",min:12,goal:"Répondre à une question de cours ou à un exercice sur la validité d'un algorithme, comme aux CC de 2022 et 2024. Fait en amphi, pas en TD : je ne sais pas si ça tombe.",steps:[
- L("Pourquoi cette leçon",`<ul><li>Le prof a déposé sur Moodle son cours annoté jusqu'à la diapo 86 : la validité (prouver qu'un algorithme est juste) et la complexité (compter ses opérations) ont été faites en amphi. Les TD 6 à 8 sur ces chapitres ne sont pas faits.</li><li>Le mail de ton chargé de TD, le 5 novembre : le CC « portera sur les notions abordées jusqu'à présent ».</li><li>CC d'octobre 2022 : deux questions de cours sur ces chapitres, et un exercice de 5 points (trace, arrêt, invariant). CC1 de novembre 2024 : deux questions de cours sur ces chapitres.</li></ul><p><b>Je ne sais pas si ça tombe demain.</b> Cette leçon et la suivante te donnent de quoi répondre : les mots du cours, les réponses des corrigés officiels, et l'exercice de 2022. Si tu manques de temps, recopie seulement les 3 blocs de la page « Au cas où » sur ta feuille A4 (15 minutes).</p>`),
+ L("Pourquoi cette leçon",`<ul><li>Le prof a déposé sur Moodle son cours annoté jusqu'à la diapo 86 : la validité (prouver qu'un algorithme est juste) et la complexité (compter ses opérations) ont été faites en amphi. Les TD 6 à 8 sur ces chapitres ne sont pas faits.</li><li>Le mail de ton chargé de TD, le 5 novembre : le CC « portera sur les notions abordées jusqu'à présent ».</li><li>CC d'octobre 2022 : deux questions de cours sur ces chapitres, et un exercice de 5 points (trace, arrêt, invariant). CC1 de novembre 2024 : deux questions de cours sur ces chapitres.</li></ul><p><b>Je ne sais pas si ça tombe demain.</b> Cette leçon et la suivante te donnent de quoi répondre : les mots du cours, les réponses des corrigés officiels, et l'exercice de 2022. Si tu manques de temps, recopie seulement les 3 blocs de la page « Au cas où » sur ta feuille, s'il y reste de la place (15 minutes).</p>`),
  L("Les mots du cours",`<p>Une <b>itération</b>, c'est un tour de boucle. Un algorithme <b>itératif</b> est un algorithme qui contient une boucle.</p><p><b>Un algorithme est valide s'il résout le problème qu'il est censé résoudre</b> (diapo 53).</p><p>Vocabulaire (diapo 54) :</p><ul><li><b>équation d'itération</b> : égalité reliant les valeurs des variables d'une itération à la suivante ; ce sera notre <b>vérité</b> ;</li><li><b>invariant de boucle</b> : propriété censée être vraie au début des itérations et à la fin de chaque itération ; ce sera notre <b>hypothèse à prouver</b>.</li></ul><p><b>Notation.</b> var<sub>i</sub> : valeur de var à la fin de l'itération n°i. Si i commence à 1, on ajoute la valeur i = 0 pour le début des itérations.</p><p><b>Méthode</b> (diapo 56) :</p><ol><li>« lire » les équations d'itération sur l'algorithme (vérité) ;</li><li>chercher un invariant de boucle (hypothèse) ;</li><li>prouver l'hypothèse par récurrence en utilisant la vérité : l'hypothèse devient une vérité ;</li><li>écrire cette vérité à la fin des itérations pour prouver l'algorithme.</li></ol><p>Le sujet de 2024 appelait les équations d'itération « équations de récurrence ».</p>`),
  L("L'exemple du cours : F1 calcule n!",`<p>n! (« factorielle de n ») = 1 × 2 × … × n, et 0! = 1.</p>${C(`FONCTION : F1 (E n : entier) : entier
 SPÉCIFICATIONS : Calcule n! avec n ∈ ℕ
@@ -10859,7 +10952,7 @@ DÉBUT
     fin si;
 FIN`}),
  P("Cours, diapo 79 : trouver l'ordre de complexité, sur papier",`<p>Trouver l'ordre de complexité, c'est-à-dire la suite de référence équivalente à T<sub>n</sub> :</p><ol><li>T<sub>n</sub> = 3n³ − 5n + 2</li><li>T<sub>n</sub> = 2<sup>n+1</sup> − 8n³</li><li>T<sub>n</sub> = 3n log(n²) + 5</li><li>T<sub>n</sub> = 2T<sub>n−1</sub></li><li>T<sub>n</sub> = T<sub>n−1</sub> + n</li><li>T<sub>n</sub> = 3n + 1 si n est pair et T<sub>n</sub> = 2n si n est impair</li></ol><p>Rappel : log(n²) = 2 log(n), et 1 + 2 + … + n = n(n + 1)/2.</p>`,`<p><b>Réponses écrites par le prof en amphi.</b></p><ol><li>T<sub>n</sub> = θ(n³).</li><li>2<sup>n+1</sup> = 2 × 2<sup>n</sup> : T<sub>n</sub> = θ(2<sup>n</sup>).</li><li>log(n²) = 2 log n, donc T<sub>n</sub> ≈ 6n log n : T<sub>n</sub> = θ(n log n).</li><li>Avec T<sub>0</sub> = 1 : T<sub>n</sub> = 2 × 2 × 2 × … × T<sub>0</sub>, avec n fois le facteur 2, soit 2<sup>n</sup> : T<sub>n</sub> = θ(2<sup>n</sup>).</li><li>T<sub>n</sub> = n + (n − 1) + (n − 2) + … + 1 + T<sub>0</sub> = n(n + 1)/2 + T<sub>0</sub> = ½n² + ½n + T<sub>0</sub> ∈ θ(n²).</li><li>3n + 1 = θ(n) et 2n = θ(n) : T<sub>n</sub> = θ(n).</li></ol><p><b>Pourquoi</b> (mes explications). On garde le terme qui grandit le plus vite et on oublie sa constante. 1 : T<sub>n</sub>/n³ tend vers 3. 2 : 8n³ est strictement dominée par 2<sup>n</sup>. 6 : T<sub>n</sub>/n reste entre 2 et 4, deux nombres strictement positifs, même s'il n'a pas de limite.</p>`,["Une suite de référence pour chaque ligne, sans constante devant","Ligne 3 : log(n²) = 2 log n","Lignes 4 et 5 : la suite écrite en fonction de n avant de conclure","Ligne 6 : θ(n), même sans limite"],7),
- L("À ajouter sur ta feuille A4",`<p>Ta feuille A4 imprimée est pleine. Recopie ces trois blocs à la main, dans une marge ou sur un coin :</p><div class="paper"><p><b>Preuve d'une boucle.</b> 1. Équations d'itération (vérité). 2. Invariant Inv<sub>i</sub> (hypothèse). 3. Récurrence : initialisation (i = 0), récurrence (Inv<sub>i−1</sub> vrai donne Inv<sub>i</sub> vrai, avec les équations), conclusion. 4. À la fin des itérations : la valeur renvoyée. Arrêt d'un tant que : une quantité entière décroît strictement à chaque itération (ou la variable du test part de …, augmente de …), le tant que s'arrête quand elle vaut … : nombre fini d'itérations, donc l'algorithme se termine.</p><p><b>Ordre de complexité.</b> T<sub>n</sub>/R<sub>n</sub> → a > 0 : θ. → 0 : o. → +∞ : ω. O = o ou θ. Ω = ω ou θ. Ordre : 1, log n, n, n log n, n², n³, 2<sup>n</sup>, n!. 1000000n³ = θ(n³).</p><p><b>Master theorem.</b> T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>) : O(n<sup>d</sup>) si b<sup>d</sup> > a ; O(n<sup>d</sup> log n) si b<sup>d</sup> = a ; O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a. a : nombre d'appels, b : diviseur de la taille, n<sup>d</sup> : opérations hors appels. Sert à estimer la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</p></div>`),
+ L("À ajouter sur ta feuille A4",`<p>S'il reste de la place sur ta feuille, recopie ces trois blocs à la main :</p><div class="paper"><p><b>Preuve d'une boucle.</b> 1. Équations d'itération (vérité). 2. Invariant Inv<sub>i</sub> (hypothèse). 3. Récurrence : initialisation (i = 0), récurrence (Inv<sub>i−1</sub> vrai donne Inv<sub>i</sub> vrai, avec les équations), conclusion. 4. À la fin des itérations : la valeur renvoyée. Arrêt d'un tant que : une quantité entière décroît strictement à chaque itération (ou la variable du test part de …, augmente de …), le tant que s'arrête quand elle vaut … : nombre fini d'itérations, donc l'algorithme se termine.</p><p><b>Ordre de complexité.</b> T<sub>n</sub>/R<sub>n</sub> → a > 0 : θ. → 0 : o. → +∞ : ω. O = o ou θ. Ω = ω ou θ. Ordre : 1, log n, n, n log n, n², n³, 2<sup>n</sup>, n!. 1000000n³ = θ(n³).</p><p><b>Master theorem.</b> T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>) : O(n<sup>d</sup>) si b<sup>d</sup> > a ; O(n<sup>d</sup> log n) si b<sup>d</sup> = a ; O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a. a : nombre d'appels, b : diviseur de la taille, n<sup>d</sup> : opérations hors appels. Sert à estimer la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</p></div>`),
  K("Un algorithme en θ(n³) peut-il être un million de fois plus lent qu'un autre en θ(n³) ?","Oui, si par exemple le premier fait 1000000n³ opérations et le deuxième n³ opérations. (Corrigé officiel du CC1 2024.)"),
  K("À quoi sert le master theorem ?","Il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel. (Corrigé officiel du CC 2022.)"),
  K("Que fait le rapport T<sub>n</sub>/R<sub>n</sub> quand T<sub>n</sub> = θ(R<sub>n</sub>) ? Quand T<sub>n</sub> = o(R<sub>n</sub>) ? Quand T<sub>n</sub> = ω(R<sub>n</sub>) ?","θ : il reste entre deux nombres strictement positifs (par exemple il tend vers a > 0). o : il tend vers 0. ω : il tend vers +∞. O = o ou θ ; Ω = ω ou θ."),
@@ -13608,7 +13701,7 @@ algo:{
   "Compter les opérations":`<p>Pour savoir si un algorithme est rapide, on ne le chronomètre pas : on compte ses opérations, en fonction de la taille n de ce qu'on lui donne.</p><p>Exemple : F1 fait une affectation, puis deux opérations à chacun de ses n tours. En tout 2n + 1.</p>`,
   "L'ordre de complexité : θ, o, ω, O, Ω":`<p>Ce qui compte, c'est la vitesse à laquelle le nombre d'opérations grandit quand n devient énorme. 2n + 1 grandit « comme n » : on écrit 2n + 1 = θ(n). Les constantes (le 2, le + 1) ne changent pas l'ordre.</p><ul><li>θ : grandit aussi vite que.</li><li>o : grandit moins vite que. ω : grandit plus vite que.</li><li>O : aussi vite ou moins vite (« au plus »). Ω : aussi vite ou plus vite (« au moins »).</li></ul><p>Exemples : n = o(n²), n² = ω(n), et 3n² + 5n = θ(n²).</p>`,
   "Le master theorem":`<p>Certains algorithmes récursifs se rappellent sur une entrée deux fois plus petite (ou trois fois…). Le master theorem donne leur ordre de complexité presque sans calcul : on repère trois nombres dans l'algorithme (a appels, une taille divisée par b, n<sup>d</sup> opérations à côté des appels), on compare b<sup>d</sup> avec a, et on lit le résultat.</p>`,
-  "À ajouter sur ta feuille A4":`<p>La feuille A4 est autorisée : pas besoin de tout savoir par cœur. Trois petits blocs suffisent pour retrouver, pendant l'épreuve, la méthode de preuve, les cinq notations et le master theorem.</p>`},
+  "À ajouter sur ta feuille A4":`<p>Une feuille est autorisée : pas besoin de tout savoir par cœur. Trois petits blocs suffisent pour retrouver, pendant l'épreuve, la méthode de preuve, les cinq notations et le master theorem.</p>`},
  "a2-invariant":{
   "Les mots du cours":`<p>Prouver une boucle, c'est trouver une phrase qui reste vraie à chaque tour, par exemple « res vaut toujours la factorielle du numéro du tour ». Cette phrase s'appelle l'<b>invariant</b>.</p><p>Pour montrer qu'elle reste vraie, on écrit ce que fait un tour de boucle sous la forme d'une égalité : c'est l'<b>équation d'itération</b>. Elle est sûre, puisqu'on la lit sur l'algorithme. L'invariant, lui, est une idée qu'il faut prouver.</p>`,
   "Premier exemple du cours : F1 calcule n!":`<p>Fais tourner F1 pour n = 3. Avant la boucle, res = 1. Tour 1 : res = 1 × 1 = 1. Tour 2 : res = 1 × 2 = 2. Tour 3 : res = 2 × 3 = 6. À chaque tour, res vaut la factorielle du numéro du tour : 1!, 2!, 3!.</p><p>La preuve dit la même chose pour tous les n d'un coup, par récurrence : c'est vrai au départ, et si c'est vrai après un tour, c'est encore vrai après le suivant.</p>`,
@@ -14366,7 +14459,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(M
 const plural=(n,s,p)=>n>1?(p||s+"s"):s;
 const examLine=S=>{const e=exam(S);return `${dayName(e.day,false)} à ${e.start.replace(":","h")}`;};
 const hrefTask=(sid,t)=>t.lesson?`#/lecon/${sid}/${t.lesson}`:t.td?`#/${sid}/td`:t.links&&t.links.length?(t.links[0][0].startsWith("#")?t.links[0][0]:`#/${sid}/${t.links[0][0]}`):`#/${sid}`;
-const A4={algo:"feuilles/feuille-a4-algo.pdf",pf:"feuilles/feuille-a4-ocaml.pdf"};
+const A4={algo:"A5, à recopier ligne par ligne",pf:"A4 recto-verso, à recopier ligne par ligne"};
 
 /* ================= les cartes « À retenir » et la révision espacée ================= */
 /* empreinte courte d'une question : elle retrouve la question même si la leçon gagne ou perd des écrans */
@@ -14760,7 +14853,7 @@ function subject(sid){
    +(S.quiz.length?sw({href:`#/${sid}/quiz`,c,tile:"?",kicker:"Se tester",name:"Quiz de cours",sub:`Meilleur score : ${st.best} sur ${A.activeQuiz(S).length}`}):"")
    +(S.td.length?sw({href:`#/${sid}/td`,c,tile:ico("i-pen"),kicker:"Sur papier",name:esc(S.tdTitle||"Exercices de TD"),sub:`${tdk} sur ${S.td.length} sus`}):"")
    +(A.annOf(S).length?sw({href:`#/${sid}/annales`,c,tile:ico("i-doc"),kicker:exW(S)==="CC"?"Comme au CC":"Comme à l'examen",name:"Annales et chrono",sub:`${A.annOf(S).length} ${plural(A.annOf(S).length,"sujet")} corrigé${A.annOf(S).length>1?"s":""}`}):"")
-   +(A4[sid]?sw({href:A4[sid],ext:true,c,tile:ico("i-doc"),kicker:"À imprimer",name:"Feuille A4 (PDF)",sub:"Recto-verso, pour le jour du CC"}):"")
+   +(A4[sid]?sw({href:`#/${sid}/p/feuille`,c,tile:ico("i-doc"),kicker:"Pour le jour du CC",name:"Ma feuille à recopier",sub:A4[sid]}):"")
    +`</ul>`;
   const chs=[...new Set(S.ORDER.map(x=>x.ch))],isOut=ch=>S.ORDER.filter(x=>x.ch===ch).every(x=>x.out);
   const phone=matchMedia("(max-width:600px)").matches;
@@ -14786,7 +14879,6 @@ function entrainer(){
     const L=[[`#/${id}/annales`,"Annales et chrono",ico("i-doc")],[`#/${id}/td`,S.tdTitle||"Exercices de TD",ico("i-pen")]];
     if(S.quiz.length)L.push([`#/${id}/quiz`,"Quiz de cours","?"]);
     S.pages.filter(p=>/recettes|feuille|types|formulaire/.test(p.id)).forEach(p=>L.push([`#/${id}/p/${p.id}`,p.t,ico("i-star")]));
-    if(A4[id])L.push([A4[id],"Feuille A4 (PDF)",ico("i-doc"),1]);
     h+=`<section class="ecrin ${c}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${exW(S)} ${shortDay(S)} · ${jx(S)}</span></div><p class="muted" style="margin:-8px 0 14px">Documents autorisés : ${S.docs}.</p><ul class="minis">${L.map(l=>sw({href:l[0],c,size:"small",tile:l[2],name:esc(l[1]),ext:!!l[3]})).join("")}</ul></div><ol class="todo">${T.map(t=>taskHTML(id,t,false)).join("")}</ol></div></section>`;});
   $("#main").innerHTML=h+`</div>`;bindTicks($("#main"),entrainer);fixLinks($("#main"),null);badges();}
 
@@ -14795,7 +14887,7 @@ function plus(){
   const tools=[["#/synchro","Synchroniser mes appareils","Ta progression sur le téléphone et l'ordinateur.","i-sync","c-violet"],["#/edt","Emploi du temps","Tes cours, tes CC et les créneaux de révision.","i-cal","c-bleu"],["#/examens","Examens et rythme","Dates, coefficients, documents, temps par jour.","i-star","c-violet"],["#/methode","Comment réviser","Ce que dit la recherche, et comment le site s'en sert.","i-star","c-bleu"],["#/mix","Mini-contrôle mélangé","12 questions de toutes les matières, pour savoir quoi réviser.","i-mix","c-violet"]];
   $("#main").innerHTML=`<div class="page wide">${ttl("Plus")}
    ${tiroir("Outils",`<ul class="minis">${tools.map(x=>sw({href:x[0],c:x[4],size:"small",tile:ico(x[3]),name:x[1],sub:x[2]})).join("")}</ul>`)}
-   ${tiroir("Fiches de cours",`<ul class="minis">${SIDS.map(id=>sw({href:"#/"+id,c:"s-"+id,size:"small",tile:tart(id),name:SUBJ[id].name,sub:"Fiches, démos, TD, annales"+(A4[id]?", feuille A4":"")})).join("")}</ul>`)}
+   ${tiroir("Fiches de cours",`<ul class="minis">${SIDS.map(id=>sw({href:"#/"+id,c:"s-"+id,size:"small",tile:tart(id),name:SUBJ[id].name,sub:"Fiches, démos, TD, annales"+(A4[id]?", feuille à recopier":"")})).join("")}</ul>`)}
    ${tiroir("Feuilles A4 recto-verso",`<ul class="minis">${Object.entries(A4).map(([id,f])=>sw({href:f,ext:true,c:"s-"+id,size:"small",tile:ico("i-doc"),name:SUBJ[id].name,sub:"Le PDF à imprimer et à emporter au CC"})).join("")}</ul>`)}</div>`;badges();}
 
 /* ================= Comment réviser ================= */
