@@ -14152,8 +14152,8 @@ function reviser(){
   drawCard();}
 function drawCard(){
   const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, les questions que tu as ratées dans tes leçons, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
-  if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Entraînement mélangé (10 questions)</a></div></div></div>`;RV.end=true;return;}
-  if(RV.i>=RV.q.length){RV.end=true;const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Entraînement mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
+  if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Mini-contrôle mélangé (12 questions)</a></div></div></div>`;RV.end=true;return;}
+  if(RV.i>=RV.q.length){RV.end=true;const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
   if(!c){RV.i++;return drawCard();}
   $("#main").innerHTML=`<div class="page">${top}
@@ -14236,17 +14236,19 @@ function home(){
   const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
   let go,after="";
   /* « Où j'en suis » : en gros bouton quand c'est nécessaire, en lien quand c'est conseillé */
-  const DGS=A.diagAFaire(),DGN=DGS.find(x=>x.need)||null;
+  const DGS=A.diagAFaire(),DGN=DGS.find(x=>x.need)||null,MD=A.miniDu(),qd=d=>d===addDays(t0,1)?"demain":dayName(d,false,true);
   if(nextT&&nextT.resume){const L=BYL[nextT.sid][nextT.t.lesson],PT=parts(L,nextT.sid),pk=PT.filter(x=>x<=nextT.resume.i).length;
     go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:"▶",kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:`Tu reprends à l'écran ${nextT.resume.i+1} sur ${nextT.resume.n}${PT.length>1?`, partie ${pk} sur ${PT.length}`:""}.`};}
   else if(DGN){const S=SUBJ[DGN.sid];go={href:`#/${DGN.sid}/niveau`,c:"s-"+DGN.sid,tile:"✓",kick:`D'abord · environ ${DGN.min} min`,name:`Où j'en suis en ${S.name}`,sub:`${exW(S)} ${jx(S)}. Coche ce que tu maîtrises et fais le mini-contrôle : le programme du jour se refait avec tes réponses.`};
+    if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
+  else if(MD.need){go={href:"#/mix",c:"c-bleu",tile:"?",kick:"D'abord · environ 10 min",name:"Mini-contrôle mélangé",sub:`12 questions de toutes tes matières. À revérifier aujourd'hui : ${MD.noms.slice(0,4).join(", ")}. Tes réponses mettent tes priorités à jour : le programme du jour se refait.`};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(due.length){go={href:"#/reviser",c:"c-bleu",tile:due.length>99?"99+":String(due.length),kick:"Continuer · d'abord 5 à 15 min",name:`Réviser ${due.length} ${plural(due.length,"carte")}`,sub:"Les cartes du jour, avant d'apprendre du nouveau : c'est ce qui fait tenir ce que tu as déjà appris."};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(nextT&&nextT.today)go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:nL?String(nL.i+1):ico("i-pen"),kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:lessonInfo(nextT.t)+"."};
   else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
   h+=`<a class="gobig ${go.c}${go.done?" is-done":""}" href="${go.href}"><span class="gobig__tile" aria-hidden="true">${go.tile}</span><span class="gobig__bar"><span class="gobig__kick">${go.kick}</span><span class="gobig__name">${go.name}</span><span class="gobig__sub">${go.sub}</span></span>${ico("i-arrow","ico gobig__arrow")}</a>`;
-  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}<a href="#/mix">${mixed?`10 questions mélangées : fait (${A.hub.mixScore} sur 10)`:"10 questions mélangées"}</a><button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
+  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}${go.href==="#/mix"?"":`<a href="#/mix">Mini-contrôle mélangé${mixed?` : fait aujourd'hui (${A.hub.mixScore} sur ${A.hub.mixSur})${MD.proch?", à refaire "+qd(MD.proch):""}`:MD.du?" (conseillé aujourd'hui)":MD.proch?` (à refaire ${qd(MD.proch)})`:""}</a>`}<button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
   /* un seul créneau ouvert : le prochain à faire ; les autres sont repliés */
@@ -14325,7 +14327,7 @@ function entrainer(){
 
 /* ================= Plus ================= */
 function plus(){
-  const tools=[["#/synchro","Synchroniser mes appareils","Ta progression sur le téléphone et l'ordinateur.","i-sync","c-violet"],["#/edt","Emploi du temps","Tes cours, tes CC et les créneaux de révision.","i-cal","c-bleu"],["#/examens","Examens et rythme","Dates, coefficients, documents, temps par jour.","i-star","c-violet"],["#/methode","Comment réviser","Ce que dit la recherche, et comment le site s'en sert.","i-star","c-bleu"],["#/mix","Entraînement mélangé","10 questions de toutes les matières.","i-mix","c-violet"]];
+  const tools=[["#/synchro","Synchroniser mes appareils","Ta progression sur le téléphone et l'ordinateur.","i-sync","c-violet"],["#/edt","Emploi du temps","Tes cours, tes CC et les créneaux de révision.","i-cal","c-bleu"],["#/examens","Examens et rythme","Dates, coefficients, documents, temps par jour.","i-star","c-violet"],["#/methode","Comment réviser","Ce que dit la recherche, et comment le site s'en sert.","i-star","c-bleu"],["#/mix","Mini-contrôle mélangé","12 questions de toutes les matières, pour savoir quoi réviser.","i-mix","c-violet"]];
   $("#main").innerHTML=`<div class="page wide">${ttl("Plus")}
    ${tiroir("Outils",`<ul class="minis">${tools.map(x=>sw({href:x[0],c:x[4],size:"small",tile:ico(x[3]),name:x[1],sub:x[2]})).join("")}</ul>`)}
    ${tiroir("Fiches de cours",`<ul class="minis">${SIDS.map(id=>sw({href:"#/"+id,c:"s-"+id,size:"small",tile:tart(id),name:SUBJ[id].name,sub:"Fiches, démos, TD, annales"+(A4[id]?", feuille A4":"")})).join("")}</ul>`)}
@@ -14339,7 +14341,7 @@ function methode(){
    ${sec(2,"Espacer, même sur une semaine",`<p>Revoir une notion le lendemain puis deux jours après la fait tenir bien mieux que trois fois le même soir. Même sur une seule semaine, réviser en plusieurs fois donne de meilleures notes qu'en une seule séance.</p><p><b>Sur le site</b> : les cartes « À retenir » reviennent dans « Réviser » le lendemain, puis plus tard, et toutes la veille du CC.</p>`)}
    ${sec(3,"L'exemple corrigé avant l'exercice",`<p>Quand on débute, étudier un exemple corrigé étape par étape apprend plus vite que chercher seul. Ensuite on retire les étapes une par une : textes à trous, puis exercice complet.</p><p><b>Sur le site</b> : « Afficher l'étape suivante » (essaie de la deviner avant), puis les trous à compléter, puis l'exercice sur papier.</p>`)}
    ${sec(4,"Remettre un programme dans l'ordre",`<p>Pour le code, remettre des lignes dans l'ordre (les « problèmes de Parsons ») apprend autant qu'écrire le programme en entier, en beaucoup moins de temps. C'est idéal pour les fin pour; et fin tq; au bon endroit.</p>`)}
-   ${sec(5,"Une idée par écran, une question tout de suite",`<p>C'est la recette de Brilliant : une courte explication avec une figure, puis une question sur ce qu'on vient de voir. Math Academy y ajoute la révision espacée et le mélange des sujets : c'est le rôle de « Réviser » et de l'entraînement mélangé.</p>`)}
+   ${sec(5,"Une idée par écran, une question tout de suite",`<p>C'est la recette de Brilliant : une courte explication avec une figure, puis une question sur ce qu'on vient de voir. Math Academy y ajoute la révision espacée et le mélange des sujets : c'est le rôle de « Réviser » et du mini-contrôle mélangé.</p>`)}
    ${sec(6,"Deviner avant de lire",`<p>Essayer de répondre à une question <b>avant</b> d'avoir appris la réponse aide à retenir ce qu'on lit ensuite, même quand on se trompe, à condition de lire la bonne réponse juste après (synthèse de Pan et Carpenter, 2023). La question oriente la lecture : on lit en cherchant.</p><p><b>Sur le site</b> : la première question d'une leçon est marquée « Devine d'abord » ; elle ne compte pas. Ensuite, quand une explication est suivie d'une question, cette question est affichée en haut de l'écran (« Tu cherches ») : tu lis l'explication en cherchant la réponse, puis tu réponds une seule fois. Toutes les questions portent sur ce que la leçon t'a déjà montré.</p>`)}
    ${sec(7,"Retrouver jusqu'à réussir, puis recommencer un autre jour",`<p>Ce qui marche le mieux pour un examen : se tester sur une notion jusqu'à la retrouver une fois sans aide, puis recommencer lors de plusieurs séances, à des jours différents. Dans une étude menée dans un vrai cours, les notes ont gagné environ une mention (Rawson, Dunlosky et Sciartelli, 2013).</p><p><b>Sur le site</b> : dans « Réviser », une carte ratée revient plus loin dans la séance jusqu'à ce que tu la retrouves (3 fois au plus), puis elle revient les jours suivants. Une question ratée dans une leçon y revient aussi, le jour même puis les jours suivants. Et à la fin d'un quiz, tu vois la liste de tes erreurs avec leur correction.</p>`)}
    ${sec(8,"Les conditions du CC, et le sommeil",`<p>Fais au moins une annale par matière en 1 heure, sur papier. La veille d'un CC : les cartes du jour, les fiches en rouge, et une vraie nuit.</p><p><b>Les pauses</b> : l'attention baisse après 45 minutes environ. Une pause de 10 à 15 minutes, sans écran, fait mieux retenir que de continuer en forçant. Le plan prévoit ces pauses, et le lecteur de leçon te les rappelle.</p>`)}
@@ -14465,7 +14467,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0};
+const hub={theme:local.theme,exams:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -14476,7 +14478,7 @@ function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.op
 function applyEv(e){
   const day=ymd(new Date(e.t));
   if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
-  if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;return;}
+  if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   const st=ST[e.s];if(!st)return;
   if(e.k==="st"){if(e.v==="known"){st.known[e.c]=true;delete st.review[e.c];st.knownOn[e.c]=day;st.seen[e.c]=true;}else if(e.v==="review"){st.review[e.c]=true;delete st.known[e.c];delete st.knownOn[e.c];st.seen[e.c]=true;}else if(e.v==="seen")st.seen[e.c]=true;}
   else if(e.k==="td"){if(e.v){st.td[e.x]=true;st.tdOn[e.x]=day;}else{delete st.td[e.x];delete st.tdOn[e.x];}}
@@ -14486,10 +14488,10 @@ function applyEv(e){
   else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
   else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;}
-  else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n){d.ok=e.ok;d.n=e.n;d.on=day;}}
+  else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n){if(e.run&&d.run===e.run){d.ok+=e.ok;d.n+=e.n;}else{d.ok=(d.ok||0)*0.5+e.ok;d.n=(d.n||0)*0.5+e.n;}d.run=e.run||null;d.on=day;}}
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -14530,7 +14532,8 @@ const SELF=[0.15,0.5,0.85];
 const themeEx=(S,T)=>T.ex||examsOf(S)[0].id;
 const themesOf=S=>{const e=exam(S);return (S.themes||[]).filter(T=>themeEx(S,T)===e.id);};
 function maitrise(sid,T){const st=ST[sid],d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,v=s!=null?SELF[s]:null,r=d.n?d.ok/d.n:null;
-  let m=v!=null&&r!=null?0.4*v+0.6*r:r!=null?0.15+0.7*r:v;
+  const wt=d.n?d.n/(d.n+1.5):0;
+  let m=d.n?(1-wt)*(v!=null?v:0.5)+wt*r:v;
   /* les leçons du thème faites depuis le mini-contrôle comptent aussi : part faite × réussite */
   const L=(T.les||[]).map(l=>st.les[l]).filter(x=>x&&x.n),tot=(T.les||[]).length;
   if(L.length&&tot){const f=L.length/tot,sc=L.reduce((x,y)=>x+y.best,0)/L.length,ml=f*(0.25+0.6*sc)+(1-f)*(m==null?0.3:Math.min(m,0.5)),der=L.map(x=>x.on||"").sort().pop();
@@ -14552,13 +14555,19 @@ function diagAFaire(){const n=NOW(),out=[];
       inconnu=TH.filter(T=>(st.diag[T.id]||{}).self==null&&T.self0==null&&!(st.diag[T.id]||{}).n).reduce((s,T)=>s+T.pts,0),
       nq=TH.reduce((s,T)=>s+Math.min(diagPool(sid,T).length,nbQ(T)),0),min=Math.max(3,Math.round(nq*0.6));
     if(!TH.some(T=>prioDe(sid,T)!==2)&&teste.length)return;/* tout est maîtrisé et vérifié */
-    if(!teste.length){if(j<=4&&inconnu>=tot/2)out.push({sid,need:true,j,min,why:"pas encore fait"});
+    if(!teste.length||inconnu>=tot/2){if(j<=4&&inconnu>=tot/2)out.push({sid,need:true,j,min,why:"pas encore fait"});
       else if(j<=10)out.push({sid,need:false,j,min,why:inconnu?"pas encore fait":"vérifie avec le mini-contrôle"});return;}
     const der=teste.map(T=>st.diag[T.id].on||"").sort().pop(),depuis=TH.reduce((s,T)=>s+(T.les||[]).filter(l=>st.les[l]&&st.les[l].n&&(st.les[l].on||"")>der).length,0);
     if(j<=10&&depuis>=2)out.push({sid,need:false,j,min,why:`à refaire : ${depuis} leçons faites depuis`});});
   return out.sort((x,y)=>(y.need-x.need)||(x.j-y.j)||(weight(SUBJ[y.sid])-weight(SUBJ[x.sid])));}
+/* le mini-contrôle mélangé : à refaire chaque jour à moins de 3 jours d'un CC, tous les 2 jours à moins de 10 jours, tous les 4 jours à moins de 3 semaines */
+function miniDu(){const n=NOW(),t0=today(),fait=hub.mixOn===t0,noms=[];let need=false,proch=null;
+  SIDS.slice().sort((x,y)=>examStart(SUBJ[x])-examStart(SUBJ[y])).forEach(sid=>{const S=SUBJ[sid],TH=themesOf(S);if(!TH.length||examStart(S)<=n)return;const j=(examStart(S)-n)/864e5;if(j>21)return;
+    const st=ST[sid],der=TH.map(T=>(st.diag[T.id]||{}).on||"").sort().pop(),pas=j<=3?1:j<=10?2:4,age=der?Math.round((toD(t0,0)-toD(der,0))/864e5):99;
+    if(age>=pas){noms.push(S.name);if(j<=10)need=true;}else{const d=addDays(der,pas);if(!proch||d<proch)proch=d;}});
+  return {du:!fait&&noms.length>0,need:!fait&&need,noms,proch:noms.length?(fait?addDays(t0,1):t0):proch};}
 /* points à gagner par minute d'une étape : sert à choisir quoi garder quand tout ne tient pas */
-function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)return 9;const T=S.TH[t.id];if(!T||themeEx(S,T)!==exam(S).id)return (t.base<=20?1.5:2)/Math.max(t.min,10);/* feuille autorisée, examen blanc, TD : 1,5 à 2 points */
+function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)return 9;const T=S.TH[t.id];if(!T||themeEx(S,T)!==exam(S).id)return (t.base<=20?1.5:Math.min(2,0.3*themesOf(S).reduce((s,X)=>s+gainTheme(sid,X),0)))/Math.max(t.min,10);/* feuille autorisée : 1,5 point ; examen blanc ou TD : 30 % de ce qu'il reste à gagner dans la matière, 2 points au plus (les leçons des thèmes faibles passent avant) */
   const mins=(T.les||[]).map(l=>"L-"+l).concat(T.tasks||[]).reduce((s,x)=>s+((S.TB[x]||{}).min||0),0);return gainTheme(sid,T)/Math.max(mins,10);}
 const examStart=S=>{const e=exam(S);return toD(e.day,mm(e.start));};
 function jx(S){const e=exam(S),n=NOW(),k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
@@ -14764,7 +14773,7 @@ function hubHome(){
   const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0);
   let body="";
   if(exToday.length)body+=`<div class="examday">${exToday.map(S=>`<p><b>${exW(S)} de ${S.name} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, ${exam(S).place}. ${S.examMorning||"Relis seulement tes fiches en rouge."}</p>`).join("")}</div>`;
-  body+=`<div class="examcard" style="--sc:var(--cobalt)"><div><b>Commence chaque séance par l'entraînement mélangé</b> : 10 questions de toutes tes matières, surtout ton prochain CC et ce que tu rates, environ 10 minutes. ${hub.mixOn===t0?`Fait aujourd'hui : ${hub.mixScore} sur 10.`:"Pas encore fait aujourd'hui."}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn pri" href="#/mix">Commencer</a><a class="btn" href="#/methode">Pourquoi ça marche</a></div></div>`;
+  body+=`<div class="examcard" style="--sc:var(--cobalt)"><div><b>Mini-contrôle mélangé</b> : 12 questions de toutes tes matières, surtout tes prochains CC et ce que tu rates, environ 10 minutes. ${hub.mixOn===t0?`Fait aujourd'hui : ${hub.mixScore} sur ${hub.mixSur}.`:"Pas encore fait aujourd'hui."}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn pri" href="#/mix">Commencer</a><a class="btn" href="#/methode">Pourquoi ça marche</a></div></div>`;
   body+=sec(1,"Aujourd'hui",tb.length?`<p class="muted">${tb.length} créneau(x), environ ${hm(tb.reduce((s,b)=>s+b.end-b.start,0))} de révision, placés autour de tes cours. Les étapes de fiches se cochent toutes seules quand tu marques les fiches « Je sais ».</p>${tb.map(b=>blockHTML(b,true)).join("")}`:`<p class="muted">Aucun créneau de révision prévu aujourd'hui. ${P.blocks.length?"Regarde les jours suivants.":"Tout est fait, ou tous les CC sont passés."}</p>`);
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
   if(days.length)body+=sec(2,"Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d);const ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
@@ -14967,14 +14976,14 @@ function niveau(sid){
   const carte=T=>{const d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,g=gainTheme(sid,T),pr=prioDe(sid,T);
     return `<section class="check"><div><b>${T.t}</b> <span class="muted">· environ ${demi(T.pts)} point(s) sur 20 au ${X}${T.src?` (${T.src})`:""}</span></div>
      <div class="filters" data-th="${T.id}">${NIV.map((n,i)=>`<button class="btn" data-self="${i}" aria-pressed="${s===i}">${n}</button>`).join("")}</div>
-     <div class="muted">${d.self==null&&T.self0!=null?"Coché d'après ce que tu m'as dit : change-le si c'est faux. ":""}Mini-contrôle : ${d.n?`${d.ok} sur ${d.n}`:"pas fait"}. Leçons faites : ${(T.les||[]).filter(l=>st.les[l]&&st.les[l].n).length} sur ${(T.les||[]).length}. Reste à gagner : environ <b>${demi(g)}</b> point(s). ${pr==null?"":pr===1?`<b>En priorité dans ton planning.</b>`:"Passe en « si tu as le temps »."}</div></section>`;};
+     <div class="muted">${d.self==null&&T.self0!=null?"Coché d'après ce que tu m'as dit : change-le si c'est faux. ":""}Mini-contrôle : ${d.n?`${Math.round(d.ok/d.n*100)} % de bonnes réponses (${dayName(d.on,false,true)})`:"pas fait"}. Leçons faites : ${(T.les||[]).filter(l=>st.les[l]&&st.les[l].n).length} sur ${(T.les||[]).length}. Reste à gagner : environ <b>${demi(g)}</b> point(s). ${pr==null?"":pr===1?`<b>En priorité dans ton planning.</b>`:"Passe en « si tu as le temps »."}</div></section>`;};
   const nq=TH.reduce((s,T)=>s+Math.min(diagPool(sid,T).length,nbQ(T)),0);
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Où j'en suis</h1></div>
    <p class="lead">Dis ce que tu penses maîtriser, puis fais le mini-contrôle. Le planning met en avant les thèmes où il te reste le plus de points à gagner, et range en « si tu as le temps » ce que tu sais déjà.</p>
    <h2 style="font-size:1.15rem;margin:0">1. Ce que je pense maîtriser</h2><p class="muted" style="margin:0">Les thèmes sont rangés par points qu'il te reste à gagner. Les points viennent du barème des anciens sujets.</p>
    ${TH.slice().sort((x,y)=>gainTheme(sid,y)-gainTheme(sid,x)).map(carte).join("")}
    <h2 style="font-size:1.15rem;margin:0">2. Mini-contrôle</h2>
-   <section class="check"><p class="muted">${nq} questions, environ ${Math.max(3,Math.round(nq*0.6))} minutes. Plus un thème rapporte de points, plus il a de questions. Si tu ne sais pas, dis-le : deviner fausse le résultat. Tes réponses passent avant ce que tu as coché.</p><div class="qbox" id="dq" aria-live="polite"><button class="btn pri" id="dgo" style="justify-self:start">${TH.some(T=>(st.diag[T.id]||{}).n)?"Refaire le mini-contrôle":"Commencer le mini-contrôle"}</button></div></section>
+   <section class="check"><p class="muted">${nq} questions, environ ${Math.max(3,Math.round(nq*0.6))} minutes. Plus un thème rapporte de points, plus il a de questions. Si tu ne sais pas, dis-le : deviner fausse le résultat. Plus tu réponds à des questions d'un thème, plus elles comptent face à ce que tu as coché. Le <a href="#/mix">mini-contrôle mélangé</a> (toutes les matières) met aussi ces résultats à jour.</p><div class="qbox" id="dq" aria-live="polite"><button class="btn pri" id="dgo" style="justify-self:start">${TH.some(T=>(st.diag[T.id]||{}).n)?"Refaire le mini-contrôle":"Commencer le mini-contrôle"}</button></div></section>
    <section class="usage"><h2>Comment c'est calculé</h2><p>Pour chaque thème : points au ${X} × ce que tu ne maîtrises pas encore = points à gagner. Un thème maîtrisé, ou qui rapporte moins d'un demi-point, passe en « si tu as le temps ». Entre deux matières, celle où il te reste le plus à gagner reçoit plus de temps.</p><p><a class="btn pri" href="#/">Voir mon planning</a></p></section></div>`;
   $("#main .page").addEventListener("click",e=>{
     const b=e.target.closest("[data-self]");if(b){emit({k:"diag",s:sid,th:b.parentNode.dataset.th,self:+b.dataset.self});niveau(sid);renderSide();return;}
@@ -15002,36 +15011,52 @@ function page(sid,pid){const S=SUBJ[sid],p=S.pages.find(x=>x.id===pid);if(!p)ret
   else $("#main").innerHTML=`<div class="page">${typeof p.html==="function"?p.html({S,sec,exam:exam(S)}):p.html}</div>`;
   fixLinks($("#main"),sid);}
 
-/* ---------- entraînement mélangé (tous les quiz, priorité au prochain CC et aux notions ratées) ---------- */
+/* ---------- mini-contrôle mélangé : toutes les matières, questions choisies par thème, chaque réponse met « Où j'en suis » à jour ---------- */
 let mx={q:[],i:0,score:0,ans:null};
 function mix(){
-  const n=NOW(),act=SIDS.filter(id=>examStart(SUBJ[id])>n),near=act.slice().sort((a,b)=>examStart(SUBJ[a])-examStart(SUBJ[b]))[0];
-  const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id];activeQuiz(S).forEach(q=>{let w=1;if(q.link){if(st.review[q.link])w=4;else if(!st.known[q.link])w=2;}if(id===near)w*=2;pool.push({sid:id,q,w});});});
-  const pick=[];for(let k=0;k<10&&pool.length;k++){let t=Math.random()*pool.reduce((s,x)=>s+x.w,0),j=0;for(;j<pool.length-1;j++){t-=pool[j].w;if(t<=0)break;}pick.push(pool.splice(j,1)[0]);}
-  pick.forEach(it=>{it.ord=perm(it.q.o.length);});
-  mx={q:pick,i:0,score:0,ans:null,miss:[]};
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Entraînement mélangé</h1></div><p class="lead">10 questions de toutes tes matières, surtout ton prochain CC et les notions que tu rates. Réponds avant de regarder les choix si tu peux. Chaque erreur met la fiche en rouge : elle reviendra dans « Révision du jour ».</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
+  const n=NOW(),t0=today(),jr=id=>(examStart(SUBJ[id])-n)/864e5,act=SIDS.filter(id=>examStart(SUBJ[id])>n).sort((x,y)=>jr(x)-jr(y));
+  /* poids d'un thème : poids du CC, proximité, points du thème, ce qui n'est pas maîtrisé, ancienneté du dernier test */
+  const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id],j=jr(id),u=weight(S)*4/(1+j)*(j<=21?1:0.3),TH=themesOf(S);
+    if(TH.length)TH.forEach(T=>{const d=st.diag[T.id]||{},m=maitrise(id,T),age=d.on?(toD(t0,0)-toD(d.on,0))/864e5:9,P=diagPool(id,T);if(!P.length)return;
+      const w=u*Math.max(T.pts,0.5)*(1.5-(m==null?0.5:m))*(1+Math.min(1,age/3))/P.length;P.forEach(q=>pool.push({sid:id,th:T.id,q,w}));});
+    else{const Q=activeQuiz(S),w0=q=>!q.link?1:st.review[q.link]?4:st.known[q.link]?1:2,tot=Q.reduce((s,q)=>s+w0(q),0);Q.forEach(q=>pool.push({sid:id,q,w:u*20*w0(q)/tot}));}});
+  const pick=[],vu={};
+  const tire=L=>{let t=Math.random()*L.reduce((s,x)=>s+x.w,0),k=0;for(;k<L.length-1;k++){t-=L[k].w;if(t<=0)break;}const it=L[k];pick.push(it);
+    if(it.th)vu[it.sid+"/"+it.th]=(vu[it.sid+"/"+it.th]||0)+1;
+    for(let i=pool.length-1;i>=0;i--){const x=pool[i];if(x.q===it.q||(it.th&&x.sid===it.sid&&x.th===it.th&&vu[it.sid+"/"+it.th]>=2))pool.splice(i,1);}};
+  /* d'abord une question par matière dont le CC est à moins de 3 semaines, puis le reste au poids */
+  act.forEach(id=>{if(pick.length>=12||jr(id)>21)return;const L=pool.filter(x=>x.sid===id);if(L.length)tire(L);});
+  while(pick.length<12&&pool.length)tire(pool);
+  const Q=perm(pick.length).map(i=>pick[i]);Q.forEach(it=>{it.ord=perm(it.q.o.length);});
+  mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:(Date.now()+TOFF).toString(36)};
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div><p class="lead">${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat.</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
   drawMix();
-  $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&mx.ans===null){const it=mx.q[mx.i];mx.ans=+o.dataset.o;if(mx.ans===it.q.a)mx.score++;else{mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}drawMix();$("#mxn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;drawMix();}if(id==="mxre")mix();});
+  $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]"),ns=e.target.closest("#mxs");
+    if((o||ns)&&mx.ans===null){const it=mx.q[mx.i],ok=o&&+o.dataset.o===it.q.a,p=mx.par[it.sid]||(mx.par[it.sid]={ok:0,n:0});mx.ans=o?+o.dataset.o:-1;p.n++;
+      if(it.th)emit({k:"diag",s:it.sid,th:it.th,ok:ok?1:0,n:1,run:mx.run});
+      if(ok){mx.score++;p.ok++;}else{if(mx.ans>=0)mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}
+      drawMix();$("#mxn")?.focus();return;}
+    const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;drawMix();}if(id==="mxre")mix();});
 }
 function drawMix(){
   const box=$("#mxbox"),n=mx.q.length;
   if(!n){box.innerHTML=`<p>Aucune question : tous tes CC sont passés.</p>`;return;}
-  if(mx.i>=n){emit({k:"mix",n:mx.score});box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${mx.score===n?"Parfait.":"Les notions ratées sont en rouge. Ouvre leur fiche maintenant, ou retrouve-les demain dans « Révision du jour »."}</p><div class="acts"><button class="btn pri" id="mxre">10 autres questions</button><a class="btn" href="#/">Retour à aujourd'hui</a></div>${missHTML(mx.miss||[])}`;return;}
+  if(mx.i>=n){emit({k:"mix",n:mx.score,sur:n});
+    box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${Object.entries(mx.par).map(([s,p])=>`${themesOf(SUBJ[s]).length?`<a href="#/${s}/niveau">${SUBJ[s].name}</a>`:SUBJ[s].name} : ${p.ok} sur ${p.n}`).join(" · ")}.</p><p>${mx.score===n?"Tout est juste : les thèmes vérifiés passent en « si tu as le temps ».":"Les thèmes ratés remontent dans ton planning, et leurs fiches sont en rouge."}</p><div class="acts"><a class="btn pri" href="#/">Voir le programme du jour</a><button class="btn" id="mxre">${n} autres questions</button></div>${missHTML(mx.miss||[])}`;return;}
   const it=mx.q[mx.i],q=it.q,S=SUBJ[it.sid];
   box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${(it.ord||q.o.map((_,i)=>i)).map(i=>{const o=q.o[i];let c="";if(mx.ans!==null){if(i===q.a)c="good";else if(i===mx.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${mx.ans!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
-   ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
+   ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":mx.ans===-1?"La réponse :":"Non."}</b> ${mx.ans===-1?q.o[q.a]+". ":""}${q.e||""}${q.link&&S.BY[q.link]?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:`<button class="btn" id="mxs" style="justify-self:start">Je ne sais pas</button>`}`;
 }
 function methode(){
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Réviser efficacement en peu de temps</h1></div>
    <p class="lead">Une grande synthèse de la recherche sur l'apprentissage (Dunlosky et ses collègues, 2013) compare dix façons de réviser. Deux sortent nettement du lot : <b>se tester</b> et <b>espacer</b>. Relire, surligner et résumer arrivent en bas du classement. Le site est construit autour de ça.</p>
    ${sec(1,"Se tester au lieu de relire",`<p>Chercher une réponse de mémoire renforce le souvenir bien plus qu'une relecture, même quand on se trompe, à condition de voir la correction juste après. C'est pour ça que chaque fiche commence par une question, que les cartes se retournent, et que les corrigés de TD restent cachés tant que tu n'as pas cherché.</p><p><b>En pratique</b> : ferme la fiche et réécris l'énoncé ou l'algorithme sur une feuille, puis compare.</p>`)}
    ${sec(2,"Espacer",`<p>Revoir une notion le lendemain, puis deux jours après, la fait tenir beaucoup mieux que la revoir trois fois le même soir. Une fiche marquée « Je sais » revient le lendemain dans le filtre « Révision du jour » des cartes. Les fiches ratées passent en rouge et reviennent aussi.</p><p><b>En pratique</b> : 10 minutes de « Révision du jour » au début de chaque séance.</p>`)}
-   ${sec(3,"Mélanger les matières",`<p>Alterner les sujets oblige à choisir la bonne méthode à chaque question, comme le jour du CC. C'est l'idée de l'entraînement mélangé de l'accueil.</p>`)}
+   ${sec(3,"Mélanger les matières",`<p>Alterner les sujets oblige à choisir la bonne méthode à chaque question, comme le jour du CC. C'est l'idée du mini-contrôle mélangé de l'accueil.</p>`)}
    ${sec(4,"S'entraîner dans les conditions du CC",`<p>Tes contrôles sont sur papier, en 1 heure. Fais au moins une annale en temps réel par matière (le chrono est dans « Annales »), sur papier, puis corrige-toi avec la liste « Avant de rendre ta copie » des pages Recettes.</p>`)}
    ${sec(5,"Dormir",`<p>Le sommeil consolide ce que tu as appris dans la journée. Une nuit blanche avant un CC fait perdre plus qu'elle ne rapporte : la veille, révise les fiches en rouge et dors.</p>`)}
-   <p><a class="btn pri" href="#/mix">Faire l'entraînement mélangé</a></p></div>`;
+   <p><a class="btn pri" href="#/mix">Faire le mini-contrôle mélangé</a></p></div>`;
 }
 
 /* ---------- recherche ---------- */
@@ -15108,7 +15133,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
