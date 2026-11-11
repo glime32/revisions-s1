@@ -14602,15 +14602,18 @@ function finish(){
 /* ================= Réviser : les cartes du jour ================= */
 let RV=null;
 function reviser(){
-  if(!RV||RV.end){const sv=A.seanceGet("cartes"),q=sv&&Array.isArray(sv.q)?sv.q.filter(x=>SUBJ[x.sid]&&cardOf(x.sid,x.cid)):[];
-    /* une séance commencée aujourd'hui reprend à la même carte */
-    if(sv&&q.length&&q.length===sv.q.length&&sv.i<q.length)RV={q,i:sv.i,flip:false,tries:sv.tries||{},ok:sv.ok||0,n:sv.n||0,end:false,total:sv.total||q.length,repris:sv.i>0};
-    else{const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length};}}
+  if(!RV||RV.end){const sv=A.seanceGet("cartes");RV=null;
+    if(sv&&Array.isArray(sv.q)){const q=sv.q.map(x=>({sid:x.s,cid:x.c,box:x.b}));
+      if(q.length&&q.every(x=>SUBJ[x.sid]&&cardOf(x.sid,x.cid))){const N={q,i:0,flip:false,tries:{},ok:0,n:0,end:false,total:q.length,run:sv.run,debute:true};
+        /* on rejoue les notes déjà données : une carte ratée repart au bout de la file, comme pendant la séance */
+        for(let j=0,nb=A.faites(sv);j<nb&&j<N.q.length;j++){const it=N.q[j],r=sv.rep[j],k=N.tries[it.cid]=(N.tries[it.cid]||0)+1;if(k===1){N.n++;if(r===2)N.ok++;}if(r===0&&k<3)N.q.push(it);N.i=j+1;}
+        if(N.i<N.q.length){N.repris=N.i>0;RV=N;}}}
+    if(!RV){const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length,run:A.nouvRun()};}}
   drawCard();}
 function drawCard(){
   const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, les questions que tu as ratées dans tes leçons, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
   if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Mini-contrôle mélangé (12 questions)</a></div></div></div>`;RV.end=true;return;}
-  if(RV.i>=RV.q.length){RV.end=true;A.seanceSet("cartes",null);const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
+  if(RV.i>=RV.q.length){RV.end=true;A.seanceFin("cartes",RV.run);const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
   if(!c){RV.i++;return drawCard();}
   $("#main").innerHTML=`<div class="page">${top}
@@ -14627,9 +14630,9 @@ function drawCard(){
     else emit(Object.assign({k:"card",s:it.sid,c:it.cid,r},re));
     A.logRep({o:"carte de Réviser",s:it.sid,carte:it.cid,note:["raté","difficile","je savais"][r],r,ok:r===2?1:0,essai:k,texte:A.brut(c.f).slice(0,400),reponse:A.brut(c.b).slice(0,600),msAvantRetour:(RV.t1||Date.now())-(RV.t0||Date.now()),ms:Date.now()-(RV.t0||Date.now())});
     if(k===1){RV.n++;if(r===2)RV.ok++;}
+    A.seanceRep("cartes",RV,()=>RV.q.map(x=>({s:x.sid,c:x.cid,b:x.box})),RV.i,r);
     if(r===0&&k<3)RV.q.push(it);
-    RV.i++;RV.flip=false;RV.repris=false;
-    A.seanceSet("cartes",{q:RV.q.map(x=>({sid:x.sid,cid:x.cid,box:x.box})),i:RV.i,tries:RV.tries,ok:RV.ok,n:RV.n,total:RV.total});drawCard();}));
+    RV.i++;RV.flip=false;RV.repris=false;drawCard();}));
   badges();}
 
 /* ================= les morceaux du nouvel onglet ================= */
@@ -14850,7 +14853,9 @@ async function sync(){
     for(let k=0;k<jours.length;k+=15){const lot={},part=jours.slice(k,k+15);part.forEach(d=>{lot[moi+d+".json"]={content:JSON.stringify({v:2,ev:evs[d]||[],rep:reps[d]||[]})};});
       await gh("/gists/"+SY.gist,{method:"PATCH",body:JSON.stringify({files:lot}),sansCorps:true});part.forEach(d=>{SY.env[d]=sig[d];});saveSY();}
     SY.last=Date.now();SY.err=null;saveSY();
-    if(added){const p=A.cur().page;if(p!=="lecon"&&p!=="reviser"&&p!=="mix"&&p!=="quiz")A.route();
+    if(added){const p=A.cur().page;A.seanceArrivee();
+      if(p==="reviser"&&RV&&!RV.debute&&!RV.end){const s=A.seanceGet("cartes");if(s&&s.run!==RV.run){RV=null;reviser();}}
+      if(p!=="lecon"&&p!=="reviser"&&p!=="mix"&&p!=="quiz")A.route();
       else if(p==="lecon"&&LP){const q=progGet(LP.sid,LP.id);if(q&&q.ts>(LP.saved||0)&&q.i!==LP.i)lessonRoute([LP.sid,LP.id]);}}
   }catch(e){if(SY){SY.err=String(e&&e.message||e);saveSY();}}
   finally{syncing=false;syncBadge();if(pending){pending=false;setTimeout(sync,1500);}}}
@@ -14891,14 +14896,14 @@ function synchro(){
 
 /* déclencheurs de la synchronisation */
 setTimeout(sync,1500);
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")sync();});
+document.addEventListener("visibilitychange",()=>sync());/* en revenant sur la page, et en la quittant pour envoyer les dernières réponses */
 window.addEventListener("online",()=>sync());
 setInterval(()=>{if(document.visibilityState==="visible")sync();},180000);
 setInterval(()=>syncBadge(),60000);
 
 return {
-  routes:{lecon:lessonRoute,apprendre,reviser:()=>{RV=null;reviser();},entrainer,plus,synchro,methode,continuer:()=>location.replace(suite())},
-  home,subject,badges,partsOf:(sid,lid)=>{const L=BYL[sid]&&BYL[sid][lid];return L?parts(L,sid).length:1;},
+  routes:{lecon:lessonRoute,apprendre,reviser:()=>{RV=null;sync();reviser();},entrainer,plus,synchro,methode,continuer:()=>location.replace(suite())},
+  home,subject,badges,sync,partsOf:(sid,lid)=>{const L=BYL[sid]&&BYL[sid][lid];return L?parts(L,sid).length:1;},
   onChange(){badges();clearTimeout(deb);deb=setTimeout(sync,4000);}
 };
 }};
@@ -14955,7 +14960,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10};
+const hub={theme:local.theme,exams:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -14978,6 +14983,10 @@ function applyEv(e){
   const day=ymd(new Date(e.t));
   if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
+  /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
+  if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
+  if(e.k==="sr"){const s=hub.se[e.c];if(s&&s.run===e.run&&e.n>=0){s.rep[e.n]=e.a;s.ts=e.t;}return;}
+  if(e.k==="sf"){const s=hub.se[e.c];if(s&&s.run===e.run)delete hub.se[e.c];return;}
   const st=ST[e.s];if(!st)return;
   if(e.k==="st"){if(e.v==="known"){st.known[e.c]=true;delete st.review[e.c];st.knownOn[e.c]=day;st.seen[e.c]=true;}else if(e.v==="review"){st.review[e.c]=true;delete st.known[e.c];delete st.knownOn[e.c];st.seen[e.c]=true;}else if(e.v==="seen")st.seen[e.c]=true;}
   else if(e.k==="td"){if(e.v){st.td[e.x]=true;st.tdOn[e.x]=day;}else{delete st.td[e.x];delete st.tdOn[e.x];}}
@@ -14992,7 +15001,7 @@ function applyEv(e){
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -15431,7 +15440,7 @@ document.addEventListener("keydown",e=>{if(!CUR.sid||!CUR.page.startsWith("carte
 
 /* ---------- quiz ---------- */
 let qOrder=[],qi=0,qScore=0,qAns=null,qPerm={},qMiss=[],qT0=0,qRepris=false;
-const quizSauve=sid=>{const Q=SUBJ[sid].quiz;seanceSet("quiz:"+sid,{ks:qOrder.map(i=>hq(Q[i])),p:qOrder.map(i=>qPerm[i]||null),i:qAns===null?qi:qi+1,score:qScore,miss:qMiss.map(m=>({k:hq(m.q),a:m.a}))});};
+let qS={run:null};
 /* les réponses changent de place à chaque passage : on ne peut pas retenir « c'est la deuxième » */
 const perm=n=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 /* à la fin d'un quiz : la liste des erreurs, avec la bonne réponse et l'explication */
@@ -15439,21 +15448,24 @@ const missHTML=L=>L.length?`<h2 style="font-size:1.15rem;margin:8px 0 0">Tes err
 function quiz(sid,neuf){
   const S=SUBJ[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):null;
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Quiz de cours</h1></div><p class="lead">${S.quizIntro||"Des questions dans le style des questions de cours du CC."}${goal?` Objectif du plan : au moins ${goal} sur ${activeQuiz(S).length}.`:""}</p><div class="qbox" id="qbox" aria-live="polite"></div></div>`;
-  qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;qPerm={};qMiss=[];qRepris=false;
+  qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;qPerm={};qMiss=[];qRepris=false;qS={run:nouvRun()};
+  if(APP.ext.sync)APP.ext.sync();
+  if(neuf===true)seanceFin("quiz:"+sid);
   const sv=neuf===true?null:seanceGet("quiz:"+sid);
-  if(sv&&Array.isArray(sv.ks)){const idx=sv.ks.map(k=>S.quiz.findIndex(x=>hq(x)===k));
-    if(idx.length&&idx.every(i=>i>=0)&&sv.i<=idx.length){qOrder=idx;qi=sv.i;qScore=sv.score||0;
-      idx.forEach((i,j)=>{const p=sv.p&&sv.p[j];if(Array.isArray(p)&&p.length===S.quiz[i].o.length)qPerm[i]=p;});
-      qMiss=(sv.miss||[]).map(m=>({sid,q:S.quiz.find(x=>hq(x)===m.k),a:m.a})).filter(m=>m.q);qRepris=qi>0&&qi<idx.length;}}
+  if(sv&&Array.isArray(sv.q)){const idx=sv.q.map(x=>S.quiz.findIndex(y=>hq(y)===x.k));
+    if(idx.length&&idx.every(i=>i>=0)){const nb=Math.min(faites(sv),idx.length);qOrder=idx;qi=nb;qS={run:sv.run,debute:true};
+      sv.q.forEach((x,j)=>{if(Array.isArray(x.p)&&x.p.length===S.quiz[idx[j]].o.length)qPerm[idx[j]]=x.p;});
+      for(let j=0;j<nb;j++){const qq=S.quiz[idx[j]],r=sv.rep[j];if(r===qq.a)qScore++;else qMiss.push({sid,q:qq,a:r});}
+      qRepris=nb>0&&nb<idx.length;}}
   drawQ(sid);
   $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;const qq=S.quiz[qOrder[qi]];
       if(qq.link)emit({k:"qr",s:sid,c:qq.link,ok:qAns===qq.a?1:0});
       logRep(Object.assign({o:"quiz de cours",s:sid,fiche:qq.link||null,ok:qAns===qq.a?1:0,ms:Date.now()-(qT0||Date.now())},repQ(qq,qAns)));
-      if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}quizSauve(sid);drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;qRepris=false;drawQ(sid);}if(id==="qre"||id==="qnew")quiz(sid,true);});
+      if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}seanceRep("quiz:"+sid,qS,()=>qOrder.map(i=>({k:hq(S.quiz[i]),p:qPerm[i]||null})),qi,qAns);drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;qRepris=false;drawQ(sid);}if(id==="qre"||id==="qnew")quiz(sid,true);});
 }
 function drawQ(sid){
   const S=SUBJ[sid],Q=S.quiz,n=qOrder.length,box=$("#qbox"),st=ST[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):n;
-  if(qi>=n){if(qScore>st.best)emit({k:"quiz",s:sid,n:qScore,goal:qScore>=goal});seanceSet("quiz:"+sid,null);box.innerHTML=`<p class="muted">Résultat</p><p class="score">${qScore} sur ${n}</p><p>${qScore>=goal?"Objectif atteint : l'étape « Quiz » de ton plan est cochée.":"Relis tes erreurs ci-dessous, puis recommence."}</p><button class="btn pri" id="qre" style="justify-self:start">Recommencer</button>${missHTML(qMiss)}`;return;}
+  if(qi>=n){if(qScore>st.best)emit({k:"quiz",s:sid,n:qScore,goal:qScore>=goal});seanceFin("quiz:"+sid,qS.run);box.innerHTML=`<p class="muted">Résultat</p><p class="score">${qScore} sur ${n}</p><p>${qScore>=goal?"Objectif atteint : l'étape « Quiz » de ton plan est cochée.":"Relis tes erreurs ci-dessous, puis recommence."}</p><button class="btn pri" id="qre" style="justify-self:start">Recommencer</button>${missHTML(qMiss)}`;return;}
   const q=Q[qOrder[qi]],ord=qPerm[qOrder[qi]]||(qPerm[qOrder[qi]]=perm(q.o.length));if(qAns===null)qT0=Date.now();
   box.innerHTML=`<p class="muted">Question ${qi+1} sur ${n}. Score : ${qScore}${qRepris?REPRISE+` · <button type="button" class="linkbtn" id="qnew">recommencer</button>`:""}</p><div class="bar"><i style="width:${qi/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${ord.map(i=>{const o=q.o[i];let c="";if(qAns!==null){if(i===q.a)c="good";else if(i===qAns)c="bad";}return `<button data-o="${i}" class="${c}" ${qAns!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
@@ -15511,6 +15523,7 @@ function diagPool(sid,T){const S=SUBJ[sid],out=[];S.quiz.forEach(q=>{if(q.link&&
   const gr=q=>{const s=strip(q.q).replace(/[^a-z0-9]/g,""),g=new Set();for(let i=0;i+4<=s.length;i++)g.add(s.slice(i,i+4));return g;},garde=[],vus=[];
   out.forEach(q=>{const g=gr(q);if(vus.some(v=>{if((v.q.code||"")!==(q.code||""))return false;if(strip(v.q.q)===strip(q.q))return true;let k=0;g.forEach(x=>{if(v.g.has(x))k++;});return k/Math.max(1,g.size+v.g.size-k)>=0.4;}))return;garde.push(q);vus.push({q,g});});return garde;}
 function niveau(sid){
+  if(APP.ext.sync&&(!DG||DG.sid!==sid))APP.ext.sync();
   const S=SUBJ[sid],TH=themesOf(S),st=ST[sid],X=exW(S)==="CC"?"CC":"examen";
   const carte=T=>{const d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,g=gainTheme(sid,T),pr=prioDe(sid,T);
     return `<section class="check"><div><b>${T.t}</b> <span class="muted">· environ ${demi(T.pts)} point(s) sur 20 au ${X}${T.src?` (${T.src})`:""}</span></div>
@@ -15527,23 +15540,23 @@ function niveau(sid){
   $("#main .page").addEventListener("click",e=>{
     const b=e.target.closest("[data-self]");if(b){emit({k:"diag",s:sid,th:b.parentNode.dataset.th,self:+b.dataset.self});niveau(sid);renderSide();return;}
     if(e.target.closest("#dgo")){const L=[];TH.forEach(T=>{const P=diagPool(sid,T);perm(P.length).slice(0,Math.min(P.length,nbQ(T))).forEach(i=>L.push({th:T.id,q:P[i]}));});
-      DG={sid,L:perm(L.length).map(i=>L[i]),i:0,ans:null,ok:0,ord:{},run:(Date.now()+TOFF).toString(36)};nivSauve();diagDraw();return;}
-    if(e.target.closest("#dgnew")){seanceSet("niv:"+sid,null);DG=null;niveau(sid);return;}
+      DG={sid,L:perm(L.length).map(i=>L[i]),i:0,ans:null,ok:0,ord:{},run:nouvRun()};diagDraw();return;}
+    if(e.target.closest("#dgnew")){seanceFin("niv:"+sid);DG=null;niveau(sid);return;}
     if(!DG)return;
     const o=e.target.closest("[data-o]"),ns=e.target.closest("#dqs");
     if((o||ns)&&DG.ans===null){const it=DG.L[DG.i];DG.ans=o?+o.dataset.o:-1;if(DG.ans===it.q.a)DG.ok++;
       emit({k:"diag",s:DG.sid,th:it.th,ok:DG.ans===it.q.a?1:0,n:1,run:DG.run});
-      logRep(Object.assign({o:"mini-contrôle de la matière",s:DG.sid,th:it.th,fiche:it.q.link||null,ok:DG.ans===it.q.a?1:0,ms:Date.now()-(DG.t0||Date.now())},repQ(it.q,DG.ans)));nivSauve();diagDraw();const nx=$("#dqn");if(nx)nx.focus();return;}
+      logRep(Object.assign({o:"mini-contrôle de la matière",s:DG.sid,th:it.th,fiche:it.q.link||null,ok:DG.ans===it.q.a?1:0,ms:Date.now()-(DG.t0||Date.now())},repQ(it.q,DG.ans)));seanceRep("niv:"+DG.sid,DG,()=>DG.L.map(x=>({th:x.th,k:hq(x.q)})),DG.i,DG.ans);diagDraw();const nx=$("#dqn");if(nx)nx.focus();return;}
     if(e.target.closest("#dqn")){DG.i++;DG.ans=null;DG.repris=false;diagDraw();}});
   if(DG&&DG.sid===sid)diagDraw();
   else{DG=null;const sv=seanceGet("niv:"+sid);
-    if(sv&&Array.isArray(sv.L)){const L=sv.L.map(x=>{const q=trouveQ(sid,x.k);return q?{th:x.th,q}:null;});
-      if(L.length&&L.every(Boolean)&&sv.i<=L.length){DG={sid,L,i:sv.i,ans:null,ok:sv.ok||0,ord:{},run:sv.run,repris:sv.i>0&&sv.i<L.length};diagDraw();}}}
+    if(sv&&Array.isArray(sv.q)){const L=sv.q.map(x=>{const q=trouveQ(sid,x.k);return q?{th:x.th,q}:null;});
+      if(L.length&&L.every(Boolean)){const nb=Math.min(faites(sv),L.length);let ok=0;for(let j=0;j<nb;j++)if(sv.rep[j]===L[j].q.a)ok++;
+        DG={sid,L,i:nb,ans:null,ok,ord:{},run:sv.run,debute:true,repris:nb>0&&nb<L.length};diagDraw();}}}
 }
-const nivSauve=()=>seanceSet("niv:"+DG.sid,{L:DG.L.map(x=>({th:x.th,k:hq(x.q)})),i:DG.ans===null?DG.i:DG.i+1,ok:DG.ok,run:DG.run});
 function diagDraw(){
   const D=DG,S=SUBJ[D.sid],box=$("#dq"),n=D.L.length;if(!box)return;
-  if(D.i>=n){const ok=D.ok;seanceSet("niv:"+D.sid,null);DG=null;niveau(D.sid);renderSide();
+  if(D.i>=n){const ok=D.ok;seanceFin("niv:"+D.sid,D.run);DG=null;niveau(D.sid);renderSide();
     const b=$("#dq");if(b)b.insertAdjacentHTML("afterbegin",`<p><b>Mini-contrôle fait : ${ok} sur ${n}.</b> Les thèmes au-dessus sont rangés avec tes résultats, et ton planning est refait.</p>`);return;}
   const q=D.L[D.i].q,ord=D.ord[D.i]||(D.ord[D.i]=perm(q.o.length));if(D.ans===null)D.t0=Date.now();
   box.innerHTML=`<p class="muted">Question ${D.i+1} sur ${n}${D.repris?REPRISE+` · <button type="button" class="linkbtn" id="dgnew">recommencer</button>`:""}</p><div class="bar"><i style="width:${D.i/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
@@ -15559,22 +15572,32 @@ function page(sid,pid){const S=SUBJ[sid],p=S.pages.find(x=>x.id===pid);if(!p)ret
   fixLinks($("#main"),sid);}
 
 /* ---------- mini-contrôle mélangé : toutes les matières, questions choisies par thème, chaque réponse met « Où j'en suis » à jour ---------- */
-/* Une séance en cours (mini-contrôle, quiz, cartes) est gardée sur l'appareil après chaque réponse : si on quitte la page
-   ou si l'onglet se recharge, on reprend à la même question, le jour même. */
-const CLE_S="rev-s1-seances";
-const seances=()=>{try{const o=JSON.parse(localStorage.getItem(CLE_S)||"{}");return o&&typeof o==="object"?o:{};}catch(e){return {};}};
-const seanceGet=k=>{const s=seances()[k];return s&&s.jour===today()?s:null;};
-function seanceSet(k,v){const o=seances(),t0=today();Object.keys(o).forEach(x=>{if(!o[x]||o[x].jour!==t0)delete o[x];});
-  if(v)o[k]=Object.assign({jour:t0},v);else delete o[k];try{localStorage.setItem(CLE_S,JSON.stringify(o));}catch(e){}}
+/* Une séance en cours (mini-contrôle, quiz, cartes) vit dans le journal, donc elle suit la synchronisation : on la reprend
+   à la même question, sur n'importe quel appareil, tant que la dernière réponse a moins de 6 heures (passer minuit ne change
+   rien). Son début n'est écrit qu'à la première réponse : ouvrir la page ne remplace pas une séance commencée ailleurs. */
+const seanceGet=k=>{const s=hub.se[k];return s&&NOW().getTime()-s.ts<6*3600e3?s:null;};
+const seanceRep=(k,o,debut,i,rep)=>{if(!o.debute){emit({k:"sd",c:k,run:o.run,q:debut()});o.debute=true;}emit({k:"sr",c:k,run:o.run,n:i,a:rep});};/* « i » est pris par l'identifiant de l'événement */
+const seanceFin=(k,run)=>{const s=hub.se[k];if(s&&(run==null||s.run===run))emit({k:"sf",c:k,run:s.run});};
+const faites=s=>{let n=0;while(s.rep[n]!=null)n++;return n;};
+const nouvRun=()=>(Date.now()+TOFF).toString(36)+Math.random().toString(36).slice(2,5);
+/* après une synchronisation : une séance commencée sur un autre appareil vient d'arriver, et on n'a pas encore répondu ici */
+function seanceArrivee(){const p=CUR.page,sid=CUR.sid;
+  if(p==="mix"){const s=seanceGet("mix");if(s&&!mx.debute&&s.run!==mx.run)mix();}
+  else if(p==="quiz"){const s=seanceGet("quiz:"+sid);if(s&&!qS.debute&&s.run!==qS.run)quiz(sid);}
+  else if(p==="niveau"){const s=seanceGet("niv:"+sid);if(s&&(!DG||(!DG.debute&&s.run!==DG.run))){DG=null;niveau(sid);}}}
 function trouveQ(sid,cle){const S=SUBJ[sid];if(!S)return null;let q=S.quiz.find(x=>hq(x)===cle);if(q)return q;
   for(const L of LES[sid]||[]){q=L.steps.find(s=>s.k==="qcm"&&hq(s)===cle);if(q)return q;}return null;}
 const REPRISE=`<span class="muted"> · tu reprends où tu t'étais arrêté</span>`;
 let mx={q:[],i:0,score:0,ans:null};
-const mixSauve=()=>seanceSet("mix",{q:mx.q.map(it=>({sid:it.sid,th:it.th||null,k:hq(it.q),ord:it.ord})),i:mx.ans===null?mx.i:mx.i+1,score:mx.score,miss:mx.miss.map(m=>({sid:m.sid,k:hq(m.q),a:m.a})),par:mx.par,run:mx.run});
+const mixDebut=()=>mx.q.map(it=>({sid:it.sid,th:it.th||null,k:hq(it.q),ord:it.ord}));
 function mix(neuf){
+  if(APP.ext.sync)APP.ext.sync();
+  if(neuf===true)seanceFin("mix");
   const sv=neuf===true?null:seanceGet("mix");
   if(sv&&Array.isArray(sv.q)){const Q0=sv.q.map(x=>{const q=trouveQ(x.sid,x.k);return q&&Array.isArray(x.ord)&&x.ord.length===q.o.length?{sid:x.sid,th:x.th||undefined,q,ord:x.ord}:null;});
-    if(Q0.length&&Q0.every(Boolean)&&sv.i<=Q0.length){mx={q:Q0,i:sv.i,score:sv.score||0,ans:null,miss:(sv.miss||[]).map(m=>({sid:m.sid,q:trouveQ(m.sid,m.k),a:m.a})).filter(m=>m.q),par:sv.par||{},run:sv.run,repris:sv.i>0&&sv.i<Q0.length};return mixPage();}}
+    if(Q0.length&&Q0.every(Boolean)){const nb=Math.min(faites(sv),Q0.length);mx={q:Q0,i:nb,score:0,ans:null,miss:[],par:{},run:sv.run,debute:true,repris:nb>0&&nb<Q0.length};
+      for(let j=0;j<nb;j++){const it=Q0[j],r=sv.rep[j],p=mx.par[it.sid]||(mx.par[it.sid]={ok:0,n:0});p.n++;if(r===it.q.a){mx.score++;p.ok++;}else if(r>=0)mx.miss.push({sid:it.sid,q:it.q,a:r});}
+      return mixPage();}}
   const n=NOW(),t0=today(),jr=id=>(examStart(SUBJ[id])-n)/864e5,act=SIDS.filter(id=>examStart(SUBJ[id])>n).sort((x,y)=>jr(x)-jr(y));
   /* poids d'un thème : poids du CC, proximité, points du thème, ce qui n'est pas maîtrisé, ancienneté du dernier test */
   const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id],j=jr(id),u=weight(S)*4/(1+j)*(j<=21?1:0.3),TH=themesOf(S);
@@ -15589,7 +15612,7 @@ function mix(neuf){
   act.forEach(id=>{if(pick.length>=12||jr(id)>21)return;const L=pool.filter(x=>x.sid===id);if(L.length)tire(L);});
   while(pick.length<12&&pool.length)tire(pool);
   const Q=perm(pick.length).map(i=>pick[i]);Q.forEach(it=>{it.ord=perm(it.q.o.length);});
-  mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:(Date.now()+TOFF).toString(36)};mixSauve();mixPage();}
+  mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:nouvRun()};mixPage();}
 function mixPage(){const Q=mx.q;
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div><p class="lead">${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat.</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
   drawMix();
@@ -15598,13 +15621,13 @@ function mixPage(){const Q=mx.q;
       logRep(Object.assign({o:"mini-contrôle mélangé",s:it.sid,th:it.th||null,fiche:it.q.link||null,ok:ok?1:0,ms:Date.now()-(mx.t0||Date.now()),passage:mx.run},repQ(it.q,mx.ans)));
       if(it.th)emit({k:"diag",s:it.sid,th:it.th,ok:ok?1:0,n:1,run:mx.run});
       if(ok){mx.score++;p.ok++;}else{if(mx.ans>=0)mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}
-      mixSauve();drawMix();$("#mxn")?.focus();return;}
+      seanceRep("mix",mx,mixDebut,mx.i,mx.ans);drawMix();$("#mxn")?.focus();return;}
     const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;mx.repris=false;drawMix();}if(id==="mxre"||id==="mxnew")mix(true);});
 }
 function drawMix(){
   const box=$("#mxbox"),n=mx.q.length;
   if(!n){box.innerHTML=`<p>Aucune question : tous tes CC sont passés.</p>`;return;}
-  if(mx.i>=n){emit({k:"mix",n:mx.score,sur:n});seanceSet("mix",null);
+  if(mx.i>=n){emit({k:"mix",n:mx.score,sur:n});seanceFin("mix",mx.run);
     box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${Object.entries(mx.par).map(([s,p])=>`${themesOf(SUBJ[s]).length?`<a href="#/${s}/niveau">${SUBJ[s].name}</a>`:SUBJ[s].name} : ${p.ok} sur ${p.n}`).join(" · ")}.</p><p>${mx.score===n?"Tout est juste : les thèmes vérifiés passent en « si tu as le temps ».":"Les thèmes ratés remontent dans ton planning, et leurs fiches sont en rouge."}</p><div class="acts"><a class="btn pri" href="#/">Voir le programme du jour</a><button class="btn" id="mxre">${n} autres questions</button></div>${missHTML(mx.miss||[])}`;return;}
   const it=mx.q[mx.i],q=it.q,S=SUBJ[it.sid];if(mx.ans===null)mx.t0=Date.now();
   box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}${mx.repris?REPRISE+` · <button type="button" class="linkbtn" id="mxnew">recommencer avec d'autres questions</button>`:""}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
@@ -15728,7 +15751,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceSet,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
