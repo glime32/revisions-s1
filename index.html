@@ -1229,13 +1229,14 @@ function calltree(host,spec){
 }
 
 /* ------------------------------------------------------------------
-   Tris pas à pas : bulles, sélection, insertion, comptage.
+   Tris pas à pas : bulles (sens du cours), fusion, sélection, insertion, par valeurs.
 ------------------------------------------------------------------ */
 const SORTS={
- bulles:{t:"Tri à bulles",gen:function*(a){const n=a.length;for(let i=n-1;i>0;i--){for(let j=0;j<i;j++){yield{a:a.slice(),cmp:[j,j+1],done:n-1-i,msg:`On compare T[${j}] = ${a[j]} et T[${j+1}] = ${a[j+1]}.`};if(a[j]>a[j+1]){[a[j],a[j+1]]=[a[j+1],a[j]];yield{a:a.slice(),swap:[j,j+1],done:n-1-i,msg:"Ils sont dans le désordre : on échange ces deux voisins."};}}}yield{a:a.slice(),done:n,msg:"Trié. Chaque passage fait remonter le plus grand restant à la fin."};}},
+ bulles:{t:"Tri à bulles",gen:function*(a){const n=a.length;for(let i=0;i<n-1;i++){for(let j=n-1;j>i;j--){yield{a:a.slice(),cmp:[j-1,j],fixed:i,msg:`i = ${i}, j = ${j} : on compare T[${j}] = ${a[j]} et T[${j-1}] = ${a[j-1]}.`};if(a[j]<a[j-1]){[a[j],a[j-1]]=[a[j-1],a[j]];yield{a:a.slice(),swap:[j-1,j],fixed:i,msg:"T[j] < T[j-1] : on échange ces deux voisins."};}}}yield{a:a.slice(),fixed:n,msg:"Trié. À chaque itération de i, le plus petit restant est remonté au début."};}},
+ fusion:{t:"Tri fusion",gen:function*(a){const n=a.length,plage=(d,f)=>Array.from({length:f-d+1},(_,k)=>d+k);function* tri(deb,fin){if(deb<fin){const mil=Math.floor((deb+fin)/2);yield* tri(deb,mil);yield* tri(mil+1,fin);const T1=a.slice(deb,mil+1),T2=a.slice(mil+1,fin+1);let i=0,j=0;yield{a:a.slice(),cmp:plage(deb,fin),msg:`fusion(T, ${deb}, ${mil}, ${fin}) : T[${deb}..${mil}] = [${T1.join(", ")}] et T[${mil+1}..${fin}] = [${T2.join(", ")}] sont triés.`};for(let k=deb;k<=fin;k++){if(j>=T2.length||(i<T1.length&&T1[i]<=T2[j]))a[k]=T1[i++];else a[k]=T2[j++];}yield{a:a.slice(),swap:plage(deb,fin),msg:`Après la fusion : T[${deb}..${fin}] = [${a.slice(deb,fin+1).join(", ")}].`};}}yield* tri(0,n-1);yield{a:a.slice(),fixed:n,msg:"Trié, en θ(n log(n)). Les fusions ont eu besoin de tableaux auxiliaires : le tri fusion n'est pas en place."};}},
  selection:{t:"Tri par sélection",gen:function*(a){const n=a.length;for(let i=0;i<n-1;i++){let m=i;for(let j=i+1;j<n;j++){yield{a:a.slice(),cmp:[m,j],fixed:i,msg:`Plus petit trouvé jusqu'ici : T[${m}] = ${a[m]}. On le compare à T[${j}] = ${a[j]}.`};if(a[j]<a[m])m=j;}if(m!==i){[a[i],a[m]]=[a[m],a[i]];yield{a:a.slice(),swap:[i,m],fixed:i+1,msg:`On place le minimum ${a[i]} en position ${i}.`};}else yield{a:a.slice(),fixed:i+1,msg:`T[${i}] = ${a[i]} est déjà le minimum : il reste en place.`};}yield{a:a.slice(),fixed:n,msg:"Trié."};}},
  insertion:{t:"Tri par insertion",gen:function*(a){const n=a.length;for(let i=1;i<n;i++){let j=i;yield{a:a.slice(),cmp:[j],fixed:i,msg:`On insère T[${i}] = ${a[i]} dans la partie déjà triée T[0..${i-1}].`};while(j>0&&a[j-1]>a[j]){yield{a:a.slice(),cmp:[j-1,j],fixed:i,msg:`${a[j-1]} > ${a[j]} : on décale.`};[a[j-1],a[j]]=[a[j],a[j-1]];yield{a:a.slice(),swap:[j-1,j],fixed:i+1,msg:"Échange avec le voisin de gauche."};j--;}}yield{a:a.slice(),fixed:n,msg:"Trié."};}},
- comptage:{t:"Tri par comptage (par valeurs)",gen:function*(a){const max=Math.max(...a);const c=new Array(max+1).fill(0);for(let i=0;i<a.length;i++){c[a[i]]++;yield{a:a.slice(),cmp:[i],cnt:c.slice(),msg:`On compte la valeur ${a[i]} : elle a été vue ${c[a[i]]} fois.`};}const r=[];for(let v=0;v<=max;v++){for(let k=0;k<c[v];k++){r.push(v);}if(c[v])yield{a:r.concat(a.slice(r.length).map(()=>null)),cnt:c.slice(),msg:`On recopie ${c[v]} fois la valeur ${v}.`};}yield{a:r,cnt:c,fixed:a.length,msg:"Trié en un seul passage de comptage + un passage de recopie : Θ(n + valeurs possibles)."};}}
+ comptage:{t:"Tri par valeurs",gen:function*(a){const max=Math.max(...a);const c=new Array(max+1).fill(0);for(let i=0;i<a.length;i++){c[a[i]]++;yield{a:a.slice(),cmp:[i],cnt:c.slice(),msg:`On compte la valeur ${a[i]} : elle a été vue ${c[a[i]]} fois.`};}const r=[];for(let v=0;v<=max;v++){for(let k=0;k<c[v];k++){r.push(v);}if(c[v])yield{a:r.concat(a.slice(r.length).map(()=>null)),cnt:c.slice(),msg:`On recopie ${c[v]} fois la valeur ${v}.`};}yield{a:r,cnt:c,fixed:a.length,msg:"Trié en un passage de comptage et un passage de recopie : θ(p + n), où p est le nombre de valeurs possibles."};}}
 };
 function sortviz(host,opts){
   opts=opts||{};let algo=opts.algo||"bulles",arr=[],steps=[],k=0;
@@ -1245,10 +1246,10 @@ function sortviz(host,opts){
   function newArr(){const n=opts.n||8;arr=Array.from({length:n},()=>1+Math.floor(Math.random()*(algo==="comptage"?6:12)));build();}
   function build(){steps=[...SORTS[algo].gen(arr.slice())];k=0;draw();}
   function draw(){const s=steps[k]||{a:arr};const mx=Math.max(...arr,1);
-    $(".bars").innerHTML=s.a.map((v,i)=>{let c="";if(s.swap&&s.swap.includes(i))c=" sw";else if(s.cmp&&s.cmp.includes(i))c=" cp";else if((algo==="bulles"&&s.done!=null&&i>=s.a.length-s.done)||(s.fixed!=null&&algo!=="bulles"&&i<s.fixed))c=" ok";return `<div class="bar${c}${v==null?" empty":""}"><i style="height:${v==null?4:Math.max(8,v/mx*120)}px"></i><span>${v==null?"":v}</span><small>${i}</small></div>`;}).join("");
+    $(".bars").innerHTML=s.a.map((v,i)=>{let c="";if(s.swap&&s.swap.includes(i))c=" sw";else if(s.cmp&&s.cmp.includes(i))c=" cp";else if(s.fixed!=null&&i<s.fixed)c=" ok";return `<div class="bar${c}${v==null?" empty":""}"><i style="height:${v==null?4:Math.max(8,v/mx*120)}px"></i><span>${v==null?"":v}</span><small>${i}</small></div>`;}).join("");
     const shown=steps.slice(0,k+1);const nc=shown.filter(x=>x.cmp&&x.cmp.length===2).length,ns=shown.filter(x=>x.swap).length;
     $(".w-note").innerHTML=`<div class="verdict info">${s.msg||""}</div>`+(s.cnt?`<div class="muted" style="margin-top:6px">Compteurs : ${s.cnt.map((c,v)=>c?`${v}→${c}`:"").filter(Boolean).join(", ")}</div>`:"");
-    $(".meas-line").innerHTML=algo==="comptage"?"":`<span class="muted">Comparaisons : <b>${nc}</b>, échanges : <b>${ns}</b></span>`;
+    $(".meas-line").innerHTML=algo==="comptage"||algo==="fusion"?"":`<span class="muted">Comparaisons : <b>${nc}</b>, échanges : <b>${ns}</b></span>`;
     $('[data-a="cnt"]').textContent=`Étape ${k+1} sur ${steps.length}`;}
   host.addEventListener("click",e=>{const a=e.target.closest("[data-a]")?.dataset.a;if(!a)return;if(a==="new")return newArr();if(a==="prev"&&k>0)k--;if(a==="next"&&k<steps.length-1)k++;if(a==="end")k=steps.length-1;draw();});
   host.addEventListener("change",e=>{if(e.target.matches("[data-s]")){algo=e.target.value;newArr();}});
@@ -1263,8 +1264,10 @@ function dicho(host){
   host.innerHTML=`<div class="widget"><div class="w-ctrl"><label>Taille n <input type="number" min="4" max="1024" value="32" data-n></label><label>Valeur cherchée <input type="number" value="0" data-x></label><button class="btn" data-a="rand">Valeur au hasard</button><button class="btn" data-a="prev">Précédent</button><button class="btn pri" data-a="next">Suivant</button><button class="btn" data-a="end">Tout</button></div>
    <div class="dstrip"></div><div class="w-note"></div></div>`;
   const $=s=>host.querySelector(s);
-  function build(){T=Array.from({length:n},(_,i)=>2*i+1);steps=[];let g=0,d=n-1,c=0;while(g<=d){const m=Math.floor((g+d)/2);c++;steps.push({g,d,m,c,msg:`Essai ${c} : on regarde le milieu T[${m}] = ${T[m]}.`});if(T[m]===x){steps.push({g,d,m,c,found:true,msg:`Trouvé en ${c} essai(s). Avec n = ${n}, il en faut au plus ${Math.floor(Math.log2(n))+1} ≈ log₂(n) + 1.`});break;}if(T[m]<x){g=m+1;steps.push({g,d,m,c,msg:`${T[m]} < ${x} : on garde la moitié droite. Il reste ${Math.max(0,d-g+1)} case(s).`});}else{d=m-1;steps.push({g,d,m,c,msg:`${T[m]} > ${x} : on garde la moitié gauche. Il reste ${Math.max(0,d-g+1)} case(s).`});}}
-    if(!steps.length||!steps[steps.length-1].found)steps.push({g,d,c,msg:`Absent : ${c} essai(s). Une recherche séquentielle aurait pu en faire ${n}.`});k=0;draw();}
+  /* RechDic du cours : pas de sortie au milieu, on renvoie le plus petit indice */
+  function build(){T=Array.from({length:n},(_,i)=>2*i+1);steps=[];let g=0,d=n-1,c=0;steps.push({g,d,c,msg:`deb = 0, fin = ${d}. On cherche e = ${x}.`});
+    while(g<=d){const m=Math.floor((g+d)/2);c++;if(T[m]<x){g=m+1;steps.push({g,d,m,c,msg:`Itération ${c} : mil = ${m}, T[${m}] = ${T[m]} < ${x}, donc deb ← ${g}. Il reste ${Math.max(0,d-g+1)} case(s).`});}else{d=m-1;steps.push({g,d,m,c,msg:`Itération ${c} : mil = ${m}, T[${m}] = ${T[m]} n'est pas < ${x}, donc fin ← ${d}. Il reste ${Math.max(0,d-g+1)} case(s).`});}}
+    const ok=g<n&&T[g]===x;steps.push({g:ok?g:0,d:ok?g:-1,m:ok?g:null,c,found:ok,msg:ok?`deb = ${g} > fin = ${d} : fin du tant que. T[${g}] = ${x} : on renvoie ${g}, après ${c} itération(s). Une recherche linéaire aurait pu en faire ${n}.`:`deb = ${g} > fin = ${d} : fin du tant que. ${g<n?`T[${g}] = ${T[g]} ≠ ${x}`:"deb = taille(T)"} : on renvoie -1, après ${c} itération(s).`});k=0;draw();}
   function draw(){const s=steps[k];const W=Math.min(n,64),scale=n/W;let h="";for(let i=0;i<W;i++){const lo=Math.floor(i*scale),hi=Math.floor((i+1)*scale)-1;const inside=hi>=s.g&&lo<=s.d;const mid=s.m!=null&&s.m>=lo&&s.m<=hi;h+=`<i class="${inside?"in":""}${mid?(s.found?" found":" mid"):""}" title="${n<=64?"T["+lo+"] = "+T[lo]:""}">${n<=32?T[lo]:""}</i>`;}
     $(".dstrip").innerHTML=h;$(".w-note").innerHTML=`<div class="verdict ${s.found?"ok":"info"}">${s.msg}</div>`;
     host.querySelector('[data-a="prev"]').disabled=k===0;host.querySelector('[data-a="next"]').disabled=k>=steps.length-1;}
@@ -3906,59 +3909,145 @@ add(3,{id:"a-calcul-complexite",type:"meth",ref:"Cours diapos 67 à 74 et 81 à 
  trap:`F(n-1) + F(n-1) fait deux appels : T<sub>n</sub> = 2T<sub>n−1</sub> + …, donc θ(2<sup>n</sup>). Et le master theorem ne s'applique que si la taille est <b>divisée</b> (n div 2, n div 3), pas si elle diminue de 1.`,
  q:"Combien d'additions fait « Pour i de 1 à n faire Pour j de 1 à i faire som ← som+1 » ? (TD 8, exercice 34)",a:"1 + 2 + … + n = n(n + 1)/2, donc θ(n²).",rel:["a-complexite"]});
 
-/* ---------- chapitre 4 : recherche et tris ---------- */
-add(4,{id:"a-recherche",type:"algo",ref:"Cours et TD 9",t:"Recherche séquentielle et dichotomique",short:"Recherche dichotomique",cc:"Tombé en 2024",
- plain:`Dans un tableau ${hl("trié")}, on regarde le milieu : selon la comparaison, on garde la moitié gauche ou droite. À chaque essai, il reste deux fois moins de cases : environ ${hl("log₂(n) essais")} au lieu de n.`,
+/* ---------- chapitre 4 : recherche et tris (cours, diapos 87 à 114 : algorithmes recopiés du cours) ---------- */
+const RECHDIC=`FONCTION : RechDic (E e : nombre, E T : tableau de nombres) : entier
+SPÉCIFICATIONS : T trié. Renvoie le plus petit i tq T[i]=e ou -1.
+Variable : deb, mil, fin : entier
+DÉBUT
+    deb, fin ← 0, taille(T)-1
+    tant que deb≤fin faire
+        mil ← (deb+fin) div 2
+        si T[mil]<e alors
+            deb ← mil+1
+        sinon
+            fin ← mil-1
+        fin si;
+    fin tq;
+    Renvoyer cond(deb<taille(T) et T[deb]=e, deb, -1)
+FIN`;
+add(4,{id:"a-recherche",type:"algo",ref:"Cours diapos 88 à 98, TD 9",t:"Recherche linéaire et recherche dichotomique",short:"Recherche dichotomique",cc:"Tombé en 2024",
+ plain:`Tableau non trié : ${hl("recherche linéaire")}, case par case, en θ(n). Tableau ${hl("trié")} : on compare e à la valeur au milieu du tableau, puis on continue dans la bonne moitié. C'est la ${hl("recherche dichotomique")}, en θ(log(n)).`,
  fig:()=>h=>W.dicho(h),
- formal:`${C(`Fonction : dicho (E T : tableau trié, E x : nombre) : booléen
-Variables : g, d, m : entiers
-Début
-  g, d ← 0, taille(T) - 1
-  Tant que g ≤ d faire
-    m ← (g + d) div 2
-    Si T[m] = x alors Renvoyer true
-    sinon Si T[m] < x alors g ← m + 1
-    sinon d ← m - 1
-  finTantQue
-  Renvoyer false
-Fin`)}<p>Complexité : Θ(log n) pour la dichotomie, Θ(n) pour la recherche séquentielle (qui marche aussi sur un tableau non trié).</p>`,
- use:`<p>CC1 2024 : 128 chevaux triés → 7 mesures (128 = 2⁷). Variante : 12 000 légos en 14 essais → 24 000 légos en 15 essais (un essai de plus coupe en deux). Justifie par « à chaque essai, le nombre de candidats est divisé par 2 ».</p>`,
- trap:`La dichotomie exige un tableau trié. Et doubler n n'ajoute qu'un seul essai : log₂(2n) = log₂(n) + 1.`,
- q:"12 000 légos triés demandent au plus 14 essais. Et 24 000 ? (CC1 2024)",a:"15 : après le premier essai, il reste 12 000 légos où chercher, donc au plus 14 essais de plus.",rel:["a-complexite","a-tri-bulles"]});
+ formal:`<p><b>Recherche linéaire</b> (diapos 88 à 90). Pour chercher un élément e dans un tableau T non trié, on le parcourt case par case jusqu'à trouver e ou atteindre la fin du tableau.</p>${C(`FONCTION : RechLin(E e : nombre, E T : tableau de nombres) : entier
+SPÉCIFICATIONS : Si T contient e, renvoie le premier indice de T qui
+                 contient e. Sinon, renvoie -1.
+Variable : i : entier
+DÉBUT
+    i ← 0
+    tant que i<taille(T) et T[i]≠e faire
+        i ← i+1
+    fin tq;
+    si i=taille(T) alors
+        Renvoyer -1
+    sinon
+        Renvoyer i
+    fin si;
+FIN`)}<p>Complexité : pire des cas pour e ∉ T en notant n = taille(T) : n itérations à coût constant + opérations à coût constant = θ(n).</p><p><b>Recherche dichotomique</b> (diapos 91 et 92). Pour chercher un élément e dans un tableau T trié, on compare e à la valeur au milieu du tableau puis on continue à le chercher dans la bonne moitié du tableau.</p>${C(RECHDIC)}<p><b>Preuve d'arrêt</b> (diapo 95) : fin-deb+1 est un entier naturel ; il décroît strictement à chaque itération ; le tant que s'arrête lorsqu'il vaut 0 ou moins. Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme se termine.</p><p><b>Complexité</b> (diapo 97). Pire cas : tout le tableau est &lt; e. Simplification pour le calcul : n = 2<sup>k</sup>. Nombre d'itérations = nombre de divisions de n par 2 jusqu'à tomber sur 0, donc k + 1. Chaque itération est en θ(1). T<sub>n</sub> = θ(1) + (k + 1).θ(1) = θ(k) donc T<sub>n</sub> = θ(log(n)). L'algorithme est logarithmique.</p>`,
+ use:`<p>CC1 2024 : 128 chevaux rangés par taille, combien de mesures ? « A chaque mesure, le nombre de chevaux parmi lesquels chercher est divisé par deux […] le nombre de fois qu'il faut diviser 128 par 2 pour trouver 1, c'est à dire 7 fois. » Autre sujet : 12000 légos demandent 14 essais au maximum ; 24000 en demandent 15, car après le premier essai il en reste 12000.</p>`,
+ trap:`RechDic ne s'arrête pas quand elle tombe sur e : elle continue jusqu'à deb > fin, ce qui lui fait renvoyer le <b>plus petit</b> indice. Et la dichotomie exige un tableau trié.`,
+ q:"Les 12000 légos de Mr Bricks sont rangés par taille. Il doit faire 14 essais au maximum pour en trouver un. Combien lui en faudrait-il avec 24000 légos ? (CC1 2024)",a:"15 : après son premier essai, le nombre de légos où chercher est divisé par 2, c'est-à-dire égal à 12000, donc il lui reste 14 essais au maximum.",rel:["a-complexite","a-tri-fusion"]});
 
-const sortConcept=(id,algo,t,plain,formal,use,trap,q,a,extra)=>add(4,Object.assign({id,type:"algo",ref:"Cours et TD 10",t,plain,fig:()=>h=>W.sortviz(h,{algo}),formal,use,trap,q,a,rel:["a-tri-bulles","a-tri-selection","a-tri-insertion","a-tri-valeurs"].filter(x=>x!==id)},extra||{}));
-sortConcept("a-tri-bulles","bulles","Le tri à bulles",`On compare ${hl("deux voisins")} et on les échange s'ils sont dans le désordre. Chaque passage fait « remonter » le plus grand élément restant à la fin, comme une bulle.`,
- `${C(`Procédure : triBulles (ES T : tableau)
-Début
-  Pour i de taille(T)-1 à 1 par pas de -1 faire
-    Pour j de 0 à i-1 faire
-      Si T[j] > T[j+1] alors échanger T[j] et T[j+1]
-    finPour
-  finPour
-Fin`)}<p>Complexité : Θ(n²) comparaisons (environ n²/2), sans tableau auxiliaire.</p>`,
- `<p>CC1 2024 : Luc ne peut que permuter deux vaisseaux voisins. Il peut trier avec le tri à bulles, qui repose entièrement sur la permutation d'éléments voisins.</p>`,
- `Après le passage numéro k, les k plus grands sont à leur place définitive : inutile de les comparer à nouveau.`,"Quel tri du cours n'utilise que des échanges d'éléments voisins ?","Le tri à bulles.",{cc:"Tombé en 2024"});
-sortConcept("a-tri-selection","selection","Le tri par sélection",`On ${hl("cherche le plus petit")} élément restant et on le met à sa place, au début. Puis on recommence avec le reste.`,
- `${C(`Pour i de 0 à n-2 faire
-  m ← indice du minimum de T[i..n-1]
-  échanger T[i] et T[m]
-finPour`)}<p>Complexité : Θ(n²) comparaisons dans tous les cas, mais au plus n − 1 échanges.</p>`,
- `<p>Utile quand les échanges coûtent cher (peu d'échanges).</p>`,`Même si le tableau est déjà trié, la sélection fait toutes ses comparaisons : Θ(n²).`,"Combien d'échanges fait au plus le tri par sélection sur n éléments ?","n − 1 (un par position, sauf la dernière).");
-sortConcept("a-tri-insertion","insertion","Le tri par insertion",`Comme pour trier des cartes en main : on prend l'élément suivant et on ${hl("l'insère à sa place")} dans la partie déjà triée, en décalant les plus grands.`,
- `${C(`Pour i de 1 à n-1 faire
-  j ← i
-  Tant que j > 0 et T[j-1] > T[j] faire
-    échanger T[j-1] et T[j] ; j ← j - 1
-  finTantQue
-finPour`)}<p>Complexité : Θ(n²) dans le pire cas (tableau à l'envers), Θ(n) si le tableau est déjà trié.</p>`,
- `<p>Bon choix pour un tableau presque trié.</p>`,`C'est un « Tant que » : le nombre de décalages dépend des données, d'où un meilleur et un pire cas différents.`,"Quelle est la complexité du tri par insertion sur un tableau déjà trié ?","Θ(n) : chaque nouvel élément est déjà à sa place, une seule comparaison par élément.");
-sortConcept("a-tri-valeurs","comptage","Le tri par valeurs (comptage)",`Quand il y a ${hl("peu de valeurs possibles")}, on compte combien de fois chaque valeur apparaît, puis on réécrit le tableau dans l'ordre. Aucune comparaison entre éléments : ${hl("Θ(n)")}.`,
- `<p>(1) Un compteur par valeur possible, à 0. (2) Un passage sur T pour compter. (3) On réécrit chaque valeur autant de fois que son compteur. Complexité Θ(n + k) avec k valeurs possibles.</p>`,
- `<p>CC1 2024 : Luc a 5 modèles de vaisseaux et un grand hangar. Il range chaque modèle dans une zone, puis les remet en ligne du plus petit au plus grand : tri par valeurs en Θ(n), effort minimal.</p>`,
- `Il faut connaître la liste (courte) des valeurs possibles. Pour des valeurs quelconques, on revient aux tris par comparaison.`,"Luc a beaucoup de vaisseaux de 5 modèles différents. Quel tri adapter ? (CC1 2024)","Le tri par valeurs (comptage) : une zone par modèle, puis on les remet en ligne. Θ(n).",{cc:"Tombé en 2024"});
+const sortConcept=(id,algo,t,plain,formal,use,trap,q,a,extra)=>add(4,Object.assign({id,type:"algo",ref:"Cours diapos 99 à 114, TD 10",t,plain,fig:()=>h=>W.sortviz(h,{algo}),formal,use,trap,q,a,rel:["a-tri-valeurs","a-tri-bulles","a-tri-fusion","a-tri-selection","a-tri-insertion"].filter(x=>x!==id)},extra||{}));
+sortConcept("a-tri-valeurs","comptage","Le tri par valeurs",`Quand les valeurs du tableau sont concentrées dans un petit intervalle, on ${hl("compte")} combien il y a de 0, de 1, de 2…, puis on les remet dans l'ordre. Aucune comparaison entre deux éléments : ${hl("θ(n)")}.`,
+ `<p><b>Motivation du tri</b> (diapo 100). Trier permet de traiter plus efficacement ensuite. On étudie 2 sortes de tris de tableaux 1D de taille n : dans le cas particulier où les valeurs du tableau sont concentrées dans un intervalle ⟦0 ; p−1⟧ avec p = O(n), tri par valeurs en θ(n) ; dans le cas général, tri par comparaison en Ω(n log n).</p><p><b>Idée générale</b> (diapo 101). On compte combien il y a de 0, de 1, de 2 etc. jusqu'à p−1. On mémorise ce comptage dans un deuxième tableau. Puis on remet autant de 0 que ce qu'on a compté au début du tableau, puis on met les 1, les 2 etc. jusqu'aux p−1.</p><p>Exemple : dans le tableau [1,0,0,1,1,1,3,0,2,2,0,1,2,3,2,0,0], on compte six 0, cinq 1, quatre 2, deux 3, donc le tableau trié est [0,0,0,0,0,0,1,1,1,1,1,2,2,2,2,3,3].</p>${C(`PROCÉDURE : TriValeurs (ES T : tableau d'entier de taille n, E p : entier)
+SPÉCIFICATIONS : Les valeurs de T sont dans ⟦0 ; p−1⟧. Trie T.
+Variable : Cpt : tableau d'entier de taille p
+           j, k : entier
+DÉBUT
+    Initialiser Cpt avec des 0
+    pour i de 0 à n-1 faire
+        Cpt[T[i]] ← Cpt[T[i]] + 1
+    fin pour;
+    j,k ← 0,0
+    tant que j<n faire
+        si Cpt[k]=0 alors
+            k ← k+1
+        sinon
+            T[j] ← k
+            j ← j+1
+            Cpt[k] ← Cpt[k]-1
+        fin si;
+    fin tq;
+FIN`)}<p>Complexité : θ(p + n) ou θ(n) si p = O(n).</p><p><b>Borne inférieure d'un tri de tableau</b> (diapo 104). Pour trier un tableau, il faut parcourir toutes ses cases. Donc sa complexité est au moins n, c'est-à-dire Ω(n). Le tri par valeur est en θ(n). L'ordre de complexité n est donc une borne inférieure pour un tri de tableau.</p>`,
+ `<p>CC1 2024 : Luc a de nombreux vaisseaux de 5 modèles différents et un hangar immense. « Il peut utiliser un tri par valeurs : il range chaque modèle dans une zone différente de son hangar, puis il les remet en ligne […] un tri en θ(n). » Examen de janvier 2023 : trier un tableau de chiffres en θ(1) est impossible (Ω(n)), en θ(n) c'est possible avec le tri par valeurs.</p>`,
+ `Il faut connaître l'intervalle des valeurs possibles, et qu'il soit petit (p = O(n)). Si les valeurs sont toutes différentes ou quelconques, on revient à un tri par comparaison.`,"Luc a de nombreux vaisseaux, de 5 modèles différents, et un hangar immense. Quel tri du cours adapter pour fournir le moins d'efforts possible ? (CC1 2024)","Le tri par valeurs : une zone du hangar par modèle, puis il les remet en ligne du plus petit modèle au plus grand. C'est un tri en θ(n).",{cc:"Tombé en 2023 et 2024"});
+sortConcept("a-tri-bulles","bulles","Le tri à bulles",`On compare ${hl("deux voisins")} et on les échange s'ils sont dans le désordre, en partant de la fin du tableau. À chaque passage, le plus petit élément restant « remonte » à sa place, au début.`,
+ `<p>Un premier tri par comparaison (diapo 105) :</p>${C(`PROCÉDURE : TriBulles (ES T : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau T par ordre croissant.
+DÉBUT
+    pour i de 0 à n-2 faire
+        pour j de n-1 à i+1 par pas de -1 faire
+            si T[j]<T[j-1] alors
+                échanger T[j] et T[j-1]
+            fin si;
+        fin pour;
+    fin pour;
+FIN`)}<p>Complexité θ(n²). Le tri à bulles n'a pas besoin d'espace supplémentaire (<b>en place</b>) et respecte l'ordre des éléments initiaux en cas d'égalité (<b>stable</b>).</p>`,
+ `<p>CC1 2024 : Luc ne peut que permuter deux vaisseaux voisins. « Oui, Luc peut utiliser le tri à bulles, qui repose entièrement sur la permutation d'éléments voisins. » Autre sujet (permuter deux vaisseaux quelconques, citer deux tris) : le tri à bulles ou le tri par sélection.</p>`,
+ `À la fin de l'itération i, les cases 0 à i contiennent les i + 1 plus petites valeurs, à leur place définitive : c'est pour ça que j s'arrête à i+1.`,"Quel tri du cours repose entièrement sur la permutation d'éléments voisins ? (CC1 2024)","Le tri à bulles.",{cc:"Tombé en 2024"});
+sortConcept("a-tri-fusion","fusion","Le tri fusion",`« ${hl("Diviser pour mieux régner")} » : on trie chaque moitié du tableau, puis on ${hl("fusionne")} les deux moitiés triées. C'est le tri par comparaison efficace du cours : ${hl("θ(n log(n))")}.`,
+ `<p><b>Principe</b> (diapo 107). Algorithme de type « Diviser pour mieux régner » : on trie chaque moitié du tableau ; on fusionne les deux moitiés triées. Il faut 2 algorithmes : l'algorithme de tri et l'algorithme de fusion.</p>${C(`PROCÉDURE : fusion (ES T : tableau de nombre, E deb1, fin1, fin2 : entier)
+SPÉCIFICATIONS : T[deb1..fin1] et T[fin1+1..fin2] triés. Trie T[deb1..fin2].
+Variable : T1, T2 : tab. de fin1-deb1+1 et fin2-fin1 nombres ; i,j : entiers
+DÉBUT
+    recopier T[deb1..fin1] dans T1 et T[fin1+1..fin2] dans T2
+    i,j ← 0,0
+    pour k de deb1 à fin2 faire
+        si j>=taille(T2) ou (i<taille(T1) et T1[i]<=T2[j]) alors
+            T[k] ← T1[i] ; i ← i+1
+        sinon
+            T[k] ← T2[j] ; j ← j+1
+        fin si;
+    fin pour;
+FIN`)}${C(`PROCÉDURE : triFusionAux (ES T : tableau de nombre; E deb, fin : entier)
+SPÉCIFICATIONS : Trie T entre les indices deb et fin.
+Variable : mil : entier
+DÉBUT
+    si deb<fin alors
+        mil ← (deb+fin) div 2
+        triFusionAux(T,deb,mil)
+        triFusionAux(T,mil+1,fin)
+        fusion(T,deb,mil,fin)
+    fin si;
+FIN`)}<p>Pour trier tout le tableau (diapo 112) : la procédure TriFusion(ES T : tableau de nombres) appelle TriFusionAux(T, 0, taille(T)-1) (les deux valeurs sont à trouver sur la diapo).</p><p><b>Complexité et propriété.</b> Le tri fusion a une complexité θ(n log(n)) (admis) et il est stable (éléments égaux dans le même ordre qu'au départ). Cependant il a besoin d'espace supplémentaire pour la fusion : il n'est pas en place.</p><p><b>Borne inférieure d'un tri par comparaison</b> (diapo 113). Dans le cas général, on doit comparer les valeurs entre elles pour les ordonner. Nombre de comparaisons nécessaires : au moins n log n/4 donc complexité Ω(n log n). Il est possible de faire θ(n log n), par exemple avec le tri fusion. L'ordre de complexité n log n est donc une borne inférieure d'un tri de tableau par comparaison.</p>`,
+ `<p>CC1 2024 : les vaisseaux de Luc sont de modèles tous différents, et son hangar est immense. « Luc ne peut pas utiliser un tri par valeurs et doit faire un tri par comparaison. Le tri par comparaison le plus efficace du cours est le tri fusion, qui peut être adapté au cas de Luc qui n'a pas de problème de stockage. »</p>`,
+ `Le tri fusion a besoin d'un tableau auxiliaire : il n'est pas en place. Dans le TD 7 (exercice 32), c'est ce qui le rend inutilisable quand la mémoire manque.`,"Quel est le tri par comparaison le plus efficace du cours, et quel est son défaut ?","Le tri fusion, en θ(n log(n)). Il a besoin d'espace supplémentaire pour la fusion : il n'est pas en place.",{cc:"Tombé en 2024"});
+sortConcept("a-tri-selection","selection","Le tri par sélection",`On ${hl("cherche le plus petit")} élément restant et on l'échange avec la première case pas encore triée. Puis on recommence avec le reste.`,
+ `<p>Cours, diapo 114 (« Quelques tris célèbres ») : pour k allant de 0 à taille(T)-2, on cherche le plus petit élément parmi T[k] à T[taille(T)-1] et on l'échange avec T[k]. Adapté pour de petits ensembles de données. Complexité : θ(n²).</p>${C(`PROCÉDURE : TriSelection (ES tab : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.
+Variable : m : entier
+DÉBUT
+    pour i de 0 à n-2 faire
+        m ← i
+        pour j de i+1 à n-1 faire
+            si tab[j] < tab[m] alors
+                m ← j
+            fin si;
+        fin pour;
+        échanger tab[i] et tab[m]
+    fin pour;
+FIN`)}<p>(Algorithme du TD 10, exercice 42, écrit par moi dans la forme du cours.) Nombre de comparaisons : (n − 1) + (n − 2) + … + 1 = n(n − 1)/2, quel que soit le tableau.</p>`,
+ `<p>TD 10, exercice 42 : écrire l'algorithme, donner sa complexité, prouver sa validité. CC1 2024 (un des sujets) : « Citer deux tris du cours » qui ne font que permuter deux éléments : le tri à bulles ou le tri par sélection.</p>`,`Même si le tableau est déjà trié, la sélection fait toutes ses comparaisons : θ(n²) dans tous les cas.`,"Combien de comparaisons fait le tri par sélection sur un tableau de n éléments ?","(n − 1) + (n − 2) + … + 1 = n(n − 1)/2, quel que soit le tableau : θ(n²).");
+sortConcept("a-tri-insertion","insertion","Le tri par insertion",`Comme pour ranger des cartes dans sa main : on prend la valeur suivante et on ${hl("l'insère à sa place")} parmi celles de gauche, déjà triées, en décalant les plus grandes.`,
+ `<p>Cours, diapo 114 (« Quelques tris célèbres ») : pour k allant de 1 à taille(T)-1, T[k] est inséré parmi T[0] à T[k-1]. Adapté lorsque les données sont presque triées. Complexité : θ(n²).</p>${C(`PROCÉDURE : TriInsertion (ES tab : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.
+Variable : a : nombre
+           j : entier
+DÉBUT
+    pour k de 1 à n-1 faire
+        a ← tab[k]
+        j ← k-1
+        tant que j ≥ 0 et tab[j] > a faire
+            tab[j+1] ← tab[j]
+            j ← j-1
+        fin tq;
+        tab[j+1] ← a
+    fin pour;
+FIN`)}<p>(Algorithme du TD 10, exercice 43, et de l'examen PEIP de mai 2023.) Pire cas, tableau rangé à l'envers : 1 + 2 + … + (n − 1) = n(n − 1)/2 décalages, θ(n²). Tableau déjà trié : aucun décalage, θ(n).</p><p>La même diapo cite aussi le <b>tri par tas</b> (θ(n log n)) et le <b>tri rapide</b> ou tri par pivot (θ(n²) dans le pire des cas, θ(n log n) en moyenne).</p>`,
+ `<p>Examen PEIP de mai 2023 : « Que doit mettre John à la place de ❶ et ❷ ? » dans « j ← ❶ » et « T[❷] ← a » : i-1 et j+1.</p>`,`Le nombre de tours du tant que dépend des données : c'est pour ça que le pire cas et le meilleur cas sont différents. La complexité, c'est celle du pire cas : θ(n²).`,"Pour quelles données le tri par insertion est-il adapté, d'après le cours ?","Lorsque les données sont presque triées : le tant que fait alors très peu de tours. Sa complexité (pire cas) reste θ(n²).",{cc:"Tombé en 2023"});
 
 /* les chapitres pas encore vus en cours cette année */
-const OUT_IDS=["a-preuve","a-complexite","a-calcul-complexite","a-recherche","a-tri-bulles","a-tri-selection","a-tri-insertion","a-tri-valeurs"];
+const OUT_IDS=["a-preuve","a-complexite","a-calcul-complexite","a-recherche","a-tri-valeurs","a-tri-bulles","a-tri-fusion","a-tri-selection","a-tri-insertion"];
 concepts.forEach(c=>{if(OUT_IDS.includes(c.id)){c.ch=7;c.out="Pas encore vu en cours cette année : le cours s'arrête aux piles et aux files, et les TD 6 à 10 ne sont pas faits. Ça ne devrait pas tomber au CC1. Garde cette fiche pour le CC2.";}});
 concepts.forEach(c=>{if(c.rel)c.rel=c.rel.filter(id=>!OUT_IDS.includes(id)||OUT_IDS.includes(c.id));});
 
@@ -4967,41 +5056,133 @@ DÉBUT
     fin pour;
     Renvoyer best
 FIN`)}<p>Une seule boucle de n − 1 tours, un nombre constant d'opérations par tour : <b>θ(n)</b>.</p><p>(Corrigé écrit par moi. Les quatre algorithmes, traduits en Python, donnent le même résultat sur 3000 tableaux tirés au hasard. « max » et « par pas de -1 » ne sont pas dans le cours : écris deux « si » et une boucle tant que si tu préfères.)</p>`}),
- P3({id:"37",s:3,note:"recherche",t:"Dérouler la dichotomie",en:"RechDic(e, T) : deb, fin ← 0, len(T) − 1 ; tant que deb ≤ fin : mil ← (deb + fin) // 2 ; si T[mil] < e alors deb ← mil + 1 sinon fin ← mil − 1 ; à la fin, renvoyer deb si deb < len(T) et T[deb] = e, sinon −1. Valeurs de deb et fin pour e = 5 dans (a) [1, 3, 5] (b) [5, 5, 5, 9] (c) [1, 3, 7, 9] (d) [1, 2, 3, 4] (e) [6, 7, 8, 9]. (2) Une seule recherche : linéaire, ou trier puis dichotomie ?",link:"a-recherche",sol:`<ul><li>(a) (0, 2) → mil 1 : 3 &lt; 5, deb = 2 → mil 2 : 5 n'est pas &lt; 5, fin = 1. Renvoie 2.</li><li>(b) (0, 3) → mil 1 : fin = 0 → mil 0 : fin = −1. Renvoie 0 (la première occurrence).</li><li>(c) (0, 3) → mil 1 : deb = 2 → mil 2 : 7, fin = 1. T[2] = 7 ≠ 5 : renvoie −1.</li><li>(d) deb passe à 2, 3, puis 4 = len(T) : renvoie −1.</li><li>(e) fin passe à 0, puis −1 ; T[0] = 6 ≠ 5 : renvoie −1.</li></ul><p>(2) Pour une seule recherche, la linéaire (Θ(n)) bat « trier puis chercher » (Θ(n log n) + Θ(log n)).</p>`}),
- P3({id:"39",s:2,note:"tris",t:"La médiane",en:"(1) nbInf(tab, e) : nombre de valeurs strictement inférieures à e. (2) mediane1 avec nbInf ; complexité ? (3) mediane2 en triant d'abord ; complexité ? (4) Conclure.",link:"a-tri-selection",sol:`${C(`Fonction : nbInf (E tab : tableau d'entiers, E e : entier) : entier
-Variables : i, c : entier
-Début
-  c ← 0
-  Pour i de 0 à taille(tab)-1 faire
-    Si tab[i] < e alors c ← c + 1 finSi
-  finPour
-  Renvoyer c
-Fin`)}<ul><li>mediane1 : pour chaque i, si nbInf(tab, tab[i]) = taille(tab) div 2, renvoyer tab[i]. Jusqu'à n appels en Θ(n) : Θ(n²).</li><li>mediane2 : trier (Θ(n log n) avec un bon tri), puis renvoyer la case du milieu (Θ(1)).</li><li>Conclusion : trier d'abord est plus rapide, à condition d'utiliser un tri en n log n.</li></ul>`}),
- P3({id:"40",s:2,note:"tris",t:"k recherches : trier d'abord ?",en:"(1) k recherches linéaires dans n entiers : complexité ? (2) Trier puis k recherches dichotomiques ? (3) Quand vaut-il mieux trier d'abord ?",link:"a-recherche",sol:`<ol><li>Θ(kn).</li><li>Θ(n log n + k log n).</li><li>Quand kn est beaucoup plus grand que n log n, c'est-à-dire quand k grandit plus vite que log n.</li></ol>`}),
- P3({id:"42",s:3,note:"tris",t:"Tri par sélection : algorithme, complexité, preuve",en:"Chercher le plus petit et l'échanger avec tab[0], puis le plus petit des n − 1 suivants avec tab[1], etc. (1) Algorithme. (2) Complexité. (3) Validité.",link:"a-tri-selection",sol:`${C(`Procédure : triSelection (ES tab : tableau d'entiers)
-Variables : i, j, m, x : entier
-Début
-  Pour i de 0 à taille(tab)-2 faire
-    m ← i
-    Pour j de i+1 à taille(tab)-1 faire
-      Si tab[j] < tab[m] alors m ← j finSi
-    finPour
-    x ← tab[i] ; tab[i] ← tab[m] ; tab[m] ← x
-  finPour
-Fin`)}<ul><li>Complexité : (n − 1) + (n − 2) + … + 1 = n(n − 1)/2 comparaisons, Θ(n²), dans tous les cas.</li><li>Invariant : après le tour i, tab[0..i] contient les i + 1 plus petites valeurs, triées. Héréditaire car on y ajoute le minimum de ce qui reste, qui est plus grand ou égal. À la fin (i = n − 2), tout est trié.</li></ul>`}),
- P3({id:"43",s:3,note:"tris",t:"Tri par insertion : algorithme, complexité, preuve",en:"Insérer chaque valeur tab[k] parmi tab[0..k−1] déjà triées. (1) Algorithme. (2) Complexité. (3) Validité.",link:"a-tri-insertion",sol:`${C(`Procédure : triInsertion (ES tab : tableau d'entiers)
-Variables : k, j, x : entier
-Début
-  Pour k de 1 à taille(tab)-1 faire
-    x ← tab[k]
-    j ← k - 1
-    Tant que j ≥ 0 et tab[j] > x faire
-      tab[j+1] ← tab[j]
-      j ← j - 1
-    finTantQue
-    tab[j+1] ← x
-  finPour
-Fin`)}<ul><li>Complexité : pire cas (tableau à l'envers) 1 + 2 + … + (n − 1) décalages, Θ(n²) ; meilleur cas (déjà trié) Θ(n).</li><li>Invariant : avant le tour k, tab[0..k−1] contient les k premières valeurs de départ, triées. Le tour k insère tab[k] à sa place. À la fin, tout est trié.</li></ul>`}));
+ P3({id:"37",s:3,note:"TD 9, recherche",t:"Dérouler la recherche dichotomique",link:"a-recherche",
+  en:`<p>Recherche dichotomique :</p><p><b>1.</b> On rappelle l'algorithme de recherche dichotomique du cours (ici traduit en Python) :</p>${P(`def RechDic (e, T) :
+   deb = 0
+   fin = len(T)-1
+   while (deb<=fin) :
+       mil = (deb+fin)//2
+       if (T[mil]<e) :
+          deb = mil+1
+       else :
+          fin = mil-1
+   if deb<taille(T) and T[deb]==e :
+      return deb
+   else :
+      return -1`)}<p>Donner la suite des valeurs des variables deb et fin lorsqu'on cherche e=5 dans les tableaux suivants, puis donner la valeur renvoyée :</p><ol type="a"><li>[1, 3, 5]</li><li>[5, 5, 5, 9]</li><li>[1, 3, 7, 9]</li><li>[1, 2, 3, 4]</li><li>[6, 7, 8, 9]</li></ol><p><b>2.</b> A présent, on souhaite savoir si un élément est dans un tableau. Est-il plus intéressant, du point de vue de la complexité, de le chercher de manière linéaire, ou de trier d'abord le tableau puis de le chercher de manière dichotomique ?</p>`,
+  sol:`<p><b>1.</b> À chaque itération : mil = (deb+fin)//2 ; si T[mil] &lt; 5, deb passe à mil+1, sinon fin passe à mil−1. On note les couples (deb, fin).</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>tableau</th><th>(deb, fin) successifs</th><th>pourquoi</th><th>renvoie</th></tr></thead><tbody><tr><td>(a) [1, 3, 5]</td><td>(0, 2), (2, 2), (2, 1)</td><td>mil = 1 : 3 &lt; 5 ; mil = 2 : 5 n'est pas &lt; 5</td><td>2</td></tr><tr><td>(b) [5, 5, 5, 9]</td><td>(0, 3), (0, 0), (0, −1)</td><td>mil = 1 : 5 n'est pas &lt; 5 ; mil = 0 : pareil</td><td>0</td></tr><tr><td>(c) [1, 3, 7, 9]</td><td>(0, 3), (2, 3), (2, 1)</td><td>mil = 1 : 3 &lt; 5 ; mil = 2 : 7 n'est pas &lt; 5</td><td>−1</td></tr><tr><td>(d) [1, 2, 3, 4]</td><td>(0, 3), (2, 3), (3, 3), (4, 3)</td><td>2 &lt; 5, 3 &lt; 5, 4 &lt; 5</td><td>−1</td></tr><tr><td>(e) [6, 7, 8, 9]</td><td>(0, 3), (0, 0), (0, −1)</td><td>7 puis 6 ne sont pas &lt; 5</td><td>−1</td></tr></tbody></table></div><ul><li>(a) À la fin deb = 2 &lt; 3 et T[2] = 5 : on renvoie 2.</li><li>(b) deb = 0 et T[0] = 5 : on renvoie 0, le <b>plus petit</b> indice où se trouve 5 (c'est la spécification du cours).</li><li>(c) deb = 2 mais T[2] = 7 ≠ 5 : −1.</li><li>(d) deb = 4 = taille du tableau : le test « deb &lt; taille(T) » est faux, on renvoie −1 sans lire T[4], qui n'existe pas.</li><li>(e) deb = 0 mais T[0] = 6 ≠ 5 : −1.</li></ul><p><b>2.</b> Recherche linéaire : θ(n) dans le pire des cas (cours, diapo 90). Trier d'abord coûte déjà au moins n : θ(n log n) avec un tri par comparaison comme le tri fusion (diapo 113), ou θ(n) avec le tri par valeurs quand il s'applique. La recherche dichotomique ajoute θ(log n). Au total θ(n log n), ou au mieux θ(n) : jamais mieux que la recherche linéaire. Pour <b>une seule</b> recherche, on cherche de manière linéaire.</p><p>(Corrigé écrit par moi ; les cinq traces ont été calculées par programme.)</p>`}),
+ P3({id:"38",s:1,note:"TD 9, recherche (supplémentaire)",t:"Recherche aléatoire dans un tableau non trié",link:"a-recherche",
+  en:`<p>Exercice supplémentaire : recherche aléatoire dans un tableau non trié</p><p>On dispose d'un tableau T qui contient un certain élément e. On cherche à connaître la position de cet élément en tirant au hasard une position jusqu'à le trouver.</p><p><b>1.</b> Écrire un algorithme de recherche qui suit ce principe. On dispose d'une fonction nombreAlea(E a, b : entier) qui tire un entier au hasard entre a et b. L'algorithme s'arrête-t-il ?</p><p><b>2.</b> Pour que l'algorithme s'arrête à coup sûr, on "raye" les indices déjà tirés de la liste des indices possibles. Proposer un algorithme qui suit ce principe et calculer sa complexité dans le pire des cas. On dispose des fonctions et procédures suivantes sur les listes, toutes les trois d'une complexité θ(longueur(liste)) :</p><ul><li>fonction longueur(E l : liste d'entier) : entier qui renvoie le nombre d'éléments de l</li><li>fonction premiers(E n : entier) : liste d'entier qui renvoie la liste [0, 1, ..., n-1]</li><li>procédure supprime(E e : nombre, ES l : liste d'entier) qui supprime e de l</li><li>fonction element(E n : entier, E l : liste d'entier) : entier qui renvoie l'élément d'indice n de l</li></ul>`,
+  sol:`<p><b>1.</b></p>${C(`FONCTION : rechAlea (E e : nombre, E T : tableau de nombres) : entier
+SPÉCIFICATIONS : T contient e. Renvoie un indice de T qui contient e.
+Variable : i : entier
+DÉBUT
+    i ← nombreAlea(0, taille(T)-1)
+    tant que T[i] ≠ e faire
+        i ← nombreAlea(0, taille(T)-1)
+    fin tq;
+    Renvoyer i
+FIN`)}<p>On ne peut pas prouver qu'il s'arrête : aucune quantité ne décroît d'une itération à l'autre, et rien n'empêche de tirer sans fin des positions qui ne contiennent pas e. (En pratique il finit presque toujours par tomber dessus, mais le nombre d'itérations n'a pas de borne.)</p><p><b>2.</b></p>${C(`FONCTION : rechAlea2 (E e : nombre, E T : tableau de nombres) : entier
+SPÉCIFICATIONS : T contient e. Renvoie un indice de T qui contient e.
+Variable : L : liste d'entier
+           i : entier
+DÉBUT
+    L ← premiers(taille(T))
+    i ← element(nombreAlea(0, longueur(L)-1), L)
+    tant que T[i] ≠ e faire
+        supprime(i, L)
+        i ← element(nombreAlea(0, longueur(L)-1), L)
+    fin tq;
+    Renvoyer i
+FIN`)}<p><b>Arrêt</b> : longueur(L) est un entier naturel qui décroît strictement à chaque itération (on supprime un indice). Un indice qui contient e n'est jamais supprimé, donc L n'est jamais vide, et au pire il ne reste que lui. Il y a un nombre fini d'itérations.</p><p><b>Complexité dans le pire des cas</b> (e est tiré en dernier), avec n = taille(T) : premiers(n) coûte θ(n). Ensuite la liste a n éléments, puis n − 1, … puis 1, et chaque passage fait un nombre constant d'appels en θ(longueur(L)). Le total est proportionnel à n + (n − 1) + … + 1 = n(n + 1)/2 : <b>θ(n²)</b>. C'est pire que la recherche linéaire, qui est en θ(n).</p><p>(Corrigé écrit par moi, essayé par programme.)</p>`}),
+ P3({id:"39",s:2,note:"TD 10, tris",t:"La valeur médiane d'un tableau",link:"a-tri-fusion",
+  en:`<p>La valeur médiane d'un tableau de nombres est la valeur qui serait située au milieu du tableau si le tableau était trié. Plus précisément la valeur médiane d'un tableau injectif tab est la valeur m de tab telle que le nombre de valeurs dans tab inférieures strictement à m est ⌊n/2⌋. Par exemple la valeur médiane du tableau [9 3 5 2 8 1 7] est 5.</p><ol><li>Écrire une fonction nbInf(E tab : tableau d'entiers, E e : entier) qui renvoie le nombre de valeurs strictement inférieures à e dans tab.</li><li>En déduire une fonction mediane1 qui renvoie la médiane d'un tableau tab supposé injectif. Quelle est sa complexité ?</li><li>Écrire une fonction mediane2 qui calcule la médiane d'un tableau en commençant par le trier. Quelle est sa complexité ?</li><li>Conclure.</li></ol><p>(Tableau injectif : toutes ses valeurs sont différentes. ⌊n/2⌋ : n div 2.)</p>`,
+  sol:`<p><b>1.</b></p>${C(`FONCTION : nbInf (E tab : tableau d'entiers, E e : entier) : entier
+SPÉCIFICATIONS : Renvoie le nombre de valeurs de tab strictement inférieures à e.
+Variable : cpt : entier
+DÉBUT
+    cpt ← 0
+    pour i de 0 à taille(tab)-1 faire
+        si tab[i] < e alors
+            cpt ← cpt + 1
+        fin si;
+    fin pour;
+    Renvoyer cpt
+FIN`)}<p><b>2.</b> On essaie les valeurs une par une jusqu'à trouver celle qui a exactement n div 2 valeurs plus petites qu'elle.</p>${C(`FONCTION : mediane1 (E tab : tableau d'entiers) : entier
+SPÉCIFICATIONS : tab est injectif et non vide. Renvoie sa valeur médiane.
+Variable : i : entier
+DÉBUT
+    i ← 0
+    tant que nbInf(tab, tab[i]) ≠ taille(tab) div 2 faire
+        i ← i + 1
+    fin tq;
+    Renvoyer tab[i]
+FIN`)}<p>Sur l'exemple : n = 7, n div 2 = 3, et 5 a bien trois valeurs plus petites (3, 2 et 1).</p><p>Complexité : nbInf fait n itérations à coût constant, θ(n). Dans le pire des cas, mediane1 appelle nbInf n fois : n × θ(n) = <b>θ(n²)</b>.</p><p><b>3.</b></p>${C(`FONCTION : mediane2 (E tab : tableau d'entiers) : entier
+SPÉCIFICATIONS : tab est non vide. Renvoie sa valeur médiane.
+Variable : T2 : tableau de taille(tab) entiers
+DÉBUT
+    pour i de 0 à taille(tab)-1 faire
+        T2[i] ← tab[i]
+    fin pour;
+    TriFusion(T2)
+    Renvoyer T2[taille(tab) div 2]
+FIN`)}<p>Complexité : la copie est en θ(n), le tri fusion en θ(n log(n)) (cours, diapo 112), l'accès à une case en θ(1). Au total <b>θ(n log(n))</b>.</p><p><b>4.</b> n log(n) est strictement dominée par n² : trier d'abord est plus efficace, à condition de choisir un tri en θ(n log(n)). Avec le tri à bulles, en θ(n²), on ne gagnerait rien. C'est la phrase du cours : « trier permet de traiter plus efficacement ensuite ».</p><p>(Corrigé écrit par moi ; mediane1 a été vérifiée par programme sur 2000 tableaux.)</p>`}),
+ P3({id:"40",s:2,note:"TD 10, tris",t:"k recherches : faut-il trier d'abord ?",link:"a-recherche",
+  en:`<ol><li>Pour un tableau quelconque de n entiers, quel est l'ordre de complexité pour effectuer k recherches par l'algorithme de recherche itérative ?</li><li>Pour un tableau de n entiers, quel est l'ordre de complexité pour trier ce tableau et effectuer k recherches par l'algorithme de recherche dichotomique ?</li><li>Pour de grandes valeurs de n, donner une condition suffisante sur k pour qu'il soit intéressant en termes de complexité de trier le tableau avant d'effectuer les k recherches.</li></ol>`,
+  sol:`<ol><li>Une recherche linéaire est en θ(n) dans le pire des cas. k recherches : <b>θ(k × n)</b>.</li><li>Le tri (tri fusion) est en θ(n log(n)). Une recherche dichotomique est en θ(log(n)), donc k recherches en θ(k log(n)). Au total <b>θ(n log(n) + k log(n))</b>.</li><li>On compare k × n avec (n + k) × log(n). Si k grandit strictement plus vite que log(n), c'est-à-dire si log(n) = o(k), alors n log(n) est strictement dominée par k × n ; et k log(n) aussi, puisque log(n) = o(n). Trier d'abord est donc intéressant <b>dès que k domine strictement log(n)</b> : par exemple k = √n ou k = n. Pour un nombre de recherches fixé (k = 1, k = 10), ça ne vaut pas le coup : on retrouve l'exercice 37.</li></ol><p>(Corrigé écrit par moi. Pour n = 1 000 000, log<sub>2</sub>(n) vaut environ 20 : à partir de quelques dizaines de recherches, le tri est rentable.)</p>`}),
+ P3({id:"41",s:1,note:"TD 10, tris",t:"Trier une liste avec un tri de tableau",link:"a-tri-fusion",
+  en:`<p>Proposer un algorithme qui, étant donnée une liste d'entiers et sa taille, trie la liste en utilisant un tri de tableau. Quelle est sa complexité ?</p>`,
+  sol:`<p>On recopie la liste dans un tableau, on trie le tableau, puis on reconstruit une liste. Pour que la liste soit dans le bon ordre, on parcourt le tableau de la fin vers le début : cons ajoute en tête.</p>${C(`FONCTION : triListe (E L : liste d'entiers, E n : entier) : liste d'entiers
+SPÉCIFICATIONS : n est le nombre d'éléments de L.
+                 Renvoie la liste des éléments de L par ordre croissant.
+Variable : T : tableau de n entiers
+           M, R : liste d'entiers
+DÉBUT
+    M ← L
+    pour i de 0 à n-1 faire
+        T[i] ← tête(M)
+        M ← queue(M)
+    fin pour;
+    TriFusion(T)
+    R ← [ ]
+    pour i de n-1 à 0 par pas de -1 faire
+        R ← cons(T[i], R)
+    fin pour;
+    Renvoyer R
+FIN`)}<p>Complexité : les deux boucles pour font n itérations à coût constant, θ(n). Le tri fusion est en θ(n log(n)). Au total <b>θ(n log(n))</b>. (Si les valeurs sont dans un petit intervalle, le tri par valeurs donne θ(n).)</p><p>(Corrigé écrit par moi.)</p>`}),
+ P3({id:"42",s:3,note:"TD 10, tris",t:"Tri par sélection : algorithme, complexité, validité",link:"a-tri-selection",
+  en:`<p>Le tri par sélection consiste, pour trier un tableau tab de n nombres :</p><ul><li>à rechercher le plus petit élément du tableau et à échanger sa valeur avec tab[0] ;</li><li>à rechercher le plus petit élément parmi les n-1 derniers éléments du tableau et à échanger sa valeur avec de tab[1] ;</li><li>et ainsi de suite jusqu'à ce que tous les éléments soient triés.</li></ul><ol><li>Écrivez l'algorithme de tri par sélection.</li><li>Déterminez son ordre de complexité.</li><li>Prouvez la validité de cet algorithme.</li></ol>`,
+  sol:`<p><b>1.</b></p>${C(`PROCÉDURE : TriSelection (ES tab : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.
+Variable : m : entier
+DÉBUT
+    pour i de 0 à n-2 faire
+        m ← i
+        pour j de i+1 à n-1 faire
+            si tab[j] < tab[m] alors
+                m ← j
+            fin si;
+        fin pour;
+        échanger tab[i] et tab[m]
+    fin pour;
+FIN`)}<p>m est l'indice du plus petit élément vu depuis la case i. On s'arrête à i = n-2 : quand les n − 1 premières cases sont à leur place, la dernière aussi.</p><p><b>2.</b> Pour une valeur de i, j prend n − 1 − i valeurs. Le nombre de comparaisons est (n − 1) + (n − 2) + … + 1 = n(n − 1)/2, et chaque itération fait un nombre constant d'opérations : <b>θ(n²)</b>, quel que soit le tableau (c'est ce que dit le cours, diapo 114). Avec le raccourci : n × O(n) × O(1) = O(n²).</p><p><b>3.</b> Avec la méthode du cours. On regarde le tableau à la fin de chaque itération i de la boucle extérieure.</p><ul><li><b>Ce que fait une itération</b> (la vérité, lue sur l'algorithme) : la boucle sur j met dans m l'indice du plus petit élément de tab[i..n-1], puis ce plus petit élément est échangé avec tab[i].</li><li><b>Invariant</b> : Inv<sub>i</sub> : « à la fin de l'itération i, tab[0..i] contient les i + 1 plus petites valeurs du tableau, par ordre croissant ».</li><li><b>Initialisation</b> : à la fin de l'itération 0, tab[0] est le plus petit élément du tableau. Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : on suppose Inv<sub>i−1</sub> vrai. Les valeurs de tab[i..n-1] sont donc toutes supérieures ou égales à celles de tab[0..i-1]. L'itération i place en tab[i] la plus petite d'entre elles : tab[0..i] contient les i + 1 plus petites valeurs, et reste croissant car tab[i] ≥ tab[i-1]. Inv<sub>i</sub> est vrai.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul><p>À la fin (i = n-2), tab[0..n-2] contient les n − 1 plus petites valeurs par ordre croissant ; la valeur restante, tab[n-1], est la plus grande. Le tableau est trié, et il contient toujours les mêmes valeurs, puisqu'on ne fait que des échanges. L'algorithme est valide. Il se termine : ce sont deux boucles pour.</p><p>(Corrigé écrit par moi ; l'algorithme a été vérifié par programme, avec ses n(n − 1)/2 comparaisons.)</p>`}),
+ P3({id:"43",s:3,note:"TD 10, tris",t:"Tri par insertion : algorithme, complexité, validité",link:"a-tri-insertion",
+  en:`<p>Le tri par insertion consiste, pour trier un tableau tab de n nombres, à insérer chaque valeur non triée du tableau parmi les valeurs déjà triées :</p><ul><li>si tab[0]>tab[1], on les permute ;</li><li>on insère tab[2] parmi tab[0] et tab[1] de telle sorte que tab[0], tab[1] et tab[2] soient dans le bon ordre ;</li><li>et ainsi de suite : à chaque nouvelle valeur tab[k], on l'insère parmi les valeurs tab[0] à tab[k-1].</li></ul><ol><li>Écrivez l'algorithme de tri par insertion.</li><li>Déterminez son ordre de complexité.</li><li>Prouvez la validité de cet algorithme.</li></ol>`,
+  sol:`<p><b>1.</b></p>${C(`PROCÉDURE : TriInsertion (ES tab : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.
+Variable : a : nombre
+           j : entier
+DÉBUT
+    pour k de 1 à n-1 faire
+        a ← tab[k]
+        j ← k-1
+        tant que j ≥ 0 et tab[j] > a faire
+            tab[j+1] ← tab[j]
+            j ← j-1
+        fin tq;
+        tab[j+1] ← a
+    fin pour;
+FIN`)}<p>a garde la valeur à insérer. Tant que la case de gauche contient une valeur plus grande, on la décale d'une case vers la droite. On pose a dans la case libre. Le test « j ≥ 0 » est écrit en premier : quand j = −1, la suite du « et » n'est pas évaluée et on ne lit pas tab[-1]. (C'est l'algorithme « triJohn » de l'examen de mai 2023.)</p><p><b>2.</b> Pire cas, le tableau est rangé à l'envers : à l'itération k, le tant que fait k tours. En tout 1 + 2 + … + (n − 1) = n(n − 1)/2 décalages : <b>θ(n²)</b> (cours, diapo 114). Si le tableau est déjà trié, le tant que ne fait aucun tour : n − 1 itérations à coût constant, θ(n). C'est pour ça que le cours le dit « adapté lorsque les données sont presque triées ».</p><p><b>3.</b> On regarde le tableau à la fin de chaque itération k de la boucle pour.</p><ul><li><b>Invariant</b> : Inv<sub>k</sub> : « tab[0..k] contient les k + 1 premières valeurs du tableau de départ, par ordre croissant ».</li><li><b>Initialisation</b> : avant la boucle (k = 0), tab[0..0] ne contient qu'une valeur : il est trié. Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : on suppose Inv<sub>k−1</sub> vrai : tab[0..k-1] est croissant. Le tant que décale d'une case vers la droite toutes les valeurs strictement plus grandes que a, et s'arrête quand j = −1 ou tab[j] ≤ a. On pose a en tab[j+1] : à sa gauche, des valeurs inférieures ou égales à a ; à sa droite, des valeurs plus grandes. tab[0..k] est croissant et contient les anciennes valeurs de tab[0..k-1] plus a. Inv<sub>k</sub> est vrai.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul><p>À la fin (k = n-1), tab[0..n-1] contient toutes les valeurs de départ par ordre croissant : l'algorithme est valide. Le tant que s'arrête : j est un entier qui décroît strictement à chaque itération, et la boucle s'arrête au plus tard quand j vaut −1.</p><p>(Corrigé écrit par moi, vérifié par programme.)</p>`}));
 
 /* ---------- annales des CC2 et CC3 : énoncés recopiés des sujets, corrigés officiels quand ils existent ---------- */
 const OFF="Corrigé officiel",MOI="Corrigé écrit par moi (pas de corrigé officiel sur Moodle), vérifié par programme";
@@ -5207,8 +5388,16 @@ quiz.push(
  {q:"T(n) ≤ 2T(⌈n/2⌉) + O(n) : que donne le master theorem ?",o:["O(n log n)","O(n²)","O(log n)"],a:0,e:"a = 2, b = 2, d = 1 : b<sup>d</sup> = a, donc O(n<sup>d</sup> log n).",link:"a-calcul-complexite"},
  {q:"Dans le master theorem, que représente b ?",o:["L'entier par lequel la taille de l'entrée est divisée à chaque appel","Le nombre d'appels récursifs","L'exposant des opérations faites en plus des appels"],a:0,e:"a : nombre d'appels ; b : diviseur de la taille ; O(n<sup>d</sup>) : opérations en plus des appels.",link:"a-calcul-complexite"},
  {q:"Princesse Sarah a rangé ses 128 chevaux par ordre de taille. Combien doit-elle en mesurer au plus pour trouver Neptune ? (CC1 2024)",o:["7","128","64"],a:0,e:"Recherche dichotomique : à chaque mesure, le nombre de chevaux est divisé par deux, et 128 = 2⁷.",link:"a-recherche"},
- {q:"Le tri par insertion sur un tableau déjà trié est en…",o:["θ(n)","θ(n²)","θ(1)"],a:0,e:"Aucun décalage : un seul test par élément.",link:"a-tri-insertion"},
- {q:"Le tri par sélection est en…",o:["θ(n²) dans tous les cas","θ(n) si le tableau est trié","θ(n log n)"],a:0,e:"Il cherche toujours le minimum de tout ce qui reste.",link:"a-tri-selection"});
+ {q:"Dans RechDic, que fait-on quand T[mil] < e ?",o:["deb ← mil+1","fin ← mil-1","Renvoyer mil"],a:0,e:"e ne peut être qu'à droite de mil. Sinon, fin ← mil-1 : on continue à gauche, même si T[mil] = e, pour trouver le plus petit indice.",link:"a-recherche"},
+ {q:"La recherche linéaire dans un tableau de taille n est en…",o:["θ(n)","θ(log(n))","θ(1)"],a:0,e:"Pire des cas : e n'est pas dans T, n itérations à coût constant (diapo 90).",link:"a-recherche"},
+ {q:"Quel tri du cours est en θ(n) quand les valeurs sont concentrées dans un petit intervalle ?",o:["Le tri par valeurs","Le tri fusion","Le tri à bulles"],a:0,e:"θ(p + n), ou θ(n) si p = O(n) (diapo 102).",link:"a-tri-valeurs"},
+ {q:"Peut-on trier un tableau de n valeurs en θ(1) ?",o:["Non : il faut au moins parcourir toutes ses cases, Ω(n)","Oui, avec le tri par valeurs","Oui, si le tableau est petit"],a:0,e:"Borne inférieure d'un tri de tableau (diapo 104, examen de janvier 2023).",link:"a-tri-valeurs"},
+ {q:"Quel est le tri par comparaison le plus efficace du cours ?",o:["Le tri fusion, en θ(n log(n))","Le tri à bulles, en θ(n²)","Le tri par sélection, en θ(n²)"],a:0,e:"Corrigé du CC1 2024 : « Le tri par comparaison le plus efficace du cours est le tri fusion. »",link:"a-tri-fusion"},
+ {q:"Le tri fusion est-il en place ?",o:["Non : il a besoin d'espace supplémentaire pour la fusion","Oui","Seulement si le tableau est déjà trié"],a:0,e:"Diapo 112 : il est stable, mais il n'est pas en place.",link:"a-tri-fusion"},
+ {q:"Quelle est la borne inférieure d'un tri de tableau par comparaison ?",o:["Ω(n log n)","Ω(n)","Ω(n²)"],a:0,e:"Diapo 113 : au moins n log n/4 comparaisons.",link:"a-tri-fusion"},
+ {q:"Quel tri du cours repose entièrement sur la permutation d'éléments voisins ?",o:["Le tri à bulles","Le tri fusion","Le tri par valeurs"],a:0,e:"Corrigé du CC1 2024 (les vaisseaux de Luc).",link:"a-tri-bulles"},
+ {q:"Le tri par insertion sur un tableau déjà trié est en…",o:["θ(n)","θ(n²)","θ(1)"],a:0,e:"Aucun décalage : un seul test par élément. Le cours le dit adapté aux données presque triées.",link:"a-tri-insertion"},
+ {q:"Le tri par sélection est en…",o:["θ(n²) dans tous les cas","θ(n) si le tableau est trié","θ(n log n)"],a:0,e:"Il cherche toujours le minimum de tout ce qui reste : n(n − 1)/2 comparaisons.",link:"a-tri-selection"});
 
 const infos23=({sec})=>`<div class="title-row"><h1>Les CC2 et CC3 en bref</h1></div>
  ${sec(1,"Quand",`<p>Les dates ne sont ni dans Prose ni dans tes mails. Le site suppose le <b>jeudi 3 décembre</b> (CC2) et le <b>jeudi 10 décembre</b> (CC3), à 15h, sur le créneau de ton TD (le 10/12 est le dernier TD d'Algo dans Prose). Dès qu'une date est annoncée, je la corrige.</p><p>Modalités 2026-2027 : 3 CC d'1 h, 34 %, 34 % et 32 % de la note, pas d'examen en janvier. Une feuille A4 autorisée aux CC des années passées.</p>`)}
@@ -5224,7 +5413,7 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Preuves et complexité : faites en amphi seulement, deux leçons « au cas où ». Pas de recherche dichotomique ni de tris.",
  chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",6:"6. Preuves et complexité (CC2)",7:"7. Recherche et tris (CC3)"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD, ex.",
- tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne. Pour le CC2 : les TD 6 à 8 en entier (exercices 24 à 36), corrigés avec la méthode de preuve et le comptage du cours.",
+ tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne. Pour le CC2 : les TD 6 à 8 en entier (exercices 24 à 36), corrigés avec la méthode de preuve et le comptage du cours. Pour le CC3 : les TD 9 et 10 en entier (exercices 37 à 43).",
  annIntro:"Le CC PEIP 2023 a exactement le programme de cette année : ses quatre sujets sont là (corrigés par moi). Le sujet 1 sert d'examen blanc ; prends dans les trois autres les exercices du type que tu rates. Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits). En bas de la liste, pour les CC2 et CC3 : le CC de 2022 et l'examen de janvier 2023 (corrigés officiels), l'examen PEIP de mai 2023 (corrigés écrits par moi).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
  pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"aucasou",t:"Au cas où : preuves et complexité",html:aucasou},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
@@ -5245,8 +5434,8 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  {id:"tdsup",ex:"cc2",t:"TD 6 à 8 : les exercices supplémentaires (28, 33, 36)",min:45,p:2,td:["28","33","36"],links:[["td","Exercices de TD"]]},
  {id:"quiz2",ex:"cc2",t:"Quiz de cours, questions des CC2 et CC3 comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
  {id:"review2",ex:"cc2",t:"Veille du CC2 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
- {id:"td910",ex:"cc3",t:"TD 9 et 10 ★★★ : dichotomie et tris, sur papier",min:50,p:1,td:["37","42","43"],links:[["td","Exercices de TD"]]},
- {id:"td910b",ex:"cc3",t:"TD 10 : médiane et k recherches",min:30,p:2,td:["39","40"],links:[["td","Exercices de TD"]]},
+ {id:"td910",ex:"cc3",t:"TD 9 et 10 : dichotomie, tri par sélection, tri par insertion, sur papier",min:60,p:1,td:["37","42","43"],links:[["td","Exercices de TD"]]},
+ {id:"td910b",ex:"cc3",t:"TD 9 et 10 : médiane, k recherches, tri d'une liste, recherche aléatoire",min:45,p:2,td:["39","40","41","38"],links:[["td","Exercices de TD"]]},
  {id:"ann3",ex:"cc3",t:"Annales : questions 2 et 3 du CC1 2024, tri de chiffres (janvier 2023), tri de John (mai 2023)",min:25,p:1,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"review3",ex:"cc3",t:"Veille du CC3 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 })();
@@ -10826,39 +11015,207 @@ Fin`)}<p>(Suite géométrique : on multiplie toujours par le même nombre, la ra
  K("Le raccourci pour des boucles pour imbriquées ?","On lit les bornes : si i prend n valeurs, j au plus n valeurs, et chaque itération O(1) opérations, alors T<sub>n</sub> = n × O(n) × O(1) = O(n²). Il donne une estimation O ; pour θ, il faut calculer la somme.")]}),
 
 /* ------------------------------------------------------------------ */
-A3({id:"a3-dicho",t:"Recherche séquentielle et dichotomique",min:10,goal:"Dérouler une recherche dichotomique et dire combien d'essais elle demande (TD 9, CC1 2024).",steps:[
- Q("128 chevaux rangés par taille. Combien de mesures au plus pour trouver Neptune ?",["7","128","64"],0,"Chaque mesure divise les candidats par 2 ; 128 = 2⁷ (CC1 2024)."),
- L("Le principe",`<p>Dans un tableau <b>trié</b>, on regarde la case du milieu : si elle est trop petite, on garde la moitié droite, sinon la moitié gauche. Il reste deux fois moins de cases à chaque essai : environ <b>log₂ n</b> essais, au lieu de n pour une recherche séquentielle.</p><p>Doubler n n'ajoute qu'<b>un</b> essai : log₂(2n) = log₂ n + 1.</p>`,{fig:"a-recherche"}),
- S("TD 9, ex. 37 : chercher 5 dans [1, 3, 5]","deb, fin ← 0, 2 ; tant que deb ≤ fin : mil ← (deb + fin) div 2 ; si T[mil] < e alors deb ← mil + 1 sinon fin ← mil − 1.",[
-  {w:"mil = 1 : T[1] = 3 < 5, donc deb = 2.",why:"5 est à droite."},
-  {w:"mil = 2 : T[2] = 5 n'est pas < 5, donc fin = 1.",why:"On continue à gauche pour trouver la première occurrence."},
-  {w:"deb = 2 > fin = 1 : fin de boucle. T[2] = 5 : on renvoie 2.",why:"deb s'arrête sur la première case ≥ e."}]),
- Q("12 000 légos triés demandent au plus 14 essais. Et 24 000 ?",["15","28","14"],0,"Un essai de plus coupe 24 000 en deux paquets de 12 000 (CC1 2024)."),
- Q("Une seule recherche dans un tableau non trié : mieux vaut…",["une recherche séquentielle, Θ(n)","trier puis chercher par dichotomie","on ne peut pas chercher"],0,"Trier coûte déjà Θ(n log n) (TD 9, ex. 37.2)."),
- K("Recherche dichotomique ?","Tableau trié ; on compare au milieu, on garde une moitié. Θ(log n) essais. Doubler n ajoute un essai.")]}),
+/* CC3 : recherche et tris (diapos 87 à 114). Ces chapitres ne sont pas encore faits en amphi le 11/11 :
+   les « À vous de jouer » sont corrigés par moi (vérifiés par programme), à remplacer par les réponses du prof quand elles seront sur Moodle. */
+A3({id:"a3-dicho",t:"Recherche linéaire et recherche dichotomique",min:15,goal:"Dérouler RechLin et RechDic du cours, prouver l'arrêt, donner les complexités (diapos 88 à 98, TD 9, CC1 2024).",steps:[
+ L("La recherche linéaire",`<p><b>Principe</b> (diapo 88). Pour chercher un élément e dans un tableau T non trié, on le parcourt case par case jusqu'à trouver e ou atteindre la fin du tableau.</p>${C(`FONCTION : RechLin(E e : nombre, E T : tableau de nombres) : entier
+SPÉCIFICATIONS : Si T contient e, renvoie le premier indice de T qui
+                 contient e. Sinon, renvoie -1.
+Variable : i : entier
+DÉBUT
+    i ← 0
+    tant que i<taille(T) et T[i]≠e faire
+        i ← i+1
+    fin tq;
+    si i=taille(T) alors
+        Renvoyer -1
+    sinon
+        Renvoyer i
+    fin si;
+FIN`)}<p><b>Complexité</b> (diapo 90) : pire des cas pour e ∉ T (e n'est pas dans T) en notant n = taille(T) : n itérations à coût constant + opérations à coût constant = θ(n).</p>`),
+ Q("Que renvoie RechLin(8, [3, 8, 5, 8]) ?",["1","3","8","-1"],0,"i avance tant que T[i] ≠ 8 : T[0] = 3, puis T[1] = 8, la boucle s'arrête avec i = 1. C'est le premier indice qui contient 8."),
+ L("La recherche dichotomique",`<p><b>Principe</b> (diapo 91). Pour chercher un élément e dans un tableau T <b>trié</b>, on compare e à la valeur au milieu du tableau puis on continue à le chercher dans la bonne moitié du tableau.</p>${C(`FONCTION : RechDic (E e : nombre, E T : tableau de nombres) : entier
+SPÉCIFICATIONS : T trié. Renvoie le plus petit i tq T[i]=e ou -1.
+Variable : deb, mil, fin : entier
+DÉBUT
+    deb, fin ← 0, taille(T)-1
+    tant que deb≤fin faire
+        mil ← (deb+fin) div 2
+        si T[mil]<e alors
+            deb ← mil+1
+        sinon
+            fin ← mil-1
+        fin si;
+    fin tq;
+    Renvoyer cond(deb<taille(T) et T[deb]=e, deb, -1)
+FIN`)}<p>(« tq » : tel que. deb et fin sont les indices du début et de la fin de la partie du tableau où on cherche encore ; mil est l'indice du milieu.)</p><p>Deux choses à remarquer. La boucle ne s'arrête pas quand elle tombe sur e : elle continue jusqu'à deb > fin. Et c'est seulement à la fin qu'on regarde si T[deb] vaut e.</p>`,{fig:"a-recherche"}),
+ S("Diapo 93 : trace pour T=[1,2,3,3,3,4,6,9,10] et e=3","Une ligne par itération : deb, mil, fin, et la partie T[deb..fin] où on cherche encore. (Pas encore corrigé en amphi : trace calculée par programme.)",[
+  {w:"Avant la boucle : deb = 0, fin = 8. On cherche dans tout le tableau.",why:"taille(T) = 9, donc fin = 8."},
+  {w:"Itération 1 : mil = (0+8) div 2 = 4. T[4] = 3 n'est pas < 3, donc fin ← 3. Il reste T[0..3] = [1, 2, 3, 3].",why:"On est tombé sur un 3, mais on continue à gauche : il peut y avoir un 3 plus tôt."},
+  {w:"Itération 2 : mil = (0+3) div 2 = 1. T[1] = 2 < 3, donc deb ← 2. Il reste T[2..3] = [3, 3].",why:"Tout ce qui est à gauche de mil est trop petit."},
+  {w:"Itération 3 : mil = (2+3) div 2 = 2. T[2] = 3 n'est pas < 3, donc fin ← 1. Maintenant deb = 2 > fin = 1 : la boucle s'arrête.",why:"La partie où on cherche est vide."},
+  {w:"deb = 2 < 9 et T[2] = 3 = e : on renvoie 2.",why:"C'est bien le plus petit indice où se trouve 3."}]),
+ Q("TD 9, exercice 37 (b) : on cherche e = 5 dans [5, 5, 5, 9]. Que renvoie RechDic ?",["0","1","2","-1"],0,"(deb, fin) vaut (0, 3), puis (0, 0), puis (0, −1) : T[1] = 5 puis T[0] = 5 ne sont pas < 5, donc fin recule deux fois. À la fin deb = 0 et T[0] = 5 : on renvoie 0, le plus petit indice."),
+ L("Arrêt, validité, complexité",`<p><b>Preuve d'arrêt</b> (diapo 95). fin-deb+1 est un entier naturel ; il décroît strictement à chaque itération ; le tant que s'arrête lorsqu'il vaut 0 ou moins. Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme se termine.</p><p>(fin-deb+1, c'est le nombre de cases où on cherche encore.)</p><p><b>Preuve de validité, principe</b> (diapo 96). Invariant (admis) : à la fin de chaque itération, les cases d'indices 0 à deb−1 contiennent des valeurs &lt; e, et les cases d'indices fin+1 à n−1 des valeurs ≥ e. Conclusion : en sortant du TantQue, deb = fin + 1. Soit deb &lt; n et T[deb] = e : alors deb est le premier indice où se trouve e. Sinon, c'est que e ∉ T. Dans les deux cas, l'algorithme renvoie le bon résultat : l'algorithme est valide.</p><p><b>Complexité</b> (diapo 97). Pire cas : tout le tableau est &lt; e. Simplification pour le calcul : n = 2<sup>k</sup> (pas de perte de généralité). Nombre d'itérations = nombre de divisions de n par 2 jusqu'à tomber sur 0 donc k + 1. Chaque itération est en θ(1) (indépendant de n). T<sub>n</sub> = θ(1) + (k + 1).θ(1) = θ(k) donc T<sub>n</sub> = θ(log(n)). L'algorithme est logarithmique.</p>`),
+ Q("CC1 de novembre 2024 : « Princesse Sarah a rangé ses 128 chevaux par ordre de taille (ils ont tous des tailles différentes). Elle cherche Neptune, qui mesure 1m65 au garrot. Combien de chevaux doit-elle mesurer pour trouver Neptune ? »",["7","128","64","8"],0,"Corrigé officiel : « Comme les chevaux sont rangés par taille, Princesse Sarah peut effectuer une recherche dichotomique. A chaque mesure, le nombre de chevaux parmi lesquels chercher est divisé par deux. Dans le pire cas où elle trouve Neptune à la dernière mesure, le nombre de mesures est le nombre de fois qu'il faut diviser 128 par 2 pour trouver 1, c'est à dire 7 fois. »"),
+ Q("CC1 de novembre 2024 (autre sujet) : « Les 12000 légos de Mr Bricks sont rangées par taille. Il doit faire 14 essais au maximum pour trouver un modèle en particulier. Combien lui en faudrait-il s'il avait 24000 légos ? »",["15","28","14","24"],0,"Corrigé officiel : « Après son premier essai, le nombre de légos où chercher est divisé par 2, c'est à dire égal à 12000, donc il lui reste 14 essais au maximum. Au total il lui faut au maximum 15 essais. » Doubler la taille n'ajoute qu'un essai."),
+ P("Diapos 94 et 98, sur papier",`<p><b>1.</b> (diapo 94) Trace de l'algorithme RechDic pour T=[1,2,3,3,3,4,6,9,10] et e=5 : un tableau avec les colonnes i, deb<sub>i</sub>, mil<sub>i</sub>, fin<sub>i</sub> et T[deb<sub>i</sub>..fin<sub>i</sub>]. Que renvoie l'algorithme ?</p><p><b>2.</b> (diapo 98) Modifier RechDic pour renvoyer le <b>plus grand</b> i tel que T[i] = e (ou -1 si e ∉ T).</p>`,`<p>Ces deux diapos ne sont pas encore corrigées en amphi : corrigé écrit par moi, vérifié par programme.</p><p><b>1.</b></p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th class="var">i</th><th class="var">deb</th><th class="var">mil</th><th class="var">fin</th><th>T[deb..fin]</th></tr></thead><tbody><tr><td>0</td><td>0</td><td></td><td>8</td><td>[1, 2, 3, 3, 3, 4, 6, 9, 10]</td></tr><tr><td>1</td><td>5</td><td>4</td><td>8</td><td>[4, 6, 9, 10]</td></tr><tr><td>2</td><td>5</td><td>6</td><td>5</td><td>[4]</td></tr><tr><td>3</td><td>6</td><td>5</td><td>5</td><td>vide</td></tr></tbody></table></div><p>Itération 1 : T[4] = 3 &lt; 5, deb ← 5. Itération 2 : T[6] = 6 n'est pas &lt; 5, fin ← 5. Itération 3 : T[5] = 4 &lt; 5, deb ← 6. deb = 6 > fin = 5 : fin de la boucle. T[6] = 6 ≠ 5 : l'algorithme renvoie <b>-1</b>.</p><p><b>2.</b> On change le test pour continuer à droite quand on tombe sur e, et c'est fin qui s'arrête sur le dernier e :</p>${C(`DÉBUT
+    deb, fin ← 0, taille(T)-1
+    tant que deb≤fin faire
+        mil ← (deb+fin) div 2
+        si T[mil]≤e alors
+            deb ← mil+1
+        sinon
+            fin ← mil-1
+        fin si;
+    fin tq;
+    Renvoyer cond(fin≥0 et T[fin]=e, fin, -1)
+FIN`)}<p>À la fin, les cases 0 à deb−1 contiennent des valeurs ≤ e et les cases fin+1 à n−1 des valeurs > e, avec deb = fin + 1 : si e est dans T, sa dernière position est fin. Pour T=[1,2,3,3,3,4,6,9,10] et e=3, on obtient 4.</p>`,["La trace : 4 lignes, de i = 0 à i = 3","La valeur renvoyée : -1, car T[6] ≠ 5","Le test changé en T[mil]≤e","Le Renvoyer avec fin, et le test fin≥0"],10),
+ K("RechDic : que fait une itération ?","mil ← (deb+fin) div 2. Si T[mil] < e alors deb ← mil+1, sinon fin ← mil-1. On continue tant que deb ≤ fin, puis on renvoie deb si deb < taille(T) et T[deb] = e, sinon -1."),
+ K("Preuve d'arrêt de la recherche dichotomique ?","fin-deb+1 est un entier naturel ; il décroît strictement à chaque itération ; le tant que s'arrête lorsqu'il vaut 0 ou moins. Il y a donc un nombre fini d'itérations, donc l'algorithme se termine."),
+ K("Complexités de la recherche linéaire et de la recherche dichotomique ?","Linéaire : θ(n) (pire cas : e n'est pas dans T). Dichotomique, sur un tableau trié : θ(log(n)) (pour n = 2^k, k + 1 itérations dans le pire cas).")]}),
 
 /* ------------------------------------------------------------------ */
-A3({id:"a3-tris",t:"Tris : sélection, insertion, bulles, par valeurs",min:16,goal:"Écrire un tri du cours, donner sa complexité et l'idée de sa preuve (TD 10, CC1 2024, examen de janvier 2023).",steps:[
- Q("Quel tri n'échange que des éléments voisins ?",["Le tri à bulles","Le tri par sélection","Le tri par valeurs"],0,"C'est la réponse au problème des vaisseaux de Luc (CC1 2024)."),
- L("Trois tris en Θ(n²)",`<ul><li><b>Sélection</b> : on cherche le plus petit élément restant et on l'échange avec la première case non triée. Θ(n²) dans tous les cas.</li><li><b>Insertion</b> : on insère chaque élément parmi ceux de gauche, déjà triés, en décalant les plus grands. Θ(n²) au pire, Θ(n) si le tableau est déjà trié.</li><li><b>Bulles</b> : on échange deux voisins dans le désordre ; chaque passage pousse le plus grand au bout. Θ(n²).</li></ul><p>Invariant commun : « la partie gauche (ou droite pour les bulles) est triée et à sa place définitive ».</p>`,{fig:"a-tri-insertion"}),
- O("Remets le tri par sélection dans l'ordre",["Pour i de 0 à taille(tab)-2 faire","  m ← i","  Pour j de i+1 à taille(tab)-1 faire","    Si tab[j] < tab[m] alors m ← j finSi","  finPour","  échanger tab[i] et tab[m]","finPour"],"On cherche l'indice du minimum, puis on échange une seule fois par tour."),
- Q("Combien de comparaisons fait le tri par sélection sur n éléments ?",["n(n − 1)/2","n","n log n"],0,"(n − 1) + (n − 2) + … + 1."),
- L("Le tri par valeurs",`<p>Quand les valeurs possibles sont peu nombreuses (des chiffres de 0 à 9), on <b>compte</b> combien il y a de 0, de 1, … puis on réécrit le tableau : Θ(n).</p><p>Examen de janvier 2023 : trier n chiffres en Θ(1) est impossible (il faut au moins tout lire : Ω(n)) ; en Θ(n), c'est possible avec le tri par valeurs.</p>`),
- Q("Trier n chiffres (0 à 9) en Θ(1) ?",["Impossible : il faut au moins lire les n cases","Possible avec le tri par valeurs","Possible avec la dichotomie"],0,"Tout tri est en Ω(n)."),
- P("TD 10, ex. 43 : le tri par insertion, sur papier","Écrire le tri par insertion, donner sa complexité au pire et au mieux, et un invariant.",`${C(`Procédure : triInsertion (ES tab : tableau d'entiers)
-Variables : k, j, x : entier
-Début
-  Pour k de 1 à taille(tab)-1 faire
-    x ← tab[k]
-    j ← k - 1
-    Tant que j ≥ 0 et tab[j] > x faire
-      tab[j+1] ← tab[j]
-      j ← j - 1
-    finTantQue
-    tab[j+1] ← x
-  finPour
-Fin`)}<p>Pire cas Θ(n²) (tableau à l'envers), meilleur cas Θ(n) (déjà trié). Invariant : avant le tour k, tab[0..k−1] est trié.</p>`,["La valeur x mise de côté avant de décaler","La condition j ≥ 0 en premier","Les deux complexités","L'invariant"],12),
- K("Complexités des tris du cours ?","Sélection Θ(n²) toujours ; insertion Θ(n²) au pire, Θ(n) si déjà trié ; bulles Θ(n²) ; par valeurs Θ(n) quand les valeurs possibles sont peu nombreuses.")]}));
+A3({id:"a3-valeurs",t:"Le tri par valeurs et la borne inférieure d'un tri",min:12,goal:"Dérouler TriValeurs, donner sa complexité, et dire quelles complexités sont possibles pour un tri (diapos 99 à 104, CC1 2024, examen de janvier 2023).",steps:[
+ L("Pourquoi trier, et deux sortes de tris",`<p><b>Motivation</b> (diapo 100). Trier permet de traiter plus efficacement ensuite.</p><p>On étudie 2 sortes de tris de tableaux 1D de taille n :</p><ul><li>dans le cas particulier où les valeurs du tableau sont concentrées dans un intervalle ⟦0 ; p−1⟧ avec p = O(n) : <b>tri par valeurs</b> en θ(n) ;</li><li>dans le cas général : <b>tri par comparaison</b> en Ω(n log n).</li></ul><p>(⟦0 ; p−1⟧ : les entiers de 0 à p−1. « p = O(n) » : il n'y a pas beaucoup plus de valeurs possibles que de cases. Exemple : un tableau de chiffres, p = 10.)</p>`),
+ L("Le tri par valeurs",`<p><b>Idée générale</b> (diapo 101). On compte combien il y a de 0, de 1, de 2 etc. jusqu'à p−1. On mémorise ce comptage dans un deuxième tableau. Puis on remet autant de 0 que ce qu'on a compté au début du tableau, puis on met les 1, les 2 etc. jusqu'aux p−1.</p><p><b>Exemple.</b> Dans le tableau [1,0,0,1,1,1,3,0,2,2,0,1,2,3,2,0,0], on compte six 0, cinq 1, quatre 2, deux 3, donc le tableau trié est [0,0,0,0,0,0,1,1,1,1,1,2,2,2,2,3,3].</p>${C(`PROCÉDURE : TriValeurs (ES T : tableau d'entier de taille n, E p : entier)
+SPÉCIFICATIONS : Les valeurs de T sont dans ⟦0 ; p−1⟧. Trie T.
+Variable : Cpt : tableau d'entier de taille p
+           j, k : entier
+DÉBUT
+    Initialiser Cpt avec des 0
+    pour i de 0 à n-1 faire
+        Cpt[T[i]] ← Cpt[T[i]] + 1
+    fin pour;
+    j,k ← 0,0
+    tant que j<n faire
+        si Cpt[k]=0 alors
+            k ← k+1
+        sinon
+            T[j] ← k
+            j ← j+1
+            Cpt[k] ← Cpt[k]-1
+        fin si;
+    fin tq;
+FIN`)}<p><b>Complexité</b> : θ(p + n) ou θ(n) si p = O(n).</p><p>Cpt[v] compte les cases qui valent v. Dans le tant que, k est la valeur qu'on est en train de recopier et j la prochaine case de T à remplir.</p>`,{fig:"a-tri-valeurs"}),
+ S("Diapo 103 : trace pour p=4 et T=[1, 0, 3, 2, 2, 2]","D'abord le comptage, puis la recopie. (Pas encore corrigé en amphi : trace calculée par programme.)",[
+  {w:"Le pour : on lit 1, 0, 3, 2, 2, 2. À la fin Cpt = [1, 1, 3, 1].",why:"Un 0, un 1, trois 2, un 3. T n'a pas changé."},
+  {w:"j, k ← 0, 0. Cpt[0] = 1 : T[0] ← 0, j = 1, Cpt = [0, 1, 3, 1].",why:"On écrit le seul 0."},
+  {w:"Cpt[0] = 0 : k ← 1. Puis Cpt[1] = 1 : T[1] ← 1, j = 2, Cpt = [0, 0, 3, 1].",why:"Plus de 0 à écrire : on passe à la valeur suivante."},
+  {w:"Cpt[1] = 0 : k ← 2. Puis trois fois : T[2] ← 2, T[3] ← 2, T[4] ← 2. j = 5, Cpt = [0, 0, 0, 1].",why:"Les trois 2."},
+  {w:"Cpt[2] = 0 : k ← 3. Puis T[5] ← 3, j = 6 : la boucle s'arrête. T = [0, 1, 2, 2, 2, 3].",why:"j = n = 6 : toutes les cases sont remplies."}]),
+ L("Borne inférieure d'un tri de tableau",`<p>Diapo 104.</p><ul><li>Pour trier un tableau, il faut parcourir toutes ses cases.</li><li>Donc sa complexité est au moins n, c'est-à-dire Ω(n).</li><li>Le tri par valeur est en θ(n).</li><li>L'ordre de complexité n est donc une borne inférieure pour un tri de tableau.</li></ul><p>(« Borne inférieure » : aucun tri ne peut faire mieux.)</p>`),
+ Q("CC1 de novembre 2024 : « Luc veut ranger ses nombreux vaisseaux spatiaux, de 5 modèles différents, par ordre de taille. Son hangar est immense et il peut les placer comme il veut. Parmi les tris du cours, lequel doit-il adapter pour fournir le moins d'efforts possible ? »",["Le tri par valeurs : une zone par modèle, puis il les remet en ligne","Le tri à bulles","La recherche dichotomique"],0,"Corrigé officiel : « Comme Luc n'a que 5 modèles différents, il peut utiliser un tri par valeurs : il range chaque modèle dans une zone différente de son hangar, puis il les remet en ligne, en commençant par le plus petit modèle jusqu'au plus grand. Il fait ainsi un tri en θ(n) qui lui garantit un effort minimal. »"),
+ P("Examen de janvier 2023, exercice 4, question 1 (2 points), sur papier",`<p>Dans cet exercice, un nombre est représenté par un tableau de chiffres. Par exemple, le nombre 2022 est représenté par le tableau [2,0,2,2].</p><p>On souhaite écrire un algorithme qui trie un tableau de chiffres de taille n. Anakin affirme pouvoir l'écrire en θ(n²), Leia en θ(n log(n)), Chewbacca en θ(n) et Luke en θ(1). Parmi ces propositions, lesquelles sont impossibles ? Justifier. Parmi les autres, donner le nom d'un tri du cours qui permet d'obtenir le meilleur ordre de complexité.</p>`,`<p><b>Corrigé officiel</b> (2 pts dont 1,5 pt pour l'ordre de complexité optimal et 0,5 pt pour le nom du tri. −0,5 pt si la complexité optimale proposée est θ(n log(n)) avec un nom de tri cohérent.)</p><p>La proposition de Luke est impossible, car il faut au moins parcourir le tableau pour pouvoir le trier, donc l'algorithme de tri est en Ω(n). La proposition de Chewbacca est possible, car chaque chiffre peut prendre uniquement 10 valeurs, donc on peut trier le tableau par valeurs avec une complexité en temps θ(n). Les propositions d'Anakin et Leia sont moins performantes donc possibles aussi.</p>`,["Luke impossible : il faut au moins parcourir le tableau, Ω(n)","Chewbacca possible : 10 valeurs seulement, tri par valeurs en θ(n)","Anakin et Leia possibles, mais moins performants","Le nom du tri : tri par valeurs"],6),
+ K("Le tri par valeurs : quand, et quelle complexité ?","Quand les valeurs du tableau sont concentrées dans un intervalle ⟦0 ; p−1⟧ avec p = O(n). On compte combien il y a de chaque valeur, puis on les remet dans l'ordre. Complexité θ(p + n), soit θ(n)."),
+ K("Peut-on trier un tableau de taille n en θ(1) ?","Non : pour trier un tableau, il faut parcourir toutes ses cases, donc la complexité est au moins n, c'est-à-dire Ω(n). C'est la borne inférieure d'un tri de tableau.")]}),
+
+/* ------------------------------------------------------------------ */
+A3({id:"a3-fusion",t:"Tri à bulles et tri fusion",min:17,goal:"Dérouler le tri à bulles et le tri fusion du cours, connaître leurs complexités et leurs propriétés (diapos 105 à 113, CC1 2024).",steps:[
+ L("Le tri à bulles",`<p>Un premier tri par comparaison (diapo 105) :</p>${C(`PROCÉDURE : TriBulles (ES T : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau T par ordre croissant.
+DÉBUT
+    pour i de 0 à n-2 faire
+        pour j de n-1 à i+1 par pas de -1 faire
+            si T[j]<T[j-1] alors
+                échanger T[j] et T[j-1]
+            fin si;
+        fin pour;
+    fin pour;
+FIN`)}<p>Complexité θ(n²). Le tri à bulles n'a pas besoin d'espace supplémentaire (<b>en place</b>) et respecte l'ordre des éléments initiaux en cas d'égalité (<b>stable</b>).</p><p>j part de la fin du tableau et recule (« par pas de -1 »). À chaque fois, on compare la case j avec sa voisine de gauche, et on les échange si elles sont dans le désordre. À la fin de l'itération i, la plus petite valeur restante est arrivée dans la case i.</p>`,{fig:"a-tri-bulles"}),
+ S("Diapo 106 : trace pour T=[5,6,2,4,3,1]","Le tableau à la fin de chaque itération de la boucle sur i. (Pas encore corrigé en amphi : trace calculée par programme.)",[
+  {w:"i = 0 (j de 5 à 1) : le 1 remonte de la case 5 à la case 0, un échange à chaque fois. T = [1, 5, 6, 2, 4, 3].",why:"1 est plus petit que tous ses voisins de gauche : 5 échanges."},
+  {w:"i = 1 (j de 5 à 2) : 3 passe devant 4 ; puis 2 remonte jusqu'à la case 1. T = [1, 2, 5, 6, 3, 4].",why:"La case 0 n'est plus touchée : j s'arrête à i+1 = 2."},
+  {w:"i = 2 (j de 5 à 3) : 3 remonte jusqu'à la case 2. T = [1, 2, 3, 5, 6, 4].",why:"4 et 3 étaient déjà dans l'ordre : pas d'échange pour j = 5."},
+  {w:"i = 3 (j de 5 à 4) : 4 remonte jusqu'à la case 3. T = [1, 2, 3, 4, 5, 6].",why:"Deux échanges."},
+  {w:"i = 4 (j = 5) : 6 n'est pas < 5, aucun échange. T = [1, 2, 3, 4, 5, 6].",why:"En tout 5 + 4 + 3 + 2 + 1 = 15 comparaisons, soit n(n − 1)/2 pour n = 6, et 12 échanges."}]),
+ Q("CC1 de novembre 2024 : « Luc veut ranger ses vaisseaux spatiaux par ordre de taille. Sa seule action possible est de permuter deux vaisseaux voisins. Peut-il arriver à ranger ses vaisseaux avec un tri du cours ? »",["Oui, avec le tri à bulles, qui repose entièrement sur la permutation d'éléments voisins","Oui, avec le tri par valeurs","Non, aucun tri du cours ne le permet"],0,"Corrigé officiel : « Oui, Luc peut utiliser le tri à bulles, qui repose entièrement sur la permutation d'éléments voisins. »"),
+ L("Le tri fusion : le principe et la fusion",`<p><b>Principe</b> (diapo 107). Algorithme de type « Diviser pour mieux régner » :</p><ul><li>on trie chaque moitié du tableau ;</li><li>on fusionne les deux moitiés triées.</li></ul><p>Il faut 2 algorithmes : l'algorithme de tri et l'algorithme de fusion.</p>${C(`PROCÉDURE : fusion (ES T : tableau de nombre, E deb1, fin1, fin2 : entier)
+SPÉCIFICATIONS : T[deb1..fin1] et T[fin1+1..fin2] triés. Trie T[deb1..fin2].
+Variable : T1, T2 : tab. de fin1-deb1+1 et fin2-fin1 nombres ; i,j : entiers
+DÉBUT
+    recopier T[deb1..fin1] dans T1 et T[fin1+1..fin2] dans T2
+    i,j ← 0,0
+    pour k de deb1 à fin2 faire
+        si j>=taille(T2) ou (i<taille(T1) et T1[i]<=T2[j]) alors
+            T[k] ← T1[i] ; i ← i+1
+        sinon
+            T[k] ← T2[j] ; j ← j+1
+        fin si;
+    fin pour;
+FIN`)}<p>T1 et T2 sont les copies des deux moitiés triées. i est la prochaine case à prendre dans T1, j dans T2. À chaque case k de T, on prend le plus petit des deux : T1[i] s'il est ≤ T2[j], ou s'il ne reste plus rien dans T2 (j>=taille(T2)).</p>`),
+ S("Diapo 109 : trace de fusion([2,6,8,4,9], 0, 2, 4)","T1 = [2, 6, 8] et T2 = [4, 9]. Une ligne par valeur de k. (Pas encore corrigé en amphi : trace calculée par programme.)",[
+  {w:"k = 0 : T1[0] = 2 ≤ T2[0] = 4, donc T[0] ← 2 et i = 1. T = [2, 6, 8, 4, 9].",why:"On prend le plus petit des deux."},
+  {w:"k = 1 : T1[1] = 6 > T2[0] = 4, donc T[1] ← 4 et j = 1. T = [2, 4, 8, 4, 9].",why:"Cette fois le plus petit est dans T2."},
+  {w:"k = 2 : T1[1] = 6 ≤ T2[1] = 9, donc T[2] ← 6 et i = 2. T = [2, 4, 6, 4, 9].",why:"Les anciennes valeurs de T sont écrasées : c'est pour ça qu'on les a recopiées dans T1 et T2."},
+  {w:"k = 3 : T1[2] = 8 ≤ 9, donc T[3] ← 8 et i = 3. T = [2, 4, 6, 8, 9].",why:"T1 est maintenant épuisé : i = taille(T1)."},
+  {w:"k = 4 : i<taille(T1) est faux, donc sinon : T[4] ← T2[1] = 9 et j = 2. T = [2, 4, 6, 8, 9].",why:"Il ne reste que T2."}]),
+ L("L'algorithme de tri fusion",`<p>Diapo 110.</p>${C(`PROCÉDURE : triFusionAux (ES T : tableau de nombre; E deb, fin : entier)
+SPÉCIFICATIONS : Trie T entre les indices deb et fin.
+Variable : mil : entier
+DÉBUT
+    si deb<fin alors
+        mil ← (deb+fin) div 2
+        triFusionAux(T,deb,mil)
+        triFusionAux(T,mil+1,fin)
+        fusion(T,deb,mil,fin)
+    fin si;
+FIN`)}<p>C'est un algorithme récursif : il trie la moitié gauche, puis la moitié droite, puis fusionne. Si deb = fin, il n'y a qu'une case : rien à faire.</p><p><b>Dernière procédure</b> (diapo 112). Pour trier tout le tableau, TriFusion(ES T : tableau de nombres) appelle TriFusionAux(T, 0, taille(T)-1). (Les deux valeurs sont à trouver sur la diapo : c'est la réponse.)</p><p><b>Complexité et propriété.</b> Le tri fusion a une complexité θ(n log(n)) (admis) et il est stable (éléments égaux dans le même ordre qu'au départ). Cependant il a besoin d'espace supplémentaire pour la fusion : il n'est pas en place.</p>`,{fig:"a-tri-fusion"}),
+ L("Borne inférieure d'un tri par comparaison, et tris célèbres",`<p>Diapo 113.</p><ul><li>Dans le cas général, on doit comparer les valeurs entre elles pour les ordonner.</li><li>Nombre de comparaisons nécessaires : au moins n log n/4 donc complexité Ω(n log n).</li><li>Il est possible de faire θ(n log n), par exemple avec le tri fusion.</li><li>L'ordre de complexité n log n est donc une borne inférieure d'un tri de tableau par comparaison.</li></ul><p><b>Quelques tris célèbres</b> (diapo 114) : tri par insertion et tri par sélection, en θ(n²) (leçon suivante) ; tri par tas, en θ(n log n) ; tri rapide ou tri par pivot, en θ(n²) dans le pire des cas, θ(n log n) en moyenne.</p>`),
+ Q("CC1 de novembre 2024 : « Luc veut ranger ses vaisseaux spatiaux, de modèles tous différents, par ordre de taille. Son hangar est immense et il peut les placer comme il veut. Parmi les tris du cours, lequel doit-il adapter pour fournir le moins d'efforts possible ? »",["Le tri fusion","Le tri par valeurs","Le tri à bulles"],0,"Corrigé officiel : « Comme les modèles sont tous différents, Luc ne peut pas utiliser un tri par valeurs et doit faire un tri par comparaison. Le tri par comparaison le plus efficace du cours est le tri fusion, qui peut être adapté au cas de Luc qui n'a pas de problème de stockage. »"),
+ P("Diapo 111 : les appels de triFusionAux([5,6,2,4,3,1],0,5), sur papier",`<p>Représenter les appels de triFusionAux([5,6,2,4,3,1],0,5) : dans l'ordre où ils sont faits, avec le tableau après chaque fusion.</p>`,`<p>Pas encore corrigé en amphi : corrigé écrit par moi, calculé par programme. Chaque décalage vers la droite est un appel fait par la ligne du dessus.</p>${W.code(`triFusionAux(T,0,5)
+  triFusionAux(T,0,2)
+    triFusionAux(T,0,1)
+      triFusionAux(T,0,0)
+      triFusionAux(T,1,1)
+      fusion(T,0,0,1)      T = [5, 6, 2, 4, 3, 1]
+    triFusionAux(T,2,2)
+    fusion(T,0,1,2)        T = [2, 5, 6, 4, 3, 1]
+  triFusionAux(T,3,5)
+    triFusionAux(T,3,4)
+      triFusionAux(T,3,3)
+      triFusionAux(T,4,4)
+      fusion(T,3,3,4)      T = [2, 5, 6, 3, 4, 1]
+    triFusionAux(T,5,5)
+    fusion(T,3,4,5)        T = [2, 5, 6, 1, 3, 4]
+  fusion(T,0,2,5)          T = [1, 2, 3, 4, 5, 6]`,"txt")}<p>11 appels à triFusionAux (dont 6 sur une seule case, qui ne font rien) et 5 fusions. La moitié gauche [5, 6, 2] est triée en [2, 5, 6], la moitié droite [4, 3, 1] en [1, 3, 4], et la dernière fusion donne le tableau trié.</p>`,["mil = 2 au premier appel : moitiés [0..2] et [3..5]","La moitié gauche est entièrement triée avant de toucher à la droite","Chaque fusion vient après les deux appels récursifs","5 fusions, la dernière sur tout le tableau"],10),
+ K("Le tri à bulles : complexité et propriétés ?","θ(n²). Il est en place (pas d'espace supplémentaire) et stable (il respecte l'ordre des éléments égaux). Il repose entièrement sur la permutation d'éléments voisins."),
+ K("Le tri fusion : principe, complexité, propriétés ?","Diviser pour mieux régner : on trie chaque moitié du tableau, puis on fusionne les deux moitiés triées. θ(n log(n)). Stable, mais pas en place : il a besoin d'espace supplémentaire pour la fusion."),
+ K("Borne inférieure d'un tri par comparaison ?","Ω(n log n) : il faut au moins n log n/4 comparaisons. Le tri fusion l'atteint, en θ(n log n).")]}),
+
+/* ------------------------------------------------------------------ */
+A3({id:"a3-tris",t:"Tri par sélection et tri par insertion (TD 10)",min:13,goal:"Écrire le tri par sélection et le tri par insertion, donner leur complexité et l'idée de leur preuve (cours diapo 114, TD 10, examen PEIP de mai 2023).",steps:[
+ L("Deux tris célèbres",`<p>Cours, diapo 114 :</p><ul><li><b>Tri par insertion</b> : pour k allant de 1 à taille(T)-1, T[k] est inséré parmi T[0] à T[k-1]. Adapté lorsque les données sont presque triées. Complexité : θ(n²).</li><li><b>Tri par sélection</b> : pour k allant de 0 à taille(T)-2, on cherche le plus petit élément parmi T[k] à T[taille(T)-1] et on l'échange avec T[k]. Adapté pour de petits ensembles de données. Complexité : θ(n²).</li></ul><p>Le cours ne donne pas leur algorithme : c'est le TD 10 qui demande de les écrire (exercices 42 et 43).</p>`,{fig:"a-tri-selection"}),
+ O("TD 10, exercice 42 : remets le tri par sélection dans l'ordre.",["PROCÉDURE : TriSelection (ES tab : tableau de nombres de taille n)","Variable : m : entier","DÉBUT","    pour i de 0 à n-2 faire","        m ← i","        pour j de i+1 à n-1 faire","            si tab[j] < tab[m] alors","                m ← j","            fin si;","        fin pour;","        échanger tab[i] et tab[m]","    fin pour;","FIN"],"m retient l'indice du plus petit élément vu depuis la case i. L'échange se fait une seule fois par itération, après la boucle sur j."),
+ Q("Combien de comparaisons « tab[j] < tab[m] » fait le tri par sélection sur un tableau de n éléments ?",["n(n − 1)/2, quel que soit le tableau","n si le tableau est déjà trié","n log(n)"],0,"Pour i fixé, j prend n − 1 − i valeurs : (n − 1) + (n − 2) + … + 1 = n(n − 1)/2. Rien ne dépend des données : θ(n²) dans tous les cas."),
+ B("TD 10, exercice 43 : complète le tri par insertion. (a garde la valeur à insérer.)",`pour k de 1 à n-1 faire
+    a ← tab[k]
+    j ← k-1
+    tant que j ≥ 0 et tab[j] [[0]] a faire
+        tab[[[1]]] ← tab[j]
+        j ← j-1
+    fin tq;
+    tab[j+1] ← [[2]]
+fin pour;`,[{o:[">","<","="],a:0},{o:["j+1","j-1","k"],a:0},{o:["a","tab[k]","tab[j]"],a:0}],"Tant que la case de gauche contient une valeur plus grande que a, on la décale d'une case vers la droite. Puis on pose a dans la case libérée. Attention : tab[k] a pu être écrasé par un décalage, c'est pour ça qu'on a gardé sa valeur dans a."),
+ Q("Le tri par insertion sur un tableau déjà trié de n éléments fait…",["n − 1 itérations sans aucun décalage : θ(n)","n(n − 1)/2 décalages : θ(n²)","aucune opération"],0,"Le test « tab[j] > a » est faux tout de suite à chaque itération. C'est pour ça que le cours le dit « adapté lorsque les données sont presque triées ». Sa complexité, celle du pire cas (tableau rangé à l'envers), reste θ(n²)."),
+ Q("CC1 de novembre 2024 : « Luc veut ranger ses vaisseaux spatiaux par ordre de taille. Sa seule action possible est de permuter deux vaisseaux. Citer deux tris du cours qui lui permettent d'y arriver. »",["Le tri à bulles et le tri par sélection","Le tri par valeurs et le tri fusion","Le tri fusion et le tri par insertion"],0,"Corrigé officiel : « Il peut utiliser le tri à bulles ou le tri par sélection, qui reposent sur la permutation d'éléments. »"),
+ P("TD 10, exercice 42, questions 1 et 2, sur papier",`<p>Le tri par sélection consiste, pour trier un tableau tab de n nombres :</p><ul><li>à rechercher le plus petit élément du tableau et à échanger sa valeur avec tab[0] ;</li><li>à rechercher le plus petit élément parmi les n-1 derniers éléments du tableau et à échanger sa valeur avec de tab[1] ;</li><li>et ainsi de suite jusqu'à ce que tous les éléments soient triés.</li></ul><ol><li>Écrivez l'algorithme de tri par sélection.</li><li>Déterminez son ordre de complexité.</li></ol>`,`<p><b>1.</b></p>${C(`PROCÉDURE : TriSelection (ES tab : tableau de nombres de taille n)
+SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.
+Variable : m : entier
+DÉBUT
+    pour i de 0 à n-2 faire
+        m ← i
+        pour j de i+1 à n-1 faire
+            si tab[j] < tab[m] alors
+                m ← j
+            fin si;
+        fin pour;
+        échanger tab[i] et tab[m]
+    fin pour;
+FIN`)}<p><b>2.</b> Pour une valeur de i, j prend n − 1 − i valeurs. Le nombre de comparaisons est (n − 1) + (n − 2) + … + 1 = n(n − 1)/2, et chaque itération fait un nombre constant d'opérations : θ(n²). Avec le raccourci du cours : n × O(n) × O(1) = O(n²).</p><p>(Corrigé écrit par moi, vérifié par programme. La question 3, la preuve de validité, est corrigée dans les exercices de TD.)</p>`,["La signature : PROCÉDURE, tab en ES","m ← i avant la boucle sur j, qui commence à i+1","Un seul échange par itération, après la boucle sur j","La somme (n − 1) + … + 1 = n(n − 1)/2, puis θ(n²)"],10),
+ K("Tri par sélection : l'idée et la complexité ?","Pour i de 0 à n-2 : chercher le plus petit élément parmi tab[i] à tab[n-1] et l'échanger avec tab[i]. n(n − 1)/2 comparaisons : θ(n²) dans tous les cas."),
+ K("Tri par insertion : l'idée et la complexité ?","Pour k de 1 à n-1 : insérer tab[k] parmi tab[0] à tab[k-1], déjà triés, en décalant vers la droite les valeurs plus grandes. θ(n²) dans le pire cas ; adapté aux données presque triées."),
+ K("Les complexités des tris du cours ?","Par valeurs : θ(n) (valeurs dans un petit intervalle). Bulles, sélection, insertion : θ(n²). Fusion, tas : θ(n log(n)). Rapide : θ(n²) au pire, θ(n log(n)) en moyenne. Bornes inférieures : Ω(n) pour tout tri, Ω(n log n) pour un tri par comparaison.")]}));
 
 })();
 
@@ -13102,10 +13459,20 @@ algo:{
   "Le raccourci pour des boucles imbriquées":`<p>Pour aller vite, on majore : chaque boucle fait au plus n tours, donc deux boucles imbriquées font au plus n × n opérations. On obtient « au plus n² », c'est-à-dire O(n²), sans calculer la somme exacte.</p>`,
   "Le master theorem":`<p>Certains algorithmes récursifs se rappellent sur une entrée deux fois plus petite (ou trois fois…). Le master theorem donne leur ordre de complexité presque sans calcul : on repère trois nombres dans l'algorithme (a appels, une taille divisée par b, n<sup>d</sup> opérations à côté des appels), on compare b<sup>d</sup> avec a, et on lit le résultat.</p>`},
  "a3-dicho":{
-  "Le principe":`<p>C'est comme chercher un mot dans le dictionnaire : on ouvre au milieu, on regarde si le mot est avant ou après, et on recommence dans la bonne moitié. À chaque essai, il reste deux fois moins de pages.</p>`},
+  "La recherche linéaire":`<p>Chercher une chaussette dans un tiroir en vrac : on les regarde une par une. Au pire, on les regarde toutes. Avec n cases, au pire n essais.</p>`,
+  "La recherche dichotomique":`<p>C'est comme chercher un mot dans le dictionnaire : on ouvre au milieu, on regarde si le mot est avant ou après, et on recommence dans la bonne moitié. À chaque essai, il reste deux fois moins de pages.</p><p>Ça ne marche que si le tableau est trié.</p>`,
+  "Arrêt, validité, complexité":`<p>Trois questions, toujours les mêmes. Est-ce que ça s'arrête ? Oui : la zone où on cherche rétrécit à chaque tour. Est-ce que le résultat est bon ? Oui : à gauche de deb tout est trop petit, à droite de fin tout est assez grand. Combien de tours ? Autant de fois qu'on peut couper n en deux : log(n).</p>`},
+ "a3-valeurs":{
+  "Pourquoi trier, et deux sortes de tris":`<p>Dans un tableau trié, on cherche beaucoup plus vite (dichotomie). Il y a deux façons de trier : en comptant, quand il y a peu de valeurs possibles ; en comparant les éléments deux à deux, dans tous les autres cas.</p>`,
+  "Le tri par valeurs":`<p>Pour trier des copies notées de 0 à 20, pas besoin de les comparer : on fait un tas par note, puis on ramasse les tas dans l'ordre. Le tri par valeurs fait pareil avec des compteurs : combien de 0, combien de 1…</p>`,
+  "Borne inférieure d'un tri de tableau":`<p>On ne peut pas trier un tableau sans regarder chaque case au moins une fois. Aucun tri ne peut donc faire moins de n opérations. Le tri par valeurs y arrive : on ne fera jamais mieux.</p>`},
+ "a3-fusion":{
+  "Le tri à bulles":`<p>On parcourt le tableau de la fin vers le début en échangeant deux voisins quand ils sont dans le désordre. Le plus petit « remonte » ainsi jusqu'au début, comme une bulle. Puis on recommence pour le deuxième plus petit, et ainsi de suite.</p>`,
+  "Le tri fusion : le principe et la fusion":`<p>Fusionner deux paquets de cartes déjà triés est facile : on regarde la carte du dessus de chaque paquet et on prend la plus petite, jusqu'à ce que les deux paquets soient vides.</p><p>Le tri fusion repose là-dessus : il coupe le tableau en deux, trie chaque moitié, puis les fusionne.</p>`,
+  "L'algorithme de tri fusion":`<p>Pour trier 6 cartes : je trie les 3 premières, je trie les 3 dernières, je fusionne. Et pour trier 3 cartes ? Pareil : 2 d'un côté, 1 de l'autre. Un paquet d'une seule carte est déjà trié : c'est le cas de base.</p>`,
+  "Borne inférieure d'un tri par comparaison, et tris célèbres":`<p>Quand on trie en comparant, on ne peut pas descendre en dessous d'environ n log(n) comparaisons. Le tri fusion atteint cette limite : c'est le meilleur ordre possible pour un tri par comparaison.</p>`},
  "a3-tris":{
-  "Trois tris en Θ(n²)":`<p>Sélection : on va chercher le plus petit et on le met devant. Insertion : on range chaque nouvelle carte à sa place dans sa main déjà triée. Bulles : on échange les voisins mal rangés, et les grands remontent au bout.</p>`,
-  "Le tri par valeurs":`<p>S'il n'y a que dix valeurs possibles, on n'a pas besoin de comparer : on compte combien de fois chaque valeur apparaît, puis on réécrit le tableau dans l'ordre.</p>`},
+  "Deux tris célèbres":`<p>Sélection : on va chercher le plus petit et on le met devant, puis le plus petit du reste, etc. Insertion : comme des cartes en main, on range chaque nouvelle carte à sa place parmi celles déjà triées.</p>`},
  "a-forme":{
   "Lire cet algorithme ligne par ligne":`<p>Lire un algorithme, c'est le faire tourner dans sa tête avec un exemple.</p><p>Prends T = [4, 7, 4] et x = 4. cpt part de 0. La boucle regarde les cases une par une : la case 0 contient 4, c'est x, cpt passe à 1 ; la case 1 contient 7, rien ne change ; la case 2 contient 4, cpt passe à 2.</p><p>À la fin, cpt vaut 2. Comme 2 &gt; 0, l'algorithme renvoie true : « oui, x est dans le tableau ».</p>`,
   "Trouve les erreurs":`<p>Ce sont les fautes qui font perdre des points faciles. Cherche dans cet ordre : la signature (FONCTION ou PROCÉDURE ? chaque paramètre a son E et son type ? le type du résultat est écrit ?), puis la ligne « Variable : », puis la fermeture de chaque bloc (fin si; fin pour; fin tq;).</p>`,
