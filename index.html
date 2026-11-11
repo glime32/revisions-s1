@@ -9953,13 +9953,25 @@ FIN`)+"<p>cons ajoute devant : on parcourt le tableau à l'envers pour garder l'
  K("Garder l'ordre d'un tableau dans une liste ?","Parcourir le tableau à l'envers (pour i de taille(T)-1 à 0 par pas de -1) et faire L ← cons(T[i], L).")]},
 
 /* ------------------------------------------------------------------ */
-{id:"a-piles",t:"Piles et files : le casse-tête du cours",min:17,goal:"Calculer l'état d'une pile après chaque instruction, en repérant les instructions interdites (cours p. 44 et 46).",steps:[
+{id:"a-piles",t:"Piles et files : le casse-tête du cours",min:22,goal:"Calculer l'état d'une pile après chaque instruction, en repérant les instructions interdites (cours p. 44 et 46).",steps:[
  Q("On empile 1, puis 2, puis 3, puis on dépile une fois. Que renvoie depiler ?",["1","2","3","[1, 2]"],2,"Une pile : dernier arrivé, premier sorti. On reprend l'assiette posée en dernier."),
  L("Piles et files",`<ul><li>Pile : <b>empiler(E élément, ES pile)</b>, <b>depiler(ES pile) : élément</b> (enlève le sommet et le renvoie), <b>estVide(E pile)</b>.</li><li>File : <b>enfiler(E élément, ES file)</b>, <b>defiler(ES file) : élément</b> (le premier arrivé), estVide.</li><li>Interdit sur une pile : un indice P[1], tête, queue ou cons.</li></ul><p>Vider une pile dans une autre (un <b>transvasement</b>) inverse l'ordre de ses éléments. Fais le casse-tête du cours pas à pas.</p>`,{fig:"a-piles-files"}),
  Q("P contient 1, 2, 3 (3 au sommet). Que fait « afficher tête(P) » ?",["Affiche 3","Affiche 1","C'est une erreur : tête est réservé aux listes"],2,"Sur une pile, on n'a que empiler, depiler et estVide. Pour connaître le sommet, il faut le dépiler."),
  Q("Pour inverser l'ordre de P avec deux piles auxiliaires Q et R, combien de transvasements faut-il ?",["1","2","3","4"],2,"Chaque transvasement inverse l'ordre : P vers Q, Q vers R, puis R vers P. Il en faut un nombre impair pour finir dans P, inversée."),
  O("Cours p. 45 : la procédure doublePile double chaque valeur d'une pile P d'entiers, sans changer leur ordre. Remets-la dans l'ordre. (Q ← [ ] crée une pile vide Q ; depiler(P) enlève le sommet de P et le renvoie ; empiler(x, Q) pose x sur Q.)",["PROCÉDURE : doublePile (ES P : pile d'entier)","SPÉCIFICATIONS : double les valeurs de P.","Variable : Q : pile d'entier","DÉBUT","    Q ← [ ]","    tant que non estVide(P) faire","        empiler(2*depiler(P), Q)","    fin tq;","    tant que non estVide(Q) faire","        empiler(depiler(Q), P)","    fin tq;","FIN"],"Le premier transvasement double et inverse ; le second remet dans l'ordre."),
- P("Cours, diapo 44 : la pile après chaque étape, sur papier",`<p>« À vous de jouer ! Calculer la valeur de la pile P après chaque étape »</p>${C(`Variable : P : pile d'entiers
+ B("Cours, diapo 50 : complète inverseFile, qui inverse l'ordre des éléments de la file F en se servant d'une pile P.",`PROCÉDURE : inverseFile (ES F : file d'entier)
+SPÉCIFICATIONS : Inverse l'ordre des éléments de la file F
+Variable : P : pile d'entier
+DÉBUT
+    P ← [ ];
+    tant que non estVide([[0]]) faire
+        empiler([[1]], P)
+    fin tq;
+    tant que non estVide([[2]]) faire
+        enfiler([[3]], F)
+    fin tq;
+FIN`,[{o:["F","P"],a:0},{o:["defiler(F)","depiler(F)","F"],a:0},{o:["P","F"],a:0},{o:["depiler(P)","defiler(P)","P"],a:0}],"On vide la file dans la pile, puis la pile dans la file. La pile rend les éléments dans l'ordre inverse : le dernier empilé ressort le premier. (Réponses du prof sur la diapo annotée.)"),
+ P("Cours, diapos 44 et 49 : la pile, puis la file, après chaque étape",`<p>« À vous de jouer ! Calculer la valeur de la pile P après chaque étape »</p>${C(`Variable : P : pile d'entiers
 P ← []
 Pour i de 1 à 3 faire
    empiler(i,P)
@@ -9971,7 +9983,19 @@ P ← cons(3,P)
 depiler(P)
 depiler(P)
 depiler(P)
-depiler(P)`)}<p>(Précisions de ma part : écris la pile entre crochets, le sommet à droite, comme [1, 2, 3]. Quand une instruction est interdite, écris ERREUR et passe à la suivante sans changer la pile.)</p>`,`<p>Réponses du prof (cours annoté) :</p>${C(`Variable : P : pile d'entiers      ?  (pas encore de valeur)
+depiler(P)`)}<p>« À vous de jouer ! Calculer la valeur de la file F après chaque étape »</p>${C(`Variable : F : file d'entiers
+F ← []
+Pour i de 1 à 3 faire
+   enfiler(i,F)
+finPour
+enfiler(defiler(F),F)
+enfiler(F[1],F)
+enfiler(F,4)
+F ← cons(3,F)
+defiler(F)
+defiler(F)
+defiler(F)
+defiler(F)`)}<p>(Précisions de ma part : écris la pile entre crochets, le sommet à droite, comme [1, 2, 3] ; pour la file, le premier arrivé à gauche. Quand une instruction est interdite, écris ERREUR et passe à la suivante sans rien changer.)</p>`,`<p>Réponses du prof (cours annoté), d'abord la pile :</p>${C(`Variable : P : pile d'entiers      ?  (pas encore de valeur)
 P ← []                             [ ]
 Pour i de 1 à 3 faire
    empiler(i,P)                    [1] puis [1, 2] puis [1, 2, 3]
@@ -9983,7 +10007,19 @@ P ← cons(3,P)                      ERREUR
 depiler(P)                         [1, 2]
 depiler(P)                         [1]
 depiler(P)                         [ ]
-depiler(P)                         ERREUR`)}<ul><li>empiler(depiler(P),P) : depiler(P) vaut 3 et P vaut [1, 2] ; puis on exécute « empiler(3, [1, 2]) ». La pile redevient [1, 2, 3].</li><li>empiler(P[1],P) : un indice comme P[1], c'est pour les tableaux seulement.</li><li>empiler(P,4) : les paramètres sont dans le mauvais ordre. L'ordre est empiler(élément, pile).</li><li>P ← cons(3,P) : cons, c'est pour les listes seulement.</li><li>Le dernier depiler(P) : la pile est vide, il n'y a plus rien à dépiler.</li></ul>`,["La boucle donne trois valeurs : [1], [1, 2], [1, 2, 3]","empiler(depiler(P), P) : la pile ne change pas à la fin","Trois ERREUR au milieu : l'indice, l'ordre des paramètres, cons","Un dernier ERREUR : on dépile une pile vide"],7),
+depiler(P)                         ERREUR`)}<ul><li>empiler(depiler(P),P) : depiler(P) vaut 3 et P vaut [1, 2] ; puis on exécute « empiler(3, [1, 2]) ». La pile redevient [1, 2, 3].</li><li>empiler(P[1],P) : un indice comme P[1], c'est pour les tableaux seulement.</li><li>empiler(P,4) : les paramètres sont dans le mauvais ordre. L'ordre est empiler(élément, pile).</li><li>P ← cons(3,P) : cons, c'est pour les listes seulement.</li><li>Le dernier depiler(P) : la pile est vide, il n'y a plus rien à dépiler.</li></ul><p>Puis la file :</p>${C(`Variable : F : file d'entiers      ?
+F ← []                             [ ]
+Pour i de 1 à 3 faire
+   enfiler(i,F)                    [1, 2, 3]
+finPour
+enfiler(defiler(F),F)              [2, 3, 1]
+enfiler(F[1],F)                    ERREUR
+enfiler(F,4)                       ERREUR
+F ← cons(3,F)                      ERREUR
+defiler(F)                         [3, 1]
+defiler(F)                         [1]
+defiler(F)                         [ ]
+defiler(F)                         ERREUR`)}<ul><li>enfiler(defiler(F),F) : defiler(F) vaut 1 (le premier arrivé) et F vaut [2, 3] ; puis on exécute « enfiler(1, [2, 3]) ». Le 1 se retrouve à la fin : [2, 3, 1]. C'est la différence avec la pile, qui ne changeait pas.</li><li>Les trois ERREUR ont les mêmes raisons que pour la pile.</li><li>Les defiler enlèvent toujours le premier : 2, puis 3, puis 1.</li></ul>`,["Pile : la boucle donne [1], [1, 2], [1, 2, 3]","Pile : empiler(depiler(P), P) ne change rien à la fin","File : enfiler(defiler(F), F) envoie le premier à la fin, [2, 3, 1]","Trois ERREUR au milieu à chaque fois : l'indice, l'ordre des paramètres, cons","Un dernier ERREUR : on enlève un élément d'une pile ou d'une file vide"],10),
  K("Pile ou file ?","Pile : dernier arrivé, premier sorti (empiler, depiler). File : premier arrivé, premier sorti (enfiler, defiler)."),
  K("Ce qui est interdit sur une pile ?","Un indice P[1], tête, queue, cons, et empiler(P, x) : l'ordre est empiler(élément, pile).")]}
 ];
