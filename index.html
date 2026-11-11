@@ -3194,19 +3194,19 @@ function growth(host){
     const tr=y=>logy?Math.log10(Math.max(y,1e-3)):y,ym=logy?Math.log10(ymax)*1.05:ymax*1.05,pl=W.plotter(w,h,0,N,logy?-0.5:0,ym);
     let s=`<svg viewBox="0 0 ${w} ${h}" class="plot">`;s+=pl.axes();F.forEach((f,i)=>{s+=pl.path(n=>n<1?NaN:tr(val(i,n)),"XCLS",1,N).replace('class="XCLS"',`style="stroke:${cols[i]};stroke-width:${i===cf?3:2};fill:none"`);});s+="</svg>";
     q(".gplot").innerHTML=s+`<div class="edt-legend">${F.map((f,i)=>`<span><i class="sdot" style="background:${cols[i]}"></i>${i===cf&&c>1?c+" × ":""}${f[0]}</span>`).join("")}</div>`;
-    q(".w-note").innerHTML=`<div class="verdict info">${logy?"En échelle log, chaque graduation multiplie par 10. ":""}Avec n = ${N} : n² = ${N*N}, n³ = ${N**3}, 2ⁿ ≈ ${(2**N).toExponential(1).replace(".",",")}. Une constante ne change pas l'ordre de grandeur Θ, mais peut rendre un algorithme ${c} fois plus lent.</div>`;q("[data-nv]").textContent=N;}
+    q(".w-note").innerHTML=`<div class="verdict info">${logy?"En échelle log, chaque graduation multiplie par 10. ":""}Avec n = ${N} : n² = ${N*N}, n³ = ${N**3}, 2ⁿ ≈ ${(2**N).toExponential(1).replace(".",",")}. Une constante ne change pas l'ordre de complexité θ, mais peut rendre un algorithme ${c} fois plus lent.</div>`;q("[data-nv]").textContent=N;}
   host.addEventListener("input",e=>{if(e.target.matches("[data-n]")){N=+e.target.value;draw();}});
   host.addEventListener("change",e=>{if(e.target.matches("[data-c]"))c=+e.target.value;if(e.target.matches("[data-cf]"))cf=+e.target.value;draw();});
   host.addEventListener("click",e=>{const b=e.target.closest("[data-log]");if(b){logy=!logy;b.setAttribute("aria-pressed",logy);draw();}});
   draw();
 }
 const FRAG=[
- {t:"Pour i de 1 à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)c++;return c;},ex:"n",th:"Θ(n)"},
- {t:"Pour i de 1 à n, Pour j de 1 à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)for(let j=1;j<=n;j++)c++;return c;},ex:"n²",th:"Θ(n²)"},
- {t:"Pour i de 1 à n, Pour j de 1 à i : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)for(let j=1;j<=i;j++)c++;return c;},ex:"n(n+1)/2",th:"Θ(n²)"},
- {t:"Pour i de 1 à n, Pour j de i à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)for(let j=i;j<=n;j++)c++;return c;},ex:"n(n+1)/2",th:"Θ(n²)"},
- {t:"Pour i de 1 à n : som ← som+1 ; Pour j de 1 à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++){c++;for(let j=1;j<=n;j++)c++;}return c;},ex:"n + n² = n(n+1)",th:"Θ(n²)"},
- {t:"i ← n ; Tant que i > 1 : i ← i div 2 ; som ← som+1",f:n=>{let c=0,i=n;while(i>1){i=Math.floor(i/2);c++;}return c;},ex:"⌊log₂ n⌋",th:"Θ(log n)"}];
+ {t:"Pour i de 1 à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)c++;return c;},ex:"n",th:"θ(n)"},
+ {t:"Pour i de 1 à n, Pour j de 1 à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)for(let j=1;j<=n;j++)c++;return c;},ex:"n²",th:"θ(n²)"},
+ {t:"Pour i de 1 à n, Pour j de 1 à i : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)for(let j=1;j<=i;j++)c++;return c;},ex:"n(n+1)/2",th:"θ(n²)"},
+ {t:"Pour i de 1 à n, Pour j de i à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++)for(let j=i;j<=n;j++)c++;return c;},ex:"n(n+1)/2",th:"θ(n²)"},
+ {t:"Pour i de 1 à n : som ← som+1 ; Pour j de 1 à n : som ← som+1",f:n=>{let c=0;for(let i=1;i<=n;i++){c++;for(let j=1;j<=n;j++)c++;}return c;},ex:"n + n² = n(n+1)",th:"θ(n²)"},
+ {t:"i ← n ; Tant que i > 1 : i ← i div 2 ; som ← som+1",f:n=>{let c=0,i=n;while(i>1){i=Math.floor(i/2);c++;}return c;},ex:"⌊log₂ n⌋",th:"θ(log n)"}];
 function counter(host){
   let k=1,n=10;
   host.innerHTML=`<div class="widget"><div class="w-ctrl"><select data-k>${FRAG.map((f,i)=>`<option value="${i}"${i===1?" selected":""}>${f.t}</option>`).join("")}</select><label>n = <input type="range" min="1" max="64" value="10" data-n> <b data-nv>10</b></label></div><div class="w-note"></div></div>`;
@@ -3881,30 +3881,30 @@ FIN`)}`,
  q:"On empile 1, 2, 3 puis on dépile deux fois. Que reste-t-il ? Même chose avec une file.",a:"Pile : 1 (on a retiré 3 puis 2). File : 3 (on a retiré 1 puis 2).",rel:["a-listes"]});
 
 /* ---------- pas au CC1 cette année : preuves, complexité, recherche, tris (rangés au chapitre 7 plus bas) ---------- */
-add(3,{id:"a-preuve",type:"meth",ref:"Cours et TD 6, CC 2022",t:"Prouver un algorithme itératif : trace, invariant, terminaison",short:"Invariant et preuve",cc:"Tombé en 2022 et 2024",
- plain:`Pour prouver une boucle : (1) ${hl("la trace")} donne l'idée, (2) on devine un ${hl("invariant")} (une égalité vraie à chaque tour), (3) on le prouve par récurrence avec les ${hl("équations de récurrence")}, (4) à la sortie, l'invariant donne le résultat.`,
+add(3,{id:"a-preuve",type:"meth",ref:"Cours diapos 52 à 65, TD 6",t:"Prouver la validité d'un algorithme : équations, invariant, récurrence",short:"Invariant et preuve",cc:"Tombé en 2022, 2023 et 2024",
+ plain:`Un algorithme est ${hl("valide")} s'il résout le problème qu'il est censé résoudre. Pour une boucle : (1) on lit les ${hl("équations d'itération")} sur l'algorithme (la vérité), (2) on cherche un ${hl("invariant de boucle")} (l'hypothèse), (3) on le prouve par récurrence, (4) on l'écrit à la fin des itérations.`,
  fig:()=>h=>W.tracer(h,{lang:"pseudo",code:["Fonction : G (E N : entier) : entier","Spécifications : N entier naturel. Calcule (N+1)².","Variables : i, j, k : entier","Début","  i, j, k ← 0, 0, 1","  Tant que i < N faire","    i ← i + 1","    j ← i + i","    k ← j + k + 1","  finTantQue","  Renvoyer k","Fin"],cols:["i","j","k","(i+1)²","k = (i+1)² ?"],params:[{k:"N",label:"N =",min:0,max:12,val:5}],
   gen:p=>{let i=0,j=0,k=1;const row=()=>({i,j,k,["(i+1)²"]:(i+1)**2,["k = (i+1)² ?"]:k===(i+1)**2?"oui":"non"});const S=[{l:4,v:row(),note:"Avant la boucle : l'invariant est vrai (k = 1 = (0+1)²)."}];while(i<p.N){i++;S.push({l:6,v:row(),row:false});j=i+i;S.push({l:7,v:row(),row:false});k=j+k+1;S.push({l:8,v:row(),note:`Tour ${i} : k = ${k} = (${i}+1)². L'invariant reste vrai.`});}S.push({l:10,v:row(),row:false,out:`renvoie ${k}`,note:`Sortie : i = N, donc k = (N+1)² = ${k}.`});return S;}}),
- formal:`<ul><li><b>Équations de récurrence</b> : on traduit un tour de boucle. Ici i<sub>n+1</sub> = i<sub>n</sub> + 1, j<sub>n+1</sub> = 2 i<sub>n+1</sub>, k<sub>n+1</sub> = j<sub>n+1</sub> + k<sub>n</sub> + 1.</li><li><b>Invariant</b> : k<sub>n</sub> = (i<sub>n</sub> + 1)². Initialisation : k<sub>0</sub> = 1 = (0 + 1)². Hérédité : k<sub>n+1</sub> = 2(i<sub>n</sub> + 1) + (i<sub>n</sub> + 1)² + 1 = (i<sub>n</sub> + 2)² = (i<sub>n+1</sub> + 1)².</li><li><b>Terminaison</b> : i part de 0 et augmente de 1 à chaque tour, donc après N tours i = N et la boucle s'arrête.</li><li><b>Conclusion</b> : à la sortie i = N, donc k = (N + 1)².</li></ul>`,
- use:`<p>Question de cours du CC1 2024 : « À quoi servent les équations de récurrence ? » Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables, et permettent de montrer qu'un invariant est héréditaire.</p>`,
- trap:`La terminaison ne se prouve pas avec l'invariant : il faut une quantité entière qui se rapproche strictement de la condition d'arrêt (ici N − i décroît).`,
- q:"Dans une preuve de validité d'un algorithme itératif, à quoi servent les équations de récurrence ? (CC1 2024)",a:"Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables. Elles permettent de montrer qu'un invariant est héréditaire : s'il est vrai à l'itération n, il l'est à l'itération n + 1.",rel:["a-boucles","a-arret"]});
+ formal:`<p><b>Vocabulaire du cours</b> (diapo 54).</p><ul><li><b>équation d'itération</b> : égalité reliant les valeurs des variables d'une itération à la suivante ; ce sera notre vérité ;</li><li><b>invariant de boucle</b> : propriété censée être vraie au début des itérations et à la fin de chaque itération ; ce sera notre hypothèse à prouver.</li></ul><p>Notation : var<sub>i</sub> : valeur de var à la fin de l'itération n°i (i = 0 pour le début des itérations).</p><p><b>Méthode</b> (diapo 56) : 1. « lire » les équations d'itération sur l'algorithme (vérité) ; 2. chercher un invariant de boucle (hypothèse) ; 3. prouver l'hypothèse par récurrence en utilisant la vérité : l'hypothèse devient une vérité ; 4. écrire cette vérité à la fin des itérations pour prouver l'algorithme.</p><p><b>Sur l'algorithme G de la figure</b> (CC 2022) :</p><ul><li>Équations d'itération : j<sub>0</sub> = 0, k<sub>0</sub> = 1 ; pour i > 0, j<sub>i</sub> = 2i et k<sub>i</sub> = k<sub>i−1</sub> + 2i + 1.</li><li>Invariant : Inv<sub>i</sub> : « k<sub>i</sub> = (i + 1)² ».</li><li>Initialisation : k<sub>0</sub> = 1 = (0 + 1)² : Inv<sub>0</sub> est vrai.</li><li>Récurrence : si Inv<sub>i−1</sub> est vrai, c'est-à-dire k<sub>i−1</sub> = i², alors k<sub>i</sub> = i² + 2i + 1 = (i + 1)² : Inv<sub>i</sub> est vrai.</li><li>Conclusion : l'invariant est vrai pour toutes les itérations.</li><li>À la fin du tant que, i = N, donc l'algorithme renvoie k<sub>N</sub> = (N + 1)² : il est valide.</li></ul><p><b>Algorithme récursif</b> (diapos 61 à 63). <b>Équation de récurrence</b> : égalité reliant le résultat de l'algorithme avec celui des appels récursifs (vérité). <b>Invariant de récursion</b> : propriété censée être vraie à chaque appel récursif ; le plus souvent, ça revient à écrire que l'algorithme renvoie le bon résultat (hypothèse). On prouve l'hypothèse par récurrence.</p><p><b>Arrêt d'un tant que</b> (modèle de la diapo 95) : une quantité entière décroît strictement à chaque itération, et le tant que s'arrête quand elle atteint une certaine valeur ; il y a donc un nombre fini d'itérations, donc l'algorithme se termine.</p>`,
+ use:`<p>CC1 2024 : « À quoi servent les équations de récurrence ? » (le nom des équations d'itération cette année-là). Réponse officielle : elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables, et permettent de montrer qu'un invariant est héréditaire.</p><p>CC 2022, exercice 3 (5 points) : trace, arrêt, invariant à choisir, conclusion. Examen de janvier 2023 : prouver qu'une boucle se termine (2 points), prouver par récurrence qu'un algorithme récursif se termine et renvoie le bon résultat (2 points).</p>`,
+ trap:`L'équation d'itération se lit sur l'algorithme : c'est la vérité. L'invariant reste une hypothèse tant qu'il n'est pas prouvé. Attention aussi à l'ordre des instructions : dans G, « k ← j+k+1 » utilise le nouveau j.`,
+ q:"Dans une preuve de validité d'un algorithme itératif, à quoi servent les équations d'itération (« équations de récurrence » dans le sujet de 2024) ?",a:"Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables. Elles permettent de montrer qu'un invariant est héréditaire : s'il est vrai à une itération, il est vrai à la suivante.",rel:["a-boucles","a-arret"]});
 
-add(3,{id:"a-complexite",type:"def",ref:"Cours et TD 7",t:"O, Ω, Θ, o : comparer des complexités",short:"Notations O, Ω, Θ, o",cc:"Tombé en 2022 et 2024",
- plain:`On compare la vitesse de croissance du nombre d'opérations quand n devient grand. ${hl("Θ")} = même ordre de grandeur, ${hl("O")} = au plus, ${hl("Ω")} = au moins, ${hl("o")} = négligeable. Les constantes ne comptent pas dans Θ, mais elles comptent en vrai.`,
+add(3,{id:"a-complexite",type:"def",ref:"Cours diapos 75 à 80, TD 7",t:"Ordre de complexité : θ, o, ω, O, Ω",short:"Notations θ, o, ω, O, Ω",cc:"Tombé en 2022 et 2024",
+ plain:`On ne garde pas l'expression exacte du nombre d'opérations T<sub>n</sub> : on la rattache à une ${hl("suite de référence")} qui grandit aussi vite, son ${hl("ordre de complexité")}. ${hl("θ")} : aussi vite. ${hl("o")} : moins vite. ${hl("ω")} : plus vite. ${hl("O")} : aussi vite ou moins vite. ${hl("Ω")} : aussi vite ou plus vite.`,
  fig:()=>growth,
- formal:`<ul><li>a<sub>n</sub> = O(b<sub>n</sub>) : a<sub>n</sub> ≤ C·b<sub>n</sub> à partir d'un rang (a est dominée par b).</li><li>a<sub>n</sub> = Ω(b<sub>n</sub>) : a<sub>n</sub> ≥ c·b<sub>n</sub> à partir d'un rang, avec c > 0.</li><li>a<sub>n</sub> = Θ(b<sub>n</sub>) : les deux à la fois (même ordre).</li><li>a<sub>n</sub> = o(b<sub>n</sub>) : a<sub>n</sub>/b<sub>n</sub> → 0.</li></ul><p>Ordre usuel : log n ≪ n ≪ n log n ≪ n² ≪ n³ ≪ 2<sup>n</sup>.</p>`,
- use:`<p>QCM du CC 2022 : « si a = Θ(b) alors a = O(b) » est vrai ; « si a = o(b) alors a = Ω(b) », « si a = Ω(b) alors a = Θ(b) », « si a = O(b) alors a = Ω(b) » sont faux.</p>`,
- trap:`Θ(n³) et Θ(n³) peuvent différer d'un facteur un million : 1 000 000 n³ et n³ sont tous les deux Θ(n³) (CC1 2024). Mets 1000000 devant n³ dans la figure.`,
- q:"Un algorithme en Θ(n²) peut-il être un million de fois plus lent qu'un autre en Θ(n²) ? (CC1 2024)",a:"Oui : par exemple l'un fait 1 000 000·n² opérations et l'autre n². Θ ignore les constantes multiplicatives.",rel:["a-calcul-complexite","a-recherche"]});
+ formal:`<p><b>Suites de référence, dans l'ordre</b> (diapo 76) : 1 (à coût constant), log(n) (logarithmique), n (linéaire), n.log(n) (pseudo-linéaire), n² (quadratique), n³ (cubique), n<sup>a</sup> avec a > 0 (polynômiale), b<sup>n</sup> avec b > 1 (exponentielle), n! (factorielle).</p><p><b>Trouver l'ordre de complexité</b> (diapo 77). On divise T<sub>n</sub> par une suite de référence R<sub>n</sub> et on fait tendre n vers +∞.</p><ul><li>si T<sub>n</sub>/R<sub>n</sub> est borné entre deux nombres strictement positifs, en particulier si T<sub>n</sub>/R<sub>n</sub> → a > 0, alors T<sub>n</sub> est équivalente à R<sub>n</sub> ou de l'ordre de complexité R<sub>n</sub>. On note T<sub>n</sub> = θ(R<sub>n</sub>).</li><li>si T<sub>n</sub>/R<sub>n</sub> → 0 alors T<sub>n</sub> est strictement dominée par R<sub>n</sub>. On note T<sub>n</sub> = o(R<sub>n</sub>).</li><li>si T<sub>n</sub>/R<sub>n</sub> → +∞ alors T<sub>n</sub> domine strictement R<sub>n</sub>. On note T<sub>n</sub> = ω(R<sub>n</sub>).</li><li>sinon, T<sub>n</sub> n'est pas comparable à R<sub>n</sub>. C'est rare.</li></ul><p><b>Domination au sens large</b> (diapo 78) : domination stricte ou équivalence. On utilise la majuscule de la domination stricte : T<sub>n</sub> = O(R<sub>n</sub>) (o ou θ), T<sub>n</sub> = Ω(R<sub>n</sub>) (ω ou θ).</p><p><b>Propriétés</b> (diapo 80).</p><ul><li>Tous les logarithmes sont du même ordre de grandeur : log<sub>10</sub>(n) = θ(log<sub>2</sub>(n)) = θ(ln(n)) etc.</li><li>o, O, ω, Ω, θ sont transitives : si a = o(b) et b = o(c) alors a = o(c), et de même pour O, ω, Ω, θ.</li><li>o, O, ω, Ω, θ sont multiplicatives et additives sur les suites > 0 : si a = o(a′) et b = o(b′) alors ab = o(a′b′) et a + b = o(a′ + b′), et de même pour O, ω, Ω, θ.</li></ul>`,
+ use:`<p>CC 2022 (QCM) : « si a<sub>n</sub> = θ(b<sub>n</sub>) alors a<sub>n</sub> = O(b<sub>n</sub>) » est la seule affirmation vraie. CC1 2024 : un algorithme en Θ(n³) peut être un million de fois plus lent qu'un autre en Θ(n³). TD 7 et examen de janvier 2023 : avec un temps proportionnel à l'ordre de complexité, on calcule le coefficient à partir d'une mesure, puis un temps ou une taille d'entrée.</p>`,
+ trap:`« Équivalentes » ne veut pas dire « identiques » : si T<sub>n</sub> = 1000000R<sub>n</sub> ou T<sub>n</sub> = R<sub>n</sub> + 1000000 alors T<sub>n</sub> et R<sub>n</sub> sont équivalentes (cours, diapo 77). Mets 1000000 devant n³ dans la figure. Le cours écrit θ, certains sujets Θ : c'est la même notation.`,
+ q:"Un algorithme de complexité Θ(n²) peut-il être un million de fois plus lent qu'un autre algorithme de complexité Θ(n²) ? (CC1 2024)",a:"Oui, si par exemple le premier fait 1000000n² opérations et le deuxième n² opérations.",rel:["a-calcul-complexite","a-recherche"]});
 
-add(3,{id:"a-calcul-complexite",type:"meth",ref:"TD 8, master theorem",t:"Calculer une complexité",
- plain:`On compte les opérations en fonction de n : une boucle de n tours donne ${hl("n")}, deux boucles imbriquées ${hl("n²")}, une boucle qui divise par 2 ${hl("log₂ n")}. Pour un récursif, on écrit une équation de récurrence sur T(n).`,
+add(3,{id:"a-calcul-complexite",type:"meth",ref:"Cours diapos 67 à 74 et 81 à 86, TD 8",t:"Calculer une complexité : compter, sommer, master theorem",short:"Calculer une complexité",cc:"Tombé en 2022 et 2023",
+ plain:`On compte les opérations en fonction de la taille n de l'entrée. Une boucle pour : on calcule une ${hl("somme")}. Un algorithme récursif : on écrit une ${hl("équation de complexité")} sur T<sub>n</sub> et on la résout, ou on applique le ${hl("master theorem")} quand la taille est divisée à chaque appel.`,
  fig:()=>counter,
- formal:`<ul><li>Σ<sub>i=1..n</sub> 1 = n ; Σ<sub>i=1..n</sub> i = n(n+1)/2 ; Σ i² = n(n+1)(2n+1)/6.</li><li>T(n) = T(n − 1) + c → Θ(n) ; T(n) = 2T(n − 1) + c → Θ(2<sup>n</sup>).</li><li>T(n) = T(n/2) + c → Θ(log n) (dichotomie) ; T(n) = 2T(n/2) + n → Θ(n log n) (tri fusion).</li><li><b>Master theorem</b> : T(n) = a·T(n/b) + Θ(n<sup>d</sup>) donne Θ(n<sup>d</sup>) si a &lt; b<sup>d</sup>, Θ(n<sup>d</sup> log n) si a = b<sup>d</sup>, Θ(n<sup>log<sub>b</sub> a</sup>) si a &gt; b<sup>d</sup>.</li></ul>`,
- use:`<p>Question de cours du CC 2022 : « À quoi sert le master theorem ? » Il donne une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</p>`,
- trap:`F(n) = F(n−1) + F(n−1) fait deux appels : Θ(2ⁿ). Stocker F(n−1) dans une variable et le doubler ramène à Θ(n).`,
- q:"Combien d'additions fait « Pour i de 1 à n, Pour j de 1 à i : som ← som + 1 » ?",a:"1 + 2 + … + n = n(n+1)/2, donc Θ(n²).",rel:["a-complexite"]});
+ formal:`<p><b>Compter</b> (diapos 67 et 68). 1 opération élémentaire = 1 unité de temps, 1 variable élémentaire = 1 unité de mémoire. T<sub>n</sub> : nombre d'opérations élémentaires, la complexité en temps. V<sub>n</sub> : espace mémoire occupé, la complexité en espace. S'ils dépendent de la configuration des données, on regarde le pire cas.</p><p><b>Boucles pour</b> (diapo 81). Compter le nombre d'opérations dans un pour revient à calculer une somme ayant les mêmes indices. Formules utiles : 1 + 2 + … + n = n(n + 1)/2 ; 1² + 2² + … + n² = n(n + 1)(2n + 1)/6 ; 1³ + 2³ + … + n³ = n²(n + 1)²/4.</p><p><b>Raccourci</b> (diapo 82). En lisant les bornes du pour, on obtient une estimation O : si i prend n valeurs, j moins de n valeurs, et chaque itération O(1) opérations, alors T<sub>n</sub> = n × O(n) × O(1) = O(n²).</p><p><b>Algorithme récursif</b> (diapo 71). T<sub>n</sub> = opérations de l'algorithme + opérations faites dans ses appels : une équation récurrente appelée <b>équation de complexité</b>. Exemple (diapo 72), la factorielle récursive F2 : T<sub>0</sub> = 1 et T<sub>n</sub> = 4 + T<sub>n−1</sub>, suite arithmétique : T<sub>n</sub> = 4n + 1.</p><p><b>Master Theorem</b> (diapo 84) : s'il existe quatre entiers a ≥ 0, b > 1, d ≥ 0 et n<sub>0</sub> > 0 tels que, pour tout n ≥ n<sub>0</sub>, T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>), alors T(n) = O(n<sup>d</sup>) si b<sup>d</sup> > a ; T(n) = O(n<sup>d</sup> log n) si b<sup>d</sup> = a ; T(n) = O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a. a représente le nombre d'appels récursifs dans le corps de l'algorithme, b l'entier par lequel la taille de l'entrée est divisée à chaque appel, O(n<sup>d</sup>) les opérations de l'algorithme en plus des appels récursifs.</p>`,
+ use:`<p>CC 2022 : « À quoi sert le master theorem ? » Réponse officielle : il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel. Examen de janvier 2023 : T<sub>n</sub> = 2T<sub>n−1</sub> + 4 à résoudre avec une suite géométrique (2 points), puis T<sub>n</sub> = θ(n) + 2T<sub>⌊n/2⌋</sub> par le master theorem (1,5 point).</p>`,
+ trap:`F(n-1) + F(n-1) fait deux appels : T<sub>n</sub> = 2T<sub>n−1</sub> + …, donc θ(2<sup>n</sup>). Et le master theorem ne s'applique que si la taille est <b>divisée</b> (n div 2, n div 3), pas si elle diminue de 1.`,
+ q:"Combien d'additions fait « Pour i de 1 à n faire Pour j de 1 à i faire som ← som+1 » ? (TD 8, exercice 34)",a:"1 + 2 + … + n = n(n + 1)/2, donc θ(n²).",rel:["a-complexite"]});
 
 /* ---------- chapitre 4 : recherche et tris ---------- */
 add(4,{id:"a-recherche",type:"algo",ref:"Cours et TD 9",t:"Recherche séquentielle et dichotomique",short:"Recherche dichotomique",cc:"Tombé en 2024",
@@ -4758,34 +4758,215 @@ const P2=o=>Object.assign(o,{ex:"cc2"}),P3=o=>Object.assign(o,{ex:"cc3"});
 const EX2={"a-preuve":1,"a-complexite":1,"a-calcul-complexite":1};
 concepts.forEach(c=>{if(OUT_IDS.includes(c.id)){delete c.out;c.ex=EX2[c.id]?"cc2":"cc3";c.ch=EX2[c.id]?6:7;}});
 
-/* ---------- TD 6 à 10, corrigés écrits pour le site ---------- */
-/* les exercices 24 et 34 existaient (cachés « pas au CC1 ») : ils passent au CC2 */
-const SOL24=`<table class="tbl"><thead><tr><th>tour</th><th class="var">i</th><th class="var">r</th><th class="var">x</th></tr></thead><tbody><tr><td>début</td><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>1</td><td>0</td><td>3</td></tr><tr><td>2</td><td>2</td><td>1</td><td>6</td></tr><tr><td>3</td><td>3</td><td>4</td><td>9</td></tr><tr><td>4</td><td>4</td><td>9</td><td>12</td></tr><tr><td>5</td><td>5</td><td>16</td><td>15</td></tr></tbody></table><ul><li>Invariants : x = 3i et r = (i − 1)².</li><li>Équations de récurrence : i<sub>k+1</sub> = i<sub>k</sub> + 1, r<sub>k+1</sub> = r<sub>k</sub> + x<sub>k</sub> − i<sub>k+1</sub>, x<sub>k+1</sub> = x<sub>k</sub> + 3.</li><li>Initialisation : x = 0 = 3 × 0 et r = 1 = (0 − 1)².</li><li>Hérédité : x<sub>k+1</sub> = 3i<sub>k</sub> + 3 = 3i<sub>k+1</sub> ; r<sub>k+1</sub> = (i<sub>k</sub> − 1)² + 3i<sub>k</sub> − (i<sub>k</sub> + 1) = i<sub>k</sub>² = (i<sub>k+1</sub> − 1)².</li><li>À la sortie i = n, donc r = (n − 1)² : g calcule (n − 1)².</li></ul>`;
-td.forEach(x=>{if(x.id==="24"){x.ex="cc2";delete x.out;x.sol=SOL24;}if(x.id==="34"){x.ex="cc2";delete x.out;}});
-td.push(
- P2({id:"25",s:2,note:"preuves",t:"Somme d'un tableau : itératif, récursif, preuves",en:"(1) Algorithme itératif qui calcule la somme des éléments de T. (2) Le prouver. (3) Version récursive somme des T[0..n−1]. (4) La prouver. (5) Avec quel n l'appeler pour tout le tableau ?",link:"a-preuve",sol:`${C(`Fonction : somme (E T : tableau d'entiers) : entier
-Variables : i, s : entier
+/* ---------- TD 6 à 10 : énoncés recopiés de la feuille, corrigés écrits pour le site avec la méthode du cours ---------- */
+/* les exercices 24 et 34 existaient (cachés « pas au CC1 ») : ils passent au CC2 avec leur énoncé complet */
+const EN24=`<p>1. Faites la trace d'exécution de la fonction g ci-dessous pour n = 5.</p>${C(`Fonction : g (E n : entier) : entier
+Spécifications : n positif. Renvoie ?
+Variables : i, r, x : entier
 Début
-  s ← 0
-  Pour i de 0 à taille(T)-1 faire
-    s ← s + T[i]
-  finPour
-  Renvoyer s
-Fin
+    i, r, x ← 0, 1, 0
+    Tant que i!=n faire
+        i ← i + 1
+        r ← r + x - i
+        x ← x + 3
+    finTant que
+    Renvoyer r
+Fin`)}<p>2. Donnez un invariant liant les valeurs des variables x et i et un invariant liant les valeurs des variables r et i.</p><p>3. Prouvez ces 2 invariants.</p><p>4. En déduire la valeur de la variable r à la fin du tant que. Que calcule la fonction g ?</p><p>(« i!=n » veut dire i ≠ n.)</p>`;
+const SOL24=`<p><b>1.</b> Une ligne par itération ; la ligne 0 donne les valeurs avant la boucle.</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>itération</th><th class="var">i</th><th class="var">r</th><th class="var">x</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>1</td><td>0</td><td>3</td></tr><tr><td>2</td><td>2</td><td>1</td><td>6</td></tr><tr><td>3</td><td>3</td><td>4</td><td>9</td></tr><tr><td>4</td><td>4</td><td>9</td><td>12</td></tr><tr><td>5</td><td>5</td><td>16</td><td>15</td></tr></tbody></table></div><p>À la ligne 5, i = n : la boucle s'arrête et g renvoie 16. Attention à l'ordre des trois instructions : r utilise le nouvel i, mais l'ancien x.</p><p><b>2.</b> Dans la trace, x vaut toujours 3 fois i, et r vaut 1, 0, 1, 4, 9, 16 : le carré de i − 1. Invariants proposés : <b>x = 3i</b> et <b>r = (i − 1)²</b>.</p><p><b>3.</b> Méthode du cours. On note i<sub>k</sub>, r<sub>k</sub>, x<sub>k</sub> les valeurs à la fin de l'itération n° k (k = 0 : avant la boucle).</p><ul><li><b>Équations d'itération</b> (la vérité, lue sur l'algorithme) : i<sub>0</sub> = 0, r<sub>0</sub> = 1, x<sub>0</sub> = 0, puis i<sub>k+1</sub> = i<sub>k</sub> + 1, r<sub>k+1</sub> = r<sub>k</sub> + x<sub>k</sub> − i<sub>k+1</sub>, x<sub>k+1</sub> = x<sub>k</sub> + 3.</li><li><b>Invariant</b> (l'hypothèse) : Inv<sub>k</sub> : « x<sub>k</sub> = 3i<sub>k</sub> et r<sub>k</sub> = (i<sub>k</sub> − 1)² ».</li><li><b>Initialisation</b> : x<sub>0</sub> = 0 = 3 × 0 et r<sub>0</sub> = 1 = (0 − 1)². Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : on suppose Inv<sub>k</sub> vrai et on fait une itération de plus. x<sub>k+1</sub> = x<sub>k</sub> + 3 = 3i<sub>k</sub> + 3 = 3(i<sub>k</sub> + 1) = 3i<sub>k+1</sub>. Et r<sub>k+1</sub> = r<sub>k</sub> + x<sub>k</sub> − i<sub>k+1</sub> = (i<sub>k</sub> − 1)² + 3i<sub>k</sub> − (i<sub>k</sub> + 1) = i<sub>k</sub>² − 2i<sub>k</sub> + 1 + 2i<sub>k</sub> − 1 = i<sub>k</sub>² = (i<sub>k+1</sub> − 1)². Donc Inv<sub>k+1</sub> est vrai.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul><p><b>4.</b> À la fin du tant que, la condition i ≠ n est fausse : i = n. L'invariant donne r = (n − 1)². <b>La fonction g calcule (n − 1)².</b> (Vérifié par programme pour n de 0 à 29.)</p>`;
+const EN34=`<p>Calculer en fonction de n la complexité en nombre d'additions des fragments suivants :</p>${C(`1) Pour i de 1 à n faire
+       som ← som+1
 
-Fonction : sommeRec (E T : tableau d'entiers, E n : entier) : entier
-Spécifications : 0 ≤ n ≤ taille(T). Renvoie T[0] + … + T[n-1].
+2) Pour i de 1 à n faire
+       Pour j de 1 à n faire
+           som ← som+1
+
+3) Pour i de 1 à n faire
+       Pour j de 1 à n^2 faire
+           Pour k de 1 à n^3 faire
+               som ← som+1
+
+4) Pour i de 1 à n faire
+       Pour j de 1 à i faire
+           som ← som+1
+
+5) Pour i de 1 à n faire
+       Pour j de i à n faire
+           som ← som+1
+
+6) Pour i de 1 à n faire
+       som ← som+1
+       Pour j de 1 à n faire
+           som ← som+1`)}`;
+const SOL34=`<p>Chaque exécution de « som ← som+1 » fait une addition. On compte combien de fois cette ligne est exécutée (cours, diapo 81 : compter dans un pour, c'est calculer une somme qui a les mêmes indices).</p><ol><li>i prend n valeurs : <b>n</b> additions.</li><li>Pour chacune des n valeurs de i, j prend n valeurs : n × n = <b>n²</b>.</li><li>n valeurs de i, n² valeurs de j, n³ valeurs de k : n × n² × n³ = <b>n⁶</b>.</li><li>Pour une valeur de i, j prend i valeurs : 1 + 2 + … + n = <b>n(n + 1)/2</b>.</li><li>Pour une valeur de i, j va de i à n : il prend n − i + 1 valeurs. La somme vaut n + (n − 1) + … + 1 = <b>n(n + 1)/2</b>, comme au 4.</li><li>À chaque tour de la boucle sur i : 1 addition, puis n additions dans la boucle sur j, soit n + 1. En tout n × (n + 1) = <b>n² + n</b>.</li></ol><p>Ordres de complexité : Θ(n), Θ(n²), Θ(n⁶), Θ(n²), Θ(n²), Θ(n²). (Les six formules ont été vérifiées par programme pour n de 1 à 8.)</p>`;
+td.forEach(x=>{
+ if(x.id==="24"){delete x.out;Object.assign(x,{ex:"cc2",s:3,note:"TD 6, preuves",t:"Trace et invariants de la fonction g",en:EN24,sol:SOL24,link:"a-preuve"});}
+ if(x.id==="34"){delete x.out;Object.assign(x,{ex:"cc2",s:3,note:"TD 8, complexité",t:"Compter les additions de six fragments",en:EN34,sol:SOL34,link:"a-calcul-complexite"});}});
+td.push(
+ P2({id:"25",s:3,note:"TD 6, preuves",t:"Somme d'un tableau : itératif, récursif, et leurs preuves",en:`<p>Soit T un tableau d'entiers.</p><ol><li>Proposer un algorithme <b>itératif</b> qui calcule la somme des éléments de T.</li><li>Prouver la validité de votre algorithme.</li><li>Écrire un algorithme <b>récursif</b> qui, étant donné un tableau T et un entier n, calcule la somme des éléments de T entre 0 et n-1.</li><li>Prouver cet algorithme.</li><li>Avec quelle valeur de n faut-il l'appeler pour avoir la somme des valeurs de tout le tableau ?</li></ol>`,link:"a-preuve",who:"Questions 1 et 2 : algorithme et preuve du cours (diapo 60, complétée par le prof) ; questions 3 à 5 : corrigé écrit par moi",sol:`<p><b>1.</b> L'algorithme du cours :</p>${C(`FONCTION : somTab (E T : tableau d'entiers) : entier
+SPÉCIFICATIONS : Renvoie la somme des valeurs de T.
+Variable : res : entier
+DÉBUT
+    res ← T[0]
+    pour i de 1 à taille(T)-1 faire
+        res ← res+T[i]
+    fin pour;
+    Renvoyer res
+FIN`)}<p><b>2.</b> On note n = taille(T), et res<sub>i</sub> la valeur de res à la fin de l'itération i (res<sub>0</sub> : avant la boucle).</p><ul><li><b>Équations d'itération</b> : res<sub>0</sub> = T[0], et res<sub>i+1</sub> = res<sub>i</sub> + T[i+1].</li><li><b>Invariant</b> : Inv<sub>i</sub> : « res<sub>i</sub> = T[0] + T[1] + … + T[i] ».</li><li><b>Initialisation</b> : avant la boucle, pour i = 0, res<sub>0</sub> = T[0], somme des valeurs de T[0] à T[0]. Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : on suppose Inv<sub>i</sub> vrai pour 0 ≤ i ≤ n − 2 et on refait une itération. Comme res<sub>i+1</sub> = res<sub>i</sub> + T[i+1] (équation d'itération) et res<sub>i</sub> = T[0] + T[1] + … + T[i] (Inv<sub>i</sub>), on a res<sub>i+1</sub> = T[0] + … + T[i] + T[i+1]. Donc Inv<sub>i+1</sub> est vrai.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul><p>À la fin du pour, l'algorithme renvoie res<sub>n−1</sub> = T[0] + … + T[n−1] par l'invariant : l'algorithme est valide.</p><p><b>3.</b></p>${C(`FONCTION : somRec (E T : tableau d'entiers, E n : entier) : entier
+SPÉCIFICATIONS : 0 ≤ n ≤ taille(T). Renvoie la somme des éléments de T
+                 d'indices 0 à n-1 (0 s'il n'y en a aucun).
+DÉBUT
+    Renvoyer cond(n=0, 0, somRec(T, n-1) + T[n-1])
+FIN`)}<p><b>4.</b> Méthode du cours pour un algorithme récursif (diapo 63).</p><ul><li><b>Équations de récurrence</b> (la vérité) : somRec(T, 0) = 0, et pour n > 0, somRec(T, n) = somRec(T, n−1) + T[n−1].</li><li><b>Invariant de récursion</b> (l'hypothèse) : P<sub>n</sub> : « somRec(T, n) = T[0] + … + T[n−1] ».</li><li><b>Initialisation</b> : pour n = 0, somRec(T, 0) = 0, qui est bien la somme de zéro élément. P<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : pour n > 0, on suppose P<sub>n−1</sub> vrai : somRec(T, n−1) = T[0] + … + T[n−2]. Comme somRec(T, n) = somRec(T, n−1) + T[n−1], alors somRec(T, n) = T[0] + … + T[n−2] + T[n−1]. Donc P<sub>n</sub> est vrai.</li><li><b>Conclusion</b> : pour tout n entre 0 et taille(T), somRec(T, n) renvoie T[0] + … + T[n−1]. L'algorithme est valide.</li></ul><p><b>5.</b> Avec n = taille(T) : somRec(T, taille(T)).</p>`}),
+ P2({id:"26",s:3,note:"TD 6, preuves",t:"Fibonacci itératif : quels invariants, que renvoyer ?",en:`<p>Parmi les égalités suivantes, quelles sont celles vérifiées par l'itération de l'algorithme f ci-dessous : (r1 = i), (r1 = i − 1), (r1 = fib(i)), (r2 = r1 + 1 si i ≠ 1), (r2 = fib(i + 1)) ? En déduire la valeur à renvoyer pour que l'algorithme soit correct.</p><p>Rappel : fib(0) = 0, fib(1) = 1 et fib(n) = fib(n − 1) + fib(n − 2) pour n > 1.</p>${C(`Fonction : f (E n : entier) : entier
+Spécifications : n un entier strictement positif.
+     Calcule et renvoie fib(n).
+Variables : i, r1, r2, r3 : entier
 Début
-  Renvoyer cond(n = 0, 0, sommeRec(T, n-1) + T[n-1])
-Fin`)}<ul><li>Itératif : invariant « après le tour i, s = T[0] + … + T[i] ». Vrai après le tour 0 (s = T[0]) ; héréditaire car s<sub>i+1</sub> = s<sub>i</sub> + T[i+1]. Après le dernier tour, s est la somme de tout T. La boucle Pour s'arrête.</li><li>Récursif, par récurrence sur n : sommeRec(T, 0) = 0 ; si sommeRec(T, n − 1) = T[0] + … + T[n−2], alors sommeRec(T, n) ajoute T[n−1]. Terminaison : n diminue de 1 jusqu'à 0.</li><li>Pour tout le tableau : sommeRec(T, taille(T)).</li></ul>`}),
- P2({id:"26",s:2,note:"preuves",t:"Fibonacci itératif : quel invariant, que renvoyer ?",en:"i, r1, r2 ← 0, 0, 1 ; Tant que i < n : r3 ← r1 ; r1 ← r2 ; r2 ← r3 + r2 ; i ← i + 1. Lesquelles sont des invariants : r1 = i ; r1 = i − 1 ; r1 = fib(i) ; r2 = r1 + 1 (si i ≠ 1) ; r2 = fib(i + 1) ? Que faut-il renvoyer ?",link:"a-preuve",sol:`<p>Invariants : <b>r1 = fib(i)</b> et <b>r2 = fib(i + 1)</b>. Au départ r1 = 0 = fib(0), r2 = 1 = fib(1). Après un tour : le nouveau r1 vaut l'ancien r2 = fib(i + 1), le nouveau r2 vaut fib(i) + fib(i + 1) = fib(i + 2), et i augmente de 1. Les autres sont faux (par exemple i = 4 : r1 = 3 ≠ 4, et r2 = 5 ≠ r1 + 1). À la sortie i = n : il faut renvoyer <b>r1</b>.</p>`}),
- P2({id:"27",s:2,note:"preuves",t:"logEntier",en:"i, p, q ← 0, 1, 2 ; Tant que q ≤ a : p ← q ; q ← p + p ; i ← i + 1 ; Renvoyer i. (1) Trace pour a = 18. (2) Invariants liant p et i, q et i. (3) Les montrer. (4) Montrer que 2^i ≤ a < 2^(i+1) à la fin.",link:"a-preuve",sol:`<p>Trace a = 18 : (i, p, q) = (0, 1, 2) → (1, 2, 4) → (2, 4, 8) → (3, 8, 16) → (4, 16, 32) ; 32 > 18 : on renvoie 4.</p><ul><li>Invariants : p = 2<sup>i</sup> et q = 2<sup>i+1</sup>. Vrais au départ ; un tour fait p ← q = 2<sup>i+1</sup>, q ← 2p = 2<sup>i+2</sup>, i ← i + 1.</li><li>À la sortie, q > a, donc a < 2<sup>i+1</sup>. Et p ≤ a : soit p = 1 au départ (a ≥ 1), soit p est un ancien q qui vérifiait q ≤ a. Donc 2<sup>i</sup> ≤ a < 2<sup>i+1</sup>.</li><li>Terminaison : q double à chaque tour, il finit par dépasser a.</li></ul>`}),
- P2({id:"28",s:1,note:"preuves",t:"La procédure h (n vers 7)",en:"n ← N ; f ← 7! ; Tant que n ≠ 7 : si n > 7 alors (f ← f × n ; n ← n − 1) sinon (n ← n + 1 ; f ← f / n). Que vaut f à la fin ? Le prouver avec un invariant.",link:"a-preuve",sol:`<p>Invariant : f = N! × 7! / n!. Au départ n = N et f = 7! : vrai. Si n > 7 : f × n = N!·7!/(n − 1)!, et n devient n − 1. Si n < 7 : n devient n + 1 et f / (n + 1) = N!·7!/(n + 1)!. À la sortie n = 7, donc <b>f = N!</b>. Terminaison : |n − 7| diminue de 1 à chaque tour.</p>`}),
- P2({id:"29",s:3,note:"complexité",t:"Ranger des suites par domination",en:"aₙ = 0,001n² − 100000n ; bₙ = 2^(n/2) ; cₙ = log(n² + 1) ; dₙ = n² ; eₙ = n²(log(3n) + 5) ; fₙ = 3000n + 28 ; gₙ = 2ⁿ + 1 ; hₙ = 3ⁿ − 2ⁿ.",link:"a-complexite",sol:`<p>cₙ = Θ(log n) ≺ fₙ = Θ(n) ≺ aₙ = Θ(n²) et dₙ = Θ(n²) (même ordre) ≺ eₙ = Θ(n² log n) ≺ bₙ = Θ((√2)ⁿ) ≺ gₙ = Θ(2ⁿ) ≺ hₙ = Θ(3ⁿ).</p><p>On garde le terme qui grandit le plus vite et on oublie les constantes : 0,001n² finit par dépasser 100000n ; log(n² + 1) ≈ 2 log n.</p>`}),
- P2({id:"30",s:3,note:"complexité",t:"A en Θ(n²), B en Θ(n log n)",en:"A met 1 s pour n = 100, B met 10 s pour n = 100. (1) Pourquoi faut-il plus d'informations ? (2) Avec des temps proportionnels à n² et n log n, les coefficients ? (3) Lequel pour n = 1000 ? (4) Pour n = 10000 ?",link:"a-complexite",sol:`<ol><li>Θ cache les constantes et les termes plus petits : il faut savoir comment le temps varie réellement.</li><li>T<sub>A</sub>(n) = 10⁻⁴ n² (car 1 = c × 100²) ; T<sub>B</sub>(n) = 10 × n log n / (100 log 100).</li><li>n = 1000 : T<sub>A</sub> = 100 s ; T<sub>B</sub> = 10 × 10 × log 1000 / log 100 = 150 s : on choisit A.</li><li>n = 10000 : T<sub>A</sub> = 10⁴ s ; T<sub>B</sub> = 10 × 100 × 2 = 2000 s : on choisit B.</li></ol><p>Le rapport log 1000 / log 100 = 3/2 ne dépend pas de la base du logarithme.</p>`}),
- P2({id:"31",s:2,note:"complexité",t:"Un ordinateur 100 fois plus rapide",en:"X traite une taille n₀ en 1 minute ; Y est 100 fois plus rapide. Quelle taille Y traite-t-il en 1 minute si le temps est proportionnel à n² ? À 2ⁿ ?",link:"a-complexite",sol:`<ul><li>n² : Y fait 100 fois plus d'opérations, n² = 100 n₀², donc n = 10 n₀.</li><li>2ⁿ : 2ⁿ = 100 × 2<sup>n₀</sup>, donc n = n₀ + log₂(100) ≈ n₀ + 6,6 : à peine 6 de plus.</li></ul>`}),
- P2({id:"32",s:1,note:"complexité",t:"Tri à bulles ou tri fusion, avec 1 Go",en:"Bulles : environ n²/2 opérations, pas de mémoire en plus. Fusion : environ n log₂ n, mais un tableau auxiliaire de n valeurs. Une valeur = 2 octets ; au plus 1 Go de mémoire. Quel tri selon n ?",link:"a-complexite",sol:`<p>Avec le tableau lui-même (2n octets) : la fusion demande 4n octets, donc n ≤ 2,5 × 10⁸ ; les bulles 2n octets, donc n ≤ 5 × 10⁸. Conclusion : jusqu'à 2,5 × 10⁸ valeurs, le tri fusion (bien plus rapide) ; entre 2,5 × 10⁸ et 5 × 10⁸, seul le tri à bulles tient en mémoire ; au-delà, aucun des deux.</p>`}),
- P2({id:"35",s:2,note:"complexité",t:"Équations de récurrence",en:"Algorithme 1 : F(n) = 1 si n = 0, sinon F(n−1) + F(n−1). Algorithme 2 : G fait une boucle de n tours puis un appel sur n div 2. Algorithme 3 : H fait la somme des appels sur 0, 1, …, n − 1. Trouver les équations sur Tₙ et les résoudre.",link:"a-calcul-complexite",sol:`<ul><li>Algorithme 1 : Tₙ = 2Tₙ₋₁ + c (deux appels). Avec l'indication (c = 6), Uₙ = Tₙ + 6 vérifie Uₙ = 2Uₙ₋₁ : Tₙ = (T₀ + 6)2ⁿ − 6, donc Θ(2ⁿ). Garder F(n−1) dans une variable donne Θ(n).</li><li>Algorithme 2 (l'appel est sur n div 2) : Tₙ = T<sub>n/2</sub> + Θ(n). Master theorem (a = 1, b = 2, d = 1, a &lt; b<sup>d</sup>) : Θ(n).</li><li>Algorithme 3 : Tₙ₊₁ − Tₙ = Tₙ + c, donc Tₙ₊₁ = 2Tₙ + c : Θ(2ⁿ) (avec l'indication, Uₙ = Tₙ + 4 est géométrique de raison 2).</li></ul><p>Dans l'énoncé, les appels « F(n div 2) » et « F(i−1) » des algorithmes 2 et 3 sont sans doute des appels à G et H eux-mêmes : c'est ce que demandent les indications.</p>`}),
+     i, r1, r2 ← 0, 0, 1
+     Tant Que i < n faire
+         r3 ← r1
+         r1 ← r2
+         r2 ← r3 + r2
+         i ← i + 1
+     Fin Tant Que
+     Renvoyer ????
+Fin`)}`,link:"a-preuve",sol:`<p><b>La trace</b> donne tout de suite la réponse (fib vaut 0, 1, 1, 2, 3, 5, 8…) :</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>itération</th><th class="var">i</th><th class="var">r1</th><th class="var">r2</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><td>2</td><td>2</td><td>1</td><td>2</td></tr><tr><td>3</td><td>3</td><td>2</td><td>3</td></tr><tr><td>4</td><td>4</td><td>3</td><td>5</td></tr><tr><td>5</td><td>5</td><td>5</td><td>8</td></tr></tbody></table></div><ul><li>r1 = i : faux dès i = 2 (r1 = 1).</li><li>r1 = i − 1 : faux dès i = 0 (r1 = 0, pas −1).</li><li>r2 = r1 + 1 si i ≠ 1 : vrai pour i = 0, 2, 3, mais faux pour i = 4 (r2 = 5 et r1 + 1 = 4).</li><li><b>r1 = fib(i)</b> et <b>r2 = fib(i + 1)</b> : vrais sur toute la trace. Ce sont les deux invariants.</li></ul><p><b>Preuve</b> (méthode du cours). Équations d'itération : i<sub>0</sub> = 0, r1<sub>0</sub> = 0, r2<sub>0</sub> = 1 ; puis r1<sub>k+1</sub> = r2<sub>k</sub>, r2<sub>k+1</sub> = r1<sub>k</sub> + r2<sub>k</sub> (r3 garde l'ancien r1), i<sub>k+1</sub> = i<sub>k</sub> + 1.</p><ul><li>Initialisation : r1<sub>0</sub> = 0 = fib(0) et r2<sub>0</sub> = 1 = fib(1).</li><li>Récurrence : si r1<sub>k</sub> = fib(k) et r2<sub>k</sub> = fib(k + 1), alors r1<sub>k+1</sub> = r2<sub>k</sub> = fib(k + 1), et r2<sub>k+1</sub> = fib(k) + fib(k + 1) = fib(k + 2).</li><li>Conclusion : l'invariant est vrai pour toutes les itérations.</li></ul><p>À la fin du tant que, i = n, donc r1 = fib(n). Il faut écrire <b>Renvoyer r1</b>.</p>`}),
+ P2({id:"27",s:2,note:"TD 6, preuves (supplémentaire)",t:"logEntier",en:`<p>Exercice supplémentaire :</p><ol><li>Faites une trace de l'algorithme logEntier ci-dessous pour a = 18.</li><li>Donnez un invariant liant les valeurs de p et de i, un autre liant q et i.</li><li>Montrez ces invariants.</li><li>Montrez que l'algorithme est correct.</li></ol>${C(`Fonction : logEntier (E a : entier) : entier
+Spécifications : a un entier strictement positif.
+     En fin d'exécution, i = partie entière de log2(a),
+     i.e. i vérifie que 2^i <= a < 2^(i+1)
+Variables : p, q, i : Entier
+Début
+     i, p, q ← 0, 1, 2
+     Tant que q <= a faire
+         p ← q
+         q ← p + p
+         i ← i + 1
+     finTant que
+     Renvoyer i
+Fin`)}`,link:"a-preuve",sol:`<p><b>1.</b></p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>itération</th><th class="var">i</th><th class="var">p</th><th class="var">q</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>1</td><td>2</td></tr><tr><td>1</td><td>1</td><td>2</td><td>4</td></tr><tr><td>2</td><td>2</td><td>4</td><td>8</td></tr><tr><td>3</td><td>3</td><td>8</td><td>16</td></tr><tr><td>4</td><td>4</td><td>16</td><td>32</td></tr></tbody></table></div><p>32 > 18 : la boucle s'arrête, l'algorithme renvoie 4. Et en effet 2⁴ = 16 ≤ 18 &lt; 32 = 2⁵.</p><p><b>2.</b> Invariants : <b>p = 2<sup>i</sup></b> et <b>q = 2<sup>i+1</sup></b>.</p><p><b>3.</b> Équations d'itération : i<sub>0</sub> = 0, p<sub>0</sub> = 1, q<sub>0</sub> = 2 ; puis p<sub>k+1</sub> = q<sub>k</sub>, q<sub>k+1</sub> = p<sub>k+1</sub> + p<sub>k+1</sub> = 2q<sub>k</sub>, i<sub>k+1</sub> = i<sub>k</sub> + 1.</p><ul><li>Initialisation : p<sub>0</sub> = 1 = 2⁰ et q<sub>0</sub> = 2 = 2¹.</li><li>Récurrence : si p<sub>k</sub> = 2<sup>k</sup> et q<sub>k</sub> = 2<sup>k+1</sup>, alors p<sub>k+1</sub> = q<sub>k</sub> = 2<sup>k+1</sup> et q<sub>k+1</sub> = 2 × 2<sup>k+1</sup> = 2<sup>k+2</sup>.</li><li>Conclusion : l'invariant est vrai pour toutes les itérations.</li></ul><p><b>4.</b> À la fin du tant que, la condition q ≤ a est fausse : a &lt; q = 2<sup>i+1</sup>. Il reste à voir que p ≤ a. S'il n'y a eu aucune itération, p = 1 ≤ a car a est strictement positif. Sinon, p est la valeur de q au tour d'avant, et ce tour n'a eu lieu que parce que q ≤ a. Dans les deux cas 2<sup>i</sup> = p ≤ a &lt; 2<sup>i+1</sup> : c'est la spécification. La boucle s'arrête bien, car q double à chaque tour et finit par dépasser a. (Vérifié par programme pour a de 1 à 2999.)</p>`}),
+ P2({id:"28",s:1,note:"TD 6, preuves (supplémentaire)",t:"La procédure h",en:`<p>Exercice supplémentaire : montrez en donnant un invariant que la procédure h ci-dessous est correcte.</p>${C(`Procédure : h (E N : entier, S f : entier)
+Spécifications : N positif. En fin d'exécution, f =?
+Variable : n : entier
+Début
+     n ← N ; f ← 7!
+     tant que n!=7 faire
+         si n > 7 alors
+             f ← f × n ; n ← n - 1
+         sinon
+             n ← n + 1 ; f ← f/n
+         fin si
+     fin Tant Que
+Fin`)}<p>(7! est la factorielle de 7. Dans « n!=7 », le signe != veut dire ≠.)</p>`,link:"a-preuve",sol:`<p><b>Ce que fait h.</b> Si N > 7, on multiplie 7! par N, N − 1, …, 8 : on obtient N!. Si N &lt; 7, on divise 7! par N + 1, …, 7 : on obtient encore N!. On va donc montrer qu'en fin d'exécution <b>f = N!</b>.</p><p><b>Invariant</b> : Inv : « f × n! = 7! × N! ».</p><ul><li><b>Initialisation</b> : n = N et f = 7!, donc f × n! = 7! × N!.</li><li><b>Récurrence</b>, cas n > 7 : le nouveau f vaut f × n et le nouveau n vaut n − 1. Alors (f × n) × (n − 1)! = f × n! : le produit ne change pas.</li><li><b>Récurrence</b>, cas n &lt; 7 : le nouveau n vaut n + 1 et le nouveau f vaut f/(n + 1). Alors (f/(n + 1)) × (n + 1)! = f × n! : le produit ne change pas.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul><p>À la fin du tant que, n = 7 : f × 7! = 7! × N!, donc <b>f = N!</b>. La boucle s'arrête, car n se rapproche de 7 d'un cran à chaque tour. (Vérifié par programme pour N de 0 à 24 ; les divisions tombent toujours juste.)</p>`}),
+ P2({id:"29",s:3,note:"TD 7, complexité",t:"Trier des suites par ordre de domination",en:`<p>Trier les suites ci-dessous par ordre de domination au voisinage de +∞.</p><ul><li>a<sub>n</sub> = 0.001n² − 100000n</li><li>b<sub>n</sub> = 2<sup>n/2</sup></li><li>c<sub>n</sub> = log(n² + 1)</li><li>d<sub>n</sub> = n²</li><li>e<sub>n</sub> = n²(log(3n) + 5)</li><li>f<sub>n</sub> = 3000n + 28</li><li>g<sub>n</sub> = 2<sup>n</sup> + 1</li><li>h<sub>n</sub> = 3<sup>n</sup> − 2<sup>n</sup></li></ul>`,link:"a-complexite",sol:`<p>On rattache chaque suite à une suite de référence du cours (diapo 76), en gardant le terme qui grandit le plus vite et en oubliant les constantes.</p><ul><li>c<sub>n</sub> = log(n² + 1) : comme log(n²) = 2 log(n), c'est Θ(log n).</li><li>f<sub>n</sub> = 3000n + 28 = Θ(n).</li><li>a<sub>n</sub> = 0.001n² − 100000n = Θ(n²) : a<sub>n</sub>/n² tend vers 0.001, qui est strictement positif.</li><li>d<sub>n</sub> = n² = Θ(n²) : le même ordre que a<sub>n</sub>.</li><li>e<sub>n</sub> = n²(log(3n) + 5) = Θ(n² log n), car log(3n) = log 3 + log n.</li><li>b<sub>n</sub> = 2<sup>n/2</sup> = (√2)<sup>n</sup> : exponentielle de base √2 ≈ 1,41.</li><li>g<sub>n</sub> = 2<sup>n</sup> + 1 = Θ(2<sup>n</sup>).</li><li>h<sub>n</sub> = 3<sup>n</sup> − 2<sup>n</sup> = Θ(3<sup>n</sup>), car 2<sup>n</sup>/3<sup>n</sup> tend vers 0.</li></ul><p>Du plus petit au plus grand :</p><div class="formula">c<sub>n</sub> ≺ f<sub>n</sub> ≺ a<sub>n</sub> et d<sub>n</sub> (même ordre) ≺ e<sub>n</sub> ≺ b<sub>n</sub> ≺ g<sub>n</sub> ≺ h<sub>n</sub></div><p>(« ≺ » : est strictement dominée par, ce que le cours note o.) Piège : a<sub>n</sub> est négative tant que n &lt; 100 000 000, mais c'est le comportement quand n tend vers +∞ qui compte.</p>`}),
+ P2({id:"30",s:3,note:"TD 7, complexité",t:"A en θ(n²), B en θ(n log n) : lequel choisir ?",en:`<p>A et B sont deux algorithmes qui répondent au même problème. La complexité de A est θ(n²) et celle de B est θ(n log n). On implémente A et B sur un même ordinateur. L'exécution du programme correspondant à A dure 1 seconde avec n = 100, celle du programme correspondant à B dure 10s avec n = 100.</p><ol><li>Expliquer pourquoi on a besoin d'informations supplémentaires pour calculer le temps d'exécution de A et B pour différentes valeurs de n.</li><li>On fait l'approximation (raisonnable) que les temps d'exécution sont respectivement proportionnels à n² et n log(n). Calculer les coefficients de proportionnalité.</li><li>L'application prévoit n = 1000. Quel algorithme faut-il choisir ?</li><li>Même question si n = 10000.</li></ol>`,link:"a-complexite",sol:`<ol><li>θ ne donne que l'ordre de grandeur : « équivalentes » ne veut pas dire « identiques » (cours, diapo 77). Un temps en θ(n²) peut être n², 1 000 000 n² ou n² + 1 000 000. Une seule mesure ne suffit pas pour connaître la formule.</li><li>Pour A : 1 = k<sub>A</sub> × 100², donc <b>k<sub>A</sub> = 0,0001</b>. Pour B : 10 = k<sub>B</sub> × 100 × log(100). Avec le logarithme en base 10, log(100) = 2, donc <b>k<sub>B</sub> = 0,05</b>. (Avec le logarithme en base 2, k<sub>B</sub> ≈ 0,015 ; la suite ne change pas.)</li><li>n = 1000 : A met 0,0001 × 1000² = 100 s. B met 0,05 × 1000 × log(1000) = 0,05 × 1000 × 3 = 150 s. <b>Il faut choisir A.</b></li><li>n = 10000 : A met 0,0001 × 10000² = 10 000 s. B met 0,05 × 10000 × 4 = 2000 s. <b>Il faut choisir B.</b></li></ol><p>Pour n assez grand, l'algorithme d'ordre le plus petit finit toujours par gagner, même s'il part avec un mauvais coefficient.</p>`}),
+ P2({id:"31",s:3,note:"TD 7, complexité",t:"Un ordinateur 100 fois plus rapide",en:`<p>On implémente un algorithme sur un ordinateur X et sur un ordinateur Y 100 fois plus rapide. On suppose que le temps d'exécution est proportionnel à n².</p><ol><li>L'ordinateur X peut traiter une taille d'entrée n<sub>0</sub> en 1 minute. Quelle taille d'entrée l'ordinateur Y peut-il traiter dans la même durée ?</li><li>Même question si le temps d'exécution est proportionnel à 2<sup>n</sup>.</li></ol>`,link:"a-complexite",sol:`<p>En 1 minute, Y fait 100 fois plus d'opérations que X.</p><ol><li>Le nombre d'opérations est proportionnel à n². On cherche n tel que n² = 100 × n<sub>0</sub>², donc <b>n = 10 n<sub>0</sub></b> : une entrée 10 fois plus grande.</li><li>On cherche n tel que 2<sup>n</sup> = 100 × 2<sup>n<sub>0</sub></sup>, donc n = n<sub>0</sub> + log<sub>2</sub>(100) ≈ n<sub>0</sub> + 6,6. Y traite seulement une taille <b>n<sub>0</sub> + 6</b> : avec un algorithme exponentiel, une machine 100 fois plus rapide ne change presque rien.</li></ol>`}),
+ P2({id:"32",s:2,note:"TD 7, complexité",t:"Tri à bulles ou tri fusion, avec 1 Go de mémoire",en:`<p>On souhaite choisir un algorithme pour trier un tableau de n valeurs.</p><p>L'algorithme du tri à bulles a une complexité en temps d'environ n²/2 dans le pire des cas et n'utilise pas d'espace de stockage (à part quelques variables isolées).</p><p>L'algorithme du tri fusion a une complexité en temps d'environ n log<sub>2</sub>(n) et a besoin d'un tableau auxiliaire de n valeurs pour ses calculs. Chaque valeur du tableau occupe 2 octets.</p><p>On peut se permettre d'utiliser au plus 1Go de mémoire vive. Selon les valeurs de n, quel algorithme de tri vaut-il mieux utiliser ?</p>`,link:"a-complexite",sol:`<p><b>La mémoire.</b> 1 Go = 1 000 000 000 octets (un milliard). Le tableau à trier occupe 2n octets.</p><ul><li>Tri à bulles : seulement le tableau, 2n octets. Il faut 2n ≤ 10⁹, donc n ≤ 500 millions.</li><li>Tri fusion : le tableau et le tableau auxiliaire, 4n octets. Il faut 4n ≤ 10⁹, donc n ≤ 250 millions.</li></ul><p><b>Le temps.</b> n log<sub>2</sub>(n) est plus petit que n²/2 dès que n dépasse 4 : le tri fusion est plus rapide, et de très loin pour n grand (pour n = 1 000 000 : environ 20 millions d'opérations contre 500 milliards).</p><p><b>Conclusion.</b></p><ul><li>n ≤ 250 millions : le <b>tri fusion</b>.</li><li>Entre 250 et 500 millions : seul le <b>tri à bulles</b> tient en mémoire (il sera très lent).</li><li>Au-delà de 500 millions : le tableau lui-même ne tient pas dans 1 Go.</li></ul><p>(Avec 1 Go = 2³⁰ octets, les deux seuils deviennent environ 268 et 537 millions.)</p>`}),
+ P2({id:"33",s:1,note:"TD 7, complexité (supplémentaire, plus théorique)",t:"Trois questions sur θ et O",en:`<p>Exercice supplémentaire (un peu plus théorique) :</p><ol><li>Réciproque fausse : donner deux suites strictement positives (T<sub>n</sub>) et (U<sub>n</sub>) telles que T<sub>n</sub> = θ(U<sub>n</sub>) mais T<sub>n</sub>/U<sub>n</sub> n'a pas une limite finie.</li><li>Trouver deux suites strictement positives (T<sub>n</sub>) et (U<sub>n</sub>) non comparables, c'est à dire telles que T<sub>n</sub> ≠ O(U<sub>n</sub>) et U<sub>n</sub> ≠ O(T<sub>n</sub>).</li><li>Soient T<sub>n</sub>, U<sub>n</sub> et V<sub>n</sub> trois suites > 0 telles que T<sub>n</sub> = θ(U<sub>n</sub>), V<sub>n</sub> = θ(U<sub>n</sub>) et T<sub>n</sub> > V<sub>n</sub>. A-t-on nécessairement T<sub>n</sub> − V<sub>n</sub> = θ(U<sub>n</sub>) ?</li></ol>`,link:"a-complexite",sol:`<p>Rappel du cours (diapo 77) : T<sub>n</sub> = θ(U<sub>n</sub>) quand T<sub>n</sub>/U<sub>n</sub> reste entre deux nombres strictement positifs.</p><ol><li>U<sub>n</sub> = 1, et T<sub>n</sub> = 1 si n est pair, 3 si n est impair. Le quotient T<sub>n</sub>/U<sub>n</sub> reste entre 1 et 3, donc T<sub>n</sub> = θ(U<sub>n</sub>) ; mais il saute sans cesse de 1 à 3 : il n'a pas de limite. (C'est le cas de la dernière ligne de la diapo 79 : 3n + 1 pour n pair, 2n pour n impair.)</li><li>T<sub>n</sub> = n si n est pair, 1 si n est impair ; U<sub>n</sub> = 1 si n est pair, n si n est impair. Pour n pair, T<sub>n</sub>/U<sub>n</sub> = n, qui n'est pas borné : T<sub>n</sub> ≠ O(U<sub>n</sub>). Pour n impair, U<sub>n</sub>/T<sub>n</sub> = n : U<sub>n</sub> ≠ O(T<sub>n</sub>).</li><li>Non. Contre-exemple : T<sub>n</sub> = n + 1, V<sub>n</sub> = n, U<sub>n</sub> = n. Les deux premières sont en θ(n) et T<sub>n</sub> > V<sub>n</sub>, mais T<sub>n</sub> − V<sub>n</sub> = 1, qui n'est pas en θ(n).</li></ol>`}),
+ P2({id:"35",s:3,note:"TD 8, complexité",t:"Équations de récurrence de trois algorithmes récursifs",en:`<p>Pour chacun des algorithmes suivants, on appelle T<sub>n</sub> le nombre d'opérations élémentaires que fait l'algorithme pour la taille d'entrée n. Déterminer la ou les équations de récurrence régissant T<sub>n</sub> puis les résoudre de manière exacte ou, si c'est impossible, en appliquant le master theorem :</p><p><b>Algorithme 1</b></p>${C(`Fonction : F (E n : entier) : entier
+Spécifications : n est un entier naturel
+Début
+    Si n=0 alors
+        Renvoyer 1
+    Sinon
+        Renvoyer F(n-1)+F(n-1)
+    FinSi
+Fin`)}<p><b>Indication :</b> montrer que la suite (U<sub>n</sub>) définie par U<sub>n</sub> = T<sub>n</sub> + 6 est géométrique.</p><p><b>Algorithme 2</b></p>${C(`Fonction : G (E n : entier) : entier
+Spécifications : n est un entier naturel
+Variables : som : nombre
+Début
+    Si n=0 alors
+        Renvoyer 1
+    Sinon
+        som ← 0
+        Pour i de 1 à n faire
+            som ← som + i*i
+        finPour
+        Renvoyer F(n div 2)+som
+    FinSi
+Fin`)}<p><b>Algorithme 3</b></p>${C(`Fonction : H (E n : entier) : entier
+Spécifications : n est un entier naturel
+Variables : som : nombre
+Début
+    Si n=0 alors
+        Renvoyer 1
+    Sinon
+        som ← 0
+        Pour i de 1 à n faire
+            som ← som + F(i-1)
+        finPour
+        Renvoyer som
+    FinSi
+Fin`)}<p><b>Indication :</b> calculer T<sub>n+1</sub> − T<sub>n</sub> à partir de n = 1 puis montrer que la suite (U<sub>n</sub>) définie par U<sub>n</sub> = T<sub>n</sub> + 4 est géométrique.</p>`,link:"a-calcul-complexite",sol:`<p><b>Une remarque d'abord.</b> Dans la feuille, G et H appellent « F ». Les deux indications ne marchent que si chaque algorithme s'appelle lui-même : G(n div 2) dans G, H(i−1) dans H. C'est ce que je suppose ici. On compte comme dans le cours (diapo 72) : une comparaison, une opération de calcul, une affectation ou un appel comptent chacun pour 1.</p><p><b>Algorithme 1.</b> Cas de base : si n = 0, 1 comparaison : T<sub>0</sub> = 1. Si n > 0 : 1 comparaison, 2 soustractions (n−1 deux fois), 2 appels, 1 addition, plus les opérations des deux appels :</p><div class="formula">T<sub>n</sub> = 6 + 2T<sub>n−1</sub></div><p>Avec U<sub>n</sub> = T<sub>n</sub> + 6 : U<sub>n</sub> = 2T<sub>n−1</sub> + 12 = 2(T<sub>n−1</sub> + 6) = 2U<sub>n−1</sub>. La suite (U<sub>n</sub>) est géométrique de raison 2, et U<sub>0</sub> = 7. Donc U<sub>n</sub> = 7 × 2<sup>n</sup> et <b>T<sub>n</sub> = 7 × 2<sup>n</sup> − 6</b> : complexité θ(2<sup>n</sup>).</p><p><b>Algorithme 2.</b> T<sub>0</sub> = 1. Si n > 0 : 1 comparaison, 1 affectation, n tours de boucle à 3 opérations (une multiplication, une addition, une affectation), puis 1 division entière, 1 appel, 1 addition, plus les opérations de l'appel :</p><div class="formula">T<sub>n</sub> = T<sub>n div 2</sub> + 3n + 5</div><p>On ne sait pas résoudre exactement : master theorem. Il y a 1 appel récursif (a = 1), la taille est divisée par 2 (b = 2), et en dehors de l'appel on fait O(n) opérations (d = 1). Comme b<sup>d</sup> = 2 > a = 1 : <b>T<sub>n</sub> = O(n)</b>.</p><p><b>Algorithme 3.</b> T<sub>0</sub> = 1. Si n > 0 : 1 comparaison, 1 affectation, puis pour chaque i de 1 à n : 1 soustraction, 1 appel, 1 addition, 1 affectation, plus les opérations de H(i−1) :</p><div class="formula">T<sub>n</sub> = 2 + 4n + T<sub>0</sub> + T<sub>1</sub> + … + T<sub>n−1</sub></div><p>Suivons l'indication. Pour n ≥ 1 : T<sub>n+1</sub> − T<sub>n</sub> = 4 + T<sub>n</sub> (il y a un tour de boucle de plus, celui de i = n + 1). Donc T<sub>n+1</sub> = 2T<sub>n</sub> + 4, et U<sub>n+1</sub> = T<sub>n+1</sub> + 4 = 2T<sub>n</sub> + 8 = 2U<sub>n</sub> : la suite (U<sub>n</sub>) est géométrique de raison 2 à partir de n = 1. Comme T<sub>1</sub> = 2 + 4 + T<sub>0</sub> = 7, U<sub>1</sub> = 11, donc U<sub>n</sub> = 11 × 2<sup>n−1</sup> et <b>T<sub>n</sub> = 11 × 2<sup>n−1</sup> − 4</b> pour n ≥ 1 : complexité θ(2<sup>n</sup>).</p><p>(Les valeurs T = 1, 8, 22, 50… pour l'algorithme 1 et T = 1, 7, 18, 40… pour l'algorithme 3 ont été recalculées par programme ; pour l'algorithme 2, T<sub>n</sub>/n tend vers 6. Si tu comptes les opérations un peu autrement, les constantes changent, pas les ordres.)</p>`}),
+ P2({id:"36",s:1,note:"TD 8, complexité (supplémentaire)",t:"Le sous-tableau de somme maximale",en:`<p>Exercice supplémentaire : recherche du sous-tableau de somme maximale</p><p>On considère un tableau T de n entiers qui peuvent être négatifs. Un sous-tableau de T est formé de valeurs consécutives de T. Par exemple, [2], [2,3,-10] et [1,2,3,-10,6] sont trois sous-tableaux de [1,2,3,-10,6]. En revanche, [1,3,6] n'en est pas un.</p><p>On cherche un sous-tableau de T qui contient la plus grande somme de T. Dans l'exemple précédent, deux sous-tableaux conviennent : [1,2,3] et [6].</p><ol><li>Une première méthode est la suivante : "pour chaque sous-tableau possible de T (repéré par un indice de début et un indice de fin), ajouter les valeurs qu'il contient, puis renvoyer la plus grande des sommes calculées". Écrire un algorithme <b>cubique</b> SomMaxCube qui suit cette méthode et vérifier son ordre de complexité.</li><li>On peut améliorer l'algorithme précédent en mémorisant les sommes intermédiaires. Écrire un algorithme <b>quadratique</b> SomMaxQuad qui utilise cette amélioration et vérifier son ordre de complexité.</li><li>Plus malin : "le sous-tableau cherché est soit inclus dans la première moitié de T, soit inclus dans la deuxième moitié, soit à cheval entre les deux moitiés." Autrement dit, on lance l'algorithme sur la première et sur la deuxième moitié, on cherche la plus grande sous-somme à cheval entre les deux moitiés et on renvoie le plus grand des trois résultats. Écrire un algorithme <b>quasi-linéaire</b> (en O(n log n)) SomMaxQL qui suit cette méthode et vérifier son ordre de complexité. En plus du tableau, cet algorithme prendra en paramètres les indices de début et de fin de la partie du tableau étudiée.</li><li>Encore plus malin : "parcourir le tableau case par case en mettant à jour une variable S telle qu'à la fin de l'itération i, S contient la plus grande somme de tous les sous-tableaux se terminant à l'indice i. A la fin des itérations, renvoyer la plus grande valeur prise par S". Écrire un algorithme <b>linéaire</b> SomMaxLin qui suit cette méthode (algorithme de Kadame) et vérifier son ordre de complexité.</li></ol>`,link:"a-calcul-complexite",sol:`<p>Les quatre fonctions renvoient la plus grande somme (6 pour l'exemple). On suppose T non vide.</p><p><b>1.</b></p>${C(`FONCTION : SomMaxCube (E T : tableau d'entiers) : entier
+Variable : best, s : entier
+DÉBUT
+    best ← T[0]
+    pour d de 0 à taille(T)-1 faire
+        pour f de d à taille(T)-1 faire
+            s ← 0
+            pour k de d à f faire
+                s ← s + T[k]
+            fin pour;
+            si s > best alors
+                best ← s
+            fin si;
+        fin pour;
+    fin pour;
+    Renvoyer best
+FIN`)}<p>Trois boucles imbriquées, chacune fait au plus n tours : O(n) × O(n) × O(n) = O(n³) (raccourci du cours, diapo 82).</p><p><b>2.</b> Quand on allonge le sous-tableau d'une case, on ajoute seulement cette case à la somme déjà calculée :</p>${C(`FONCTION : SomMaxQuad (E T : tableau d'entiers) : entier
+Variable : best, s : entier
+DÉBUT
+    best ← T[0]
+    pour d de 0 à taille(T)-1 faire
+        s ← 0
+        pour f de d à taille(T)-1 faire
+            s ← s + T[f]
+            si s > best alors
+                best ← s
+            fin si;
+        fin pour;
+    fin pour;
+    Renvoyer best
+FIN`)}<p>Deux boucles imbriquées d'au plus n tours : O(n²).</p><p><b>3.</b></p>${C(`FONCTION : SomMaxQL (E T : tableau d'entiers, E deb, fin : entier) : entier
+SPÉCIFICATIONS : 0 ≤ deb ≤ fin ≤ taille(T)-1. Renvoie la plus grande somme
+                 d'un sous-tableau de T situé entre les indices deb et fin.
+Variable : mil, g, dr, s, mg, md : entier
+DÉBUT
+    si deb = fin alors
+        Renvoyer T[deb]
+    fin si;
+    mil ← (deb + fin) div 2
+    g ← SomMaxQL(T, deb, mil)
+    dr ← SomMaxQL(T, mil+1, fin)
+    s ← 0 ; mg ← T[mil]
+    pour k de mil à deb par pas de -1 faire
+        s ← s + T[k]
+        si s > mg alors
+            mg ← s
+        fin si;
+    fin pour;
+    s ← 0 ; md ← T[mil+1]
+    pour k de mil+1 à fin faire
+        s ← s + T[k]
+        si s > md alors
+            md ← s
+        fin si;
+    fin pour;
+    Renvoyer max(g, max(dr, mg + md))
+FIN`)}<p>mg est la plus grande somme d'un morceau qui finit à l'indice mil, md celle d'un morceau qui commence à mil+1 : mg + md est la meilleure somme « à cheval ». On appelle SomMaxQL(T, 0, taille(T)-1). Complexité : 2 appels récursifs (a = 2), sur une taille divisée par 2 (b = 2), plus O(n) opérations pour les deux boucles (d = 1). Master theorem, cas b<sup>d</sup> = a : <b>O(n log n)</b>.</p><p><b>4.</b> La meilleure somme qui finit à l'indice i est soit T[i] tout seul, soit la meilleure somme qui finit en i − 1 à laquelle on ajoute T[i] (ce qui ne vaut le coup que si elle est positive) :</p>${C(`FONCTION : SomMaxLin (E T : tableau d'entiers) : entier
+Variable : S, best : entier
+DÉBUT
+    S ← T[0]
+    best ← T[0]
+    pour i de 1 à taille(T)-1 faire
+        S ← cond(S < 0, T[i], S + T[i])
+        si S > best alors
+            best ← S
+        fin si;
+    fin pour;
+    Renvoyer best
+FIN`)}<p>Une seule boucle de n − 1 tours, un nombre constant d'opérations par tour : <b>θ(n)</b>.</p><p>(Corrigé écrit par moi. Les quatre algorithmes, traduits en Python, donnent le même résultat sur 3000 tableaux tirés au hasard. « max » et « par pas de -1 » ne sont pas dans le cours : écris deux « si » et une boucle tant que si tu préfères.)</p>`}),
  P3({id:"37",s:3,note:"recherche",t:"Dérouler la dichotomie",en:"RechDic(e, T) : deb, fin ← 0, len(T) − 1 ; tant que deb ≤ fin : mil ← (deb + fin) // 2 ; si T[mil] < e alors deb ← mil + 1 sinon fin ← mil − 1 ; à la fin, renvoyer deb si deb < len(T) et T[deb] = e, sinon −1. Valeurs de deb et fin pour e = 5 dans (a) [1, 3, 5] (b) [5, 5, 5, 9] (c) [1, 3, 7, 9] (d) [1, 2, 3, 4] (e) [6, 7, 8, 9]. (2) Une seule recherche : linéaire, ou trier puis dichotomie ?",link:"a-recherche",sol:`<ul><li>(a) (0, 2) → mil 1 : 3 &lt; 5, deb = 2 → mil 2 : 5 n'est pas &lt; 5, fin = 1. Renvoie 2.</li><li>(b) (0, 3) → mil 1 : fin = 0 → mil 0 : fin = −1. Renvoie 0 (la première occurrence).</li><li>(c) (0, 3) → mil 1 : deb = 2 → mil 2 : 7, fin = 1. T[2] = 7 ≠ 5 : renvoie −1.</li><li>(d) deb passe à 2, 3, puis 4 = len(T) : renvoie −1.</li><li>(e) fin passe à 0, puis −1 ; T[0] = 6 ≠ 5 : renvoie −1.</li></ul><p>(2) Pour une seule recherche, la linéaire (Θ(n)) bat « trier puis chercher » (Θ(n log n) + Θ(log n)).</p>`}),
  P3({id:"39",s:2,note:"tris",t:"La médiane",en:"(1) nbInf(tab, e) : nombre de valeurs strictement inférieures à e. (2) mediane1 avec nbInf ; complexité ? (3) mediane2 en triant d'abord ; complexité ? (4) Conclure.",link:"a-tri-selection",sol:`${C(`Fonction : nbInf (E tab : tableau d'entiers, E e : entier) : entier
 Variables : i, c : entier
@@ -4822,29 +5003,218 @@ Début
   finPour
 Fin`)}<ul><li>Complexité : pire cas (tableau à l'envers) 1 + 2 + … + (n − 1) décalages, Θ(n²) ; meilleur cas (déjà trié) Θ(n).</li><li>Invariant : avant le tour k, tab[0..k−1] contient les k premières valeurs de départ, triées. Le tour k insère tab[k] à sa place. À la fin, tout est trié.</li></ul>`}));
 
-/* ---------- annales des CC2 et CC3 ---------- */
+/* ---------- annales des CC2 et CC3 : énoncés recopiés des sujets, corrigés officiels quand ils existent ---------- */
+const OFF="Corrigé officiel",MOI="Corrigé écrit par moi (pas de corrigé officiel sur Moodle), vérifié par programme";
+const F23=`Fonction : F (E n : entier) : entier
+Spécifications : n∈ ℕ. Renvoie 1/(n+1).
+Début
+    Si n=0 alors
+      Renvoyer 1
+    Sinon
+      Renvoyer F(n-1) / (1+F(n-1))
+    FinSi
+Fin`;
+const QF23=`<p>(Dans le sujet, « 1/(n+1) » est écrit en fraction.)</p>`;
+const SOLF1=`<ul><li><b>Base</b> : pour n = 0, F renvoie 1 donc se termine. De plus, comme 1 = 1/(0 + 1), F renvoie le bon résultat.</li><li><b>Hérédité</b> : supposons que, pour n > 0, F(n − 1) se termine et renvoie le bon résultat, c'est à dire 1/n. Alors l'appel F(n) est constitué d'opérations élémentaires et de deux appels à F(n − 1) donc se termine. De plus, F(n) renvoie F(n−1)/(1 + F(n−1)) = (1/n)/(1 + 1/n) = 1/(n + 1) c'est à dire le bon résultat.</li><li><b>Conclusion</b> : pour tout n ∈ ℕ, l'appel F(n) se termine et renvoie le bon résultat.</li></ul>`;
+const SOLF2=`<p>On a T<sub>0</sub> = 0 et pour n > 0, T<sub>n</sub> = 2T<sub>n−1</sub> + 4 (2 appels au rang n − 1, une addition, une division, deux soustractions).</p><p>Par suite, U<sub>n</sub> = T<sub>n</sub> + 4 = 2T<sub>n−1</sub> + 8 = 2(T<sub>n−1</sub> + 4) = 2U<sub>n−1</sub> donc la suite U<sub>n</sub> est géométrique. Son premier terme est U<sub>0</sub> = T<sub>0</sub> + 4 = 4 et sa raison vaut 2. D'où U<sub>n</sub> = 4 × 2<sup>n</sup> et finalement <b>T<sub>n</sub> = 4 × 2<sup>n</sup> − 4</b>.</p><p>(Le corrigé officiel écrit « + 4 » dans la dernière formule : c'est une coquille, puisque T<sub>n</sub> = U<sub>n</sub> − 4. On le vérifie : T<sub>0</sub> = 0, T<sub>1</sub> = 4, T<sub>2</sub> = 12.)</p>`;
 ann.push(
- {src:"CC1 novembre 2024 · Cours, questions 2 à 5",t:"Tri par voisins, dichotomie, Θ, équations de récurrence",en:"(2) Luc ne peut que permuter deux vaisseaux voisins : peut-il les ranger avec un tri du cours ? (3) 128 chevaux rangés par taille : combien de mesures pour trouver Neptune ? (4) Un algorithme en Θ(n³) peut-il être un million de fois plus lent qu'un autre en Θ(n³) ? (5) Dans une preuve de validité, à quoi servent les équations de récurrence ?",go:"a-complexite",sol:`<ol start="2"><li>Oui : le tri à bulles ne fait que permuter des voisins.</li><li>Dichotomie : chaque mesure divise par 2 les candidats ; 128 = 2⁷, donc 7 mesures au pire.</li><li>Oui : 1 000 000 n³ et n³ sont tous les deux en Θ(n³).</li><li>Elles traduisent le fonctionnement de l'algorithme en relations entre les variables, et servent à montrer qu'un invariant est héréditaire.</li></ol>`},
- {src:"Examen janvier 2023 · Ex. 2 · 3 pts",t:"Un ordinateur 200 fois plus rapide (n log n)",en:"Temps proportionnel à n log₁₀(n). A traite n = 100 en 1 minute ; B est 200 fois plus rapide. Quelle taille B traite-t-il en 1 minute ? (n log₁₀ n vaut 200 pour n = 100, 3000 pour 1000, 40000 pour 10000.)",go:"a-complexite",sol:`<p>1 = k × 100 log₁₀ 100 = 200k, donc k = 1/200. Pour B : 1 = (k/200) × n log₁₀ n, donc n log₁₀ n = 200 × 200 = 40000, soit <b>n = 10000</b>.</p>`},
- {src:"Examen janvier 2023 · Ex. 3 · 8,5 pts",t:"F(n) = F(n−1) / (1 + F(n−1)) et le master theorem",en:"F(n) renvoie 1 si n = 0, sinon F(n−1) / (1 + F(n−1)). (1) Prouver par récurrence que F termine et renvoie 1/(n + 1). (2) Tₙ = nombre d'opérations arithmétiques : équation et formule (Uₙ = Tₙ + 4 est géométrique). (3) Ordre de complexité ; un algorithme radicalement plus efficace. (5) G(n, d) affiche n fois d, puis appelle G(n div 2, d) et G(n div 2, d + 1) : complexité par le master theorem.",go:"a-calcul-complexite",who:"Corrigé officiel, réécrit",sol:`<ol><li>Base : F(0) = 1 = 1/(0 + 1). Hérédité : si F(n − 1) = 1/n, alors F(n) = (1/n)/(1 + 1/n) = 1/(n + 1), et F(n) termine car F(n − 1) termine. Conclusion pour tout n.</li><li>T₀ = 0 et Tₙ = 2Tₙ₋₁ + 4 (deux appels, une addition, une division, et le calcul de n − 1 deux fois). Uₙ = Tₙ + 4 = 2Uₙ₋₁ et U₀ = 4 : Tₙ = 4 × 2ⁿ − 4.</li><li>Θ(2ⁿ). Bien mieux : « Renvoyer 1/(n + 1) », en Θ(1).</li><li value="5">Tₙ = Θ(n) + 2T<sub>n/2</sub> : master theorem avec a = 2, b = 2, d = 1, b<sup>d</sup> = a : Θ(n log n).</li></ol>`},
- {src:"Examen janvier 2023 · Ex. 4, question 1",t:"Trier un tableau de chiffres : quelles complexités sont possibles ?",en:"Trier un tableau de n chiffres (0 à 9). Anakin le fait en Θ(n²), Leia en Θ(n log n), Chewbacca en Θ(n), Luke en Θ(1). Lesquelles sont impossibles ? Quel tri du cours donne la meilleure ?",go:"a-tri-valeurs",who:"Corrigé officiel, réécrit",sol:`<p>Luke est impossible : il faut au moins lire tout le tableau, donc Ω(n). Chewbacca est possible : un chiffre ne prend que 10 valeurs, le <b>tri par valeurs</b> (on compte les 0, les 1…) est en Θ(n). Anakin et Leia sont possibles, mais moins bons.</p>`});
+ {src:"CC1 octobre 2022 · Cours, questions 4 et 5 · pour le CC2",t:"o, Ω, θ et le master theorem",go:"a-complexite",who:OFF+" ; les contre-exemples sont de moi",
+  en:`<p><b>4.</b> (a<sub>n</sub>) et (b<sub>n</sub>) sont deux suites strictement positives. Cocher la ou les affirmations vraies.</p><ul><li>☐ Si a<sub>n</sub> = o(b<sub>n</sub>) alors a<sub>n</sub> = Ω(b<sub>n</sub>) ;</li><li>☐ Si a<sub>n</sub> = Ω(b<sub>n</sub>) alors a<sub>n</sub> = θ(b<sub>n</sub>) ;</li><li>☐ Si a<sub>n</sub> = θ(b<sub>n</sub>) alors a<sub>n</sub> = O(b<sub>n</sub>) ;</li><li>☐ Si a<sub>n</sub> = O(b<sub>n</sub>) alors a<sub>n</sub> = Ω(b<sub>n</sub>) ;</li><li>☐ aucun des précédents.</li></ul><p><b>5.</b> A quoi sert le master theorem ?</p><p>(Les questions 1 à 3 de ce CC sont plus haut dans la liste. Les cinq questions valaient 5 points.)</p>`,
+  sol:`<p><b>4.</b> Une seule case à cocher : « Si a<sub>n</sub> = θ(b<sub>n</sub>) alors a<sub>n</sub> = O(b<sub>n</sub>) » (si a est du même ordre que b alors a est dominée par b).</p><p>Les autres sont fausses. Contre-exemples : n = o(n²) mais n n'est pas Ω(n²) ; n² = Ω(n) mais n² n'est pas θ(n) ; n = O(n²) mais n n'est pas Ω(n²).</p><p><b>5.</b> Il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.</p>`},
+ {src:"CC1 octobre 2022 · Ex. 3 · 5 pts · pour le CC2",t:"Trace, arrêt et invariant de G, qui calcule (N+1)²",go:"a-preuve",who:OFF+" ; la preuve de l'invariant, à la fin, est de moi",
+  en:`<p>On considère l'algorithme suivant :</p>${C(`Fonction : G (E N : entier) : entier
+Spécifications : N est un entier naturel. Calcule (N+1)².
+Variables : i, j, k : entier
+Début
+   i, j, k ← 0, 0, 1
+   Tant que i<N faire
+      i ← i+1
+      j ← i+i
+      k ← j+k+1
+   finTantQue
+   Renvoyer k
+Fin`)}<ol><li>On appelle j<sub>i</sub> et k<sub>i</sub> les valeurs de j et k à <b>la fin</b> de la i-ème itération. Compléter la trace de l'algorithme pour N=5 (un tableau à trois colonnes i, j<sub>i</sub>, k<sub>i</sub>, avec une ligne pour chaque i de 0 à 5).</li><li>Prouver que l'algorithme se termine.</li><li>Parmi les invariants suivants, cochez celui qui semble correct : ☐ k<sub>i</sub> = 2i + 1 ; ☐ k<sub>i</sub> = 2i − 1 ; ☐ k<sub>i</sub> = i² ; ☐ k<sub>i</sub> = (i + 1)².</li><li>En admettant que cet invariant soit correct, expliquez pourquoi l'algorithme renvoie le bon résultat.</li></ol>`,
+  sol:`<p><b>1.</b></p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th class="var">i</th><th class="var">j<sub>i</sub></th><th class="var">k<sub>i</sub></th></tr></thead><tbody><tr><td>0</td><td>0</td><td>1</td></tr><tr><td>1</td><td>2</td><td>4</td></tr><tr><td>2</td><td>4</td><td>9</td></tr><tr><td>3</td><td>6</td><td>16</td></tr><tr><td>4</td><td>8</td><td>25</td></tr><tr><td>5</td><td>10</td><td>36</td></tr></tbody></table></div><p><b>2.</b> i est initialisé à 0 et augmente de 1 à chaque itération. Après N itérations, i = N donc la boucle se termine et l'algorithme aussi.</p><p><b>3.</b> k<sub>i</sub> = (i + 1)² (lecture sur le tableau de valeurs).</p><p><b>4.</b> À la fin du TantQue, i = N donc l'algorithme renvoie k<sub>N</sub> = (N + 1)².</p><p><b>En plus, si on te demande de prouver l'invariant</b> (méthode du cours de cette année) :</p><ul><li>Équations d'itération : j<sub>0</sub> = 0, k<sub>0</sub> = 1 et, pour i > 0, j<sub>i</sub> = i + i = 2i, k<sub>i</sub> = j<sub>i</sub> + k<sub>i−1</sub> + 1 = k<sub>i−1</sub> + 2i + 1.</li><li>Invariant : Inv<sub>i</sub> : « k<sub>i</sub> = (i + 1)² ».</li><li>Initialisation : k<sub>0</sub> = 1 = (0 + 1)², donc Inv<sub>0</sub> est vrai.</li><li>Récurrence : si Inv<sub>i−1</sub> est vrai, c'est-à-dire si k<sub>i−1</sub> = i², comme k<sub>i</sub> = k<sub>i−1</sub> + 2i + 1, alors k<sub>i</sub> = i² + 2i + 1 = (i + 1)² : Inv<sub>i</sub> est vrai.</li><li>Conclusion : l'invariant est vrai pour toutes les itérations.</li></ul>`},
+ {src:"CC1 novembre 2024 · Cours, questions 4 et 5 (les 4 sujets) · pour le CC2",t:"Un million de fois plus lent ? À quoi servent les équations de récurrence ?",go:"a-complexite",who:OFF,
+  en:`<p><b>4.</b> Un algorithme de complexité Θ(n³) peut-il être un million de fois plus lent qu'un autre algorithme de complexité Θ(n³) ? Justifier.</p><p>Dans les trois autres sujets, la même question avec : Θ(n²) et « un million de fois » ; Θ(n.log(n)) et « mille fois » ; Θ(log(n)) et « mille fois ».</p><p><b>5.</b> Dans une preuve de validité d'un algorithme itératif, à quoi servent les équations de récurrence ?</p><p>(Les 5 questions de cours valaient 7,5 points. La question 1 est plus haut dans la liste, les questions 2 et 3 plus bas. Cette année, le cours appelle « équations d'itération » les équations de la question 5.)</p>`,
+  sol:`<p><b>4.</b> Oui, si par exemple le premier fait 1000000n³ opérations et le deuxième n³ opérations.</p><p>Autres sujets : « Oui, si par exemple le premier fait 1000000n² opérations et le deuxième n² opérations. » ; « Oui, si par exemple le premier fait 1000 log n opérations et le deuxième log n opérations. » Pour Θ(n.log(n)), le corrigé écrit 1000000n log n alors que la question dit « mille fois » : 1000 n log n suffit.</p><p><b>5.</b> Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables. Elles permettent de montrer qu'un invariant est héréditaire, c'est à dire que s'il est vrai à l'itération n, alors il est vrai à l'itération n+1.</p>`},
+ {src:"Examen janvier 2023 · Ex. 1 · 3,5 pts · pour le CC2",t:"La procédure Dessin : le dessin, puis l'arrêt",go:"a-preuve",who:OFF+" (figure et preuve) ; le tableau et les explications sont de moi",
+  en:`<p>On dispose de la procédure Dessin ci-dessous. Elle appelle la procédure Segment(E x1, y1, x2, y2 : entier) qui dessine un segment entre le point de coordonnées (x1,y1) et le point de coordonnées (x2,y2).</p>${C(`Procédure : Dessin (E i,j : entier)
+Variables : a, b, c, d : entier
+Début
+   a, b ← i, j
+   tant que a>0 et b>0 faire
+      si a mod 2 = 0 alors
+         c ← a div 2
+         d ← b-1
+      sinon
+         c ← b
+         d ← a-1
+      finSi
+      Segment (a,b,c,d)
+      a, b ← c, d
+   finTantQue
+Fin`)}<ol><li>Sur la feuille réponse, représenter le dessin produit par l'appel Dessin(10,10). (La feuille réponse donne un repère, avec x et y gradués de 0 à 10.)</li><li>Démontrer que la procédure Dessin se termine.</li></ol>`,
+  sol:`<p><b>1.</b> (1,5 pt) Une ligne par itération :</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>a, b</th><th>a pair ?</th><th>c, d</th><th>segment tracé</th></tr></thead><tbody><tr><td>10, 10</td><td>oui</td><td>5, 9</td><td>de (10,10) à (5,9)</td></tr><tr><td>5, 9</td><td>non</td><td>9, 4</td><td>de (5,9) à (9,4)</td></tr><tr><td>9, 4</td><td>non</td><td>4, 8</td><td>de (9,4) à (4,8)</td></tr><tr><td>4, 8</td><td>oui</td><td>2, 7</td><td>de (4,8) à (2,7)</td></tr><tr><td>2, 7</td><td>oui</td><td>1, 6</td><td>de (2,7) à (1,6)</td></tr><tr><td>1, 6</td><td>non</td><td>6, 0</td><td>de (1,6) à (6,0)</td></tr></tbody></table></div><p>Ensuite a, b = 6, 0 : b n'est plus > 0, la boucle s'arrête. Le dessin est une ligne brisée :</p><svg viewBox="0 0 215 205" style="max-width:300px;width:100%;height:auto;display:block;margin:6px 0" role="img" aria-label="Dessin(10,10) : une ligne brisée de (10,10) à (6,0)"><g stroke="currentColor" fill="none"><path stroke-width="1" d="M30.0 186.0L201.2 186.0"/><path stroke-width="1" d="M30.0 186.0L30.0 14.8"/><path stroke-width="1" d="M46.0 187.9L46.0 184.1"/><path stroke-width="1" d="M62.0 187.9L62.0 184.1"/><path stroke-width="1" d="M78.0 187.9L78.0 184.1"/><path stroke-width="1" d="M94.0 187.9L94.0 184.1"/><path stroke-width="1" d="M110.0 187.9L110.0 184.1"/><path stroke-width="1" d="M126.0 187.9L126.0 184.1"/><path stroke-width="1" d="M142.0 187.9L142.0 184.1"/><path stroke-width="1" d="M158.0 187.9L158.0 184.1"/><path stroke-width="1" d="M174.0 187.9L174.0 184.1"/><path stroke-width="1" d="M190.0 187.9L190.0 184.1"/><path stroke-width="1" d="M28.1 170.0L31.9 170.0"/><path stroke-width="1" d="M28.1 154.0L31.9 154.0"/><path stroke-width="1" d="M28.1 138.0L31.9 138.0"/><path stroke-width="1" d="M28.1 122.0L31.9 122.0"/><path stroke-width="1" d="M28.1 106.0L31.9 106.0"/><path stroke-width="1" d="M28.1 90.0L31.9 90.0"/><path stroke-width="1" d="M28.1 74.0L31.9 74.0"/><path stroke-width="1" d="M28.1 58.0L31.9 58.0"/><path stroke-width="1" d="M28.1 42.0L31.9 42.0"/><path stroke-width="1" d="M28.1 26.0L31.9 26.0"/><path stroke-width="1.8" d="M190.0 26.0L110.0 42.0L174.0 122.0L94.0 58.0L62.0 74.0L46.0 90.0L126.0 186.0"/></g><g fill="currentColor" stroke="none"><circle cx="190.0" cy="26.0" r="2"/><circle cx="110.0" cy="42.0" r="2"/><circle cx="174.0" cy="122.0" r="2"/><circle cx="94.0" cy="58.0" r="2"/><circle cx="62.0" cy="74.0" r="2"/><circle cx="46.0" cy="90.0" r="2"/><circle cx="126.0" cy="186.0" r="2"/></g><g fill="currentColor" stroke="none" font-size="11"><text x="43.0" y="199.0">1</text><text x="59.0" y="199.0">2</text><text x="75.0" y="199.0">3</text><text x="91.0" y="199.0">4</text><text x="107.0" y="199.0">5</text><text x="123.0" y="199.0">6</text><text x="139.0" y="199.0">7</text><text x="155.0" y="199.0">8</text><text x="171.0" y="199.0">9</text><text x="184.0" y="199.0">10</text><text x="15.0" y="174.0">1</text><text x="15.0" y="158.0">2</text><text x="15.0" y="142.0">3</text><text x="15.0" y="126.0">4</text><text x="15.0" y="110.0">5</text><text x="15.0" y="94.0">6</text><text x="15.0" y="78.0">7</text><text x="15.0" y="62.0">8</text><text x="15.0" y="46.0">9</text><text x="11.0" y="30.0">10</text><text x="19.0" y="199.0">0</text><text x="203.2" y="190.0">x</text><text x="26.0" y="11.8">y</text></g></svg><p><b>2.</b> (2 pts) L'expression entière a + b vaut initialement i + j et décroît strictement à chaque itération. Comme le tant que s'arrête lorsque a ≤ 0 ou b ≤ 0, il effectue au maximum i + j itérations. Il y a donc un nombre fini d'itérations donc l'algorithme s'arrête.</p><p>Pourquoi a + b décroît : si a est pair, le nouveau a + b vaut a div 2 + b − 1, plus petit que a + b. Sinon il vaut b + a − 1.</p>`},
+ {src:"Examen janvier 2023 · Ex. 2 · 3 pts · pour le CC2",t:"Un ordinateur 200 fois plus rapide",go:"a-complexite",who:OFF,
+  en:`<p>On implémente sur ordinateur un algorithme avec un temps d'exécution proportionnel à n log<sub>10</sub>(n), où n est la taille de l'entrée.</p><p>Un premier ordinateur A traite une entrée de taille 100 en une minute. L'ordinateur B est 200 fois plus rapide que A, quelle taille d'entrée peut-il traiter pendant la même durée ?</p><p>Pour faciliter les calculs, on donne les valeurs de n log<sub>10</sub>(n) pour quelques valeurs de n.</p><div style="overflow-x:auto"><table class="tbl tr"><tbody><tr><td>n</td><td>1</td><td>10</td><td>100</td><td>1000</td><td>10000</td><td>100000</td></tr><tr><td>n log<sub>10</sub>(n)</td><td>0</td><td>10</td><td>200</td><td>3000</td><td>40000</td><td>500000</td></tr></tbody></table></div>`,
+  sol:`<p>(3 pts dont 1,5 pt raisonnement, 1,5 pt calculs.)</p><p>On note k le coefficient de proportionnalité entre le temps d'exécution (en minutes) sur l'ordinateur A et n log<sub>10</sub>(n). Les informations sur l'ordinateur A s'écrivent 1 = k × 100 log<sub>10</sub>(100) = k × 200 donc k = 1/200.</p><p>On note n<sub>1</sub> la taille d'entrée traitée par B en une minute. Les informations sur l'ordinateur B s'écrivent 1 = (k/200) × n<sub>1</sub> log<sub>10</sub>(n<sub>1</sub>) d'où n<sub>1</sub> log<sub>10</sub>(n<sub>1</sub>) = 40000 et finalement <b>n<sub>1</sub> = 10000</b>.</p>`},
+ {src:"Examen janvier 2023 · Ex. 3 · 8,5 pts · pour le CC2",t:"F et G : récurrence, équation de récurrence, affichage, master theorem",go:"a-calcul-complexite",who:OFF+" (une coquille signalée)",
+  en:`<p>On dispose des deux algorithmes F et G suivants. La procédure aLaLigne() passe à la ligne suivante, la procédure affiche(E n : entier) affiche n sans passer à la ligne.</p>${C(F23)}${C(`Procédure : G (E n : entier, E d : entier)
+Spécifications : n∈ ℕ.
+Début
+   Si n≠0 alors
+      Pour i de 1 à n faire
+         affiche(d)
+      finPour
+      aLaLigne()
+      G(n div 2,d)
+      G(n div 2,d+1)
+   finSi
+Fin`)}${QF23}<ol><li>Prouver par récurrence que la fonction F se termine et renvoie le bon résultat.</li><li>On note T<sub>n</sub> le nombre d'opérations arithmétiques (additions, soustractions, multiplications, divisions) faites par F lorsqu'on l'appelle avec le paramètre n. Ecrire l'équation de récurrence vérifiée par T<sub>n</sub> puis exprimer T<sub>n</sub> en fonction de n.<br><b>Indication :</b> montrer que U<sub>n</sub> = T<sub>n</sub> + 4 est une suite géométrique.</li><li>Quel est l'ordre de complexité en temps de F ? Proposer un algorithme radicalement plus efficace que F qui renvoie le même résultat.</li><li>Sur la feuille réponse, écrire l'affichage que produit l'appel G(6, 0).</li><li>En utilisant le master theorem, donner un ordre de grandeur de la complexité en temps de G en fonction de n. Les procédures affiche et aLaLigne ont une complexité en temps θ(1).</li></ol>`,
+  sol:`<p><b>1.</b> (2 pts)</p>${SOLF1}<p><b>2.</b> (2 pts : 1 pt pour l'équation, 1 pt pour la résolution)</p>${SOLF2}<p><b>3.</b> (1,5 pt dont 0,5 pt pour l'ordre de complexité et 1 pt pour l'algo plus efficace. −0,5 si l'amélioration consiste à mémoriser F(n−1) dans une variable.)</p><p>L'ordre de complexité en temps de F est θ(2<sup>n</sup>). Un algorithme en θ(1) renvoyant le même résultat est : <code>Renvoyer 1 / (n+1)</code></p><p><b>4.</b> (1,5 pt)</p>${C(`000000
+000
+0
+1
+111
+1
+2`)}<p>Explication (de moi) : G(6,0) affiche six 0, puis lance G(3,0) et G(3,1). G(3,0) affiche 000, puis lance G(1,0), qui affiche 0, et G(1,1), qui affiche 1. G(3,1) affiche 111, puis lance G(1,1) et G(1,2), qui affichent 1 et 2. Un appel avec n = 0 n'affiche rien.</p><p><b>5.</b> (1,5 pt : 1 pt pour l'équation, 0,5 pt pour la résolution)</p><p>Le nombre d'opérations élémentaires T<sub>n</sub> effectuées par l'appel G(n, d) vérifie, pour n > 0 : T<sub>n</sub> = θ(n) + 2T<sub>⌊n/2⌋</sub>. Par application du master theorem avec a = 2, b = 2, d = 1, on a b<sup>d</sup> = a donc T<sub>n</sub> = O(n log(n)).</p><p>L'exercice 5 de l'examen PEIP de mai 2023 (5 pts) reprend F avec les questions 1 à 3, et demande seulement l'ordre de complexité à la fin.</p>`},
+ {src:"Examen PEIP mai 2023 · Ex. 1 · 3 pts · pour le CC2",t:"La procédure Dessin, avec des cercles",go:"a-preuve",who:MOI,
+  en:`<p>On dispose de la procédure Dessin ci-dessous. Elle appelle la procédure Cercle(E x, y : entier) qui dessine un cercle de centre (x,y) et de rayon 1.</p>${C(`Procédure : Dessin (E i,j : entier)
+Variables : x, y, a, b, r : entier
+Début
+   x, y ← i, j
+   tant que x>0 et y>0 faire
+      si x mod 2 = 0 alors
+         x ← x div 2
+         y ← y-1
+      sinon
+         x ← y
+         y ← x-1
+      finSi
+      Cercle (x,y)
+   finTantQue
+Fin`)}<ol><li>Sur la feuille réponse, représenter à main levée le dessin produit par l'appel Dessin(7,7).</li><li>Démontrer que la procédure Dessin se termine.</li></ol>`,
+  sol:`<p><b>1.</b> Le piège est dans le sinon : « x ← y » est exécuté d'abord, puis « y ← x-1 » utilise le <b>nouveau</b> x. Si x est impair, (x, y) devient donc (y, y − 1).</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>x, y au début du tour</th><th>x pair ?</th><th>nouveaux x, y</th><th>cercle de centre</th></tr></thead><tbody><tr><td>7, 7</td><td>non</td><td>7, 6</td><td>(7,6)</td></tr><tr><td>7, 6</td><td>non</td><td>6, 5</td><td>(6,5)</td></tr><tr><td>6, 5</td><td>oui</td><td>3, 4</td><td>(3,4)</td></tr><tr><td>3, 4</td><td>non</td><td>4, 3</td><td>(4,3)</td></tr><tr><td>4, 3</td><td>oui</td><td>2, 2</td><td>(2,2)</td></tr><tr><td>2, 2</td><td>oui</td><td>1, 1</td><td>(1,1)</td></tr><tr><td>1, 1</td><td>non</td><td>1, 0</td><td>(1,0)</td></tr></tbody></table></div><p>Ensuite y = 0 : la boucle s'arrête. Sept cercles de rayon 1 :</p><svg viewBox="0 0 185 180" style="max-width:300px;width:100%;height:auto;display:block;margin:6px 0" role="img" aria-label="Dessin(7,7) : sept cercles de rayon 1"><g stroke="currentColor" fill="none"><path stroke-width="1" d="M30.0 150.0L169.2 150.0"/><path stroke-width="1" d="M30.0 150.0L30.0 26.8"/><path stroke-width="1" d="M46.0 151.9L46.0 148.1"/><path stroke-width="1" d="M62.0 151.9L62.0 148.1"/><path stroke-width="1" d="M78.0 151.9L78.0 148.1"/><path stroke-width="1" d="M94.0 151.9L94.0 148.1"/><path stroke-width="1" d="M110.0 151.9L110.0 148.1"/><path stroke-width="1" d="M126.0 151.9L126.0 148.1"/><path stroke-width="1" d="M142.0 151.9L142.0 148.1"/><path stroke-width="1" d="M158.0 151.9L158.0 148.1"/><path stroke-width="1" d="M28.1 134.0L31.9 134.0"/><path stroke-width="1" d="M28.1 118.0L31.9 118.0"/><path stroke-width="1" d="M28.1 102.0L31.9 102.0"/><path stroke-width="1" d="M28.1 86.0L31.9 86.0"/><path stroke-width="1" d="M28.1 70.0L31.9 70.0"/><path stroke-width="1" d="M28.1 54.0L31.9 54.0"/><path stroke-width="1" d="M28.1 38.0L31.9 38.0"/><circle cx="142.0" cy="54.0" r="16.0" stroke-width="1.6"/><circle cx="126.0" cy="70.0" r="16.0" stroke-width="1.6"/><circle cx="78.0" cy="86.0" r="16.0" stroke-width="1.6"/><circle cx="94.0" cy="102.0" r="16.0" stroke-width="1.6"/><circle cx="62.0" cy="118.0" r="16.0" stroke-width="1.6"/><circle cx="46.0" cy="134.0" r="16.0" stroke-width="1.6"/><circle cx="46.0" cy="150.0" r="16.0" stroke-width="1.6"/></g><g fill="currentColor" stroke="none"><circle cx="142.0" cy="54.0" r="2"/><circle cx="126.0" cy="70.0" r="2"/><circle cx="78.0" cy="86.0" r="2"/><circle cx="94.0" cy="102.0" r="2"/><circle cx="62.0" cy="118.0" r="2"/><circle cx="46.0" cy="134.0" r="2"/><circle cx="46.0" cy="150.0" r="2"/></g><g fill="currentColor" stroke="none" font-size="11"><text x="43.0" y="163.0">1</text><text x="59.0" y="163.0">2</text><text x="75.0" y="163.0">3</text><text x="91.0" y="163.0">4</text><text x="107.0" y="163.0">5</text><text x="123.0" y="163.0">6</text><text x="139.0" y="163.0">7</text><text x="155.0" y="163.0">8</text><text x="15.0" y="138.0">1</text><text x="15.0" y="122.0">2</text><text x="15.0" y="106.0">3</text><text x="15.0" y="90.0">4</text><text x="15.0" y="74.0">5</text><text x="15.0" y="58.0">6</text><text x="15.0" y="42.0">7</text><text x="19.0" y="163.0">0</text><text x="171.2" y="154.0">x</text><text x="26.0" y="23.8">y</text></g></svg><p><b>2.</b> Sur le modèle du corrigé de janvier 2023. L'entier y vaut initialement j et décroît strictement à chaque itération : il diminue de 1 dans les deux cas (si x est pair, y ← y-1 ; sinon y reçoit le nouveau x moins 1, c'est-à-dire l'ancien y moins 1). Comme le tant que s'arrête lorsque x ≤ 0 ou y ≤ 0, il effectue au maximum j itérations. Il y a donc un nombre fini d'itérations donc la procédure se termine.</p><p>(Les variables a, b et r sont déclarées dans le sujet mais ne servent pas.)</p>`},
+ {src:"Examen PEIP mai 2023 · Ex. 2 · 3 pts · pour le CC2",t:"La plus grande somme de p éléments qui se suivent, en temps linéaire",go:"a-calcul-complexite",who:MOI,
+  en:`<p>On souhaite écrire une fonction qui, étant donnés une liste d'entiers L et un entier p compris entre 1 et la taille de la liste, calcule et renvoie la plus grande somme possible de p éléments qui se suivent dans la liste. Par exemple, pour L = [5, 2, −8, 9, 0, 4] et p = 4, l'algorithme renvoie 8, c'est à dire 5 + 2 − 8 + 9.</p><p>Proposer un algorithme de complexité <b>linéaire</b> répondant au problème.</p>`,
+  sol:`<p><b>L'idée.</b> Recalculer chaque somme de p éléments coûterait environ n × p additions : ce n'est pas linéaire. On fait <b>glisser</b> la somme : pour passer d'un groupe de p éléments au suivant, on ajoute l'élément qui entre et on retire celui qui sort. Avec des listes, on garde deux listes : gauche commence au premier élément du groupe, droite commence juste après le groupe.</p>${C(`FONCTION : sommeMaxP (E L : liste d'entiers, E p : entier) : entier
+SPÉCIFICATIONS : p est compris entre 1 et le nombre d'éléments de L.
+                 Renvoie la plus grande somme de p éléments qui se suivent dans L.
+Variable : gauche, droite : liste d'entiers
+           s, best : entier
+DÉBUT
+    s ← 0
+    droite ← L
+    pour i de 1 à p faire
+        s ← s + tête(droite)
+        droite ← queue(droite)
+    fin pour;
+    best ← s
+    gauche ← L
+    tant que non estVide(droite) faire
+        s ← s + tête(droite) - tête(gauche)
+        gauche ← queue(gauche)
+        droite ← queue(droite)
+        si s > best alors
+            best ← s
+        fin si;
+    fin tq;
+    Renvoyer best
+FIN`)}<p><b>Sur l'exemple</b> : après le pour, s = 5 + 2 − 8 + 9 = 8. Puis s = 8 + 0 − 5 = 3, puis s = 3 + 4 − 2 = 5. Le plus grand est 8.</p><p><b>Complexité</b> : on note n le nombre d'éléments de L. Le pour fait p itérations, le tant que n − p itérations, chacune avec un nombre constant d'opérations : n itérations à coût constant, donc θ(n). L'algorithme est linéaire.</p>`},
+ {src:"Examen PEIP mai 2023 · Ex. 3 · 3 pts · pour le CC2",t:"Trois ordres de complexité",go:"a-calcul-complexite",who:MOI,
+  en:`<p>Déterminer l'ordre de complexité des morceaux de code suivants en fonction de l'entier n. Justifier brièvement. On prendra en compte uniquement le nombre d'opérations élémentaires <code>&lt;op elem&gt;</code>.</p><p><b>1.</b></p>${C(`Pour i de 1 à √n faire
+   Pour j de 1 à n² faire
+      <op elem>
+   finPour
+finPour`)}<p><b>2.</b></p>${C(`i, j ← 0, 0
+Tant que i<n faire
+   <op elem>
+   j ← j+1
+   si j=n alors
+      i ← i+1
+      j ← 0
+   finSi
+finTantQue`)}<p><b>3.</b></p>${C(`Procédure F(E n : entier)
+   si n=0 alors
+      <op elem>
+   sinon
+      F(n div 3)
+      <op elem>
+      F(n div 3)
+   finSi`)}`,
+  sol:`<ol><li>i prend √n valeurs et, pour chacune, j prend n² valeurs : √n × n² opérations élémentaires. L'ordre de complexité est <b>θ(n²√n)</b>, c'est-à-dire θ(n<sup>2,5</sup>).</li><li>j augmente de 1 à chaque itération ; quand il atteint n, il revient à 0 et i augmente de 1. Il faut donc n itérations pour que i augmente de 1, et i doit aller de 0 à n : n × n = n² itérations, une opération élémentaire à chaque fois. <b>θ(n²)</b>.</li><li>Équation de complexité : T<sub>0</sub> = 1 et, pour n > 0, T<sub>n</sub> = 2T<sub>n div 3</sub> + 1. Master theorem : 2 appels récursifs (a = 2), la taille est divisée par 3 (b = 3), une opération en dehors des appels, O(1) = O(n<sup>0</sup>) (d = 0). b<sup>d</sup> = 1 &lt; a, donc <b>T<sub>n</sub> = O(n<sup>log 2 / log 3</sup>)</b>, environ O(n<sup>0,63</sup>).</li></ol><p>Vérification par programme : pour le 1, exactement √n × n² opérations quand n est un carré ; pour le 2, exactement n² ; pour le 3, T<sub>n</sub> = 2<sup>k+2</sup> − 1 quand n = 3<sup>k</sup> (3, 7, 15, 31…).</p>`},
+ {src:"Examen PEIP mai 2023 · Ex. 6 · 5 pts · pour le CC2",t:"Trace, invariant et preuve de la fonction G",go:"a-preuve",who:MOI,
+  en:`<p>On considère l'algorithme suivant :</p>${C(`Fonction G(E n : entier) : entier
+Variables : a, b : entier
+Début
+   a, b ← 0, 0
+   Pour i de 1 à n faire
+      a ← a + 3*b + 3*i + 1
+      b ← b + 2*i + 1
+   finPour
+   Renvoyer a
+Fin`)}<ol><li>Faire une trace de l'algorithme pour n=4.</li><li>On revient au cas général et on appelle a<sub>i</sub> et b<sub>i</sub> les valeurs de a et b à la fin de l'itération i. Proposer un invariant de boucle exprimant a<sub>i</sub> et b<sub>i</sub> en fonction de i.</li><li>Prouver cet invariant par récurrence.</li><li>Que calcule la fonction G ?</li></ol>`,
+  sol:`<p><b>1.</b> Attention à l'ordre : a est calculé avec l'<b>ancien</b> b, puis b change.</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th class="var">i</th><th class="var">a<sub>i</sub></th><th class="var">b<sub>i</sub></th></tr></thead><tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>1</td><td>4</td><td>3</td></tr><tr><td>2</td><td>20</td><td>8</td></tr><tr><td>3</td><td>54</td><td>15</td></tr><tr><td>4</td><td>112</td><td>24</td></tr></tbody></table></div><p>G(4) renvoie 112.</p><p><b>2.</b> Pour b : 3, 8, 15, 24, c'est un de moins que les carrés 4, 9, 16, 25. Donc b<sub>i</sub> = (i + 1)² − 1 = i² + 2i. Pour a : 4 = 1 × 4, 20 = 4 × 5, 54 = 9 × 6, 112 = 16 × 7, donc a<sub>i</sub> = i²(i + 3) = i³ + 3i².</p><p>Invariant proposé : Inv<sub>i</sub> : « a<sub>i</sub> = i³ + 3i² et b<sub>i</sub> = i² + 2i ».</p><p><b>3.</b> Équations d'itération (la vérité) : a<sub>0</sub> = 0, b<sub>0</sub> = 0 et, pour i > 0, a<sub>i</sub> = a<sub>i−1</sub> + 3b<sub>i−1</sub> + 3i + 1 et b<sub>i</sub> = b<sub>i−1</sub> + 2i + 1.</p><ul><li><b>Initialisation</b> : a<sub>0</sub> = 0 = 0³ + 3 × 0² et b<sub>0</sub> = 0 = 0² + 2 × 0. Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : on suppose Inv<sub>i−1</sub> vrai (1 ≤ i ≤ n) : a<sub>i−1</sub> = (i − 1)³ + 3(i − 1)² et b<sub>i−1</sub> = (i − 1)² + 2(i − 1) = i² − 1.<br>Alors b<sub>i</sub> = i² − 1 + 2i + 1 = i² + 2i.<br>Et a<sub>i</sub> = (i − 1)³ + 3(i − 1)² + 3(i² − 1) + 3i + 1 = (i³ − 3i² + 3i − 1) + (3i² − 6i + 3) + (3i² − 3) + 3i + 1 = i³ + 3i².<br>Donc Inv<sub>i</sub> est vrai.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul><p><b>4.</b> À la fin des n itérations, a<sub>n</sub> = n³ + 3n². <b>G calcule n³ + 3n²</b>, c'est-à-dire n²(n + 3). (Vérifié par programme pour n de 0 à 39.)</p>`},
+ {src:"CC1 novembre 2024 · Cours, questions 2 et 3 (les 4 sujets) · pour le CC3",t:"Quel tri pour Luc ? Combien de mesures pour Sarah, d'essais pour Mr Bricks ?",go:"a-tri-bulles",who:OFF,
+  en:`<p><b>2.</b> Quatre versions, une par sujet :</p><ul><li>(a) Luc veut ranger ses vaisseaux spatiaux par ordre de taille. Sa seule action possible est de permuter deux vaisseaux voisins. Peut-il arriver à ranger ses vaisseaux avec un tri du cours ? Justifier.</li><li>(b) Luc veut ranger ses nombreux vaisseaux spatiaux, de 5 modèles différents, par ordre de taille. Son hangar est immense et il peut les placer comme il veut. Parmi les tris du cours, lequel doit-il adapter pour fournir le moins d'efforts possible ? Justifier.</li><li>(c) Luc veut ranger ses vaisseaux spatiaux par ordre de taille. Sa seule action possible est de permuter deux vaisseaux. Citer deux tris du cours qui lui permettent d'y arriver.</li><li>(d) Luc veut ranger ses vaisseaux spatiaux, de modèles tous différents, par ordre de taille. Son hangar est immense et il peut les placer comme il veut. Parmi les tris du cours, lequel doit-il adapter pour fournir le moins d'efforts possible ? Justifier.</li></ul><p><b>3.</b> Deux versions :</p><ul><li>(a) Princesse Sarah a rangé ses 128 chevaux par ordre de taille (ils ont tous des tailles différentes). Elle cherche Neptune, qui mesure 1m65 au garrot. Combien de chevaux doit-elle mesurer pour trouver Neptune ? Justifier.</li><li>(b) Les 12000 légos de Mr Bricks sont rangées par taille. Il doit faire 14 essais au maximum pour trouver un modèle en particulier. Combien lui en faudrait-il s'il avait 24000 légos ? Justifier.</li></ul>`,
+  sol:`<p><b>2.</b></p><ul><li>(a) Oui, Luc peut utiliser le tri à bulles, qui repose entièrement sur la permutation d'éléments voisins.</li><li>(b) Comme Luc n'a que 5 modèles différents, il peut utiliser un tri par valeurs : il range chaque modèle dans une zone différente de son hangar, puis il les remet en ligne, en commençant par le plus petit modèle jusqu'au plus grand. Il fait ainsi un tri en θ(n) qui lui garantit un effort minimal.</li><li>(c) Il peut utiliser le tri à bulles ou le tri par sélection, qui reposent sur la permutation d'éléments.</li><li>(d) Comme les modèles sont tous différents, Luc ne peut pas utiliser un tri par valeurs et doit faire un tri par comparaison. Le tri par comparaison le plus efficace du cours est le tri fusion, qui peut être adapté au cas de Luc qui n'a pas de problème de stockage.</li></ul><p><b>3.</b></p><ul><li>(a) Comme les chevaux sont rangés par taille, Princesse Sarah peut effectuer une recherche dichotomique. A chaque mesure, le nombre de chevaux parmi lesquels chercher est divisé par deux. Dans le pire cas où elle trouve Neptune à la dernière mesure, le nombre de mesures est le nombre de fois qu'il faut diviser 128 par 2 pour trouver 1, c'est à dire 7 fois.</li><li>(b) Comme les légos sont rangés par taille, Mr Bricks peut effectuer une recherche par dichotomie. Après son premier essai, le nombre de légos où chercher est divisé par 2, c'est à dire égal à 12000, donc il lui reste 14 essais au maximum. Au total il lui faut au maximum 15 essais.</li></ul>`},
+ {src:"Examen janvier 2023 · Ex. 4 · 5 pts · pour le CC3",t:"Trier un tableau de chiffres, puis listeDiff",go:"a-tri-valeurs",who:OFF+" (un oubli signalé dans la question 2)",
+  en:`<p>Dans cet exercice, un nombre est représenté par un tableau de chiffres. Par exemple, le nombre 2022 est représenté par le tableau [2,0,2,2].</p><ol><li>On souhaite écrire un algorithme qui trie un tableau de chiffres de taille n. Anakin affirme pouvoir l'écrire en θ(n²), Leia en θ(n log(n)), Chewbacca en θ(n) et Luke en θ(1). Parmi ces propositions, lesquelles sont impossibles ? Justifier. Parmi les autres, donner le nom d'un tri du cours qui permet d'obtenir le meilleur ordre de complexité.</li><li>Ecrire une fonction listeDiff qui, étant donné un tableau de chiffres T, calcule et renvoie la liste des chiffres différents qu'il contient. L'ordre des éléments dans la liste est sans importance. Par exemple, listeDiff([2,0,2,2]) renvoie la liste [2,0] ou la liste [0,2]. Vous pourrez utiliser la fonction nbOccurrences(e, T) qui renvoie le nombre de fois où l'élément e est présent dans le tableau T (complexité : θ(taille(T))).</li><li>Quel est l'ordre de complexité en temps de votre fonction listeDiff ?</li></ol>`,
+  sol:`<p><b>1.</b> (2 pts dont 1,5 pt pour l'ordre de complexité optimal et 0,5 pt pour le nom du tri. −0,5 pt si la complexité optimale proposée est θ(n log(n)) avec un nom de tri cohérent.)</p><p>La proposition de Luke est impossible, car il faut au moins parcourir le tableau pour pouvoir le trier, donc l'algorithme de tri est en Ω(n). La proposition de Chewbacca est possible, car chaque chiffre peut prendre uniquement 10 valeurs, donc on peut trier le tableau par valeurs avec une complexité en temps θ(n). Les propositions d'Anakin et Leia sont moins performantes donc possibles aussi.</p><p><b>2.</b> (2 pts. Utilisation des listes à la python avec append, + etc. sanctionnée.) Une correction linéaire sans nbOccurrences :</p>${C(`Fonction : listeDiff (E T : tableau d'entiers) : liste d'entiers
+Spécifications : renvoie la liste des chiffres différents de T
+Variables : L : liste d'entiers, T2 : tableau de taille(T) entiers
+Début
+   L ← [ ]
+   Pour i de 0 à taille(T)-1 faire
+      T2[i] ← T[i]
+   finPour
+   triValeurs(T2,10)
+   Pour i de 1 à taille(T)-1 faire
+      si T2[i]≠T2[i-1] alors
+         L ← cons(T2[i], L)
+      finSi
+   finPour
+   Renvoyer L
+Fin`)}<p><b>Attention, un oubli dans ce corrigé officiel</b> : la deuxième boucle commence à i = 1 et n'ajoute T2[i] que s'il est différent du précédent. Le plus petit chiffre, T2[0], n'est donc jamais ajouté : pour [2,0,2,2], T2 = [0,2,2,2] et la fonction renvoie [2] au lieu de [2,0] (vérifié par programme). Il suffit de remplacer « L ← [ ] » par « L ← cons(T2[0], [ ]) », après le tri, pour un tableau non vide.</p><p><b>3.</b> (1 pt) Le tri par valeurs est en θ(n) et les deux boucles pour aussi, d'où une complexité en temps θ(n).</p>`},
+ {src:"Examen PEIP mai 2023 · Ex. 4 · 3 pts · pour le CC3",t:"Le tri de John : deux trous à remplir",go:"a-tri-insertion",who:MOI,
+  en:`<p>John propose l'algorithme de tri suivant :</p>${C(`Procédure : triJohn (E T : tableau d'entier)
+Spécifications : trie le tableau T par ordre croissant
+Début
+   Pour i de 0 à taille(T)-1 faire
+      a ← T[i]
+      j ← ❶
+      Tant que j>=0 et T[j]>a faire
+         T[j+1] ← T[j]
+         j ← j-1
+      FinTantQue
+      T[❷] ← a
+   FinPour
+Fin`)}<p>Que doit mettre John à la place de ❶ et ❷ pour que l'algorithme fonctionne ?</p>`,
+  sol:`<p><b>❶ : i-1</b> et <b>❷ : j+1</b>.</p><p>C'est le tri par insertion (cours, diapo 114 : « T[k] est inséré parmi T[0] à T[k-1] »). À l'itération i, les cases T[0] à T[i-1] sont déjà triées.</p><ul><li>a garde la valeur de T[i].</li><li>j part de la case juste à gauche : i-1. Tant que T[j] est plus grand que a, on le décale d'une case vers la droite (T[j+1] ← T[j]) et on recule.</li><li>La boucle s'arrête quand j = −1 ou quand T[j] ≤ a : la place libre est juste à droite de j, donc T[j+1] ← a.</li></ul><p>Vérifié par programme sur 1000 tableaux tirés au hasard. Remarque : le sujet écrit « E T » dans la signature ; pour que le tableau soit modifié, il faudrait ES.</p>`});
 
 /* ---------- quiz ---------- */
 quiz.push(
- {q:"Un invariant de boucle doit être…",o:["vrai avant la boucle et conservé par chaque tour","vrai seulement à la fin","faux au départ"],a:0,e:"Initialisation et hérédité, comme une récurrence.",link:"a-preuve"},
- {q:"Pour prouver qu'un Tant que s'arrête, on utilise…",o:["une quantité entière qui diminue strictement","l'invariant","la trace"],a:0,e:"Par exemple N − i, ou a + b.",link:"a-preuve"},
- {q:"Si a = Θ(b), alors…",o:["a = O(b)","a = o(b)","a ne peut pas être Ω(b)"],a:0,e:"Θ = à la fois O et Ω.",link:"a-complexite"},
- {q:"Combien d'additions fait « Pour i de 1 à n, Pour j de 1 à i : som ← som + 1 » ?",o:["n(n + 1)/2","n²","2n"],a:0,e:"1 + 2 + … + n.",link:"a-calcul-complexite"},
- {q:"T(n) = 2T(n − 1) + c donne…",o:["Θ(2ⁿ)","Θ(n)","Θ(n log n)"],a:0,e:"Le nombre d'appels double à chaque niveau.",link:"a-calcul-complexite"},
- {q:"T(n) = 2T(n/2) + Θ(n) donne…",o:["Θ(n log n)","Θ(n²)","Θ(log n)"],a:0,e:"Master theorem avec a = b<sup>d</sup> = 2.",link:"a-calcul-complexite"},
- {q:"Combien d'essais au plus pour une dichotomie dans 1024 éléments triés ?",o:["10 (ou 11 selon la façon de compter)","1024","512"],a:0,e:"1024 = 2¹⁰ : chaque essai divise par 2.",link:"a-recherche"},
- {q:"Le tri par insertion sur un tableau déjà trié est en…",o:["Θ(n)","Θ(n²)","Θ(1)"],a:0,e:"Aucun décalage : un seul test par élément.",link:"a-tri-insertion"},
- {q:"Le tri par sélection est en…",o:["Θ(n²) dans tous les cas","Θ(n) si le tableau est trié","Θ(n log n)"],a:0,e:"Il cherche toujours le minimum de tout ce qui reste.",link:"a-tri-selection"});
+ {q:"Un invariant de boucle, d'après le cours, est une propriété censée être vraie…",o:["au début des itérations et à la fin de chaque itération","seulement à la fin des itérations","seulement au début des itérations"],a:0,e:"Diapo 54. On le prouve par récurrence : initialisation, récurrence, conclusion.",link:"a-preuve"},
+ {q:"Équation d'itération ou invariant de boucle : lequel est « la vérité » dans le cours ?",o:["L'équation d'itération : on la lit sur l'algorithme","L'invariant : on le lit sur la trace","Les deux"],a:0,e:"L'invariant est l'hypothèse à prouver ; il ne devient une vérité qu'après la récurrence.",link:"a-preuve"},
+ {q:"Pour prouver qu'un tant que s'arrête, on montre…",o:["qu'une quantité entière décroît strictement à chaque itération, jusqu'à la valeur qui arrête la boucle","que l'invariant est vrai","que la trace s'arrête pour n = 5"],a:0,e:"Modèle de la diapo 95 et du corrigé de janvier 2023 (a + b décroît strictement).",link:"a-preuve"},
+ {q:"Si a<sub>n</sub> = θ(b<sub>n</sub>), alors…",o:["a<sub>n</sub> = O(b<sub>n</sub>)","a<sub>n</sub> = o(b<sub>n</sub>)","a<sub>n</sub> = ω(b<sub>n</sub>)"],a:0,e:"O veut dire o ou θ (QCM du CC 2022).",link:"a-complexite"},
+ {q:"T<sub>n</sub> = 3n³ − 5n + 2. Quel est son ordre de complexité ?",o:["θ(n³)","θ(n)","θ(3ⁿ)"],a:0,e:"T<sub>n</sub>/n³ tend vers 3, un nombre strictement positif (cours, diapo 79).",link:"a-complexite"},
+ {q:"log<sub>10</sub>(n) et log<sub>2</sub>(n)…",o:["sont du même ordre de grandeur","ne sont pas comparables","ne sont pas du même ordre : log<sub>2</sub> domine strictement"],a:0,e:"Tous les logarithmes sont du même ordre de grandeur (diapo 80).",link:"a-complexite"},
+ {q:"Que veut dire « pire cas » ?",o:["La configuration des données qui consomme le plus de ressources","La plus grande entrée possible","Le cas où l'algorithme s'arrête sur une erreur"],a:0,e:"Diapo 67 : si les opérations dépendent de la configuration des données, on regarde uniquement celle qui consomme le plus.",link:"a-calcul-complexite"},
+ {q:"Combien d'additions fait « Pour i de 1 à n faire Pour j de 1 à i faire som ← som+1 » ?",o:["n(n + 1)/2","n²","2n"],a:0,e:"1 + 2 + … + n (TD 8, exercice 34).",link:"a-calcul-complexite"},
+ {q:"T<sub>0</sub> = 0 et T<sub>n</sub> = 2T<sub>n−1</sub> + 4 donnent…",o:["T<sub>n</sub> = 4 × 2ⁿ − 4, d'ordre 2ⁿ","T<sub>n</sub> = 4n, d'ordre n","T<sub>n</sub> = 2n + 4, d'ordre n"],a:0,e:"U<sub>n</sub> = T<sub>n</sub> + 4 est géométrique de raison 2 (examen de janvier 2023).",link:"a-calcul-complexite"},
+ {q:"T(n) ≤ 2T(⌈n/2⌉) + O(n) : que donne le master theorem ?",o:["O(n log n)","O(n²)","O(log n)"],a:0,e:"a = 2, b = 2, d = 1 : b<sup>d</sup> = a, donc O(n<sup>d</sup> log n).",link:"a-calcul-complexite"},
+ {q:"Dans le master theorem, que représente b ?",o:["L'entier par lequel la taille de l'entrée est divisée à chaque appel","Le nombre d'appels récursifs","L'exposant des opérations faites en plus des appels"],a:0,e:"a : nombre d'appels ; b : diviseur de la taille ; O(n<sup>d</sup>) : opérations en plus des appels.",link:"a-calcul-complexite"},
+ {q:"Princesse Sarah a rangé ses 128 chevaux par ordre de taille. Combien doit-elle en mesurer au plus pour trouver Neptune ? (CC1 2024)",o:["7","128","64"],a:0,e:"Recherche dichotomique : à chaque mesure, le nombre de chevaux est divisé par deux, et 128 = 2⁷.",link:"a-recherche"},
+ {q:"Le tri par insertion sur un tableau déjà trié est en…",o:["θ(n)","θ(n²)","θ(1)"],a:0,e:"Aucun décalage : un seul test par élément.",link:"a-tri-insertion"},
+ {q:"Le tri par sélection est en…",o:["θ(n²) dans tous les cas","θ(n) si le tableau est trié","θ(n log n)"],a:0,e:"Il cherche toujours le minimum de tout ce qui reste.",link:"a-tri-selection"});
 
 const infos23=({sec})=>`<div class="title-row"><h1>Les CC2 et CC3 en bref</h1></div>
  ${sec(1,"Quand",`<p>Les dates ne sont ni dans Prose ni dans tes mails. Le site suppose le <b>jeudi 3 décembre</b> (CC2) et le <b>jeudi 10 décembre</b> (CC3), à 15h, sur le créneau de ton TD (le 10/12 est le dernier TD d'Algo dans Prose). Dès qu'une date est annoncée, je la corrige.</p><p>Modalités 2026-2027 : 3 CC d'1 h, 34 %, 34 % et 32 % de la note, pas d'examen en janvier. Une feuille A4 autorisée aux CC des années passées.</p>`)}
- ${sec(2,"Le programme supposé",`<p>CC2 : preuves de validité (invariants, terminaison) et complexité (O, Ω, Θ, compter les opérations, équations de récurrence, master theorem) : TD 6 à 8. CC3 : recherche (dichotomie) et tris (sélection, insertion, bulles, par valeurs) : TD 9 et 10. Chaque CC peut aussi reprendre ce qui précède.</p>`)}
- ${sec(3,"Ce qui tombe aux annales",`<ul><li>Des questions de cours : « Θ(n³) peut-il être un million de fois plus lent ? », « à quoi servent les équations de récurrence ? », « combien de mesures par dichotomie ? ».</li><li>Une preuve : trace, invariant, terminaison.</li><li>Un calcul de complexité, un temps d'exécution sur un ordinateur plus rapide.</li><li>Un tri à écrire, avec sa complexité.</li></ul>`)}`;
+ ${sec(2,"Le programme supposé",`<p>CC2 : validité (prouver une boucle ou un algorithme récursif, arrêt d'un tant que) et complexité (compter les opérations, ordre de complexité θ, O, Ω, boucles, équation de complexité, master theorem) : diapos 52 à 86 du cours, TD 6 à 8. CC3 : recherche (linéaire, dichotomique) et tris (par valeurs, à bulles, fusion dans le cours ; sélection et insertion en TD) : diapos 87 à 114, TD 9 et 10. Chaque CC peut aussi reprendre ce qui précède.</p>`)}
+ ${sec(3,"Ce qui tombe aux annales",`<ul><li>Des questions de cours : « Θ(n³) peut-il être un million de fois plus lent ? », « à quoi servent les équations de récurrence ? », « à quoi sert le master theorem ? », un QCM sur o, O, Ω, θ.</li><li>Une preuve de boucle : trace, invariant à trouver ou à choisir, récurrence, conclusion (5 points en 2022 et en mai 2023), et l'arrêt d'une boucle tant que (2 points en janvier et en mai 2023).</li><li>Un algorithme récursif : prouver par récurrence qu'il se termine et renvoie le bon résultat, écrire son équation de récurrence, la résoudre avec une suite géométrique, donner l'ordre de complexité, appliquer le master theorem (8,5 points en janvier 2023).</li><li>Un temps d'exécution sur un ordinateur plus rapide (3 points).</li><li>Pour le CC3 : un tri à choisir ou à compléter, sa complexité, une recherche dichotomique.</li></ul>`)}
+ ${sec(4,"Les documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote_validite_complexite.pdf","Cours annoté : validité, complexité"],["algo/cours_trous.pdf","Cours à trous (recherche, tris)"],["algo/td.pdf","Feuilles de TD"],["algo/exam_jan2023_corr.pdf","Corrigé janvier 2023"],["algo/exam_mai2023.pdf","Sujet PEIP mai 2023"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.32,key:"rev-algo-v1",lang:"pseudo",
  exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
@@ -4854,8 +5224,8 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  prog:"Sur papier. Jusqu'au TD 5 et aux piles : pseudo-code, expressions et cond, boucles et motifs, récursivité, tableaux 1D et 2D (TD 4 jusqu'à l'ex. 15), listes, piles. TP : jeu de la vie, pendu. Preuves et complexité : faites en amphi seulement, deux leçons « au cas où ». Pas de recherche dichotomique ni de tris.",
  chapters:{1:"1. Écrire du pseudo-code (TD 1)",2:"2. Récursivité (TD 2)",3:"3. Tableaux 1D et 2D (TD 3, 4, TP)",4:"4. Listes (TD 5)",5:"5. Piles et files",6:"6. Preuves et complexité (CC2)",7:"7. Recherche et tris (CC3)"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD, ex.",
- tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne.",
- annIntro:"Le CC PEIP 2023 a exactement le programme de cette année : ses quatre sujets sont là (corrigés par moi). Le sujet 1 sert d'examen blanc ; prends dans les trois autres les exercices du type que tu rates. Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
+ tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne. Pour le CC2 : les TD 6 à 8 en entier (exercices 24 à 36), corrigés avec la méthode de preuve et le comptage du cours.",
+ annIntro:"Le CC PEIP 2023 a exactement le programme de cette année : ses quatre sujets sont là (corrigés par moi). Le sujet 1 sert d'examen blanc ; prends dans les trois autres les exercices du type que tu rates. Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits). En bas de la liste, pour les CC2 et CC3 : le CC de 2022 et l'examen de janvier 2023 (corrigés officiels), l'examen PEIP de mai 2023 (corrigés écrits par moi).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
  pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"aucasou",t:"Au cas où : preuves et complexité",html:aucasou},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
@@ -4867,14 +5237,17 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  {id:"tdex2",t:"Autres exercices de TD sur papier",min:50,p:2,td:["2","3","7","13","16","TP2"],links:[["td","Exercices de TD"]]},
  {id:"quiz",t:"Quiz de cours : au moins 80 %",min:15,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
  {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
- {id:"td6",ex:"cc2",t:"TD 6 ★★★ : preuves (g, logEntier, Fibonacci), sur papier",min:45,p:1,td:["24","26","27"],links:[["td","Exercices de TD"]]},
- {id:"td78",ex:"cc2",t:"TD 7 et 8 ★★★ : complexité, sur papier",min:45,p:1,td:["29","30","34","35"],links:[["td","Exercices de TD"]]},
- {id:"ann2",ex:"cc2",t:"Annales : janvier 2023, ex. 2 et 3, en 40 min",min:50,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Temps d'exécution, preuve par récurrence, équation de récurrence, master theorem."},
+ {id:"td6",ex:"cc2",t:"TD 6 : preuves (somme d'un tableau, Fibonacci), sur papier",min:45,p:1,td:["25","26"],links:[["td","Exercices de TD"]]},
+ {id:"td78",ex:"cc2",t:"TD 7 et 8 : suites à trier, temps d'exécution, additions, équations de récurrence, sur papier",min:60,p:1,td:["29","31","32","34","35"],links:[["td","Exercices de TD"]]},
+ {id:"ann2",ex:"cc2",t:"Annales : examen de janvier 2023, exercices 1 à 3, en 1 h 10",min:80,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"15 points sur 20 de l'examen : arrêt d'une boucle, temps d'exécution, preuve par récurrence, équation de récurrence, master theorem. Corrigé officiel avec le barème."},
+ {id:"ann2b",ex:"cc2",t:"Annales : CC de 2022 (questions 4 et 5, exercice 3) et questions de cours du CC1 2024",min:30,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Les questions de cours déjà posées, avec les réponses officielles."},
+ {id:"ann2c",ex:"cc2",t:"Annales : examen PEIP de mai 2023, exercices 1, 2, 3 et 6",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Même format que janvier 2023, sans corrigé officiel : corrigés écrits par moi, vérifiés par programme."},
+ {id:"tdsup",ex:"cc2",t:"TD 6 à 8 : les exercices supplémentaires (28, 33, 36)",min:45,p:2,td:["28","33","36"],links:[["td","Exercices de TD"]]},
  {id:"quiz2",ex:"cc2",t:"Quiz de cours, questions des CC2 et CC3 comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
  {id:"review2",ex:"cc2",t:"Veille du CC2 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]},
  {id:"td910",ex:"cc3",t:"TD 9 et 10 ★★★ : dichotomie et tris, sur papier",min:50,p:1,td:["37","42","43"],links:[["td","Exercices de TD"]]},
  {id:"td910b",ex:"cc3",t:"TD 10 : médiane et k recherches",min:30,p:2,td:["39","40"],links:[["td","Exercices de TD"]]},
- {id:"ann3",ex:"cc3",t:"Annales : questions de cours du CC1 2024 et tri de chiffres (janvier 2023)",min:25,p:1,manual:true,links:[["annales","Annales et chrono"]]},
+ {id:"ann3",ex:"cc3",t:"Annales : questions 2 et 3 du CC1 2024, tri de chiffres (janvier 2023), tri de John (mai 2023)",min:25,p:1,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"review3",ex:"cc3",t:"Veille du CC3 : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 })();
 
@@ -10141,51 +10514,311 @@ LES.algo.forEach(L=>{L.p=2;});
 const A2=o=>Object.assign(o,{ex:"cc2"}),A3=o=>Object.assign(o,{ex:"cc3"});
 LES.algo.push(
 /* ------------------------------------------------------------------ */
-A2({id:"a2-invariant",t:"Prouver une boucle : trace, invariant, terminaison",min:14,goal:"Faire la preuve de validité d'un algorithme itératif : trace, équations de récurrence, invariant, sortie, terminaison (TD 6, CC 2022 et 2024).",steps:[
- Q("Un invariant de boucle, c'est…",["une propriété vraie avant la boucle et conservée par chaque tour","la condition du Tant que","la valeur renvoyée"],0,"Comme une récurrence : vrai au départ, et si c'est vrai avant un tour, c'est vrai après."),
- L("Les quatre étapes",`<ol><li><b>La trace</b> : un tableau avec une colonne par variable, une ligne par tour. Elle donne l'idée.</li><li><b>Les équations de récurrence</b> : on traduit un tour, par exemple i<sub>k+1</sub> = i<sub>k</sub> + 1, x<sub>k+1</sub> = x<sub>k</sub> + 3.</li><li><b>L'invariant</b> : une égalité entre les variables, vraie à chaque tour (x = 3i). On la prouve par récurrence : vraie au départ, puis conservée grâce aux équations.</li><li><b>La sortie</b> : quand la boucle s'arrête, on remplace dans l'invariant la condition de sortie (i = n) : on obtient le résultat.</li></ol><p>Et la <b>terminaison</b> à part : une quantité entière qui diminue strictement à chaque tour (n − i), sinon la boucle pourrait tourner pour toujours.</p>`,{fig:"a-preuve"}),
- S("TD 6, ex. 24 : g(n)","i, r, x ← 0, 1, 0 ; Tant que i ≠ n : i ← i + 1 ; r ← r + x − i ; x ← x + 3 ; Renvoyer r.",[
-  {w:"Trace pour n = 5 : (i, r, x) = (0, 1, 0), (1, 0, 3), (2, 1, 6), (3, 4, 9), (4, 9, 12), (5, 16, 15).",why:"x vaut 3 fois i ; r a l'air d'être un carré."},
-  {w:"Invariants devinés : x = 3i et r = (i − 1)².",why:"0, 1, 4, 9, 16 = (i − 1)²."},
-  {w:"Départ : x = 0 = 3 × 0 et r = 1 = (0 − 1)².",why:"L'initialisation."},
-  {w:"Hérédité : x<sub>k+1</sub> = 3i<sub>k</sub> + 3 = 3i<sub>k+1</sub> ; r<sub>k+1</sub> = (i<sub>k</sub> − 1)² + 3i<sub>k</sub> − (i<sub>k</sub> + 1) = i<sub>k</sub>² = (i<sub>k+1</sub> − 1)².",why:"On utilise les équations de récurrence et l'hypothèse."},
-  {w:"Sortie : i = n, donc r = (n − 1)² : g calcule (n − 1)². Terminaison : n − i diminue de 1 à chaque tour.",why:"On remplace i par n dans l'invariant."}]),
- Q("À quoi servent les équations de récurrence ? (CC1 2024)",["À montrer qu'un invariant est héréditaire","À prouver que la boucle s'arrête","À choisir les variables"],0,"Elles traduisent un tour de boucle en relations entre les variables."),
- Q("Pour prouver qu'un Tant que s'arrête, on cherche…",["une quantité entière qui diminue strictement","un invariant","la valeur finale"],0,"Une quantité entière ≥ 0 ne peut pas diminuer indéfiniment."),
- Q("Fibonacci itératif : i, r1, r2 ← 0, 0, 1 ; tant que i < n : r3 ← r1 ; r1 ← r2 ; r2 ← r3 + r2 ; i ← i + 1. Que renvoyer ?",["r1, car r1 = fib(i) et i = n à la fin","r2","i"],0,"Invariants r1 = fib(i), r2 = fib(i + 1) (TD 6, ex. 26)."),
- P("TD 6, ex. 27 : logEntier, sur papier","i, p, q ← 0, 1, 2 ; Tant que q ≤ a : p ← q ; q ← p + p ; i ← i + 1 ; Renvoyer i. (1) Trace pour a = 18. (2) Invariants liant p et i, q et i. (3) Les prouver. (4) Montrer qu'à la fin 2^i ≤ a < 2^(i+1).",`<p>Trace : (0, 1, 2), (1, 2, 4), (2, 4, 8), (3, 8, 16), (4, 16, 32) : renvoie 4. Invariants p = 2<sup>i</sup> et q = 2<sup>i+1</sup> (vrais au départ ; un tour fait p ← 2<sup>i+1</sup>, q ← 2<sup>i+2</sup>, i ← i + 1). À la sortie q > a ; p ≤ a (p = 1 ≤ a au départ, sinon c'est un ancien q ≤ a). Donc 2<sup>i</sup> ≤ a < 2<sup>i+1</sup>. Terminaison : q double et finit par dépasser a.</p>`,["Un tableau de trace propre","Initialisation et hérédité des deux invariants","La sortie : q > a et p ≤ a","Une phrase de terminaison"],12),
- K("Les étapes d'une preuve de validité ?","Trace, équations de récurrence, invariant (initialisation + hérédité), sortie (condition d'arrêt dans l'invariant), et terminaison (quantité entière qui décroît)."),
- K("À quoi servent les équations de récurrence ?","À traduire un tour de boucle en relations entre les variables, pour montrer qu'un invariant est héréditaire.")]}),
+A2({id:"a2-invariant",t:"Prouver une boucle : équations d'itération et invariant",min:17,goal:"Faire la preuve de validité d'un algorithme itératif avec la méthode en 4 étapes du cours, et prouver qu'un tant que s'arrête (TD 6, CC 2022, examens de 2023).",steps:[
+ L("Les mots du cours",`<p>Une <b>itération</b>, c'est un tour de boucle. Un algorithme <b>itératif</b> est un algorithme qui contient une boucle.</p><p><b>Un algorithme est valide s'il résout le problème qu'il est censé résoudre</b> (diapo 53).</p><p>Vocabulaire (diapo 54) :</p><ul><li><b>équation d'itération</b> : égalité reliant les valeurs des variables d'une itération à la suivante ; ce sera notre <b>vérité</b> ;</li><li><b>invariant de boucle</b> : propriété censée être vraie au début des itérations et à la fin de chaque itération ; ce sera notre <b>hypothèse à prouver</b>.</li></ul><p><b>Notation.</b> var<sub>i</sub> : valeur de var à la fin de l'itération n°i. Si i commence à 1, on ajoute la valeur i = 0 pour le début des itérations.</p><p><b>Méthode</b> (diapo 56) :</p><ol><li>« lire » les équations d'itération sur l'algorithme (vérité) ;</li><li>chercher un invariant de boucle (hypothèse) ;</li><li>prouver l'hypothèse par récurrence en utilisant la vérité : l'hypothèse devient une vérité ;</li><li>écrire cette vérité à la fin des itérations pour prouver l'algorithme.</li></ol>`),
+ L("Premier exemple du cours : F1 calcule n!",`<p>n! (« factorielle de n ») = 1 × 2 × … × n, et 0! = 1.</p>${C(`FONCTION : F1 (E n : entier) : entier
+SPÉCIFICATIONS : Calcule n! avec n ∈ ℕ
+Variable : res : entier
+DÉBUT
+    res ← 1
+    pour i de 1 à n faire
+        res ← res * i
+    fin pour;
+    Renvoyer res
+FIN`)}<p>La preuve du cours (diapo 57). res<sub>i</sub> est la valeur de res à la fin de l'itération i.</p><ol><li><b>Équation d'itération</b> : res<sub>0</sub> = 1 et si i > 0, res<sub>i</sub> = res<sub>i−1</sub> × i.</li><li><b>Invariant proposé</b> : Inv<sub>i</sub> : « res<sub>i</sub> = i! ».</li><li><b>Preuve de l'invariant</b> :<ul><li><b>Initialisation</b> : au début des itérations, res<sub>0</sub> = 1 (vérité) donc res<sub>0</sub> = 0! donc Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : si Inv<sub>i−1</sub> est vrai (1 ≤ i ≤ n), c'est-à-dire si res<sub>i−1</sub> = (i − 1)!, comme res<sub>i</sub> = res<sub>i−1</sub> × i (vérité), alors res<sub>i</sub> = (i − 1)! × i = i!, c'est-à-dire Inv<sub>i</sub> est vrai.</li><li><b>Conclusion</b> : l'invariant est vrai pour toutes les itérations.</li></ul></li><li>À la fin des n itérations, l'invariant (nouvelle vérité) s'écrit res<sub>n</sub> = n!. La valeur renvoyée est la valeur attendue : l'algorithme est valide.</li></ol>`),
+ Q("Dans la preuve de F1, à quel moment se sert-on de l'équation d'itération res<sub>i</sub> = res<sub>i−1</sub> × i ?",["Dans la récurrence, pour passer de Inv<sub>i−1</sub> à Inv<sub>i</sub>","Seulement dans la conclusion","Jamais : elle sert à prouver l'arrêt"],0,"C'est elle qui relie une itération à la suivante. Le sujet du CC1 2024 le demandait : « à quoi servent les équations de récurrence ? » (le nom des équations d'itération cette année-là). Corrigé officiel : « Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables. Elles permettent de montrer qu'un invariant est héréditaire, c'est à dire que s'il est vrai à l'itération n, alors il est vrai à l'itération n+1. »"),
+ L("Deuxième exemple du cours : Cube, avec quatre variables",`${C(`FONCTION : Cube (E n : entier) : entier
+SPÉCIFICATIONS : Calcule n³ avec n ∈ ℕ.
+Variable : A, B, C, Z : entier
+DÉBUT
+    A, B, C, Z ← 1, 0, n, 0 ;
+    tant que C > 0 faire
+        Z ← Z+A+B ;
+        B ← B+A+A+1 ;
+        A, C ← A+3, C-1 ;
+    fin tq;
+    Renvoyer Z
+FIN`)}<p><b>Équations d'itération (vérité)</b> : A<sub>0</sub> = 1, B<sub>0</sub> = 0, C<sub>0</sub> = n, Z<sub>0</sub> = 0, puis</p><div class="formula">A<sub>i+1</sub> = A<sub>i</sub> + 3 &nbsp;;&nbsp; B<sub>i+1</sub> = B<sub>i</sub> + 2A<sub>i</sub> + 1 &nbsp;;&nbsp; C<sub>i+1</sub> = C<sub>i</sub> − 1 &nbsp;;&nbsp; Z<sub>i+1</sub> = Z<sub>i</sub> + A<sub>i</sub> + B<sub>i</sub></div><p>(Z est calculé avec les anciens A et B, et B avec l'ancien A : les lignes sont exécutées dans l'ordre.)</p><p><b>Invariant (hypothèse)</b> : on le cherche sur une « trace », ici pour n = 4 :</p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>itération i</th><th class="var">A<sub>i</sub></th><th class="var">B<sub>i</sub></th><th class="var">C<sub>i</sub></th><th class="var">Z<sub>i</sub></th></tr></thead><tbody><tr><td>0</td><td>1</td><td>0</td><td>4</td><td>0</td></tr><tr><td>1</td><td>4</td><td>3</td><td>3</td><td>1</td></tr><tr><td>2</td><td>7</td><td>12</td><td>2</td><td>8</td></tr><tr><td>3</td><td>10</td><td>27</td><td>1</td><td>27</td></tr><tr><td>4</td><td>13</td><td>48</td><td>0</td><td>64</td></tr></tbody></table></div><p>Invariant proposé : Inv<sub>i</sub> : « A<sub>i</sub> = 3i + 1, B<sub>i</sub> = 3i², C<sub>i</sub> = n − i, Z<sub>i</sub> = i³ ».</p>`),
+ L("La preuve de Cube",`<p>Diapo 59. On reprend les équations d'itération (EI) et l'invariant de l'écran précédent.</p><ul><li><b>Initialisation</b> : au début des itérations (i = 0), A<sub>0</sub> = 1 = 3 × 0 + 1, B<sub>0</sub> = 0 = 3 × 0², C<sub>0</sub> = n = n − 0, Z<sub>0</sub> = 0 = 0³ : Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : on suppose Inv<sub>i</sub> vrai et on fait une itération de plus.<br>A<sub>i+1</sub> = A<sub>i</sub> + 3 = 3i + 1 + 3 = 3(i + 1) + 1<br>B<sub>i+1</sub> = B<sub>i</sub> + 2A<sub>i</sub> + 1 = 3i² + 2(3i + 1) + 1 = 3(i + 1)²<br>C<sub>i+1</sub> = C<sub>i</sub> − 1 = n − i − 1 = n − (i + 1)<br>Z<sub>i+1</sub> = Z<sub>i</sub> + A<sub>i</sub> + B<sub>i</sub> = i³ + 3i + 1 + 3i² = (i + 1)³<br>Alors Inv<sub>i+1</sub> est vrai. L'invariant est donc vrai pour toutes les itérations.</li><li><b>Conclusion</b> : à la fin du TantQue, C<sub>i</sub> = 0 = n − i donc i = n. La valeur renvoyée est donc Z<sub>n</sub> = n³ : l'algorithme est valide.</li></ul><p>À chaque ligne de la récurrence : d'abord l'équation d'itération, puis l'invariant au rang i, puis un calcul. (Rappel : (i + 1)² = i² + 2i + 1 et (i + 1)³ = i³ + 3i² + 3i + 1.)</p>`),
+ Q("Avec l'invariant de Cube, que valent A et Z à la fin de l'itération 5 (pour n ≥ 5) ?",["A = 16 et Z = 125","A = 15 et Z = 125","A = 16 et Z = 25","A = 13 et Z = 64"],0,"A<sub>5</sub> = 3 × 5 + 1 = 16 et Z<sub>5</sub> = 5³ = 125. Une fois l'invariant prouvé, plus besoin de dérouler la trace."),
+ B("Cours, diapo 60 : « À vous de jouer ! Compléter la preuve ». On note n = taille(T). Choisis ce que le prof a écrit dans chaque trou.",`1. Équations d'itération : res₀ = [[0]] et resᵢ₊₁ = [[1]]
+2. Invariant : Invᵢ : « resᵢ = [[2]] »
+3. Initialisation : avant la boucle, pour i = 0, res₀ = T[0],
+   somme des valeurs de T[0] à T[0]. Inv₀ est vrai.
+   Récurrence : on suppose Invᵢ vrai pour 0 ≤ i ≤ n − 2
+   et on refait une itération.
+   Comme resᵢ₊₁ = resᵢ + T[i+1] (EI) et resᵢ = T[0] + T[1] + … + T[i] (Invᵢ),
+   on a resᵢ₊₁ = [[3]]. Donc Invᵢ₊₁ est vrai.
+   Conclusion : l'invariant est vrai pour toutes les itérations.
+4. À la fin du pour, l'algorithme renvoie [[4]]
+   par l'invariant : l'algorithme est valide.`,[{o:["T[0]","0","T[1]"],a:0},{o:["resᵢ + T[i+1]","resᵢ + T[i]","resᵢ + 1"],a:0},{o:["T[0] + T[1] + … + T[i]","T[0] + T[1] + … + T[n−1]","T[i]"],a:0},{o:["T[0] + … + T[i] + T[i+1]","T[0] + … + T[i]","T[i] + T[i+1]"],a:0},{o:["res avec l'indice taille(T)−1, égal à T[0] + … + T[taille(T)−1]","res₀ = T[0]","res avec l'indice taille(T), égal à T[0] + … + T[taille(T)]"],a:0}],"Ce sont les réponses écrites par le prof en amphi. Ici res part de T[0] et la boucle commence à i = 1 : à la fin de l'itération i, res contient la somme des cases 0 à i. La dernière itération est i = taille(T) − 1.",{lang:"txt",show:`FONCTION : somTab (E T : tableau d'entiers) : entier
+SPÉCIFICATIONS : Renvoie la somme des valeurs de T.
+Variable : res : entier
+DÉBUT
+    res ← T[0]
+    pour i de 1 à taille(T)-1 faire
+        res ← res+T[i]
+    fin pour;
+    Renvoyer res
+FIN`,showLang:"pseudo"}),
+ S("TD 6, exercice 24 : la fonction g","Faire la trace pour n = 5, donner un invariant liant x et i et un invariant liant r et i, les prouver, puis dire ce que calcule g. (« i!=n » veut dire i ≠ n.)",[
+  {w:"Trace pour n = 5, une ligne par itération : (i, r, x) = (0, 1, 0), (1, 0, 3), (2, 1, 6), (3, 4, 9), (4, 9, 12), (5, 16, 15). g renvoie 16.",why:"Attention à l'ordre des trois instructions : « r ← r + x - i » utilise le nouveau i, mais l'ancien x."},
+  {w:"Équations d'itération : i<sub>0</sub> = 0, r<sub>0</sub> = 1, x<sub>0</sub> = 0, puis i<sub>k+1</sub> = i<sub>k</sub> + 1, r<sub>k+1</sub> = r<sub>k</sub> + x<sub>k</sub> − i<sub>k+1</sub>, x<sub>k+1</sub> = x<sub>k</sub> + 3.",why:"Étape 1 : on les lit sur l'algorithme. C'est la vérité."},
+  {w:"Invariant proposé : Inv<sub>k</sub> : « x<sub>k</sub> = 3i<sub>k</sub> et r<sub>k</sub> = (i<sub>k</sub> − 1)² ».",why:"Étape 2 : dans la trace, x vaut toujours 3 fois i, et r vaut 1, 0, 1, 4, 9, 16 : le carré de i − 1."},
+  {w:"Initialisation : x<sub>0</sub> = 0 = 3 × 0 et r<sub>0</sub> = 1 = (0 − 1)². Inv<sub>0</sub> est vrai.",why:"Étape 3, début de la récurrence."},
+  {w:"Récurrence : on suppose Inv<sub>k</sub> vrai. x<sub>k+1</sub> = x<sub>k</sub> + 3 = 3i<sub>k</sub> + 3 = 3i<sub>k+1</sub>. Et r<sub>k+1</sub> = (i<sub>k</sub> − 1)² + 3i<sub>k</sub> − (i<sub>k</sub> + 1) = i<sub>k</sub>² = (i<sub>k+1</sub> − 1)². Inv<sub>k+1</sub> est vrai : l'invariant est vrai pour toutes les itérations.",why:"On remplace avec les équations d'itération, puis avec l'invariant au rang k. (i − 1)² + 3i − (i + 1) = i² − 2i + 1 + 2i − 1 = i²."},
+  {w:"À la fin du tant que, i = n, donc r = (n − 1)² : g calcule (n − 1)².",why:"Étape 4 : la condition i ≠ n est devenue fausse. On écrit l'invariant avec i = n."}],{code:`Fonction : g (E n : entier) : entier
+Spécifications : n positif. Renvoie ?
+Variables : i, r, x : entier
+Début
+    i, r, x ← 0, 1, 0
+    Tant que i!=n faire
+        i ← i + 1
+        r ← r + x - i
+        x ← x + 3
+    finTant que
+    Renvoyer r
+Fin`}),
+ L("Et l'arrêt d'une boucle tant que ?",`<p>La méthode en 4 étapes prouve que le résultat est bon <b>si la boucle s'arrête</b>. Une boucle pour s'arrête toujours. Pour une boucle tant que, les sujets demandent de le prouver (CC 2022, examens de janvier et mai 2023 : 2 points à chaque fois).</p><p>Le modèle du cours (diapo 95, sur la recherche dichotomique) :</p><ul><li>une quantité est un <b>entier naturel</b> ;</li><li>elle <b>décroît strictement</b> à chaque itération ;</li><li>le tant que s'arrête lorsqu'elle vaut 0 ou moins.</li></ul><p>« Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme se termine. »</p><p>Corrigé officiel de janvier 2023, pour une boucle « tant que a>0 et b>0 » : « L'expression entière a + b vaut initialement i + j et décroît strictement à chaque itération. Comme le tant que s'arrête lorsque a ≤ 0 ou b ≤ 0, il effectue au maximum i + j itérations. Il y a donc un nombre fini d'itérations donc l'algorithme s'arrête. »</p><p>Quand la variable du test monte vers une borne, on le dit dans l'autre sens : d'où elle part, de combien elle augmente, et après combien d'itérations le test devient faux.</p>`),
+ Q("Pourquoi la boucle de Cube s'arrête-t-elle ?",["C est un entier naturel qui décroît strictement à chaque itération, et le tant que s'arrête lorsqu'il vaut 0","Parce que Z finit par valoir n³","Parce que l'invariant est vrai pour toutes les itérations"],0,"C part de n et diminue de 1 à chaque itération : après n itérations, C = 0 et le test C > 0 est faux. L'invariant et la valeur de Z prouvent que le résultat est bon, pas que la boucle s'arrête.",{code:`A, B, C, Z ← 1, 0, n, 0 ;
+tant que C > 0 faire
+    Z ← Z+A+B ;
+    B ← B+A+A+1 ;
+    A, C ← A+3, C-1 ;
+fin tq;`}),
+ P("TD 6, exercice 27 : logEntier, sur papier",`<ol><li>Faites une trace de l'algorithme logEntier ci-dessous pour a = 18.</li><li>Donnez un invariant liant les valeurs de p et de i, un autre liant q et i.</li><li>Montrez ces invariants.</li><li>Montrez que l'algorithme est correct.</li></ol>${C(`Fonction : logEntier (E a : entier) : entier
+Spécifications : a un entier strictement positif.
+     En fin d'exécution, i = partie entière de log2(a),
+     i.e. i vérifie que 2^i <= a < 2^(i+1)
+Variables : p, q, i : Entier
+Début
+     i, p, q ← 0, 1, 2
+     Tant que q <= a faire
+         p ← q
+         q ← p + p
+         i ← i + 1
+     finTant que
+     Renvoyer i
+Fin`)}<p>(2^i veut dire 2<sup>i</sup>.)</p>`,`<p><b>1.</b></p><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>itération</th><th class="var">i</th><th class="var">p</th><th class="var">q</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>1</td><td>2</td></tr><tr><td>1</td><td>1</td><td>2</td><td>4</td></tr><tr><td>2</td><td>2</td><td>4</td><td>8</td></tr><tr><td>3</td><td>3</td><td>8</td><td>16</td></tr><tr><td>4</td><td>4</td><td>16</td><td>32</td></tr></tbody></table></div><p>32 > 18 : la boucle s'arrête, l'algorithme renvoie 4. Et en effet 2⁴ = 16 ≤ 18 &lt; 32 = 2⁵.</p><p><b>2.</b> p = 2<sup>i</sup> et q = 2<sup>i+1</sup>.</p><p><b>3.</b> Équations d'itération : i<sub>0</sub> = 0, p<sub>0</sub> = 1, q<sub>0</sub> = 2 ; puis p<sub>k+1</sub> = q<sub>k</sub>, q<sub>k+1</sub> = p<sub>k+1</sub> + p<sub>k+1</sub> = 2q<sub>k</sub>, i<sub>k+1</sub> = i<sub>k</sub> + 1.</p><ul><li>Initialisation : p<sub>0</sub> = 1 = 2⁰ et q<sub>0</sub> = 2 = 2¹.</li><li>Récurrence : si p<sub>k</sub> = 2<sup>k</sup> et q<sub>k</sub> = 2<sup>k+1</sup>, alors p<sub>k+1</sub> = q<sub>k</sub> = 2<sup>k+1</sup> et q<sub>k+1</sub> = 2 × 2<sup>k+1</sup> = 2<sup>k+2</sup>.</li><li>Conclusion : l'invariant est vrai pour toutes les itérations.</li></ul><p><b>4.</b> À la fin du tant que, la condition q ≤ a est fausse : a &lt; q = 2<sup>i+1</sup>. Il reste à voir que p ≤ a. S'il n'y a eu aucune itération, p = 1 ≤ a car a est strictement positif. Sinon, p est la valeur de q à l'itération d'avant, et cette itération n'a eu lieu que parce que q ≤ a. Dans les deux cas 2<sup>i</sup> = p ≤ a &lt; 2<sup>i+1</sup> : c'est la spécification.</p><p>L'arrêt : q double à chaque itération, donc a − q est un entier qui décroît strictement ; le tant que s'arrête lorsqu'il est négatif. Il y a un nombre fini d'itérations.</p><p>(Corrigé écrit par moi, vérifié par programme pour a de 1 à 2999.)</p>`,["Le tableau de trace : 5 lignes, la dernière avec q = 32","Les équations d'itération écrites avant l'invariant","Initialisation, récurrence, conclusion","La fin : q > a, et p ≤ a (deux cas)"],12),
+ K("Équation d'itération, invariant de boucle : les définitions du cours ?","Équation d'itération : égalité reliant les valeurs des variables d'une itération à la suivante (la vérité). Invariant de boucle : propriété censée être vraie au début des itérations et à la fin de chaque itération (l'hypothèse à prouver)."),
+ K("Les 4 étapes pour prouver la validité d'un algorithme itératif ?","1. « Lire » les équations d'itération sur l'algorithme (vérité). 2. Chercher un invariant de boucle (hypothèse). 3. Prouver l'hypothèse par récurrence en utilisant la vérité : initialisation, récurrence, conclusion. 4. Écrire cette vérité à la fin des itérations pour prouver l'algorithme."),
+ K("Comment prouver qu'un tant que s'arrête ?","Une quantité entière décroît strictement à chaque itération, et le tant que s'arrête lorsqu'elle atteint une certaine valeur : il y a un nombre fini d'itérations, donc l'algorithme se termine. Exemple (janvier 2023) : a + b vaut i + j au début et décroît strictement ; la boucle s'arrête quand a ≤ 0 ou b ≤ 0.")]}),
 
 /* ------------------------------------------------------------------ */
-A2({id:"a2-notations",t:"O, Ω, Θ : comparer des complexités",min:12,goal:"Utiliser O, Ω, Θ, o, ranger des suites, et estimer un temps d'exécution (TD 7, CC 2022 et 2024).",steps:[
- Q("Un algorithme en Θ(n³) peut-il être un million de fois plus lent qu'un autre en Θ(n³) ?",["Oui : 1 000 000 n³ et n³ sont tous deux en Θ(n³)","Non, ils ont la même vitesse","Seulement si n est petit"],0,"Θ ignore les constantes multiplicatives (CC1 2024)."),
- L("Les notations",`<ul><li><b>a = O(b)</b> : a ≤ C·b à partir d'un rang (« au plus »).</li><li><b>a = Ω(b)</b> : a ≥ c·b à partir d'un rang, c > 0 (« au moins »).</li><li><b>a = Θ(b)</b> : les deux (« même ordre de grandeur »).</li><li><b>a = o(b)</b> : a/b tend vers 0 (« négligeable »).</li></ul><p>Pour trouver l'ordre : on garde le terme qui grandit le plus vite et on oublie les constantes. Ordre à connaître : log n ≺ n ≺ n log n ≺ n² ≺ n³ ≺ 2ⁿ ≺ 3ⁿ.</p>`,{fig:"a-complexite"}),
- Q("Si a = Θ(b), alors…",["a = O(b)","a = o(b)","a n'est pas Ω(b)"],0,"Θ veut dire à la fois O et Ω (QCM du CC 2022)."),
- Q("Ordre de 0,001n² − 100000n ?",["Θ(n²)","Θ(n)","Θ(1)"],0,"Le n² finit par l'emporter, quelle que soit la constante."),
- S("TD 7, ex. 30 : A en Θ(n²), B en Θ(n log n)","A met 1 s et B 10 s pour n = 100. Lequel choisir pour n = 1000 ? pour n = 10000 ?",[
-  {w:"T<sub>A</sub>(n) = c n² avec 1 = c × 100², donc c = 10⁻⁴.",why:"On suppose les temps proportionnels à n² et n log n."},
-  {w:"n = 1000 : T<sub>A</sub> = 100 s ; T<sub>B</sub> = 10 × (1000 log 1000)/(100 log 100) = 10 × 10 × 1,5 = 150 s : A.",why:"log 1000 / log 100 = 3/2, quelle que soit la base."},
-  {w:"n = 10000 : T<sub>A</sub> = 10⁴ s ; T<sub>B</sub> = 10 × 100 × 2 = 2000 s : B.",why:"Pour n assez grand, l'ordre plus faible finit toujours par gagner."}]),
- Q("Un ordinateur 100 fois plus rapide, temps proportionnel à n². En 1 minute, il traite…",["10 fois plus de données","100 fois plus","2 fois plus"],0,"n² = 100 n₀², donc n = 10 n₀ (TD 7, ex. 31)."),
- K("O, Ω, Θ, o ?","O : au plus (à une constante près). Ω : au moins. Θ : les deux, même ordre. o : négligeable. Θ ignore les constantes."),
- K("Ordre de croissance à connaître ?","log n ≺ n ≺ n log n ≺ n² ≺ n³ ≺ 2ⁿ ≺ 3ⁿ.")]}),
+A2({id:"a2-recursif",t:"Prouver un algorithme récursif",min:13,goal:"Prouver par récurrence qu'un algorithme récursif renvoie le bon résultat et se termine (cours diapos 61 à 65, TD 6 ex. 25, examens de 2023 : 2 points).",steps:[
+ L("Les mots du cours pour un algorithme récursif",`<p>Vocabulaire (diapo 61) :</p><ul><li><b>équation de récurrence</b> : égalité reliant le résultat de l'algorithme avec celui des appels récursifs ; ce sera notre <b>vérité</b> ;</li><li><b>invariant de récursion</b> : propriété censée être vraie à chaque appel récursif. Le plus souvent, ça revient à écrire que l'algorithme renvoie le bon résultat ; ce sera notre <b>hypothèse à prouver</b>.</li></ul><p><b>Méthode</b> (diapo 63) :</p><ol><li>« lire » les équations de récurrence sur l'algorithme (vérité) ;</li><li>poser l'invariant de récursion (hypothèse) ;</li><li>prouver l'hypothèse par récurrence en utilisant la vérité ;</li><li>l'hypothèse devient alors une vérité qui prouve l'algorithme.</li></ol><p>C'est la même méthode que pour une boucle. Ce qui change : la récurrence porte sur le paramètre n de l'algorithme, plus sur le numéro de l'itération.</p>`),
+ L("L'exemple du cours : F2, la factorielle récursive",`${C(`FONCTION : F2 (E n : entier) : entier
+SPÉCIFICATIONS : calcule la factorielle d'un entier n ∈ ℕ.
+DÉBUT
+    si n=0 alors
+        Renvoyer 1
+    sinon
+        Renvoyer n*F2(n-1)
+    fin si;
+FIN`)}<p>La preuve du cours (diapo 64) :</p><ol><li><b>Équation de récurrence (vérité)</b> : F2(0) = 1 et F2(n) = n × F2(n − 1) pour n > 0.</li><li><b>Invariant (hypothèse)</b> : Inv<sub>n</sub> : « F2(n) = n! ».</li><li><b>Preuve de l'invariant</b> :<ul><li><b>Initialisation</b> : pour n = 0, on a F2(0) = 1 (vérité) donc F2(0) = 0! c'est-à-dire Inv<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : pour n > 0, si Inv<sub>n−1</sub> est vrai, c'est-à-dire si F2(n − 1) = (n − 1)!, comme F2(n) = n × F2(n − 1) (vérité) alors F2(n) = n × (n − 1)! = n!. Donc Inv<sub>n</sub> est vrai.</li><li><b>Conclusion</b> : pour tout n ∈ ℕ, F2(n) = n!</li></ul></li><li>L'algorithme renvoie le bon résultat : il est valide.</li></ol>`),
+ Q("Dans la preuve de F2, d'où vient l'égalité F2(n) = n × F2(n − 1) ?",["On la lit sur l'algorithme : c'est l'équation de récurrence, la vérité","C'est l'invariant de récursion, l'hypothèse","C'est la conclusion de la preuve"],0,"C'est la ligne « Renvoyer n*F2(n-1) ». L'hypothèse, c'est « F2(n) = n! » : elle dit que l'algorithme renvoie le bon résultat."),
+ B("Cours, diapo 65 : « À vous de jouer ! Compléter la preuve ». Choisis ce que le prof a écrit dans chaque trou.",`Équations de récurrence : si n = 1 alors F4(1) = [[0]]
+et si n > 1 alors F4(n) = [[1]]   (*)
+Invariant à prouver : Pₙ : F4(n) = [[2]]
+Initialisation : pour n = 1, F4(n) = 1
+   qui est bien la somme de 1 à 1. Donc P₁ est vrai.
+Récurrence : pour n > 1, on suppose Pₙ₋₁ vraie :
+   F4(n − 1) = [[3]]
+   Comme F4(n) = n + F4(n − 1) (*)
+   alors F4(n) = n + 1 + 2 + … + (n − 1). Donc Pₙ est vrai.
+Conclusion : pour tout n, F4(n) renvoie 1 + 2 + … + n.
+L'algorithme est valide.`,[{o:["1","0","n"],a:0},{o:["n + F4(n − 1)","n × F4(n − 1)","1 + F4(n − 1)"],a:0},{o:["1 + 2 + … + n","n!","n + 1"],a:0},{o:["1 + 2 + … + (n − 1)","1 + 2 + … + n","n − 1"],a:0}],"Réponses écrites par le prof en amphi. Ici le cas de base est n = 1 (n est dans ℕ*, les entiers à partir de 1) : l'initialisation se fait donc pour n = 1.",{lang:"txt",show:`FONCTION : F4 (E n : entier) : entier
+SPÉCIFICATIONS : Renvoie la somme des entiers de 1 à n, avec n ∈ ℕ*
+DÉBUT
+    Renvoyer cond(n=1, 1, n+F4(n-1))
+FIN`,showLang:"pseudo"}),
+ L("Prouver aussi que l'algorithme se termine",`<p>Les sujets d'examen demandent les deux à la fois : « Prouver par récurrence que la fonction F se termine et renvoie le bon résultat » (janvier et mai 2023, 2 points).</p><p>On ajoute « se termine » dans la propriété, et on le justifie à chaque étape :</p><ul><li><b>Base</b> : le cas de base renvoie une valeur sans appel récursif, donc se termine.</li><li><b>Hérédité</b> : on suppose que l'appel au rang n − 1 se termine et renvoie le bon résultat. L'appel au rang n est constitué d'opérations élémentaires et d'appels au rang n − 1, donc il se termine.</li></ul><p>Les corrigés officiels disent « base » et « hérédité » ; le cours de cette année dit « initialisation » et « récurrence ». C'est la même chose.</p><p>Tu as déjà vu une preuve d'arrêt de ce type pour le CC1 : la procédure G du CC1 2024, avec une récurrence à deux pas (G(n) appelle G(n-1) et G(n-2)).</p>`),
+ S("Examen de janvier 2023, exercice 3, question 1 (2 points)","Prouver par récurrence que la fonction F se termine et renvoie le bon résultat. La spécification dit que F renvoie 1/(n+1).",[
+  {w:"Base : pour n = 0, F renvoie 1 donc se termine. De plus, comme 1 = 1/(0 + 1), F renvoie le bon résultat.",why:"Le cas de base : les deux choses à dire (se termine, bon résultat)."},
+  {w:"Hérédité : supposons que, pour n > 0, F(n − 1) se termine et renvoie le bon résultat, c'est à dire 1/n.",why:"L'hypothèse de récurrence, au rang n − 1 : le bon résultat pour n − 1 est 1/((n − 1) + 1) = 1/n."},
+  {w:"Alors l'appel F(n) est constitué d'opérations élémentaires et de deux appels à F(n − 1) donc se termine.",why:"L'arrêt : tout ce que fait F(n) se termine."},
+  {w:"De plus, F(n) renvoie F(n−1)/(1 + F(n−1)) = (1/n)/(1 + 1/n) = 1/(n + 1), c'est à dire le bon résultat.",why:"L'équation de récurrence (lue sur l'algorithme), puis l'hypothèse. (1/n)/(1 + 1/n) = (1/n)/((n + 1)/n) = 1/(n + 1)."},
+  {w:"Conclusion : pour tout n ∈ ℕ, l'appel F(n) se termine et renvoie le bon résultat.",why:"C'est le corrigé officiel, mot pour mot."}],{code:`Fonction : F (E n : entier) : entier
+Spécifications : n∈ ℕ. Renvoie 1/(n+1).
+Début
+    Si n=0 alors
+      Renvoyer 1
+    Sinon
+      Renvoyer F(n-1) / (1+F(n-1))
+    FinSi
+Fin`}),
+ P("TD 6, exercice 25, questions 3 à 5 : la somme d'un tableau en récursif, sur papier",`<p>Soit T un tableau d'entiers.</p><ol start="3"><li>Écrire un algorithme <b>récursif</b> qui, étant donné un tableau T et un entier n, calcule la somme des éléments de T entre 0 et n-1.</li><li>Prouver cet algorithme.</li><li>Avec quelle valeur de n faut-il l'appeler pour avoir la somme des valeurs de tout le tableau ?</li></ol>`,`<p><b>3.</b></p>${C(`FONCTION : somRec (E T : tableau d'entiers, E n : entier) : entier
+SPÉCIFICATIONS : 0 ≤ n ≤ taille(T). Renvoie la somme des éléments de T
+                 d'indices 0 à n-1 (0 s'il n'y en a aucun).
+DÉBUT
+    Renvoyer cond(n=0, 0, somRec(T, n-1) + T[n-1])
+FIN`)}<p><b>4.</b></p><ul><li><b>Équations de récurrence</b> (la vérité) : somRec(T, 0) = 0, et pour n > 0, somRec(T, n) = somRec(T, n−1) + T[n−1].</li><li><b>Invariant de récursion</b> (l'hypothèse) : P<sub>n</sub> : « somRec(T, n) = T[0] + … + T[n−1] ».</li><li><b>Initialisation</b> : pour n = 0, somRec(T, 0) = 0, qui est bien la somme de zéro élément. P<sub>0</sub> est vrai.</li><li><b>Récurrence</b> : pour n > 0, on suppose P<sub>n−1</sub> vrai : somRec(T, n−1) = T[0] + … + T[n−2]. Comme somRec(T, n) = somRec(T, n−1) + T[n−1], alors somRec(T, n) = T[0] + … + T[n−2] + T[n−1]. Donc P<sub>n</sub> est vrai.</li><li><b>Conclusion</b> : pour tout n entre 0 et taille(T), somRec(T, n) renvoie T[0] + … + T[n−1]. L'algorithme est valide.</li></ul><p><b>5.</b> Avec n = taille(T) : somRec(T, taille(T)).</p><p>(Corrigé écrit par moi, sur le modèle de la diapo 65.)</p>`,["Un cas de base sans appel récursif (n = 0 renvoie 0)","L'appel récursif sur n-1, et la case T[n-1] (pas T[n])","Les équations de récurrence, puis l'invariant P<sub>n</sub>","Initialisation, récurrence, conclusion"],10),
+ K("Équation de récurrence, invariant de récursion : les définitions du cours ?","Équation de récurrence : égalité reliant le résultat de l'algorithme avec celui des appels récursifs (la vérité). Invariant de récursion : propriété censée être vraie à chaque appel récursif ; le plus souvent, l'algorithme renvoie le bon résultat (l'hypothèse à prouver)."),
+ K("Prouver par récurrence qu'un algorithme récursif F se termine et renvoie le bon résultat : le plan ?","Base : le cas de base renvoie la bonne valeur sans appel, donc se termine. Hérédité : on suppose que F(n − 1) se termine et renvoie le bon résultat ; F(n) est fait d'opérations élémentaires et d'appels à F(n − 1), donc se termine ; avec l'équation de récurrence, il renvoie le bon résultat. Conclusion : pour tout n.")]}),
 
 /* ------------------------------------------------------------------ */
-A2({id:"a2-compter",t:"Compter les opérations : boucles et récursivité",min:15,goal:"Calculer la complexité de boucles imbriquées et d'algorithmes récursifs (TD 8, examen de janvier 2023).",steps:[
- Q("Combien d'additions fait « Pour i de 1 à n, Pour j de 1 à n : som ← som + 1 » ?",["n²","2n","n"],0,"n tours, et n additions à chaque tour."),
- L("Les boucles",`<ul><li>Une boucle de n tours avec un travail constant : <b>n</b>.</li><li>Deux boucles imbriquées de n tours : <b>n²</b>.</li><li>« Pour j de 1 à i » : 1 + 2 + … + n = <b>n(n + 1)/2</b>, donc Θ(n²).</li><li>Une boucle qui divise par 2 à chaque tour : <b>log₂ n</b> tours.</li></ul><p>Sommes utiles : Σ 1 = n ; Σ i = n(n + 1)/2 ; Σ i² = n(n + 1)(2n + 1)/6.</p>`,{fig:"a-calcul-complexite"}),
- Q("« Pour i de 1 à n, Pour j de i à n : som ← som + 1 » fait…",["n(n + 1)/2 additions","n² additions","n additions"],0,"n + (n − 1) + … + 1 (TD 8, ex. 34.5)."),
- L("Les algorithmes récursifs",`<p>On écrit une <b>équation de récurrence</b> sur Tₙ, le nombre d'opérations pour la taille n.</p><ul><li>Tₙ = Tₙ₋₁ + c → Θ(n).</li><li>Tₙ = 2Tₙ₋₁ + c → Θ(2ⁿ) : deux appels de taille n − 1.</li><li>Tₙ = T<sub>n/2</sub> + c → Θ(log n) (dichotomie).</li><li>Tₙ = 2T<sub>n/2</sub> + Θ(n) → Θ(n log n).</li></ul><p><b>Master theorem</b> : Tₙ = a T<sub>n/b</sub> + Θ(n<sup>d</sup>) donne Θ(n<sup>d</sup>) si a &lt; b<sup>d</sup>, Θ(n<sup>d</sup> log n) si a = b<sup>d</sup>, Θ(n<sup>log_b a</sup>) si a &gt; b<sup>d</sup>.</p>`),
- S("Examen de janvier 2023, ex. 3 : F(n) = F(n−1) / (1 + F(n−1))","Tₙ = nombre d'opérations arithmétiques.",[
-  {w:"T₀ = 0 ; pour n > 0 : deux appels F(n − 1), une addition, une division, et deux calculs de n − 1 : Tₙ = 2Tₙ₋₁ + 4.",why:"On compte ce que fait un appel, plus les appels qu'il lance."},
-  {w:"Uₙ = Tₙ + 4 vérifie Uₙ = 2Tₙ₋₁ + 8 = 2Uₙ₋₁ : suite géométrique, U₀ = 4.",why:"L'indication du sujet."},
-  {w:"Uₙ = 4 × 2ⁿ, donc Tₙ = 4 × 2ⁿ − 4 : Θ(2ⁿ).",why:"On revient à T."},
-  {w:"Bien mieux : F(n) = 1/(n + 1), donc « Renvoyer 1/(n+1) » en Θ(1).",why:"Garder F(n − 1) dans une variable donnerait seulement Θ(n) (−0,5 au barème)."}]),
- Q("Tₙ = 2T<sub>n/2</sub> + Θ(n) donne…",["Θ(n log n)","Θ(n²)","Θ(log n)"],0,"a = 2, b = 2, d = 1 : a = b<sup>d</sup>."),
- P("TD 8, ex. 34, sur papier","Nombre d'additions de : (1) Pour i de 1 à n : som ← som + 1. (2) i et j de 1 à n. (3) i de 1 à n, j de 1 à n², k de 1 à n³. (4) i de 1 à n, j de 1 à i. (6) i de 1 à n : som ← som + 1, puis dans la même boucle j de 1 à n : som ← som + 1.",`<ol><li>n.</li><li>n².</li><li>n⁶.</li><li>n(n + 1)/2, Θ(n²).</li><li value="6">n(1 + n) = n² + n, Θ(n²).</li></ol>`,["Une somme écrite pour chaque cas","Le résultat simplifié, puis l'ordre Θ"],8),
- K("Complexité de boucles imbriquées ?","On multiplie les nombres de tours ; si la boucle intérieure dépend de i, on fait la somme (Σ i = n(n + 1)/2)."),
- K("Tₙ = 2Tₙ₋₁ + c ? Tₙ = 2T(n/2) + n ?","Θ(2ⁿ) ; Θ(n log n) (master theorem, a = b^d).")]}),
+A2({id:"a2-compter",t:"Compter les opérations : Tₙ, Vₙ, équation de complexité",min:14,goal:"Calculer la complexité en temps et en espace d'un algorithme, itératif ou récursif, comme dans les « À vous de jouer » du cours (diapos 67 à 74) et l'examen de janvier 2023.",steps:[
+ L("Ce qu'on compte",`<p><b>Motivation</b> (diapo 67). Un algorithme efficace, une fois traduit en programme, consomme peu de ressources et fonctionne vite. Idée : compter le nombre d'opérations et l'espace mémoire de l'algorithme.</p><ul><li>Simplification : 1 opération élémentaire = 1 unité de temps, 1 variable élémentaire = 1 unité de mémoire.</li><li>Simplification : ils dépendent uniquement d'un entier appelé <b>taille de l'entrée</b>, exceptionnellement deux.</li><li>S'ils dépendent de la configuration des données, on regarde uniquement celle qui consomme le plus de ressources (<b>pire cas</b>).</li></ul><p><b>Notations</b> (diapo 68). On note <b>T<sub>n</sub></b> le nombre d'opérations élémentaires et <b>V<sub>n</sub></b> l'espace mémoire occupé. Ce sont des suites d'entiers positifs. T<sub>n</sub> est la <b>complexité en temps</b>, ou complexité de l'algorithme. V<sub>n</sub> est sa <b>complexité en espace</b>.</p><p>Une opération élémentaire : une affectation (←), un calcul (+, −, *, div…), une comparaison, un accès à une case T[i], un appel.</p>`),
+ L("Diapo 69 : compter dans F1",`${C(`FONCTION : F1 (E n : entier) : entier
+Variable : res : entier
+DÉBUT
+    res ← 1
+    pour i de 1 à n faire
+        res ← res * i
+    fin pour;
+    Renvoyer res
+FIN`)}<p>Réponse écrite par le prof en amphi :</p><ul><li>« res ← 1 » : 1 opération.</li><li>« res ← res * i » : 2 opérations (la multiplication et l'affectation), faites n fois : 2n.</li><li>Donc <b>T<sub>n</sub> = 2n + 1</b>.</li><li>1 variable (res) : <b>V<sub>n</sub> = 1</b>.</li></ul>`),
+ S("Diapo 70 : compter dans le pire cas","Calculer Tₙ et Vₙ dans le pire cas. On note n = taille(T). (La diapo imprimée écrit « i&lt;=taille(T) » ; le prof a barré le = en amphi.)",[
+  {w:"Pire cas : le cas où il parcourt tout le tableau (toutes les cases valent 0). Il y a alors n tours de boucle.",why:"Le nombre de tours dépend du contenu de T : on prend la configuration qui consomme le plus."},
+  {w:"« i ← 0 » : 1 opération.",why:"Une affectation."},
+  {w:"Le test du tant que fait 5 opérations : la comparaison de i avec taille(T), l'appel taille(T), le « et », l'accès T[i], la comparaison avec 0. Il est vérifié n + 1 fois : 5(n + 1).",why:"n fois où il est vrai, plus une dernière fois où il est faux et fait sortir de la boucle."},
+  {w:"« i ← i+1 » : 2 opérations (l'addition et l'affectation), n fois : 2n.",why:"Une fois par tour."},
+  {w:"T<sub>n</sub> = 1 + 5(n + 1) + 2n = 7n + 6 dans le pire cas (ou 7n + 4 avec l'évaluation paresseuse). 1 variable : V<sub>n</sub> = 1.",why:"Évaluation paresseuse : au dernier test, « i<taille(T) » est faux, donc la suite du « et » n'est pas calculée. C'est ce que le prof a écrit en amphi."}],{code:`FONCTION : F4 (E T : tableau d'entier) : entier
+Variable : i : nombre
+DÉBUT
+    i ← 0
+    tant que i<taille(T) et T[i]=0 faire
+        i ← i+1
+    fin tq;
+    Renvoyer i
+FIN`}),
+ Q("Dans F4, quel est le meilleur cas (celui qui fait le moins d'opérations) ?",["T[0] ≠ 0 : le test est faux dès le début, aucun tour de boucle","Toutes les cases valent 0","Le tableau est trié"],0,"Le nombre d'opérations dépend ici des données. Par convention du cours, la complexité est celle du pire cas : toutes les cases valent 0."),
+ L("Compter pour un algorithme récursif : l'équation de complexité",`<p><b>Problématique</b> (diapo 71). Lorsqu'on appelle un algorithme récursif, il effectue des opérations et occupe de l'espace. Puis il s'appelle, et les appels effectuent des opérations et occupent de l'espace…</p><p><b>Solution.</b> T<sub>n</sub> = opérations de l'algorithme + opérations faites dans ses appels. T<sub>n</sub> est une suite définie par une équation récurrente appelée <b>équation de complexité</b>, il reste à l'exprimer directement en fonction de n. C'est pareil pour V<sub>n</sub>.</p><p><b>Exemple</b> (diapo 72), la factorielle récursive :</p>${C(`FONCTION : F2 (E n : entier) : entier
+DÉBUT
+    si n=0 alors
+        Renvoyer 1
+    sinon
+        Renvoyer n*F2(n-1)
+    fin si;
+FIN`)}<ul><li><b>Cas de base</b> : si n = 0, 1 comparaison : T<sub>0</sub> = 1.</li><li><b>Équation de complexité</b> : si n > 0 : 1 comparaison, 1 multiplication, 1 appel, 1 soustraction + les opérations de F2(n-1) : T<sub>n</sub> = 4 + T<sub>n−1</sub>.</li><li><b>Résolution</b> : T<sub>n</sub> est une suite arithmétique : T<sub>n</sub> = 4n + 1.</li></ul><p>(Suite arithmétique : on ajoute toujours le même nombre, ici 4. En partant de T<sub>0</sub> = 1, après n fois : 1 + 4n.)</p>`),
+ Q("Examen de janvier 2023 : F renvoie F(n-1) / (1+F(n-1)) si n ≠ 0, et on compte seulement les opérations arithmétiques (T<sub>0</sub> = 0). Quelle est l'équation de complexité ?",["T<sub>n</sub> = 2T<sub>n−1</sub> + 4","T<sub>n</sub> = T<sub>n−1</sub> + 4","T<sub>n</sub> = 2T<sub>n−1</sub> + 2"],0,"Corrigé officiel : « 2 appels au rang n − 1, une addition, une division, deux soustractions ». F(n-1) est écrit deux fois : il est calculé deux fois, et chaque n-1 est une soustraction."),
+ L("Quand la taille de l'entrée est divisée",`<p>Diapo 73. « n mod 2 » est le reste de la division de n par 2, « n div 2 » son quotient.</p>${C(`FONCTION : F5 (E n : entier) : booléen
+SPÉCIFICATIONS : détermine si n ∈ ℕ* est une puissance de 2.
+DÉBUT
+    si n=1 alors
+        Renvoyer true
+    sinon si n mod 2 = 1 alors
+        Renvoyer false
+    sinon
+        Renvoyer F5(n div 2)
+    fin si;
+FIN`)}<ul><li><b>Pire cas</b> : quand n est une puissance de 2 (n = 2<sup>k</sup>) car on fait un maximum d'appels récursifs jusqu'à tomber sur 1.</li><li><b>Cas de base</b> : T<sub>1</sub> = 1 (1 comparaison).</li><li><b>Équation de complexité</b> : si n > 1 : 5 opérations + celles de F5(n div 2) : T<sub>n</sub> = 5 + T<sub>n div 2</sub>.</li><li><b>Résolution</b> : depuis le cas de base, on ajoute 5 autant de fois que n = 2<sup>k</sup> peut être divisé par 2, c'est-à-dire k fois : T<sub>n</sub> = 1 + 5k = 1 + 5 log<sub>2</sub>(n).</li></ul><p><b>log<sub>2</sub>(n)</b> : le nombre de fois qu'il faut diviser n par 2 pour arriver à 1. Si n = 2<sup>k</sup>, alors log<sub>2</sub>(n) = k. Exemples : log<sub>2</sub>(8) = 3, log<sub>2</sub>(128) = 7, log<sub>2</sub>(1024) = 10.</p>`),
+ Q("Avec ce comptage, combien d'opérations fait F5(64) ?",["31","64","13","321"],0,"64 = 2⁶, donc log<sub>2</sub>(64) = 6 et T<sub>64</sub> = 1 + 5 × 6 = 31. Pour une entrée 64 fois plus grande que 1, seulement 30 opérations de plus."),
+ P("Cours, diapo 74 : estPair, sur papier",`<p>Complexité en soustractions ? Compléter le raisonnement.</p>${C(`FONCTION : estPair (E n : entier) : booléen
+DÉBUT
+    Renvoyer cond(n=0, true, cond(n=1, false, estPair(n-2)))
+FIN`)}<ul><li><b>Cas de base :</b></li><li><b>Équation de complexité :</b></li><li><b>Résolution :</b> valeurs de T<sub>n</sub> : … Généralisation :</li></ul><p>(On compte seulement les soustractions.)</p>`,`<p>Cette diapo n'est pas annotée dans le fichier du prof : corrigé écrit par moi, vérifié par programme.</p><ul><li><b>Cas de base</b> : pour n = 0 et n = 1, aucune soustraction : T<sub>0</sub> = 0 et T<sub>1</sub> = 0.</li><li><b>Équation de complexité</b> : si n ≥ 2, une soustraction (n-2) + celles de estPair(n-2) : T<sub>n</sub> = 1 + T<sub>n−2</sub>.</li><li><b>Résolution</b> : valeurs de T<sub>n</sub> pour n = 0, 1, 2, 3, 4, 5, 6, 7 : 0, 0, 1, 1, 2, 2, 3, 3.</li><li><b>Généralisation</b> : T<sub>n</sub> = n div 2 (le quotient de n par 2).</li></ul><p>L'ordre de complexité est donc n : l'algorithme est linéaire (leçon suivante).</p>`,["Deux cas de base : n = 0 et n = 1","L'équation relie T<sub>n</sub> à T<sub>n−2</sub>, pas à T<sub>n−1</sub>","Les premières valeurs écrites avant de généraliser","T<sub>n</sub> = n div 2"],7),
+ K("T<sub>n</sub>, V<sub>n</sub>, pire cas : que dit le cours ?","T<sub>n</sub> : nombre d'opérations élémentaires, la complexité en temps. V<sub>n</sub> : espace mémoire occupé, la complexité en espace. n : la taille de l'entrée. Si le nombre d'opérations dépend de la configuration des données, on regarde uniquement celle qui consomme le plus de ressources : le pire cas."),
+ K("Compter pour un algorithme récursif ?","T<sub>n</sub> = opérations de l'algorithme + opérations faites dans ses appels : c'est l'équation de complexité. On écrit le cas de base, l'équation, puis on la résout. Exemple F2 : T<sub>0</sub> = 1, T<sub>n</sub> = 4 + T<sub>n−1</sub>, donc T<sub>n</sub> = 4n + 1."),
+ K("Que vaut log<sub>2</sub>(n) quand n = 2<sup>k</sup> ?","k : le nombre de fois qu'il faut diviser n par 2 pour arriver à 1. log<sub>2</sub>(128) = 7, log<sub>2</sub>(1024) = 10.")]}),
+
+/* ------------------------------------------------------------------ */
+A2({id:"a2-notations",t:"L'ordre de complexité : θ, o, ω, O, Ω",min:15,goal:"Trouver l'ordre de complexité d'une suite, utiliser θ, o, ω, O, Ω, et estimer un temps d'exécution (cours diapos 75 à 80, TD 7, CC 2022 et 2024, examen de janvier 2023).",steps:[
+ L("Les suites de référence",`<p><b>Outils mathématiques</b> (diapo 75). T<sub>n</sub> et V<sub>n</sub> sont des suites d'entiers positifs souvent croissantes. Plutôt que leur expression exacte, on va les rattacher à une <b>suite de référence</b> R<sub>n</sub> qui a la même vitesse de croissance (« comparaison asymptotique »). Cette suite de référence est appelée <b>ordre de complexité</b> de l'algorithme.</p><p><b>Principales suites de référence dans l'ordre</b> (diapo 76) :</p><ul><li>1 (à coût constant)</li><li>log(n) (logarithmique)</li><li>n (linéaire)</li><li>n.log(n) (pseudo-linéaire)</li><li>n² (quadratique)</li><li>n³ (cubique)</li><li>n<sup>a</sup> avec a > 0 (polynômiale), n<sup>a</sup> log(n) avec a > 0</li><li>b<sup>n</sup> avec b > 1 (exponentielle)</li><li>n! (factorielle)</li></ul><p>(« Asymptotique » : quand n devient très grand.)</p>`,{fig:"a-complexite"}),
+ O("Range ces suites de référence dans l'ordre du cours, de celle qui grandit le moins vite à celle qui grandit le plus vite.",["1","log(n)","n","n.log(n)","n²","n³","2ⁿ","n!"],"1 (coût constant), log(n), n (linéaire), n.log(n) (pseudo-linéaire), n² (quadratique), n³ (cubique), puis les exponentielles comme 2ⁿ, et enfin n!.",{lang:"txt"}),
+ L("θ, o, ω : on divise par la suite de référence",`<p><b>Trouver l'ordre de complexité</b> (diapo 77). On divise T<sub>n</sub> par une suite de référence R<sub>n</sub> et on fait tendre n vers +∞.</p><ul><li>si T<sub>n</sub>/R<sub>n</sub> est borné entre deux nombres strictement positifs, en particulier si T<sub>n</sub>/R<sub>n</sub> → a > 0, alors T<sub>n</sub> est équivalente à R<sub>n</sub> ou de l'ordre de complexité R<sub>n</sub>. On note <b>T<sub>n</sub> = θ(R<sub>n</sub>)</b>.</li><li>si T<sub>n</sub>/R<sub>n</sub> → 0 alors T<sub>n</sub> est strictement dominée par R<sub>n</sub>. On note <b>T<sub>n</sub> = o(R<sub>n</sub>)</b>.</li><li>si T<sub>n</sub>/R<sub>n</sub> → +∞ alors T<sub>n</sub> domine strictement R<sub>n</sub>. On note <b>T<sub>n</sub> = ω(R<sub>n</sub>)</b>.</li><li>sinon, T<sub>n</sub> n'est pas comparable à R<sub>n</sub>. C'est rare.</li></ul><p><b>Attention.</b> « Équivalentes » ne veut pas dire « identiques » : si T<sub>n</sub> = 1000000R<sub>n</sub> ou T<sub>n</sub> = R<sub>n</sub> + 1000000 alors T<sub>n</sub> et R<sub>n</sub> sont équivalentes !</p><p>Exemple : T<sub>n</sub> = 2n + 1 (la complexité de F1). T<sub>n</sub>/n = 2 + 1/n tend vers 2 > 0 : T<sub>n</sub> = θ(n). F1 est linéaire.</p><p>Le cours écrit θ ; certains sujets écrivent Θ : c'est la même notation.</p>`),
+ Q("CC1 de novembre 2024 (un des 4 sujets) : « Un algorithme de complexité Θ(log(n)) peut-il être mille fois plus lent qu'un autre algorithme de complexité Θ(log(n)) ? Justifier. »",["Oui : par exemple le premier fait 1000 log n opérations et le deuxième log n opérations","Non : ils font le même nombre d'opérations","Non : un algorithme logarithmique est toujours rapide"],0,"Corrigé officiel : « Oui, si par exemple le premier fait 1000 log n opérations et le deuxième log n opérations. » C'est le « Attention » du cours : 1000 log n / log n = 1000, un nombre strictement positif, donc les deux sont en θ(log(n)). Les autres sujets posaient la question avec Θ(n³), Θ(n²) et Θ(n.log(n))."),
+ L("O et Ω, et trois propriétés",`<p><b>Vocabulaire</b> (diapo 78). Domination stricte ou équivalence = domination au sens large. On utilise la majuscule de la domination stricte :</p><ul><li><b>T<sub>n</sub> = O(R<sub>n</sub>)</b> : T<sub>n</sub> = o(R<sub>n</sub>) ou T<sub>n</sub> = θ(R<sub>n</sub>). T<sub>n</sub> est dominée par R<sub>n</sub> au sens large.</li><li><b>T<sub>n</sub> = Ω(R<sub>n</sub>)</b> : T<sub>n</sub> = ω(R<sub>n</sub>) ou T<sub>n</sub> = θ(R<sub>n</sub>). T<sub>n</sub> domine R<sub>n</sub> au sens large.</li></ul><p><b>Propriétés</b> (diapo 80) :</p><ul><li>tous les logarithmes sont du même ordre de grandeur : log<sub>10</sub>(n) = θ(log<sub>2</sub>(n)) = θ(ln(n)) etc.</li><li>o, O, ω, Ω, θ sont transitives : si a = o(b) et b = o(c) alors a = o(c) et de même pour O, ω, Ω, θ.</li><li>o, O, ω, Ω, θ sont multiplicatives et additives sur les suites > 0 : si a = o(a′) et b = o(b′) alors ab = o(a′b′) et a + b = o(a′ + b′), et de même pour O, ω, Ω, θ.</li></ul><p>En pratique : dans une somme, on garde le terme qui grandit le plus vite, et on oublie sa constante. 3n³ − 5n + 2 = θ(n³).</p>`),
+ Q("(a<sub>n</sub>) et (b<sub>n</sub>) sont deux suites strictement positives, avec a<sub>n</sub> = o(b<sub>n</sub>). Laquelle de ces affirmations est vraie ?",["a<sub>n</sub> = O(b<sub>n</sub>)","a<sub>n</sub> = Ω(b<sub>n</sub>)","a<sub>n</sub> = θ(b<sub>n</sub>)"],0,"O veut dire « o ou θ » : si a est strictement dominée par b, elle est dominée au sens large. En revanche a<sub>n</sub>/b<sub>n</sub> tend vers 0 : ce n'est ni θ ni Ω. Le QCM du CC de 2022 testait ce genre d'implication ; sa seule case vraie était « si a<sub>n</sub> = θ(b<sub>n</sub>) alors a<sub>n</sub> = O(b<sub>n</sub>) »."),
+ S("TD 7, exercice 30 : A en θ(n²), B en θ(n log n)","L'exécution de A dure 1 seconde avec n = 100, celle de B dure 10 s avec n = 100. (2) On suppose les temps proportionnels à n² et n log(n) : calculer les coefficients. (3) Quel algorithme pour n = 1000 ? (4) Pour n = 10000 ?",[
+  {w:"Pour A : 1 = k<sub>A</sub> × 100², donc k<sub>A</sub> = 0,0001.",why:"« Proportionnel à n² » : temps = k<sub>A</sub> × n². On remplace par la mesure connue."},
+  {w:"Pour B : 10 = k<sub>B</sub> × 100 × log(100) = k<sub>B</sub> × 200, donc k<sub>B</sub> = 0,05.",why:"Avec le logarithme en base 10, log(100) = 2 car 100 = 10². Une autre base change k<sub>B</sub>, pas les conclusions."},
+  {w:"n = 1000 : A met 0,0001 × 1000² = 100 s. B met 0,05 × 1000 × 3 = 150 s. Il faut choisir A.",why:"log(1000) = 3. Pour cette taille, l'algorithme d'ordre le plus grand est encore le plus rapide."},
+  {w:"n = 10000 : A met 0,0001 × 10000² = 10 000 s. B met 0,05 × 10000 × 4 = 2000 s. Il faut choisir B.",why:"Pour n assez grand, l'ordre de complexité le plus petit finit toujours par gagner."},
+  {w:"Question 1 du TD : pourquoi fallait-il plus d'informations ? Parce que θ ne donne que l'ordre : un temps en θ(n²) peut être n², 1000000n² ou n² + 1000000.",why:"« Équivalentes » ne veut pas dire « identiques »."}]),
+ Q("TD 7, exercice 31 : un ordinateur Y est 100 fois plus rapide que X, et le temps d'exécution est proportionnel à n². X traite une taille n<sub>0</sub> en 1 minute. Quelle taille Y traite-t-il dans la même durée ?",["10 n<sub>0</sub>","100 n<sub>0</sub>","n<sub>0</sub> + 100","2 n<sub>0</sub>"],0,"En 1 minute, Y fait 100 fois plus d'opérations : n² = 100 × n<sub>0</sub>², donc n = 10 n<sub>0</sub>. Avec un temps proportionnel à 2<sup>n</sup> (question 2 du TD), on trouve seulement n<sub>0</sub> + 6 : 2<sup>n</sup> = 100 × 2<sup>n<sub>0</sub></sup> donne n = n<sub>0</sub> + log<sub>2</sub>(100), environ n<sub>0</sub> + 6,6."),
+ P("Cours, diapo 79 : trouver l'ordre de complexité, sur papier",`<p>Trouver l'ordre de complexité, c'est-à-dire la suite de référence équivalente à T<sub>n</sub> :</p><ol><li>T<sub>n</sub> = 3n³ − 5n + 2</li><li>T<sub>n</sub> = 2<sup>n+1</sup> − 8n³</li><li>T<sub>n</sub> = 3n log(n²) + 5</li><li>T<sub>n</sub> = 2T<sub>n−1</sub></li><li>T<sub>n</sub> = T<sub>n−1</sub> + n</li><li>T<sub>n</sub> = 3n + 1 si n est pair et T<sub>n</sub> = 2n si n est impair</li></ol><p>Rappels : log(n²) = 2 log(n), et 1 + 2 + … + n = n(n + 1)/2.</p>`,`<p><b>Réponses écrites par le prof en amphi.</b></p><ol><li>T<sub>n</sub> = θ(n³).</li><li>2<sup>n+1</sup> = 2 × 2<sup>n</sup> : T<sub>n</sub> = θ(2<sup>n</sup>).</li><li>log(n²) = 2 log n, donc T<sub>n</sub> ≈ 6n log n : T<sub>n</sub> = θ(n log n).</li><li>Avec T<sub>0</sub> = 1 : T<sub>n</sub> = 2 × 2 × 2 × … × T<sub>0</sub>, avec n fois le facteur 2, soit 2<sup>n</sup> : T<sub>n</sub> = θ(2<sup>n</sup>).</li><li>T<sub>n</sub> = n + (n − 1) + (n − 2) + … + 1 + T<sub>0</sub> = n(n + 1)/2 + T<sub>0</sub> = ½n² + ½n + T<sub>0</sub> ∈ θ(n²).</li><li>3n + 1 = θ(n) et 2n = θ(n) : T<sub>n</sub> = θ(n).</li></ol><p><b>Pourquoi</b> (mes explications). On garde le terme qui grandit le plus vite et on oublie sa constante. 1 : T<sub>n</sub>/n³ tend vers 3. 2 : 8n³ est strictement dominée par 2<sup>n</sup>. 6 : T<sub>n</sub>/n reste entre 2 et 4, deux nombres strictement positifs, même s'il n'a pas de limite.</p>`,["Une suite de référence pour chaque ligne, sans constante devant","Ligne 3 : log(n²) = 2 log n","Lignes 4 et 5 : la suite écrite en fonction de n avant de conclure","Ligne 6 : θ(n), même sans limite"],7),
+ K("T<sub>n</sub> = θ(R<sub>n</sub>), o(R<sub>n</sub>), ω(R<sub>n</sub>) : que fait T<sub>n</sub>/R<sub>n</sub> ?","θ : il reste entre deux nombres strictement positifs (par exemple il tend vers a > 0). o : il tend vers 0. ω : il tend vers +∞. O = o ou θ ; Ω = ω ou θ."),
+ K("Les suites de référence, dans l'ordre ?","1, log(n), n, n.log(n), n², n³, n<sup>a</sup>, b<sup>n</sup> (b > 1), n!. Constant, logarithmique, linéaire, pseudo-linéaire, quadratique, cubique, polynômiale, exponentielle, factorielle."),
+ K("Un algorithme en θ(n²) peut-il être un million de fois plus lent qu'un autre en θ(n²) ?","Oui, si par exemple le premier fait 1000000n² opérations et le deuxième n² opérations. (Corrigé officiel du CC1 2024.) « Équivalentes » ne veut pas dire « identiques ».")]}),
+
+/* ------------------------------------------------------------------ */
+A2({id:"a2-boucles",t:"Boucles imbriquées et master theorem",min:16,goal:"Trouver l'ordre de complexité de boucles pour (somme ou raccourci) et d'un algorithme récursif dont la taille est divisée, avec le master theorem (cours diapos 81 à 86, TD 8, CC 2022, examens de 2023).",steps:[
+ L("Une boucle pour, c'est une somme",`<p>Diapo 81. Compter le nombre d'opérations dans un pour revient à calculer une somme ayant les mêmes indices.</p>${C(`pour i de 1 à n faire
+    pour j de 1 à i faire
+        op élém
+    fin pour;
+fin pour;`)}<p>(« op élém » : une opération élémentaire.) Pour une valeur de i, la boucle sur j fait i opérations. En tout :</p><div class="formula">T<sub>n</sub> = 1 + 2 + … + n = n(n + 1)/2</div><p>Le cours l'écrit avec le signe Σ (« somme ») : T<sub>n</sub> = Σ<sub>i=1..n</sub> Σ<sub>j=1..i</sub> 1.</p><p><b>Formules utiles</b> :</p><ul><li>1 + 2 + … + n = n(n + 1)/2</li><li>1² + 2² + … + n² = n(n + 1)(2n + 1)/6</li><li>1³ + 2³ + … + n³ = n²(n + 1)²/4</li></ul>`,{fig:"a-calcul-complexite"}),
+ Q("TD 8, exercice 34 (5) : combien d'additions fait ce fragment ?",["n(n + 1)/2","n²","n","n(n − 1)/2"],0,"Pour une valeur de i, j va de i à n : n − i + 1 valeurs. La somme vaut n + (n − 1) + … + 1 = n(n + 1)/2, comme quand j va de 1 à i.",{code:`Pour i de 1 à n faire
+    Pour j de i à n faire
+        som ← som+1`}),
+ L("Le raccourci pour des boucles imbriquées",`<p>Diapo 82. En lisant les bornes du pour, on obtient une estimation O de la complexité.</p>${C(`pour i de 1 à n faire
+    pour j de 1 à i faire
+        op élém
+    fin pour;
+fin pour;`)}<ul><li>i prend n valeurs,</li><li>j prend moins de n valeurs donc O(n),</li><li>chaque itération fait O(1) opérations (indépendant de n),</li><li>donc T<sub>n</sub> = n × O(n) × O(1) = O(n²).</li></ul><p><b>Remarque</b> : on peut mettre θ à la place de O mais c'est plus difficile à justifier !</p><p>(Le raccourci donne O, « au plus » : il majore le nombre de tours de la boucle du dedans. Le calcul exact de l'écran précédent, n(n + 1)/2, donne θ(n²).)</p>`),
+ S("Cours, diapo 83 : trois ordres de complexité","Les réponses écrites par le prof en amphi. Il compte 2 opérations pour « som ← som+1 » (l'addition et l'affectation).",[
+  {w:"Fragment 1 : n × n × 2. T<sub>n</sub> = 2n² ∈ θ(n²).",why:"i prend n valeurs, j aussi, et chaque passage fait 2 opérations."},
+  {w:"Fragment 2, calcul exact : la somme, pour i de 1 à n, j de 1 à i et k de j à i, de 2. Pour i et j fixés, k prend i − j + 1 valeurs.",why:"Trois pour imbriqués : trois sommes avec les mêmes indices."},
+  {w:"En additionnant sur j : 2 × (1 + 2 + … + i) = i(i + 1). Puis sur i : la somme des i² + i, soit n(n + 1)(2n + 1)/6 + n(n + 1)/2 = θ(n³).",why:"On reconnaît les deux premières formules utiles. Le terme qui grandit le plus vite est n³/3."},
+  {w:"Fragment 2, version rapide : n × O(n) × O(n) × 2 = O(n³).",why:"Le raccourci : i prend n valeurs, j et k moins de n valeurs chacun."},
+  {w:"Fragment 3 : la boucle continue tant que i² &lt; n, c'est-à-dire i &lt; √n. Environ 1 + 4√n opérations : θ(√n).",why:"i augmente de 1 à chaque itération, donc √n itérations ; à chacune, le carré, la comparaison, l'addition et l'affectation ; plus « i ← 0 »."}],{code:`1  Pour i de 1 à n faire
+      Pour j de 1 à n faire
+         som ← som+1
+
+2  Pour i de 1 à n faire
+      Pour j de 1 à i faire
+         Pour k de j à i faire
+            som ← som+1
+
+3  i ← 0
+   TantQue i²<n faire
+      i ← i+1
+   finTq`}),
+ L("Le master theorem",`<p><b>Idée</b> (diapo 84). Donner une estimation O de l'ordre de complexité d'un algorithme récursif quand les appels se font avec une taille d'entrée divisée.</p><p><b>Master Theorem</b> : s'il existe quatre entiers a ≥ 0, b > 1, d ≥ 0 et n<sub>0</sub> > 0 tels que, pour tout n ≥ n<sub>0</sub>, T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>), alors</p><ul><li>T(n) = O(n<sup>d</sup>) si b<sup>d</sup> > a ;</li><li>T(n) = O(n<sup>d</sup> log n) si b<sup>d</sup> = a ;</li><li>T(n) = O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a.</li></ul><p><b>Remarque</b> : a représente le nombre d'appels récursifs dans le corps de l'algorithme, b l'entier par lequel la taille de l'entrée est divisée à chaque appel, O(n<sup>d</sup>) les opérations de l'algorithme en plus des appels récursifs.</p><p>(⌈x⌉ : x arrondi à l'entier du dessus. ⌊x⌋ : x arrondi à l'entier du dessous ; ⌊n/2⌋, c'est n div 2.)</p><p><b>Exemple du cours</b> (diapo 85) :</p>${C(`FONCTION : F3 (E n : entier) : entier
+DÉBUT
+    si n=0 alors
+        Renvoyer 0
+    sinon
+        Renvoyer n+2*F3(n div 2)
+    fin si;
+FIN`)}<p>À partir de n=1 (n<sub>0</sub> = 1), F3 fait 1 appel récursif (a = 1) au rang ⌊n/2⌋ (b = 2). En dehors des appels, il effectue O(1) = O(n<sup>0</sup>) opérations (d = 0). On est dans le cas b<sup>d</sup> = a donc T<sub>n</sub> = O(n<sup>0</sup> log(n)) = O(log(n)) : l'algorithme est logarithmique.</p>`),
+ Q("Dans le master theorem, que représente a ?",["Le nombre d'appels récursifs dans le corps de l'algorithme","L'entier par lequel la taille de l'entrée est divisée à chaque appel","L'exposant de n dans les opérations faites en plus des appels"],0,"a : le nombre d'appels. b : l'entier par lequel la taille est divisée. d : l'exposant dans O(n<sup>d</sup>), les opérations en plus des appels. Question de cours du CC de 2022 : « À quoi sert le master theorem ? » Corrigé officiel : « Il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel. »"),
+ B("Cours, diapo 86 : « Trouver a, b, d et un ordre de complexité ». Choisis ce que le prof a écrit.",`Les deux pour imbriqués font θ(n²) opérations : d = [[0]]
+Deux appels F(n div 2) : a = [[1]]
+La taille est divisée par 2 : b = [[2]]
+Équation : Tₙ = 2T(⌊n/2⌋) + O(n²)
+b^d = [[3]] , à comparer avec a = 2 : b^d > a
+Donc Tₙ = O(n^d) = [[4]] : l'algorithme est quadratique.`,[{o:["2","1","0"],a:0},{o:["2","1","4"],a:0},{o:["2","1","4"],a:0},{o:["4","2","1"],a:0},{o:["O(n²)","O(n² log n)","O(n)"],a:0}],"Réponses écrites par le prof en amphi : T<sub>n</sub> = 2T<sub>⌊n/2⌋</sub> + O(n²), b<sup>d</sup> = 4, a = 2, T<sub>n</sub> = O(n<sup>d</sup>) = O(n²), « algo quadratique ».",{lang:"txt",show:`PROCÉDURE : F (E n : entier)
+SPÉCIFICATIONS : n ∈ ℕ
+DÉBUT
+    si n ≠ 1 alors
+        pour i de 0 à n-1 faire
+            pour j de 0 à n-1 faire
+                op élém
+            fin pour;
+        fin pour;
+        F(n div 2)
+        F(n div 2)
+    fin si;
+FIN`,showLang:"pseudo"}),
+ Q("Examen de janvier 2023 : pour n ≠ 0, G(n, d) affiche n fois d, passe à la ligne, puis appelle G(n div 2, d) et G(n div 2, d+1). Que donne le master theorem ?",["a = 2, b = 2, d = 1 : b<sup>d</sup> = a, donc O(n log(n))","a = 2, b = 2, d = 1 : b<sup>d</sup> > a, donc O(n)","a = 1, b = 2, d = 0 : b<sup>d</sup> = a, donc O(log(n))"],0,"Corrigé officiel : « Le nombre d'opérations élémentaires T<sub>n</sub> effectuées par l'appel G(n, d) vérifie, pour n > 0 : T<sub>n</sub> = θ(n) + 2T<sub>⌊n/2⌋</sub>. Par application du master theorem avec a = 2, b = 2, d = 1, on a b<sup>d</sup> = a donc T<sub>n</sub> = O(n log(n)). » Attention : le d du théorème n'est pas le paramètre d de G."),
+ P("TD 8, exercice 35, algorithmes 1 et 2, sur papier",`<p>Pour chacun des algorithmes suivants, on appelle T<sub>n</sub> le nombre d'opérations élémentaires que fait l'algorithme pour la taille d'entrée n. Déterminer la ou les équations de récurrence régissant T<sub>n</sub> puis les résoudre de manière exacte ou, si c'est impossible, en appliquant le master theorem :</p><p><b>Algorithme 1</b></p>${C(`Fonction : F (E n : entier) : entier
+Spécifications : n est un entier naturel
+Début
+    Si n=0 alors
+        Renvoyer 1
+    Sinon
+        Renvoyer F(n-1)+F(n-1)
+    FinSi
+Fin`)}<p><b>Indication :</b> montrer que la suite (U<sub>n</sub>) définie par U<sub>n</sub> = T<sub>n</sub> + 6 est géométrique.</p><p><b>Algorithme 2</b></p>${C(`Fonction : G (E n : entier) : entier
+Spécifications : n est un entier naturel
+Variables : som : nombre
+Début
+    Si n=0 alors
+        Renvoyer 1
+    Sinon
+        som ← 0
+        Pour i de 1 à n faire
+            som ← som + i*i
+        finPour
+        Renvoyer F(n div 2)+som
+    FinSi
+Fin`)}<p>(Suite géométrique : on multiplie toujours par le même nombre, la raison. Si U<sub>n</sub> = 2U<sub>n−1</sub>, alors U<sub>n</sub> = U<sub>0</sub> × 2<sup>n</sup>.)</p>`,`<p><b>Une remarque d'abord.</b> Dans la feuille, G appelle « F ». L'exercice n'a de sens pour le master theorem que si G s'appelle lui-même : G(n div 2). C'est ce que je suppose. On compte comme dans le cours (diapo 72) : une comparaison, un calcul, une affectation ou un appel comptent chacun pour 1.</p><p><b>Algorithme 1.</b> Cas de base : si n = 0, 1 comparaison : T<sub>0</sub> = 1. Si n > 0 : 1 comparaison, 2 soustractions (n-1 deux fois), 2 appels, 1 addition, plus les opérations des deux appels :</p><div class="formula">T<sub>n</sub> = 6 + 2T<sub>n−1</sub></div><p>Avec U<sub>n</sub> = T<sub>n</sub> + 6 : U<sub>n</sub> = 2T<sub>n−1</sub> + 12 = 2(T<sub>n−1</sub> + 6) = 2U<sub>n−1</sub>. La suite (U<sub>n</sub>) est géométrique de raison 2, et U<sub>0</sub> = 7. Donc U<sub>n</sub> = 7 × 2<sup>n</sup> et <b>T<sub>n</sub> = 7 × 2<sup>n</sup> − 6</b> : l'ordre de complexité est 2<sup>n</sup>, l'algorithme est exponentiel.</p><p><b>Algorithme 2.</b> T<sub>0</sub> = 1. Si n > 0 : 1 comparaison, 1 affectation, n tours de boucle à 3 opérations (une multiplication, une addition, une affectation), puis 1 division entière, 1 appel, 1 addition, plus les opérations de l'appel :</p><div class="formula">T<sub>n</sub> = T<sub>n div 2</sub> + 3n + 5</div><p>La taille est divisée : master theorem. 1 appel récursif (a = 1), taille divisée par 2 (b = 2), O(n) opérations en plus de l'appel (d = 1). Comme b<sup>d</sup> = 2 > a = 1 : <b>T<sub>n</sub> = O(n)</b>.</p><p>(Corrigé écrit par moi. Les valeurs T = 1, 8, 22, 50… de l'algorithme 1 ont été recalculées par programme. Si tu comptes les opérations un peu autrement, les constantes changent, pas les ordres.)</p>`,["Algorithme 1 : T<sub>0</sub>, puis une équation avec 2T<sub>n−1</sub> (deux appels)","U<sub>n</sub> = 2U<sub>n−1</sub> écrit, puis T<sub>n</sub> en fonction de n","Algorithme 2 : l'équation avec T<sub>n div 2</sub> et un terme en n","a, b, d nommés, b<sup>d</sup> comparé à a, puis la conclusion en O"],12),
+ K("Master theorem : T(n) ≤ aT(⌈n/b⌉) + O(n<sup>d</sup>). Les trois cas ?","O(n<sup>d</sup>) si b<sup>d</sup> > a ; O(n<sup>d</sup> log n) si b<sup>d</sup> = a ; O(n<sup>log a / log b</sup>) si b<sup>d</sup> &lt; a. a : nombre d'appels récursifs, b : entier par lequel la taille est divisée, O(n<sup>d</sup>) : opérations en plus des appels."),
+ K("À quoi sert le master theorem ?","Il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel. (Corrigé officiel du CC 2022.)"),
+ K("Les trois formules de sommes du cours ?","1 + 2 + … + n = n(n + 1)/2 ; 1² + 2² + … + n² = n(n + 1)(2n + 1)/6 ; 1³ + 2³ + … + n³ = n²(n + 1)²/4."),
+ K("Le raccourci pour des boucles pour imbriquées ?","On lit les bornes : si i prend n valeurs, j au plus n valeurs, et chaque itération O(1) opérations, alors T<sub>n</sub> = n × O(n) × O(1) = O(n²). Il donne une estimation O ; pour θ, il faut calculer la somme.")]}),
 
 /* ------------------------------------------------------------------ */
 A3({id:"a3-dicho",t:"Recherche séquentielle et dichotomique",min:10,goal:"Dérouler une recherche dichotomique et dire combien d'essais elle demande (TD 9, CC1 2024).",steps:[
@@ -12441,12 +13074,28 @@ algo:{
   "Le master theorem":`<p>Certains algorithmes récursifs se rappellent sur une entrée deux fois plus petite (ou trois fois…). Le master theorem donne leur ordre de complexité presque sans calcul : on repère trois nombres dans l'algorithme (a appels, une taille divisée par b, n<sup>d</sup> opérations à côté des appels), on compare b<sup>d</sup> avec a, et on lit le résultat.</p>`,
   "À ajouter sur ta feuille A4":`<p>La feuille A4 est autorisée : pas besoin de tout savoir par cœur. Trois petits blocs suffisent pour retrouver, pendant l'épreuve, la méthode de preuve, les cinq notations et le master theorem.</p>`},
  "a2-invariant":{
-  "Les quatre étapes":`<p>Prouver une boucle, c'est montrer qu'une phrase reste vraie à chaque tour, comme « x vaut toujours 3 fois i ». Quand la boucle s'arrête, cette phrase, avec la condition d'arrêt, donne le résultat.</p><p>Pour l'arrêt, on montre qu'un compteur entier descend à chaque tour : il ne peut pas descendre indéfiniment.</p>`},
- "a2-notations":{
-  "Les notations":`<p>On compare des algorithmes quand les données deviennent énormes. Θ(n²) veut dire « grandit comme n² » : les constantes devant ne comptent pas. O veut dire « au plus comme », Ω « au moins comme ».</p>`},
+  "Les mots du cours":`<p>Prouver une boucle, c'est trouver une phrase qui reste vraie à chaque tour, par exemple « res vaut toujours la factorielle du numéro du tour ». Cette phrase s'appelle l'<b>invariant</b>.</p><p>Pour montrer qu'elle reste vraie, on écrit ce que fait un tour de boucle sous la forme d'une égalité : c'est l'<b>équation d'itération</b>. Elle est sûre, puisqu'on la lit sur l'algorithme. L'invariant, lui, est une idée qu'il faut prouver.</p>`,
+  "Premier exemple du cours : F1 calcule n!":`<p>Fais tourner F1 pour n = 3. Avant la boucle, res = 1. Tour 1 : res = 1 × 1 = 1. Tour 2 : res = 1 × 2 = 2. Tour 3 : res = 2 × 3 = 6. À chaque tour, res vaut la factorielle du numéro du tour : 1!, 2!, 3!.</p><p>La preuve dit la même chose pour tous les n d'un coup, par récurrence : c'est vrai au départ, et si c'est vrai après un tour, c'est encore vrai après le suivant.</p>`,
+  "Deuxième exemple du cours : Cube, avec quatre variables":`<p>Avec plusieurs variables, on fait pareil, une ligne par variable. Pour deviner l'invariant, on remplit un tableau (la trace) et on cherche une formule dans chaque colonne : A augmente de 3 en 3, C descend de 1 en 1, Z vaut 0, 1, 8, 27, 64, les cubes.</p>`,
+  "La preuve de Cube":`<p>Quatre petites preuves identiques, une par variable. À chaque fois : j'écris ce que fait le tour de boucle (l'équation), je remplace les anciennes valeurs par leur formule (l'invariant au rang i), et je vérifie que j'obtiens la formule au rang i + 1.</p>`,
+  "Et l'arrêt d'une boucle tant que ?":`<p>Une boucle tant que tourne tant que son test est vrai. Pour montrer qu'elle s'arrête, on cherche un compte à rebours : un nombre entier qui diminue à chaque tour. Il ne peut pas diminuer sans fin sans rendre le test faux.</p>`},
+ "a2-recursif":{
+  "Les mots du cours pour un algorithme récursif":`<p>Un algorithme récursif s'appelle lui-même. Pour prouver qu'il est juste, on suppose que l'appel sur plus petit donne le bon résultat, et on vérifie qu'alors l'appel courant aussi. C'est une récurrence, comme en maths.</p><p>L'équation de récurrence, c'est la ligne « Renvoyer … » traduite en égalité.</p>`,
+  "L'exemple du cours : F2, la factorielle récursive":`<p>F2(3) = 3 × F2(2) = 3 × 2 × F2(1) = 3 × 2 × 1 × F2(0) = 3 × 2 × 1 × 1 = 6. La preuve dit : si F2(n − 1) vaut bien (n − 1)!, alors n × F2(n − 1) vaut bien n!.</p>`,
+  "Prouver aussi que l'algorithme se termine":`<p>Un algorithme récursif s'arrête si chaque appel finit par atteindre le cas de base. Dans la récurrence, on le dit en une phrase : l'appel au rang n fait quelques opérations et des appels au rang n − 1, qui se terminent par hypothèse.</p>`},
  "a2-compter":{
-  "Les boucles":`<p>On compte combien de fois l'opération est faite. Deux boucles imbriquées de n tours font n × n fois l'opération. Si la boucle du dedans va de 1 à i, on additionne 1 + 2 + … + n.</p>`,
-  "Les algorithmes récursifs":`<p>Pour une fonction récursive, le travail total = le travail d'un appel + le travail des appels qu'il lance. Deux appels sur n − 1, c'est un arbre qui double à chaque étage : 2ⁿ.</p>`},
+  "Ce qu'on compte":`<p>Pour savoir si un algorithme est rapide, on ne le chronomètre pas : on compte ses opérations, en fonction de la taille n de ce qu'on lui donne (un entier n, ou un tableau de n cases).</p><p>Quand le nombre d'opérations dépend des données, on prend le cas le plus défavorable : le pire cas.</p>`,
+  "Diapo 69 : compter dans F1":`<p>On compte ligne par ligne. Une ligne hors de la boucle compte une fois. Une ligne dans une boucle de n tours compte n fois.</p>`,
+  "Compter pour un algorithme récursif : l'équation de complexité":`<p>Pour une fonction récursive, le travail total = le travail d'un appel + le travail des appels qu'il lance. On l'écrit comme une suite : T<sub>n</sub> en fonction de T<sub>n−1</sub>, puis on trouve la formule.</p>`,
+  "Quand la taille de l'entrée est divisée":`<p>Si chaque appel divise n par 2, on arrive très vite au cas de base : 64, 32, 16, 8, 4, 2, 1, six divisions seulement. Ce nombre de divisions s'appelle log<sub>2</sub>(n). Un algorithme qui divise la taille par 2 à chaque appel fait donc très peu d'opérations.</p>`},
+ "a2-notations":{
+  "Les suites de référence":`<p>Ce qui compte, c'est la vitesse à laquelle le nombre d'opérations grandit quand n devient énorme. On range les algorithmes dans des familles : ceux qui grandissent comme n, comme n², comme 2ⁿ…</p><p>Pour n = 1000 : log(n) vaut environ 10 (en base 2), n vaut 1000, n² un million, et 2ⁿ est un nombre de 300 chiffres.</p>`,
+  "θ, o, ω : on divise par la suite de référence":`<p>Pour comparer deux vitesses de croissance, on divise l'une par l'autre et on regarde ce que devient le quotient quand n grandit.</p><ul><li>Il reste autour d'un nombre positif : même vitesse, θ.</li><li>Il tend vers 0 : la première grandit moins vite, o.</li><li>Il tend vers l'infini : elle grandit plus vite, ω.</li></ul><p>Exemple : (3n² + 5n)/n² = 3 + 5/n tend vers 3, donc 3n² + 5n = θ(n²).</p>`,
+  "O et Ω, et trois propriétés":`<p>O veut dire « au plus » : aussi vite ou moins vite. Ω veut dire « au moins » : aussi vite ou plus vite. θ, c'est les deux à la fois.</p><p>Exemples : n = O(n²), n² = Ω(n), et 2n + 1 est à la fois O(n) et Ω(n), donc θ(n).</p>`},
+ "a2-boucles":{
+  "Une boucle pour, c'est une somme":`<p>On compte combien de fois l'opération est faite. Deux boucles imbriquées de n tours la font n × n fois. Si la boucle du dedans va de 1 à i, on additionne : 1 fois, puis 2 fois, … puis n fois.</p>`,
+  "Le raccourci pour des boucles imbriquées":`<p>Pour aller vite, on majore : chaque boucle fait au plus n tours, donc deux boucles imbriquées font au plus n × n opérations. On obtient « au plus n² », c'est-à-dire O(n²), sans calculer la somme exacte.</p>`,
+  "Le master theorem":`<p>Certains algorithmes récursifs se rappellent sur une entrée deux fois plus petite (ou trois fois…). Le master theorem donne leur ordre de complexité presque sans calcul : on repère trois nombres dans l'algorithme (a appels, une taille divisée par b, n<sup>d</sup> opérations à côté des appels), on compare b<sup>d</sup> avec a, et on lit le résultat.</p>`},
  "a3-dicho":{
   "Le principe":`<p>C'est comme chercher un mot dans le dictionnaire : on ouvre au milieu, on regarde si le mot est avant ou après, et on recommence dans la bonne moitié. À chaque essai, il reste deux fois moins de pages.</p>`},
  "a3-tris":{
