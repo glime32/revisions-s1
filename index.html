@@ -13989,6 +13989,174 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
 
 </script>
 <script>
+/* Lexique : les mots techniques de chaque matière, expliqués avec des mots simples.
+   m : le mot ; d : l'explication ; a : les autres formes du mot (pluriel, variante) pour le retrouver dans une question ;
+   ch : le chapitre ; x : l'épreuve (par défaut la première de la matière) ; g : mot très courant, montré en dernier. */
+(function(){
+window.LEX=window.LEX||{};
+const D=(ch,m,d,o)=>Object.assign({ch,m,d},o||{});
+
+/* ---------------- Algorithmique 1 ---------------- */
+{const B="Les bases du pseudo-code",E="Expressions et types",I="Instructions et boucles",R="Récursivité",T="Tableaux et dictionnaires",L="Listes, piles et files",
+ P="Preuves",C="Complexité",S="Recherche et tris";
+window.LEX.algo=[
+ D(B,"algorithme","Une suite d'instructions qui résout un problème, écrite pour une personne et pas pour une machine précise.",{a:["algorithmes"],g:1}),
+ D(B,"pseudo-code","La façon d'écrire les algorithmes dans ce cours : du français avec des mots fixes (FONCTION, DÉBUT, FIN, si, pour, tant que, Renvoyer).",{a:["pseudo code"]}),
+ D(B,"fonction","Un algorithme qui renvoie un résultat. Sa signature se termine par le type de ce résultat.",{a:["fonctions"],g:1}),
+ D(B,"procédure","Un algorithme qui ne renvoie rien : il affiche quelque chose, ou il modifie un paramètre.",{a:["procédures"]}),
+ D(B,"signature","La première ligne d'un algorithme : son nom, ses paramètres avec leur type et, pour une fonction, le type du résultat. Exemple : FONCTION : max (E a : entier, E b : entier) : entier.",{a:["signatures"]}),
+ D(B,"paramètre","Une donnée que l'algorithme reçoit de celui qui l'appelle. Il est écrit dans la signature. E devant un paramètre veut dire « entrée » : on le lit sans le modifier.",{a:["paramètres"]}),
+ D(B,"variable","Une mémoire de travail à l'intérieur de l'algorithme. On la déclare avec son type sur la ligne « Variable : ».",{a:["variables"]}),
+ D(B,"spécifications","La phrase, sous la signature, qui dit ce que l'algorithme reçoit et ce qu'il renvoie ou fait.",{a:["spécification"]}),
+ D(B,"appel","Utiliser un algorithme en lui donnant des valeurs. max(3, 7) est un appel de max.",{a:["appels","appelle","appeler"]}),
+ D(B,"argument","Une valeur donnée lors d'un appel. Dans max(3, 7), les arguments sont 3 et 7.",{a:["arguments"]}),
+ D(B,"Renvoyer","Donne le résultat de la fonction et arrête aussitôt l'algorithme : rien de ce qui suit n'est exécuté.",{a:["renvoie","renvoyer","renvoie-t-il"],g:1}),
+ D(B,"afficher","Écrit quelque chose à l'écran et continue. Ce n'est pas renvoyer : rien n'est donné à celui qui a appelé.",{a:["affiche","affichage"]}),
+ D(E,"expression","Un calcul qui a une valeur, par exemple 3 + 2, x < 5 ou cond(x > 0, 1, 2).",{a:["expressions"],g:1}),
+ D(E,"type","La sorte d'une valeur : entier, nombre, booléen ou chaîne. Chaque expression a un type.",{a:["types"],g:1}),
+ D(E,"entier","Un nombre sans virgule : 5, −2, 0.",{a:["entiers"],g:1}),
+ D(E,"booléen","Une valeur qui vaut true (vrai) ou false (faux). Une comparaison comme 3 < 5 donne un booléen.",{a:["booléens","booléenne"]}),
+ D(E,"chaîne","Un texte entre guillemets, comme \"bonjour\".",{a:["chaînes","chaîne de caractères"]}),
+ D(E,"cond","cond(a, b, c) est une expression : elle vaut b si a est vrai, et c sinon. b et c doivent avoir le même type."),
+ D(E,"div","Le quotient de la division entière : 7 div 2 = 3."),
+ D(E,"mod","Le reste de la division entière : 7 mod 2 = 1. « n mod 2 = 0 » veut dire que n est pair."),
+ D(E,"évaluation paresseuse","Dans « a et b », si a est faux, b n'est même pas calculé. Dans « a ou b », si a est vrai, b n'est pas calculé."),
+ D(I,"instruction","Un ordre que l'algorithme exécute : une affectation, un si, une boucle, Renvoyer, afficher.",{a:["instructions"]}),
+ D(I,"affectation","x ← 5 range la valeur 5 dans la variable x. La flèche se lit « reçoit ».",{a:["←"]}),
+ D(I,"boucle pour","« pour i de a à b faire … fin pour; » répète le bloc une fois pour chaque valeur de i, de a jusqu'à b compris. Le nombre de tours est connu à l'avance.",{a:["boucle « pour »"]}),
+ D(I,"boucle tant que","« tant que condition faire … fin tq; » répète le bloc tant que la condition est vraie. Il faut que quelque chose change dans le bloc, sinon elle ne s'arrête jamais.",{a:["tant que"]}),
+ D(I,"itération","Un tour de boucle.",{a:["itérations"]}),
+ D(I,"itératif","Qui répète avec une boucle, sans s'appeler lui-même. C'est le contraire de récursif.",{a:["itérative"]}),
+ D(I,"trace","Le tableau des valeurs des variables, tour de boucle après tour de boucle. Elle sert à suivre un algorithme à la main."),
+ D(R,"récursif","Un algorithme récursif s'appelle lui-même, sur une donnée plus petite (n − 1, la queue d'une liste…).",{a:["récursive","récursifs","récursivité"]}),
+ D(R,"cas de base","Dans un algorithme récursif, le cas où il répond directement, sans se rappeler. Exemple : n = 0, ou la liste vide.",{a:["cas de bases"]}),
+ D(R,"appel récursif","L'endroit où l'algorithme s'appelle lui-même.",{a:["appels récursifs"]}),
+ D(R,"arbre des appels","Le dessin de tous les appels qu'un algorithme récursif déclenche : chaque appel est relié à ceux qu'il lance."),
+ D(T,"tableau","Une suite de cases numérotées. T[i] est la case numéro i. On accède directement à n'importe quelle case.",{a:["tableaux"],g:1}),
+ D(T,"indice","Le numéro d'une case d'un tableau. Les indices vont de 0 à taille(T) − 1.",{a:["indices"]}),
+ D(T,"taille","taille(T) est le nombre de cases du tableau T."),
+ D(T,"tableau 2D","Un tableau dont chaque case est une ligne. T[i][j] est la case de la ligne i et de la colonne j.",{a:["tableaux 2d"]}),
+ D(T,"dictionnaire","Une collection de couples clé-valeur. On retrouve une valeur par sa clé : D['taille'].",{a:["dictionnaires"]}),
+ D(T,"clé","Dans un dictionnaire, le nom qui sert à retrouver une valeur.",{a:["clés"]}),
+ D(L,"liste","Une suite d'éléments où l'on n'accède qu'au premier. Pas d'indice : pour aller plus loin, on prend la queue.",{a:["listes"],g:1}),
+ D(L,"tête","tête(L) est le premier élément de la liste L."),
+ D(L,"queue","queue(L) est la liste L sans son premier élément."),
+ D(L,"cons","cons(x, L) est la liste obtenue en ajoutant x devant L."),
+ D(L,"estVide","estVide(L) est vrai quand la liste L n'a aucun élément."),
+ D(L,"pile","Une collection où l'on ajoute et retire toujours du même côté, le sommet : le dernier arrivé sort le premier.",{a:["piles","empiler","depiler","dépiler"]}),
+ D(L,"file","Une collection où l'on ajoute d'un côté et retire de l'autre : le premier arrivé sort le premier, comme une file d'attente.",{a:["files","enfiler","defiler","défiler"]}),
+ D(P,"équation d'itération","Une égalité qui relie les valeurs des variables d'un tour de boucle au tour suivant. On la lit directement sur l'algorithme.",{x:"cc2",a:["équations d'itération"]}),
+ D(P,"invariant de boucle","Une propriété qui est vraie avant la boucle et qui reste vraie à la fin de chaque tour. On la prouve par récurrence.",{x:"cc2",a:["invariant","invariants"]}),
+ D(P,"terminaison","Le fait que l'algorithme s'arrête. Pour un tant que : une quantité entière diminue à chaque tour, donc la boucle finit.",{x:"cc2",a:["arrêt","se termine"]}),
+ D(P,"équation de récurrence","Une égalité qui relie le résultat d'un algorithme récursif au résultat de ses appels récursifs.",{x:"cc2",a:["équations de récurrence"]}),
+ D(P,"validité","Un algorithme est valide quand il s'arrête et renvoie le bon résultat.",{x:"cc2",a:["valide"]}),
+ D(C,"complexité","Le nombre d'opérations que fait un algorithme, en fonction de la taille n de son entrée.",{x:"cc2",a:["complexités"]}),
+ D(C,"pire cas","La configuration des données qui fait faire le plus d'opérations à l'algorithme.",{x:"cc2"}),
+ D(C,"θ","Tn = θ(Rn) : Tn grandit à la même vitesse que Rn (le rapport Tn/Rn reste entre deux nombres strictement positifs).",{x:"cc2",a:["Θ","theta"]}),
+ D(C,"O","Tn = O(Rn) : Tn grandit au plus aussi vite que Rn.",{x:"cc2",a:["grand O"]}),
+ D(C,"Ω","Tn = Ω(Rn) : Tn grandit au moins aussi vite que Rn.",{x:"cc2",a:["omega"]}),
+ D(C,"master theorem","Une formule qui donne la complexité d'un algorithme récursif quand la taille de l'entrée est divisée à chaque appel.",{x:"cc2"}),
+ D(C,"logarithme","log2(n) est le nombre de fois qu'il faut diviser n par 2 pour arriver à 1 : log2(8) = 3.",{x:"cc2",a:["log","log2"]}),
+ D(S,"recherche linéaire","Chercher un élément en regardant les cases une par une, depuis le début.",{x:"cc3",a:["recherche séquentielle"]}),
+ D(S,"recherche dichotomique","Chercher dans un tableau trié en regardant la case du milieu, puis en gardant seulement la moitié où l'élément peut être.",{x:"cc3",a:["dichotomie","dichotomique"]}),
+ D(S,"tri","Ranger les éléments d'un tableau dans l'ordre.",{x:"cc3",a:["tris","trier","trié"]}),
+ D(S,"tri par sélection","À chaque étape, on cherche le plus petit élément de ce qui reste et on le met à sa place.",{x:"cc3"}),
+ D(S,"tri par insertion","On prend les éléments un par un et on insère chacun à sa place parmi ceux déjà triés.",{x:"cc3"}),
+ D(S,"tri à bulles","On parcourt le tableau en échangeant deux voisins quand ils sont dans le mauvais ordre, et on recommence.",{x:"cc3"}),
+ D(S,"tri fusion","On coupe le tableau en deux moitiés, on trie chaque moitié, puis on fusionne les deux moitiés triées.",{x:"cc3"}),
+ D(S,"tri par valeurs","On compte combien de fois chaque valeur apparaît, puis on réécrit les valeurs dans l'ordre. Il ne marche que si les valeurs sont dans un petit intervalle.",{x:"cc3"}),
+ D(S,"en place","Un tri est en place quand il n'a pas besoin d'un deuxième tableau.",{x:"cc3"}),
+ D(S,"stable","Un tri est stable quand deux éléments égaux gardent leur ordre de départ.",{x:"cc3"})];}
+
+/* ---------------- Programmation fonctionnelle (OCaml) ---------------- */
+{const T="Types et expressions",F="Fonctions",R="Récursivité",L="Listes",M="Filtrage",Y="Types définis",X="Exceptions",O="Ordre supérieur";
+window.LEX.pf=[
+ D(T,"expression","Un morceau de programme qui a une valeur et un type : 3 + 2, x < 5, if … then … else ….",{a:["expressions"],g:1}),
+ D(T,"type","La sorte d'une valeur : int, float, bool, string, int list… OCaml le calcule tout seul et refuse un programme mal typé.",{a:["types"],g:1}),
+ D(T,"int","Les entiers : 3, −2. Opérateurs : + − * / mod. La division / entre deux int est entière : 7 / 2 = 3."),
+ D(T,"float","Les nombres à virgule : 3.5, 2. (avec un point). Opérateurs avec un point : +. −. *. /."),
+ D(T,"bool","Deux valeurs : true et false. Une comparaison comme 3 < 5 est de type bool.",{a:["booléen"]}),
+ D(T,"string","Un texte entre guillemets : \"bonjour\"."),
+ D(T,"bien typée","Une expression est bien typée quand chaque opérateur reçoit des valeurs du bon type. 3 + 4. est mal typée : + veut deux int.",{a:["mal typée","erreur de type","typage"]}),
+ D(T,"mod","Le reste de la division entière : 7 mod 2 = 1. n mod 10 est le dernier chiffre de n."),
+ D(T,"division entière","Entre deux int, / donne le quotient sans la partie après la virgule : 7 / 2 = 3. n / 10 enlève le dernier chiffre de n."),
+ D(T,"if","if c then e1 else e2 vaut e1 si c est vrai, e2 sinon. c est un bool ; e1 et e2 doivent avoir le même type.",{a:["if then else"]}),
+ D(T,"let … in","let x = 5 in x + 1 : on donne un nom à une valeur, pour s'en servir seulement dans ce qui suit le in.",{a:["let","définition locale"]}),
+ D(T,"let … and","let a = 1 and b = 2 in … : deux définitions faites en même temps. b ne peut pas se servir de a."),
+ D(T,"float_of_int","Change un int en float : float_of_int 3 = 3.",{a:["int_of_float"]}),
+ D(F,"fonction","Une valeur qui attend un argument et rend un résultat. function x -> x + 1 est la fonction qui ajoute 1.",{a:["fonctions","function","fun"],g:1}),
+ D(F,"signature","Le type d'une fonction : ce qu'elle reçoit, une flèche, ce qu'elle rend. int -> bool : reçoit un int, rend un bool.",{a:["signatures"]}),
+ D(F,"paramètre","Le nom donné, dans la définition d'une fonction, à ce qu'elle reçoit. Dans function x -> x + 1, le paramètre est x.",{a:["paramètres"]}),
+ D(F,"argument","La valeur donnée à une fonction quand on l'appelle. Dans f 3, l'argument est 3.",{a:["arguments"]}),
+ D(F,"application","Appeler une fonction : on écrit la fonction, puis son argument, f 3. Elle passe avant les opérateurs : f n - 1 se lit (f n) - 1.",{a:["appliquer","appel"]}),
+ D(F,"couple","Deux valeurs entre parenthèses, séparées par une virgule : (3, true) est de type int * bool.",{a:["couples"]}),
+ D(F,"curryfiée","Une fonction curryfiée reçoit ses paramètres l'un après l'autre : let add x y = x + y, de type int -> int -> int, appelée par add 3 4. L'autre façon est de recevoir un couple.",{a:["curryfié","curryfication","forme curryfiée"]}),
+ D(R,"récursive","Une fonction récursive s'appelle elle-même. En OCaml il faut écrire let rec.",{a:["récursif","récursivité","let rec","rec"]}),
+ D(R,"cas de base","Le cas où la fonction récursive répond directement, sans se rappeler : n = 0, n < 10, la liste vide…"),
+ D(R,"appel récursif","L'endroit où la fonction s'appelle elle-même, sur une donnée plus petite : f (n - 1), f (List.tl li).",{a:["appels récursifs"]}),
+ D(L,"liste","Une suite de valeurs du même type, entre crochets et séparées par des points-virgules : [2; 3; 5] est une int list.",{a:["listes","int list"],g:1}),
+ D(L,"[]","La liste vide."),
+ D(L,"::","x :: li est la liste li avec x ajouté devant : 1 :: [2; 3] = [1; 2; 3].",{a:["cons"]}),
+ D(L,"List.hd","List.hd li est le premier élément de la liste li (sa tête). Erreur sur la liste vide.",{a:["tête"]}),
+ D(L,"List.tl","List.tl li est la liste li sans son premier élément (sa queue). Erreur sur la liste vide.",{a:["queue"]}),
+ D(L,"&& et ||","a && b (« et ») est vrai quand a et b sont vrais tous les deux. a || b (« ou ») est vrai quand au moins un des deux est vrai.",{a:["&&","||"]}),
+ D(M,"filtrage","match e with | motif1 -> … | motif2 -> … : on compare e à chaque motif, de haut en bas, et on prend le premier qui correspond.",{x:"ct",a:["match","filtrer"]}),
+ D(M,"motif","Une forme à laquelle on compare une valeur dans un match : [], e :: tl, 0, (x, y), _.",{x:"ct",a:["motifs"]}),
+ D(M,"polymorphe","Une fonction polymorphe marche pour plusieurs types. Son type contient des lettres comme 'a : List.hd est de type 'a list -> 'a.",{x:"ct",a:["polymorphisme","'a"]}),
+ D(Y,"type somme","Un type dont les valeurs ont plusieurs formes possibles, chacune avec son constructeur : type nombre = Ent of int | Rat of (int * int).",{x:"ct",a:["types somme"]}),
+ D(Y,"constructeur","Le nom, avec une majuscule, d'une des formes d'un type somme : Ent 3, Rat (1, 2).",{x:"ct",a:["constructeurs"]}),
+ D(Y,"type récursif","Un type somme dont une forme contient une valeur du même type : une liste maison, un arbre.",{x:"ct",a:["types récursifs"]}),
+ D(Y,"enregistrement","Une valeur faite de champs nommés : {nom = \"Ada\"; age = 20}. On lit un champ avec p.age.",{x:"ct",a:["enregistrements","champ"]}),
+ D(X,"exception","Un signal d'erreur qui arrête le calcul en cours et remonte jusqu'à un try … with qui le rattrape.",{x:"ct",a:["exceptions","raise","failwith"]}),
+ D(X,"try … with","try e with E -> v : on calcule e ; si l'exception E est levée, le résultat est v.",{x:"ct",a:["try"]}),
+ D(O,"ordre supérieur","Une fonction d'ordre supérieur reçoit une fonction en paramètre, ou en rend une. Exemple : List.map.",{x:"ct"}),
+ D(O,"List.map","List.map f l applique f à chaque élément de l et rend la liste des résultats.",{x:"ct",a:["map"]}),
+ D(O,"List.filter","List.filter p l garde les éléments de l pour lesquels p rend true.",{x:"ct",a:["filter"]}),
+ D(O,"List.fold_left","List.fold_left f init l parcourt l de gauche à droite en gardant un résultat en cours, qui part de init : c'est une boucle « accumuler ».",{x:"ct",a:["fold_left","fold_right","fold"]}),
+ D(O,"récursivité terminale","L'appel récursif est la toute dernière opération : il ne reste rien à calculer après. On y arrive avec un accumulateur.",{x:"ct",a:["récursive terminale","terminale","accumulateur"]})];}
+
+/* ---------------- Calculus ---------------- */
+{const F="Fonctions",L="Limites",P="Primitives et intégrales",E="Équations différentielles",C="Nombres complexes";
+window.LEX.calc=[
+ D(F,"domaine de définition","L'ensemble des x pour lesquels f(x) a un sens. On enlève les x qui annulent un dénominateur, qui mettent un nombre négatif ou nul dans un ln, ou un nombre négatif sous une racine.",{a:["domaine","domaines"]}),
+ D(F,"dérivée","f′(x) mesure la vitesse à laquelle f change en x : c'est la pente de la tangente à la courbe.",{a:["dérivées","dériver","dérive"]}),
+ D(F,"dérivable","f est dérivable en a quand le taux d'accroissement (f(x) − f(a))/(x − a) a une limite finie quand x tend vers a.",{a:["dérivabilité"]}),
+ D(F,"composée","Une fonction appliquée à une autre, comme ln(u) ou e^u. Sa dérivée contient toujours u′ : (e^u)′ = u′e^u.",{a:["composée de fonctions"]}),
+ D(F,"taux d'accroissement","Le quotient (f(x) − f(a))/(x − a). Sa limite quand x tend vers a est f′(a)."),
+ D(F,"fonction impaire","f(−x) = −f(x) pour tout x. Son intégrale de −a à a vaut 0.",{a:["impaire","fonction paire","paire"]}),
+ D(L,"limite","La valeur dont f(x) s'approche quand x s'approche d'un nombre a, ou devient très grand.",{a:["limites"]}),
+ D(L,"forme indéterminée","Un calcul de limite qu'on ne peut pas conclure directement : ∞ − ∞, 0 × ∞, 0/0, ∞/∞. Il faut transformer l'écriture.",{a:["formes indéterminées","indéterminée"]}),
+ D(L,"croissances comparées","En +∞, l'exponentielle l'emporte sur les puissances de x, qui l'emportent sur ln x. Exemple : x² ln x tend vers 0 en 0⁺."),
+ D(L,"quantité conjuguée","Pour √a − √b, c'est √a + √b. On multiplie en haut et en bas par elle pour faire disparaître les racines.",{a:["conjuguée"]}),
+ D(P,"primitive","F est une primitive de f quand F′ = f. Il y en a une infinité, qui diffèrent d'une constante : on écrit + C.",{a:["primitives"]}),
+ D(P,"intégrale","∫ₐᵇ f(x) dx = F(b) − F(a), où F est une primitive de f. C'est un nombre : l'aire entre la courbe et l'axe, comptée négativement sous l'axe.",{a:["intégrales","intégrer"]}),
+ D(P,"intégration par parties","∫ u v′ = [u v] − ∫ u′ v. Elle sert pour un produit : on dérive un facteur (u) et on prend une primitive de l'autre (v′).",{a:["par parties","IPP"]}),
+ D(P,"changement de variable","On remplace une expression de x par une nouvelle lettre u. Il faut alors changer trois choses : la fonction, dx et les bornes."),
+ D(P,"bornes","Les deux nombres a et b d'une intégrale de a à b.",{a:["borne"]}),
+ D(E,"équation différentielle","Une équation dont l'inconnue est une fonction y, et qui relie y à sa dérivée y′. Exemple : y′ + 3y = 0.",{a:["équations différentielles","équa diff"]}),
+ D(E,"ordre 1","L'équation contient y et y′, mais pas y″.",{a:["premier ordre","d'ordre 1"]}),
+ D(E,"solution","Une fonction y qui rend l'équation vraie pour tout x. On le vérifie en la dérivant et en remplaçant.",{a:["solutions"],g:1}),
+ D(E,"équation homogène","L'équation où le second membre est remplacé par 0 : y′ + a(x) y = 0. Ses solutions sont C e^(−A(x)), avec A une primitive de a.",{a:["homogène","sans second membre"]}),
+ D(E,"second membre","Ce qui est à droite du signe = : dans y′ + 2y = 6, le second membre est 6."),
+ D(E,"solution particulière","Une seule solution de l'équation complète, n'importe laquelle. Notée y_p.",{a:["y_p"]}),
+ D(E,"solution générale","Toutes les solutions : la solution particulière, plus toutes les solutions de l'équation homogène.",{a:["toutes les solutions"]}),
+ D(E,"condition initiale","Une valeur imposée à la solution, comme y(0) = 1. Elle sert à trouver la constante C.",{a:["conditions initiales"]}),
+ D(E,"variation de la constante","Méthode pour trouver une solution particulière : on remplace la constante C de la solution homogène par une fonction c(x), et on cherche c."),
+ D(E,"ordre 2","L'équation contient y″ : y″ + a y′ + b y = 0.",{x:"cc2",a:["second ordre","d'ordre 2"]}),
+ D(E,"équation caractéristique","Pour y″ + a y′ + b y = 0, c'est r² + a r + b = 0. Ses racines donnent la forme des solutions.",{x:"cc2"}),
+ D(E,"racine double","Quand le discriminant vaut 0, l'équation du second degré a une seule racine, comptée deux fois.",{x:"cc2"}),
+ D(C,"nombre complexe","Un nombre z = a + ib, où a et b sont réels et i² = −1.",{x:"cc2",a:["complexe","complexes"]}),
+ D(C,"partie réelle","Dans z = a + ib, la partie réelle est a et la partie imaginaire est b.",{x:"cc2",a:["partie imaginaire"]}),
+ D(C,"conjugué","Le conjugué de a + ib est a − ib. Le produit d'un complexe par son conjugué est le réel a² + b².",{x:"cc2"}),
+ D(C,"module","|z| = √(a² + b²) : la distance entre le point z et 0.",{x:"cc2"}),
+ D(C,"argument","L'angle entre l'axe des réels et le segment qui va de 0 à z.",{x:"cc2"}),
+ D(C,"forme algébrique","L'écriture z = a + ib.",{x:"cc2"}),
+ D(C,"forme exponentielle","L'écriture z = r e^(iθ), avec r le module et θ l'argument.",{x:"cc2"}),
+ D(C,"racine n-ième","Un complexe z tel que zⁿ = w. Tout complexe non nul en a exactement n.",{x:"cc2",a:["racines n-ièmes"]})];}
+})();
+
+</script>
+<script>
 /* Apprendre : les leçons pas à pas, la révision espacée, la synchronisation entre appareils,
    et les pages pensées pour le téléphone (Aujourd'hui, Apprendre, Réviser, S'entraîner, Plus).
    Principes (voir la page « Comment réviser ») : se tester plutôt que relire, espacer,
@@ -14138,7 +14306,7 @@ const STEP={
   next.disabled=true;let done=false;
   body.querySelector(".opts").addEventListener("click",e=>{const b=e.target.closest("[data-o]");if(!b||done)return;done=true;const k=+b.dataset.o,ok=k===s.a;
     body.querySelectorAll(".opts button").forEach(x=>{x.disabled=true;const j=+x.dataset.o;if(j===s.a)x.className="good";else if(j===k)x.className="bad";});
-    body.querySelector(".lfb").innerHTML=`<div class="expl${ok?"":" no"}"><b>${ok?(s.open?"Bien deviné.":"Exact."):(s.open?"Pas grave : tu ne l'as pas encore vu.":"Pas tout à fait.")}</b> ${s.e||""}</div>`;
+    body.querySelector(".lfb").innerHTML=`<div class="expl${ok?"":" no"}"><b>${ok?(s.open?"Bien deviné.":"Exact."):(s.open?"Pas grave : tu ne l'as pas encore vu.":"Pas tout à fait.")}</b> ${s.e||""}${ok?"":A.motsHTML(LP.sid,s)}</div>`;
     if(!s.open)mark(ok?1:0,s,k);else A.logRep(Object.assign({o:"leçon, devine d'abord",s:LP.sid,l:LP.id,ecran:LP.i,ok:ok?1:0,ms:Date.now()-(LP.shownT||Date.now())},A.repQ(s,k)));next.disabled=false;next.focus();});
   const h=body.querySelector("#lhint");if(h)h.addEventListener("click",()=>{body.querySelector("#lhintt").hidden=false;h.hidden=true;});},
  blanks(s,body,next){
@@ -14386,6 +14554,7 @@ function subject(sid){
   h+=`<ul class="swatches lead1">`
    +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(S.TB["L-"+nextL.id].min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
    +(A.themesOf(S).length?sw({href:`#/${sid}/niveau`,c,tile:"✓",kicker:"Choisir quoi réviser",name:"Où j'en suis",sub:"Coche ce que tu maîtrises, fais le mini-contrôle : le planning se refait"}):"")
+   +(A.lexDe(sid).length?sw({href:`#/${sid}/lexique`,c,tile:"Aa",kicker:"Comprendre les mots",name:"Lexique",sub:"Chaque mot technique du cours, expliqué simplement"}):"")
    +sw({href:`#/${sid}/cartes`,c,tile:ico("i-cards"),kicker:"Se tester",name:"Cartes des fiches",sub:`${known} sur ${inProg.length} sues${red?`, <span class="r">${red} en rouge</span>`:""}`})
    +(S.quiz.length?sw({href:`#/${sid}/quiz`,c,tile:"?",kicker:"Se tester",name:"Quiz de cours",sub:`Meilleur score : ${st.best} sur ${A.activeQuiz(S).length}`}):"")
    +(S.td.length?sw({href:`#/${sid}/td`,c,tile:ico("i-pen"),kicker:"Sur papier",name:esc(S.tdTitle||"Exercices de TD"),sub:`${tdk} sur ${S.td.length} sus`}):"")
@@ -15049,7 +15218,7 @@ function drawQ(sid){
   const q=Q[qOrder[qi]],ord=qPerm[qOrder[qi]]||(qPerm[qOrder[qi]]=perm(q.o.length));if(qAns===null)qT0=Date.now();
   box.innerHTML=`<p class="muted">Question ${qi+1} sur ${n}. Score : ${qScore}</p><div class="bar"><i style="width:${qi/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${ord.map(i=>{const o=q.o[i];let c="";if(qAns!==null){if(i===q.a)c="good";else if(i===qAns)c="bad";}return `<button data-o="${i}" class="${c}" ${qAns!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
-   ${qAns!==null?`<div class="expl${qAns===q.a?"":" no"}"><b>${qAns===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="qn" style="justify-self:start">${qi<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
+   ${qAns!==null?`<div class="expl${qAns===q.a?"":" no"}"><b>${qAns===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${sid}/c/${q.link}">Voir la fiche</a>`:""}${qAns===q.a?"":motsHTML(sid,q)}</div><button class="btn pri" id="qn" style="justify-self:start">${qi<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
 }
 
 /* ---------- TD ---------- */
@@ -15133,7 +15302,7 @@ function diagDraw(){
   const q=D.L[D.i].q,ord=D.ord[D.i]||(D.ord[D.i]=perm(q.o.length));if(D.ans===null)D.t0=Date.now();
   box.innerHTML=`<p class="muted">Question ${D.i+1} sur ${n}</p><div class="bar"><i style="width:${D.i/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${ord.map(i=>{let c="";if(D.ans!==null){if(i===q.a)c="good";else if(i===D.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${D.ans!==null?"disabled":""}>${q.o[i]}</button>`;}).join("")}</div>
-   ${D.ans!==null?`<div class="expl${D.ans===q.a?"":" no"}"><b>${D.ans===q.a?"Exact.":D.ans===-1?"La réponse :":"Non."}</b> ${D.ans===-1?q.o[q.a]+". ":""}${q.e||""}</div><button class="btn pri" id="dqn" style="justify-self:start">${D.i<n-1?"Question suivante":"Voir le résultat"}</button>`:`<button class="btn" id="dqs" style="justify-self:start">Je ne sais pas</button>`}`;
+   ${D.ans!==null?`<div class="expl${D.ans===q.a?"":" no"}"><b>${D.ans===q.a?"Exact.":D.ans===-1?"La réponse :":"Non."}</b> ${D.ans===-1?q.o[q.a]+". ":""}${q.e||""}${D.ans===q.a?"":motsHTML(D.sid,q)}</div><button class="btn pri" id="dqn" style="justify-self:start">${D.i<n-1?"Question suivante":"Voir le résultat"}</button>`:`<button class="btn" id="dqs" style="justify-self:start">Je ne sais pas</button>`}`;
 }
 
 /* ---------- pages propres à une matière ---------- */
@@ -15178,8 +15347,22 @@ function drawMix(){
   const it=mx.q[mx.i],q=it.q,S=SUBJ[it.sid];if(mx.ans===null)mx.t0=Date.now();
   box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${(it.ord||q.o.map((_,i)=>i)).map(i=>{const o=q.o[i];let c="";if(mx.ans!==null){if(i===q.a)c="good";else if(i===mx.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${mx.ans!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
-   ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":mx.ans===-1?"La réponse :":"Non."}</b> ${mx.ans===-1?q.o[q.a]+". ":""}${q.e||""}${q.link&&S.BY[q.link]?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:`<button class="btn" id="mxs" style="justify-self:start">Je ne sais pas</button>`}`;
+   ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":mx.ans===-1?"La réponse :":"Non."}</b> ${mx.ans===-1?q.o[q.a]+". ":""}${q.e||""}${q.link&&S.BY[q.link]?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}${mx.ans===q.a?"":motsHTML(it.sid,q)}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:`<button class="btn" id="mxs" style="justify-self:start">Je ne sais pas</button>`}`;
 }
+/* ---------- lexique : les mots techniques en mots simples (lexique.js), et les mots d'une question ratée ---------- */
+const lexDe=sid=>{const S=SUBJ[sid];return ((window.LEX||{})[sid]||[]).filter(x=>inScope(S,{ex:x.x}));};
+function motsDe(sid,txt){const t=" "+strip(txt).replace(/\s+/g," ")+" ",vus=[];
+  lexDe(sid).forEach(x=>{let best=-1;[x.m].concat(x.a||[]).forEach(f=>{const k=strip(f);if(!k)return;let i=-1;
+      if(/^[a-z0-9]/.test(k)&&/[a-z0-9]$/.test(k)){const m=new RegExp("(^|[^a-z0-9])"+k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^a-z0-9]|$)").exec(t);if(m)i=m.index;}else i=t.indexOf(k);
+      if(i>=0&&(best<0||i<best))best=i;});
+    if(best>=0)vus.push({x,i:best});});
+  /* les mots précis d'abord ; les mots très courants (fonction, type…) seulement s'il y a peu de mots précis */
+  const prec=vus.filter(v=>!v.x.g).sort((u,v)=>u.i-v.i).slice(0,4),cour=vus.filter(v=>v.x.g).sort((u,v)=>u.i-v.i).slice(0,prec.length>=2?0:2-prec.length);
+  return prec.concat(cour).map(v=>v.x);}
+const motsHTML=(sid,q)=>{const M=motsDe(sid,[q.q||"",q.code||"",(q.o||[]).join(" ")].join(" "));
+  return M.length?`<p class="muted" style="margin:10px 0 2px">Les mots de la question (<a href="#/${sid}/lexique">tout le lexique</a>) :</p>${M.map(x=>`<p style="margin:2px 0"><b>${x.m}</b> : ${x.d}</p>`).join("")}`:"";};
+function lexique(sid){const S=SUBJ[sid],L=lexDe(sid),chs=[];L.forEach(x=>{if(!chs.includes(x.ch))chs.push(x.ch);});
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Lexique</h1></div><p class="lead">Les mots techniques de ${exW(S)==="CC"?"ce CC":"cet examen"}, expliqués avec des mots simples. Quand tu te trompes à une question, les mots qu'elle contient s'affichent sous la correction. La définition exacte du cours reste dans les fiches.</p>${chs.map((c,i)=>sec(i+1,c,L.filter(x=>x.ch===c).map(x=>`<p><b>${x.m}</b> : ${x.d}</p>`).join(""))).join("")}</div>`;}
 function methode(){
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Réviser efficacement en peu de temps</h1></div>
    <p class="lead">Une grande synthèse de la recherche sur l'apprentissage (Dunlosky et ses collègues, 2013) compare dix façons de réviser. Deux sortent nettement du lot : <b>se tester</b> et <b>espacer</b>. Relire, surligner et résumer arrivent en bas du classement. Le site est construit autour de ça.</p>
@@ -15241,6 +15424,7 @@ function render(parts){
     else if(rest[0]==="annales"&&annOf(S).length){pg="annales";CUR.page=pg;annales(sid);}
     else if(rest[0]==="p"&&rest[1]){pg="p/"+rest[1];CUR.page=pg;page(sid,rest[1]);}
     else if(rest[0]==="niveau"&&themesOf(S).length){pg="niveau";CUR.page=pg;niveau(sid);}
+    else if(rest[0]==="lexique"&&lexDe(sid).length){pg="lexique";CUR.page=pg;lexique(sid);}
     else (APP.ext.subject||subjHome)(sid);
     /* plus de barre latérale : chaque sous-page d'une matière ramène à sa page */
     if(pg!=="home"&&!pg.startsWith("c/")){const pe=main.querySelector(".page");if(pe)pe.insertAdjacentHTML("afterbegin",`<a class="back" href="#/${sid}">‹ ${S.name}</a>`);}
@@ -15265,7 +15449,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repQ,brut,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repQ,brut,lexDe,motsHTML,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
