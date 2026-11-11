@@ -14158,8 +14158,8 @@ function buildPlan(){
     for(;;){let best=null;active.forEach(id=>{if(ptr[id]<L[id].length&&(best===null||got[id]/ew(id)<got[best]/ew(best)))best=id;});if(best===null)break;
       const t=L[best][ptr[best]++],d=dl(best);
       if(dls.every(D=>D<d||load[D]+t.min<=cap[D])){keep.add(best+":"+t.id);dls.forEach(D=>{if(D>=d)load[D]+=t.min;});got[best]+=t.min;}}});
-  /* 2. File d'attente de chaque matière, dans l'ordre du cours ; quiz et fiches en rouge à la fin */
-  const Q={};active.forEach(id=>{const P=pendingTasks(id).filter(t=>keep.has(id+":"+t.id));Q[id]=P.filter(t=>!t.last).concat(P.filter(t=>t.last));plan.bonus[id]=pendingTasks(id).filter(t=>!keep.has(id+":"+t.id)).map(t=>t.id);});
+  /* 2. File d'attente de chaque matière : l'essentiel d'abord (p = 1), dans l'ordre du cours ; quiz et fiches en rouge à la fin */
+  const Q={};active.forEach(id=>{const P=pendingTasks(id).filter(t=>keep.has(id+":"+t.id));Q[id]=P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(a.i-b.i)).concat(P.filter(t=>t.last));plan.bonus[id]=pendingTasks(id).filter(t=>!keep.has(id+":"+t.id)).map(t=>t.id);});
   /* 3. Affectation créneau par créneau : la matière la plus en retard sur son temps restant (bonus de coefficient).
         Une étape ne va que dans un créneau assez long. Le quiz et les fiches en rouge attendent les 30 h avant le CC, ou le dernier jour où il reste une séance. */
   const fitsIn=(t,room)=>t.min<=room+15;
@@ -14170,25 +14170,35 @@ function buildPlan(){
   const ratee=(id,t,B)=>t.lesson&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0;/* leçon ratée aujourd'hui : on la refait demain */
   const fill=(id,B,dur,src,finalWin,ordre)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(ratee(id,t,B))continue;if(!fitsIn(t,dur-used)){if(ordre&&!t.last)break;continue;}tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
   const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(lenFor(used),30));
-    tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=30+GAP)blocks.splice(i+1,0,{day:B.day,start:B.end+GAP,end:full});};
+    tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=25)blocks.splice(i+1,0,{day:B.day,start:B.end,end:full});};
   const freeIdx=[];
+  /* étapes essentielles (p = 1) qui n'ont pas pu être gardées : elles passent avant une matière lointaine quand leur CC est à moins de 3 jours */
+  const R1={};active.forEach(id=>{R1[id]=(plan.bonus[id]||[]).map(tid=>SUBJ[id].TB[tid]).filter(t=>t.p===1&&!t.last);});
   for(let i=0;i<blocks.length;i++){
     const B=blocks[i],bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
-    let best=null,bestScore=-1;
+    /* dans l'ordre du cours d'abord ; si le créneau irait à une matière lointaine alors qu'un CC est à moins de 3 jours,
+       une étape plus courte de ce CC passe devant */
+    const proche=id=>dl(id)-bs<=72*3600e3;
+    const choisir=ordre=>{let best=null,bestScore=-1;
     active.forEach(id=>{if(!Q[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||""))return;
+      if(!ordre&&!proche(id))return;
       const room=Math.min(dur,paceLeft(id,B.day));if(room<=0)return;
       const finalWin=fenetre(id,B,bs);
-      const elig=Q[id].filter(t=>(!t.last||finalWin)&&!ratee(id,t,B));if(!elig.length||!fitsIn(elig[0],room))return;
+      const elig=Q[id].filter(t=>(!t.last||finalWin)&&!ratee(id,t,B));if(!elig.length||(ordre?!fitsIn(elig[0],room):!elig.some(t=>fitsIn(t,room))))return;
       let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
       const rem=elig.reduce((s,t)=>s+t.min,0);
       let sc=rem/Math.max(avail,1)*(1+0.3*weight(SUBJ[id])/WMAX);
-      if(finalWin&&Q[id].some(t=>t.last))sc+=0.6;
+      if(finalWin&&elig[0].last)sc+=0.6;/* quiz et veille : seulement quand les leçons de la matière sont placées */
       /* une étape longue qui ne tiendra plus dans aucune séance libre avant son CC passe maintenant */
       let mx=0;for(let j=i+1;j<blocks.length;j++){if(blocks[j].sid)continue;if(toD(blocks[j].day,blocks[j].end).getTime()<=dl(id))mx=Math.max(mx,work(blocks[j].end-blocks[j].start));}
       if(elig.some(t=>!t.last&&fitsIn(t,dur)&&!fitsIn(t,mx)))sc+=5;
-      if(sc>bestScore){bestScore=sc;best=id;}});
+      if(sc>bestScore){bestScore=sc;best=id;}});return best;};
+    let ordre=true,best=choisir(true);
+    if(!best||!proche(best)){const u=choisir(false);if(u){best=u;ordre=false;}
+      else{let r=null;active.forEach(id=>{if(!proche(id)||be>dl(id)||!R1[id].some(t=>fitsIn(t,dur)))return;if(!r||dl(id)<dl(r)||(dl(id)===dl(r)&&weight(SUBJ[id])>weight(SUBJ[r])))r=id;});
+        if(r){const f=fill(r,B,dur,R1,false);if(f.tk.length){f.tk.forEach(t=>{const k=plan.bonus[r].indexOf(t.id);if(k>=0)plan.bonus[r].splice(k,1);});useDay(r,B.day,f.used);place(i,r,f.tk,f.used,dur,true);continue;}}}}
     if(!best){freeIdx.push(i);continue;}
-    const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),Q,fenetre(best,B,bs),true);
+    const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),Q,fenetre(best,B,bs),ordre);
     if(!tk.length){freeIdx.push(i);continue;}
     useDay(best,B.day,used);place(i,best,tk,used,dur,false);
   }
