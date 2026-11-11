@@ -14235,14 +14235,18 @@ function home(){
   /* le gros bouton : une leçon commencée, sinon les cartes du jour, sinon la suite du programme, sinon du repos */
   const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
   let go,after="";
+  /* « Où j'en suis » : en gros bouton quand c'est nécessaire, en lien quand c'est conseillé */
+  const DGS=A.diagAFaire(),DGN=DGS.find(x=>x.need)||null;
   if(nextT&&nextT.resume){const L=BYL[nextT.sid][nextT.t.lesson],PT=parts(L,nextT.sid),pk=PT.filter(x=>x<=nextT.resume.i).length;
     go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:"▶",kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:`Tu reprends à l'écran ${nextT.resume.i+1} sur ${nextT.resume.n}${PT.length>1?`, partie ${pk} sur ${PT.length}`:""}.`};}
+  else if(DGN){const S=SUBJ[DGN.sid];go={href:`#/${DGN.sid}/niveau`,c:"s-"+DGN.sid,tile:"✓",kick:`D'abord · environ ${DGN.min} min`,name:`Où j'en suis en ${S.name}`,sub:`${exW(S)} ${jx(S)}. Coche ce que tu maîtrises et fais le mini-contrôle : le programme du jour se refait avec tes réponses.`};
+    if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(due.length){go={href:"#/reviser",c:"c-bleu",tile:due.length>99?"99+":String(due.length),kick:"Continuer · d'abord 5 à 15 min",name:`Réviser ${due.length} ${plural(due.length,"carte")}`,sub:"Les cartes du jour, avant d'apprendre du nouveau : c'est ce qui fait tenir ce que tu as déjà appris."};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(nextT&&nextT.today)go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:nL?String(nL.i+1):ico("i-pen"),kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:lessonInfo(nextT.t)+"."};
   else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
   h+=`<a class="gobig ${go.c}${go.done?" is-done":""}" href="${go.href}"><span class="gobig__tile" aria-hidden="true">${go.tile}</span><span class="gobig__bar"><span class="gobig__kick">${go.kick}</span><span class="gobig__name">${go.name}</span><span class="gobig__sub">${go.sub}</span></span>${ico("i-arrow","ico gobig__arrow")}</a>`;
-  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}<a href="#/mix">${mixed?`10 questions mélangées : fait (${A.hub.mixScore} sur 10)`:"10 questions mélangées"}</a><button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
+  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}<a href="#/mix">${mixed?`10 questions mélangées : fait (${A.hub.mixScore} sur 10)`:"10 questions mélangées"}</a><button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
   /* un seul créneau ouvert : le prochain à faire ; les autres sont repliés */
@@ -14525,16 +14529,36 @@ const annOf=S=>S.ann.filter(x=>!x.ex||inScope(S,x));
 const SELF=[0.15,0.5,0.85];
 const themeEx=(S,T)=>T.ex||examsOf(S)[0].id;
 const themesOf=S=>{const e=exam(S);return (S.themes||[]).filter(T=>themeEx(S,T)===e.id);};
-function maitrise(sid,T){const d=ST[sid].diag[T.id]||{},s=d.self!=null?d.self:T.self0,v=s!=null?SELF[s]:null,r=d.n?d.ok/d.n:null;
-  return v!=null&&r!=null?0.4*v+0.6*r:r!=null?0.15+0.7*r:v;}
+function maitrise(sid,T){const st=ST[sid],d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,v=s!=null?SELF[s]:null,r=d.n?d.ok/d.n:null;
+  let m=v!=null&&r!=null?0.4*v+0.6*r:r!=null?0.15+0.7*r:v;
+  /* les leçons du thème faites depuis le mini-contrôle comptent aussi : part faite × réussite */
+  const L=(T.les||[]).map(l=>st.les[l]).filter(x=>x&&x.n),tot=(T.les||[]).length;
+  if(L.length&&tot){const f=L.length/tot,sc=L.reduce((x,y)=>x+y.best,0)/L.length,ml=f*(0.25+0.6*sc)+(1-f)*(m==null?0.3:Math.min(m,0.5)),der=L.map(x=>x.on||"").sort().pop();
+    if(m==null||!d.on||der>d.on)m=Math.max(m==null?0:m,ml);}
+  return m;}
 const gainTheme=(sid,T)=>{const m=maitrise(sid,T);return T.pts*(1-(m==null?0.5:m));};
 const prioDe=(sid,T)=>{const m=maitrise(sid,T);return m==null?null:m>=0.75||T.pts*(1-m)<0.5?2:1;};
-function prioTheme(S,T,p0){if(themeEx(S,T)!==exam(S).id)return p0;const p=prioDe(S.id,T);return p==null?p0:p===2?Math.max(2,p0):1;}
+/* un thème d'une épreuve déjà passée, encore couvert par l'épreuve courante, garde son effet : il y pèse environ trois fois moins */
+function prioTheme(S,T,p0){const e=exam(S),te=themeEx(S,T);if(te!==e.id&&!(e.covers||[]).includes(te))return p0;const m=maitrise(S.id,T);if(m==null)return p0;
+  return m>=0.75||T.pts*(te===e.id?1:0.3)*(1-m)<0.5?Math.max(2,p0):1;}
 const diagFait=sid=>themesOf(SUBJ[sid]).some(T=>maitrise(sid,T)!=null);
 /* part des points encore à gagner dans une matière : 1 quand on ne sait rien, moins quand presque tout est maîtrisé */
 const marge=sid=>{const L=themesOf(SUBJ[sid]),tot=L.reduce((s,T)=>s+T.pts,0);if(!tot)return 1;return Math.min(1.6,Math.max(0.35,L.reduce((s,T)=>s+gainTheme(sid,T),0)/tot/0.5));};
+/* Faut-il faire ou refaire « Où j'en suis » ? Nécessaire : CC dans 4 jours au plus, aucun mini-contrôle, et on ne sait rien
+   sur la moitié des points. Conseillé : CC dans 10 jours et jamais de mini-contrôle, ou des leçons faites depuis le dernier. */
+function diagAFaire(){const n=NOW(),out=[];
+  SIDS.forEach(sid=>{const S=SUBJ[sid],TH=themesOf(S);if(!TH.length||examStart(S)<=n)return;
+    const st=ST[sid],j=(examStart(S)-n)/864e5,tot=TH.reduce((s,T)=>s+T.pts,0),teste=TH.filter(T=>(st.diag[T.id]||{}).n),
+      inconnu=TH.filter(T=>(st.diag[T.id]||{}).self==null&&T.self0==null&&!(st.diag[T.id]||{}).n).reduce((s,T)=>s+T.pts,0),
+      nq=TH.reduce((s,T)=>s+Math.min(diagPool(sid,T).length,nbQ(T)),0),min=Math.max(3,Math.round(nq*0.6));
+    if(!TH.some(T=>prioDe(sid,T)!==2)&&teste.length)return;/* tout est maîtrisé et vérifié */
+    if(!teste.length){if(j<=4&&inconnu>=tot/2)out.push({sid,need:true,j,min,why:"pas encore fait"});
+      else if(j<=10)out.push({sid,need:false,j,min,why:inconnu?"pas encore fait":"vérifie avec le mini-contrôle"});return;}
+    const der=teste.map(T=>st.diag[T.id].on||"").sort().pop(),depuis=TH.reduce((s,T)=>s+(T.les||[]).filter(l=>st.les[l]&&st.les[l].n&&(st.les[l].on||"")>der).length,0);
+    if(j<=10&&depuis>=2)out.push({sid,need:false,j,min,why:`à refaire : ${depuis} leçons faites depuis`});});
+  return out.sort((x,y)=>(y.need-x.need)||(x.j-y.j)||(weight(SUBJ[y.sid])-weight(SUBJ[x.sid])));}
 /* points à gagner par minute d'une étape : sert à choisir quoi garder quand tout ne tient pas */
-function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)return 9;const T=S.TH[t.id];if(!T||themeEx(S,T)!==exam(S).id)return 0;
+function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)return 9;const T=S.TH[t.id];if(!T||themeEx(S,T)!==exam(S).id)return (t.base<=20?1.5:2)/Math.max(t.min,10);/* feuille autorisée, examen blanc, TD : 1,5 à 2 points */
   const mins=(T.les||[]).map(l=>"L-"+l).concat(T.tasks||[]).reduce((s,x)=>s+((S.TB[x]||{}).min||0),0);return gainTheme(sid,T)/Math.max(mins,10);}
 const examStart=S=>{const e=exam(S);return toD(e.day,mm(e.start));};
 function jx(S){const e=exam(S),n=NOW(),k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
@@ -14621,13 +14645,14 @@ function buildPlan(){
   let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){freeBlocks(d,d===t0?Math.ceil((nowMin+10)/5)*5:0,d===t0?Math.max(0,dayCap(t0)-doneTodayMin()):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
   const dl=id=>examStart(SUBJ[id]).getTime();
   /* 1. Ce qu'on garde, quand tout ne tient pas : le temps est partagé entre les matières en proportion du poids de chaque CC
-        dans la moyenne (coefficient × part du CC), avec un bonus pour le prochain CC. On remplit d'abord l'essentiel (p = 1,
+        dans la moyenne (coefficient × part du CC), de sa proximité (bonus dans les 7 jours) et des points qu'il reste
+        à y gagner (page « Où j'en suis »). On remplit d'abord l'essentiel (p = 1,
         dans l'ordre du cours), en donnant chaque étape à la matière la moins servie, tant que tout tient avant chaque CC
         (8 % de marge). Puis l'important (p = 2), puis le reste. Ce qui ne tient pas devient facultatif. */
   const dls=[...new Set(active.map(dl))].sort((a,b)=>a-b),cap={},load={};
   dls.forEach(D=>{cap[D]=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=D?s+work(b.end-b.start):s,0)*0.92;load[D]=0;});
   const lastD=Math.max(...dls);plan.have=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=lastD?s+work(b.end-b.start):s,0);plan.need=active.reduce((s,id)=>s+pendingTasks(id).filter(t=>t.p===1).reduce((a,t)=>a+t.min,0),0);
-  const keep=new Set(),first=active.slice().sort((a,b)=>dl(a)-dl(b))[0],ew=id=>weight(SUBJ[id])*(id===first?1.5:1)*marge(id),got={},qs={};
+  const keep=new Set(),first=active.slice().sort((a,b)=>dl(a)-dl(b))[0],urg=id=>1+0.5*Math.max(0,1-(dl(id)-n.getTime())/(7*864e5)),ew=id=>weight(SUBJ[id])*urg(id)*marge(id),got={},qs={};
   /* quand tout ne tient pas, les leçons et les exercices passent avant le quiz et la veille */
   active.forEach(id=>{got[id]=0;const P=pendingTasks(id);qs[id]=P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(valeur(id,b)-valeur(id,a))||(a.i-b.i)).concat(P.filter(t=>t.last));});
   const tier=t=>t.last?1:t.p;
@@ -14942,7 +14967,7 @@ function niveau(sid){
   const carte=T=>{const d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,g=gainTheme(sid,T),pr=prioDe(sid,T);
     return `<section class="check"><div><b>${T.t}</b> <span class="muted">· environ ${demi(T.pts)} point(s) sur 20 au ${X}${T.src?` (${T.src})`:""}</span></div>
      <div class="filters" data-th="${T.id}">${NIV.map((n,i)=>`<button class="btn" data-self="${i}" aria-pressed="${s===i}">${n}</button>`).join("")}</div>
-     <div class="muted">${d.self==null&&T.self0!=null?"Coché d'après ce que tu m'as dit : change-le si c'est faux. ":""}Mini-contrôle : ${d.n?`${d.ok} sur ${d.n}`:"pas fait"}. Reste à gagner : environ <b>${demi(g)}</b> point(s). ${pr==null?"":pr===1?`<b>En priorité dans ton planning.</b>`:"Passe en « si tu as le temps »."}</div></section>`;};
+     <div class="muted">${d.self==null&&T.self0!=null?"Coché d'après ce que tu m'as dit : change-le si c'est faux. ":""}Mini-contrôle : ${d.n?`${d.ok} sur ${d.n}`:"pas fait"}. Leçons faites : ${(T.les||[]).filter(l=>st.les[l]&&st.les[l].n).length} sur ${(T.les||[]).length}. Reste à gagner : environ <b>${demi(g)}</b> point(s). ${pr==null?"":pr===1?`<b>En priorité dans ton planning.</b>`:"Passe en « si tu as le temps »."}</div></section>`;};
   const nq=TH.reduce((s,T)=>s+Math.min(diagPool(sid,T).length,nbQ(T)),0);
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Où j'en suis</h1></div>
    <p class="lead">Dis ce que tu penses maîtriser, puis fais le mini-contrôle. Le planning met en avant les thèmes où il te reste le plus de points à gagner, et range en « si tu as le temps » ce que tu sais déjà.</p>
@@ -15083,7 +15108,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
