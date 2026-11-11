@@ -4835,7 +4835,7 @@ const aucasou=({sec})=>`<div class="title-row"><h1>Au cas où : preuves et compl
 const infos=({sec,exam})=>`<div class="title-row"><h1>Le CC1 d'algorithmique en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Jeudi 12 novembre. L'heure n'est pas sur Moodle : je l'ai placé à 15h, sur ton premier créneau de TD d'algo. Corrige-la dans « Examens et coefficients » si besoin. Sur papier.</p>`)}
  ${sec(2,"Le poids",`<p>Contrôle continu intégral : 3 CC à 32 %, 34 % et 34 %, sans rattrapage. Coefficient 5 dans le semestre : c'est l'une des matières qui comptent le plus.</p>`)}
- ${sec(3,"Le programme",`<ul><li>D'après tes camarades : « tout ce qu'on a fait », jusqu'au TD 5 et au casse-tête des piles du cours.</li><li>TD 1 (expressions, cond, motifs), TD 2 (récursivité), TD 3 (tableaux 1D), TD 4 (tableaux 2D, jusqu'à l'exercice 15 compris), TD 5 (listes). TP : le jeu de la vie et le pendu.</li><li>Cours : jusqu'aux piles et aux files (p. 43 à 51).</li><li><b>Appris le 11 novembre</b> : le prof a déposé sur Moodle son cours annoté jusqu'à la diapo 86. La validité (prouver une boucle) et la complexité (θ, O, master theorem) ont donc été faites en amphi, mais pas en TD. Les CC de 2022 et de 2024 avaient des questions de cours sur ces chapitres, et celui de 2022 un exercice de 5 points. <b>Je ne sais pas si ça tombe cette année</b> : la page <a href="#/p/aucasou">Au cas où</a> donne 3 blocs à recopier sur ta feuille A4 (15 minutes), et deux leçons les expliquent si tu as le temps.</li><li>Pas encore vu en amphi : recherche dichotomique, tris. Ces fiches sont rangées à part.</li></ul>`)}
+ ${sec(3,"Le programme",`<ul><li>D'après tes camarades : « tout ce qu'on a fait », jusqu'au TD 5 et au casse-tête des piles du cours.</li><li>TD 1 (expressions, cond, motifs), TD 2 (récursivité), TD 3 (tableaux 1D), TD 4 (tableaux 2D, jusqu'à l'exercice 15 compris), TD 5 (listes). TP : le jeu de la vie et le pendu.</li><li>Cours : jusqu'aux piles et aux files (p. 43 à 51).</li><li><b>Appris le 11 novembre</b> : le prof a déposé sur Moodle son cours annoté jusqu'à la diapo 86. La validité (prouver une boucle) et la complexité (θ, O, master theorem) ont donc été faites en amphi, mais pas en TD. Les CC de 2022 et de 2024 avaient des questions de cours sur ces chapitres, et celui de 2022 un exercice de 5 points. <b>Je ne sais pas si ça tombe cette année</b> (d'après toi, la complexité n'est pas au programme du CC1) : la page <a href="#/p/aucasou">Au cas où</a> donne 3 blocs à recopier sur ta feuille A4 (15 minutes), et deux leçons les expliquent si tu as le temps.</li><li>Pas encore vu en amphi : recherche dichotomique, tris. Ces fiches sont rangées à part.</li></ul>`)}
  ${sec(4,"Le conseil de tes camarades",`<p>« Apprends bien comment écrire du pseudo-code : ne pas oublier la signature, et mettre fin pour, fin tant que au bon endroit. » Commence par la fiche <a href="#/c/a-pseudo">Écrire un algorithme sans faute</a> et la page <a href="#/p/recettes">Recettes pas à pas</a>.</p>`)}
  ${sec(5,"Documents",`<p>Une feuille A4 autorisée, écrite comme tu veux (tes camarades le confirment). Aucun matériel électronique. Prépare-la avec la page « Ma feuille A4 ».</p><p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote.pdf","Cours annoté"],["algo/td.pdf","Feuilles de TD"],["algo/cc_peip_2023.pdf","CC PEIP 2023"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
@@ -5374,6 +5374,8 @@ Début
 Fin`)}<p>Que doit mettre John à la place de ❶ et ❷ pour que l'algorithme fonctionne ?</p>`,
   sol:`<p><b>❶ : i-1</b> et <b>❷ : j+1</b>.</p><p>C'est le tri par insertion (cours, diapo 114 : « T[k] est inséré parmi T[0] à T[k-1] »). À l'itération i, les cases T[0] à T[i-1] sont déjà triées.</p><ul><li>a garde la valeur de T[i].</li><li>j part de la case juste à gauche : i-1. Tant que T[j] est plus grand que a, on le décale d'une case vers la droite (T[j+1] ← T[j]) et on recule.</li><li>La boucle s'arrête quand j = −1 ou quand T[j] ≤ a : la place libre est juste à droite de j, donc T[j+1] ← a.</li></ul><p>Vérifié par programme sur 1000 tableaux tirés au hasard. Remarque : le sujet écrit « E T » dans la signature ; pour que le tableau soit modifié, il faudrait ES.</p>`});
 
+ann.forEach(x=>{const k=/pour le (CC[23])$/.exec(x.src);if(k)x.ex=k[1].toLowerCase();});
+
 /* ---------- quiz ---------- */
 quiz.push(
  {q:"Un invariant de boucle, d'après le cours, est une propriété censée être vraie…",o:["au début des itérations et à la fin de chaque itération","seulement à la fin des itérations","seulement au début des itérations"],a:0,e:"Diapo 54. On le prouve par récurrence : initialisation, récurrence, conclusion.",link:"a-preuve"},
@@ -5416,9 +5418,20 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  tdIntro:"Les exercices des TD 1 à 5 et des TP, corrigés par moi en pseudo-code, dans la forme du cours (pas de corrigé officiel sur Moodle). Les ★★★ ressemblent le plus aux CC. Écris ta réponse sur une feuille avant d'ouvrir le corrigé, puis compare la forme ligne par ligne. Pour le CC2 : les TD 6 à 8 en entier (exercices 24 à 36), corrigés avec la méthode de preuve et le comptage du cours. Pour le CC3 : les TD 9 et 10 en entier (exercices 37 à 43).",
  annIntro:"Le CC PEIP 2023 a exactement le programme de cette année : ses quatre sujets sont là (corrigés par moi). Le sujet 1 sert d'examen blanc ; prends dans les trois autres les exercices du type que tu rates. Pour le CC1 2024 et le CC 2022, j'ai gardé les exercices de ton programme (corrigés officiels, réécrits). En bas de la liste, pour les CC2 et CC3 : le CC de 2022 et l'examen de janvier 2023 (corrigés officiels), l'examen PEIP de mai 2023 (corrigés écrits par moi).",quizIntro:"Des questions de cours des CC 2022, 2023 et 2024, et des questions sur la forme du pseudo-code.",
  pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"aucasou",t:"Au cas où : preuves et complexité",html:aucasou},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
+ /* thèmes du CC1 et leur poids moyen dans les sujets de 2022, PEIP 2023 et 2024 (sur 20).
+    self0 : ce qu'il a dit le 11/11 (« presque tout juste » sur l'entraînement) ; il peut le changer dans « Où j'en suis ». */
+ themes:[
+  {id:"listes",t:"Listes : tête, queue, cons",pts:5,src:"2 à 8 points selon l'année",les:["a-listes"],fiches:["a-listes","a-listes-rec"],self0:2},
+  {id:"tableaux",t:"Tableaux 1D : accumuler, chercher, fabriquer",pts:5,src:"4 à 6 points",les:["a-tableaux"],fiches:["a-tableaux"],self0:2},
+  {id:"recursif",t:"Écrire un algorithme récursif",pts:3,src:"2,5 à 4 points",les:["a-recursif"],fiches:["a-recursif"],self0:2},
+  {id:"affichage",t:"Ce qu'affiche une procédure récursive, et son arrêt",pts:3,src:"4 points en 2023 et en 2024",les:["a-affichage"],fiches:["a-arbre-appels","a-arret"],self0:2},
+  {id:"forme",t:"La forme du pseudo-code, les expressions, les questions de cours",pts:2,src:"1,5 à 3 points",les:["a-forme","a-expressions"],fiches:["a-pseudo","a-bases","a-expressions"],self0:2},
+  {id:"boucles",t:"Boucles pour et tant que",pts:1,src:"dans tous les exercices",les:["a-boucles"],fiches:["a-boucles"],self0:2},
+  {id:"motifs",t:"Motifs d'étoiles",pts:1,src:"4 points en 2023, rien les autres années",les:["a-motifs"],fiches:["a-motifs"],self0:2},
+  {id:"reste",t:"Tableaux 2D, dictionnaires, piles et files",pts:0.5,src:"jamais tombés",les:["a-tableaux2d","a-dicos","a-piles"],fiches:["a-tableaux-2d","a-dicos","a-piles-files"],self0:2}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
- {id:"amphia4",ex:"cc1x",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille A4",min:15,p:1,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille A4, recopier suffit pour répondre."},
+ {id:"amphia4",ex:"cc1x",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille A4",min:15,p:2,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille A4, recopier suffit pour répondre."},
  {id:"peip",t:"Examen blanc : CC PEIP 2023 en 1 h, puis correction",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus proche de ton programme."},
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:2,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
  {id:"peip2",t:"CC PEIP 2023, sujets 2, 3 et 4 : les exercices du type que tu rates",min:60,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Trois autres sujets au format exact du tien : 15 exercices corrigés."},
@@ -6652,6 +6665,12 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
  annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h ; en 2021 sans document, cette année avec ta feuille A4). Le sujet blanc n° 2 est inventé par moi sur le même modèle, pour t'entraîner une deuxième fois. J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
  pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille A4",html:feuille}],
+ /* thèmes du CC et leur poids dans le partiel d'octobre 2021 (sur 20) */
+ themes:[
+  {id:"rec",t:"Récursivité sur les entiers : chiffres, diviseurs",pts:7,src:"queDesUn et prodDiv au partiel 2021",les:["p-rec","p-chiffres"],fiches:["pf-rec","pf-rec-ex"]},
+  {id:"listes",t:"Listes : schéma récursif, fabriquer, tester",pts:7,src:"somElem et prefLong au partiel 2021",les:["p-listes","p-schema","p-fabriquer"],fiches:["pf-listes","pf-listes-rec","pf-listes-construire","pf-listes-tests"]},
+  {id:"types",t:"Types et valeurs d'une expression, if, let",pts:3,src:"question 1 du partiel 2021",les:["p-types","p-iflet"],tasks:["drill","tdtypes"],fiches:["pf-types","pf-if","pf-let","pf-erreurs"]},
+  {id:"fonctions",t:"Écrire une fonction et sa signature",pts:3,src:"memeParite au partiel 2021, et la signature à chaque question",les:["p-fonctions"],fiches:["pf-fonctions","pf-signature"]}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-ocaml.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"Autorisée (le prof de CM l'a dit) : imprimée ou manuscrite."},
  {id:"drill",t:"Entraînement « types et valeurs » sans faute",min:15,p:1,manual:true,links:[["p/types","Entraînement"]]},
@@ -7052,6 +7071,16 @@ SUBJ.calc={name:"Calculus",code:"HAX106X",color:"#FFB547",coef:3,share:0.25,key:
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
  tdIntro:"Toute la feuille 1 (les 30 questions, énoncés recopiés sur la feuille du prof) et les exercices 1 et 2 de la feuille 2, corrigés par moi étape par étape. Les ★★★ ressemblent le plus aux CC. Fais-les sur papier, sans calculatrice, comme au CC.",annIntro:"Corrigés officiels des CC1 2025 et 2023, réécrits avec le barème et la rédaction attendue. J'ai ajouté le problème de la feuille 3 bis (inspiré d'un CC de 2021-2022), corrigé par moi.",
  pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"formulaire",t:"Formulaire",html:formulaire}],
+ /* thèmes du CC1 et leur poids moyen dans les CC de 2023 et 2025 (sur 20). self0 : ce qu'il a dit le 11/11
+    (« juste me rappeler les formules », « mieux comprendre les équa diff ») ; le mini-contrôle peut le contredire. */
+ themes:[
+  {id:"ipp",t:"Intégration par parties",pts:5,src:"4 à 6,5 points",les:["c-ipp"],fiches:["c-ipp"],self0:2},
+  {id:"derivees",t:"Dériver et étudier une fonction",pts:4.5,src:"3 à 6 points",les:["c-derivees"],fiches:["c-derivees"],self0:2},
+  {id:"limites",t:"Limites",pts:3,src:"1,5 à 4 points",les:["c-limites"],fiches:["c-limites"],self0:2},
+  {id:"primitives",t:"Primitives : reconnaître la forme",pts:2.5,src:"5 points en 2025",les:["c-primitives"],fiches:["c-primitives"],self0:2},
+  {id:"ed1",t:"Équations différentielles d'ordre 1",pts:2,src:"4 points en 2023, au programme cette année",les:["c-ed0","c-ed1"],fiches:["c-ed1","c-ed1-sm"],self0:0},
+  {id:"domaine",t:"Domaine de définition",pts:1.5,src:"1 à 2 points",les:["c-domaine"],fiches:["c-domaine"],self0:2},
+  {id:"integrales",t:"Changement de variable et calcul d'intégrales",pts:1.5,src:"3 points en 2025",les:["c-integrales"],fiches:["c-chgt-var","c-integrale"],self0:2}],
  tasks:[
  {id:"form",first:true,t:"Revoir le formulaire : dérivées, primitives, intégrales, limites, équations différentielles",min:20,p:1,manual:true,links:[["p/formulaire","Formulaire"]],why:"Aucun document au CC. Cache la colonne de droite et récite ; note ce qui ne sort pas tout seul."},
  {id:"cc25",t:"Examen blanc : CC1 2025 en 1 h, puis correction",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Étude de fonction, intégrales, primitives : tout le CC1."},
@@ -10403,10 +10432,10 @@ DÉBUT
     fin pour;
     Renvoyer R
 FIN`,[{o:["taille(T)-1-i","taille(T)-i","i-1"],a:0}],"Pour i = 0 on veut la dernière case, d'indice taille(T) − 1 ; pour i = taille(T) − 1, la case 0."),
- S("Exemple corrigé : CC1 2024, exercice 3 (6 points)","Trois tableaux L, W, H donnent les longueurs, largeurs et hauteurs des cartons. Écrire Volume(L, W, H), le volume total, puis NbCamionsMin si chaque camion porte un volume Vmax.",[
-  {w:"Volume : un accumulateur V ← 0, puis pour i de 0 à taille(L)-1 : V ← V + L[i] * W[i] * H[i], fin pour;, puis Renvoyer V.",why:"Le schéma « accumuler »."},
-  {w:"NbCamionsMin : Renvoyer ⌈Volume(L, W, H) / Vmax⌉, l'arrondi au-dessus.",why:"On réutilise la fonction précédente : c'est permis et attendu."},
-  {w:"Question 3 : avec L = [2, 2, 2], W = H = [1, 1, 1] et Vmax = 3, la fonction dit 2 camions, mais il en faut 3 : un carton de 2 m³ ne se coupe pas.",why:"Le volume total ne suffit pas : les cartons sont entiers."}]),
+ S("Exemple corrigé : CC1 2024, exercice 3 (6 points)","<p>Les algorithmes de l'exercice suivant peuvent être écrits en pseudo-code ou en python.</p><p>On veut transporter des cartons par camion. Les cartons sont représentés par trois tableaux de nombres L, W et H, qui contiennent les longueurs, les largeurs et les hauteurs des cartons dans le même ordre (en m). Chaque camion peut porter un certain volume maximal Vmax (en m³).</p><ol><li>Ecrire une fonction Volume qui, étant donnés les trois tableaux L, W et H, renvoie le volume total occupé par les cartons (en m³).</li><li>Ecrire une fonction NbCamionsMin qui, étant donnés les trois tableaux L, W et H et le volume maximal Vmax, renvoie le nombre minimal de camions nécessaires pour transporter tous les cartons. Ce nombre correspond au cas où tous les camions portent le même volume.</li><li>Donner un exemple où il faut plus de camions pour transporter les cartons que ce que NbCamionsMin calcule. On pourra choisir un exemple avec L=[2,2,2] W=[1,1,1] et H=[1,1,1].</li></ol>",[
+  {w:"Question 1. Volume : un accumulateur V ← 0, puis pour i de 0 à taille(L)-1 : V ← V + L[i] * W[i] * H[i], fin pour;, puis Renvoyer V.",why:"Le schéma « accumuler »."},
+  {w:"Question 2. NbCamionsMin : Renvoyer ⌈Volume(L, W, H) / Vmax⌉, l'arrondi au-dessus.",why:"On réutilise la fonction précédente : c'est permis et attendu. C'est le corrigé officiel."},
+  {w:"Question 3. Avec L = [2, 2, 2], W = H = [1, 1, 1] : le volume total est de 6 m³. Si on choisit Vmax = 3 m³, la fonction dit 2 camions, mais il en faut 3 : un carton de 2 m³ ne se coupe pas.",why:"Le volume total ne suffit pas : les cartons ne peuvent pas être fractionnés (corrigé officiel)."}]),
  P("TD 3 sur papier : croissant et compteEgaux","TD 3, exercice 14 (questions 5 et 2). Écris des fonctions qui, étant donné un tableau T de nombres, calculent et renvoient : (a) si la séquence des valeurs des éléments de T est croissante (true ou false) ; (b) le nombre d'éléments de T qui ont une valeur égale à e. Appelle-les croissant(T) et compteEgaux(e, T).",C(`FONCTION : croissant (E T : tableau de nombres) : booléen
 SPÉCIFICATIONS : renvoie true si les valeurs de T sont dans l'ordre croissant, false sinon.
 DÉBUT
@@ -10730,11 +10759,9 @@ FIN`}),
 const ORDRE_CC1=["a-forme","a-expressions","a-boucles","a-tableaux","a-recursif","a-affichage","a-listes","a-motifs","a-amphi-preuve","a-amphi-complexite","a-tableaux2d","a-dicos","a-piles"];
 LES.algo.sort((a,b)=>ORDRE_CC1.indexOf(a.id)-ORDRE_CC1.indexOf(b.id));
 LES.algo.forEach(L=>{if(["a-amphi-preuve","a-amphi-complexite","a-tableaux2d","a-dicos","a-piles"].includes(L.id))L.late=true;});
-/* Dit par l'utilisateur le 11/11 : il réussit presque tout le sujet d'entraînement, et il a deux autres CC le vendredi.
-   Les leçons du CC1 deviennent « si tu as le temps » ; restent au plan : feuille A4, blocs « au cas où », examen blanc, quiz, veille. */
-LES.algo.forEach(L=>{L.p=2;});
-/* les deux leçons « au cas où » ne servent que pour le CC1 : pour le CC2, les leçons a2-* les remplacent */
-LES.algo.forEach(L=>{if(/^a-amphi-/.test(L.id))L.ex="cc1x";});
+/* La priorité des leçons du CC1 vient maintenant des thèmes (matiere-algo.js, page « Où j'en suis »).
+   Les deux leçons « au cas où » ne servent que pour le CC1, en « si tu as le temps » ; pour le CC2, les leçons a2-* les remplacent. */
+LES.algo.forEach(L=>{if(/^a-amphi-/.test(L.id)){L.ex="cc1x";L.p=2;}});
 /* ================== leçons des CC2 (preuves, complexité) et CC3 (recherche, tris) ================== */
 const A2=o=>Object.assign(o,{ex:"cc2"}),A3=o=>Object.assign(o,{ex:"cc3"});
 LES.algo.push(
@@ -11956,9 +11983,8 @@ LES.calc=[
 /* Le domaine d'abord (8 min) : la leçon sur les dérivées le demande dans chaque exercice. Les limites à la fin :
    celle de l'étude de fonction du CC (factoriser en ±∞) est expliquée dans l'exemple corrigé de c-derivees. */
 /* Choix de l'utilisateur, 11/11 : pour le CC1 il veut seulement revoir les formules et mieux comprendre les équations
-   différentielles d'ordre 1. Les deux leçons d'équations différentielles passent devant ; les autres deviennent « si tu as le temps ». */
+   différentielles d'ordre 1. Les deux leçons d'équations différentielles passent devant ; la priorité des autres vient des thèmes (matiere-calc.js, page « Où j'en suis »). */
 {const ORDRE_CC1=["c-ed0","c-ed1","c-domaine","c-derivees","c-primitives","c-ipp","c-integrales","c-limites"];
- LES.calc.forEach(L=>{if(["c-domaine","c-derivees","c-primitives","c-ipp","c-integrales","c-limites"].includes(L.id))L.p=2;});
  const rang=L=>{const k=ORDRE_CC1.indexOf(L.id);return k<0?99:k;};LES.calc.sort((a,b)=>rang(a)-rang(b));}
 })();
 
@@ -14222,10 +14248,10 @@ function home(){
 function apprendre(){
   let h=`<div class="page wide">${ttl("Apprendre","Des leçons courtes, dans l'ordre de tes CC. Une question à chaque écran, la correction tout de suite. L'étoile marque la prochaine leçon ; celles ratées reviennent dans ton programme.")}`;
   ordered().forEach((id,k)=>{const S=SUBJ[id],Ls=lesOf(id),st=ST[id],d=lessonsDone(id);let firstTodo=null;
-    const items=Ls.map((L,i)=>{const r=st.les[L.id],dn=isDone(id,S.TB["L-"+L.id]),redo=!dn&&!!r,isNext=!dn&&!firstTodo;if(isNext)firstTodo=L;
-      const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":L.p>1?" is-later":"";
+    const items=Ls.map((L,i)=>{const r=st.les[L.id],dn=isDone(id,S.TB["L-"+L.id]),redo=!dn&&!!r,isNext=!dn&&!firstTodo&&(S.TB["L-"+L.id].p===1||!Ls.some(M=>!isDone(id,S.TB["L-"+M.id])&&S.TB["L-"+M.id].p===1));if(isNext)firstTodo=L;
+      const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":S.TB["L-"+L.id].p>1?" is-later":"";
       const pg=dn?null:progGet(id,L.id);
-      const meta=pg?`En cours · écran ${pg.i+1} sur ${pg.n}`:dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${L.p>1?" · si tu as le temps":""}`;
+      const meta=pg?`En cours · écran ${pg.i+1} sur ${pg.n}`:dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${S.TB["L-"+L.id].p>1?" · si tu as le temps":""}`;
       return `<li class="slot"><a class="piece lpiece${cls}" href="#/lecon/${id}/${L.id}">${isNext?`<span class="tag">Maintenant</span>`:""}${spark}<span class="lnum">${dn?"✓":redo?"!":i+1}</span><span class="piece__text"><span class="piece__title">${esc(L.t)}</span><span class="piece__meta">${meta}</span>${isNext&&L.goal?`<span class="lgoal">${L.goal}</span>`:""}</span></a></li>`;}).join("");
     h+=`<section class="ecrin s-${id}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">${exW(S)} ${shortDay(S)} · ${jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul></div></div></section>`;});
   $("#main").innerHTML=h+`</div>`;badges();}
@@ -14233,15 +14259,16 @@ function apprendre(){
 /* ================= une matière : tout ce qu'il y a dedans ================= */
 function subject(sid){
   const S=SUBJ[sid],st=ST[sid],P=plan(),t0=today(),e=exam(S),Ls=lesOf(sid),d=lessonsDone(sid);
-  const nextL=Ls.find(L=>!isDone(sid,S.TB["L-"+L.id]));
+  const nextL=Ls.find(L=>!isDone(sid,S.TB["L-"+L.id])&&S.TB["L-"+L.id].p===1)||Ls.find(L=>!isDone(sid,S.TB["L-"+L.id]));
   const inProg=S.ORDER.filter(c=>!c.out),red=S.ORDER.filter(c=>st.review[c.id]).length,known=inProg.filter(c=>st.known[c.id]).length,tdk=S.td.filter(x=>st.td[x.id]).length,c="s-"+sid;
   let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`${exW(S)} <b>${examLine(S)}</b> (${jx(S)}), ${e.place}, ${e.dur}. Documents : ${e.docs||S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${e.prog||S.prog}</p>`;
   h+=`<ul class="swatches lead1">`
    +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(S.TB["L-"+nextL.id].min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
+   +(A.themesOf(S).length?sw({href:`#/${sid}/niveau`,c,tile:"✓",kicker:"Choisir quoi réviser",name:"Où j'en suis",sub:"Coche ce que tu maîtrises, fais le mini-contrôle : le planning se refait"}):"")
    +sw({href:`#/${sid}/cartes`,c,tile:ico("i-cards"),kicker:"Se tester",name:"Cartes des fiches",sub:`${known} sur ${inProg.length} sues${red?`, <span class="r">${red} en rouge</span>`:""}`})
    +(S.quiz.length?sw({href:`#/${sid}/quiz`,c,tile:"?",kicker:"Se tester",name:"Quiz de cours",sub:`Meilleur score : ${st.best} sur ${A.activeQuiz(S).length}`}):"")
    +(S.td.length?sw({href:`#/${sid}/td`,c,tile:ico("i-pen"),kicker:"Sur papier",name:esc(S.tdTitle||"Exercices de TD"),sub:`${tdk} sur ${S.td.length} sus`}):"")
-   +(S.ann.length?sw({href:`#/${sid}/annales`,c,tile:ico("i-doc"),kicker:exW(S)==="CC"?"Comme au CC":"Comme à l'examen",name:"Annales et chrono",sub:`${S.ann.length} ${plural(S.ann.length,"sujet")} corrigé${S.ann.length>1?"s":""}`}):"")
+   +(A.annOf(S).length?sw({href:`#/${sid}/annales`,c,tile:ico("i-doc"),kicker:exW(S)==="CC"?"Comme au CC":"Comme à l'examen",name:"Annales et chrono",sub:`${A.annOf(S).length} ${plural(A.annOf(S).length,"sujet")} corrigé${A.annOf(S).length>1?"s":""}`}):"")
    +(A4[sid]?sw({href:A4[sid],ext:true,c,tile:ico("i-doc"),kicker:"À imprimer",name:"Feuille A4 (PDF)",sub:"Recto-verso, pour le jour du CC"}):"")
    +`</ul>`;
   const chs=[...new Set(S.ORDER.map(x=>x.ch))],isOut=ch=>S.ORDER.filter(x=>x.ch===ch).every(x=>x.out);
@@ -14389,6 +14416,12 @@ SIDS.forEach(id=>{const S=SUBJ[id];
 /* matières à plusieurs épreuves : une fiche ou un exercice prévu pour une autre épreuve est « hors programme » pour l'épreuve courante */
 SIDS.forEach(id=>{const S=SUBJ[id];if(!S.exams)return;const dyn=x=>{if(x._dyn)return;Object.defineProperty(x,"_dyn",{value:1});const st=x.out;Object.defineProperty(x,"out",{get(){if(inScope(S,x))return false;const e=examsOf(S).find(e=>e.id===exId(S,x));const lab=e&&e.label;return st||((lab?"Pour "+(/^CC/.test(lab)?"le "+lab:"l'"+lab.toLowerCase()):"Pour le prochain contrôle")+", pas pour l'épreuve qui vient.");},configurable:true,enumerable:true});};(S.concepts||[]).forEach(dyn);(S.td||[]).forEach(dyn);});
 SIDS.forEach(id=>{const S=SUBJ[id];S.id=id;S.BY={};S.concepts.forEach(c=>S.BY[c.id]=c);S.ORDER=S.concepts.slice().sort((a,b)=>a.ch-b.ch);S.TB={};S.tasks.forEach((t,i)=>{t.p=t.p||2;t.i=i;S.TB[t.id]=t;});S.quiz=S.quiz||[];S.td=S.td||[];S.ann=S.ann||[];S.pages=S.pages||[];});
+/* Thèmes d'une épreuve (S.themes) : chacun a son poids moyen en points dans les anciens sujets, ses leçons et ses exercices.
+   La page « Où j'en suis » enregistre ce que l'étudiant pense maîtriser et un mini-contrôle. Une étape d'un thème maîtrisé,
+   ou qui rapporte moins d'un demi-point, passe en « si tu as le temps » ; une étape d'un thème à travailler passe en priorité. */
+SIDS.forEach(id=>{const S=SUBJ[id];S.TH={};if(!S.themes)return;
+  S.themes.forEach(T=>{(T.les||[]).map(l=>"L-"+l).concat(T.tasks||[]).forEach(tid=>{S.TH[tid]=T;});});
+  S.tasks.forEach(t=>{const T=S.TH[t.id];if(!T)return;const p0=t.p;Object.defineProperty(t,"p",{get(){return prioTheme(S,T,p0);},enumerable:true,configurable:true});});});
 
 /* ---------- dates ---------- */
 function NOW(){const q=new URLSearchParams(location.search);const f=q.get("date"),t=q.get("heure");if(f&&/^\d{4}-\d\d-\d\d$/.test(f)){const[y,m,d]=f.split("-").map(Number);const[h,mi]=(t||"08:00").split(":").map(Number);return new Date(y,m-1,d,h,mi);}return new Date();}
@@ -14415,7 +14448,7 @@ let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArr
 const persistJ=()=>{try{localStorage.setItem(JKEY,JSON.stringify(J));}catch(e){}};
 const ST={};
 function cardIds(sid,lid){const L=(LES[sid]||[]).find(x=>x.id===lid);if(!L)return [];const out=[];let n=0;L.steps.forEach(st=>{if(st.k==="card")out.push(lid+"#"+(n++));});return out;}
-function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{}};}
+function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{}};}
 function applyEv(e){
   const day=ymd(new Date(e.t));
   if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
@@ -14429,6 +14462,7 @@ function applyEv(e){
   else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
   else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;}
+  else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n){d.ok=e.ok;d.n=e.n;d.on=day;}}
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;}
 }
 function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
@@ -14466,6 +14500,22 @@ const exW=S=>{const l=(exam(S)||{}).label||"CC";return /^CC/.test(l)?"CC":l;};
 const exId=(S,x)=>x.ex||examsOf(S)[0].id;
 const inScope=(S,x)=>{const e=exam(S);return (e.covers||[e.id]).includes(exId(S,x));};
 const lesOf=id=>(LES[id]||[]).filter(L=>inScope(SUBJ[id],L));
+const annOf=S=>S.ann.filter(x=>!x.ex||inScope(S,x));
+/* thèmes de l'épreuve courante ; maîtrise entre 0 et 1 (null : on ne sait pas) ; points encore à gagner */
+const SELF=[0.15,0.5,0.85];
+const themeEx=(S,T)=>T.ex||examsOf(S)[0].id;
+const themesOf=S=>{const e=exam(S);return (S.themes||[]).filter(T=>themeEx(S,T)===e.id);};
+function maitrise(sid,T){const d=ST[sid].diag[T.id]||{},s=d.self!=null?d.self:T.self0,v=s!=null?SELF[s]:null,r=d.n?d.ok/d.n:null;
+  return v!=null&&r!=null?0.4*v+0.6*r:r!=null?0.15+0.7*r:v;}
+const gainTheme=(sid,T)=>{const m=maitrise(sid,T);return T.pts*(1-(m==null?0.5:m));};
+const prioDe=(sid,T)=>{const m=maitrise(sid,T);return m==null?null:m>=0.75||T.pts*(1-m)<0.5?2:1;};
+function prioTheme(S,T,p0){if(themeEx(S,T)!==exam(S).id)return p0;const p=prioDe(S.id,T);return p==null?p0:p===2?Math.max(2,p0):1;}
+const diagFait=sid=>themesOf(SUBJ[sid]).some(T=>maitrise(sid,T)!=null);
+/* part des points encore à gagner dans une matière : 1 quand on ne sait rien, moins quand presque tout est maîtrisé */
+const marge=sid=>{const L=themesOf(SUBJ[sid]),tot=L.reduce((s,T)=>s+T.pts,0);if(!tot)return 1;return Math.min(1.6,Math.max(0.35,L.reduce((s,T)=>s+gainTheme(sid,T),0)/tot/0.5));};
+/* points à gagner par minute d'une étape : sert à choisir quoi garder quand tout ne tient pas */
+function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)return 9;const T=S.TH[t.id];if(!T||themeEx(S,T)!==exam(S).id)return 0;
+  const mins=(T.les||[]).map(l=>"L-"+l).concat(T.tasks||[]).reduce((s,x)=>s+((S.TB[x]||{}).min||0),0);return gainTheme(sid,T)/Math.max(mins,10);}
 const examStart=S=>{const e=exam(S);return toD(e.day,mm(e.start));};
 function jx(S){const e=exam(S),n=NOW(),k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
 const weight=S=>{const e=exam(S);return S.coef*(e.share!=null?e.share:S.share);};
@@ -14557,9 +14607,9 @@ function buildPlan(){
   const dls=[...new Set(active.map(dl))].sort((a,b)=>a-b),cap={},load={};
   dls.forEach(D=>{cap[D]=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=D?s+work(b.end-b.start):s,0)*0.92;load[D]=0;});
   const lastD=Math.max(...dls);plan.have=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=lastD?s+work(b.end-b.start):s,0);plan.need=active.reduce((s,id)=>s+pendingTasks(id).filter(t=>t.p===1).reduce((a,t)=>a+t.min,0),0);
-  const keep=new Set(),first=active.slice().sort((a,b)=>dl(a)-dl(b))[0],ew=id=>weight(SUBJ[id])*(id===first?1.5:1),got={},qs={};
+  const keep=new Set(),first=active.slice().sort((a,b)=>dl(a)-dl(b))[0],ew=id=>weight(SUBJ[id])*(id===first?1.5:1)*marge(id),got={},qs={};
   /* quand tout ne tient pas, les leçons et les exercices passent avant le quiz et la veille */
-  active.forEach(id=>{got[id]=0;const P=pendingTasks(id);qs[id]=P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(a.i-b.i)).concat(P.filter(t=>t.last));});
+  active.forEach(id=>{got[id]=0;const P=pendingTasks(id);qs[id]=P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(valeur(id,b)-valeur(id,a))||(a.i-b.i)).concat(P.filter(t=>t.last));});
   const tier=t=>t.last?1:t.p;
   [1,2,3].forEach(P=>{const ptr={},L={};active.forEach(id=>{ptr[id]=0;L[id]=qs[id].filter(t=>tier(t)===P);});
     for(;;){let best=null;active.forEach(id=>{if(ptr[id]<L[id].length&&(best===null||got[id]/ew(id)<got[best]/ew(best)))best=id;});if(best===null)break;
@@ -14844,16 +14894,58 @@ function annales(sid){
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Annales et examen blanc</h1></div><p class="lead">Fais un sujet en temps réel, puis corrige-toi. ${S.annIntro||""} Coche ensuite l'étape dans ton plan.</p>
    <section class="check"><h2 style="font-size:1.1rem">Chrono de ${len} minutes</h2><p class="muted">${S.docs?`Documents autorisés ${exW(S)==="CC"?"au CC":"à l'examen"} : ${S.docs}.`:""} Ne regarde aucun corrigé avant la fin.</p><div class="timer"><span class="score" id="tm"></span><button class="btn pri" id="tmgo">Lancer</button><button class="btn" id="tmre">Remettre à zéro</button><span class="muted" id="tmmsg" aria-live="polite"></span></div></section>
    <div id="ann" style="display:grid;gap:10px"></div></div>`;
-  $("#ann").innerHTML=S.ann.map((x,i)=>`<details class="ex"><summary><span><span class="sub">${x.src}</span><br><span class="h">${x.t}</span></span></summary><div class="body"><div class="enon">${x.en}</div>
+  const AN=annOf(S),plus=S.ann.length-AN.length;
+  $("#ann").innerHTML=AN.map((x,i)=>`<details class="ex"><summary><span><span class="sub">${x.src}</span><br><span class="h">${x.t}</span></span></summary><div class="body"><div class="enon">${x.en}</div>
    ${x.go?`<p><a class="btn pri" href="#/${sid}/c/${x.go}">Ouvrir la fiche</a></p>`:""}
    ${x.hint?`<div><button class="btn" data-rv="h${i}" data-l="Voir l'indice">Voir l'indice</button><div class="sol" id="h${i}" hidden style="margin-top:8px">${x.hint}</div></div>`:""}
-   ${x.sol?`<div><button class="btn" data-rv="s${i}" data-l="Voir le corrigé">Voir le corrigé</button><div class="sol" id="s${i}" hidden style="margin-top:8px"><span class="who">${x.who||"Corrigé du prof, réécrit"}</span>${x.sol}</div></div>`:""}</div></details>`).join("");
+   ${x.sol?`<div><button class="btn" data-rv="s${i}" data-l="Voir le corrigé">Voir le corrigé</button><div class="sol" id="s${i}" hidden style="margin-top:8px"><span class="who">${x.who||"Corrigé du prof, réécrit"}</span>${x.sol}</div></div>`:""}</div></details>`).join("")+(plus?`<p class="muted">${plus} autre(s) sujet(s) portent sur les chapitres des épreuves suivantes : ils apparaîtront ici après ${exW(S)==="CC"?"ce CC":"cette épreuve"}.</p>`:"");
   $("#ann").addEventListener("click",e=>{const r=e.target.closest("[data-rv]");if(!r)return;const el=document.getElementById(r.dataset.rv);el.hidden=!el.hidden;r.textContent=el.hidden?r.dataset.l:"Masquer";});
   const show=()=>{const s=Math.max(0,Math.ceil(tm.left));const el=$("#tm");if(!el)return;el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");el.classList.toggle("end",s===0);};
   const tick=()=>{tm.left=(tm.end-Date.now())/1000;const msg=$("#tmmsg");if(!tm.warn&&tm.left<=600&&tm.left>0){tm.warn=true;if(msg)msg.textContent="Plus que 10 minutes : gardes-en 5 pour relire.";}if(tm.left<=0){tm.left=0;clearInterval(tm.int);tm.int=null;if(msg)msg.textContent="Temps écoulé : pose le stylo et corrige-toi.";if($("#tmgo"))$("#tmgo").textContent="Lancer";}show();};
   $("#tmgo").addEventListener("click",()=>{if(tm.int){clearInterval(tm.int);tm.int=null;tm.left=(tm.end-Date.now())/1000;$("#tmgo").textContent="Reprendre";$("#tmmsg").textContent="En pause.";}else if(tm.left>0){tm.end=Date.now()+tm.left*1000;tm.int=setInterval(tick,250);$("#tmgo").textContent="Pause";$("#tmmsg").textContent="";}show();});
   $("#tmre").addEventListener("click",()=>{clearInterval(tm.int);tm={left:len*60,end:0,int:null,warn:false,len};$("#tmgo").textContent="Lancer";$("#tmmsg").textContent="";show();});
   if(tm.int)$("#tmgo").textContent="Pause";show();fixLinks($("#main"),sid);
+}
+
+/* ---------- où j'en suis : ce que je pense maîtriser, mini-contrôle, priorités ---------- */
+let DG=null;
+const NIV=["Pas compris ou oublié","Moyen","Je maîtrise"];
+const demi=x=>String(Math.round(x*2)/2).replace(".",",");
+const nbQ=T=>T.pts>=4?3:T.pts>=2?2:1;
+function diagPool(sid,T){const S=SUBJ[sid],out=[];S.quiz.forEach(q=>{if(q.link&&(T.fiches||[]).includes(q.link))out.push(q);});
+  (T.les||[]).forEach(l=>{const L=(LES[sid]||[]).find(x=>x.id===l);if(L)L.steps.forEach(s=>{if(s.k==="qcm"&&s.diag!==false&&!/écran|ci-dessus|précédent|Dans la preuve|Avec l'invariant|l'exemple/i.test(s.q))out.push(s);});});return out;}
+function niveau(sid){
+  const S=SUBJ[sid],TH=themesOf(S),st=ST[sid],X=exW(S)==="CC"?"CC":"examen";
+  const carte=T=>{const d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,g=gainTheme(sid,T),pr=prioDe(sid,T);
+    return `<section class="check"><div><b>${T.t}</b> <span class="muted">· environ ${demi(T.pts)} point(s) sur 20 au ${X}${T.src?` (${T.src})`:""}</span></div>
+     <div class="filters" data-th="${T.id}">${NIV.map((n,i)=>`<button class="btn" data-self="${i}" aria-pressed="${s===i}">${n}</button>`).join("")}</div>
+     <div class="muted">${d.self==null&&T.self0!=null?"Coché d'après ce que tu m'as dit : change-le si c'est faux. ":""}Mini-contrôle : ${d.n?`${d.ok} sur ${d.n}`:"pas fait"}. Reste à gagner : environ <b>${demi(g)}</b> point(s). ${pr==null?"":pr===1?`<b>En priorité dans ton planning.</b>`:"Passe en « si tu as le temps »."}</div></section>`;};
+  const nq=TH.reduce((s,T)=>s+Math.min(diagPool(sid,T).length,nbQ(T)),0);
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Où j'en suis</h1></div>
+   <p class="lead">Dis ce que tu penses maîtriser, puis fais le mini-contrôle. Le planning met en avant les thèmes où il te reste le plus de points à gagner, et range en « si tu as le temps » ce que tu sais déjà.</p>
+   <h2 style="font-size:1.15rem;margin:0">1. Ce que je pense maîtriser</h2><p class="muted" style="margin:0">Les thèmes sont rangés par points qu'il te reste à gagner. Les points viennent du barème des anciens sujets.</p>
+   ${TH.slice().sort((x,y)=>gainTheme(sid,y)-gainTheme(sid,x)).map(carte).join("")}
+   <h2 style="font-size:1.15rem;margin:0">2. Mini-contrôle</h2>
+   <section class="check"><p class="muted">${nq} questions, environ ${Math.max(3,Math.round(nq*0.6))} minutes. Plus un thème rapporte de points, plus il a de questions. Si tu ne sais pas, dis-le : deviner fausse le résultat. Tes réponses passent avant ce que tu as coché.</p><div class="qbox" id="dq" aria-live="polite"><button class="btn pri" id="dgo" style="justify-self:start">${TH.some(T=>(st.diag[T.id]||{}).n)?"Refaire le mini-contrôle":"Commencer le mini-contrôle"}</button></div></section>
+   <section class="usage"><h2>Comment c'est calculé</h2><p>Pour chaque thème : points au ${X} × ce que tu ne maîtrises pas encore = points à gagner. Un thème maîtrisé, ou qui rapporte moins d'un demi-point, passe en « si tu as le temps ». Entre deux matières, celle où il te reste le plus à gagner reçoit plus de temps.</p><p><a class="btn pri" href="#/">Voir mon planning</a></p></section></div>`;
+  $("#main .page").addEventListener("click",e=>{
+    const b=e.target.closest("[data-self]");if(b){emit({k:"diag",s:sid,th:b.parentNode.dataset.th,self:+b.dataset.self});niveau(sid);renderSide();return;}
+    if(e.target.closest("#dgo")){const L=[];TH.forEach(T=>{const P=diagPool(sid,T);perm(P.length).slice(0,Math.min(P.length,nbQ(T))).forEach(i=>L.push({th:T.id,q:P[i]}));});
+      DG={sid,L:perm(L.length).map(i=>L[i]),i:0,ans:null,res:{},ord:{}};diagDraw();return;}
+    if(!DG)return;
+    const o=e.target.closest("[data-o]"),ns=e.target.closest("#dqs");
+    if((o||ns)&&DG.ans===null){const it=DG.L[DG.i],r=DG.res[it.th]||(DG.res[it.th]={ok:0,n:0});DG.ans=o?+o.dataset.o:-1;r.n++;if(DG.ans===it.q.a)r.ok++;diagDraw();const nx=$("#dqn");if(nx)nx.focus();return;}
+    if(e.target.closest("#dqn")){DG.i++;DG.ans=null;diagDraw();}});
+  if(DG&&DG.sid===sid)diagDraw();else DG=null;
+}
+function diagDraw(){
+  const D=DG,S=SUBJ[D.sid],box=$("#dq"),n=D.L.length;if(!box)return;
+  if(D.i>=n){Object.entries(D.res).forEach(([th,r])=>emit({k:"diag",s:D.sid,th,ok:r.ok,n:r.n}));const ok=Object.values(D.res).reduce((s,r)=>s+r.ok,0);DG=null;niveau(D.sid);renderSide();
+    const b=$("#dq");if(b)b.insertAdjacentHTML("afterbegin",`<p><b>Mini-contrôle fait : ${ok} sur ${n}.</b> Les thèmes au-dessus sont rangés avec tes résultats, et ton planning est refait.</p>`);return;}
+  const q=D.L[D.i].q,ord=D.ord[D.i]||(D.ord[D.i]=perm(q.o.length));
+  box.innerHTML=`<p class="muted">Question ${D.i+1} sur ${n}</p><div class="bar"><i style="width:${D.i/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
+   <div class="opts">${ord.map(i=>{let c="";if(D.ans!==null){if(i===q.a)c="good";else if(i===D.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${D.ans!==null?"disabled":""}>${q.o[i]}</button>`;}).join("")}</div>
+   ${D.ans!==null?`<div class="expl${D.ans===q.a?"":" no"}"><b>${D.ans===q.a?"Exact.":D.ans===-1?"La réponse :":"Non."}</b> ${D.ans===-1?q.o[q.a]+". ":""}${q.e||""}</div><button class="btn pri" id="dqn" style="justify-self:start">${D.i<n-1?"Question suivante":"Voir le résultat"}</button>`:`<button class="btn" id="dqs" style="justify-self:start">Je ne sais pas</button>`}`;
 }
 
 /* ---------- pages propres à une matière ---------- */
@@ -14941,8 +15033,9 @@ function render(parts){
     else if(rest[0]==="cartes"){pg="cartes";CUR.page=pg;cards(sid,rest[1]==="rouge"?"rouge":null);}
     else if(rest[0]==="quiz"&&S.quiz.length){pg="quiz";CUR.page=pg;quiz(sid);}
     else if(rest[0]==="td"&&S.td.length){pg="td";CUR.page=pg;td(sid);}
-    else if(rest[0]==="annales"&&S.ann.length){pg="annales";CUR.page=pg;annales(sid);}
+    else if(rest[0]==="annales"&&annOf(S).length){pg="annales";CUR.page=pg;annales(sid);}
     else if(rest[0]==="p"&&rest[1]){pg="p/"+rest[1];CUR.page=pg;page(sid,rest[1]);}
+    else if(rest[0]==="niveau"&&themesOf(S).length){pg="niveau";CUR.page=pg;niveau(sid);}
     else (APP.ext.subject||subjHome)(sid);
     /* plus de barre latérale : chaque sous-page d'une matière ramène à sa page */
     if(pg!=="home"&&!pg.startsWith("c/")){const pe=main.querySelector(".page");if(pe)pe.insertAdjacentHTML("afterbegin",`<a class="back" href="#/${sid}">‹ ${S.name}</a>`);}
@@ -14967,7 +15060,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
