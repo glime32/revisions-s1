@@ -1,7 +1,7 @@
 /* Hors ligne : une copie du site reste sur l'appareil.
    La page elle-même est toujours demandée au réseau d'abord : chaque mise à jour apparaît tout de suite ;
    sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan. */
-const CACHE = "revisions-20261111-050418";
+const CACHE = "revisions-20261111-051250";
 const FICHIERS = ["./", "index.html", "manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS))); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE).map(n => caches.delete(n))))); self.clients.claim(); });
