@@ -14933,7 +14933,10 @@ const NIV=["Pas compris ou oublié","Moyen","Je maîtrise"];
 const demi=x=>String(Math.round(x*2)/2).replace(".",",");
 const nbQ=T=>T.pts>=4?3:T.pts>=2?2:1;
 function diagPool(sid,T){const S=SUBJ[sid],out=[];S.quiz.forEach(q=>{if(q.link&&(T.fiches||[]).includes(q.link))out.push(q);});
-  (T.les||[]).forEach(l=>{const L=(LES[sid]||[]).find(x=>x.id===l);if(L)L.steps.forEach(s=>{if(s.k==="qcm"&&s.diag!==false&&!/écran|ci-dessus|précédent|Dans la preuve|Avec l'invariant|l'exemple/i.test(s.q))out.push(s);});});return out;}
+  (T.les||[]).forEach(l=>{const L=(LES[sid]||[]).find(x=>x.id===l);if(L)L.steps.forEach(s=>{if(s.k==="qcm"&&s.diag!==false&&!/écran|ci-dessus|précédent|Dans la preuve|Avec l'invariant|l'exemple|Dans cet|Avec ces|Avec cette/i.test(s.q))out.push(s);});});
+  /* pas deux questions presque identiques (le quiz et une leçon posent parfois la même) : même code, et textes qui se recouvrent */
+  const gr=q=>{const s=strip(q.q).replace(/[^a-z0-9]/g,""),g=new Set();for(let i=0;i+4<=s.length;i++)g.add(s.slice(i,i+4));return g;},garde=[],vus=[];
+  out.forEach(q=>{const g=gr(q);if(vus.some(v=>{if((v.q.code||"")!==(q.code||""))return false;let k=0;g.forEach(x=>{if(v.g.has(x))k++;});return k/Math.max(1,g.size+v.g.size-k)>=0.4;}))return;garde.push(q);vus.push({q,g});});return garde;}
 function niveau(sid){
   const S=SUBJ[sid],TH=themesOf(S),st=ST[sid],X=exW(S)==="CC"?"CC":"examen";
   const carte=T=>{const d=st.diag[T.id]||{},s=d.self!=null?d.self:T.self0,g=gainTheme(sid,T),pr=prioDe(sid,T);
@@ -15080,7 +15083,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
