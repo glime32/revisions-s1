@@ -5406,7 +5406,7 @@ const infos23=({sec})=>`<div class="title-row"><h1>Les CC2 et CC3 en bref</h1></
  ${sec(4,"Les documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["algo/cours_annote_validite_complexite.pdf","Cours annoté : validité, complexité"],["algo/cours_trous.pdf","Cours à trous (recherche, tris)"],["algo/td.pdf","Feuilles de TD"],["algo/exam_jan2023_corr.pdf","Corrigé janvier 2023"],["algo/exam_mai2023.pdf","Sujet PEIP mai 2023"],["algo/cc1_2022_corr.pdf","Corrigé CC 2022"],["algo/cc1_2024_corr.pdf","Corrigé CC1 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.32,key:"rev-algo-v1",lang:"pseudo",
- exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-12",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.32,covers:["cc1","cc1x"],unsure:"Date confirmée par le mail de ton chargé de TD (5/11) : premier CC jeudi 12/11, sur tout ce qui a été vu. L'heure (15h, début de ton TD) reste supposée."},
         {id:"cc2",label:"CC2",day:"2026-12-03",start:"15:00",end:"16:00",place:"salle de TD (36.310 ce jour-là dans Prose)",dur:"1 h",share:0.34,covers:["cc1","cc2"],unsure:"Date supposée (créneau de ton TD) : ni Prose ni les mails ne l'annoncent. Programme supposé : preuves et complexité (TD 6 à 8).",prog:"Supposé : preuves de validité (invariants, terminaison) et complexité (O, Ω, Θ, compter les opérations, équations de récurrence, master theorem), TD 6 à 8, plus ce qui précède."},
         {id:"cc3",label:"CC3",day:"2026-12-10",start:"15:00",end:"16:00",place:"salle de TD 5.212",dur:"1 h",share:0.34,covers:["cc1","cc2","cc3"],unsure:"Date supposée (dernier TD d'Algo dans Prose) : ni Prose ni les mails ne l'annoncent. Programme supposé : recherche et tris (TD 9 et 10).",prog:"Supposé : recherche séquentielle et dichotomique, tris (sélection, insertion, bulles, par valeurs) avec leur complexité et leur preuve, TD 9 et 10, plus ce qui précède."}],
  docs:"une feuille A4, écrite comme tu veux",examMinutes:60,examMorning:"Relis ta feuille A4, refais deux algorithmes du jeu « trouve l'erreur », puis les fiches en rouge.",
@@ -5418,7 +5418,7 @@ SUBJ.algo={name:"Algorithmique 1",code:"HAI101I",color:"#3BE8F0",coef:5,share:0.
  pages:[{id:"infos23",t:"Les CC2 et CC3 en bref",html:infos23},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"aucasou",t:"Au cas où : preuves et complexité",html:aucasou},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"feuille",t:"Ma feuille A4",html:feuille}],
  tasks:[
  {id:"feuille",t:"Imprimer ta feuille A4 recto-verso et la relire",min:15,p:1,manual:true,links:[["feuilles/feuille-a4-algo.pdf","La feuille A4 (PDF)"],["p/feuille","Version web"]],why:"D'après tes camarades, une feuille A4 recto-verso est autorisée (à confirmer) : apporte-la."},
- {id:"amphia4",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille A4",min:15,p:1,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille A4, recopier suffit pour répondre."},
+ {id:"amphia4",ex:"cc1x",t:"Au cas où (preuves, complexité) : recopier 3 blocs sur ta feuille A4",min:15,p:1,manual:true,links:[["p/aucasou","Les blocs à recopier"]],why:"Fait en amphi, tombé aux CC de 2022 et 2024. Avec la feuille A4, recopier suffit pour répondre."},
  {id:"peip",t:"Examen blanc : CC PEIP 2023 en 1 h, puis correction",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Le sujet le plus proche de ton programme."},
  {id:"tdex",t:"Exercices de TD ★★★ sur papier",min:60,p:2,td:["4","9","14","15","18","19"],links:[["td","Exercices de TD"]]},
  {id:"peip2",t:"CC PEIP 2023, sujets 2, 3 et 4 : les exercices du type que tu rates",min:60,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Trois autres sujets au format exact du tien : 15 exercices corrigés."},
@@ -10704,6 +10704,8 @@ LES.algo.forEach(L=>{if(["a-amphi-preuve","a-amphi-complexite","a-tableaux2d","a
 /* Dit par l'utilisateur le 11/11 : il réussit presque tout le sujet d'entraînement, et il a deux autres CC le vendredi.
    Les leçons du CC1 deviennent « si tu as le temps » ; restent au plan : feuille A4, blocs « au cas où », examen blanc, quiz, veille. */
 LES.algo.forEach(L=>{L.p=2;});
+/* les deux leçons « au cas où » ne servent que pour le CC1 : pour le CC2, les leçons a2-* les remplacent */
+LES.algo.forEach(L=>{if(/^a-amphi-/.test(L.id))L.ex="cc1x";});
 /* ================== leçons des CC2 (preuves, complexité) et CC3 (recherche, tris) ================== */
 const A2=o=>Object.assign(o,{ex:"cc2"}),A3=o=>Object.assign(o,{ex:"cc3"});
 LES.algo.push(
