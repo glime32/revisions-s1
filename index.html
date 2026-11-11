@@ -14602,16 +14602,19 @@ function finish(){
 /* ================= Réviser : les cartes du jour ================= */
 let RV=null;
 function reviser(){
-  if(!RV||RV.end){const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length};}
+  if(!RV||RV.end){const sv=A.seanceGet("cartes"),q=sv&&Array.isArray(sv.q)?sv.q.filter(x=>SUBJ[x.sid]&&cardOf(x.sid,x.cid)):[];
+    /* une séance commencée aujourd'hui reprend à la même carte */
+    if(sv&&q.length&&q.length===sv.q.length&&sv.i<q.length)RV={q,i:sv.i,flip:false,tries:sv.tries||{},ok:sv.ok||0,n:sv.n||0,end:false,total:sv.total||q.length,repris:sv.i>0};
+    else{const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length};}}
   drawCard();}
 function drawCard(){
   const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, les questions que tu as ratées dans tes leçons, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
   if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Mini-contrôle mélangé (12 questions)</a></div></div></div>`;RV.end=true;return;}
-  if(RV.i>=RV.q.length){RV.end=true;const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
+  if(RV.i>=RV.q.length){RV.end=true;A.seanceSet("cartes",null);const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
   if(!c){RV.i++;return drawCard();}
   $("#main").innerHTML=`<div class="page">${top}
-   <div class="rv s-${it.sid}"><div class="rv-h"><span class="sdot" style="background:${S.color}"></span>${S.name}<span class="muted">· carte ${RV.i+1} sur ${RV.q.length}</span></div>
+   <div class="rv s-${it.sid}"><div class="rv-h"><span class="sdot" style="background:${S.color}"></span>${S.name}<span class="muted">· carte ${RV.i+1} sur ${RV.q.length}${RV.repris?" · tu reprends où tu t'étais arrêté":""}</span></div>
     <div class="lp-bar"><i style="width:${Math.round(RV.i/RV.q.length*100)}%"></i></div>
     <p class="kbdhint"><span class="kb">Clavier : Espace pour retourner la carte · 1 raté, 2 difficile, 3 je savais.</span></p><div class="kcard${RV.flip?"":" fresh"}"><span class="tag">${esc(S.name)}</span><span class="kk">${RV.flip?"La réponse":"Retrouve de mémoire"}</span><p class="kq">${c.f}</p>${RV.flip?`<div class="ka">${c.b}</div><p class="muted" style="font-size:.85rem;margin:0">${esc(c.src)} · <a href="${c.link}">ouvrir</a></p>`:""}</div>
     ${RV.flip?`<p class="muted">Tu avais trouvé ?</p><div class="acts rate"><button class="btn rev" data-r="0">Raté</button><button class="btn mid" data-r="1">Difficile</button><button class="btn ok" data-r="2">Je savais</button></div>`:`<button class="btn pri big" id="rvflip">Voir la réponse</button>`}</div></div>`;
@@ -14625,7 +14628,8 @@ function drawCard(){
     A.logRep({o:"carte de Réviser",s:it.sid,carte:it.cid,note:["raté","difficile","je savais"][r],r,ok:r===2?1:0,essai:k,texte:A.brut(c.f).slice(0,400),reponse:A.brut(c.b).slice(0,600),msAvantRetour:(RV.t1||Date.now())-(RV.t0||Date.now()),ms:Date.now()-(RV.t0||Date.now())});
     if(k===1){RV.n++;if(r===2)RV.ok++;}
     if(r===0&&k<3)RV.q.push(it);
-    RV.i++;RV.flip=false;drawCard();}));
+    RV.i++;RV.flip=false;RV.repris=false;
+    A.seanceSet("cartes",{q:RV.q.map(x=>({sid:x.sid,cid:x.cid,box:x.box})),i:RV.i,tries:RV.tries,ok:RV.ok,n:RV.n,total:RV.total});drawCard();}));
   badges();}
 
 /* ================= les morceaux du nouvel onglet ================= */
@@ -15426,25 +15430,32 @@ function cardAnswer(sid,ok){const c=deck[di];setStatus(sid,c.id,ok?"known":"revi
 document.addEventListener("keydown",e=>{if(!CUR.sid||!CUR.page.startsWith("cartes")||(e.target.closest&&e.target.closest("input,textarea,button,select")))return;if(e.key===" "&&!flip&&deck[di]){e.preventDefault();flip=true;drawCard(CUR.sid);}else if(flip&&(e.key==="1"||e.key==="2"))cardAnswer(CUR.sid,e.key==="1");});
 
 /* ---------- quiz ---------- */
-let qOrder=[],qi=0,qScore=0,qAns=null,qPerm={},qMiss=[],qT0=0;
+let qOrder=[],qi=0,qScore=0,qAns=null,qPerm={},qMiss=[],qT0=0,qRepris=false;
+const quizSauve=sid=>{const Q=SUBJ[sid].quiz;seanceSet("quiz:"+sid,{ks:qOrder.map(i=>hq(Q[i])),p:qOrder.map(i=>qPerm[i]||null),i:qAns===null?qi:qi+1,score:qScore,miss:qMiss.map(m=>({k:hq(m.q),a:m.a}))});};
 /* les réponses changent de place à chaque passage : on ne peut pas retenir « c'est la deuxième » */
 const perm=n=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 /* à la fin d'un quiz : la liste des erreurs, avec la bonne réponse et l'explication */
 const missHTML=L=>L.length?`<h2 style="font-size:1.15rem;margin:8px 0 0">Tes erreurs (${L.length})</h2><p class="muted" style="margin:0">Relis chaque correction, puis recommence : les réponses changent de place à chaque fois.</p>${L.map(m=>`<div class="expl no"><p class="qtxt" style="font-size:1rem;margin:0 0 4px">${m.q.q}</p>${m.q.code?W.code(m.q.code,m.q.lang||SUBJ[m.sid].lang):""}<p style="margin:0"><span class="r">Ta réponse : ${m.q.o[m.a]}</span><br><span style="color:var(--vert);font-weight:700">La bonne réponse : ${m.q.o[m.q.a]}</span></p><p class="muted" style="margin:4px 0 0">${m.q.e||""}${m.q.link&&SUBJ[m.sid].BY[m.q.link]?` <a href="#/${m.sid}/c/${m.q.link}">Voir la fiche</a>`:""}</p></div>`).join("")}`:"";
-function quiz(sid){
+function quiz(sid,neuf){
   const S=SUBJ[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):null;
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Quiz de cours</h1></div><p class="lead">${S.quizIntro||"Des questions dans le style des questions de cours du CC."}${goal?` Objectif du plan : au moins ${goal} sur ${activeQuiz(S).length}.`:""}</p><div class="qbox" id="qbox" aria-live="polite"></div></div>`;
-  qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;qPerm={};qMiss=[];drawQ(sid);
+  qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;qPerm={};qMiss=[];qRepris=false;
+  const sv=neuf===true?null:seanceGet("quiz:"+sid);
+  if(sv&&Array.isArray(sv.ks)){const idx=sv.ks.map(k=>S.quiz.findIndex(x=>hq(x)===k));
+    if(idx.length&&idx.every(i=>i>=0)&&sv.i<=idx.length){qOrder=idx;qi=sv.i;qScore=sv.score||0;
+      idx.forEach((i,j)=>{const p=sv.p&&sv.p[j];if(Array.isArray(p)&&p.length===S.quiz[i].o.length)qPerm[i]=p;});
+      qMiss=(sv.miss||[]).map(m=>({sid,q:S.quiz.find(x=>hq(x)===m.k),a:m.a})).filter(m=>m.q);qRepris=qi>0&&qi<idx.length;}}
+  drawQ(sid);
   $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;const qq=S.quiz[qOrder[qi]];
       if(qq.link)emit({k:"qr",s:sid,c:qq.link,ok:qAns===qq.a?1:0});
       logRep(Object.assign({o:"quiz de cours",s:sid,fiche:qq.link||null,ok:qAns===qq.a?1:0,ms:Date.now()-(qT0||Date.now())},repQ(qq,qAns)));
-      if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;drawQ(sid);}if(id==="qre")quiz(sid);});
+      if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}quizSauve(sid);drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;qRepris=false;drawQ(sid);}if(id==="qre"||id==="qnew")quiz(sid,true);});
 }
 function drawQ(sid){
   const S=SUBJ[sid],Q=S.quiz,n=qOrder.length,box=$("#qbox"),st=ST[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):n;
-  if(qi>=n){if(qScore>st.best)emit({k:"quiz",s:sid,n:qScore,goal:qScore>=goal});box.innerHTML=`<p class="muted">Résultat</p><p class="score">${qScore} sur ${n}</p><p>${qScore>=goal?"Objectif atteint : l'étape « Quiz » de ton plan est cochée.":"Relis tes erreurs ci-dessous, puis recommence."}</p><button class="btn pri" id="qre" style="justify-self:start">Recommencer</button>${missHTML(qMiss)}`;return;}
+  if(qi>=n){if(qScore>st.best)emit({k:"quiz",s:sid,n:qScore,goal:qScore>=goal});seanceSet("quiz:"+sid,null);box.innerHTML=`<p class="muted">Résultat</p><p class="score">${qScore} sur ${n}</p><p>${qScore>=goal?"Objectif atteint : l'étape « Quiz » de ton plan est cochée.":"Relis tes erreurs ci-dessous, puis recommence."}</p><button class="btn pri" id="qre" style="justify-self:start">Recommencer</button>${missHTML(qMiss)}`;return;}
   const q=Q[qOrder[qi]],ord=qPerm[qOrder[qi]]||(qPerm[qOrder[qi]]=perm(q.o.length));if(qAns===null)qT0=Date.now();
-  box.innerHTML=`<p class="muted">Question ${qi+1} sur ${n}. Score : ${qScore}</p><div class="bar"><i style="width:${qi/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
+  box.innerHTML=`<p class="muted">Question ${qi+1} sur ${n}. Score : ${qScore}${qRepris?REPRISE+` · <button type="button" class="linkbtn" id="qnew">recommencer</button>`:""}</p><div class="bar"><i style="width:${qi/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${ord.map(i=>{const o=q.o[i];let c="";if(qAns!==null){if(i===q.a)c="good";else if(i===qAns)c="bad";}return `<button data-o="${i}" class="${c}" ${qAns!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
    ${qAns!==null?`<div class="expl${qAns===q.a?"":" no"}"><b>${qAns===q.a?"Exact.":"Non."}</b> ${q.e}${q.link?` <a href="#/${sid}/c/${q.link}">Voir la fiche</a>`:""}${qAns===q.a?"":motsHTML(sid,q)}</div><button class="btn pri" id="qn" style="justify-self:start">${qi<n-1?"Question suivante":"Voir le score"}</button>`:""}`;
   motsClic(sid,box.querySelector(".qtxt"));
@@ -15516,20 +15527,26 @@ function niveau(sid){
   $("#main .page").addEventListener("click",e=>{
     const b=e.target.closest("[data-self]");if(b){emit({k:"diag",s:sid,th:b.parentNode.dataset.th,self:+b.dataset.self});niveau(sid);renderSide();return;}
     if(e.target.closest("#dgo")){const L=[];TH.forEach(T=>{const P=diagPool(sid,T);perm(P.length).slice(0,Math.min(P.length,nbQ(T))).forEach(i=>L.push({th:T.id,q:P[i]}));});
-      DG={sid,L:perm(L.length).map(i=>L[i]),i:0,ans:null,res:{},ord:{}};diagDraw();return;}
+      DG={sid,L:perm(L.length).map(i=>L[i]),i:0,ans:null,ok:0,ord:{},run:(Date.now()+TOFF).toString(36)};nivSauve();diagDraw();return;}
+    if(e.target.closest("#dgnew")){seanceSet("niv:"+sid,null);DG=null;niveau(sid);return;}
     if(!DG)return;
     const o=e.target.closest("[data-o]"),ns=e.target.closest("#dqs");
-    if((o||ns)&&DG.ans===null){const it=DG.L[DG.i],r=DG.res[it.th]||(DG.res[it.th]={ok:0,n:0});DG.ans=o?+o.dataset.o:-1;r.n++;if(DG.ans===it.q.a)r.ok++;
-      logRep(Object.assign({o:"mini-contrôle de la matière",s:DG.sid,th:it.th,fiche:it.q.link||null,ok:DG.ans===it.q.a?1:0,ms:Date.now()-(DG.t0||Date.now())},repQ(it.q,DG.ans)));diagDraw();const nx=$("#dqn");if(nx)nx.focus();return;}
-    if(e.target.closest("#dqn")){DG.i++;DG.ans=null;diagDraw();}});
-  if(DG&&DG.sid===sid)diagDraw();else DG=null;
+    if((o||ns)&&DG.ans===null){const it=DG.L[DG.i];DG.ans=o?+o.dataset.o:-1;if(DG.ans===it.q.a)DG.ok++;
+      emit({k:"diag",s:DG.sid,th:it.th,ok:DG.ans===it.q.a?1:0,n:1,run:DG.run});
+      logRep(Object.assign({o:"mini-contrôle de la matière",s:DG.sid,th:it.th,fiche:it.q.link||null,ok:DG.ans===it.q.a?1:0,ms:Date.now()-(DG.t0||Date.now())},repQ(it.q,DG.ans)));nivSauve();diagDraw();const nx=$("#dqn");if(nx)nx.focus();return;}
+    if(e.target.closest("#dqn")){DG.i++;DG.ans=null;DG.repris=false;diagDraw();}});
+  if(DG&&DG.sid===sid)diagDraw();
+  else{DG=null;const sv=seanceGet("niv:"+sid);
+    if(sv&&Array.isArray(sv.L)){const L=sv.L.map(x=>{const q=trouveQ(sid,x.k);return q?{th:x.th,q}:null;});
+      if(L.length&&L.every(Boolean)&&sv.i<=L.length){DG={sid,L,i:sv.i,ans:null,ok:sv.ok||0,ord:{},run:sv.run,repris:sv.i>0&&sv.i<L.length};diagDraw();}}}
 }
+const nivSauve=()=>seanceSet("niv:"+DG.sid,{L:DG.L.map(x=>({th:x.th,k:hq(x.q)})),i:DG.ans===null?DG.i:DG.i+1,ok:DG.ok,run:DG.run});
 function diagDraw(){
   const D=DG,S=SUBJ[D.sid],box=$("#dq"),n=D.L.length;if(!box)return;
-  if(D.i>=n){Object.entries(D.res).forEach(([th,r])=>emit({k:"diag",s:D.sid,th,ok:r.ok,n:r.n}));const ok=Object.values(D.res).reduce((s,r)=>s+r.ok,0);DG=null;niveau(D.sid);renderSide();
+  if(D.i>=n){const ok=D.ok;seanceSet("niv:"+D.sid,null);DG=null;niveau(D.sid);renderSide();
     const b=$("#dq");if(b)b.insertAdjacentHTML("afterbegin",`<p><b>Mini-contrôle fait : ${ok} sur ${n}.</b> Les thèmes au-dessus sont rangés avec tes résultats, et ton planning est refait.</p>`);return;}
   const q=D.L[D.i].q,ord=D.ord[D.i]||(D.ord[D.i]=perm(q.o.length));if(D.ans===null)D.t0=Date.now();
-  box.innerHTML=`<p class="muted">Question ${D.i+1} sur ${n}</p><div class="bar"><i style="width:${D.i/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
+  box.innerHTML=`<p class="muted">Question ${D.i+1} sur ${n}${D.repris?REPRISE+` · <button type="button" class="linkbtn" id="dgnew">recommencer</button>`:""}</p><div class="bar"><i style="width:${D.i/n*100}%;background:var(--cobalt)"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${ord.map(i=>{let c="";if(D.ans!==null){if(i===q.a)c="good";else if(i===D.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${D.ans!==null?"disabled":""}>${q.o[i]}</button>`;}).join("")}</div>
    ${D.ans!==null?`<div class="expl${D.ans===q.a?"":" no"}"><b>${D.ans===q.a?"Exact.":D.ans===-1?"La réponse :":"Non."}</b> ${D.ans===-1?q.o[q.a]+". ":""}${q.e||""}${D.ans===q.a?"":motsHTML(D.sid,q)}</div><button class="btn pri" id="dqn" style="justify-self:start">${D.i<n-1?"Question suivante":"Voir le résultat"}</button>`:`<button class="btn" id="dqs" style="justify-self:start">Je ne sais pas</button>`}`;
   motsClic(D.sid,box.querySelector(".qtxt"));
@@ -15542,8 +15559,22 @@ function page(sid,pid){const S=SUBJ[sid],p=S.pages.find(x=>x.id===pid);if(!p)ret
   fixLinks($("#main"),sid);}
 
 /* ---------- mini-contrôle mélangé : toutes les matières, questions choisies par thème, chaque réponse met « Où j'en suis » à jour ---------- */
+/* Une séance en cours (mini-contrôle, quiz, cartes) est gardée sur l'appareil après chaque réponse : si on quitte la page
+   ou si l'onglet se recharge, on reprend à la même question, le jour même. */
+const CLE_S="rev-s1-seances";
+const seances=()=>{try{const o=JSON.parse(localStorage.getItem(CLE_S)||"{}");return o&&typeof o==="object"?o:{};}catch(e){return {};}};
+const seanceGet=k=>{const s=seances()[k];return s&&s.jour===today()?s:null;};
+function seanceSet(k,v){const o=seances(),t0=today();Object.keys(o).forEach(x=>{if(!o[x]||o[x].jour!==t0)delete o[x];});
+  if(v)o[k]=Object.assign({jour:t0},v);else delete o[k];try{localStorage.setItem(CLE_S,JSON.stringify(o));}catch(e){}}
+function trouveQ(sid,cle){const S=SUBJ[sid];if(!S)return null;let q=S.quiz.find(x=>hq(x)===cle);if(q)return q;
+  for(const L of LES[sid]||[]){q=L.steps.find(s=>s.k==="qcm"&&hq(s)===cle);if(q)return q;}return null;}
+const REPRISE=`<span class="muted"> · tu reprends où tu t'étais arrêté</span>`;
 let mx={q:[],i:0,score:0,ans:null};
-function mix(){
+const mixSauve=()=>seanceSet("mix",{q:mx.q.map(it=>({sid:it.sid,th:it.th||null,k:hq(it.q),ord:it.ord})),i:mx.ans===null?mx.i:mx.i+1,score:mx.score,miss:mx.miss.map(m=>({sid:m.sid,k:hq(m.q),a:m.a})),par:mx.par,run:mx.run});
+function mix(neuf){
+  const sv=neuf===true?null:seanceGet("mix");
+  if(sv&&Array.isArray(sv.q)){const Q0=sv.q.map(x=>{const q=trouveQ(x.sid,x.k);return q&&Array.isArray(x.ord)&&x.ord.length===q.o.length?{sid:x.sid,th:x.th||undefined,q,ord:x.ord}:null;});
+    if(Q0.length&&Q0.every(Boolean)&&sv.i<=Q0.length){mx={q:Q0,i:sv.i,score:sv.score||0,ans:null,miss:(sv.miss||[]).map(m=>({sid:m.sid,q:trouveQ(m.sid,m.k),a:m.a})).filter(m=>m.q),par:sv.par||{},run:sv.run,repris:sv.i>0&&sv.i<Q0.length};return mixPage();}}
   const n=NOW(),t0=today(),jr=id=>(examStart(SUBJ[id])-n)/864e5,act=SIDS.filter(id=>examStart(SUBJ[id])>n).sort((x,y)=>jr(x)-jr(y));
   /* poids d'un thème : poids du CC, proximité, points du thème, ce qui n'est pas maîtrisé, ancienneté du dernier test */
   const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id],j=jr(id),u=weight(S)*4/(1+j)*(j<=21?1:0.3),TH=themesOf(S);
@@ -15558,7 +15589,8 @@ function mix(){
   act.forEach(id=>{if(pick.length>=12||jr(id)>21)return;const L=pool.filter(x=>x.sid===id);if(L.length)tire(L);});
   while(pick.length<12&&pool.length)tire(pool);
   const Q=perm(pick.length).map(i=>pick[i]);Q.forEach(it=>{it.ord=perm(it.q.o.length);});
-  mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:(Date.now()+TOFF).toString(36)};
+  mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:(Date.now()+TOFF).toString(36)};mixSauve();mixPage();}
+function mixPage(){const Q=mx.q;
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div><p class="lead">${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat.</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
   drawMix();
   $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]"),ns=e.target.closest("#mxs");
@@ -15566,16 +15598,16 @@ function mix(){
       logRep(Object.assign({o:"mini-contrôle mélangé",s:it.sid,th:it.th||null,fiche:it.q.link||null,ok:ok?1:0,ms:Date.now()-(mx.t0||Date.now()),passage:mx.run},repQ(it.q,mx.ans)));
       if(it.th)emit({k:"diag",s:it.sid,th:it.th,ok:ok?1:0,n:1,run:mx.run});
       if(ok){mx.score++;p.ok++;}else{if(mx.ans>=0)mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}
-      drawMix();$("#mxn")?.focus();return;}
-    const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;drawMix();}if(id==="mxre")mix();});
+      mixSauve();drawMix();$("#mxn")?.focus();return;}
+    const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;mx.repris=false;drawMix();}if(id==="mxre"||id==="mxnew")mix(true);});
 }
 function drawMix(){
   const box=$("#mxbox"),n=mx.q.length;
   if(!n){box.innerHTML=`<p>Aucune question : tous tes CC sont passés.</p>`;return;}
-  if(mx.i>=n){emit({k:"mix",n:mx.score,sur:n});
+  if(mx.i>=n){emit({k:"mix",n:mx.score,sur:n});seanceSet("mix",null);
     box.innerHTML=`<p class="muted">Résultat</p><p class="score">${mx.score} sur ${n}</p><p>${Object.entries(mx.par).map(([s,p])=>`${themesOf(SUBJ[s]).length?`<a href="#/${s}/niveau">${SUBJ[s].name}</a>`:SUBJ[s].name} : ${p.ok} sur ${p.n}`).join(" · ")}.</p><p>${mx.score===n?"Tout est juste : les thèmes vérifiés passent en « si tu as le temps ».":"Les thèmes ratés remontent dans ton planning, et leurs fiches sont en rouge."}</p><div class="acts"><a class="btn pri" href="#/">Voir le programme du jour</a><button class="btn" id="mxre">${n} autres questions</button></div>${missHTML(mx.miss||[])}`;return;}
   const it=mx.q[mx.i],q=it.q,S=SUBJ[it.sid];if(mx.ans===null)mx.t0=Date.now();
-  box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
+  box.innerHTML=`<p class="muted"><i class="sdot" style="background:${S.color}"></i> ${S.name}. Question ${mx.i+1} sur ${n}, score : ${mx.score}${mx.repris?REPRISE+` · <button type="button" class="linkbtn" id="mxnew">recommencer avec d'autres questions</button>`:""}</p><div class="bar"><i style="width:${mx.i/n*100}%;background:${S.color}"></i></div><p class="qtxt">${q.q}</p>${q.code?W.code(q.code,q.lang||S.lang):""}
    <div class="opts">${(it.ord||q.o.map((_,i)=>i)).map(i=>{const o=q.o[i];let c="";if(mx.ans!==null){if(i===q.a)c="good";else if(i===mx.ans)c="bad";}return `<button data-o="${i}" class="${c}" ${mx.ans!==null?"disabled":""}>${o}</button>`;}).join("")}</div>
    ${mx.ans!==null?`<div class="expl${mx.ans===q.a?"":" no"}"><b>${mx.ans===q.a?"Exact.":mx.ans===-1?"La réponse :":"Non."}</b> ${mx.ans===-1?q.o[q.a]+". ":""}${q.e||""}${q.link&&S.BY[q.link]?` <a href="#/${it.sid}/c/${q.link}">Voir la fiche</a>`:""}${mx.ans===q.a?"":motsHTML(it.sid,q)}</div><button class="btn pri" id="mxn" style="justify-self:start">${mx.i<n-1?"Question suivante":"Voir le score"}</button>`:`<button class="btn" id="mxs" style="justify-self:start">Je ne sais pas</button>`}`;
   motsClic(it.sid,box.querySelector(".qtxt"));
@@ -15696,7 +15728,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceSet,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
