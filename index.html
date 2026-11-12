@@ -14928,6 +14928,84 @@ ana:{
 <ul><li>1 est adhérent à A : les nombres 0,9, puis 0,99, puis 0,999 sont dans A et s'approchent de 1 autant qu'on veut. Pourtant 1 n'est pas dans A.</li><li>2 n'est pas adhérent à A : tous les éléments de A sont à une distance de 2 supérieure à 1. Impossible de s'approcher.</li><li>0,5 est adhérent à A, tout simplement parce qu'il est dans A : on prend a = 0,5, à distance 0.</li></ul>
 <p><b>Le lien avec les suites.</b> « x est adhérent à A » revient à dire : il existe une suite de nombres de A qui tend vers x. Pour 1 et [0, 1[, la suite 1 − 1/n convient : 0, puis 1/2, puis 2/3, puis 3/4…</p>
 <p><b>Le lien avec la borne supérieure.</b> m = sup(A) revient à dire : m est un majorant de A, et il existe une suite de nombres de A qui tend vers m.</p>`},
+ "a-suites":{
+  "Les définitions":`<p><b>Une suite</b>, c'est une liste de nombres numérotés : u₀, u₁, u₂, u₃… Le terme numéro n se note uₙ. La suite entière se note (uₙ), avec des parenthèses.</p>
+<p><b>Le vocabulaire, avec un exemple pour chaque mot :</b></p>
+<ul><li><b>croissante</b> : chaque terme est au moins égal au précédent. 1, 3, 5, 7… ;</li><li><b>décroissante</b> : chaque terme est au plus égal au précédent. 10, 8, 6, 4… ;</li><li><b>monotone</b> : croissante ou décroissante (elle va toujours dans le même sens) ;</li><li><b>majorée</b> : il existe un plafond, le même pour tous les termes. La suite 1 − 1/n ne dépasse jamais 1 ;</li><li><b>minorée</b> : il existe un plancher ;</li><li><b>bornée</b> : un plafond et un plancher ;</li><li><b>périodique</b> : les termes se répètent à intervalles réguliers. 1, −1, 1, −1… se répète tous les 2 rangs.</li></ul>
+<p><b>Lire la version en symboles.</b> « ∀n ∈ ℕ, uₙ₊₁ ≥ uₙ » veut dire : « pour tout numéro n, le terme suivant est au moins égal au terme numéro n ». C'est la définition de « croissante ».</p>
+<p><b>« À partir d'un certain rang ».</b> On accepte que le début de la suite ne respecte pas la règle. La suite 5, 1, 2, 3, 4… n'est pas croissante (elle descend de 5 à 1), mais elle l'est à partir du rang 1.</p>`,
+  "Méthodes pour la monotonie":`<p><b>La question.</b> Comment prouver qu'une suite est croissante (ou décroissante) pour <b>tous</b> les rangs, et pas seulement en regardant les premiers termes ?</p>
+<p><b>Méthode 1 : le signe de la différence uₙ₊₁ − uₙ.</b> Si elle est toujours positive, chaque terme est plus grand que le précédent : la suite est croissante. Si elle est toujours négative : décroissante.</p>
+<p>Exemple : uₙ = n² + n.</p>
+<ol><li>J'écris uₙ₊₁ en remplaçant n par n + 1 : (n + 1)² + (n + 1).</li><li>Je calcule uₙ₊₁ − uₙ = (n² + 2n + 1) + n + 1 − n² − n = 2n + 2.</li><li>2n + 2 est positif pour tout entier naturel n : la suite est croissante.</li></ol>
+<p><b>Méthode 2 : le quotient uₙ₊₁/uₙ</b>, à réserver aux suites dont <b>tous les termes sont strictement positifs</b>. Si ce quotient est toujours plus grand que 1, la suite est croissante ; plus petit que 1, décroissante.</p>
+<p>Exemple : uₙ = 2ⁿ. Le quotient uₙ₊₁/uₙ vaut 2ⁿ⁺¹/2ⁿ = 2, qui est plus grand que 1 : la suite est croissante.</p>
+<p><b>Laquelle choisir ?</b> La différence quand uₙ est écrit avec des sommes ; le quotient quand il est écrit avec des produits ou des puissances.</p>
+<p><b>Méthode 3 : la récurrence</b>, pour les suites où chaque terme est calculé à partir du précédent (uₙ₊₁ = f(uₙ)). Elle a sa leçon plus loin.</p>`},
+ "a-limite":{
+  "La définition":`<p><b>L'idée.</b> Dire que la suite (uₙ) converge vers le nombre ℓ, c'est dire que ses termes <b>s'approchent de ℓ autant qu'on veut, et y restent</b>.</p>
+<p><b>Lire la définition, morceau par morceau.</b></p>
+<ul><li><b>ε</b> (epsilon) : une marge d'erreur qu'on s'autorise, aussi petite qu'on veut ;</li><li><b>|uₙ − ℓ| ≤ ε</b> : le terme uₙ est à une distance d'au plus ε de ℓ ;</li><li><b>N</b> : un rang à partir duquel c'est vrai pour <b>tous</b> les termes.</li></ul>
+<p>La phrase « ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε » se lit donc : « quelle que soit la marge ε, il y a un rang N à partir duquel tous les termes sont à moins de ε de ℓ ».</p>
+<p><b>C'est un jeu à deux.</b> Quelqu'un me donne une marge ε. Je dois répondre par un rang N. Si je peux toujours répondre, la suite converge.</p>
+<p><b>Exemple : uₙ = 1/n, qui converge vers 0.</b></p>
+<ul><li>On me donne ε = 0,1. Il faut 1/n ≤ 0,1, c'est-à-dire n ≥ 10. Je réponds N = 10.</li><li>On me donne ε = 0,01. Il faut n ≥ 100. Je réponds N = 100.</li></ul>
+<p>Plus la marge est petite, plus le rang est grand : <b>N dépend de ε</b>.</p>
+<p><b>Une suite qui ne converge pas :</b> 1, −1, 1, −1… Elle saute sans arrêt entre deux valeurs, elle ne reste près d'aucun nombre.</p>`,
+  "Le modèle de rédaction":`<p><b>Le but.</b> Prouver qu'une suite converge vers ℓ en utilisant la définition. La rédaction est toujours la même : il faut l'apprendre comme un modèle à trous.</p>
+<p><b>Exemple : uₙ = (2n + 1)/n, pour n ≥ 1, converge vers 2.</b></p>
+<ol><li><b>Je calcule la distance à la limite.</b> uₙ − 2 = (2n + 1)/n − 2 = 1/n. Donc |uₙ − 2| = 1/n.</li><li><b>« Soit ε &gt; 0. »</b> Je prends une marge quelconque. Cette phrase est obligatoire.</li><li><b>Je choisis le rang.</b> Je veux 1/n ≤ ε, c'est-à-dire n ≥ 1/ε. Il me faut un entier plus grand que 1/ε : je pose N = E(1/ε) + 1, où E désigne la partie entière. Alors N &gt; 1/ε.</li><li><b>Je vérifie.</b> Pour n ≥ N : |uₙ − 2| = 1/n ≤ 1/N &lt; ε.</li><li><b>Je conclus.</b> « On a montré : ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − 2| ≤ ε. Donc (uₙ) converge vers 2. »</li></ol>
+<p><b>Deux passages qui posent question.</b></p>
+<ul><li>Pourquoi 1/n ≤ 1/N quand n ≥ N ? Parce que plus on divise par un grand nombre, plus le résultat est petit.</li><li>Pourquoi 1/N &lt; ε ? Parce que N &gt; 1/ε : en passant à l'inverse, entre nombres positifs, l'inégalité change de sens.</li></ul>
+<p><b>Si la distance n'est pas exactement 1/n</b>, on cherche d'abord, au brouillon, à partir de quel n elle passe sous ε, et on choisit N en conséquence.</p>`,
+  "Tendre vers +∞":`<p><b>L'idée.</b> Une suite tend vers +∞ quand ses termes deviennent <b>aussi grands qu'on veut, et le restent</b>.</p>
+<p><b>Lire la définition.</b> « ∀A ∈ ℝ, ∃N ∈ ℕ, ∀n ≥ N, uₙ ≥ A » : quel que soit le seuil A (une barre placée aussi haut qu'on veut), il y a un rang N à partir duquel tous les termes sont au-dessus de la barre.</p>
+<p><b>Le même jeu qu'avant.</b> On me donne une barre A, je dois répondre par un rang N.</p>
+<p>Exemple : uₙ = 2n.</p>
+<ul><li>On me donne A = 1000. Il faut 2n ≥ 1000, c'est-à-dire n ≥ 500. Je réponds N = 500.</li><li>On me donne A = un million. Je réponds N = 500 000.</li></ul>
+<p>Je peux toujours répondre : la suite tend vers +∞.</p>
+<p><b>Le vocabulaire.</b> Une suite qui tend vers +∞ ne « converge » pas : converger veut dire s'approcher d'un nombre, et +∞ n'est pas un nombre. On dit qu'elle diverge.</p>
+<p><b>Vers −∞</b>, c'est la même phrase à l'envers : quelle que soit la barre, la suite finit par rester en dessous.</p>
+<p><b>Deux résultats à connaître par cœur</b> sur les puissances : 2ⁿ tend vers +∞ (comme toute puissance d'un nombre plus grand que 1), et (1/2)ⁿ tend vers 0 (comme toute puissance d'un nombre entre −1 et 1).</p>`},
+ "a-lim-fonction":{
+  "Les définitions":`<p><b>Ce qui change par rapport aux suites.</b> Pour une suite, on regarde ce qui se passe quand le numéro n devient grand. Pour une fonction f, on regarde ce que devient f(x) quand x <b>s'approche d'un nombre x₀</b> (ou devient très grand).</p>
+<p><b>La définition en un point x₀</b> a la même forme que pour les suites, avec une lettre de plus : η (êta).</p>
+<ul><li><b>ε</b> : la marge autorisée sur le résultat f(x) ;</li><li><b>η</b> : à quel point x doit être proche de x₀ pour que ça marche.</li></ul>
+<p>« ∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε » se lit : « quelle que soit la marge ε, il y a une distance η telle que : dès que x est à moins de η de x₀, f(x) est à moins de ε de ℓ ».</p>
+<p><b>Exemple : f(x) = 2x, en x₀ = 1.</b> La limite est 2. La distance au résultat : |2x − 2| = 2 |x − 1|.</p>
+<ul><li>On me donne ε = 0,1. Si x est à moins de 0,05 de 1, alors 2 |x − 1| est plus petit que 0,1. Je réponds η = 0,05.</li><li>En général, je réponds η = ε/2.</li></ul>
+<p><b>En +∞</b>, on remplace « x proche de x₀ » par « x plus grand qu'un seuil α » : à partir du seuil α, f(x) est à moins de ε de ℓ.</p>
+<p><b>Le tableau pour s'y retrouver :</b> pour une suite, je réponds par un rang N ; pour une fonction en un point, par une distance η ; pour une fonction en +∞, par un seuil α.</p>`,
+  "Le modèle de rédaction en +∞":`<p><b>Le but.</b> Prouver avec la définition qu'une fonction tend vers ℓ quand x tend vers +∞. Le modèle ressemble à celui des suites.</p>
+<p><b>Exemple : f(x) = (x + 1)/x, pour x &gt; 0, tend vers 1 en +∞.</b></p>
+<ol><li><b>Je calcule la distance à la limite.</b> f(x) − 1 = (x + 1)/x − 1 = 1/x. Pour x &gt; 0, |f(x) − 1| = 1/x.</li><li><b>« Soit ε &gt; 0. »</b></li><li><b>Je choisis le seuil.</b> Je veux 1/x &lt; ε, c'est-à-dire x &gt; 1/ε. Je pose α = 1/ε.</li><li><b>Je vérifie.</b> Pour x &gt; α : x &gt; 1/ε, donc 1/x &lt; ε, donc |f(x) − 1| &lt; ε.</li><li><b>Je conclus</b> en récrivant la définition complète : « ∀ε &gt; 0, ∃α &gt; 0, ∀x &gt; α, |f(x) − 1| &lt; ε. Donc f(x) tend vers 1 quand x tend vers +∞. »</li></ol>
+<p><b>La différence avec les suites.</b> Le seuil α n'a pas besoin d'être un entier : on prend directement α = 1/ε, sans partie entière.</p>
+<p><b>Comment trouver α dans un autre exercice.</b> Au brouillon, on part de l'inégalité qu'on veut, |f(x) − ℓ| &lt; ε, et on la transforme jusqu'à obtenir « x &gt; quelque chose ». Ce « quelque chose » est α.</p>`,
+  "Limites infinies, limites d'un seul côté":`<p><b>Pourquoi regarder un seul côté.</b> Prenons f(x) = 1/x, près de 0.</p>
+<ul><li>Pour x positif et très petit : 1/0,1 = 10, puis 1/0,001 = 1000. Les valeurs deviennent très grandes : f(x) tend vers +∞.</li><li>Pour x négatif et très petit : 1/(−0,1) = −10, puis 1/(−0,001) = −1000. Les valeurs deviennent très négatives : f(x) tend vers −∞.</li></ul>
+<p>Le comportement n'est pas le même à droite et à gauche de 0 : il faut pouvoir parler de chaque côté séparément.</p>
+<p><b>Les notations.</b> « x → 0, x &gt; 0 » veut dire que x s'approche de 0 en restant plus grand que 0 : c'est la limite à droite. « x → 0, x &lt; 0 » : la limite à gauche.</p>
+<p><b>Lire la définition d'une limite infinie.</b> « ∀A &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ f(x) &gt; A » : quelle que soit la barre A, il y a une distance η telle que, dès que x est à moins de η de x₀, f(x) est au-dessus de la barre.</p>
+<p>Avec 1/x à droite de 0 : on me donne A = 1000. Dès que x est entre 0 et 0,001, on a 1/x &gt; 1000. Je réponds η = 0,001.</p>
+<p><b>À retenir :</b> quand une fonction a une valeur interdite, on étudie toujours les deux côtés, et on peut trouver deux résultats différents.</p>`},
+ "a-calcul":{
+  "Opérations sur les limites":`<p><b>L'idée.</b> On ne revient presque jamais à la définition avec ε. Quand on connaît la limite de chaque morceau, des règles donnent la limite du tout.</p>
+<p><b>Avec des limites qui sont des nombres.</b> Si uₙ tend vers 2 et vₙ tend vers 3 :</p>
+<ul><li>uₙ + vₙ tend vers 2 + 3 = 5 ;</li><li>uₙ × vₙ tend vers 2 × 3 = 6 ;</li><li>uₙ/vₙ tend vers 2/3 (à condition que la limite du dénominateur ne soit pas 0).</li></ul>
+<p><b>Avec l'infini</b>, il faut penser en ordres de grandeur :</p>
+<ul><li>« très grand + un nombre » reste très grand : n + 5 tend vers +∞ ;</li><li>« un nombre divisé par très grand » devient tout petit : 3/n tend vers 0 ;</li><li>« très grand × très grand » est très grand : n × n² tend vers +∞.</li></ul>
+<p><b>Les quatre cas où on ne peut rien dire : les formes indéterminées.</b> Ce sont +∞ − ∞, 0 × ∞, ∞/∞ et 0/0.</p>
+<p>Pourquoi « indéterminées » ? Regarde trois différences du type « très grand moins très grand » :</p>
+<ul><li>n² − n tend vers +∞ ;</li><li>n − n² tend vers −∞ ;</li><li>(n + 1) − n vaut toujours 1.</li></ul>
+<p>Trois résultats différents pour la même forme : la règle n'existe pas. Dans ces cas, il faut d'abord <b>transformer l'écriture</b>, avec les outils de l'écran suivant.</p>`,
+  "Les trois outils":`<p>Quand on tombe sur une forme indéterminée, on réécrit l'expression. Trois techniques couvrent presque tous les exercices.</p>
+<p><b>Outil 1 : mettre en facteur le terme le plus fort.</b> Pour une fraction avec des puissances de n.</p>
+<p>Exemple : (n² + 1)/(2n² + n). En haut et en bas, le terme le plus fort est n². On factorise : n²(1 + 1/n²) en haut, n²(2 + 1/n) en bas. Les n² se simplifient : il reste (1 + 1/n²)/(2 + 1/n), qui tend vers 1/2, car 1/n² et 1/n tendent vers 0.</p>
+<p><b>Outil 2 : diviser par la plus grande puissance.</b> Pour une fraction avec des aⁿ.</p>
+<p>Exemple : (4ⁿ + 1)/(4ⁿ + 2ⁿ). La plus grande puissance est 4ⁿ. On divise en haut et en bas par 4ⁿ : (1 + (1/4)ⁿ)/(1 + (1/2)ⁿ). Or (1/4)ⁿ et (1/2)ⁿ tendent vers 0 : la limite est 1/1 = 1.</p>
+<p><b>Outil 3 : la quantité conjuguée.</b> Pour une différence de deux racines. On multiplie et on divise par la somme des deux racines, pour utiliser (a − b)(a + b) = a² − b².</p>
+<p>Exemple : √(n + 2) − √n. On multiplie en haut et en bas par √(n + 2) + √n. En haut : (n + 2) − n = 2. Il reste 2/(√(n + 2) + √n). Le dénominateur tend vers +∞, donc la limite est 0.</p>
+<p><b>Avant de sortir un outil,</b> vérifie que c'est bien une forme indéterminée. Sinon, les règles s'appliquent directement : 5 − 3/n tend vers 5.</p>`},
  /*SUITE-ANA*/}
 };
 const LES=window.LESSONS||{};
