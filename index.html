@@ -475,6 +475,9 @@ svg .arrow-ok{fill:var(--vert)}
 .expl{border-left:4px solid var(--vert);padding:4px 0 4px 14px;animation:rise .3s var(--snap)}
 .expl>b:first-child{color:var(--vert)}
 .expl.no{border-color:var(--rouge)}
+.mq-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mq-row input{flex:1 1 12em;min-width:0;font:inherit;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
+.mq-row input:focus{outline:none;border-color:var(--violet-hi)}
 .expl.no>b:first-child{color:var(--rouge)}
 .score{font:400 3rem/1 var(--f-serif);color:var(--head);font-variant-numeric:tabular-nums}
 details.ex{background:var(--feuille);border:2px solid var(--trait);border-radius:16px;transition:border-color .2s}
@@ -1485,7 +1488,22 @@ function formules(root,tout){
     P.normalize();faits.forEach(orne);});
 }
 
-window.W={esc,sup,mth,formules,code,hlCode,tracer,calltree,sortviz,dicho,listlab,drill,rewrite,plotter};
+function mq(root){
+  const norm=s=>String(s).normalize("NFKC").toLowerCase().replace(/[−–—]/g,"-").replace(/→/g,"->").replace(/[“”«»"]/g,"").replace(/[’‘]/g,"'").replace(/\s+/g,"").replace(/;;$/,"");
+  root.querySelectorAll(".mq").forEach(b=>{
+    const inp=b.querySelector("input"),ver=b.querySelector(".verdict"),ex=b.querySelector(".expl"),ok=b.dataset.ok.split("§");
+    const valider=()=>{const v=norm(inp.value);ver.hidden=false;
+      if(!v){ver.className="verdict info";ver.textContent="Écris d'abord ta réponse.";return;}
+      const bon=ok.some(a=>a[0]==="~"?v.includes(norm(a.slice(1))):v===norm(a));
+      ver.className="verdict "+(bon?"ok":"no");
+      ver.textContent=bon?"Juste !":"Pas ça. Réessaie, ou clique sur « Voir la réponse ».";
+      if(bon)ex.hidden=false;};
+    b.querySelector('[data-mq="ok"]').addEventListener("click",valider);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")valider();});
+    b.querySelector('[data-mq="voir"]').addEventListener("click",()=>{ex.hidden=false;});
+  });
+}
+window.W={mq,esc,sup,mth,formules,code,hlCode,tracer,calltree,sortviz,dicho,listlab,drill,rewrite,plotter};
 })();
 
 </script>
@@ -6482,98 +6500,416 @@ oublier rec ; f n - 1 sans parenthèses
 if sans else ; = pour comparer (pas ==)
 2 paramètres ou plus : curryfiée (fun)`,"txt"))}
 ${sec(4,"Comment la lire",`<p>« .. » remplace ce que tu écris toi-même, « base » la valeur du cas de base. Les modèles du verso sont les fonctions du partiel de 2021, avec mes corrigés : le jour du contrôle, cherche celui qui ressemble le plus à la question (un test sur les chiffres : queDesUn ; un calcul sur les diviseurs : prodDiv ; une somme sur une liste : somElem ; une liste à fabriquer : liPairs ou prefLong) et adapte-le.</p>`)}`;
-const feuille2=({sec})=>{const E=(c,h)=>M(c)+h;return `<div class="title-row"><h1>Ma feuille expliquée</h1></div>
-<p class="lead">La feuille A4, ligne par ligne : ce que chaque morceau veut dire, comment t'en servir, un exemple, et le piège. Cette page n'est pas à recopier : tu recopies <a href="#/pf/p/feuille">Ma feuille à recopier</a>, et tu lis celle-ci pour comprendre ce que tu écris.</p>
-${sec(1,"Les règles d'OCaml à connaître avant tout",`<ol>
-<li><b>OCaml calcule des expressions.</b> Une expression, c'est un calcul, comme 3 + 4. Elle a une <b>valeur</b> (7) et un <b>type</b>, c'est-à-dire la sorte de valeur (ici int, un entier). Au CC, « type et valeur » veut dire : quelle sorte, et quel résultat.</li>
-<li><b>Chaque chose a un seul type, et OCaml ne mélange jamais.</b> Un entier et un nombre à virgule ne s'additionnent pas avec le même signe. Une liste ne contient qu'un seul type. Les deux branches d'un if ont le même type. La plupart des erreurs du CC viennent de là.</li>
-<li><b>let donne un nom, pour toujours.</b> Après let x = 5, x vaut 5 et ne changera plus. Il n'y a pas de variable qui change, pas de boucle pour ni tant que.</li>
-<li><b>Pour répéter, on utilise la récursivité</b> : une fonction qui s'appelle elle-même avec une entrée plus petite (let rec). C'est la seule « boucle » d'OCaml.</li>
-<li><b>Appeler une fonction : son nom, un espace, l'argument.</b> f 3. Les parenthèses ne servent qu'à regrouper un calcul : f (n - 1).</li>
-<li><b>= compare, il ne range rien.</b> x = 3 pose la question « x vaut-il 3 ? » et répond true ou false. Seul le = qui suit let sert à définir.</li></ol>`)}
-${sec(2,"Recto : les types",
-E(`int: + - * / mod      7/2 = 3`,`<p><b>int</b> = les entiers : …, −1, 0, 1, 2… Les signes + − * marchent comme d'habitude. <b>/ coupe la virgule</b> : 7/2 = 3, et 2/5 = 0. <b>mod donne le reste</b> : 7 mod 2 = 1, car 7 = 2 × 3 + 1.</p><p>À quoi sert mod : n mod 2 = 0 veut dire « n est pair » ; n mod 10 donne le dernier chiffre de n.</p>`)+
-E(`float: +. -. *. /.    2. et 3.5`,`<p><b>float</b> = les nombres à virgule. Ils s'écrivent toujours avec un point : 2. (et pas 2, qui serait un int), 3.5. Leurs opérations ont aussi un point : 2.5 +. 1. = 3.5 ; 3. *. 2. = 6.</p><p>Les comparaisons (&lt;, >, =) n'ont pas de point : 3.5 > 2. marche.</p>`)+
-E(`jamais int et float mélangés`,`<p>3 + 2.5 : erreur, 2.5 n'est pas un int. 3. +. 2.5 : bon, vaut 5.5. 3 +. 2.5 : erreur, 3 n'est pas un float. Au CC, une question « type et valeur » cache souvent ce piège : la bonne réponse est alors « erreur de type ».</p>`)+
-E(`float_of_int 3 = 3.   int_of_float 2.9 = 2`,`<p>Pour passer de l'un à l'autre. float_of_int transforme un int en float : float_of_int 3 = 3. int_of_float transforme un float en int en <b>coupant</b> la virgule, sans arrondir : int_of_float 2.9 = 2.</p><p>Exemple : la moitié de l'entier n, avec la virgule, c'est float_of_int n /. 2.</p>`)+
-E(`bool: && || not     = <> < > <= >=`,`<p><b>bool</b> = les deux valeurs true (vrai) et false (faux). <b>&amp;&amp;</b> veut dire « et » : vrai si les deux sont vrais. <b>||</b> veut dire « ou » : vrai si au moins un des deux est vrai. <b>not</b> inverse : not true = false.</p><p>Les comparaisons rendent un bool : 3 &lt; 5 vaut true. <b>&lt;></b> veut dire « différent de » : 3 &lt;> 4 vaut true. &lt;= et >= : « plus petit ou égal », « plus grand ou égal ».</p>`)+
-E(`string: "ab" ^ "c"`,`<p><b>string</b> = du texte, entre guillemets. ^ colle deux textes : "ab" ^ "c" = "abc". Attention : "12" est un texte, pas un nombre.</p><p>Deux textes se comparent lettre par lettre, comme dans un dictionnaire : "100" &lt; "2" vaut true, car "1" vient avant "2".</p>`)+
-E(`if c then a else b : c bool, a b même type`,`<p>if pose une question c (un bool) et vaut a si la réponse est vraie, b sinon. Le else est <b>obligatoire</b>, et a et b ont le <b>même type</b>, qui est aussi le type du if tout entier.</p><p>if 5 > 3 then "oui" else "non" vaut "oui", de type string. if x > 0 then 1 else "non" : erreur, un int d'un côté et un string de l'autre.</p>`)+
-E(`let a = 1 and b = 2 in ..  (b ne voit pas a)`,`<p>let … in donne un nom pour un seul calcul : let a = 1 in a + 2 vaut 3. Avec and, on définit plusieurs noms en même temps : let a = 1 and b = 2 in a + b vaut 3.</p><p>Le piège : dans let a = 1 and b = a + 1, b ne connaît pas encore a. Pour qu'il le connaisse, on enchaîne deux let : let a = 1 in let b = a + 1 in a + b vaut 3.</p>`))}
-${sec(3,"Recto : les fonctions",
-E(`function x -> ..   1 paramètre ou 1 couple`,`<p>function x -> … fabrique une fonction : « je reçois x, je rends … ». function x -> 2 * x reçoit un nombre et rend son double.</p><p>function n'accepte qu'<b>un</b> paramètre. Pour lui en donner deux, on les met dans un <b>couple</b>, entre parenthèses avec une virgule : function (x, y) -> x + y, qu'on appelle avec f (2, 3).</p>`)+
-E(`fun x y -> ..      plusieurs paramètres`,`<p>fun accepte plusieurs paramètres, séparés par des espaces : fun a b -> a + b. On l'appelle sans virgule : h 2 3. On dit que la fonction est « curryfiée ».</p><p><b>Comment choisir au CC :</b> regarde les exemples de l'énoncé. parite(2,7), avec une virgule : c'est un couple, donc function (x, y). mult 3 4, sans virgule : deux paramètres, donc fun n m.</p>`)+
-E(`let f : int -> int = function n -> 2*n + 1`,`<p>Se lit : « f, de type int -> int, est la fonction qui à n associe 2n + 1 ». <b>int -> int</b> veut dire : elle reçoit un int et rend un int. f 3 = 7.</p><p>La partie « : int -> int » est la <b>signature</b>. Les sujets demandent de l'écrire : mets-la toujours.</p>`)+
-E(`let g : int * int -> bool =
-  function (x, y) -> x < y       g (2, 3)`,`<p><b>int * int</b> = un couple de deux int. Ici le * ne multiplie pas, il veut dire « et ». g reçoit un couple et rend un bool : g (2, 3) = true, car 2 &lt; 3.</p>`)+
-E(`let h : int -> int -> int =
-  fun a b -> a + b               h 2 3`,`<p>Plusieurs flèches : chaque type placé avant une flèche est un paramètre, et le <b>dernier</b> est le résultat. int -> int -> int : on reçoit un int, puis un int, et on rend un int. h 2 3 = 5.</p>`)+
-E(`signature: types paramètres -> résultat`,`<p><b>Trouver une signature, en 3 questions :</b></p><ol><li>Combien de paramètres, et sous quelle forme : un couple, ou plusieurs séparés par des espaces ?</li><li>Le type de chaque paramètre : regarde ce qu'on en fait. x + 1, donc x est un int. x +. 1., donc un float. if x, donc un bool. List.hd x, donc x est une liste.</li><li>Le type du résultat : celui de ce que la fonction rend. Une comparaison rend un bool.</li></ol><p>Exemple : function (x, y) -> x * 2 &lt; List.hd y. Un couple. x * 2, donc x : int. List.hd y est comparé à un int, donc y : int list. On rend une comparaison : bool. Signature : int * int list -> bool.</p>`))}
-${sec(4,"Recto : la récursivité",
-E(`RÉCURSIVITÉ  (let rec)`,`<p>Une fonction récursive s'appelle elle-même. Il faut écrire <b>let rec</b> : sans rec, OCaml ne connaît pas encore le nom de la fonction quand il lit son corps, et répond « Unbound value ».</p>`)+
-E(`let rec f : int -> int = function n ->
-  if n = 0 then base else .. f (n - 1) ..`,`<p>Le squelette pour un entier n. Deux cas :</p><ul><li><b>n = 0</b> : le cas le plus petit, on donne la réponse directement (la « base ») ;</li><li><b>sinon</b> : on fait confiance à f (n - 1), qui donne la bonne réponse pour n − 1, et on s'en sert pour fabriquer celle de n.</li></ul>${M(`let rec somme : int -> int = function n ->
-  if n = 0 then 0 else n + somme (n - 1)`)}<p>somme 3 = 3 + somme 2 = 3 + 2 + somme 1 = 3 + 2 + 1 + somme 0 = 3 + 2 + 1 + 0 = 6.</p>`)+
-E(`f (n - 1) avec parenthèses`,`<p>Sans parenthèses, f n - 1 se lit (f n) - 1 : la fonction se rappelle avec n, puis encore avec n… et ne s'arrête jamais. Un appel de fonction passe toujours avant les calculs autour.</p>`)+
-E(`base: somme 0, produit 1, liste [],
-  tous true, existe false`,`<p>Que rendre dans le cas de base ? La valeur qui ne change rien au calcul :</p><ul><li>une somme part de <b>0</b> : ajouter 0 ne change rien ;</li><li>un produit part de <b>1</b> : multiplier par 1 ne change rien (avec 0, tout vaudrait 0) ;</li><li>une liste qu'on fabrique part de <b>[]</b> ;</li><li>« tous vérifient… » : sur une liste vide, c'est <b>true</b>, personne ne contredit ;</li><li>« il en existe un qui… » : sur une liste vide, c'est <b>false</b>, on n'a trouvé personne.</li></ul>`)+
-E(`chiffres: n mod 10 dernier chiffre,
-  n / 10 le reste, base n < 10`,`<p>Pour un exercice sur les chiffres d'un nombre : 4725 mod 10 = 5, le dernier chiffre ; 4725 / 10 = 472, le nombre sans son dernier chiffre. On s'arrête quand il ne reste qu'un chiffre : n &lt; 10.</p>${M(`let rec nbChiffres : int -> int = function n ->
-  if n < 10 then 1 else 1 + nbChiffres (n / 10)`)}<p>nbChiffres 4725 = 1 + nbChiffres 472 = 1 + 1 + nbChiffres 47 = 1 + 1 + 1 + nbChiffres 4 = 4.</p>`))}
-${sec(5,"Recto : les listes",
-E(`LISTES  [2; 3; 5]   [] vide`,`<p>Une liste s'écrit entre crochets, avec des <b>points-virgules</b>. [] est la liste vide. Tous les éléments ont le même type : [2; 3; 5] est une int list, une liste d'int.</p>`)+
-E(`x :: li devant    li @ [x] à la fin`,`<p>:: ajoute <b>un élément devant</b> une liste : 1 :: [2; 3] = [1; 2; 3]. @ <b>colle deux listes</b> : [1; 2] @ [3] = [1; 2; 3]. Pour ajouter un élément à la fin, il faut donc le mettre entre crochets : li @ [x].</p><p>On peut enchaîner les :: : 1 :: 2 :: [] = [1; 2].</p>`)+
-E(`List.hd li premier   List.tl li le reste`,`<p>List.hd [7; 1; 5] = 7 : le premier élément, un int. List.tl [7; 1; 5] = [1; 5] : la liste sans son premier élément, une int list. Les deux font une erreur sur la liste vide : on teste toujours li = [] avant.</p>`)+
-E(`let rec g : int list -> int = function li ->
-  if li = [] then base
-  else .. List.hd li .. g (List.tl li) ..`,`<p>Le squelette pour une liste. C'est la même idée que pour un entier : la liste vide joue le rôle de 0, et List.tl li celui de n − 1. On traite le premier élément nous-mêmes, la fonction s'occupe du reste.</p>${M(`let rec longueur : int list -> int = function li ->
-  if li = [] then 0 else 1 + longueur (List.tl li)`)}<p>longueur [7; 1; 5] = 1 + longueur [1; 5] = 1 + 1 + longueur [5] = 1 + 1 + 1 + longueur [] = 3.</p>`)+
-E(`garder: List.hd li :: g (List.tl li)
-enlever: g (List.tl li)`,`<p>Pour <b>fabriquer une liste</b> en gardant certains éléments et en enlevant d'autres. Garder le premier : on le remet devant le résultat du reste. L'enlever : on ne rend que le résultat du reste. Le modèle complet est liPairs, au verso.</p>`)+
-E(`tous: test && g (..)  existe: test || g (..)`,`<p>« Tous les éléments vérifient… » : le premier vérifie, <b>et</b> tous les autres aussi. « Il en existe un qui… » : le premier vérifie, <b>ou</b> il y en a un dans le reste.</p>${M(`let rec tousPositifs : int list -> bool = function li ->
+const F2T=(head,rows,cc=[0,1])=>`<div style="overflow-x:auto"><table class="tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td>${cc.includes(i)?`<code>${esc(c)}</code>`:c.replace(/<(?![a-z\/])/g,"&lt;")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const F2V=(head,rows)=>F2T(head,rows,[0,1]);
+const F2Q=(q,code,ok,ex)=>`<div class="qbox mq" data-ok="${esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p>${code?M(code):""}<div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : <code>${esc(ok[0])}</code></b><br>${ex}</div></div>`;
+const F2E=(titre,ligne,sens,corps)=>`<h3>${titre}</h3><p class="muted">Sur ta feuille :</p>${M(ligne)}<p><b>Ce que ça veut dire.</b> ${sens}</p>${corps}`;
+const F2Z=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ».</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const feuille2=({sec})=>[
+`<div class="title-row"><h1>Ma feuille expliquée</h1></div>
+<p class="lead">Ta feuille A4, morceau par morceau. Pour chaque morceau : la ligne de ta feuille, ce qu'elle veut dire, beaucoup d'exemples, le piège, puis un mini-quiz pour vérifier que tu as compris. Cette page n'est pas à recopier : tu recopies <a href="#/pf/p/feuille">Ma feuille à recopier</a>.</p>
+<p>Dans les quiz, écris la réponse comme OCaml l'écrirait : <code>[1; 2]</code> pour une liste, <code>3.</code> pour un float, <code>int -> bool</code> pour une signature. Les espaces ne comptent pas.</p>`,
+
+sec(1,"Les règles d'OCaml à connaître avant tout",`<ol>
+<li><b>OCaml calcule des expressions.</b> Une expression, c'est un calcul. Elle a une <b>valeur</b> (le résultat) et un <b>type</b> (la sorte de résultat).</li>
+<li><b>Chaque chose a un seul type, et OCaml ne mélange jamais les types.</b> La plupart des erreurs du CC viennent de là.</li>
+<li><b>let donne un nom, pour toujours.</b> Il n'y a pas de variable qui change, pas de boucle pour, pas de tant que.</li>
+<li><b>Pour répéter, on utilise la récursivité</b> : une fonction qui s'appelle elle-même (let rec).</li>
+<li><b>Pour appeler une fonction : son nom, un espace, l'argument.</b> Les parenthèses servent seulement à regrouper un calcul.</li>
+<li><b>= compare.</b> Il pose une question et répond true ou false.</li></ol>
+<p><b>Les types que tu vas croiser :</b></p>`+
+F2T(["Tu écris","Ça vaut","Type","Ce que c'est"],[
+["3 + 4","7","int","un entier"],
+["2.5 +. 1.","3.5","float","un nombre à virgule"],
+["3 < 5","true","bool","vrai ou faux"],
+['"ab" ^ "c"','"abc"',"string","du texte"],
+["[1; 2]","[1; 2]","int list","une liste d'entiers"],
+["(2, true)","(2, true)","int * bool","un couple"]],[0,1,2])+
+`<p><b>Appeler une fonction :</b></p>`+F2T(["Tu écris","Ce que ça fait"],[
+["f 3","appelle f avec 3"],
+["f (n - 1)","appelle f avec n − 1"],
+["f n - 1","appelle f avec n, puis enlève 1 au résultat (le piège)"],
+["g (2, 3)","appelle g avec le couple (2, 3)"],
+["h 2 3","appelle h avec 2, puis avec 3"]],[0])+
+F2Z(F2Q("Quel est le type de cette expression ?","10 > 3",["bool"],"Une comparaison répond vrai ou faux : son type est bool. Sa valeur est true."),
+F2Q("Que vaut cette expression ?","4 * 5 - 2",["18"],"La multiplication passe avant la soustraction : 4 * 5 = 20, puis 20 − 2 = 18."),
+F2Q("Quel est le type de cette expression ?",'"bonjour"',["string"],"Du texte entre guillemets : c'est un string."))),
+
+sec(2,"Recto : les types",
+F2E("Les entiers : int","int: + - * / mod      7/2 = 3","Les int sont les nombres sans virgule. <b>/ coupe la virgule</b> (on garde seulement la partie entière). <b>mod donne le reste</b> de la division.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["7 / 2","3","7 ÷ 2 = 3,5, on coupe la virgule"],
+["2 / 5","0","2 ÷ 5 = 0,4, on coupe : 0"],
+["10 / 3","3","10 ÷ 3 = 3,33…"],
+["7 mod 2","1","7 = 2 × 3 + 1 : il reste 1"],
+["10 mod 3","1","10 = 3 × 3 + 1"],
+["12 mod 4","0","12 = 4 × 3 : il ne reste rien"],
+["4725 mod 10","5","le reste par 10, c'est le dernier chiffre"],
+["4725 / 10","472","on enlève le dernier chiffre"]])+
+`<p><b>À quoi sert mod :</b></p>`+F2T(["Tu écris","Ça veut dire"],[
+["n mod 2 = 0","n est pair"],
+["n mod 2 = 1","n est impair"],
+["n mod 3 = 0","n est divisible par 3"],
+["n mod 10","le dernier chiffre de n"]],[0])+
+`<p><b>Le piège.</b> Avec des int, 7 / 2 ne vaut pas 3,5. C'est 3.</p>`+
+F2Z(F2Q("Que vaut cette expression ?","17 / 5",["3"],"17 ÷ 5 = 3,4. Avec des int, on coupe la virgule : 3."),
+F2Q("Que vaut cette expression ?","17 mod 5",["2"],"17 = 5 × 3 + 2 : il reste 2."),
+F2Q("Que vaut cette expression ?","9 mod 2",["1"],"9 = 2 × 4 + 1 : il reste 1. C'est normal, 9 est impair.")))+
+
+F2E("Les nombres à virgule : float","float: +. -. *. /.    2. et 3.5","Un float s'écrit <b>toujours avec un point</b> : 2. ou 3.5. Ses opérations ont aussi un point : +. -. *. /.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["2.5 +. 1.","3.5","addition de float : +. avec un point"],
+["3. *. 2.","6.","le résultat est un float, il garde son point"],
+["7. /. 2.","3.5","avec des float, la division garde la virgule"],
+["10. -. 0.5","9.5",""],
+["3.5 > 2.","true","les comparaisons n'ont pas de point"]])+
+`<p><b>Le piège.</b> 2 et 2. ne sont pas la même chose : 2 est un int, 2. est un float.</p>`+
+F2Z(F2Q("Que vaut cette expression ?","7. /. 2.",["3.5"],"Ce sont des float : la division garde la virgule. 3.5."),
+F2Q("Que vaut cette expression ?","1.5 +. 1.5",["3.","3.0"],"1,5 + 1,5 = 3. Le résultat est un float, donc il s'écrit 3. avec un point.")))+
+
+F2E("Ne jamais mélanger int et float","jamais int et float mélangés","Un calcul avec un int et un float est une <b>erreur</b>. Il faut deux int avec + - * /, ou deux float avec +. -. *. /.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["3 + 2","5","deux int, opération des int : bon"],
+["3. +. 2.5","5.5","deux float, opération des float : bon"],
+["3 + 2.5","erreur","2.5 n'est pas un int"],
+["3 +. 2.5","erreur","3 n'est pas un float"],
+["2 * 3.","erreur","3. n'est pas un int"]])+
+`<p><b>Le piège.</b> Au CC, une question « type et valeur » cache souvent ce piège. La bonne réponse est alors « erreur de type ».</p>`+
+F2Z(F2Q("Que vaut cette expression ?","4 + 1.",["erreur","~erreur"],"4 est un int, 1. est un float : on ne peut pas les additionner. C'est une erreur de type."),
+F2Q("Que vaut cette expression ?","4. +. 1.",["5.","5.0"],"Deux float avec +. : le résultat est le float 5.")))+
+
+F2E("Passer de l'un à l'autre","float_of_int 3 = 3.   int_of_float 2.9 = 2","float_of_int transforme un int en float. int_of_float transforme un float en int, <b>en coupant</b> la virgule (sans arrondir).",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["float_of_int 3","3.","le même nombre, en float"],
+["int_of_float 2.9","2","on coupe : 2,9 devient 2, pas 3"],
+["int_of_float 7.5","7",""],
+["float_of_int 7 /. 2.","3.5","on transforme 7 en 7., puis division de float"]])+
+F2Z(F2Q("Que vaut cette expression ?","int_of_float 9.99",["9"],"int_of_float coupe la virgule, il n'arrondit pas : 9."),
+F2Q("Que vaut cette expression ?","float_of_int 5",["5.","5.0"],"Le même nombre, transformé en float : 5. avec un point.")))+
+
+F2E("Vrai ou faux : bool","bool: && || not     = <> < > <= >=","Un bool vaut true (vrai) ou false (faux). <b>&amp;&amp;</b> veut dire « et » : il faut que les deux soient vrais. <b>||</b> veut dire « ou » : il suffit qu'un des deux soit vrai. <b>not</b> inverse.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["true && false","false","« et » : il faut les deux"],
+["true || false","true","« ou » : un seul suffit"],
+["not true","false","not inverse"],
+["3 <> 4","true","<> veut dire « différent de »"],
+["3 <= 3","true","<= veut dire « plus petit ou égal »"],
+["5 > 2 && 1 > 4","false","5 > 2 est vrai, mais 1 > 4 est faux"],
+["5 > 2 || 1 > 4","true","5 > 2 est vrai, ça suffit"]])+
+F2Z(F2Q("Que vaut cette expression ?","2 < 3 || 5 < 1",["true"],"2 < 3 est vrai. Avec || (ou), un seul vrai suffit : true."),
+F2Q("Que vaut cette expression ?","not (4 = 4)",["false"],"4 = 4 est vrai, et not inverse : false."),
+F2Q("Que vaut cette expression ?","6 <> 6",["false"],"<> veut dire « différent de ». 6 n'est pas différent de 6 : false.")))+
+
+F2E("Le texte : string",'string: "ab" ^ "c"',"Un string est du texte entre guillemets. <b>^ colle</b> deux textes l'un après l'autre. Deux textes se comparent <b>lettre par lettre</b>, comme dans un dictionnaire.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+['"ab" ^ "c"','"abc"',"on colle"],
+['"bon" ^ "jour"','"bonjour"',""],
+['"12" ^ "3"','"123"',"ce sont des textes : on colle, on n'additionne pas"],
+['"100" < "2"',"true","1re lettre : 1 vient avant 2, c'est fini"],
+['"chat" < "chien"',"true","c = c, h = h, puis a vient avant i"]])+
+F2Z(F2Q("Que vaut cette expression ?",'"ab" ^ "ab"',['"abab"'],"^ colle les deux textes : \"abab\"."),
+F2Q("Que vaut cette expression ?",'"9" < "10"',["false"],"Lettre par lettre : on compare d'abord \"9\" et \"1\". 9 vient après 1, donc \"9\" n'est pas plus petit : false. Ce sont des textes, pas des nombres.")))+
+
+F2E("if … then … else","if c then a else b : c bool, a b même type","if pose une question c (un bool). Si la réponse est vraie, le if vaut a ; sinon il vaut b. Le else est <b>obligatoire</b>, et a et b ont <b>le même type</b>.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+['if 5 > 3 then "oui" else "non"','"oui"',"5 > 3 est vrai : on prend la partie then"],
+["if 2 > 3 then 10 else 20","20","2 > 3 est faux : on prend la partie else"],
+["if true then 1 else 2.5","erreur","un int d'un côté, un float de l'autre"],
+["if 3 then 1 else 2","erreur","3 n'est pas un bool : on ne peut pas poser la question"]])+
+F2Z(F2Q("Que vaut cette expression ?",'if 4 mod 2 = 0 then "pair" else "impair"',['"pair"'],"4 mod 2 = 0 est vrai (4 est pair), donc on prend la partie then : \"pair\"."),
+F2Q("Quel est le type de cette expression ?","if 1 < 2 then 3. else 4.",["float"],"Les deux branches sont des float (3. et 4.) : le if tout entier est un float.")))+
+
+F2E("let … in","let a = 1 and b = 2 in ..  (b ne voit pas a)","let … in donne un nom à une valeur, pour le calcul qui suit le in. Avec and, on définit plusieurs noms en même temps.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["let a = 1 in a + 2","3","a vaut 1, donc a + 2 = 3"],
+["let a = 2 and b = 5 in a * b","10","a vaut 2, b vaut 5"],
+["let a = 1 in let b = a + 1 in a + b","3","b = 1 + 1 = 2, puis 1 + 2 = 3"],
+["let a = 1 and b = a + 1 in b","erreur","avec and, b ne connaît pas encore a"]])+
+`<p><b>Le piège.</b> Si b a besoin de a, n'utilise pas and : enchaîne deux let … in.</p>`+
+F2Z(F2Q("Que vaut cette expression ?","let x = 4 in x * x",["16"],"x vaut 4, donc x * x = 16."),
+F2Q("Que vaut cette expression ?","let a = 3 in let b = a * 2 in a + b",["9"],"a = 3, puis b = 3 × 2 = 6, puis a + b = 9.")))),
+
+sec(3,"Recto : les fonctions",
+F2E("function : un seul paramètre, ou un couple","function x -> ..   1 paramètre ou 1 couple","function x -> … fabrique une fonction : « je reçois x, je rends … ». Elle n'accepte qu'<b>un</b> paramètre. Pour lui en donner deux, on les met dans un <b>couple</b> : (x, y), avec une virgule.",
+M(`let double = function x -> 2 * x
+double 5        (* vaut 10 *)
+double 0        (* vaut 0 *)
+
+let somme2 = function (x, y) -> x + y
+somme2 (3, 4)   (* vaut 7 *)
+somme2 (10, 1)  (* vaut 11 *)`)+
+`<p>(* … *) est un commentaire : OCaml ne le lit pas.</p>`+
+F2Z(F2Q("Que vaut triple 4 ?","let triple = function x -> 3 * x",["12"],"triple reçoit 4 et rend 3 × 4 = 12."),
+F2Q("Que vaut f (10, 3) ?","let f = function (a, b) -> a - b",["7"],"f reçoit le couple (10, 3) : a = 10, b = 3. Elle rend 10 − 3 = 7.")))+
+
+F2E("fun : plusieurs paramètres","fun x y -> ..      plusieurs paramètres","fun accepte plusieurs paramètres, séparés par des espaces. On l'appelle aussi avec des espaces, sans virgule. On dit que la fonction est « curryfiée ».",
+M(`let plus = fun a b -> a + b
+plus 2 3        (* vaut 5 *)
+
+let moins = fun a b -> a - b
+moins 10 4      (* vaut 6 *)`)+
+`<p><b>Comment choisir au CC : regarde les exemples de l'énoncé.</b></p>`+F2T(["L'énoncé écrit","Donc","Tu écris"],[
+["parite(2,7)","une virgule : un couple","function (x, y) -> …"],
+["mult 3 4","des espaces : deux paramètres","fun n m -> …"]],[0,2])+
+F2Z(F2Q("L'énoncé dit : « plusGrand(4, 9) vaut 9 ». Tu écris function (a, b) ou fun a b ?","",["function (a, b)","function","function (x, y)","couple"],"Il y a une virgule entre 4 et 9 : c'est un couple. Donc function (a, b) -> …"),
+F2Q("L'énoncé dit : « puissance 2 3 vaut 8 ». Tu écris function (a, b) ou fun a b ?","",["fun a b","fun","fun x y","fun n m"],"Il n'y a pas de virgule : deux paramètres séparés par un espace. Donc fun a b -> …")))+
+
+F2E("Lire une signature","let f : int -> int = function n -> 2*n + 1","La partie « : int -> int » est la <b>signature</b>. Elle dit ce que la fonction reçoit et ce qu'elle rend. Les types avant les flèches sont les paramètres ; le <b>dernier</b> est le résultat. Les sujets demandent de l'écrire : mets-la toujours.",
+F2T(["Signature","Se lit"],[
+["int -> int","reçoit un int, rend un int"],
+["int -> bool","reçoit un int, rend un bool"],
+["int * int -> bool","reçoit un couple de deux int, rend un bool (ici * veut dire « et »)"],
+["int -> int -> int","reçoit un int, puis un int, rend un int"],
+["int list -> int","reçoit une liste d'int, rend un int"],
+["float list -> float","reçoit une liste de float, rend un float"]],[0])+
+M(`let g : int * int -> bool =
+  function (x, y) -> x < y
+g (2, 3)        (* vaut true *)
+
+let h : int -> int -> int =
+  fun a b -> a + b
+h 2 3           (* vaut 5 *)`)+
+F2Z(F2Q("Quelle est la signature de cette fonction ?","function n -> n mod 2 = 0",["int -> bool"],"n mod 2 : n est un int. On rend une comparaison (= 0), donc un bool. Signature : int -> bool."),
+F2Q("Quelle est la signature de cette fonction ?","fun a b -> a + b",["int -> int -> int"],"Deux paramètres (fun a b). a + b avec + : a et b sont des int, et le résultat aussi. Signature : int -> int -> int."),
+F2Q("Quelle est la signature de cette fonction ?","function (x, y) -> x *. y",["float * float -> float"],"Un couple. *. avec un point : x et y sont des float, le résultat aussi. Signature : float * float -> float.")))+
+
+F2E("Trouver une signature : la méthode","signature: types paramètres -> résultat","Trois questions, dans l'ordre.",
+`<ol><li><b>Combien de paramètres, et sous quelle forme ?</b> function (x, y) : un couple. fun a b : plusieurs.</li><li><b>Le type de chaque paramètre</b> : regarde ce qu'on en fait.</li><li><b>Le type du résultat</b> : celui de ce que la fonction rend.</li></ol>`+
+F2T(["Ce qu'on fait avec x","Donc x est"],[
+["x + 1, x * 2, x mod 2","int"],
+["x +. 1., x *. 2.","float"],
+["if x then …, x && …","bool"],
+["List.hd x, List.tl x","une liste"],
+['x ^ "a"',"string"]],[0])+
+`<p><b>Exemple, en entier.</b></p>`+M(`function (x, y) -> x * 2 < List.hd y`)+
+`<ol><li>Un couple (x, y).</li><li>x * 2 : x est un int. List.hd y est comparé à x * 2, un int : y est une liste d'int, int list.</li><li>On rend une comparaison : un bool.</li></ol><p>Signature : <code>int * int list -> bool</code>.</p>`+
+F2Z(F2Q("Quelle est la signature de cette fonction ?","function (a, b) -> if a > 0 then b else b +. 1.",["int * float -> float"],"Un couple. a > 0 : a est un int. b +. 1. : b est un float. On rend b ou b +. 1., des float. Signature : int * float -> float."),
+F2Q("Quelle est la signature de cette fonction ?","fun li x -> List.hd li + x",["int list -> int -> int"],"Deux paramètres. List.hd li : li est une liste. List.hd li + x avec + : tout est int, donc li est une int list et x un int. On rend un int. Signature : int list -> int -> int.")))),
+
+sec(4,"Recto : la récursivité",
+F2E("let rec et le squelette","let rec f : int -> int = function n ->\n  if n = 0 then base else .. f (n - 1) ..","Une fonction récursive s'appelle elle-même. Il faut écrire <b>let rec</b>. Deux cas : quand n = 0, on donne la réponse directement (la « base ») ; sinon, on fait confiance à f (n - 1) et on s'en sert pour fabriquer la réponse pour n.",
+`<p><b>Exemple 1 : la somme 1 + 2 + … + n.</b></p>`+M(`let rec somme : int -> int = function n ->
+  if n = 0 then 0
+  else n + somme (n - 1)`)+`<p>Ce que calcule somme 3, ligne par ligne :</p>`+M(`somme 3
+= 3 + somme 2
+= 3 + 2 + somme 1
+= 3 + 2 + 1 + somme 0
+= 3 + 2 + 1 + 0
+= 6`)+
+`<p><b>Exemple 2 : le produit 1 × 2 × … × n</b> (on l'appelle factorielle).</p>`+M(`let rec fact : int -> int = function n ->
+  if n = 0 then 1
+  else n * fact (n - 1)`)+M(`fact 4
+= 4 * fact 3
+= 4 * 3 * fact 2
+= 4 * 3 * 2 * fact 1
+= 4 * 3 * 2 * 1 * fact 0
+= 4 * 3 * 2 * 1 * 1
+= 24`)+
+`<p><b>Le piège.</b> Sans rec, OCaml ne connaît pas encore le nom de la fonction quand il lit son corps : il répond « Unbound value ».</p>`+
+F2Z(F2Q("Que vaut f 3 ?","let rec f = function n ->\n  if n = 0 then 0 else 2 + f (n - 1)",["6"],"f 3 = 2 + f 2 = 2 + 2 + f 1 = 2 + 2 + 2 + f 0 = 2 + 2 + 2 + 0 = 6."),
+F2Q("Que vaut g 2 ?","let rec g = function n ->\n  if n = 0 then 1 else 3 * g (n - 1)",["9"],"g 2 = 3 * g 1 = 3 * 3 * g 0 = 3 * 3 * 1 = 9.")))+
+
+F2E("Les parenthèses de f (n - 1)","f (n - 1) avec parenthèses","Un appel de fonction passe toujours avant les calculs autour. Sans parenthèses, f n - 1 se lit (f n) - 1.",
+F2T(["Tu écris","OCaml comprend","Résultat"],[
+["f (n - 1)","appelle f avec n − 1","bon"],
+["f n - 1","appelle f avec n, puis enlève 1","f se rappelle avec n, encore et encore : ne s'arrête jamais"]],[0])+
+F2Z(F2Q("Que se passe-t-il quand on calcule f 2 ?","let rec f = function n ->\n  if n = 0 then 0 else 1 + f n - 1",["ça ne s'arrête jamais","~boucle","~infini","~jamais","~arrêtepas","~arretepas"],"f n - 1 se lit (f n) - 1. Donc f 2 appelle f 2, qui appelle f 2… La fonction ne s'arrête jamais. Il fallait écrire f (n - 1).")))+
+
+F2E("Que rendre dans le cas de base ?","base: somme 0, produit 1, liste [],\n  tous true, existe false","La base est la valeur qui ne change rien au calcul.",
+F2T(["Ce qu'on calcule","Base","Pourquoi"],[
+["une somme","0","ajouter 0 ne change rien"],
+["un produit","1","multiplier par 1 ne change rien (avec 0, tout vaudrait 0)"],
+["un nombre d'éléments","0","une liste vide a 0 élément"],
+["une liste qu'on fabrique","[]","on part de la liste vide"],
+["« tous vérifient … »","true","dans une liste vide, personne ne contredit"],
+["« il en existe un qui … »","false","dans une liste vide, on n'a trouvé personne"]],[1])+
+F2Z(F2Q("Une fonction calcule le produit des éléments d'une liste. Que rend-elle pour la liste vide [] ?","",["1"],"Un produit part de 1 : multiplier par 1 ne change rien. Avec 0, le produit vaudrait toujours 0."),
+F2Q("Une fonction répond à « Y a-t-il un nombre négatif dans la liste ? ». Que rend-elle pour [] ?","",["false"],"C'est un « il existe ». Dans une liste vide, il n'y a aucun nombre, donc aucun négatif : false.")))+
+
+F2E("Les chiffres d'un nombre","chiffres: n mod 10 dernier chiffre,\n  n / 10 le reste, base n < 10","Pour travailler sur les chiffres : n mod 10 donne le dernier chiffre, n / 10 enlève le dernier chiffre. On s'arrête quand il ne reste qu'un chiffre : n &lt; 10.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["4725 mod 10","5","le dernier chiffre"],
+["4725 / 10","472","le nombre sans son dernier chiffre"],
+["472 mod 10","2",""],
+["7 < 10","true","7 n'a qu'un chiffre : c'est la base"]])+
+`<p><b>Exemple : la somme des chiffres.</b></p>`+M(`let rec sommeChiffres : int -> int = function n ->
+  if n < 10 then n
+  else n mod 10 + sommeChiffres (n / 10)`)+M(`sommeChiffres 472
+= 2 + sommeChiffres 47
+= 2 + 7 + sommeChiffres 4
+= 2 + 7 + 4
+= 13`)+
+F2Z(F2Q("Que vaut cette expression ?","368 mod 10",["8"],"Le reste par 10 : le dernier chiffre, 8."),
+F2Q("Que vaut cette expression ?","368 / 10",["36"],"On enlève le dernier chiffre : 36."),
+F2Q("Avec la fonction sommeChiffres ci-dessus, que vaut sommeChiffres 205 ?","",["7"],"sommeChiffres 205 = 5 + sommeChiffres 20 = 5 + 0 + sommeChiffres 2 = 5 + 0 + 2 = 7.")))),
+
+sec(5,"Recto : les listes",
+F2E("Écrire une liste","LISTES  [2; 3; 5]   [] vide","Une liste s'écrit entre crochets, avec des <b>points-virgules</b>. [] est la liste vide. Tous les éléments ont le même type.",
+F2V(["Tu écris","Type","Pourquoi"],[
+["[2; 3; 5]","int list","une liste d'int"],
+["[]","liste vide",""],
+["[1.5; 2.]","float list",""],
+['["a"; "b"]',"string list",""],
+["[1; 2.]","erreur","un int et un float dans la même liste"],
+["[2, 3]","(int * int) list","une virgule fait un couple : une liste d'un seul élément, le couple (2, 3)"]])+
+F2Z(F2Q("Quel est le type de cette liste ?","[true; false]",["bool list"],"Ses éléments sont des bool : c'est une bool list."),
+F2Q("Combien d'éléments a cette liste ?","[4, 5]",["1"],"La virgule fabrique un couple : [4, 5] contient un seul élément, le couple (4, 5). Pour deux éléments, il faut [4; 5].")))+
+
+F2E("Ajouter devant, coller à la fin","x :: li devant    li @ [x] à la fin",":: ajoute <b>un élément devant</b> une liste. @ <b>colle deux listes</b>. Pour ajouter un élément à la fin, il faut le mettre entre crochets.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["1 :: [2; 3]","[1; 2; 3]","1 se met devant"],
+["1 :: []","[1]","devant la liste vide"],
+["1 :: 2 :: []","[1; 2]","on lit de droite à gauche : 2 devant [], puis 1 devant"],
+["[1; 2] @ [3]","[1; 2; 3]","on colle deux listes"],
+["[1] @ [2; 3]","[1; 2; 3]",""],
+["[1; 2] @ 3","erreur","3 n'est pas une liste : il faut [3]"]])+
+F2Z(F2Q("Que vaut cette expression ?","5 :: [6; 7]",["[5; 6; 7]"],"5 se met devant : [5; 6; 7]."),
+F2Q("Que vaut cette expression ?","[5; 6] @ [7]",["[5; 6; 7]"],"@ colle les deux listes : [5; 6; 7]."),
+F2Q("Que vaut cette expression ?","0 :: 1 :: []",["[0; 1]"],"D'abord 1 :: [] = [1], puis 0 devant : [0; 1].")))+
+
+F2E("Le premier, et le reste","List.hd li premier   List.tl li le reste","List.hd donne le <b>premier élément</b> (un élément). List.tl donne la <b>liste sans le premier</b> (une liste). Les deux font une erreur sur la liste vide.",
+F2V(["Tu écris","Ça vaut","Pourquoi"],[
+["List.hd [7; 1; 5]","7","le premier élément, un int"],
+["List.tl [7; 1; 5]","[1; 5]","le reste, une int list"],
+["List.tl [5]","[]","une liste d'un élément : il ne reste rien"],
+["List.hd []","erreur","une liste vide n'a pas de premier élément"],
+["List.hd (List.tl [7; 1; 5])","1","le reste est [1; 5], son premier est 1"]])+
+F2Z(F2Q("Que vaut cette expression ?","List.hd [9; 4; 2]",["9"],"Le premier élément : 9."),
+F2Q("Que vaut cette expression ?","List.tl [9; 4; 2]",["[4; 2]"],"La liste sans son premier élément : [4; 2]."),
+F2Q("Que vaut cette expression ?","List.hd (List.tl [9; 4; 2])",["4"],"List.tl [9; 4; 2] = [4; 2], puis son premier élément : 4.")))+
+
+F2E("Le squelette pour une liste","let rec g : int list -> int = function li ->\n  if li = [] then base\n  else .. List.hd li .. g (List.tl li) ..","Même idée que pour un entier : la liste vide joue le rôle de 0, et List.tl li celui de n − 1. On s'occupe du premier élément ; la fonction s'occupe du reste.",
+`<p><b>Exemple : la longueur d'une liste.</b></p>`+M(`let rec longueur : int list -> int = function li ->
+  if li = [] then 0
+  else 1 + longueur (List.tl li)`)+M(`longueur [7; 1; 5]
+= 1 + longueur [1; 5]
+= 1 + 1 + longueur [5]
+= 1 + 1 + 1 + longueur []
+= 1 + 1 + 1 + 0
+= 3`)+
+F2Z(F2Q("Que vaut f [3; 4; 5] ?","let rec f = function li ->\n  if li = [] then 0\n  else List.hd li + f (List.tl li)",["12"],"f [3; 4; 5] = 3 + f [4; 5] = 3 + 4 + f [5] = 3 + 4 + 5 + f [] = 3 + 4 + 5 + 0 = 12. C'est la somme des éléments."),
+F2Q("Que vaut g [8; 8; 8; 8] ?","let rec g = function li ->\n  if li = [] then 0\n  else 1 + g (List.tl li)",["4"],"g ajoute 1 pour chaque élément, sans regarder sa valeur : c'est la longueur. 4.")))+
+
+F2E("Garder ou enlever des éléments","garder: List.hd li :: g (List.tl li)\nenlever: g (List.tl li)","Pour fabriquer une liste. Garder le premier élément : on le remet devant le résultat du reste. L'enlever : on rend seulement le résultat du reste.",
+`<p><b>Exemple : garder les nombres plus grands que 0.</b></p>`+M(`let rec positifs : int list -> int list = function li ->
+  if li = [] then []
+  else if List.hd li > 0 then List.hd li :: positifs (List.tl li)
+  else positifs (List.tl li)`)+M(`positifs [3; -1; 4]
+= 3 :: positifs [-1; 4]      (3 > 0 : on garde)
+= 3 :: positifs [4]          (-1 : on enlève)
+= 3 :: 4 :: positifs []      (4 > 0 : on garde)
+= 3 :: 4 :: []
+= [3; 4]`)+
+F2Z(F2Q("Avec la fonction positifs ci-dessus, que vaut positifs [-2; 5; 0; 7] ?","",["[5; 7]"],"−2 : enlevé. 5 : gardé. 0 : enlevé, car 0 > 0 est faux. 7 : gardé. Résultat : [5; 7].")))+
+
+F2E("« Tous » et « il existe »","tous: test && g (..)  existe: test || g (..)","« Tous vérifient » : le premier vérifie <b>et</b> tous les autres aussi (&amp;&amp;, base true). « Il en existe un » : le premier vérifie <b>ou</b> il y en a un dans le reste (||, base false).",
+M(`let rec tousPositifs : int list -> bool = function li ->
   if li = [] then true
-  else List.hd li > 0 && tousPositifs (List.tl li)`)}`)+
-E(`liste non vide: base List.tl li = []`,`<p>Quand l'énoncé dit « liste non vide », c'est souvent que la liste vide n'a pas de réponse (son plus grand élément, son dernier élément…). Le cas de base est alors une liste d'<b>un seul</b> élément : List.tl li = [].</p>${M(`let rec maxi : int list -> int = function li ->
+  else List.hd li > 0 && tousPositifs (List.tl li)
+
+let rec contientZero : int list -> bool = function li ->
+  if li = [] then false
+  else List.hd li = 0 || contientZero (List.tl li)`)+M(`tousPositifs [2; 5]
+= 2 > 0 && tousPositifs [5]
+= true && 5 > 0 && tousPositifs []
+= true && true && true
+= true`)+
+F2Z(F2Q("Que vaut tousPositifs [4; -1; 6] ?","",["false"],"4 > 0 est vrai, mais −1 > 0 est faux. Avec &amp;&amp;, un seul faux suffit : false."),
+F2Q("Que vaut contientZero [3; 0; 2] ?","",["true"],"3 = 0 est faux, mais 0 = 0 est vrai. Avec ||, un seul vrai suffit : true.")))+
+
+F2E("Une liste non vide","liste non vide: base List.tl li = []","Quand l'énoncé dit « liste non vide », c'est souvent que la liste vide n'a pas de réponse (son plus grand élément, son dernier…). La base est alors une liste d'<b>un seul</b> élément : List.tl li = [].",
+`<p><b>Exemple : le plus grand élément.</b></p>`+M(`let rec maxi : int list -> int = function li ->
   if List.tl li = [] then List.hd li
   else let m = maxi (List.tl li) in
-       if List.hd li > m then List.hd li else m`)}`))}
-${sec(6,"Verso : les six modèles",`<p>Six fonctions complètes et corrigées, celles du partiel 2021. Le jour du CC, cherche celle qui ressemble le plus à la question, et adapte-la.</p>`+
-E(`let memeParite : int * int -> bool =
-  function (a, b) -> a mod 2 = b mod 2`,`<p>Vrai si deux entiers ont la même parité (tous les deux pairs ou tous les deux impairs) : ils ont le même reste dans la division par 2. Pas récursive. <b>Sert pour</b> un test simple sur un couple. Pour « parités opposées », remplace = par &lt;>.</p>`)+
-E(`let rec queDesUn : int -> bool = function n ->
-  if n < 10 then n = 1
-  else n mod 10 = 1 && queDesUn (n / 10)`,`<p>Vrai si n ne s'écrit qu'avec des 1 (1, 11, 111…). Base : un seul chiffre, et il doit valoir 1. Sinon : le dernier chiffre vaut 1, <b>et</b> le reste du nombre n'a que des 1. queDesUn 121 : le dernier chiffre 1 va bien, puis queDesUn 12 : 2 ne vaut pas 1, donc false. <b>Sert pour</b> « tous les chiffres vérifient… ».</p>`)+
-E(`let rec prodDiv : int -> int -> int = fun n i ->
-  if i = 0 then 1
-  else if n mod i = 0 then i * prodDiv n (i - 1)
-  else prodDiv n (i - 1)`,`<p>Multiplie les diviseurs de n qui sont plus petits que i, ou égaux. Deux paramètres : n reste fixe, i descend jusqu'à 0. Si i divise n (n mod i = 0), on le multiplie au reste ; sinon, on passe au suivant. La base vaut 1, car c'est un produit. prodDiv 6 6 = 6 × 3 × 2 × 1 = 36. <b>Sert pour</b> parcourir les nombres de i jusqu'à 1 : diviseurs, sommes, comptages.</p>`)+
-E(`let rec somElem : int list -> int =
-  function li -> if li = [] then 0
-  else List.hd li + somElem (List.tl li)`,`<p>La somme des éléments d'une liste : le premier, plus la somme du reste. Base 0. <b>Sert pour</b> les sommes ; pour compter les éléments, remplace List.hd li par 1.</p>`)+
-E(`let rec liPairs : int list -> int list =
-  function li -> if li = [] then []
-  else if List.hd li mod 2 = 0
-  then List.hd li :: liPairs (List.tl li)
-  else liPairs (List.tl li)`,`<p>Garde les éléments pairs, dans le même ordre. Si le premier est pair, on le garde, devant le résultat du reste ; sinon on le saute. <b>Sert pour</b> toutes les questions « la liste des éléments qui… » ou « supprimer les… ».</p>`)+
-E(`let rec prefLong : int list -> int -> int list =
-  fun li n -> if li = [] || n = 0 then []
-  else List.hd li ::
-       prefLong (List.tl li) (n - 1)`,`<p>Les n premiers éléments de li. On s'arrête quand la liste est vide, ou quand on en a pris assez (n = 0). Sinon on garde le premier, et on demande les n − 1 suivants au reste. prefLong [4; 7; 1; 9] 2 = [4; 7]. <b>Sert pour</b> les exercices avec une liste et un compteur.</p>`))}
-${sec(7,"Verso : type et valeur",
-E(`(8/3) :: (8 mod 3) :: []    int list  [2; 2]`,`<p>8/3 = 2 (la division coupe la virgule) et 8 mod 3 = 2 (le reste). Les :: les placent devant la liste vide : [2; 2], une liste d'int.</p>`)+
-E(`List.hd [3.5; 1.] > 2.      bool  true`,`<p>List.hd donne le premier élément, 3.5. Puis 3.5 > 2. est une comparaison : son type est bool, et elle est vraie.</p>`)+
-E(`3 * 4.     erreur: int et float`,`<p>3 est un int, 4. est un float : on ne peut pas les multiplier ensemble. La réponse attendue est « erreur de type ».</p>`)+
-E(`if x then y else 3 : int (x bool, y int)`,`<p>if x : x doit être un bool. Le else rend 3, un int ; les deux branches ont le même type, donc y est aussi un int, et le if tout entier aussi.</p>`)+
-E(`function (x, y) -> if y then x+1 else 2*x
-     int * bool -> int`,`<p>La méthode des 3 questions. Un couple (x, y). x+1, donc x : int. if y, donc y : bool. On rend x+1 ou 2*x, des int. Signature : int * bool -> int.</p>`)+
-E(`"100" < "2"   bool  true (lettre par lettre)
-[1; 2.]    erreur: un seul type par liste`,`<p>Les textes se comparent comme dans un dictionnaire : on regarde la première lettre, "1" vient avant "2", c'est fini. Et [1; 2.] mélange un int et un float dans une liste : erreur.</p>`)+
-E(`AU CAS OÙ  'a = n'importe quel type
-List.hd : 'a list -> 'a`,`<p>'a se lit « alpha ». On l'écrit quand rien n'oblige une valeur à être d'un type précis : elle peut être de n'importe quel type. List.hd marche sur toutes les listes : sur une int list il rend un int, sur une string list un string. D'où 'a list -> 'a.</p>`)+
-E(`fun n x -> .. x renvoyé sans calcul
-     int -> 'a -> 'a`,`<p>Exemple : fun n x -> if n = 0 then x else … n est comparé à 0, donc c'est un int. x n'est jamais utilisé dans un calcul, il est seulement rendu : il peut être de n'importe quel type, 'a, et le résultat est du même type que lui.</p>`))}
-${sec(8,"Verso : les pièges",`<ul><li><b>Oublier rec</b> : la fonction ne se connaît pas elle-même, « Unbound value ».</li><li><b>f n - 1 sans parenthèses</b> : se lit (f n) - 1, la fonction ne s'arrête jamais. Écris f (n - 1).</li><li><b>[2, 3]</b> : la virgule fabrique un couple, donc c'est une liste d'<b>un seul</b> élément, le couple (2, 3). Dans une liste, toujours des points-virgules.</li><li><b>if sans else</b> : toujours écrire le else.</li><li><b>= pour comparer</b> : écris x = 3, pas x == 3.</li><li><b>2 paramètres ou plus</b> : la forme curryfiée, fun a b -> …, appelée avec f 2 3. Sauf si l'énoncé écrit f(2,3) avec une virgule : alors un couple, function (a, b) -> ….</li></ul>`)}
-${sec(9,"Au CC : écrire une fonction en 5 étapes",`<ol><li><b>Lis les exemples de l'énoncé</b> : une virgule, f(2,7), veut dire un couple, function (x, y) ; des espaces, f 3 4, veulent dire fun a b.</li><li><b>Écris la signature</b> : le type de chaque paramètre, puis celui du résultat.</li><li><b>Récursive ?</b> L'énoncé le dit souvent. Si oui : let rec.</li><li><b>Le cas de base</b> : n = 0, n &lt; 10, li = [], ou List.tl li = [] si la liste est non vide.</li><li><b>Le cas général</b>, puis <b>teste</b> sur l'exemple de l'énoncé en déroulant à la main, comme somme 3 plus haut.</li></ol>`)}`;};
+       if List.hd li > m then List.hd li else m`)+M(`maxi [3; 9; 4]
+   maxi [4] = 4                 (un seul élément)
+   maxi [9; 4] : 9 > 4, donc 9
+maxi [3; 9; 4] : 3 > 9 ? non, donc 9`)+
+F2Z(F2Q("Que vaut maxi [2; 8; 5] ?","",["8"],"maxi [5] = 5 ; maxi [8; 5] : 8 > 5, donc 8 ; maxi [2; 8; 5] : 2 > 8 ? non, donc 8.")))),
+
+sec(6,"Verso : les six modèles",`<p>Six fonctions complètes et corrigées, celles du partiel 2021. Le jour du CC, cherche celle qui ressemble le plus à la question, et adapte-la.</p>`+
+F2E("memeParite","let memeParite : int * int -> bool =\n  function (a, b) -> a mod 2 = b mod 2","Vrai si deux entiers ont la même parité (tous les deux pairs, ou tous les deux impairs) : ils ont le même reste dans la division par 2. Elle n'est pas récursive. <b>Sert pour</b> un test simple sur un couple.",
+M(`memeParite (4, 6)
+= 4 mod 2 = 6 mod 2
+= 0 = 0
+= true
+
+memeParite (4, 3)
+= 0 = 1
+= false`)+`<p>Pour « parités opposées », remplace = par &lt;>.</p>`+
+F2Z(F2Q("Que vaut memeParite (7, 2) ?","",["false"],"7 mod 2 = 1 et 2 mod 2 = 0. 1 = 0 est faux : false.")))+
+F2E("queDesUn","let rec queDesUn : int -> bool = function n ->\n  if n < 10 then n = 1\n  else n mod 10 = 1 && queDesUn (n / 10)","Vrai si n ne s'écrit qu'avec des 1 (1, 11, 111…). Base : un seul chiffre, qui doit valoir 1. Sinon : le dernier chiffre vaut 1, <b>et</b> le reste n'a que des 1. <b>Sert pour</b> « tous les chiffres vérifient … ».",
+M(`queDesUn 111
+= 111 mod 10 = 1 && queDesUn 11
+= true && (11 mod 10 = 1 && queDesUn 1)
+= true && true && (1 = 1)
+= true`)+
+F2Z(F2Q("Que vaut queDesUn 101 ?","",["false"],"101 mod 10 = 1 : bon. Puis queDesUn 10 : 10 mod 10 = 0, ce n'est pas 1. Donc false.")))+
+F2E("prodDiv","let rec prodDiv : int -> int -> int = fun n i ->\n  if i = 0 then 1\n  else if n mod i = 0 then i * prodDiv n (i - 1)\n  else prodDiv n (i - 1)","Multiplie les diviseurs de n qui sont plus petits que i, ou égaux. n ne bouge pas ; i descend jusqu'à 0. Si i divise n (n mod i = 0), on le multiplie ; sinon on passe. Base 1, car c'est un produit. <b>Sert pour</b> parcourir les nombres de i jusqu'à 1 : diviseurs, sommes, comptages.",
+M(`prodDiv 6 3
+= 3 * prodDiv 6 2        (6 mod 3 = 0 : 3 divise 6)
+= 3 * 2 * prodDiv 6 1    (6 mod 2 = 0)
+= 3 * 2 * 1 * prodDiv 6 0
+= 3 * 2 * 1 * 1
+= 6`)+`<p>Pour tous les diviseurs de n, on appelle prodDiv n n.</p>`+
+F2Z(F2Q("Que vaut prodDiv 10 10 ?","",["100"],"Les diviseurs de 10 sont 1, 2, 5 et 10. Leur produit : 1 × 2 × 5 × 10 = 100.")))+
+F2E("somElem","let rec somElem : int list -> int =\n  function li -> if li = [] then 0\n  else List.hd li + somElem (List.tl li)","La somme des éléments : le premier, plus la somme du reste. Base 0. <b>Sert pour</b> les sommes ; pour compter les éléments, remplace List.hd li par 1.",
+F2Z(F2Q("Que vaut somElem [1; 2; 3; 4] ?","",["10"],"1 + 2 + 3 + 4 + 0 = 10.")))+
+F2E("liPairs","let rec liPairs : int list -> int list =\n  function li -> if li = [] then []\n  else if List.hd li mod 2 = 0\n  then List.hd li :: liPairs (List.tl li)\n  else liPairs (List.tl li)","Garde les éléments pairs, dans le même ordre. <b>Sert pour</b> toutes les questions « la liste des éléments qui … » ou « supprimer les … ».",
+M(`liPairs [1; 4; 6; 7]
+= liPairs [4; 6; 7]            (1 impair : enlevé)
+= 4 :: liPairs [6; 7]          (4 pair : gardé)
+= 4 :: 6 :: liPairs [7]
+= 4 :: 6 :: liPairs []         (7 impair : enlevé)
+= [4; 6]`)+
+F2Z(F2Q("Que vaut liPairs [2; 3; 8] ?","",["[2; 8]"],"2 pair : gardé. 3 impair : enlevé. 8 pair : gardé. [2; 8].")))+
+F2E("prefLong","let rec prefLong : int list -> int -> int list =\n  fun li n -> if li = [] || n = 0 then []\n  else List.hd li ::\n       prefLong (List.tl li) (n - 1)","Les n premiers éléments de li. On s'arrête quand la liste est vide, ou quand on en a pris assez (n = 0). Sinon, on garde le premier et on demande les n − 1 suivants. <b>Sert pour</b> les exercices avec une liste et un compteur.",
+M(`prefLong [4; 7; 1; 9] 2
+= 4 :: prefLong [7; 1; 9] 1
+= 4 :: 7 :: prefLong [1; 9] 0
+= 4 :: 7 :: []
+= [4; 7]`)+
+F2Z(F2Q("Que vaut prefLong [5; 6; 7] 5 ?","",["[5; 6; 7]"],"On demande 5 éléments, mais la liste n'en a que 3 : on s'arrête quand elle est vide. [5; 6; 7].")))),
+
+sec(7,"Verso : type et valeur",`<p>Les lignes du verso, expliquées. La méthode pour une question « type et valeur » : calcule pas à pas, de l'intérieur vers l'extérieur, et à chaque étape vérifie que les types vont ensemble.</p>`+
+F2V(["Tu écris","Type et valeur","Pourquoi"],[
+["(8/3) :: (8 mod 3) :: []","int list, [2; 2]","8/3 = 2, 8 mod 3 = 2, puis :: les met devant []"],
+["List.hd [3.5; 1.] > 2.","bool, true","List.hd donne 3.5 ; 3.5 > 2. est une comparaison vraie"],
+["3 * 4.","erreur","un int et un float"],
+["if x then y else 3","int","x doit être un bool ; le else rend un int, donc y aussi"],
+['"100" < "2"',"bool, true","lettre par lettre : 1 avant 2"],
+["[1; 2.]","erreur","un seul type par liste"]])+
+`<p><b>Au cas où : le type 'a.</b> 'a se lit « alpha ». On l'écrit quand rien n'oblige une valeur à avoir un type précis : elle peut être de n'importe quel type.</p>`+
+F2V(["Tu écris","Type","Pourquoi"],[
+["List.hd [1; 2]","int","sur une int list, List.hd rend un int"],
+['List.hd ["a"]',"string","sur une string list, un string"],
+["List.hd","'a list -> 'a","marche sur toutes les listes"],
+["fun x -> x","'a -> 'a","x n'est utilisé dans aucun calcul : n'importe quel type"],
+["fun n x -> if n = 0 then x else x","int -> 'a -> 'a","n est comparé à 0 (int) ; x est seulement rendu"]])+
+F2Z(F2Q("Que vaut cette expression ?","(9/2) :: (9 mod 2) :: []",["[4; 1]"],"9/2 = 4 (on coupe la virgule), 9 mod 2 = 1. Puis :: les met devant [] : [4; 1], une int list."),
+F2Q("Quel est le type de cette expression ?","List.hd [2.5; 1.] < 3.",["bool"],"List.hd donne 2.5, puis 2.5 &lt; 3. est une comparaison : bool (elle vaut true)."),
+F2Q("Quelle est la signature de cette fonction ?","function (x, y) -> if y then x + 1 else 2 * x",["int * bool -> int"],"Un couple. x + 1 : x est un int. if y : y est un bool. On rend x + 1 ou 2 * x : un int. Signature : int * bool -> int."))),
+
+sec(8,"Verso : les pièges",F2T(["Faux","Juste","Pourquoi"],[
+["let f = function n -> .. f (n - 1) ..","let rec f = function n -> ..","sans rec, f ne se connaît pas : « Unbound value »"],
+["f n - 1","f (n - 1)","sinon (f n) - 1 : ne s'arrête jamais"],
+["[2, 3]","[2; 3]","la virgule fait un couple : un seul élément"],
+["if x > 0 then 1","if x > 0 then 1 else 0","toujours un else"],
+["x == 3","x = 3","pour comparer, un seul ="],
+["mult (3, 4) si l'énoncé écrit mult 3 4","fun n m -> …","sans virgule dans l'énoncé : fonction curryfiée"]],[0,1])),
+
+sec(9,"Au CC : écrire une fonction en 5 étapes",`<ol><li><b>Lis les exemples de l'énoncé</b> : une virgule (f(2,7)) veut dire un couple, function (x, y) ; des espaces (f 3 4) veulent dire fun a b.</li><li><b>Écris la signature</b> : le type de chaque paramètre, puis celui du résultat.</li><li><b>Récursive ?</b> L'énoncé le dit souvent. Si oui : let rec.</li><li><b>Le cas de base</b> : n = 0, n &lt; 10, li = [], ou List.tl li = [] si la liste est non vide.</li><li><b>Le cas général</b>, puis <b>teste</b> à la main sur l'exemple de l'énoncé.</li></ol>
+<p><b>Exemple complet.</b> Énoncé : « Écrire la fonction récursive nbGrands qui compte les éléments plus grands que 10 d'une liste d'entiers. Exemple : nbGrands [3; 15; 12] vaut 2. »</p>
+<ol><li>nbGrands [3; 15; 12] : un seul paramètre, une liste.</li><li>Une liste d'entiers, et on rend un nombre : <code>int list -> int</code>.</li><li>« récursive » : let rec.</li><li>Base : une liste vide n'a aucun élément plus grand que 10 : 0.</li><li>Si le premier est plus grand que 10, on compte 1 de plus ; sinon, on ne compte rien.</li></ol>`+M(`let rec nbGrands : int list -> int = function li ->
+  if li = [] then 0
+  else if List.hd li > 10 then 1 + nbGrands (List.tl li)
+  else nbGrands (List.tl li)`)+`<p>Le test, à la main :</p>`+M(`nbGrands [3; 15; 12]
+= nbGrands [15; 12]          (3 n'est pas > 10)
+= 1 + nbGrands [12]          (15 > 10)
+= 1 + 1 + nbGrands []        (12 > 10)
+= 1 + 1 + 0
+= 2`)+`<p>On trouve 2, comme l'énoncé. La fonction est bonne.</p>`)
+].join("\n");
 const types=({sec})=>`<div class="title-row"><h1>Entraînement : types et valeurs</h1></div><p class="lead">27 expressions tirées du TD et du partiel. Choisis le type, lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : c'est 3 points faciles au contrôle.</p><div id="drill"></div>`;
 const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation fonctionnelle en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Vendredi 13 novembre à 9h45, d'après le mail de David Delahaye du 5 novembre. Amphi 5.01 si ton nom de famille commence par une lettre de A à M, amphi 5.03 de N à Z. L'épreuve dure 1 h (1 h 20 avec un tiers-temps).</p>`)}
@@ -7113,6 +7449,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  {id:"ctquiz",ex:"ct",t:"Quiz de cours, questions de janvier comprises : au moins 80 %",min:15,p:1,manual:true,last:true,links:[["quiz","Quiz de cours"]]},
  {id:"ctreview",ex:"ct",t:"Veille de l'examen : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
 /* la page d'entraînement monte l'exercice interactif */
+SUBJ.pf.pages.find(p=>p.id==="feuille2").render=(root,ctx)=>{root.innerHTML=feuille2(ctx);W.mq(root);};
 SUBJ.pf.pages.find(p=>p.id==="types").render=(root,ctx)=>{root.innerHTML=types(ctx);W.drill(root.querySelector("#drill"),DRILL,CHOICES);};
 })();
 
