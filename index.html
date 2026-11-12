@@ -763,6 +763,7 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 /* les explications en mots simples, puis le cours */
 .clair{border:2px solid color-mix(in srgb,var(--vert) 45%,transparent);background:color-mix(in srgb,var(--vert) 7%,#000);border-radius:16px;padding:12px 16px;display:grid;gap:6px}
 .clair__t{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--vert)}
+.nivbar{margin-top:20px;padding-top:12px;border-top:1px solid var(--trait);display:grid;gap:8px}
 .lxlab{font-weight:850;font-size:.74rem;font-stretch:110%;text-transform:uppercase;letter-spacing:.07em;color:var(--sc);margin-bottom:-8px}
 /* entre deux parties d'une leçon */
 .cp{display:grid;gap:12px;padding:10px 0 20px;animation:rise .3s var(--snap)}
@@ -14294,6 +14295,73 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
 
 </script>
 <script>
+/* Explications « depuis zéro » : le niveau Débutant des leçons. Une entrée par écran d'explication,
+   rangée par matière, par leçon, puis par titre de l'écran (le même titre que dans lecons-<matière>.js).
+   Chaque texte part de rien : il redit les mots, avance par petits pas et montre un exemple chiffré.
+   Le texte du cours reste affiché dessous, tel quel. */
+(function(){
+const DEBUT={
+calc:{
+ "c-ed0":{
+  "Une équation dont l'inconnue est une fonction":`<p><b>Ce que tu connais déjà.</b> Dans une équation comme 2x + 1 = 7, on cherche un <b>nombre</b> : ici x = 3, parce que 2 × 3 + 1 = 7.</p>
+<p><b>Ce qui change ici.</b> On ne cherche plus un nombre, on cherche une <b>fonction</b>. Une fonction, c'est une règle qui donne un résultat pour chaque valeur de t. Exemples : y(t) = t² (pour t = 3, elle donne 9), ou y(t) = e<sup>2t</sup>.</p>
+<p><b>La dérivée y′</b> d'une fonction dit à quelle vitesse elle monte ou descend. Trois dérivées suffisent pour cette leçon :</p>
+<ul><li>la dérivée d'un nombre fixe (comme 5) est 0 : il ne bouge pas ;</li><li>la dérivée de t² est 2t ;</li><li>la dérivée de e<sup>2t</sup> est 2 e<sup>2t</sup> : le nombre devant t descend devant l'exponentielle.</li></ul>
+<p><b>Une équation différentielle</b> est une égalité où apparaissent à la fois y et y′. Par exemple y′ − 2y = 0. La résoudre, c'est trouver les fonctions y pour lesquelles cette égalité est vraie <b>pour toutes les valeurs de t</b>, pas seulement pour une.</p>
+<p><b>Tester une fonction, en 3 gestes.</b> On veut savoir si y(t) = e<sup>2t</sup> est solution de y′ − 2y = 0.</p>
+<ol><li>On calcule sa dérivée : y′(t) = 2 e<sup>2t</sup>.</li><li>On remplace dans le côté gauche : y′ − 2y = 2 e<sup>2t</sup> − 2 × e<sup>2t</sup>.</li><li>On simplifie : ça fait 0, quel que soit t. L'égalité est vraie : <b>c'est une solution</b>.</li></ol>
+<p><b>Un essai qui rate</b>, pour voir la différence. Est-ce que y(t) = t² est solution de la même équation ? Sa dérivée est 2t. Donc y′ − 2y = 2t − 2t². Pour t = 2, ça donne 4 − 8 = −4, et pas 0. L'égalité est fausse pour t = 2 : <b>ce n'est pas une solution</b>.</p>
+<p><b>Les lettres a et b.</b> Le cours écrit toutes ces équations sous la forme y′ + a y = b. Les lettres a et b sont <b>données</b> par l'énoncé, y est ce qu'on cherche. Dans y′ + 3y = 6 : a = 3 et b = 6. Dans y′ − 2y = 0 : a = −2 (le signe compte) et b = 0.</p>`,
+  "L'équation homogène : y′ + ay = 0":`<p><b>Le mot.</b> « Homogène » veut seulement dire : il y a <b>0 à droite</b> du signe =. C'est le cas le plus simple, et il sert dans tous les autres.</p>
+<p><b>Comprendre sur un exemple : y′ + 3y = 0.</b> On passe 3y de l'autre côté : y′ = −3y. En mots : « la dérivée de y vaut −3 fois y ». Quelle fonction a une dérivée égale à elle-même multipliée par un nombre ? L'exponentielle.</p>
+<ul><li>Essai : y = e<sup>−3x</sup>. Sa dérivée est −3 e<sup>−3x</sup>, c'est-à-dire −3 fois y. Ça marche.</li><li>Et 5 e<sup>−3x</sup> ? Sa dérivée est 5 × (−3) e<sup>−3x</sup>, encore −3 fois elle-même. Ça marche aussi.</li><li>On peut donc mettre n'importe quel nombre devant. On l'appelle C. <b>Toutes les solutions : y = C e<sup>−3x</sup></b>.</li></ul>
+<p>Il y a une infinité de solutions : une pour chaque valeur de C.</p>
+<p><b>Quand a n'est pas un nombre fixe</b>, par exemple y′ + 2x y = 0, il faut une <b>primitive</b> de a. Une primitive de a, c'est une fonction A dont la dérivée est a. Ici a(x) = 2x, et la dérivée de x² est 2x : donc A(x) = x².</p>
+<p>La règle du cours : les solutions sont y = C e<sup>−A(x)</sup>. Ici : y = C e<sup>−x²</sup>.</p>
+<p>Vérification : la dérivée de e<sup>−x²</sup> est −2x e<sup>−x²</sup>. Donc y′ = −2x y, c'est-à-dire y′ + 2x y = 0.</p>
+<p><b>Le piège du signe.</b> Dans y′ − 4y = 0, a vaut <b>−4</b>. Donc A(x) = −4x, et e<sup>−A(x)</sup> = e<sup>4x</sup> : le signe a changé deux fois. Les solutions sont y = C e<sup>4x</sup>.</p>
+<p><b>En résumé</b> : je lis a avec son signe, je trouve A (une primitive de a), j'écris C e<sup>−A(x)</sup>.</p>`,
+  "La condition initiale choisit une seule solution":`<p><b>Le problème.</b> y = C e<sup>−3x</sup> n'est pas une réponse unique : c'est toute une famille de fonctions, une par valeur de C. L'énoncé ajoute donc un renseignement pour en choisir une seule.</p>
+<p><b>Lire la condition.</b> « y(0) = 2 » veut dire : quand x vaut 0, la fonction vaut 2. C'est le point de départ de la courbe.</p>
+<p><b>La méthode : on remplace x, et on trouve C.</b></p>
+<ol><li>J'écris la famille : y(x) = C e<sup>−3x</sup>.</li><li>Je remplace x par 0 : y(0) = C e<sup>0</sup>. Or e<sup>0</sup> = 1, donc y(0) = C.</li><li>L'énoncé dit y(0) = 2. Donc C = 2.</li><li>La solution cherchée : y(x) = 2 e<sup>−3x</sup>.</li></ol>
+<p><b>Quand la condition n'est pas en 0</b>, c'est le même geste. Exemple : y′ + 3y = 0 avec y(1) = 5.</p>
+<ol><li>y(x) = C e<sup>−3x</sup>.</li><li>Je remplace x par 1 : y(1) = C e<sup>−3</sup>.</li><li>Il faut C e<sup>−3</sup> = 5. Je multiplie les deux côtés par e<sup>3</sup> : C = 5 e<sup>3</sup>.</li><li>y(x) = 5 e<sup>3</sup> e<sup>−3x</sup> = 5 e<sup>3 − 3x</sup>. Contrôle : pour x = 1, l'exposant vaut 0, donc y(1) = 5.</li></ol>
+<p><b>L'ordre à respecter sur la copie</b> : d'abord toutes les solutions, avec la lettre C. Ensuite seulement, la condition, pour trouver C. Le TD le demande dans cet ordre.</p>`},
+ "c-ed1":{
+  "Avec un second membre : le plan en 3 temps":`<p><b>Le mot.</b> Le « second membre », c'est ce qui est à droite du signe =. Dans la leçon d'avant, c'était 0. Maintenant, ce n'est plus 0 : par exemple y′ + 2y = 6.</p>
+<p><b>Première idée : trouver une solution, n'importe laquelle.</b> Le plus simple à essayer, c'est un nombre fixe : y = k. Sa dérivée est 0. L'équation devient 0 + 2k = 6, donc k = 3. La fonction y = 3 est <b>une</b> solution. On l'appelle une solution particulière.</p>
+<p><b>Deuxième idée : toutes les autres s'obtiennent en ajoutant quelque chose.</b> Si à 3 j'ajoute une fonction qui donne 0 quand on calcule y′ + 2y, le total donnera toujours 6 + 0 = 6. Ces fonctions qui donnent 0, on les connaît : ce sont les solutions de l'équation homogène y′ + 2y = 0, c'est-à-dire C e<sup>−2x</sup>.</p>
+<p>Donc toutes les solutions sont y = 3 + C e<sup>−2x</sup>. Vérifions : la dérivée est −2C e<sup>−2x</sup>. Alors y′ + 2y = −2C e<sup>−2x</sup> + 6 + 2C e<sup>−2x</sup> = 6. Les deux morceaux avec C se détruisent, il reste bien 6.</p>
+<p><b>Le plan, toujours le même :</b></p>
+<ol><li>je résous l'équation avec 0 à droite : C e<sup>−2x</sup> ;</li><li>je trouve <b>une</b> solution de la vraie équation : ici 3 ;</li><li>j'additionne : y = 3 + C e<sup>−2x</sup> ;</li><li>à la fin seulement, la condition initiale donne C.</li></ol>
+<p><b>La fin de l'exemple</b>, avec y(0) = 1 : y(0) = 3 + C e<sup>0</sup> = 3 + C. Il faut 3 + C = 1, donc C = −2. Réponse : y = 3 − 2 e<sup>−2x</sup>.</p>
+<p><b>L'erreur à éviter.</b> Poser la condition sur C e<sup>−2x</sup> tout seul, avant d'avoir ajouté le 3. On trouverait C = 1, et la réponse serait fausse.</p>`,
+  "Trouver une solution particulière : la variation de la constante":`<p><b>À quoi ça sert.</b> Dans l'exemple d'avant, on a deviné la solution particulière (le nombre 3). On ne peut pas toujours deviner. La variation de la constante est une méthode qui la <b>calcule</b>, sans rien deviner.</p>
+<p><b>Les deux lettres à avoir sous les yeux.</b> Dans y′ + a y = b : A est une primitive de a (une fonction dont la dérivée est a), et b est le côté droit.</p>
+<p><b>Les trois gestes</b>, faits sur y′ + 2y = 6, pour vérifier qu'on retrouve bien 3 :</p>
+<ol><li><b>Je multiplie b par e<sup>A</sup>.</b> Ici a = 2, donc A(x) = 2x. Et b = 6. Ça donne 6 e<sup>2x</sup>.</li><li><b>Je cherche une primitive de ce résultat.</b> Une fonction dont la dérivée est 6 e<sup>2x</sup> : c'est 3 e<sup>2x</sup> (sa dérivée est 3 × 2 e<sup>2x</sup>). Je l'appelle c(x).</li><li><b>Je multiplie c par e<sup>−A</sup>.</b> 3 e<sup>2x</sup> × e<sup>−2x</sup> = 3, parce que e<sup>2x</sup> × e<sup>−2x</sup> = 1.</li></ol>
+<p>On retrouve la solution particulière 3. La méthode a fait le travail toute seule.</p>
+<p><b>Pour ne pas se tromper de signe</b> : <b>+A</b> à l'aller (geste 1), <b>−A</b> au retour (geste 3).</p>
+<p><b>D'où vient le nom.</b> Les solutions avec 0 à droite sont C e<sup>−A</sup>, où C est une constante. Ici, on remplace la constante C par une fonction c(x) : on la fait « varier ».</p>
+<p>La suite ne change pas : toutes les solutions = cette solution particulière + C e<sup>−A(x)</sup>, puis la condition initiale.</p>
+<p>Trois exemples rédigés ligne par ligne, du plus simple au plus dur : <a href="#/calc/p/m-varcst">Méthode : la variation de la constante</a>.</p>`,
+  "Le raccourci quand a est une constante":`<p><b>L'idée.</b> Quand a est un simple nombre, on peut souvent aller plus vite que la variation de la constante : on essaie une fonction <b>qui ressemble au côté droit</b>, avec des nombres inconnus, et on règle ces nombres.</p>
+<p><b>Exemple 1 : le côté droit est un polynôme.</b> y′ + 2y = 4x.</p>
+<ol><li>Le côté droit, 4x, est de la forme « un nombre fois x, plus un nombre ». J'essaie donc y = αx + β, où α et β sont deux nombres à trouver.</li><li>Sa dérivée est α.</li><li>Je remplace : y′ + 2y = α + 2(αx + β) = 2α x + (α + 2β).</li><li>Il faut que ce soit égal à 4x pour tout x. Je compare les deux côtés morceau par morceau : devant x, 2α = 4, donc α = 2. Sans x, α + 2β = 0, donc β = −1.</li><li>Solution particulière : y = 2x − 1. Contrôle : sa dérivée est 2, et 2 + 2(2x − 1) = 4x.</li></ol>
+<p><b>Exemple 2 : le côté droit est une exponentielle.</b> y′ + 2y = e<sup>x</sup>. J'essaie y = A e<sup>x</sup> (un nombre fois la même exponentielle). Sa dérivée est A e<sup>x</sup>. Donc y′ + 2y = 3A e<sup>x</sup>. Il faut 3A = 1, donc A = 1/3. Solution particulière : y = (1/3) e<sup>x</sup>.</p>
+<p><b>Le tableau à retenir :</b></p>
+<ul><li>côté droit = polynôme → j'essaie un polynôme du même degré ;</li><li>côté droit = e<sup>kx</sup> → j'essaie A e<sup>kx</sup> ;</li><li>côté droit = cos x ou sin x → j'essaie α cos x + β sin x (les deux, même si un seul apparaît).</li></ul>
+<p><b>Quand le raccourci rate.</b> Si le côté droit est déjà une solution de l'équation avec 0 à droite (par exemple y′ + 2y = e<sup>−2x</sup>), l'essai A e<sup>−2x</sup> donne 0 et pas e<sup>−2x</sup>. Dans ce cas, on essaie A x e<sup>−2x</sup>, ou on prend la variation de la constante, qui marche toujours.</p>`}}
+};
+const LES=window.LESSONS||{};
+Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
+  L.steps.forEach(s=>{if(s.k==="learn"&&M[s.h])s.debut=M[s.h];});}));
+window.DEBUT=DEBUT;
+})();
+
+</script>
+<script>
 /* Lexique : les mots techniques de chaque matière, expliqués avec des mots simples.
    m : le mot ; d : l'explication ; a : les autres formes du mot (pluriel, variante) pour le retrouver dans une question ;
    ch : le chapitre ; x : l'épreuve (par défaut la première de la matière) ; g : mot très courant, montré en dernier. */
@@ -14783,9 +14851,18 @@ function drawStep(){
   const rs=$("#lp-restart");if(rs)rs.addEventListener("click",()=>{progDrop(LP.sid,LP.id,true);LP=newLP(LP.sid,LP.id);drawStep();});
   progSave();fixLinks(body,LP.sid);window.scrollTo(0,0);}
 const code=(src,lang)=>W.code(src,lang||SUBJ[LP.sid].lang||"txt");
+/* niveau des explications d'une matière : choisi dans la leçon, sinon déduit de la maîtrise du thème
+   (mini-contrôles, quiz, cartes, erreurs). 1 débutant, 2 intermédiaire, 3 avancé. */
+const NIVEAUX=["","Débutant","Intermédiaire","Avancé"];
+function niveauDe(sid,lid){const S=SUBJ[sid],st=A.ST[sid],th=A.themeDe(S,lid),T=th&&(S.themes||[]).find(x=>x.id===th),m=T?A.maitrise(sid,T):null;
+  if(st.niv)return {n:st.niv,auto:false,m};
+  return {n:m==null?2:m<0.4?1:m<0.75?2:3,auto:true,m};}
+const nivBarre=nv=>`<div class="nivbar"><p class="muted">Niveau des explications en ${SUBJ[LP.sid].name} : <b>${NIVEAUX[nv.n]}</b>, ${nv.auto?(nv.m==null?`par défaut. Fais le <a href="#/${LP.sid}/niveau">mini-contrôle</a> pour qu'il s'adapte à toi`:"choisi automatiquement d'après tes résultats sur ce thème"):"choisi par toi"}.</p><div class="filters">${[[1,"Débutant : tout depuis zéro"],[2,"Intermédiaire"],[3,"Avancé : seulement le cours"],[0,"Automatique"]].map(x=>`<button class="btn" data-niv="${x[0]}" aria-pressed="${x[0]?!nv.auto&&nv.n===x[0]:nv.auto}">${x[1]}</button>`).join("")}</div></div>`;
 const STEP={
  learn(s,body){
-  body.innerHTML=`${s.look?`<p class="look"><b>Tu cherches :</b> ${s.look}</p>`:""}${s.h?`<h2>${s.h}</h2>`:""}${s.clair?`<div class="clair"><p class="clair__t">En clair</p><div class="lx">${s.clair}</div></div><p class="lxlab">Ce que dit le cours</p>`:""}<div class="lx">${s.x||""}</div>${s.svg||""}${s.code?code(s.code,s.lang):""}<div class="lfig"></div>${s.after?`<div class="lx">${s.after}</div>`:""}`;
+  const nv=niveauDe(LP.sid,LP.id),aide=nv.n===1&&s.debut?["Depuis zéro",s.debut]:nv.n<3&&s.clair?["En clair",s.clair]:null;
+  body.innerHTML=`${s.look?`<p class="look"><b>Tu cherches :</b> ${s.look}</p>`:""}${s.h?`<h2>${s.h}</h2>`:""}${aide?`<div class="clair"><p class="clair__t">${aide[0]}</p><div class="lx">${aide[1]}</div></div><p class="lxlab">Ce que dit le cours</p>`:""}<div class="lx">${s.x||""}</div>${s.svg||""}${s.code?code(s.code,s.lang):""}<div class="lfig"></div>${s.after?`<div class="lx">${s.after}</div>`:""}${nivBarre(nv)}`;
+  body.querySelectorAll("[data-niv]").forEach(b=>b.addEventListener("click",()=>{A.emit({k:"niv",s:LP.sid,v:+b.dataset.niv});drawStep();}));
   if(s.fig){const c=SUBJ[LP.sid].BY[s.fig];if(c)mount(body.querySelector(".lfig"),c,s.figKey);}},
  pre(s,body,next){
   const ord=shuffle(s.o.map((_,i)=>i));
@@ -15299,6 +15376,7 @@ function applyEv(e){
   else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
   else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;const th=themeDe(SUBJ[e.s],e.l);if(th)preuve(st,th,0,1,day);}
+  else if(e.k==="niv"){st.niv=e.v||0;}
   else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n)preuve(st,e.th,e.ok,e.n,day,e.run,true);}
   else if(e.k==="cr"||e.k==="qr"){/* carte d'une fiche notée dans « Réviser », réponse à une question du quiz */const th=themeDe(SUBJ[e.s],null,e.c);if(th&&!e.re)preuve(st,th,e.k==="cr"?e.r/2:e.ok?1:0,1,day);}
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
@@ -16054,7 +16132,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
