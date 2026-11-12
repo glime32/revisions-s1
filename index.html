@@ -14300,6 +14300,7 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
    Chaque texte part de rien : il redit les mots, avance par petits pas et montre un exemple chiffré.
    Le texte du cours reste affiché dessous, tel quel. */
 (function(){
+const C=s=>W.code(s,"ml");
 const DEBUT={
 calc:{
  "c-ed0":{
@@ -14352,7 +14353,154 @@ calc:{
 <p><b>Exemple 2 : le côté droit est une exponentielle.</b> y′ + 2y = e<sup>x</sup>. J'essaie y = A e<sup>x</sup> (un nombre fois la même exponentielle). Sa dérivée est A e<sup>x</sup>. Donc y′ + 2y = 3A e<sup>x</sup>. Il faut 3A = 1, donc A = 1/3. Solution particulière : y = (1/3) e<sup>x</sup>.</p>
 <p><b>Le tableau à retenir :</b></p>
 <ul><li>côté droit = polynôme → j'essaie un polynôme du même degré ;</li><li>côté droit = e<sup>kx</sup> → j'essaie A e<sup>kx</sup> ;</li><li>côté droit = cos x ou sin x → j'essaie α cos x + β sin x (les deux, même si un seul apparaît).</li></ul>
-<p><b>Quand le raccourci rate.</b> Si le côté droit est déjà une solution de l'équation avec 0 à droite (par exemple y′ + 2y = e<sup>−2x</sup>), l'essai A e<sup>−2x</sup> donne 0 et pas e<sup>−2x</sup>. Dans ce cas, on essaie A x e<sup>−2x</sup>, ou on prend la variation de la constante, qui marche toujours.</p>`}}
+<p><b>Quand le raccourci rate.</b> Si le côté droit est déjà une solution de l'équation avec 0 à droite (par exemple y′ + 2y = e<sup>−2x</sup>), l'essai A e<sup>−2x</sup> donne 0 et pas e<sup>−2x</sup>. Dans ce cas, on essaie A x e<sup>−2x</sup>, ou on prend la variation de la constante, qui marche toujours.</p>`}},
+pf:{
+ "p-types":{
+  "OCaml répond un type, puis une valeur":`<p><b>L'image à garder.</b> OCaml est une calculatrice très stricte. Tu lui donnes un calcul (on dit une <b>expression</b>), terminé par <code>;;</code>. Il répond deux choses, toujours dans cet ordre : la <b>sorte</b> du résultat, puis le <b>résultat</b>.</p>
+${C(`# 7 / 3;;
+- : int = 2`)}
+<p>Ça se lit : « le résultat est de la sorte <code>int</code> (un entier), et il vaut 2 ». La sorte s'appelle le <b>type</b>, le résultat s'appelle la <b>valeur</b>.</p>
+<p><b>Les quatre types du début :</b></p>
+<ul><li><code>int</code> : un entier, comme 3 ou -7 ;</li><li><code>float</code> : un nombre à virgule, écrit avec un point, comme 2.5 ;</li><li><code>bool</code> : vrai ou faux, écrits <code>true</code> et <code>false</code> ;</li><li><code>string</code> : du texte entre guillemets, comme "bonjour".</li></ul>
+<p><b>Pourquoi « stricte ».</b> Avant de calculer, OCaml vérifie que chaque opération reçoit le bon type. Si ce n'est pas le cas, il refuse tout de suite : c'est une <b>erreur de type</b>. Il n'y a alors ni type ni valeur.</p>
+<p>Exemple : <code>2.3 + 3.1</code> est refusé. Le signe <code>+</code> est réservé aux entiers ; pour les nombres à virgule, il faut <code>+.</code> avec un point.</p>
+<p><b>Ne pas confondre « erreur » et « false ».</b> <code>not true</code> a une valeur : <code>false</code>. Mais <code>not 1</code> est une erreur : on ne peut pas dire « le contraire de 1 ».</p>
+<p><b>Au contrôle</b>, pour chaque expression, on attend : son type et sa valeur, ou bien le mot « erreur » avec la raison.</p>`,
+  "Chaque expression a un type":`<p><b>Chaque type a ses propres opérations.</b> On ne les mélange jamais.</p>
+<ul><li><b>int</b> (entiers) : <code>+ - * / mod</code>. Attention, <code>/</code> est la division <b>entière</b> : <code>7 / 3</code> vaut 2 (« 3 rentre 2 fois dans 7 »). <code>7 mod 3</code> vaut 1 (« il reste 1 »).</li><li><b>float</b> (à virgule) : les mêmes signes suivis d'un point, <code>+. -. *. /.</code> Et un nombre à virgule s'écrit avec un point : <code>2</code> est un int, <code>2.</code> est un float.</li><li><b>bool</b> : <code>not</code> (le contraire), <code>&amp;&amp;</code> (et), <code>||</code> (ou).</li><li><b>string</b> : <code>^</code> colle deux textes. <code>"au" ^ "to"</code> vaut <code>"auto"</code>.</li></ul>
+<p><b>Les comparaisons</b> (<code>=</code>, <code>&lt;&gt;</code> pour « différent », <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>) donnent toujours un <code>bool</code>. Les deux côtés doivent être du même type : <code>4 = 4.0</code> est une erreur, car 4 est un int et 4.0 un float.</p>
+<p><b>Passer d'un type à l'autre.</b> <code>float_of_int 2</code> vaut <code>2.</code> ; <code>int_of_float 4.7</code> vaut 4 (il coupe ce qui est après la virgule).</p>
+<p><b>Trouver le type d'une expression, pas à pas.</b> On part de l'intérieur. Exemple : <code>float_of_int (7 / 2) +. 0.5</code>.</p>
+<ol><li><code>7 / 2</code> : deux entiers et <code>/</code>, donc un int. Il vaut 3.</li><li><code>float_of_int 3</code> : un float. Il vaut <code>3.</code></li><li><code>3. +. 0.5</code> : deux floats et <code>+.</code>, donc un float. Il vaut 3.5.</li></ol>
+<p>Réponse : type <code>float</code>, valeur 3.5.</p>
+<p><b>Une règle de lecture.</b> Une fonction s'applique avant les opérations : <code>int_of_float 2.5 + 1</code> se lit <code>(int_of_float 2.5) + 1</code>, c'est-à-dire 2 + 1 = 3.</p>`},
+ "p-iflet":{
+  "if est une expression, let donne un nom":`<p><b>if calcule une valeur.</b> En OCaml, <code>if</code> n'est pas un ordre, c'est un calcul qui a un résultat.</p>
+${C(`if 1 < 2 then 3 + 1 else 5 / 2`)}
+<p>On lit : « si 1 &lt; 2, le résultat est 3 + 1, sinon c'est 5 / 2 ». Comme 1 &lt; 2 est vrai, l'expression vaut 4.</p>
+<p>Deux règles en découlent :</p>
+<ul><li>ce qui suit <code>if</code> doit être un <code>bool</code> ;</li><li>les deux résultats possibles (après <code>then</code> et après <code>else</code>) doivent avoir <b>le même type</b>, sinon OCaml ne saurait pas dire le type du tout. Et le <code>else</code> est obligatoire.</li></ul>
+<p><b>let … in … donne un nom à une valeur, le temps d'un calcul.</b></p>
+${C(`let x = 5 in x * x`)}
+<p>On lit : « appelons x le nombre 5, dans le calcul x * x ». Résultat : 25. Le nom x n'existe que dans la partie après <code>in</code>.</p>
+<p><b>Deux let à la suite</b> : le second voit le premier.</p>
+${C(`let a = 5 in let b = a + 1 in a + b`)}
+<p>a vaut 5, puis b vaut 5 + 1 = 6, puis a + b vaut 11.</p>
+<p><b>Avec and</b>, les deux noms sont créés en même temps : l'un ne connaît pas l'autre. <code>let a = 2 and b = 5 in a + 2 * b</code> vaut 2 + 10 = 12. Mais <code>let a = 5 and b = a + 1 in a + b</code> est une erreur : au moment de calculer b, le nom a n'existe pas encore.</p>
+<p><b>Les commentaires</b> s'écrivent entre <code>(*</code> et <code>*)</code> : OCaml ne les lit pas.</p>`},
+ "p-fonctions":{
+  "Définir une fonction, puis l'appeler":`<p><b>Une fonction est une machine</b> : on lui donne une valeur, elle en rend une autre. En maths, on écrit f(x) = x + 1. En OCaml :</p>
+${C(`let f : int -> int = function
+  x -> x + 1`)}
+<p><b>Lecture mot par mot :</b></p>
+<ul><li><code>let f</code> : je crée quelque chose qui s'appelle f ;</li><li><code>: int -> int</code> : c'est une fonction qui prend un int et rend un int. Cette partie s'appelle la <b>signature</b> ;</li><li><code>= function x -> x + 1</code> : la règle. « Quand on me donne x, je rends x + 1. »</li></ul>
+<p><b>L'appeler</b> : on écrit son nom, un espace, puis la valeur. <code>f 3</code> vaut 4.</p>
+<p><b>Le piège des parenthèses.</b> <code>f 2 + 3</code> se lit <code>(f 2) + 3</code>, donc 3 + 3 = 6. Pour donner 2 + 3 à la fonction, il faut écrire <code>f (2 + 3)</code>, qui vaut 6 aussi ici, mais ce n'est pas le même calcul : c'est f 5.</p>
+<p><b>Un deuxième exemple</b>, qui rend un bool :</p>
+${C(`let estPositif : int -> bool = function
+  x -> x > 0`)}
+<p><code>estPositif 4</code> vaut <code>true</code>, <code>estPositif (-2)</code> vaut <code>false</code>.</p>
+<p><b>Sur la copie</b>, une fonction s'écrit toujours avec ces trois morceaux : le nom, la signature, la règle.</p>`,
+  "Deux façons d'écrire une fonction à deux paramètres":`<p>Pour une fonction qui a besoin de deux valeurs (par exemple « le plus grand de deux entiers »), le cours a deux écritures. Il faut savoir lire et écrire les deux.</p>
+<p><b>Écriture 1 : on donne les deux valeurs ensemble, dans un couple.</b> Un couple s'écrit <code>(3, 7)</code>, et son type se note avec une étoile : <code>int * int</code>.</p>
+${C(`let maxi_a : int * int -> int = function
+  (x, y) -> if x > y then x else y`)}
+<p>Appel : <code>maxi_a (3, 7)</code>, qui vaut 7.</p>
+<p><b>Écriture 2 : on donne les deux valeurs l'une après l'autre.</b></p>
+${C(`let maxi_b : int -> int -> int = fun
+  x y -> if x > y then x else y`)}
+<p>Appel : <code>maxi_b 3 7</code>, qui vaut 7. Dans <code>int -> int -> int</code>, les deux premiers <code>int</code> sont les deux paramètres, le dernier est le résultat.</p>
+<p><b>Les trois différences à repérer :</b></p>
+<ul><li>la signature : une étoile (<code>int * int -> int</code>) ou deux flèches (<code>int -> int -> int</code>) ;</li><li>le mot : <code>function (x, y)</code> ou <code>fun x y</code> ;</li><li>l'appel : <code>maxi_a (3, 7)</code> avec parenthèses et virgule, ou <code>maxi_b 3 7</code> avec des espaces.</li></ul>
+<p><b>Au contrôle</b>, l'énoncé donne la signature : c'est elle qui dit quelle écriture utiliser.</p>`,
+  "Trouver une signature":`<p><b>La question type</b> : on te donne le corps d'une fonction, tu dois dire sa signature. La méthode : regarder ce que la fonction <b>fait</b> de chaque paramètre. Chaque opération trahit un type.</p>
+<ul><li><code>x + 1</code>, <code>x * 2</code>, <code>x mod 2</code> : x est un <code>int</code> ;</li><li><code>x +. 1.</code> : x est un <code>float</code> ;</li><li><code>if y then …</code> ou <code>not y</code> : y est un <code>bool</code> ;</li><li><code>s ^ "a"</code> : s est une <code>string</code> ;</li><li><code>List.hd li</code> : li est une liste.</li></ul>
+<p>Le type du résultat, c'est le type de ce que la fonction rend à la fin.</p>
+<p><b>Exemple 1.</b> <code>function x -> if x > 0 then x + 1 else 0</code></p>
+<ol><li>x est comparé à 0 et on calcule x + 1 : x est un int.</li><li>La fonction rend x + 1 ou 0 : un int.</li><li>Signature : <code>int -> int</code>.</li></ol>
+<p><b>Exemple 2.</b> <code>fun x y -> if y then x +. 1. else x</code></p>
+<ol><li>y est après <code>if</code> : c'est un bool.</li><li>x est utilisé avec <code>+.</code> : c'est un float.</li><li>La fonction rend x +. 1. ou x : un float.</li><li>Signature, dans l'ordre des paramètres : <code>float -> bool -> float</code>.</li></ol>`},
+ "p-rec":{
+  "La méthode du TD":`<p><b>Une fonction récursive</b> est une fonction qui s'appelle elle-même, sur un cas plus petit. On l'annonce avec <code>let rec</code>.</p>
+<p><b>L'exemple de base : som n = 0 + 1 + 2 + … + n.</b> Pour calculer som 3, on se dit : « c'est 3, plus la somme jusqu'à 2 ».</p>
+<ul><li>som 3 = 3 + som 2</li><li>som 2 = 2 + som 1</li><li>som 1 = 1 + som 0</li><li>som 0 = 0 : là, on connaît la réponse sans calcul. C'est le <b>cas de base</b>, celui qui arrête tout.</li></ul>
+<p>Puis on remonte : som 1 = 1, som 2 = 3, som 3 = 6.</p>
+<p><b>Les deux questions à se poser, toujours les mêmes :</b></p>
+<ol><li>Quel est le cas le plus petit, et que vaut la fonction pour lui ? (ici : n = 0, réponse 0)</li><li>Si je connais déjà le résultat pour n - 1, comment j'obtiens celui pour n ? (ici : j'ajoute n)</li></ol>
+<p><b>L'écriture :</b></p>
+${C(`let rec som : int -> int = function
+  n -> if n = 0 then 0 else n + som (n - 1)`)}
+<p><b>Les trois erreurs classiques :</b></p>
+<ul><li>oublier <code>rec</code> : OCaml ne connaît pas encore som à l'intérieur de sa propre définition ;</li><li>oublier les parenthèses : <code>som n - 1</code> se lit <code>(som n) - 1</code>, et la fonction se rappelle sans jamais diminuer n ;</li><li>oublier le cas de base : la fonction ne s'arrête jamais.</li></ul>`},
+ "p-chiffres":{
+  "Deux schémas qui reviennent":`<p><b>Schéma 1 : travailler sur les chiffres d'un entier.</b> Deux opérations suffisent :</p>
+<ul><li><code>n mod 10</code> donne le <b>dernier chiffre</b> : 472 mod 10 vaut 2 ;</li><li><code>n / 10</code> donne le nombre <b>sans son dernier chiffre</b> : 472 / 10 vaut 47.</li></ul>
+<p>On traite le dernier chiffre, puis on recommence avec le reste. On s'arrête quand il ne reste qu'un chiffre : <code>n &lt; 10</code>.</p>
+<p>Exemple, la somme des chiffres :</p>
+${C(`let rec somChiffres : int -> int = function
+  n -> if n < 10 then n else n mod 10 + somChiffres (n / 10)`)}
+<p>somChiffres 472 = 2 + somChiffres 47 = 2 + 7 + somChiffres 4 = 2 + 7 + 4 = 13.</p>
+<p><b>Schéma 2 : essayer tous les entiers de n jusqu'à 1.</b> « i divise n » veut dire que la division tombe juste, donc que le reste vaut 0 : <code>n mod i = 0</code>. Exemples : 12 mod 4 vaut 0, donc 4 divise 12 ; 12 mod 5 vaut 2, donc 5 ne divise pas 12.</p>
+<p>Pour compter les diviseurs de n, on ajoute un deuxième paramètre i, qui part de n et descend de 1 à chaque appel. Quand i arrive à 0, c'est fini.</p>
+${C(`let rec nbDiv : int -> int -> int = fun
+  n i -> if i = 0 then 0
+         else (if n mod i = 0 then 1 else 0) + nbDiv n (i - 1)`)}
+<p><code>nbDiv 6 6</code> essaie 6, 5, 4, 3, 2, 1 : quatre d'entre eux divisent 6 (6, 3, 2 et 1). Résultat : 4.</p>
+<p><b>Choisir la valeur du cas de base.</b> Elle ne doit rien changer au calcul : 0 quand on additionne ou qu'on compte, 1 quand on multiplie.</p>`},
+ "p-listes":{
+  "Construire et défaire une liste":`<p><b>Une liste</b> est une suite de valeurs du même type, dans un ordre. Elle s'écrit entre crochets, avec des <b>points-virgules</b> : <code>[2; 3; 2; 4]</code>. Son type est <code>int list</code>. La liste vide s'écrit <code>[]</code>.</p>
+<p><b>Trois outils, et c'est tout :</b></p>
+<ul><li><code>x :: li</code> fabrique une liste en mettant x <b>devant</b> li. <code>1 :: [2; 3]</code> vaut <code>[1; 2; 3]</code>.</li><li><code>List.hd li</code> donne le <b>premier élément</b>. <code>List.hd [2; 3; 4]</code> vaut 2.</li><li><code>List.tl li</code> donne la liste <b>sans son premier élément</b>. <code>List.tl [2; 3; 4]</code> vaut <code>[3; 4]</code>.</li></ul>
+<p><b>Ce qu'il faut bien voir :</b> <code>List.hd</code> rend <b>un élément</b>, <code>List.tl</code> rend <b>une liste</b>. Par exemple <code>List.tl [5]</code> vaut <code>[]</code>, et pas « rien ».</p>
+<p><b>Combiner les deux.</b> Le deuxième élément d'une liste : on enlève le premier, puis on prend le premier de ce qui reste. <code>List.hd (List.tl [2; 3; 4])</code> vaut 3.</p>
+<p><b>Deux pièges :</b></p>
+<ul><li>la virgule : <code>[2, 3]</code> n'est pas une liste de deux entiers, c'est une liste qui contient <b>un seul couple</b> ;</li><li>la liste vide : <code>List.hd []</code> et <code>List.tl []</code> provoquent une erreur pendant le calcul. Il faut donc tester avant.</li></ul>
+<p><b>Un test utile</b> : <code>List.tl li = []</code> est vrai quand li n'a qu'un seul élément.</p>`},
+ "p-schema":{
+  "Le schéma du cours":`<p><b>L'idée.</b> Une liste non vide, c'est un premier élément, plus une liste plus courte (le reste). Pour faire un calcul sur toute la liste, on s'occupe du premier élément, et on demande à la fonction elle-même de s'occuper du reste.</p>
+<p><b>Exemple : la somme des éléments.</b></p>
+${C(`let rec somme : int list -> int = function
+  li -> if li = [] then 0
+        else List.hd li + somme (List.tl li)`)}
+<p><b>On déroule sur [2; 5; 1] :</b></p>
+<ul><li>somme [2; 5; 1] = 2 + somme [5; 1]</li><li>somme [5; 1] = 5 + somme [1]</li><li>somme [1] = 1 + somme []</li><li>somme [] = 0 : le cas de base.</li></ul>
+<p>On remonte : 1 + 0 = 1, puis 5 + 1 = 6, puis 2 + 6 = 8.</p>
+<p><b>Pourquoi ça s'arrête.</b> À chaque appel, la liste perd un élément. Elle finit forcément par être vide.</p>
+<p><b>Le schéma a trois trous</b>, et presque toutes les fonctions sur les listes du TD se font en les remplissant :</p>
+<ol><li>la signature (que rend la fonction : un int, un bool, une liste ?) ;</li><li>la valeur pour la liste vide ;</li><li>la façon de combiner <code>List.hd li</code> avec le résultat sur <code>List.tl li</code>.</li></ol>`},
+ "p-fabriquer":{
+  "Ce que dit l'énoncé, ce que tu écris":`<p>Tout se joue dans les deux trous du schéma : la valeur pour la liste vide, et la combinaison. Voici comment les remplir selon ce que demande l'énoncé, avec le même test à chaque fois : « l'élément est pair », qui s'écrit <code>List.hd li mod 2 = 0</code>.</p>
+<p><b>1. Compter</b> (combien d'éléments pairs ?). Liste vide : 0. Sinon : 1 ou 0 pour le premier, plus le compte du reste.</p>
+${C(`let rec nbPairs : int list -> int = function
+  li -> if li = [] then 0
+        else (if List.hd li mod 2 = 0 then 1 else 0) + nbPairs (List.tl li)`)}
+<p><b>2. « Tous »</b> (tous les éléments sont-ils pairs ?). Liste vide : <code>true</code>. Sinon : le premier est pair <b>et</b> tous les autres aussi.</p>
+${C(`let rec tousPairs : int list -> bool = function
+  li -> if li = [] then true
+        else List.hd li mod 2 = 0 && tousPairs (List.tl li)`)}
+<p><b>3. « Il existe »</b> (y a-t-il au moins un pair ?). Liste vide : <code>false</code>. Sinon : le premier est pair <b>ou</b> il y en a un dans le reste.</p>
+${C(`let rec exiPairs : int list -> bool = function
+  li -> if li = [] then false
+        else List.hd li mod 2 = 0 || exiPairs (List.tl li)`)}
+<p><b>4. Garder certains éléments</b> (la liste des pairs). Liste vide : <code>[]</code>. Sinon : si le premier est pair, on le remet devant le résultat du reste ; sinon on rend seulement le résultat du reste.</p>
+${C(`let rec liPairs : int list -> int list = function
+  li -> if li = [] then []
+        else if List.hd li mod 2 = 0 then List.hd li :: liPairs (List.tl li)
+        else liPairs (List.tl li)`)}
+<p><b>Comment retenir la valeur de la liste vide.</b> C'est celle qui ne change rien à l'opération : 0 pour <code>+</code>, <code>true</code> pour <code>&amp;&amp;</code>, <code>false</code> pour <code>||</code>, <code>[]</code> pour <code>::</code>.</p>`,
+  "Tester une liste":`<p><b>Le problème.</b> Pour certaines questions, la liste vide n'a pas de réponse : quel est le plus grand élément d'une liste vide ? Son dernier élément ? Il n'y en a pas.</p>
+<p><b>La solution.</b> L'énoncé précise alors « liste non vide », et le cas de base devient <b>la liste à un seul élément</b>. On la reconnaît avec le test <code>List.tl li = []</code> (« une fois le premier enlevé, il ne reste rien »).</p>
+<p><b>Exemple 1 : le dernier élément.</b> S'il n'y a qu'un élément, c'est lui. Sinon, c'est le dernier du reste.</p>
+${C(`let rec derListe : int list -> int = function
+  li -> if List.tl li = [] then List.hd li
+        else derListe (List.tl li)`)}
+<p>derListe [4; 9; 2] = derListe [9; 2] = derListe [2] = 2.</p>
+<p><b>Exemple 2 : le plus grand élément.</b> S'il n'y a qu'un élément, c'est lui. Sinon, on calcule le plus grand du reste, on l'appelle m, et on le compare au premier.</p>
+${C(`let rec maxListe : int list -> int = function
+  li -> if List.tl li = [] then List.hd li
+        else let m = maxListe (List.tl li) in
+             if List.hd li > m then List.hd li else m`)}
+<p>maxListe [4; 9; 2] : le plus grand de [9; 2] est 9 ; on compare 4 et 9 ; résultat 9.</p>`}}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
