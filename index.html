@@ -6289,6 +6289,41 @@ let g = function (x, y) -> x *. 2. < y`)}<p>(string_of_int : int -> string trans
   sol:M(`let rec oterPremiers : int list -> int -> int list = fun li n ->
   if li = [] || n = 0 then li
   else oterPremiers (List.tl li) (n - 1)`)},
+ {src:"CC octobre 2025 · Q1 · 3 pts",t:"Types, valeurs et signatures",en:`<p>(En tête du sujet de 2025 : 1 h, aucun document. Cette année, le mail du prof autorise une feuille A4 recto-verso.)</p><p>1. Indiquez les types et valeurs des expressions suivantes :</p>${M(`2 + (List.hd [4;2])
+(5/4) :: (4/5) :: 0. :: []
+List.hd(["100"]) < "2"`)}<p>2. Quelle est la signature (types du/des paramètre(s) et résultat) des fonctions suivantes ?</p>${M(`let f = function x ->
+  if x > 10 then x < 100 else x = 0
+
+let g = function (x, y) ->
+  if x then List.hd y
+  else List.hd (List.tl y)
+
+let rec h = fun n x ->
+  if n = 0 then x
+  else h (n - 1) x`)}`,who:"Mon corrigé",go:"pf-signature",
+  sol:`<p>1. <b>int, 6</b> : List.hd [4;2] vaut 4. <b>Erreur de type</b> : 5/4 et 4/5 sont des int (1 et 0), 0. est un float, et une liste n'a qu'un seul type. <b>bool, true</b> : les chaînes se comparent lettre par lettre, comme dans un dictionnaire, et "1" vient avant "2".</p><p>2. f : <b>int -> bool</b> (x > 10 force x : int ; les deux branches sont des comparaisons). g : <b>bool * 'a list -> 'a</b> (if x force x : bool ; List.hd y force y à être une liste, mais rien ne dit de quoi, d'où 'a). h : <b>int -> 'a -> 'a</b> (n = 0 force n : int ; x est renvoyé sans calcul, il peut être de n'importe quel type).</p><p>'a se lit « alpha » : n'importe quel type. Le site te disait que ce genre de type ne tomberait pas au CC ; ce sujet de 2025 en avait. Sache au moins le lire.</p>`},
+ {src:"CC octobre 2025 · Q2 · 3 pts",t:"parite_opposee",en:"Définir en OCaml la fonction parite_opposee : ℕ × ℕ → Bool qui vérifie si deux entiers naturels ont des parités opposées. Attention : la fonction n'est pas récursive. Exemples : parite_opposee(2,7) vaut true ; parite_opposee(2,10) vaut false. (En tête du sujet : pour les questions 2 à 6, indiquer la signature de la fonction.)",who:"Mon corrigé",go:"pf-signature",
+  sol:M(`let parite_opposee : int * int -> bool = function
+  (x, y) -> x mod 2 <> y mod 2`)+`<p>Parités opposées : les restes dans la division par 2 sont différents. &lt;&gt; veut dire « différent de ». L'énoncé écrit parite_opposee(2,7), avec une virgule : la fonction prend un couple, d'où int * int -> bool. C'est le memeParite du partiel 2021, avec &lt;&gt; à la place de =.</p>`},
+ {src:"CC octobre 2025 · Q3 · 4 pts",t:"mult",en:"Définir en OCaml la fonction récursive mult qui, étant donnés deux entiers naturels n et m, calcule le produit n × m sans utiliser la multiplication * sur les entiers d'OCaml (uniquement l'addition). Cela repose sur l'idée que n × m est égal à m + m + … + m (n fois). Exemples : mult 3 4 vaut 12 ; mult 6 7 vaut 42.",who:"Mon corrigé",go:"pf-rec-ex",
+  sol:M(`let rec mult : int -> int -> int = fun n m ->
+  if n = 0 then 0
+  else m + mult (n - 1) m`)+`<p>n × m, c'est m ajouté n fois. Cas de base : 0 × m = 0. Sinon n × m = m + (n − 1) × m. mult 3 4 = 4 + mult 2 4 = 4 + 4 + mult 1 4 = 4 + 4 + 4 + mult 0 4 = 12. Les exemples écrivent mult 3 4, sans virgule : la fonction est curryfiée, d'où fun n m et int -> int -> int. Garde les parenthèses de mult (n - 1) m.</p>`},
+ {src:"CC octobre 2025 · Q4 · 4 pts",t:"points_moyenne",en:"Définir en OCaml la fonction récursive points_moyenne qui, étant donnée une liste non vide de réels (de type float list) représentant des notes entre 0 et 20, calcule le nombre de points total au-dessus de la moyenne (10) sur l'ensemble des notes. Exemples : (points_moyenne [3.5; 8.5; 12.; 0.]) vaut 10.5 ; (points_moyenne [3.5; 10.; 8.]) vaut 0. ; (points_moyenne [13.5; 10.25; 8.]) vaut 0.75.",who:"Mon corrigé",go:"pf-listes-rec",
+  sol:M(`let rec points_moyenne : float list -> float = function li ->
+  if li = [] then 0.
+  else (if List.hd li > 10. then List.hd li -. 10. else 0.)
+       +. points_moyenne (List.tl li)`)+`<p>Pour chaque note au-dessus de 10, on compte ce qui dépasse : 12. compte pour 2. Tout est en float : 10. et 0. avec un point, -. et +. avec un point. La liste est non vide, mais le cas [] sert quand même d'arrêt.</p><p><b>Attention : les exemples du sujet ne collent pas avec la phrase.</b> Avec cette lecture (je n'en trouve pas d'autre), [3.5; 8.5; 12.; 0.] donne 2. et [13.5; 10.25; 8.] donne 3.75, pas 10.5 et 0.75. Ce sont sans doute des fautes de frappe : avec 18.5 au lieu de 8.5, et 10.5 au lieu de 13.5, on trouve bien 10.5 et 0.75. Le jour du CC, si un exemple ne colle pas, suis la phrase et écris en une ligne ce que tu as compris.</p>`},
+ {src:"CC octobre 2025 · Q5 · 4 pts",t:"supprimer_elem",en:"Définir en OCaml la fonction récursive supprimer_elem qui, étant donnés un élément e et une liste l, calcule la liste l où toutes les occurrences de e ont été supprimées. Exemples : (supprimer_elem 2 [2; 3; 2; 4]) vaut [3; 4] ; (supprimer_elem 2. [1.; 3.; 5.; 7.]) vaut [1.; 3.; 5.; 7.] ; (supprimer_elem 'a' []) vaut [].",who:"Mon corrigé",go:"pf-listes-rec",
+  sol:M(`let rec supprimer_elem : 'a -> 'a list -> 'a list = fun e li ->
+  if li = [] then []
+  else if List.hd li = e then supprimer_elem e (List.tl li)
+  else List.hd li :: supprimer_elem e (List.tl li)`)+`<p>Le schéma « garder ou enlever » de ta feuille : si la tête vaut e, on l'enlève (on ne la remet pas devant) ; sinon on la garde. Les exemples utilisent des int, des float et un caractère ('a') : la fonction marche pour tout type, d'où 'a -> 'a list -> 'a list. Si tu bloques sur 'a, écris int -> int list -> int list : le code est le même.</p>`},
+ {src:"CC octobre 2025 · Q6 · 4 pts",t:"incr_list",en:"Définir en OCaml la fonction récursive incr_list qui, étant données une liste d'entiers li et une liste de booléens lb de mêmes longueurs, rend la liste li où un élément d'indice k est incrémenté si l'élément d'indice k dans lb est égal à true ; l'élément d'indice k dans li est inchangé dans le cas contraire (à savoir si l'élément d'indice k dans lb est égal à false). Exemples : (incr_list [1; 2; 3; 4; 5] [true; false; false; true; true]) vaut [2; 2; 3; 5; 6].",who:"Mon corrigé",go:"pf-listes-rec",
+  sol:M(`let rec incr_list : int list -> bool list -> int list = fun li lb ->
+  if li = [] then []
+  else (if List.hd lb then List.hd li + 1 else List.hd li)
+       :: incr_list (List.tl li) (List.tl lb)`)+`<p>On avance dans les deux listes en même temps : List.hd li va avec List.hd lb, et l'appel récursif reçoit les deux queues. « Incrémenter » veut dire ajouter 1. Les deux listes ont la même longueur, donc tester li = [] suffit.</p>`},
  {src:"Examen janvier 2022 · Ex. 1 · 7 pts sur 21",t:"Nombres de Fermat",en:`<p>F<sub>n</sub> = 2^(2^n) + 1 : F₀ = 3, F₁ = 5, F₂ = 17, F₃ = 257. Forme curryfiée dès qu'il y a deux arguments.</p><ol><li>pow x y calcule xʸ avec x ** y (sur des float), float_of_int et int_of_float.</li><li>fermat_nbr n rend F<sub>n</sub>.</li><li>is_fermat_rec p n teste s'il existe un nombre de Fermat égal à p de rang ≥ n (is_fermat_rec 15 2 = false car F₂ = 17 > 15), puis is_fermat p.</li><li>fermat_list n rend la liste des n premiers nombres de Fermat (ordre libre).</li></ol>`,who:"Mon corrigé (examen de janvier, mais ces questions sont dans ton programme)",go:"pf-rec-ex",
   hint:"Pour is_fermat_rec : calcule f = fermat_nbr n avec un let … in. Si f > p, c'est perdu ; sinon f = p, ou on essaie le rang n + 1.",
   sol:M(`let pow : int -> int -> int = fun x y ->
@@ -6404,7 +6439,7 @@ garder: List.hd li :: g (List.tl li)
 enlever: g (List.tl li)
 tous: test && g (..)  existe: test || g (..)
 liste non vide: base List.tl li = []`,"txt"))}
-${sec(3,"Verso : des modèles complets (36 lignes)",W.code(`MODÈLES (partiel 2021)
+${sec(3,"Verso : des modèles complets (42 lignes)",W.code(`MODÈLES (partiel 2021)
 let memeParite : int * int -> bool =
   function (a, b) -> a mod 2 = b mod 2
 let rec queDesUn : int -> bool = function n ->
@@ -6435,6 +6470,12 @@ List.hd [3.5; 1.] > 2.      bool  true
 if x then y else 3 : int (x bool, y int)
 function (x, y) -> if y then x+1 else 2*x
      int * bool -> int
+"100" < "2"   bool  true (lettre par lettre)
+[1; 2.]    erreur: un seul type par liste
+AU CAS OÙ  'a = n'importe quel type
+List.hd : 'a list -> 'a
+fun n x -> .. x renvoyé sans calcul
+     int -> 'a -> 'a
 PIÈGES
 oublier rec ; f n - 1 sans parenthèses
 [2, 3] = un seul élément (un couple)
