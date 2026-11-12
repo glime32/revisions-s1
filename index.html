@@ -16059,11 +16059,10 @@ if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
 window.addEventListener("hashchange",route);
-/* formules en écriture mathématique dans les matières de maths : en essai, seulement avec ?maths=1
-   (la leçon d'analyse a-lim-calc fige la page, cause pas encore trouvée).
+/* formules en écriture mathématique dans les matières de maths (?maths=0 pour s'en passer).
    Seuls les morceaux de page qui viennent de changer sont repassés ; un corrigé replié l'est à son ouverture. */
 {const MATHS=["calc","ana","lin","geo","rai"],main=$("#main");
- if(new URLSearchParams(location.search).get("maths")==="1"){
+ if(new URLSearchParams(location.search).get("maths")!=="0"){
   const matiere=()=>{const p=(location.hash||"#/").slice(2).split("/").filter(Boolean),sid=p[0]==="lecon"?p[1]:p[0];
     if(SIDS.includes(sid))return sid;const q=main.querySelector("[data-mots]");return q?q.dataset.mots:"";};
   const passe=R=>{const sid=matiere();if(sid&&!MATHS.includes(sid))return;obs.disconnect();
