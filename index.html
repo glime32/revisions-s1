@@ -6401,7 +6401,7 @@ const recettes=({sec})=>`<div class="title-row"><h1>Recettes pas à pas</h1></di
  ${sec(3,"Trouver un type ou une valeur",`<div class="recipe"><ol><li>Regarde les opérateurs : + - * / mod veulent des int, +. -. *. /. des float, && || not des bool, ^ des string.</li><li>Les deux branches d'un if ont le même type ; la condition est un bool.</li><li>À droite de ::, une liste ; à gauche, un élément du même type que ceux de la liste.</li><li>Calcule la valeur étape par étape, en écrivant chaque résultat intermédiaire.</li></ol><p>Entraîne-toi avec <a href="#/p/types">l'entraînement types et valeurs</a>.</p></div>`)}
  ${sec(4,"Avant de rendre ta copie",`<div class="paper"><b>Pour chaque fonction, vérifie :</b><ul><li>le mot <code>rec</code> si la fonction s'appelle elle-même ;</li><li>la signature écrite (et cohérente : int list, pas int) ;</li><li>la forme curryfiée dès qu'il y a deux paramètres ;</li><li>des parenthèses autour de chaque argument calculé : <code>f (List.tl li)</code>, <code>f (n - 1)</code> ;</li><li>un <code>else</code> pour chaque <code>if</code>, et le même type dans les deux branches ;</li><li>pas de List.hd sans avoir testé que la liste n'est pas vide ;</li><li>les opérateurs à point pour les float : <code>+.</code>, <code>*.</code>.</li></ul></div>`)}`;
 const feuille=({sec})=>`<div class="title-row"><h1>Ma feuille à recopier</h1></div>
-<p class="lead">Pas d'imprimante : cette feuille est faite pour être recopiée à la main, en écrivant gros. Chaque ligne du modèle est une ligne de ta feuille.</p>
+<p class="lead">Pas d'imprimante : cette feuille est faite pour être recopiée à la main, en écrivant gros. Chaque ligne du modèle est une ligne de ta feuille. Ce que veut dire chaque ligne, avec des exemples : <a href="#/pf/p/feuille2">Ma feuille expliquée</a>.</p>
 ${sec(1,"Quel format",`<p>Le mail du prof (5 novembre) le dit : « Le seul document autorisé est une feuille A4 recto-verso. » Donc une feuille <b>A4</b>, écrite des deux côtés, tenue en hauteur. Ce n'est pas A5 : tu as deux fois plus de place qu'en algo.</p>`)}
 ${sec(2,"Recto : les règles (36 lignes)",W.code(`TYPES
 int: + - * / mod      7/2 = 3
@@ -6482,6 +6482,98 @@ oublier rec ; f n - 1 sans parenthèses
 if sans else ; = pour comparer (pas ==)
 2 paramètres ou plus : curryfiée (fun)`,"txt"))}
 ${sec(4,"Comment la lire",`<p>« .. » remplace ce que tu écris toi-même, « base » la valeur du cas de base. Les modèles du verso sont les fonctions du partiel de 2021, avec mes corrigés : le jour du contrôle, cherche celui qui ressemble le plus à la question (un test sur les chiffres : queDesUn ; un calcul sur les diviseurs : prodDiv ; une somme sur une liste : somElem ; une liste à fabriquer : liPairs ou prefLong) et adapte-le.</p>`)}`;
+const feuille2=({sec})=>{const E=(c,h)=>M(c)+h;return `<div class="title-row"><h1>Ma feuille expliquée</h1></div>
+<p class="lead">La feuille A4, ligne par ligne : ce que chaque morceau veut dire, comment t'en servir, un exemple, et le piège. Cette page n'est pas à recopier : tu recopies <a href="#/pf/p/feuille">Ma feuille à recopier</a>, et tu lis celle-ci pour comprendre ce que tu écris.</p>
+${sec(1,"Les règles d'OCaml à connaître avant tout",`<ol>
+<li><b>OCaml calcule des expressions.</b> Une expression, c'est un calcul, comme 3 + 4. Elle a une <b>valeur</b> (7) et un <b>type</b>, c'est-à-dire la sorte de valeur (ici int, un entier). Au CC, « type et valeur » veut dire : quelle sorte, et quel résultat.</li>
+<li><b>Chaque chose a un seul type, et OCaml ne mélange jamais.</b> Un entier et un nombre à virgule ne s'additionnent pas avec le même signe. Une liste ne contient qu'un seul type. Les deux branches d'un if ont le même type. La plupart des erreurs du CC viennent de là.</li>
+<li><b>let donne un nom, pour toujours.</b> Après let x = 5, x vaut 5 et ne changera plus. Il n'y a pas de variable qui change, pas de boucle pour ni tant que.</li>
+<li><b>Pour répéter, on utilise la récursivité</b> : une fonction qui s'appelle elle-même avec une entrée plus petite (let rec). C'est la seule « boucle » d'OCaml.</li>
+<li><b>Appeler une fonction : son nom, un espace, l'argument.</b> f 3. Les parenthèses ne servent qu'à regrouper un calcul : f (n - 1).</li>
+<li><b>= compare, il ne range rien.</b> x = 3 pose la question « x vaut-il 3 ? » et répond true ou false. Seul le = qui suit let sert à définir.</li></ol>`)}
+${sec(2,"Recto : les types",
+E(`int: + - * / mod      7/2 = 3`,`<p><b>int</b> = les entiers : …, −1, 0, 1, 2… Les signes + − * marchent comme d'habitude. <b>/ coupe la virgule</b> : 7/2 = 3, et 2/5 = 0. <b>mod donne le reste</b> : 7 mod 2 = 1, car 7 = 2 × 3 + 1.</p><p>À quoi sert mod : n mod 2 = 0 veut dire « n est pair » ; n mod 10 donne le dernier chiffre de n.</p>`)+
+E(`float: +. -. *. /.    2. et 3.5`,`<p><b>float</b> = les nombres à virgule. Ils s'écrivent toujours avec un point : 2. (et pas 2, qui serait un int), 3.5. Leurs opérations ont aussi un point : 2.5 +. 1. = 3.5 ; 3. *. 2. = 6.</p><p>Les comparaisons (&lt;, >, =) n'ont pas de point : 3.5 > 2. marche.</p>`)+
+E(`jamais int et float mélangés`,`<p>3 + 2.5 : erreur, 2.5 n'est pas un int. 3. +. 2.5 : bon, vaut 5.5. 3 +. 2.5 : erreur, 3 n'est pas un float. Au CC, une question « type et valeur » cache souvent ce piège : la bonne réponse est alors « erreur de type ».</p>`)+
+E(`float_of_int 3 = 3.   int_of_float 2.9 = 2`,`<p>Pour passer de l'un à l'autre. float_of_int transforme un int en float : float_of_int 3 = 3. int_of_float transforme un float en int en <b>coupant</b> la virgule, sans arrondir : int_of_float 2.9 = 2.</p><p>Exemple : la moitié de l'entier n, avec la virgule, c'est float_of_int n /. 2.</p>`)+
+E(`bool: && || not     = <> < > <= >=`,`<p><b>bool</b> = les deux valeurs true (vrai) et false (faux). <b>&amp;&amp;</b> veut dire « et » : vrai si les deux sont vrais. <b>||</b> veut dire « ou » : vrai si au moins un des deux est vrai. <b>not</b> inverse : not true = false.</p><p>Les comparaisons rendent un bool : 3 &lt; 5 vaut true. <b>&lt;></b> veut dire « différent de » : 3 &lt;> 4 vaut true. &lt;= et >= : « plus petit ou égal », « plus grand ou égal ».</p>`)+
+E(`string: "ab" ^ "c"`,`<p><b>string</b> = du texte, entre guillemets. ^ colle deux textes : "ab" ^ "c" = "abc". Attention : "12" est un texte, pas un nombre.</p><p>Deux textes se comparent lettre par lettre, comme dans un dictionnaire : "100" &lt; "2" vaut true, car "1" vient avant "2".</p>`)+
+E(`if c then a else b : c bool, a b même type`,`<p>if pose une question c (un bool) et vaut a si la réponse est vraie, b sinon. Le else est <b>obligatoire</b>, et a et b ont le <b>même type</b>, qui est aussi le type du if tout entier.</p><p>if 5 > 3 then "oui" else "non" vaut "oui", de type string. if x > 0 then 1 else "non" : erreur, un int d'un côté et un string de l'autre.</p>`)+
+E(`let a = 1 and b = 2 in ..  (b ne voit pas a)`,`<p>let … in donne un nom pour un seul calcul : let a = 1 in a + 2 vaut 3. Avec and, on définit plusieurs noms en même temps : let a = 1 and b = 2 in a + b vaut 3.</p><p>Le piège : dans let a = 1 and b = a + 1, b ne connaît pas encore a. Pour qu'il le connaisse, on enchaîne deux let : let a = 1 in let b = a + 1 in a + b vaut 3.</p>`))}
+${sec(3,"Recto : les fonctions",
+E(`function x -> ..   1 paramètre ou 1 couple`,`<p>function x -> … fabrique une fonction : « je reçois x, je rends … ». function x -> 2 * x reçoit un nombre et rend son double.</p><p>function n'accepte qu'<b>un</b> paramètre. Pour lui en donner deux, on les met dans un <b>couple</b>, entre parenthèses avec une virgule : function (x, y) -> x + y, qu'on appelle avec f (2, 3).</p>`)+
+E(`fun x y -> ..      plusieurs paramètres`,`<p>fun accepte plusieurs paramètres, séparés par des espaces : fun a b -> a + b. On l'appelle sans virgule : h 2 3. On dit que la fonction est « curryfiée ».</p><p><b>Comment choisir au CC :</b> regarde les exemples de l'énoncé. parite(2,7), avec une virgule : c'est un couple, donc function (x, y). mult 3 4, sans virgule : deux paramètres, donc fun n m.</p>`)+
+E(`let f : int -> int = function n -> 2*n + 1`,`<p>Se lit : « f, de type int -> int, est la fonction qui à n associe 2n + 1 ». <b>int -> int</b> veut dire : elle reçoit un int et rend un int. f 3 = 7.</p><p>La partie « : int -> int » est la <b>signature</b>. Les sujets demandent de l'écrire : mets-la toujours.</p>`)+
+E(`let g : int * int -> bool =
+  function (x, y) -> x < y       g (2, 3)`,`<p><b>int * int</b> = un couple de deux int. Ici le * ne multiplie pas, il veut dire « et ». g reçoit un couple et rend un bool : g (2, 3) = true, car 2 &lt; 3.</p>`)+
+E(`let h : int -> int -> int =
+  fun a b -> a + b               h 2 3`,`<p>Plusieurs flèches : chaque type placé avant une flèche est un paramètre, et le <b>dernier</b> est le résultat. int -> int -> int : on reçoit un int, puis un int, et on rend un int. h 2 3 = 5.</p>`)+
+E(`signature: types paramètres -> résultat`,`<p><b>Trouver une signature, en 3 questions :</b></p><ol><li>Combien de paramètres, et sous quelle forme : un couple, ou plusieurs séparés par des espaces ?</li><li>Le type de chaque paramètre : regarde ce qu'on en fait. x + 1, donc x est un int. x +. 1., donc un float. if x, donc un bool. List.hd x, donc x est une liste.</li><li>Le type du résultat : celui de ce que la fonction rend. Une comparaison rend un bool.</li></ol><p>Exemple : function (x, y) -> x * 2 &lt; List.hd y. Un couple. x * 2, donc x : int. List.hd y est comparé à un int, donc y : int list. On rend une comparaison : bool. Signature : int * int list -> bool.</p>`))}
+${sec(4,"Recto : la récursivité",
+E(`RÉCURSIVITÉ  (let rec)`,`<p>Une fonction récursive s'appelle elle-même. Il faut écrire <b>let rec</b> : sans rec, OCaml ne connaît pas encore le nom de la fonction quand il lit son corps, et répond « Unbound value ».</p>`)+
+E(`let rec f : int -> int = function n ->
+  if n = 0 then base else .. f (n - 1) ..`,`<p>Le squelette pour un entier n. Deux cas :</p><ul><li><b>n = 0</b> : le cas le plus petit, on donne la réponse directement (la « base ») ;</li><li><b>sinon</b> : on fait confiance à f (n - 1), qui donne la bonne réponse pour n − 1, et on s'en sert pour fabriquer celle de n.</li></ul>${M(`let rec somme : int -> int = function n ->
+  if n = 0 then 0 else n + somme (n - 1)`)}<p>somme 3 = 3 + somme 2 = 3 + 2 + somme 1 = 3 + 2 + 1 + somme 0 = 3 + 2 + 1 + 0 = 6.</p>`)+
+E(`f (n - 1) avec parenthèses`,`<p>Sans parenthèses, f n - 1 se lit (f n) - 1 : la fonction se rappelle avec n, puis encore avec n… et ne s'arrête jamais. Un appel de fonction passe toujours avant les calculs autour.</p>`)+
+E(`base: somme 0, produit 1, liste [],
+  tous true, existe false`,`<p>Que rendre dans le cas de base ? La valeur qui ne change rien au calcul :</p><ul><li>une somme part de <b>0</b> : ajouter 0 ne change rien ;</li><li>un produit part de <b>1</b> : multiplier par 1 ne change rien (avec 0, tout vaudrait 0) ;</li><li>une liste qu'on fabrique part de <b>[]</b> ;</li><li>« tous vérifient… » : sur une liste vide, c'est <b>true</b>, personne ne contredit ;</li><li>« il en existe un qui… » : sur une liste vide, c'est <b>false</b>, on n'a trouvé personne.</li></ul>`)+
+E(`chiffres: n mod 10 dernier chiffre,
+  n / 10 le reste, base n < 10`,`<p>Pour un exercice sur les chiffres d'un nombre : 4725 mod 10 = 5, le dernier chiffre ; 4725 / 10 = 472, le nombre sans son dernier chiffre. On s'arrête quand il ne reste qu'un chiffre : n &lt; 10.</p>${M(`let rec nbChiffres : int -> int = function n ->
+  if n < 10 then 1 else 1 + nbChiffres (n / 10)`)}<p>nbChiffres 4725 = 1 + nbChiffres 472 = 1 + 1 + nbChiffres 47 = 1 + 1 + 1 + nbChiffres 4 = 4.</p>`))}
+${sec(5,"Recto : les listes",
+E(`LISTES  [2; 3; 5]   [] vide`,`<p>Une liste s'écrit entre crochets, avec des <b>points-virgules</b>. [] est la liste vide. Tous les éléments ont le même type : [2; 3; 5] est une int list, une liste d'int.</p>`)+
+E(`x :: li devant    li @ [x] à la fin`,`<p>:: ajoute <b>un élément devant</b> une liste : 1 :: [2; 3] = [1; 2; 3]. @ <b>colle deux listes</b> : [1; 2] @ [3] = [1; 2; 3]. Pour ajouter un élément à la fin, il faut donc le mettre entre crochets : li @ [x].</p><p>On peut enchaîner les :: : 1 :: 2 :: [] = [1; 2].</p>`)+
+E(`List.hd li premier   List.tl li le reste`,`<p>List.hd [7; 1; 5] = 7 : le premier élément, un int. List.tl [7; 1; 5] = [1; 5] : la liste sans son premier élément, une int list. Les deux font une erreur sur la liste vide : on teste toujours li = [] avant.</p>`)+
+E(`let rec g : int list -> int = function li ->
+  if li = [] then base
+  else .. List.hd li .. g (List.tl li) ..`,`<p>Le squelette pour une liste. C'est la même idée que pour un entier : la liste vide joue le rôle de 0, et List.tl li celui de n − 1. On traite le premier élément nous-mêmes, la fonction s'occupe du reste.</p>${M(`let rec longueur : int list -> int = function li ->
+  if li = [] then 0 else 1 + longueur (List.tl li)`)}<p>longueur [7; 1; 5] = 1 + longueur [1; 5] = 1 + 1 + longueur [5] = 1 + 1 + 1 + longueur [] = 3.</p>`)+
+E(`garder: List.hd li :: g (List.tl li)
+enlever: g (List.tl li)`,`<p>Pour <b>fabriquer une liste</b> en gardant certains éléments et en enlevant d'autres. Garder le premier : on le remet devant le résultat du reste. L'enlever : on ne rend que le résultat du reste. Le modèle complet est liPairs, au verso.</p>`)+
+E(`tous: test && g (..)  existe: test || g (..)`,`<p>« Tous les éléments vérifient… » : le premier vérifie, <b>et</b> tous les autres aussi. « Il en existe un qui… » : le premier vérifie, <b>ou</b> il y en a un dans le reste.</p>${M(`let rec tousPositifs : int list -> bool = function li ->
+  if li = [] then true
+  else List.hd li > 0 && tousPositifs (List.tl li)`)}`)+
+E(`liste non vide: base List.tl li = []`,`<p>Quand l'énoncé dit « liste non vide », c'est souvent que la liste vide n'a pas de réponse (son plus grand élément, son dernier élément…). Le cas de base est alors une liste d'<b>un seul</b> élément : List.tl li = [].</p>${M(`let rec maxi : int list -> int = function li ->
+  if List.tl li = [] then List.hd li
+  else let m = maxi (List.tl li) in
+       if List.hd li > m then List.hd li else m`)}`))}
+${sec(6,"Verso : les six modèles",`<p>Six fonctions complètes et corrigées, celles du partiel 2021. Le jour du CC, cherche celle qui ressemble le plus à la question, et adapte-la.</p>`+
+E(`let memeParite : int * int -> bool =
+  function (a, b) -> a mod 2 = b mod 2`,`<p>Vrai si deux entiers ont la même parité (tous les deux pairs ou tous les deux impairs) : ils ont le même reste dans la division par 2. Pas récursive. <b>Sert pour</b> un test simple sur un couple. Pour « parités opposées », remplace = par &lt;>.</p>`)+
+E(`let rec queDesUn : int -> bool = function n ->
+  if n < 10 then n = 1
+  else n mod 10 = 1 && queDesUn (n / 10)`,`<p>Vrai si n ne s'écrit qu'avec des 1 (1, 11, 111…). Base : un seul chiffre, et il doit valoir 1. Sinon : le dernier chiffre vaut 1, <b>et</b> le reste du nombre n'a que des 1. queDesUn 121 : le dernier chiffre 1 va bien, puis queDesUn 12 : 2 ne vaut pas 1, donc false. <b>Sert pour</b> « tous les chiffres vérifient… ».</p>`)+
+E(`let rec prodDiv : int -> int -> int = fun n i ->
+  if i = 0 then 1
+  else if n mod i = 0 then i * prodDiv n (i - 1)
+  else prodDiv n (i - 1)`,`<p>Multiplie les diviseurs de n qui sont plus petits que i, ou égaux. Deux paramètres : n reste fixe, i descend jusqu'à 0. Si i divise n (n mod i = 0), on le multiplie au reste ; sinon, on passe au suivant. La base vaut 1, car c'est un produit. prodDiv 6 6 = 6 × 3 × 2 × 1 = 36. <b>Sert pour</b> parcourir les nombres de i jusqu'à 1 : diviseurs, sommes, comptages.</p>`)+
+E(`let rec somElem : int list -> int =
+  function li -> if li = [] then 0
+  else List.hd li + somElem (List.tl li)`,`<p>La somme des éléments d'une liste : le premier, plus la somme du reste. Base 0. <b>Sert pour</b> les sommes ; pour compter les éléments, remplace List.hd li par 1.</p>`)+
+E(`let rec liPairs : int list -> int list =
+  function li -> if li = [] then []
+  else if List.hd li mod 2 = 0
+  then List.hd li :: liPairs (List.tl li)
+  else liPairs (List.tl li)`,`<p>Garde les éléments pairs, dans le même ordre. Si le premier est pair, on le garde, devant le résultat du reste ; sinon on le saute. <b>Sert pour</b> toutes les questions « la liste des éléments qui… » ou « supprimer les… ».</p>`)+
+E(`let rec prefLong : int list -> int -> int list =
+  fun li n -> if li = [] || n = 0 then []
+  else List.hd li ::
+       prefLong (List.tl li) (n - 1)`,`<p>Les n premiers éléments de li. On s'arrête quand la liste est vide, ou quand on en a pris assez (n = 0). Sinon on garde le premier, et on demande les n − 1 suivants au reste. prefLong [4; 7; 1; 9] 2 = [4; 7]. <b>Sert pour</b> les exercices avec une liste et un compteur.</p>`))}
+${sec(7,"Verso : type et valeur",
+E(`(8/3) :: (8 mod 3) :: []    int list  [2; 2]`,`<p>8/3 = 2 (la division coupe la virgule) et 8 mod 3 = 2 (le reste). Les :: les placent devant la liste vide : [2; 2], une liste d'int.</p>`)+
+E(`List.hd [3.5; 1.] > 2.      bool  true`,`<p>List.hd donne le premier élément, 3.5. Puis 3.5 > 2. est une comparaison : son type est bool, et elle est vraie.</p>`)+
+E(`3 * 4.     erreur: int et float`,`<p>3 est un int, 4. est un float : on ne peut pas les multiplier ensemble. La réponse attendue est « erreur de type ».</p>`)+
+E(`if x then y else 3 : int (x bool, y int)`,`<p>if x : x doit être un bool. Le else rend 3, un int ; les deux branches ont le même type, donc y est aussi un int, et le if tout entier aussi.</p>`)+
+E(`function (x, y) -> if y then x+1 else 2*x
+     int * bool -> int`,`<p>La méthode des 3 questions. Un couple (x, y). x+1, donc x : int. if y, donc y : bool. On rend x+1 ou 2*x, des int. Signature : int * bool -> int.</p>`)+
+E(`"100" < "2"   bool  true (lettre par lettre)
+[1; 2.]    erreur: un seul type par liste`,`<p>Les textes se comparent comme dans un dictionnaire : on regarde la première lettre, "1" vient avant "2", c'est fini. Et [1; 2.] mélange un int et un float dans une liste : erreur.</p>`)+
+E(`AU CAS OÙ  'a = n'importe quel type
+List.hd : 'a list -> 'a`,`<p>'a se lit « alpha ». On l'écrit quand rien n'oblige une valeur à être d'un type précis : elle peut être de n'importe quel type. List.hd marche sur toutes les listes : sur une int list il rend un int, sur une string list un string. D'où 'a list -> 'a.</p>`)+
+E(`fun n x -> .. x renvoyé sans calcul
+     int -> 'a -> 'a`,`<p>Exemple : fun n x -> if n = 0 then x else … n est comparé à 0, donc c'est un int. x n'est jamais utilisé dans un calcul, il est seulement rendu : il peut être de n'importe quel type, 'a, et le résultat est du même type que lui.</p>`))}
+${sec(8,"Verso : les pièges",`<ul><li><b>Oublier rec</b> : la fonction ne se connaît pas elle-même, « Unbound value ».</li><li><b>f n - 1 sans parenthèses</b> : se lit (f n) - 1, la fonction ne s'arrête jamais. Écris f (n - 1).</li><li><b>[2, 3]</b> : la virgule fabrique un couple, donc c'est une liste d'<b>un seul</b> élément, le couple (2, 3). Dans une liste, toujours des points-virgules.</li><li><b>if sans else</b> : toujours écrire le else.</li><li><b>= pour comparer</b> : écris x = 3, pas x == 3.</li><li><b>2 paramètres ou plus</b> : la forme curryfiée, fun a b -> …, appelée avec f 2 3. Sauf si l'énoncé écrit f(2,3) avec une virgule : alors un couple, function (a, b) -> ….</li></ul>`)}
+${sec(9,"Au CC : écrire une fonction en 5 étapes",`<ol><li><b>Lis les exemples de l'énoncé</b> : une virgule, f(2,7), veut dire un couple, function (x, y) ; des espaces, f 3 4, veulent dire fun a b.</li><li><b>Écris la signature</b> : le type de chaque paramètre, puis celui du résultat.</li><li><b>Récursive ?</b> L'énoncé le dit souvent. Si oui : let rec.</li><li><b>Le cas de base</b> : n = 0, n &lt; 10, li = [], ou List.tl li = [] si la liste est non vide.</li><li><b>Le cas général</b>, puis <b>teste</b> sur l'exemple de l'énoncé en déroulant à la main, comme somme 3 plus haut.</li></ol>`)}`;};
 const types=({sec})=>`<div class="title-row"><h1>Entraînement : types et valeurs</h1></div><p class="lead">27 expressions tirées du TD et du partiel. Choisis le type, lis la valeur et l'explication. Refais-le jusqu'à ne plus te tromper : c'est 3 points faciles au contrôle.</p><div id="drill"></div>`;
 const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation fonctionnelle en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Vendredi 13 novembre à 9h45, d'après le mail de David Delahaye du 5 novembre. Amphi 5.01 si ton nom de famille commence par une lettre de A à M, amphi 5.03 de N à Z. L'épreuve dure 1 h (1 h 20 avec un tiers-temps).</p>`)}
@@ -6984,7 +7076,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
  annIntro:"Le partiel d'octobre 2021 a exactement le format de ton contrôle (1 h ; en 2021 sans document, cette année avec ta feuille A4). Le sujet blanc n° 2 est inventé par moi sur le même modèle, pour t'entraîner une deuxième fois. J'ai ajouté deux exercices d'examens de janvier qui restent dans ton programme. Les corrigés sont les miens.",
- pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille à recopier",html:feuille}],
+ pages:[{id:"infosct",t:"L'examen de janvier en bref",html:infosCT},{id:"infos",t:"Le contrôle en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"types",t:"Entraînement types et valeurs",html:types,after:true},{id:"feuille",t:"Ma feuille à recopier",html:feuille},{id:"feuille2",t:"Ma feuille expliquée",html:feuille2}],
  /* thèmes du CC et leur poids dans le partiel d'octobre 2021 (sur 20) */
  themes:[
   {id:"rec",t:"Récursivité sur les entiers : chiffres, diviseurs",pts:7,src:"queDesUn et prodDiv au partiel 2021",les:["p-rec","p-chiffres"],fiches:["pf-rec","pf-rec-ex"]},
