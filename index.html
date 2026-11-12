@@ -15006,7 +15006,68 @@ ana:{
 <p><b>Outil 3 : la quantité conjuguée.</b> Pour une différence de deux racines. On multiplie et on divise par la somme des deux racines, pour utiliser (a − b)(a + b) = a² − b².</p>
 <p>Exemple : √(n + 2) − √n. On multiplie en haut et en bas par √(n + 2) + √n. En haut : (n + 2) − n = 2. Il reste 2/(√(n + 2) + √n). Le dénominateur tend vers +∞, donc la limite est 0.</p>
 <p><b>Avant de sortir un outil,</b> vérifie que c'est bien une forme indéterminée. Sinon, les règles s'appliquent directement : 5 − 3/n tend vers 5.</p>`},
- /*SUITE-ANA*/}
+ "a-comparaison":{
+  "Passage à la limite et signe":`<p><b>Première règle : l'ordre se garde à la limite.</b> Si une suite reste toujours en dessous d'une autre (uₙ ≤ vₙ) et que les deux convergent, alors la limite de la première est en dessous de celle de la seconde, ou égale.</p>
+<p><b>Le piège.</b> Même si l'inégalité de départ est stricte (uₙ &lt; vₙ), on n'obtient à la limite qu'une inégalité large (≤). Exemple : uₙ = 0 et vₙ = 1/n. On a bien 0 &lt; 1/n pour tout n, mais les deux limites valent 0 : elles sont égales.</p>
+<p><b>Deuxième règle : le signe de la limite se voit sur les termes.</b> Si une suite tend vers un nombre strictement positif, alors ses termes sont strictement positifs à partir d'un certain rang. C'est logique : ils finissent par être tout près de la limite.</p>
+<p>Exemple : uₙ = 1 − 5/n tend vers 1, qui est positif. Les premiers termes sont négatifs (u₁ = −4, u₂ = −1,5), mais dès que n dépasse 5, tous les termes sont positifs.</p>
+<p><b>Dans l'autre sens :</b> si tous les termes sont positifs ou nuls et que la suite converge, sa limite est positive ou nulle. Elle peut valoir 0, même si aucun terme ne vaut 0 (pense à 1/n).</p>`,
+  "Le théorème des gendarmes":`<p><b>L'image.</b> Deux gendarmes encadrent un prisonnier. S'ils vont tous les deux au même endroit, le prisonnier y va aussi : il est coincé entre eux.</p>
+<p><b>Le théorème.</b> Si uₙ ≤ vₙ ≤ wₙ, et si (uₙ) et (wₙ) tendent vers le <b>même</b> nombre ℓ, alors (vₙ) tend aussi vers ℓ.</p>
+<p><b>Quand s'en servir.</b> Quand la suite contient un morceau qui s'agite sans avoir de limite, mais qui reste borné : (−1)ⁿ, sin n, cos n.</p>
+<p><b>Exemple : vₙ = (−1)ⁿ/n.</b></p>
+<ol><li>(−1)ⁿ vaut 1 ou −1 : il est toujours entre −1 et 1.</li><li>En divisant par n (positif) : −1/n ≤ (−1)ⁿ/n ≤ 1/n.</li><li>Les deux gendarmes, −1/n et 1/n, tendent vers 0.</li><li>Donc (−1)ⁿ/n tend vers 0.</li></ol>
+<p><b>La version courte, très pratique.</b> Si |vₙ − ℓ| ≤ aₙ et que aₙ tend vers 0, alors vₙ tend vers ℓ. Ici : |(−1)ⁿ/n − 0| = 1/n, qui tend vers 0.</p>
+<p><b>La version avec l'infini.</b> Un seul gendarme suffit : si vₙ ≥ uₙ et que uₙ tend vers +∞, alors vₙ aussi. Exemple : n + sin n ≥ n − 1, et n − 1 tend vers +∞, donc n + sin n aussi.</p>
+<p><b>L'erreur à éviter :</b> encadrer par deux suites qui n'ont pas la même limite. Alors on ne peut rien conclure.</p>`},
+ "a-monotone":{
+  "Théorème de la limite monotone":`<p><b>L'idée.</b> Une suite qui monte toujours, mais qui ne peut pas dépasser un plafond, finit forcément par se stabiliser : elle converge.</p>
+<p><b>Le théorème :</b></p>
+<ul><li>croissante et majorée : elle converge ;</li><li>croissante et non majorée : elle tend vers +∞ ;</li><li>décroissante et minorée : elle converge ;</li><li>décroissante et non minorée : elle tend vers −∞.</li></ul>
+<p><b>Exemple.</b> uₙ = 1 − 1/n, pour n ≥ 1 : 0, puis 0,5, puis 0,67, puis 0,75… Elle est croissante, et tous ses termes sont plus petits que 1. Donc elle converge.</p>
+<p><b>Ce que le théorème ne dit pas : la valeur de la limite.</b> Il dit seulement qu'elle existe. Et attention : la limite n'est pas forcément le plafond qu'on a trouvé. La suite 1 − 1/n est aussi majorée par 5, et pourtant sa limite n'est pas 5.</p>
+<p><b>Comment trouver la valeur</b>, quand la suite est définie par uₙ₊₁ = f(uₙ) : une fois qu'on sait qu'elle converge vers un nombre ℓ, on remplace uₙ et uₙ₊₁ par ℓ dans la relation. On obtient l'équation ℓ = f(ℓ), qu'on résout.</p>
+<p><b>Pourquoi ce théorème est précieux.</b> Il permet de prouver qu'une suite converge <b>sans connaître sa limite à l'avance</b>.</p>`,
+  "La méthode en 4 étapes":`<p>Pour une suite définie par son premier terme et une relation uₙ₊₁ = f(uₙ), l'étude se fait toujours en quatre étapes. Exemple : u₀ = 0 et uₙ₊₁ = (uₙ + 3)/2. Les premiers termes : 0, puis 1,5, puis 2,25, puis 2,625…</p>
+<ol><li><b>Encadrer, par récurrence.</b> On devine un plafond en regardant les premiers termes : ils restent sous 3. On prouve « 0 ≤ uₙ ≤ 3 pour tout n ».<br>Au départ : u₀ = 0, c'est vrai.<br>Si c'est vrai au rang n : uₙ + 3 est entre 3 et 6, donc uₙ₊₁ = (uₙ + 3)/2 est entre 1,5 et 3. C'est encore vrai au rang n + 1.</li><li><b>Le sens de variation.</b> uₙ₊₁ − uₙ = (uₙ + 3)/2 − uₙ = (3 − uₙ)/2. Comme uₙ ≤ 3 (étape 1), cette différence est positive ou nulle : la suite est croissante.</li><li><b>La convergence.</b> Croissante et majorée par 3 : elle converge, vers un nombre qu'on appelle ℓ.</li><li><b>La valeur.</b> On remplace dans la relation : ℓ = (ℓ + 3)/2. Donc 2ℓ = ℓ + 3, donc ℓ = 3.</li></ol>
+<p><b>Pourquoi cet ordre.</b> L'encadrement de l'étape 1 sert à l'étape 2 (pour le signe) et à l'étape 3 (pour le plafond). Et on n'a le droit d'écrire ℓ = f(ℓ) qu'après avoir prouvé que la limite existe.</p>
+<p><b>Quand l'équation ℓ = f(ℓ) a plusieurs solutions</b>, on élimine celles qui ne respectent pas l'encadrement de l'étape 1.</p>`},
+ "a-adjacentes":{
+  "Le théorème":`<p><b>L'image.</b> Deux suites se rapprochent l'une de l'autre : celle du bas monte, celle du haut descend, et l'écart entre elles se referme. Elles finissent par se rejoindre en un même point.</p>
+<p><b>Les quatre conditions à vérifier :</b></p>
+<ol><li>(uₙ) est croissante ;</li><li>(vₙ) est décroissante ;</li><li>uₙ ≤ vₙ pour tout n ;</li><li>l'écart vₙ − uₙ tend vers 0.</li></ol>
+<p><b>La conclusion :</b> les deux suites convergent, vers la <b>même</b> limite ℓ, et ℓ est toujours coincée entre elles : uₙ ≤ ℓ ≤ vₙ.</p>
+<p><b>Exemple.</b> uₙ = 1 − 1/n et vₙ = 1 + 1/n, pour n ≥ 1.</p>
+<ol><li>uₙ : 0, puis 0,5, puis 0,67… Elle monte.</li><li>vₙ : 2, puis 1,5, puis 1,33… Elle descend.</li><li>1 − 1/n est toujours plus petit que 1 + 1/n.</li><li>L'écart vaut 2/n, qui tend vers 0.</li></ol>
+<p>Les deux suites sont adjacentes. Leur limite commune est 1, et on a bien 1 − 1/n ≤ 1 ≤ 1 + 1/n.</p>
+<p><b>À quoi ça sert.</b> À prouver que deux suites convergent sans connaître la limite, et à l'encadrer : à chaque rang, uₙ et vₙ donnent une valeur approchée par en dessous et par au-dessus.</p>`},
+ "a-extraites":{
+  "Suites extraites":`<p><b>Une suite extraite</b> (on dit aussi sous-suite), c'est ce qu'on obtient en ne gardant que <b>certains termes</b> d'une suite, sans changer leur ordre.</p>
+<p><b>Les deux qu'on utilise tout le temps :</b></p>
+<ul><li>les termes de rang pair, u₀, u₂, u₄… : on note cette suite (u₂ₙ) ;</li><li>les termes de rang impair, u₁, u₃, u₅… : on la note (u₂ₙ₊₁).</li></ul>
+<p><b>La règle.</b> Si la suite entière tend vers ℓ, alors toutes ses suites extraites tendent aussi vers ℓ : si tous les termes s'approchent de ℓ, une partie d'entre eux aussi.</p>
+<p><b>On s'en sert surtout à l'envers,</b> pour montrer qu'une suite <b>n'a pas de limite</b> : si deux suites extraites ont des limites différentes, la suite diverge.</p>
+<p><b>Exemple.</b> uₙ = (−1)ⁿ × n/(n + 1).</p>
+<ul><li>Pour n pair, (−1)ⁿ = 1 : les termes valent n/(n + 1), qui tend vers 1.</li><li>Pour n impair, (−1)ⁿ = −1 : les termes valent −n/(n + 1), qui tend vers −1.</li></ul>
+<p>Deux suites extraites, deux limites différentes : la suite n'a pas de limite, elle diverge.</p>`,
+  "Valeur d'adhérence":`<p><b>La définition.</b> Un nombre ℓ est une « valeur d'adhérence » d'une suite quand une de ses suites extraites tend vers ℓ. En mots : la suite revient s'approcher de ℓ une infinité de fois.</p>
+<p><b>Exemple.</b> La suite 0, 1, 2, 0, 1, 2, 0, 1, 2… (le reste de n dans la division par 3). Si on garde un terme sur trois en partant du premier, on obtient 0, 0, 0… qui tend vers 0. De même pour 1 et pour 2. Ses valeurs d'adhérence sont 0, 1 et 2.</p>
+<p><b>Le lien avec la convergence.</b> Une suite qui converge vers ℓ n'a qu'une seule valeur d'adhérence : ℓ. Donc une suite qui en a deux (ou plus) ne converge pas.</p>
+<p><b>Le résultat utile dans l'autre sens.</b> Si les termes de rang pair et les termes de rang impair tendent vers le <b>même</b> nombre ℓ, alors la suite entière tend vers ℓ. C'est normal : pairs et impairs, à eux deux, ce sont tous les termes.</p>
+<p>Exemple : uₙ = (−1)ⁿ/n. Les termes de rang pair valent 1/n, ceux de rang impair −1/n. Les deux tendent vers 0 : la suite tend vers 0.</p>`},
+ "a-lim-calc":{
+  "Les mêmes règles que pour les suites":`<p><b>Bonne nouvelle :</b> pour les limites de fonctions, tout ce qui a été vu pour les suites reste vrai. Mêmes règles pour les sommes, les produits et les quotients ; mêmes formes indéterminées (+∞ − ∞, 0 × ∞, ∞/∞, 0/0) ; mêmes outils.</p>
+<p><b>Mettre en facteur le terme le plus fort.</b> (2x² + 1)/(x² − 3) quand x tend vers +∞ : on factorise par x² en haut et en bas. Il reste (2 + 1/x²)/(1 − 3/x²), qui tend vers 2.</p>
+<p><b>La quantité conjuguée.</b> √(x² + 1) − x quand x tend vers +∞ est une forme « +∞ − ∞ ». On multiplie et on divise par √(x² + 1) + x. En haut : (x² + 1) − x² = 1. Il reste 1/(√(x² + 1) + x), qui tend vers 0.</p>
+<p><b>Les gendarmes.</b> sin(x)/x quand x tend vers +∞ : sin x est entre −1 et 1, donc sin(x)/x est entre −1/x et 1/x. Les deux côtés tendent vers 0 : la limite est 0.</p>
+<p><b>Ce qui est nouveau avec les fonctions :</b> on peut chercher une limite en un nombre x₀, et pas seulement à l'infini. Si la fonction est définie en x₀ par une formule sans piège, il suffit de remplacer. Sinon (forme 0/0), on factorise ou on utilise la quantité conjuguée, comme à l'infini.</p>`,
+  "Limites et suites":`<p><b>Le lien.</b> Si f(x) tend vers ℓ quand x tend vers x₀, alors pour <b>n'importe quelle</b> suite (xₙ) qui tend vers x₀, la suite des images f(xₙ) tend vers ℓ. Quelle que soit la façon de s'approcher de x₀, on arrive au même résultat.</p>
+<p><b>On s'en sert à l'envers, pour montrer qu'une limite n'existe pas.</b> Il suffit de trouver <b>deux</b> façons de s'approcher de x₀ qui donnent deux résultats différents.</p>
+<p><b>Exemple : la partie entière E(x), en 1.</b> (E(x) est l'entier juste en dessous de x.)</p>
+<ul><li>Je m'approche de 1 par la droite avec xₙ = 1 + 1/n : ces nombres sont entre 1 et 2, donc E(xₙ) = 1. Les images tendent vers 1.</li><li>Je m'approche de 1 par la gauche avec yₙ = 1 − 1/n (n ≥ 2) : ces nombres sont entre 0 et 1, donc E(yₙ) = 0. Les images tendent vers 0.</li></ul>
+<p>Deux résultats différents : E(x) n'a pas de limite en 1.</p>
+<p><b>La méthode sur la copie :</b> j'écris mes deux suites, je vérifie que toutes les deux tendent vers x₀, je calcule les deux suites d'images, et je constate que leurs limites sont différentes.</p>
+<p><b>L'erreur à éviter.</b> Une seule suite ne prouve rien dans l'autre sens. Par exemple sin(πx) vaut 0 pour tous les entiers x, et pourtant sin(πx) n'a pas de limite en +∞ : entre deux entiers, la fonction remonte à 1 ou redescend à −1.</p>`}}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
