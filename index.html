@@ -14398,6 +14398,7 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
    Le texte du cours reste affiché dessous, tel quel. */
 (function(){
 const C=s=>W.code(s,"ml");
+const PS=s=>W.code(s,"pseudo");
 const v=s=>`<span class="vec">${s}</span>`;
 const sys=(...ls)=>`<span class="sys">${ls.map(l=>`<span>${l}</span>`).join("")}</span>`;
 const mat=(R,aug)=>`<span class="mat${aug?" aug":""}" style="--n:${R[0].length}">${R.map(r=>r.map((x,j)=>`<span${aug&&j===r.length-1?' class="au"':""}>${String(x).replace(/^-/,"−")}</span>`).join("")).join("")}</span>`;
@@ -15067,7 +15068,105 @@ ana:{
 <ul><li>Je m'approche de 1 par la droite avec xₙ = 1 + 1/n : ces nombres sont entre 1 et 2, donc E(xₙ) = 1. Les images tendent vers 1.</li><li>Je m'approche de 1 par la gauche avec yₙ = 1 − 1/n (n ≥ 2) : ces nombres sont entre 0 et 1, donc E(yₙ) = 0. Les images tendent vers 0.</li></ul>
 <p>Deux résultats différents : E(x) n'a pas de limite en 1.</p>
 <p><b>La méthode sur la copie :</b> j'écris mes deux suites, je vérifie que toutes les deux tendent vers x₀, je calcule les deux suites d'images, et je constate que leurs limites sont différentes.</p>
-<p><b>L'erreur à éviter.</b> Une seule suite ne prouve rien dans l'autre sens. Par exemple sin(πx) vaut 0 pour tous les entiers x, et pourtant sin(πx) n'a pas de limite en +∞ : entre deux entiers, la fonction remonte à 1 ou redescend à −1.</p>`}}
+<p><b>L'erreur à éviter.</b> Une seule suite ne prouve rien dans l'autre sens. Par exemple sin(πx) vaut 0 pour tous les entiers x, et pourtant sin(πx) n'a pas de limite en +∞ : entre deux entiers, la fonction remonte à 1 ou redescend à −1.</p>`}},
+algo:{
+ "a2-invariant":{
+  "Les mots du cours":`<p><b>Le but.</b> Prouver qu'un algorithme qui contient une boucle renvoie le bon résultat pour <b>toutes</b> les entrées possibles. L'essayer sur trois valeurs ne suffit pas : il faut une preuve. Un algorithme « valide », c'est un algorithme qui fait ce que promet sa spécification.</p>
+<p><b>Une itération</b>, c'est un tour de boucle. Si la boucle tourne 5 fois, il y a 5 itérations.</p>
+<p><b>La notation res<sub>i</sub>.</b> Une variable change de valeur pendant la boucle. Pour s'y retrouver, on donne un nom à chacune de ses valeurs : res<sub>0</sub> est sa valeur avant le premier tour, res<sub>1</sub> sa valeur à la fin du tour 1, res<sub>2</sub> à la fin du tour 2…</p>
+<p><b>Un petit algorithme pour voir :</b></p>
+${PS(`FONCTION : Triple (E n : entier) : entier
+SPÉCIFICATIONS : Calcule 3n avec n ∈ ℕ
+Variable : res : entier
+DÉBUT
+  res ← 0
+  pour i de 1 à n faire
+    res ← res + 3
+  fin pour;
+  Renvoyer res
+FIN`)}
+<p>Les valeurs de res : res<sub>0</sub> = 0, res<sub>1</sub> = 3, res<sub>2</sub> = 6, res<sub>3</sub> = 9…</p>
+<p><b>L'équation d'itération</b> dit comment on passe d'un tour au suivant. On la <b>lit</b> sur l'algorithme : la ligne « res ← 0 » donne res<sub>0</sub> = 0, et la ligne « res ← res + 3 » donne res<sub>i</sub> = res<sub>i−1</sub> + 3. C'est sûr, puisque c'est écrit dans l'algorithme : le cours appelle ça la « vérité ».</p>
+<p><b>L'invariant de boucle</b> est une formule qui donne directement la valeur au tour i, sans passer par les tours d'avant. En regardant 0, 3, 6, 9, on <b>devine</b> : res<sub>i</sub> = 3i. Tant que ce n'est pas prouvé, ce n'est qu'une supposition : le cours l'appelle l'« hypothèse ».</p>
+<p><b>La méthode, toujours la même :</b></p>
+<ol><li>lire les équations d'itération sur l'algorithme ;</li><li>deviner un invariant, en calculant les premières valeurs ;</li><li>prouver l'invariant par récurrence. Il est vrai au départ : 0 = 3 × 0. Et s'il est vrai à un tour, il l'est au suivant : res<sub>i</sub> = res<sub>i−1</sub> + 3 = 3(i − 1) + 3 = 3i ;</li><li>écrire l'invariant au dernier tour : res<sub>n</sub> = 3n. C'est la valeur renvoyée, et c'est ce que promet la spécification.</li></ol>`,
+  "Premier exemple du cours : F1 calcule n!":`<p><b>D'abord, n!.</b> « Factorielle de n », c'est le produit de tous les entiers de 1 à n. Par exemple 4! = 1 × 2 × 3 × 4 = 24. Par convention, 0! = 1.</p>
+<p><b>Une propriété qui sert dans la preuve :</b> pour passer d'une factorielle à la suivante, on multiplie par le nouvel entier. 4! = 3! × 4, c'est-à-dire 24 = 6 × 4. En général : i! = (i − 1)! × i.</p>
+<p><b>Je déroule F1 pour n = 4</b>, en notant res à la fin de chaque tour :</p>
+<div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>tour i</th><th>calcul</th><th class="var">res<sub>i</sub></th><th>i!</th></tr></thead><tbody><tr><td>0 (avant la boucle)</td><td>res ← 1</td><td>1</td><td>0! = 1</td></tr><tr><td>1</td><td>1 × 1</td><td>1</td><td>1! = 1</td></tr><tr><td>2</td><td>1 × 2</td><td>2</td><td>2! = 2</td></tr><tr><td>3</td><td>2 × 3</td><td>6</td><td>3! = 6</td></tr><tr><td>4</td><td>6 × 4</td><td>24</td><td>4! = 24</td></tr></tbody></table></div>
+<p>Les deux dernières colonnes sont identiques : voilà l'invariant, res<sub>i</sub> = i!.</p>
+<p><b>La preuve, pas à pas.</b></p>
+<ul><li><b>Au départ (i = 0)</b> : res<sub>0</sub> = 1 et 0! = 1. C'est pareil : l'invariant est vrai avant la boucle.</li><li><b>D'un tour au suivant</b> : je suppose que c'était vrai au tour d'avant, donc res<sub>i−1</sub> = (i − 1)!. L'algorithme multiplie par i : res<sub>i</sub> = res<sub>i−1</sub> × i = (i − 1)! × i = i!. C'est encore vrai.</li><li><b>Donc</b> c'est vrai à tous les tours : vrai au tour 0, donc au tour 1, donc au tour 2, et ainsi de suite, comme des dominos qui tombent l'un après l'autre.</li></ul>
+<p><b>La conclusion.</b> La boucle fait n tours. Au dernier, l'invariant donne res<sub>n</sub> = n!. Or l'algorithme renvoie res : il renvoie bien n!.</p>
+<p><b>Les deux rôles à ne pas mélanger :</b> l'équation d'itération vient de l'algorithme (je la lis) ; l'invariant vient de moi (je le devine, puis je le prouve).</p>`,
+  "Deuxième exemple du cours : Cube, avec quatre variables":`<p><b>Ce qui change :</b> quatre variables bougent en même temps. Il faut donc quatre équations d'itération, et un invariant en quatre morceaux.</p>
+<p><b>Le piège : l'ordre des lignes.</b> Dans un tour, les lignes s'exécutent l'une après l'autre.</p>
+<ul><li>« Z ← Z+A+B » passe en premier : elle utilise A et B <b>d'avant</b> le tour.</li><li>« B ← B+A+A+1 » vient ensuite : A n'a pas encore changé, c'est toujours l'ancien A.</li><li>« A, C ← A+3, C-1 » : A et C changent en dernier.</li></ul>
+<p>C'est pour ça que, dans les équations, tout ce qui est à droite du signe = porte l'indice i (les anciennes valeurs), et ce qui est à gauche l'indice i + 1 (les nouvelles).</p>
+<p><b>Je fais le premier tour de la trace</b> (n = 4). Avant : A = 1, B = 0, C = 4, Z = 0.</p>
+<ul><li>Z ← 0 + 1 + 0 = 1</li><li>B ← 0 + 1 + 1 + 1 = 3</li><li>A ← 1 + 3 = 4, et C ← 4 − 1 = 3</li></ul>
+<p>On retrouve la ligne 1 du tableau : A = 4, B = 3, C = 3, Z = 1.</p>
+<p><b>Comment deviner l'invariant : une colonne à la fois.</b></p>
+<ul><li>A : 1, 4, 7, 10, 13. On ajoute 3 à chaque tour en partant de 1 : A<sub>i</sub> = 3i + 1.</li><li>C : 4, 3, 2, 1, 0. On enlève 1 à chaque tour en partant de n : C<sub>i</sub> = n − i.</li><li>Z : 0, 1, 8, 27, 64. Ce sont les cubes 0³, 1³, 2³, 3³, 4³ : Z<sub>i</sub> = i³.</li><li>B : 0, 3, 12, 27, 48. Je divise tout par 3 : 0, 1, 4, 9, 16. Ce sont les carrés : B<sub>i</sub> = 3i².</li></ul>
+<p><b>Un cube,</b> c'est un nombre multiplié trois fois par lui-même : 4³ = 4 × 4 × 4 = 64. La dernière ligne du tableau donne Z = 64 pour n = 4 : l'algorithme a bien l'air de calculer n³. Reste à le prouver, à l'écran suivant.</p>`,
+  "La preuve de Cube":`<p><b>Le plan est le même que pour F1 :</b> vrai au départ, puis vrai d'un tour au suivant, puis conclusion. Il y a seulement quatre vérifications au lieu d'une.</p>
+<p><b>Au départ (i = 0).</b> Je remplace i par 0 dans chaque formule de l'invariant, et je compare avec les valeurs de départ : 3 × 0 + 1 = 1 (c'est A), 3 × 0² = 0 (c'est B), n − 0 = n (c'est C), 0³ = 0 (c'est Z). Tout colle.</p>
+<p><b>D'un tour au suivant.</b> Chaque ligne se fait en trois gestes :</p>
+<ol><li>j'écris l'équation d'itération ;</li><li>je remplace les valeurs au rang i par ce que dit l'invariant ;</li><li>je calcule, jusqu'à reconnaître la formule de l'invariant avec i + 1 à la place de i.</li></ol>
+<p><b>La ligne de B, en détail.</b> Le but : arriver à 3(i + 1)².</p>
+<ul><li>Équation : B<sub>i+1</sub> = B<sub>i</sub> + 2A<sub>i</sub> + 1.</li><li>Je remplace B<sub>i</sub> par 3i² et A<sub>i</sub> par 3i + 1 : cela donne 3i² + 2(3i + 1) + 1.</li><li>Je développe : 3i² + 6i + 2 + 1 = 3i² + 6i + 3.</li><li>Je mets 3 en facteur : 3(i² + 2i + 1). Et i² + 2i + 1, c'est (i + 1)².</li></ul>
+<p>J'obtiens 3(i + 1)² : c'est gagné pour B.</p>
+<p><b>La ligne de Z.</b> Z<sub>i+1</sub> = i³ + (3i + 1) + 3i² = i³ + 3i² + 3i + 1. C'est exactement le développement de (i + 1)³.</p>
+<p><b>La conclusion, et pourquoi i = n.</b> La boucle s'arrête quand C vaut 0. L'invariant dit C<sub>i</sub> = n − i. Donc à l'arrêt n − i = 0 : la boucle a fait exactement n tours. À ce moment-là, Z vaut n³, et c'est Z que l'algorithme renvoie.</p>
+<p><b>Astuce pour la copie :</b> écris le but (la formule avec i + 1) dans la marge avant de calculer. Tu sais vers quoi aller.</p>`,
+  "Et l'arrêt d'une boucle tant que ?":`<p><b>Le problème.</b> Une boucle « pour i de 1 à n » fait n tours et s'arrête : aucun doute. Une boucle « tant que » continue tant que son test est vrai. Si le test ne devient jamais faux, elle tourne sans fin.</p>
+<p><b>Une boucle qui ne s'arrête pas.</b> On part de x = 5, puis « tant que x ≠ 0 faire x ← x − 2 ». Les valeurs : 5, 3, 1, −1, −3… x saute par-dessus 0 et ne vaut jamais 0.</p>
+<p><b>La recette pour prouver l'arrêt.</b> Trouver une quantité (souvent une variable du test) et dire trois choses :</p>
+<ol><li>c'est un <b>entier naturel</b> (un entier positif ou nul) ;</li><li>elle <b>diminue strictement</b> à chaque tour (au moins 1 de moins) ;</li><li>la boucle s'arrête quand elle arrive à 0.</li></ol>
+<p>Un entier positif ne peut pas diminuer indéfiniment : s'il vaut 20 au départ, il y aura au plus 20 tours.</p>
+<p><b>Exemple.</b></p>
+${PS(`tant que n > 0 faire
+  n ← n div 2
+fin tq;`)}
+<p>(« n div 2 » : le quotient de n par 2, sans la virgule.) Pour n = 20, les valeurs sont 20, 10, 5, 2, 1, 0. Arrêt.</p>
+<p>Sur la copie : « n est un entier naturel. Tant que n &gt; 0, n div 2 est strictement plus petit que n, donc n décroît strictement à chaque itération. Le tant que s'arrête lorsque n vaut 0. Il y a donc un nombre fini d'itérations, donc l'algorithme se termine. »</p>
+<p><b>Quand la variable monte au lieu de descendre.</b> Dans « i ← 0 ; tant que i &lt; n faire … i ← i + 1 », i monte vers n. La quantité qui descend, c'est l'écart n − i : il vaut n au départ, perd 1 à chaque tour, et la boucle s'arrête quand il vaut 0.</p>
+<p><b>À quoi sert cette preuve.</b> La preuve par invariant dit seulement : « si la boucle s'arrête, le résultat est bon ». Avec la preuve d'arrêt en plus, on a tout : l'algorithme s'arrête, et il a raison.</p>`},
+ "a2-recursif":{
+  "Les mots du cours pour un algorithme récursif":`<p><b>Rappel : un algorithme récursif</b> s'appelle lui-même, avec une entrée plus petite, jusqu'à arriver à un cas simple où il répond directement (le « cas de base »).</p>
+<p><b>Un petit algorithme pour voir :</b></p>
+${PS(`FONCTION : Double (E n : entier) : entier
+SPÉCIFICATIONS : Calcule 2n avec n ∈ ℕ
+DÉBUT
+  si n=0 alors
+    Renvoyer 0
+  sinon
+    Renvoyer 2+Double(n-1)
+  fin si;
+FIN`)}
+<p><b>L'équation de récurrence</b> se lit sur l'algorithme, ligne par ligne :</p>
+<ul><li>« si n=0 alors Renvoyer 0 » donne Double(0) = 0 ;</li><li>« sinon Renvoyer 2+Double(n-1) » donne Double(n) = 2 + Double(n − 1) pour n &gt; 0.</li></ul>
+<p>C'est sûr, puisque c'est écrit dans l'algorithme : c'est la « vérité ».</p>
+<p><b>L'invariant de récursion,</b> c'est ce qu'on veut prouver : « l'algorithme renvoie ce que promet sa spécification ». Ici : Double(n) = 2n. Rien à deviner, il suffit de recopier la spécification. C'est l'« hypothèse ».</p>
+<p><b>La preuve par récurrence sur n :</b></p>
+<ul><li><b>pour n = 0</b> : Double(0) = 0 (vérité), et 2 × 0 = 0. C'est bon.</li><li><b>pour n &gt; 0</b> : je suppose que l'appel d'en dessous a raison, donc Double(n − 1) = 2(n − 1). Alors Double(n) = 2 + Double(n − 1) = 2 + 2(n − 1) = 2n. C'est bon aussi.</li></ul>
+<p><b>Pourquoi a-t-on le droit de supposer que l'appel d'en dessous a raison ?</b> Parce que la chaîne part du cas de base, qu'on a vérifié à la main : vrai pour 0, donc pour 1, donc pour 2, et ainsi de suite.</p>
+<p><b>La différence avec une boucle :</b> pour une boucle, on numérotait les tours avec i. Ici il n'y a pas de tours : on raisonne sur l'entrée n elle-même.</p>`,
+  "L'exemple du cours : F2, la factorielle récursive":`<p><b>Je déroule F2(3) pour voir ce qui se passe.</b> Chaque appel attend la réponse de l'appel d'en dessous :</p>
+<ul><li>F2(3) doit renvoyer 3 × F2(2) ;</li><li>F2(2) doit renvoyer 2 × F2(1) ;</li><li>F2(1) doit renvoyer 1 × F2(0) ;</li><li>F2(0) est le cas de base : il renvoie 1, sans nouvel appel.</li></ul>
+<p>Puis on remonte : F2(1) = 1 × 1 = 1, F2(2) = 2 × 1 = 2, F2(3) = 3 × 2 = 6. Et 3! = 1 × 2 × 3 = 6 : le résultat est bon pour n = 3.</p>
+<p><b>La preuve fait la même chose, mais pour tous les n d'un coup.</b> Imagine une échelle.</p>
+<ul><li><b>Le bas de l'échelle (n = 0).</b> L'algorithme renvoie 1. Et 0! = 1. D'accord.</li><li><b>Un barreau de plus.</b> Je suppose que F2(n − 1) renvoie bien (n − 1)!. L'algorithme calcule n × F2(n − 1), donc n × (n − 1)!. Or multiplier (n − 1)! par n donne n! : par exemple 5 × 4! = 5 × 24 = 120 = 5!. Donc F2(n) = n!.</li></ul>
+<p>Si on tient le bas de l'échelle, et si on sait toujours monter d'un barreau, on atteint tous les barreaux : c'est vrai pour tout n.</p>
+<p><b>Les trois choses que le correcteur cherche sur la copie :</b></p>
+<ol><li>l'équation de récurrence, lue sur l'algorithme ;</li><li>l'hypothèse au rang n − 1, écrite en toutes lettres ;</li><li>le calcul qui combine les deux, et la phrase « donc Inv<sub>n</sub> est vrai ».</li></ol>`,
+  "Prouver aussi que l'algorithme se termine":`<p><b>Pourquoi un algorithme récursif pourrait ne jamais finir.</b> Il s'appelle lui-même. Si les appels ne se rapprochent pas du cas de base, ils s'enchaînent sans fin. Exemple : une fonction qui, pour n, appelle n + 1. En partant de 3, elle appelle 4, puis 5, puis 6… Elle n'arrive jamais à 0.</p>
+<p><b>Ce qu'il faut vérifier :</b> chaque appel se fait avec une entrée <b>plus petite</b>, et on finit par tomber sur le cas de base.</p>
+<p><b>Comment l'écrire.</b> On prouve les deux choses dans la même récurrence. La propriété devient : « l'appel avec n <b>se termine</b> et renvoie le bon résultat ».</p>
+<p><b>Exemple</b> avec une fonction Double, qui calcule 2n : si n=0, elle renvoie 0 ; sinon elle renvoie 2+Double(n-1).</p>
+<ul><li><b>Base (n = 0).</b> L'algorithme renvoie 0 sans s'appeler : il se termine. Et 0 = 2 × 0 : le résultat est bon.</li><li><b>Hérédité (n &gt; 0).</b> Je suppose que l'appel Double(n − 1) se termine et renvoie 2(n − 1). L'appel Double(n) fait un test, une soustraction, une addition, et un appel à Double(n − 1). Tout cela se termine, donc Double(n) se termine. Et il renvoie 2 + 2(n − 1) = 2n.</li></ul>
+<p><b>La phrase à retenir :</b> « l'appel au rang n est fait de quelques opérations élémentaires et d'appels au rang n − 1, qui se terminent par hypothèse ; donc il se termine ».</p>
+<p><b>Les mots.</b> « Base » ou « initialisation » : le premier cas, vérifié à la main. « Hérédité » ou « récurrence » : le passage d'un rang au suivant. Les deux vocabulaires sont acceptés.</p>`} /*SUITE-ALGO*/}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
