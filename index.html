@@ -15166,7 +15166,101 @@ FIN`)}
 <p><b>Exemple</b> avec une fonction Double, qui calcule 2n : si n=0, elle renvoie 0 ; sinon elle renvoie 2+Double(n-1).</p>
 <ul><li><b>Base (n = 0).</b> L'algorithme renvoie 0 sans s'appeler : il se termine. Et 0 = 2 × 0 : le résultat est bon.</li><li><b>Hérédité (n &gt; 0).</b> Je suppose que l'appel Double(n − 1) se termine et renvoie 2(n − 1). L'appel Double(n) fait un test, une soustraction, une addition, et un appel à Double(n − 1). Tout cela se termine, donc Double(n) se termine. Et il renvoie 2 + 2(n − 1) = 2n.</li></ul>
 <p><b>La phrase à retenir :</b> « l'appel au rang n est fait de quelques opérations élémentaires et d'appels au rang n − 1, qui se terminent par hypothèse ; donc il se termine ».</p>
-<p><b>Les mots.</b> « Base » ou « initialisation » : le premier cas, vérifié à la main. « Hérédité » ou « récurrence » : le passage d'un rang au suivant. Les deux vocabulaires sont acceptés.</p>`} /*SUITE-ALGO*/}
+<p><b>Les mots.</b> « Base » ou « initialisation » : le premier cas, vérifié à la main. « Hérédité » ou « récurrence » : le passage d'un rang au suivant. Les deux vocabulaires sont acceptés.</p>`},
+ "a2-compter":{
+  "Ce qu'on compte":`<p><b>Pourquoi compter.</b> Deux algorithmes peuvent donner tous les deux le bon résultat, et pourtant l'un répond en une seconde et l'autre en une heure. Pour les comparer sans ordinateur, on <b>compte les opérations</b> qu'ils font.</p>
+<p><b>Une opération élémentaire</b>, c'est un geste simple de la machine : une affectation (←), un calcul (+, −, *, div, mod), une comparaison (=, &lt;, &gt;), la lecture d'une case T[i], un appel de fonction. On décide que chacune coûte 1.</p>
+<p><b>Exemple :</b> la ligne « x ← a + b * 2 » fait 3 opérations : une multiplication, une addition, une affectation.</p>
+<p><b>La taille de l'entrée, n.</b> Le travail dépend de ce qu'on donne à l'algorithme : additionner les cases d'un tableau de 1000 cases demande plus d'opérations que pour 10 cases. On appelle n cette « taille » : le nombre de cases du tableau, ou la valeur de l'entier donné.</p>
+<p><b>T<sub>n</sub></b> est le nombre d'opérations quand l'entrée est de taille n. C'est une formule en n. Par exemple T<sub>n</sub> = 2n + 1 : pour n = 10, cela fait 21 opérations ; pour n = 1000, cela en fait 2001.</p>
+<p><b>V<sub>n</sub></b> compte la mémoire : le nombre de variables dont l'algorithme a besoin pour travailler.</p>
+<p><b>Le pire cas.</b> Parfois le nombre d'opérations dépend aussi de la chance. Chercher un nombre dans un tableau : s'il est dans la première case, c'est fini tout de suite ; s'il n'y est pas, il faut regarder toutes les cases. On compte toujours le cas <b>le plus long</b>. C'est une garantie : l'algorithme ne fera jamais plus.</p>`,
+  "Diapo 69 : compter dans F1":`<p><b>La méthode :</b> prendre chaque ligne, compter ce qu'elle coûte, et multiplier par le nombre de fois où elle est exécutée.</p>
+<p><b>Ligne « res ← 1 ».</b> Une affectation : 1 opération. Elle est exécutée une seule fois, avant la boucle. Total : 1.</p>
+<p><b>Ligne « res ← res * i ».</b> Deux opérations : la multiplication, puis l'affectation. Elle est dans la boucle « pour i de 1 à n », donc exécutée n fois. Total : 2 × n.</p>
+<p><b>J'additionne :</b> T<sub>n</sub> = 2n + 1.</p>
+<p><b>Je vérifie sur un petit cas, n = 3.</b> « res ← 1 » : 1 opération. Puis trois tours à 2 opérations : 6. En tout 7. La formule donne 2 × 3 + 1 = 7. C'est bon.</p>
+<p><b>Ce que le prof ne compte pas ici :</b> le compteur i géré par le « pour », et le « Renvoyer ». C'est une convention. Si tu les comptes, tu trouves d'autres nombres, mais toujours la même forme : « un nombre × n + un nombre ». C'est cette forme qui compte. Au contrôle, <b>dis ce que tu comptes</b>, ou suis l'énoncé s'il le précise (« on compte seulement les multiplications »).</p>
+<p><b>La mémoire.</b> L'algorithme déclare une seule variable, res : V<sub>n</sub> = 1. Que n vaille 3 ou un million, il n'utilise toujours qu'une variable.</p>`,
+  "Compter pour un algorithme récursif : l'équation de complexité":`<p><b>La difficulté.</b> Dans un algorithme récursif, il n'y a pas de boucle à multiplier. L'algorithme fait quelques opérations, puis il <b>s'appelle</b>, et l'appel fait à son tour des opérations, et ainsi de suite.</p>
+<p><b>L'idée :</b> le coût de l'appel pour n = ce qu'il fait lui-même + le coût des appels qu'il lance. Cette phrase, écrite avec T, s'appelle l'<b>équation de complexité</b>. (S'il lance plusieurs appels, on additionne le coût de chacun.)</p>
+<p><b>Sur F2 :</b></p>
+<ul><li><b>Si n = 0 :</b> l'algorithme fait le test « n=0 » et renvoie 1. Une opération : T<sub>0</sub> = 1.</li><li><b>Si n &gt; 0 :</b> il fait le test « n=0 » (1), la soustraction n−1 (1), l'appel (1), la multiplication (1). Cela fait 4. Il faut ajouter tout ce que fait F2(n−1), qui coûte T<sub>n−1</sub>. Donc T<sub>n</sub> = 4 + T<sub>n−1</sub>.</li></ul>
+<p><b>Résoudre</b>, c'est trouver une formule directe. Je calcule les premières valeurs :</p>
+<ul><li>T<sub>0</sub> = 1</li><li>T<sub>1</sub> = 4 + 1 = 5</li><li>T<sub>2</sub> = 4 + 5 = 9</li><li>T<sub>3</sub> = 4 + 9 = 13</li></ul>
+<p>On ajoute 4 à chaque fois, en partant de 1. Après n fois : T<sub>n</sub> = 1 + 4n. Vérification pour n = 3 : 1 + 12 = 13.</p>
+<p><b>Une suite arithmétique,</b> c'est exactement ça : une suite où on ajoute toujours le même nombre. Sa formule : la valeur de départ + n × le nombre ajouté.</p>
+<p><b>Sur la copie, trois lignes :</b> le cas de base (T<sub>0</sub> = …), l'équation de complexité (T<sub>n</sub> = … + T<sub>n−1</sub>), la résolution (T<sub>n</sub> = …).</p>`,
+  "Quand la taille de l'entrée est divisée":`<p><b>Ce que fait F5.</b> Elle dit si n est une puissance de 2 (1, 2, 4, 8, 16, 32…). Sa méthode : diviser n par 2 tant que c'est possible.</p>
+<ul><li>F5(8) : 8 est pair, on passe à 4 ; 4 est pair, on passe à 2 ; 2 est pair, on passe à 1 ; n = 1, la réponse est vrai.</li><li>F5(12) : 12 est pair, on passe à 6 ; 6 est pair, on passe à 3 ; 3 est impair (son reste par 2 vaut 1), la réponse est faux.</li></ul>
+<p><b>Le pire cas.</b> Dès qu'on tombe sur un nombre impair autre que 1, l'algorithme s'arrête. Le cas le plus long, c'est quand ça n'arrive jamais : quand n est une puissance de 2.</p>
+<p><b>L'équation.</b> Chaque appel fait 5 opérations, puis lance l'appel avec n div 2 : T<sub>n</sub> = 5 + T<sub>n div 2</sub>. Et T<sub>1</sub> = 1.</p>
+<p><b>Ce qui change par rapport à F2 :</b> l'entrée ne baisse pas de 1 à chaque appel, elle est <b>divisée par 2</b>. On arrive à 1 beaucoup plus vite.</p>
+<p><b>Je déroule pour n = 16 :</b></p>
+<ul><li>T<sub>16</sub> = 5 + T<sub>8</sub></li><li>T<sub>8</sub> = 5 + T<sub>4</sub></li><li>T<sub>4</sub> = 5 + T<sub>2</sub></li><li>T<sub>2</sub> = 5 + T<sub>1</sub> = 5 + 1</li></ul>
+<p>Quatre lignes, donc quatre fois le 5 : T<sub>16</sub> = 1 + 5 × 4 = 21.</p>
+<p><b>D'où vient le 4 ?</b> C'est le nombre de fois qu'il faut diviser 16 par 2 pour arriver à 1 : 16, 8, 4, 2, 1. Ce nombre s'appelle log<sub>2</sub>(16). Autre façon de le voir : 16 = 2⁴, donc log<sub>2</sub>(16) = 4.</p>
+<p><b>En général :</b> T<sub>n</sub> = 1 + 5 log<sub>2</sub>(n).</p>
+<p><b>Ce que ça change.</b> Pour n proche d'un million, un algorithme en 4n + 1 fait environ 4 millions d'opérations. Celui-ci en fait une centaine, car log<sub>2</sub> d'un million vaut à peu près 20. Diviser l'entrée par 2 à chaque appel, c'est un gain énorme.</p>`},
+ "a2-notations":{
+  "Les suites de référence":`<p><b>L'idée.</b> La formule exacte de T<sub>n</sub> (2n + 1, ou 7n + 6…) dépend de la façon de compter. Ce qui compte vraiment, c'est <b>comment le travail grandit quand n grandit</b>. Si je double n, est-ce que le travail double ? Est-ce qu'il est multiplié par 4 ? Est-ce qu'il ne bouge presque pas ?</p>
+<p><b>Les suites de référence</b> sont des modèles de croissance, rangés du plus lent au plus rapide. On range chaque algorithme dans une de ces familles : c'est son « ordre de complexité ».</p>
+<p><b>Pour les sentir, je calcule pour n = 1000</b> (avec le logarithme en base 2, qui vaut à peu près 10 pour n = 1000) :</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>suite</th><th>nom</th><th>pour n = 1000</th><th>si n double</th></tr></thead><tbody><tr><td>1</td><td>constant</td><td>1</td><td>ne change pas</td></tr><tr><td>log(n)</td><td>logarithmique</td><td>environ 10</td><td>+ 1 seulement</td></tr><tr><td>n</td><td>linéaire</td><td>1000</td><td>× 2</td></tr><tr><td>n log(n)</td><td>pseudo-linéaire</td><td>environ 10 000</td><td>un peu plus que × 2</td></tr><tr><td>n²</td><td>quadratique</td><td>1 000 000</td><td>× 4</td></tr><tr><td>n³</td><td>cubique</td><td>1 000 000 000</td><td>× 8</td></tr><tr><td>2ⁿ</td><td>exponentielle</td><td>un nombre à 302 chiffres</td><td>mis au carré</td></tr></tbody></table></div>
+<p><b>Ce qu'il faut retenir :</b> plus la suite est bas dans la liste, plus l'algorithme devient lent quand n est grand. Un algorithme en n² reste utilisable pour n = 1000. Un algorithme en 2ⁿ ne l'est déjà plus pour n = 100.</p>
+<p><b>Et n! ?</b> Encore pire que l'exponentielle : 20! dépasse déjà 2 milliards de milliards.</p>
+<p><b>« Asymptotique »</b> veut dire : on regarde ce qui se passe quand n est très grand. Pour de petits n, tous les algorithmes sont rapides ; c'est pour les grands n que la différence se voit.</p>`,
+  "θ, o, ω : on divise par la suite de référence":`<p><b>La question :</b> à quelle suite de référence ressemble T<sub>n</sub> ? <b>Le test :</b> on divise T<sub>n</sub> par la suite de référence, et on regarde ce que devient le résultat quand n est très grand.</p>
+<p><b>Trois résultats possibles.</b> Je prends T<sub>n</sub> = 3n² + 5.</p>
+<ul><li><b>Je divise par n².</b> (3n² + 5)/n² = 3 + 5/n². Quand n est très grand, 5/n² devient minuscule : le résultat s'approche de 3. C'est un nombre fixe, plus grand que 0 : les deux suites grandissent <b>à la même vitesse</b>. On écrit T<sub>n</sub> = θ(n²), « thêta de n² ».</li><li><b>Je divise par n³.</b> (3n² + 5)/n³ = 3/n + 5/n³, qui s'approche de 0. T<sub>n</sub> grandit <b>moins vite</b> que n³. On écrit T<sub>n</sub> = o(n³), « petit o de n³ ».</li><li><b>Je divise par n.</b> (3n² + 5)/n = 3n + 5/n, qui devient aussi grand qu'on veut. T<sub>n</sub> grandit <b>plus vite</b> que n. On écrit T<sub>n</sub> = ω(n), « petit oméga de n ».</li></ul>
+<p><b>Pour s'en souvenir :</b> θ = même vitesse ; o = moins vite ; ω = plus vite.</p>
+<p><b>Avec des nombres,</b> pour n = 1000 : T<sub>n</sub> = 3 000 005. Divisé par n², cela donne 3,000005. Divisé par n³ : 0,003. Divisé par n : 3000,005.</p>
+<p><b>Le point surprenant :</b> θ ne regarde pas le nombre placé devant. 3n² + 5, n² et 50n² sont tous θ(n²). L'ordre de complexité dit comment le travail <b>grandit</b>, pas combien il vaut. C'est pour ça qu'on dit « de l'ordre de n² », et pas « égal à n² ».</p>
+<p><b>En pratique,</b> on cherche la suite de référence pour laquelle la division donne un nombre fixe plus grand que 0. C'est elle, l'ordre de complexité.</p>`,
+  "O et Ω, et trois propriétés":`<p><b>Deux notations « au sens large ».</b> Souvent on ne connaît pas la vitesse exacte de T<sub>n</sub>, mais on sait donner une limite.</p>
+<ul><li><b>T<sub>n</sub> = O(R<sub>n</sub>)</b>, « grand O » : T<sub>n</sub> grandit <b>au plus aussi vite</b> que R<sub>n</sub>. Soit moins vite (o), soit à la même vitesse (θ). C'est un plafond.</li><li><b>T<sub>n</sub> = Ω(R<sub>n</sub>)</b>, « grand oméga » : T<sub>n</sub> grandit <b>au moins aussi vite</b> que R<sub>n</sub>. Soit plus vite (ω), soit à la même vitesse (θ). C'est un plancher.</li></ul>
+<p><b>La comparaison avec les nombres aide.</b> o, c'est comme &lt; ; O, c'est comme ≤ ; θ, c'est comme = ; Ω, c'est comme ≥ ; ω, c'est comme &gt;.</p>
+<p><b>Exemple.</b> T<sub>n</sub> = 5n + 2 est θ(n). Donc c'est aussi O(n), O(n²), O(n³) : tous ces plafonds sont vrais, mais O(n) est le plus précis. Et c'est Ω(n), et aussi Ω(1).</p>
+<p><b>Les trois propriétés, en mots simples :</b></p>
+<ul><li><b>Tous les logarithmes se valent.</b> log<sub>2</sub>(n), log<sub>10</sub>(n) et ln(n) ne diffèrent que par un nombre fixe en facteur, et θ ignore ces nombres. On écrit donc « log(n) » sans préciser lequel.</li><li><b>Transitivité.</b> Si a grandit moins vite que b, et b moins vite que c, alors a grandit moins vite que c. Comme avec &lt;.</li><li><b>Sommes et produits.</b> On peut additionner ou multiplier deux comparaisons du même type.</li></ul>
+<p><b>La règle pratique qui en sort.</b> Pour trouver l'ordre d'une somme :</p>
+<ol><li>je repère le terme qui grandit le plus vite ;</li><li>j'efface les autres ;</li><li>j'efface le nombre placé devant.</li></ol>
+<p>Exemple : 4n² + 100n + 7. Le terme le plus fort est 4n². J'enlève le 4 : θ(n²). Pour n = 1000, 4n² vaut 4 000 000 alors que 100n + 7 vaut 100 007 : le reste pèse déjà très peu.</p>`},
+ "a2-boucles":{
+  "Une boucle pour, c'est une somme":`<p><b>Le problème.</b> Deux boucles l'une dans l'autre. Celle du dedans ne fait pas le même nombre de tours à chaque fois : elle va « de 1 à i », et i change.</p>
+<p><b>Je compte à la main pour n = 4.</b></p>
+<ul><li>i = 1 : j va de 1 à 1, donc 1 opération ;</li><li>i = 2 : j va de 1 à 2, donc 2 opérations ;</li><li>i = 3 : 3 opérations ;</li><li>i = 4 : 4 opérations.</li></ul>
+<p>Total : 1 + 2 + 3 + 4 = 10.</p>
+<p><b>Pour n quelconque :</b> 1 + 2 + … + n. Compter les opérations d'un « pour », c'est donc calculer une somme.</p>
+<p><b>La formule : 1 + 2 + … + n = n(n + 1)/2.</b> Vérification pour n = 4 : 4 × 5/2 = 10. C'est bien ça.</p>
+<p><b>Pourquoi cette formule marche.</b> J'écris la somme deux fois, une fois à l'endroit et une fois à l'envers : 1 + 2 + 3 + 4, et dessous 4 + 3 + 2 + 1. J'additionne colonne par colonne : 5 + 5 + 5 + 5, c'est-à-dire 4 fois 5. J'ai compté la somme deux fois, donc elle vaut 4 × 5/2.</p>
+<p><b>Le signe Σ</b> (« sigma ») veut juste dire « somme ». « Σ pour i de 1 à n » se lit : j'additionne ce qui suit, pour i = 1, puis i = 2, jusqu'à i = n. Deux Σ à la suite, c'est deux boucles imbriquées.</p>
+<p><b>L'ordre de complexité.</b> n(n + 1)/2 = n²/2 + n/2. Le terme le plus fort est n²/2 ; on enlève le 1/2 : θ(n²).</p>`,
+  "Le raccourci pour des boucles imbriquées":`<p><b>L'idée.</b> Le calcul exact avec les sommes peut être long. Si on veut seulement un plafond (un O), il y a plus rapide : <b>lire les bornes des boucles et multiplier</b>.</p>
+<p><b>Comment faire :</b></p>
+<ol><li>pour chaque boucle, je me demande combien de tours elle fait <b>au maximum</b> ;</li><li>je regarde ce que coûte l'intérieur ;</li><li>je multiplie tout.</li></ol>
+<p><b>Sur l'exemple du cours.</b> La boucle sur i fait n tours. La boucle sur j va de 1 à i, et i ne dépasse jamais n : elle fait au plus n tours. L'intérieur coûte un nombre fixe d'opérations. Produit : n × n × un nombre fixe, donc O(n²).</p>
+<p><b>Que veut dire O(1) ?</b> « Un nombre d'opérations qui ne dépend pas de n » : 1, 2 ou 50, peu importe, tant que ça ne grandit pas avec n.</p>
+<p><b>Pourquoi seulement O, et pas θ ?</b> Parce qu'on a arrondi vers le haut : on a dit « au plus n tours » pour la boucle du dedans, alors qu'elle en fait souvent moins. On obtient donc un plafond. Ici le plafond tombe juste (le calcul exact donne n(n + 1)/2, qui est θ(n²)), mais le raccourci seul ne le prouve pas.</p>
+<p><b>Un autre exemple.</b></p>
+${PS(`pour i de 1 à n faire
+  pour j de 1 à 5 faire
+    op élém
+  fin pour;
+fin pour;`)}
+<p>La boucle sur i fait n tours. La boucle sur j fait toujours 5 tours : un nombre fixe, donc O(1). Total : n × O(1) = O(n). Deux boucles imbriquées ne donnent donc <b>pas toujours</b> n² : il faut lire les bornes.</p>`,
+  "Le master theorem":`<p><b>À quoi il sert.</b> À donner l'ordre de complexité d'un algorithme récursif qui <b>divise</b> son entrée (par 2, par 3…) à chaque appel, sans résoudre l'équation de complexité à la main.</p>
+<p><b>Trois nombres à repérer dans l'algorithme :</b></p>
+<ul><li><b>a</b> : combien d'appels récursifs il lance ;</li><li><b>b</b> : par combien l'entrée est divisée dans ces appels ;</li><li><b>d</b> : l'exposant du travail fait en dehors des appels. Un nombre fixe d'opérations : d = 0 (car n⁰ = 1). Une boucle de n tours : d = 1. Deux boucles imbriquées de n tours : d = 2.</li></ul>
+<p>L'équation de complexité a alors cette forme : T(n) = a × T(n/b) + O(n<sup>d</sup>).</p>
+<p><b>Ensuite, une seule comparaison : b<sup>d</sup> contre a.</b></p>
+<ul><li>b<sup>d</sup> &gt; a : le travail hors appels l'emporte. T(n) = O(n<sup>d</sup>).</li><li>b<sup>d</sup> = a : égalité, on ajoute un log. T(n) = O(n<sup>d</sup> log n).</li><li>b<sup>d</sup> &lt; a : les appels l'emportent. T(n) = O(n<sup>log a / log b</sup>).</li></ul>
+<p><b>Exemple.</b> Un algorithme reçoit un tableau de taille n. Il fait une boucle de n tours, puis lance 4 appels récursifs, chacun sur une moitié du tableau.</p>
+<ul><li>4 appels : a = 4 ;</li><li>taille divisée par 2 : b = 2 ;</li><li>une boucle de n tours en dehors des appels, donc O(n¹) : d = 1.</li></ul>
+<p>Je compare : b<sup>d</sup> = 2¹ = 2, et a = 4. Donc b<sup>d</sup> &lt; a : troisième cas. L'exposant vaut log 4 / log 2 = 2, car 4 = 2². Résultat : T(n) = O(n²).</p>
+<p><b>Calculer log a / log b sans calculatrice :</b> c'est l'exposant qu'il faut mettre sur b pour obtenir a. log 8 / log 2 = 3 car 2³ = 8. log 9 / log 3 = 2 car 3² = 9.</p>
+<p><b>Quand ne pas l'utiliser.</b> Il faut que l'entrée soit <b>divisée</b> (n div 2, n/3…). Si l'appel se fait avec n − 1, le théorème ne s'applique pas : on résout l'équation à la main, comme pour la factorielle.</p>
+<p><b>Sur la copie :</b> écris a, b et d avec une justification pour chacun, calcule b<sup>d</sup>, dis dans quel cas tu es, puis donne le O.</p>`} /*SUITE-ALGO*/}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
