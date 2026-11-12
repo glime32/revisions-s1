@@ -14303,6 +14303,76 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
 const C=s=>W.code(s,"ml");
 const DEBUT={
 calc:{
+ "c-domaine":{
+  "Ce qui est interdit":`<p><b>Le domaine de définition</b> d'une fonction, c'est l'ensemble des nombres x pour lesquels on <b>peut faire le calcul</b>. Chercher le domaine, c'est chercher ce qui bloque.</p>
+<p><b>Trois choses bloquent, et seulement trois dans ce cours :</b></p>
+<ul><li><b>diviser par 0</b> : 1/0 n'existe pas. Donc ce qui est sous une barre de fraction ne doit pas valoir 0 ;</li><li><b>le ln d'un nombre négatif ou nul</b> : ln(0) et ln(−2) n'existent pas. Donc ce qui est dans un ln doit être strictement positif ;</li><li><b>la racine d'un nombre négatif</b> : √(−4) n'existe pas. Donc ce qui est sous une racine doit être positif ou nul.</li></ul>
+<p><b>La méthode :</b> je repère chaque danger, j'écris sa condition, je la résous, puis j'écris l'ensemble des x qui restent.</p>
+<p><b>Exemple 1.</b> f(x) = 1/(x − 3). Danger : la division. Condition : x − 3 ≠ 0, donc x ≠ 3. Domaine : tous les réels sauf 3, ce qui s'écrit ℝ ∖ {3}.</p>
+<p><b>Exemple 2.</b> f(x) = ln(x − 2). Danger : le ln. Condition : x − 2 &gt; 0, donc x &gt; 2. Domaine : ]2, +∞[. Le crochet est tourné vers l'extérieur parce que 2 lui-même est interdit.</p>
+<p><b>Exemple 3.</b> f(x) = √(x + 4). Danger : la racine. Condition : x + 4 ≥ 0, donc x ≥ −4. Domaine : [−4, +∞[. Ici le crochet est tourné vers −4 parce que −4 est autorisé (√0 = 0).</p>
+<p><b>Exemple 4, deux dangers à la fois.</b> f(x) = √(x − 1)/(x − 4). La racine demande x ≥ 1. La division demande x ≠ 4. Il faut les deux : les réels à partir de 1, sauf 4. On l'écrit [1, 4[ ∪ ]4, +∞[, où ∪ veut dire « réuni avec ».</p>
+<p><b>À ne pas faire :</b> simplifier la formule avant de chercher le domaine. On cherche les interdits sur la formule telle qu'elle est donnée.</p>`},
+ "c-derivees":{
+  "Les règles":`<p><b>La dérivée f′</b> d'une fonction mesure sa pente : positive quand la fonction monte, négative quand elle descend. Pour la calculer, on applique des règles. Il y a deux étages.</p>
+<p><b>Étage 1 : les dérivées de base, à savoir par cœur.</b></p>
+<ul><li>un nombre seul (5, π) : dérivée 0 ;</li><li>xⁿ : n xⁿ⁻¹. Par exemple (x³)′ = 3x² et (x)′ = 1 ;</li><li>eˣ : eˣ ;</li><li>ln x : 1/x ;</li><li>sin x : cos x ; cos x : −sin x.</li></ul>
+<p><b>Étage 2 : quand ce n'est pas « x » tout seul à l'intérieur.</b> On appelle u ce qu'il y a à l'intérieur. La règle : on dérive comme d'habitude, puis <b>on multiplie par u′</b>, la dérivée de l'intérieur.</p>
+<ul><li>(e<sup>3x</sup>)′ : ici u = 3x et u′ = 3. Résultat : 3 e<sup>3x</sup>.</li><li>(ln(x² + 1))′ : u = x² + 1 et u′ = 2x. Résultat : 2x/(x² + 1).</li><li>((2x + 1)³)′ : u = 2x + 1 et u′ = 2. Résultat : 3 × 2 × (2x + 1)² = 6(2x + 1)².</li></ul>
+<p><b>Un produit de deux fonctions</b> u × v : (uv)′ = u′v + uv′. Exemple : x² eˣ. On pose u = x² et v = eˣ, donc u′ = 2x et v′ = eˣ. Résultat : 2x eˣ + x² eˣ.</p>
+<p><b>Un quotient</b> u/v : (u/v)′ = (u′v − uv′)/v². Exemple : x/(x + 1). On pose u = x et v = x + 1, donc u′ = 1 et v′ = 1. Résultat : (1 × (x + 1) − x × 1)/(x + 1)² = 1/(x + 1)².</p>
+<p><b>La méthode sur la copie :</b></p>
+<ol><li>je regarde la forme : un produit, un quotient, ou quelque chose avec un intérieur ?</li><li>j'écris u, v, u′ et v′ <b>avant</b> de toucher à la formule ;</li><li>j'écris la formule, puis je remplace.</li></ol>
+<p>La plupart des erreurs viennent d'un u′ oublié ou d'un signe moins perdu dans le quotient.</p>`},
+ "c-primitives":{
+  "Primitive, intégrale : les mots et les notations":`<p><b>Une primitive, c'est une dérivée à l'envers.</b> Chercher une primitive de 2x, c'est chercher une fonction dont la dérivée est 2x. Réponse : x², puisque (x²)′ = 2x.</p>
+<p><b>Pourquoi « + C ».</b> x² + 5 marche aussi : la dérivée de 5 est 0. Et x² − 3 aussi. Toutes les primitives de 2x sont donc x² + C, où C est n'importe quel nombre. On écrit : ∫ 2x dx = x² + C.</p>
+<p><b>Lire l'écriture ∫ f(x) dx.</b> Le signe ∫ veut dire « primitive de », et le « dx » à la fin dit seulement que la variable s'appelle x.</p>
+<p><b>Une intégrale, c'est un nombre.</b> Quand il y a deux bornes, en bas et en haut du ∫, on calcule une primitive F, puis F(en haut) − F(en bas).</p>
+<p>Exemple : ∫₀³ 2x dx.</p>
+<ol><li>Une primitive de 2x : F(x) = x².</li><li>F(3) − F(0) = 9 − 0 = 9.</li></ol>
+<p>On l'écrit [x²]₀³ = 9. Les crochets veulent dire « valeur en haut moins valeur en bas ».</p>
+<p><b>Ce que ce nombre représente :</b> l'aire entre la courbe et l'axe horizontal, de x = 0 à x = 3. Ici, c'est un triangle de base 3 et de hauteur 6 : son aire est bien 3 × 6/2 = 9.</p>
+<p><b>À ne pas mélanger :</b></p>
+<ul><li>sans bornes : la réponse est une <b>fonction</b>, avec « + C » ;</li><li>avec bornes : la réponse est un <b>nombre</b>, sans « + C ».</li></ul>`,
+  "Les formes à reconnaître":`<p>Pour trouver une primitive, on ne calcule pas : on <b>reconnaît</b> une forme, puis on vérifie en dérivant.</p>
+<p><b>Forme 1 : une puissance de x.</b> On ajoute 1 à l'exposant, et on divise par le nouvel exposant. Une primitive de x² est x³/3. Vérification : (x³/3)′ = 3x²/3 = x².</p>
+<p><b>Forme 2 : 1/x.</b> Sa primitive est ln|x|. (La règle des puissances ne marche pas ici : elle ferait diviser par 0.)</p>
+<p><b>Forme 3 : une fonction u, et sa dérivée u′ juste à côté.</b> C'est la forme la plus fréquente au contrôle. On cherche un « intérieur » u, et on regarde si sa dérivée est là, en facteur.</p>
+<p>Exemple : 2x e<sup>x²</sup>. L'intérieur est u = x². Sa dérivée, 2x, est bien devant. C'est donc u′ e<sup>u</sup>, de primitive e<sup>u</sup> : la réponse est e<sup>x²</sup>.</p>
+<p><b>Quand il manque un nombre.</b> Pour x e<sup>x²</sup>, il faudrait 2x devant, et on n'a que x. On écrit x = (1/2) × 2x. La primitive est donc (1/2) e<sup>x²</sup>.</p>
+<p>Autre exemple : cos(3x). L'intérieur est u = 3x, de dérivée 3, qui n'est pas là. On compense en divisant par 3 : la primitive est sin(3x)/3. Vérification : (sin(3x)/3)′ = 3 cos(3x)/3 = cos(3x).</p>
+<p><b>Le réflexe qui sauve des points :</b> dériver sa réponse. Si on retombe sur la fonction de départ, c'est juste.</p>`},
+ "c-ipp":{
+  "La formule et le choix":`<p><b>Quand s'en servir.</b> Quand il faut intégrer un <b>produit de deux fonctions de familles différentes</b>, par exemple x × eˣ, et qu'on ne reconnaît aucune forme « u′ avec u ».</p>
+<p><b>L'idée.</b> On échange l'intégrale difficile contre une plus facile : on dérive l'un des deux morceaux (pour le simplifier) et on prend une primitive de l'autre.</p>
+<p><b>Les quatre cases à remplir</b>, avant tout calcul :</p>
+<ul><li>u : le morceau que je vais <b>dériver</b>, et u′ sa dérivée ;</li><li>v′ : le morceau dont je vais prendre une <b>primitive</b>, et v cette primitive.</li></ul>
+<p>La formule : ∫ u v′ = [u v] − ∫ u′ v.</p>
+<p><b>Exemple complet : ∫₀¹ x eˣ dx.</b></p>
+<ol><li>Je choisis u = x (en dérivant, il devient 1 : plus simple) et v′ = eˣ.</li><li>Je remplis : u′ = 1 et v = eˣ.</li><li>J'applique : [x eˣ]₀¹ − ∫₀¹ 1 × eˣ dx.</li><li>Le crochet : 1 × e¹ − 0 × e⁰ = e.</li><li>L'intégrale qui reste : ∫₀¹ eˣ dx = [eˣ]₀¹ = e − 1.</li><li>Résultat : e − (e − 1) = 1.</li></ol>
+<p><b>Comment choisir u.</b> On prend pour u ce qui devient plus simple quand on le dérive : un polynôme (x devient 1) ou un ln (ln x devient 1/x). On garde pour v′ ce dont on connaît une primitive : eˣ, sin, cos.</p>
+<p><b>Si on se trompe de choix</b>, l'intégrale qui reste est plus compliquée que celle de départ : c'est le signe qu'il faut échanger les rôles.</p>
+<p><b>Sur la copie</b>, on écrit la phrase : « On effectue une intégration par parties en posant u(x) = … et v′(x) = … Alors u′(x) = … et v(x) = … »</p>`},
+ "c-integrales":{
+  "Le changement de variable":`<p><b>L'idée.</b> Quand un morceau compliqué revient dans l'intégrale, on lui donne un nom, u, et on réécrit toute l'intégrale avec u. Elle devient plus simple.</p>
+<p><b>Il faut changer trois choses, pas une seule :</b> la fonction, le « dx », et les bornes.</p>
+<p><b>Exemple complet : ∫₀¹ 2x (x² + 1)³ dx.</b></p>
+<ol><li><b>Je choisis u.</b> Le morceau compliqué est x² + 1. Je pose u = x² + 1.</li><li><b>Je change dx.</b> La dérivée de u est 2x, ce qu'on écrit du = 2x dx. Justement, « 2x dx » est dans l'intégrale : je le remplace par du.</li><li><b>Je change les bornes.</b> Elles étaient pour x, il les faut pour u. Quand x = 0, u = 0² + 1 = 1. Quand x = 1, u = 1² + 1 = 2.</li><li><b>Je réécris.</b> L'intégrale devient ∫₁² u³ du.</li><li><b>Je calcule.</b> Une primitive de u³ est u⁴/4. Donc [u⁴/4]₁² = 16/4 − 1/4 = 15/4.</li></ol>
+<p><b>Les deux oublis qui coûtent des points :</b></p>
+<ul><li>garder « dx » au lieu de le remplacer : dx et du ne sont pas la même chose ;</li><li>garder les anciennes bornes 0 et 1 : elles valaient pour x, plus pour u.</li></ul>
+<p><b>Quoi choisir pour u ?</b> Ce qui est sous une racine, dans une parenthèse à une puissance, ou une exponentielle qui revient plusieurs fois.</p>`},
+ "c-limites":{
+  "Les outils":`<p><b>Une limite</b> répond à la question : vers quel nombre va f(x) quand x s'approche d'une valeur, ou quand x devient très grand ?</p>
+<p><b>Le cas facile.</b> Souvent, il suffit de remplacer. La limite de x² + 1 quand x tend vers 2 est 2² + 1 = 5.</p>
+<p><b>Un fait à connaître :</b> quand x devient très grand, 1/x devient très petit. On dit que 1/x tend vers 0. Pareil pour 5/x² ou 1/x³.</p>
+<p><b>Le cas qui bloque : les formes indéterminées.</b> Quand on remplace et qu'on obtient « ∞/∞ » ou « 0/0 », on ne peut rien conclure : il faut d'abord transformer l'écriture.</p>
+<p><b>Outil 1, pour une fraction quand x tend vers l'infini : mettre en facteur le terme le plus fort, en haut et en bas.</b></p>
+<p>Exemple : (3x² + x)/(x² + 5). En haut et en bas, le plus fort est x². On factorise : x²(3 + 1/x) en haut, x²(1 + 5/x²) en bas. Les x² se simplifient. Il reste (3 + 1/x)/(1 + 5/x²), qui tend vers 3/1 = 3.</p>
+<p><b>Outil 2, pour « 0/0 » quand x tend vers un nombre a : factoriser par (x − a), puis simplifier.</b></p>
+<p>Exemple : (x² − 9)/(x − 3) quand x tend vers 3. En remplaçant, on obtient 0/0. Or x² − 9 = (x − 3)(x + 3). On simplifie par (x − 3) : il reste x + 3, qui tend vers 6.</p>
+<p><b>Outil 3 : qui gagne à l'infini ?</b> L'exponentielle l'emporte sur toutes les puissances de x, et les puissances l'emportent sur ln. Par exemple x/eˣ tend vers 0 (l'exponentielle, en bas, gagne), et ln(x)/x tend vers 0 aussi.</p>
+<p><b>Deux notations :</b> « en 0⁺ » veut dire que x s'approche de 0 par des valeurs positives (0,1 puis 0,01…). « En +∞ » veut dire que x devient de plus en plus grand.</p>`},
  "c-ed0":{
   "Une équation dont l'inconnue est une fonction":`<p><b>Ce que tu connais déjà.</b> Dans une équation comme 2x + 1 = 7, on cherche un <b>nombre</b> : ici x = 3, parce que 2 × 3 + 1 = 7.</p>
 <p><b>Ce qui change ici.</b> On ne cherche plus un nombre, on cherche une <b>fonction</b>. Une fonction, c'est une règle qui donne un résultat pour chaque valeur de t. Exemples : y(t) = t² (pour t = 3, elle donne 9), ou y(t) = e<sup>2t</sup>.</p>
