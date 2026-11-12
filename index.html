@@ -15260,7 +15260,104 @@ fin pour;`)}
 <p>Je compare : b<sup>d</sup> = 2¹ = 2, et a = 4. Donc b<sup>d</sup> &lt; a : troisième cas. L'exposant vaut log 4 / log 2 = 2, car 4 = 2². Résultat : T(n) = O(n²).</p>
 <p><b>Calculer log a / log b sans calculatrice :</b> c'est l'exposant qu'il faut mettre sur b pour obtenir a. log 8 / log 2 = 3 car 2³ = 8. log 9 / log 3 = 2 car 3² = 9.</p>
 <p><b>Quand ne pas l'utiliser.</b> Il faut que l'entrée soit <b>divisée</b> (n div 2, n/3…). Si l'appel se fait avec n − 1, le théorème ne s'applique pas : on résout l'équation à la main, comme pour la factorielle.</p>
-<p><b>Sur la copie :</b> écris a, b et d avec une justification pour chacun, calcule b<sup>d</sup>, dis dans quel cas tu es, puis donne le O.</p>`} /*SUITE-ALGO*/}
+<p><b>Sur la copie :</b> écris a, b et d avec une justification pour chacun, calcule b<sup>d</sup>, dis dans quel cas tu es, puis donne le O.</p>`},
+ "a3-dicho":{
+  "La recherche linéaire":`<p><b>Le problème.</b> On a un tableau de nombres, dans n'importe quel ordre, et un nombre e. On veut savoir <b>où</b> se trouve e dans le tableau, ou apprendre qu'il n'y est pas.</p>
+<p><b>La méthode la plus naturelle :</b> regarder la case 0, puis la case 1, puis la case 2… et s'arrêter dès qu'on trouve e. « Linéaire » veut dire : en ligne, une case après l'autre.</p>
+<p><b>Rappel :</b> les cases sont numérotées à partir de 0. Un tableau de 4 cases a les indices 0, 1, 2, 3, et taille(T) vaut 4.</p>
+<p><b>Lire le test du tant que.</b> « i&lt;taille(T) et T[i]≠e » : je continue tant que <b>je suis encore dans le tableau</b> et que <b>la case regardée n'est pas e</b>. La boucle s'arrête donc pour l'une de ces deux raisons : j'ai trouvé e, ou je suis sorti du tableau.</p>
+<p><b>Exemple 1 : chercher 7 dans [4, 9, 7, 2].</b></p>
+<ul><li>i = 0 : T[0] = 4, ce n'est pas 7, j'avance ;</li><li>i = 1 : T[1] = 9, ce n'est pas 7, j'avance ;</li><li>i = 2 : T[2] = 7, trouvé : la boucle s'arrête.</li></ul>
+<p>i vaut 2, qui n'est pas la taille du tableau : l'algorithme renvoie 2.</p>
+<p><b>Exemple 2 : chercher 5 dans [4, 9, 7, 2].</b> Aucune case ne vaut 5. i passe par 0, 1, 2, 3, puis vaut 4. Là, « i&lt;taille(T) » est faux : la boucle s'arrête. Comme i = taille(T), l'algorithme renvoie −1. Ce −1 est un code qui veut dire « pas trouvé » : aucune case ne porte le numéro −1.</p>
+<p><b>Le coût.</b> Le pire cas, c'est quand e n'est pas dans le tableau : on regarde les n cases. Chaque tour coûte un nombre fixe d'opérations. Le total est de l'ordre de n : θ(n). Si le tableau est deux fois plus long, la recherche est deux fois plus longue.</p>`,
+  "La recherche dichotomique":`<p><b>L'idée, avec un dictionnaire.</b> Pour chercher un mot, tu n'ouvres pas à la page 1. Tu ouvres au milieu, tu regardes si ton mot est avant ou après, et tu recommences dans la bonne moitié. Ça marche parce que les mots sont <b>rangés dans l'ordre</b>.</p>
+<p><b>Condition indispensable :</b> le tableau doit être <b>trié</b>, du plus petit au plus grand. Sinon, regarder le milieu n'apprend rien. « Dichotomie » veut dire : couper en deux.</p>
+<p><b>Les trois variables.</b> deb et fin sont les indices qui délimitent la zone où e peut encore se trouver. mil est l'indice du milieu de cette zone : (deb+fin) div 2, la moyenne sans la virgule.</p>
+<p><b>À chaque tour, on regarde T[mil] :</b></p>
+<ul><li>si T[mil] &lt; e : e est forcément plus à droite. On jette la moitié gauche : deb ← mil+1 ;</li><li>sinon (T[mil] ≥ e) : e est à la case mil ou plus à gauche. On jette la moitié droite : fin ← mil−1.</li></ul>
+<p><b>Exemple : chercher 11 dans [2, 5, 8, 11, 14, 20, 23]</b> (indices 0 à 6).</p>
+<div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th class="var">deb</th><th class="var">fin</th><th class="var">mil</th><th>T[mil]</th><th>décision</th></tr></thead><tbody><tr><td>0</td><td>6</td><td>3</td><td>11</td><td>11 &lt; 11 ? non : fin ← 2</td></tr><tr><td>0</td><td>2</td><td>1</td><td>5</td><td>5 &lt; 11 ? oui : deb ← 2</td></tr><tr><td>2</td><td>2</td><td>2</td><td>8</td><td>8 &lt; 11 ? oui : deb ← 3</td></tr><tr><td>3</td><td>2</td><td></td><td></td><td>deb &gt; fin : arrêt</td></tr></tbody></table></div>
+<p>La boucle s'arrête quand deb dépasse fin. On regarde alors la case deb : T[3] = 11, c'est bien e. L'algorithme renvoie 3.</p>
+<p><b>Ce qui surprend.</b> Au premier tour, on est tombé pile sur 11, et pourtant l'algorithme a continué. C'est voulu : dans la boucle, il ne teste jamais « T[mil] = e ». Il resserre la zone jusqu'au bout, et c'est seulement à la fin qu'il vérifie la case deb.</p>
+<p><b>Si e n'est pas là.</b> À la fin, soit deb est sorti du tableau, soit T[deb] ≠ e : l'algorithme renvoie −1. C'est ce que dit la dernière ligne, « cond(deb&lt;taille(T) et T[deb]=e, deb, -1) » : si la condition est vraie, renvoyer deb, sinon renvoyer −1.</p>`,
+  "Arrêt, validité, complexité":`<p><b>Trois questions classiques sur un algorithme :</b> est-ce qu'il s'arrête ? Est-ce qu'il a raison ? Combien coûte-t-il ?</p>
+<p><b>1. L'arrêt.</b> La quantité fin−deb+1, c'est le <b>nombre de cases où on cherche encore</b>. Avec deb = 2 et fin = 6 : 6 − 2 + 1 = 5 cases (les indices 2, 3, 4, 5, 6). À chaque tour, on jette au moins la case du milieu : ce nombre diminue strictement. Un entier positif qui diminue à chaque tour finit par atteindre 0 : la boucle s'arrête.</p>
+<p><b>2. La validité.</b> L'invariant dit, à chaque tour : tout ce qui est <b>à gauche de deb</b> est plus petit que e, et tout ce qui est <b>à droite de fin</b> est plus grand que e, ou égal. C'est logique : on ne jette la partie gauche que si T[mil] &lt; e, et la partie droite que si T[mil] ≥ e.</p>
+<p>À la fin, deb = fin + 1 : les deux parties jetées se touchent. Tout ce qui est avant deb est trop petit, tout ce qui est à partir de deb est assez grand. Si e est dans le tableau, sa première apparition est donc exactement à la case deb. Il suffit de regarder cette case.</p>
+<p><b>3. La complexité.</b> À chaque tour, la zone de recherche est divisée par 2. Pour un tableau de 16 cases, dans le pire cas : 16, 8, 4, 2, 1, puis 0. Cela fait 5 tours, et log<sub>2</sub>(16) = 4 : le nombre de tours vaut log<sub>2</sub>(n) + 1. Chaque tour coûte un nombre fixe d'opérations. Total : θ(log(n)).</p>
+<p><b>Ce que ça change, en vrai.</b> Pour un tableau d'un million de cases, la recherche linéaire regarde jusqu'à 1 000 000 de cases ; la recherche dichotomique, une vingtaine. Mais elle exige un tableau trié.</p>
+<p><b>Pour compter sans formule :</b> quand la taille du tableau double, il y a seulement <b>un</b> tour de plus.</p>`},
+ "a3-valeurs":{
+  "Pourquoi trier, et deux sortes de tris":`<p><b>Trier,</b> c'est ranger les valeurs d'un tableau dans l'ordre, de la plus petite à la plus grande. [7, 2, 9, 4] devient [2, 4, 7, 9].</p>
+<p><b>Pourquoi se donner ce mal.</b> Une fois le tableau trié, beaucoup de choses deviennent rapides. Tu viens d'en voir une : chercher une valeur prend θ(log n) au lieu de θ(n).</p>
+<p><b>Deux situations, deux familles de tris :</b></p>
+<ul><li><b>Cas particulier : peu de valeurs possibles.</b> Par exemple les notes (entières, de 0 à 20) de 300 étudiants : il n'y a que 21 valeurs possibles. On peut alors trier <b>sans comparer</b>, juste en comptant combien il y a de chaque valeur. C'est le tri par valeurs, très rapide : θ(n).</li><li><b>Cas général : des valeurs quelconques.</b> Des prix, des tailles, des nombres à virgule… Impossible de prévoir une case par valeur possible. Il faut <b>comparer</b> les valeurs deux à deux. Ces tris-là ne peuvent pas descendre sous n log n.</li></ul>
+<p><b>Lire les notations.</b> ⟦0 ; p−1⟧ désigne les entiers 0, 1, 2… jusqu'à p−1 : cela fait p valeurs possibles. Pour des notes de 0 à 20, p = 21. « p = O(n) » veut dire : le nombre de valeurs possibles n'est pas beaucoup plus grand que le nombre de cases.</p>
+<p><b>Rappel :</b> θ(n) veut dire « de l'ordre de n opérations » ; Ω(n log n) veut dire « au moins de l'ordre de n log n opérations ».</p>`,
+  "Le tri par valeurs":`<p><b>L'idée.</b> Imagine des copies notées 0, 1, 2 ou 3. Pour les ranger par note, pas besoin de les comparer entre elles : tu comptes combien il y a de 0, de 1, de 2 et de 3, puis tu réécris la liste, d'abord tous les 0, puis tous les 1, et ainsi de suite.</p>
+<p><b>Exemple : T = [2, 0, 3, 0, 2], avec p = 4</b> (valeurs possibles : 0, 1, 2, 3).</p>
+<p><b>Étape 1 : compter.</b> Le tableau Cpt a une case par valeur possible, toutes à 0 au départ. On parcourt T, et pour chaque valeur lue on ajoute 1 dans sa case.</p>
+<ul><li>je lis 2 : Cpt[2] passe à 1 ;</li><li>je lis 0 : Cpt[0] passe à 1 ;</li><li>je lis 3 : Cpt[3] passe à 1 ;</li><li>je lis 0 : Cpt[0] passe à 2 ;</li><li>je lis 2 : Cpt[2] passe à 2.</li></ul>
+<p>Résultat : Cpt = [2, 0, 2, 1]. Il se lit : deux 0, aucun 1, deux 2, un 3.</p>
+<p><b>La ligne « Cpt[T[i]] ← Cpt[T[i]] + 1 »</b> fait exactement ça : T[i] est la valeur lue, et elle sert de <b>numéro de case</b> dans Cpt.</p>
+<p><b>Étape 2 : réécrire.</b> On remplit T depuis le début : deux fois 0, zéro fois 1, deux fois 2, une fois 3. T devient [0, 0, 2, 2, 3].</p>
+<p><b>Dans le tant que :</b> k est la valeur qu'on est en train d'écrire, j la prochaine case de T à remplir. S'il reste des k à écrire (Cpt[k] ≠ 0), on en écrit un et on décompte. Sinon (Cpt[k] = 0), on passe à la valeur suivante.</p>
+<p><b>Le coût.</b> Un passage sur T pour compter (n tours), puis la réécriture (n cases à remplir, et p valeurs à passer en revue). En tout, de l'ordre de n + p. Si p n'est pas plus grand que n, c'est θ(n).</p>
+<p><b>La limite.</b> Il faut connaître à l'avance les valeurs possibles, et qu'il n'y en ait pas trop. Pour trier des entiers entre 0 et un milliard, il faudrait un tableau Cpt d'un milliard de cases.</p>`,
+  "Borne inférieure d'un tri de tableau":`<p><b>La question :</b> peut-on inventer un tri encore plus rapide que θ(n) ? Non, et l'argument tient en quelques lignes.</p>
+<p><b>L'argument.</b> Pour trier un tableau, il faut au moins <b>regarder chaque case une fois</b>. Un algorithme qui ne regarderait pas une case ne saurait pas quelle valeur elle contient : il ne pourrait pas la ranger au bon endroit. Regarder n cases, c'est déjà n opérations. Donc n'importe quel tri fait au moins de l'ordre de n opérations : Ω(n).</p>
+<p><b>« Borne inférieure »</b> veut dire : un plancher. Aucun algorithme, même pas encore inventé, ne peut descendre dessous.</p>
+<p><b>Le plancher est atteint.</b> Le tri par valeurs fait θ(n) : il touche le plancher. Dans son cas particulier, c'est le meilleur possible.</p>
+<p><b>Deux phrases à ne pas confondre :</b></p>
+<ul><li>« <b>cet algorithme</b> est en θ(n) » parle d'un algorithme précis ;</li><li>« <b>tout tri</b> est en Ω(n) » parle du problème lui-même : c'est vrai pour tous les algorithmes possibles.</li></ul>`},
+ "a3-fusion":{
+  "Le tri à bulles":`<p><b>Un tri par comparaison :</b> la seule chose qu'on s'autorise, c'est comparer deux valeurs et les échanger.</p>
+<p><b>Le geste de base :</b> comparer une case avec sa voisine de gauche. Si elles sont dans le désordre (la plus petite est à droite), on les échange.</p>
+<p><b>Un passage.</b> On part de la fin du tableau et on recule, en faisant ce geste à chaque case. La plus petite valeur est ainsi poussée vers la gauche, de voisine en voisine, jusqu'au début. Comme une bulle qui remonte : d'où le nom.</p>
+<p><b>Exemple : T = [4, 1, 3, 2]. Premier passage (i = 0) :</b></p>
+<ul><li>j = 3 : je compare T[3] = 2 et T[2] = 3. Désordre : j'échange. T = [4, 1, 2, 3] ;</li><li>j = 2 : je compare T[2] = 2 et T[1] = 1. C'est dans l'ordre : rien ;</li><li>j = 1 : je compare T[1] = 1 et T[0] = 4. Désordre : j'échange. T = [1, 4, 2, 3].</li></ul>
+<p>Le plus petit, 1, est arrivé à sa place, dans la case 0.</p>
+<p><b>Deuxième passage (i = 1) :</b> pareil, mais on s'arrête avant la case 0, qui est déjà bonne. j = 3 : je compare 3 et 2, rien. j = 2 : je compare 2 et 4, j'échange. T = [1, 2, 4, 3].</p>
+<p><b>Troisième passage (i = 2) :</b> j = 3 : je compare 3 et 4, j'échange. T = [1, 2, 3, 4]. Trié.</p>
+<p><b>Lire les deux boucles.</b> La boucle sur i compte les passages : après le passage i, la case i contient la bonne valeur. La boucle sur j recule de la dernière case (n−1) jusqu'à la case i+1 ; « par pas de -1 » veut dire que j diminue de 1 à chaque tour.</p>
+<p><b>Le coût.</b> Premier passage : n − 1 comparaisons. Deuxième : n − 2. Et ainsi de suite jusqu'à 1. Total : (n − 1) + (n − 2) + … + 1 = n(n − 1)/2, de l'ordre de n² : θ(n²). Pour 4 cases : 3 + 2 + 1 = 6 comparaisons.</p>
+<p><b>Deux mots.</b> « En place » : il trie dans le tableau lui-même, sans tableau en plus. « Stable » : deux valeurs égales restent dans leur ordre de départ, car il n'échange que si la valeur de droite est strictement plus petite.</p>`,
+  "Le tri fusion : le principe et la fusion":`<p><b>L'idée « diviser pour mieux régner ».</b> Trier un gros tableau, c'est difficile. Alors on le coupe en deux moitiés, on trie chaque moitié, et on <b>rassemble</b> les deux moitiés triées. Ce rassemblement s'appelle la fusion.</p>
+<p><b>La fusion, avec deux paquets de cartes.</b> Tu as deux paquets déjà triés, la plus petite carte au-dessus. Pour en faire un seul paquet trié : tu compares les deux cartes du dessus, tu prends la plus petite, tu la poses. Et tu recommences, jusqu'à ce que les deux paquets soient vides.</p>
+<p><b>Exemple : fusionner [1, 5, 7] et [2, 3, 9].</b></p>
+<div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>dessus du paquet 1</th><th>dessus du paquet 2</th><th>je prends</th><th>résultat</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>1</td><td>[1]</td></tr><tr><td>5</td><td>2</td><td>2</td><td>[1, 2]</td></tr><tr><td>5</td><td>3</td><td>3</td><td>[1, 2, 3]</td></tr><tr><td>5</td><td>9</td><td>5</td><td>[1, 2, 3, 5]</td></tr><tr><td>7</td><td>9</td><td>7</td><td>[1, 2, 3, 5, 7]</td></tr><tr><td>vide</td><td>9</td><td>9</td><td>[1, 2, 3, 5, 7, 9]</td></tr></tbody></table></div>
+<p><b>Pourquoi c'est rapide.</b> On ne regarde que le dessus de chaque paquet : comme les paquets sont triés, la plus petite carte restante est forcément l'une de ces deux-là. Chaque carte est posée une seule fois : pour n cartes, de l'ordre de n opérations.</p>
+<p><b>Dans l'algorithme.</b> T1 et T2 sont les deux paquets (des copies des deux moitiés). i est la position du dessus de T1, j celle du dessus de T2. La condition du « si » dit : je prends dans T1 si T2 est vide (j&gt;=taille(T2)), ou bien s'il reste des cartes dans T1 et que la sienne est la plus petite, ou égale.</p>
+<p><b>Les paramètres deb1, fin1, fin2</b> disent où sont les deux moitiés dans T : la première va de l'indice deb1 à fin1, la seconde de fin1+1 à fin2.</p>`,
+  "L'algorithme de tri fusion":`<p><b>Le plan de triFusionAux,</b> pour trier la partie de T entre les indices deb et fin :</p>
+<ol><li>calculer le milieu mil ;</li><li>trier la moitié gauche (de deb à mil) ;</li><li>trier la moitié droite (de mil+1 à fin) ;</li><li>fusionner les deux moitiés.</li></ol>
+<p><b>Mais comment trie-t-on chaque moitié ?</b> Avec le même algorithme : il s'appelle lui-même. Chaque moitié est coupée en deux, puis encore en deux… jusqu'à des morceaux d'une seule case. Un morceau d'une case est déjà trié : rien à faire. C'est le cas de base, quand deb = fin (le test « deb&lt;fin » est faux).</p>
+<p><b>Exemple : T = [7, 3, 8, 1].</b></p>
+<ul><li><b>On coupe :</b> [7, 3] et [8, 1].</li><li><b>On coupe encore :</b> [7] et [3], puis [8] et [1]. Des morceaux d'une case : déjà triés.</li><li><b>On fusionne en remontant :</b> [7] et [3] donnent [3, 7]. [8] et [1] donnent [1, 8].</li><li><b>Dernière fusion :</b> [3, 7] et [1, 8] donnent [1, 3, 7, 8].</li></ul>
+<p><b>Tout le travail de tri est fait par les fusions.</b> La descente ne fait que couper.</p>
+<p><b>Pourquoi θ(n log n).</b> On coupe en deux jusqu'à des morceaux d'une case : cela fait log<sub>2</sub>(n) étages (2 étages pour 4 cases, 3 pour 8 cases). À chaque étage, les fusions manipulent en tout les n valeurs : de l'ordre de n opérations. D'où n × log n.</p>
+<p><b>À quel point c'est mieux que n².</b> Pour n = 1000 : n² vaut 1 000 000, et n log<sub>2</sub>(n) environ 10 000. Cent fois moins.</p>
+<p><b>Le prix à payer.</b> La fusion recopie les moitiés dans T1 et T2 : il faut de la mémoire en plus. Le tri fusion n'est donc pas « en place ». Il est en revanche « stable » : deux valeurs égales restent dans leur ordre de départ.</p>
+<p><b>Pourquoi « Aux » ?</b> Pour « auxiliaire ». triFusionAux a besoin de deb et fin pour savoir quelle partie trier. La procédure principale, celle qu'on appelle pour trier tout le tableau, lance triFusionAux sur le tableau entier, du premier indice au dernier.</p>`,
+  "Borne inférieure d'un tri par comparaison, et tris célèbres":`<p><b>La question :</b> en ne faisant que comparer des valeurs deux à deux, peut-on trier plus vite que n log n ? La réponse est non.</p>
+<p><b>Ce que dit le résultat.</b> N'importe quel tri par comparaison, dans le pire cas, fait au moins de l'ordre de n log n comparaisons. C'est un plancher : Ω(n log n). Le cours l'admet, sans preuve.</p>
+<p><b>L'idée derrière.</b> Chaque comparaison ne donne qu'une toute petite information : « plus petit » ou « plus grand ». Or il existe énormément de façons de mélanger n valeurs. Il faut beaucoup de réponses de ce genre pour savoir dans quel mélange on se trouve.</p>
+<p><b>Le tri fusion touche ce plancher :</b> il est en θ(n log n). Parmi les tris par comparaison, on ne peut pas faire mieux en ordre de grandeur.</p>
+<p><b>Le tableau à connaître :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>tri</th><th>complexité</th><th>à retenir</th></tr></thead><tbody><tr><td>par valeurs</td><td>θ(n)</td><td>seulement s'il y a peu de valeurs possibles ; ne compare pas</td></tr><tr><td>fusion</td><td>θ(n log n)</td><td>stable, mais pas en place</td></tr><tr><td>par tas</td><td>θ(n log n)</td><td>seulement cité par le cours</td></tr><tr><td>rapide (par pivot)</td><td>θ(n log n) en moyenne, θ(n²) au pire</td><td>seulement cité par le cours</td></tr><tr><td>à bulles</td><td>θ(n²)</td><td>en place, stable</td></tr><tr><td>par insertion</td><td>θ(n²)</td><td>adapté quand le tableau est presque trié</td></tr><tr><td>par sélection</td><td>θ(n²)</td><td>adapté aux petits tableaux</td></tr></tbody></table></div>
+<p><b>Pas de contradiction avec le tri par valeurs.</b> Lui descend à θ(n), sous le plancher n log n. C'est permis : il ne compare jamais deux valeurs entre elles, donc le plancher des tris par comparaison ne le concerne pas.</p>`},
+ "a3-tris":{
+  "Deux tris célèbres":`<p><b>Deux façons très naturelles de trier,</b> celles qu'on utilise sans y penser avec des cartes.</p>
+<p><b>Le tri par sélection : « je cherche le plus petit, je le mets devant ».</b></p>
+<ol><li>je cherche la plus petite valeur de tout le tableau, et je l'échange avec la case 0 ;</li><li>je cherche la plus petite parmi le reste (à partir de la case 1), et je l'échange avec la case 1 ;</li><li>et ainsi de suite.</li></ol>
+<p>Exemple avec [6, 2, 9, 4] :</p>
+<ul><li>le plus petit est 2 : je l'échange avec 6. [2, 6, 9, 4] ;</li><li>le plus petit du reste (6, 9, 4) est 4 : je l'échange avec 6. [2, 4, 9, 6] ;</li><li>le plus petit du reste (9, 6) est 6 : je l'échange avec 9. [2, 4, 6, 9].</li></ul>
+<p><b>Le tri par insertion : « je range chaque nouvelle carte parmi celles que je tiens déjà ».</b> C'est la façon dont on trie ses cartes en main. La partie gauche du tableau est toujours triée ; on prend la valeur suivante et on la glisse à sa place dans cette partie.</p>
+<p>Exemple avec [6, 2, 9, 4] :</p>
+<ul><li>je prends 2 : il va avant 6. [2, 6, 9, 4] ;</li><li>je prends 9 : il est déjà à sa place. [2, 6, 9, 4] ;</li><li>je prends 4 : il se glisse entre 2 et 6 ; 6 et 9 se décalent d'une case. [2, 4, 6, 9].</li></ul>
+<p><b>Le coût : θ(n²) pour les deux.</b> Sélection : pour trouver le plus petit, il faut parcourir tout le reste, et on recommence n − 1 fois. Insertion : dans le pire cas, chaque valeur doit remonter toute la partie déjà triée.</p>
+<p><b>Leur différence.</b> Le tri par sélection fait toujours le même travail, même si le tableau est déjà trié. Le tri par insertion, lui, va vite quand le tableau est presque trié : chaque valeur est déjà à peu près à sa place, il n'y a presque rien à décaler.</p>`} /*SUITE-ALGO*/}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
