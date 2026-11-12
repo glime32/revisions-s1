@@ -15438,7 +15438,178 @@ fin pour;`)}
 <p><b>2. Chercher : je réponds par vrai ou faux.</b> « Est-ce que toutes les cases sont plus petites que 10 ? » Je regarde les cases une par une. Dès que j'en vois une qui contredit (12 ≥ 10), je connais la réponse : je renvoie false tout de suite. Si j'arrive au bout sans en avoir vu, je renvoie true, <b>après</b> la boucle.</p>
 <p>Le piège : on ne peut pas répondre true dans la boucle. Voir une case qui convient ne dit rien sur les suivantes.</p>
 <p><b>3. Fabriquer : je construis un nouveau tableau.</b> Je déclare un tableau R de la bonne taille dans « Variable », je remplis ses cases une par une dans la boucle, et je le renvoie après. Pour T = [5, 12, 7] et « le double de chaque valeur » : R = [10, 24, 14].</p>
-<p><b>Devant un énoncé, pose-toi la question :</b> me demande-t-on un total, une réponse vrai ou faux, ou un nouveau tableau ? Tu sais alors quel modèle suivre.</p>`} /*SUITE-ALGO*/}
+<p><b>Devant un énoncé, pose-toi la question :</b> me demande-t-on un total, une réponse vrai ou faux, ou un nouveau tableau ? Tu sais alors quel modèle suivre.</p>`},
+ "a-recursif":{
+  "La méthode du TD":`<p><b>Un algorithme récursif s'appelle lui-même.</b> L'idée : pour résoudre un gros problème, je fais comme si je savais déjà résoudre <b>le même problème, en un peu plus petit</b>. Il me reste juste la dernière marche à monter.</p>
+<p><b>Exemple : calculer 3ⁿ</b> (3 multiplié n fois par lui-même ; 3⁴ = 3 × 3 × 3 × 3 = 81).</p>
+<ol><li><b>Le cas de base :</b> le cas le plus petit, où je connais la réponse sans rien calculer. Ici n = 0, et 3⁰ = 1.</li><li><b>La récurrence :</b> comment passer du problème plus petit au mien. 3ⁿ = 3 × 3ⁿ⁻¹. Si quelqu'un me donne 3ⁿ⁻¹, je n'ai plus qu'à multiplier par 3.</li><li><b>La traduction :</b> j'écris les deux cas.</li></ol>
+${PS(`FONCTION : p3 (E n : entier) : entier
+SPÉCIFICATIONS : Calcule 3 puissance n, avec n ∈ ℕ
+DÉBUT
+    Renvoyer cond(n = 0, 1, 3 * p3(n-1))
+FIN`)}
+<p><b>Je déroule p3(3)</b> : chaque appel attend la réponse de celui du dessous.</p>
+<ul><li>p3(3) = 3 × p3(2)</li><li>p3(2) = 3 × p3(1)</li><li>p3(1) = 3 × p3(0)</li><li>p3(0) = 1 : le cas de base, on s'arrête de descendre.</li></ul>
+<p>Puis on remonte : p3(1) = 3, p3(2) = 9, p3(3) = 27. Et 3³ = 27.</p>
+<p><b>Les deux façons de tout casser :</b></p>
+<ul><li><b>oublier le cas de base :</b> p3 s'appellerait avec 2, 1, 0, −1, −2… sans jamais s'arrêter ;</li><li><b>appeler avec une entrée qui ne se rapproche pas du cas de base :</b> écrire p3(n+1) au lieu de p3(n-1). En partant de 3, on irait vers 4, 5, 6… et jamais vers 0.</li></ul>
+<p><b>La question à te poser :</b> « si je sais résoudre le problème pour n − 1, comment j'obtiens la réponse pour n ? ».</p>`,
+  "Avant d'écrire : ce que l'énoncé impose":`<p><b>Un énoncé, c'est comme une recette avec des contraintes :</b> « fais un gâteau, mais sans four ». Si tu utilises le four, le gâteau est peut-être bon, mais tu n'as pas fait l'exercice. Le correcteur enlève les points.</p>
+<p><b>Les mots à repérer, et ce qu'ils veulent dire :</b></p>
+<ul><li><b>« récursif »</b> : l'algorithme doit s'appeler lui-même ;</li><li><b>« itératif »</b> : avec une boucle (pour ou tant que) ;</li><li><b>« non itératif »</b> : aucune boucle ;</li><li><b>« non récursif »</b> : il ne doit jamais s'appeler lui-même ;</li><li><b>« les seules opérations autorisées sont… »</b> : tout ce qui n'est pas dans la liste est interdit. Même si tu sais que mod ou * existent.</li></ul>
+<p><b>Exemple.</b> « Écrire un algorithme récursif qui calcule 3 × n, en n'utilisant que l'addition et la soustraction. » L'expression 3 * n est interdite. On se ramène au cas plus petit : 3 × n = 3 × (n − 1) + 3. Et 3 × 0 = 0.</p>
+${PS(`FONCTION : fois3 (E n : entier) : entier
+SPÉCIFICATIONS : Calcule 3n avec n ∈ ℕ, sans multiplication
+DÉBUT
+    Renvoyer cond(n = 0, 0, fois3(n-1) + 3)
+FIN`)}
+<p>Vérification : fois3(2) = fois3(1) + 3 = (fois3(0) + 3) + 3 = 0 + 3 + 3 = 6. On n'a utilisé qu'une soustraction (n−1), des additions et une comparaison.</p>
+<p><b>La méthode :</b></p>
+<ol><li>avant d'écrire, souligne dans l'énoncé chaque mot qui impose quelque chose ;</li><li>fais la liste de ce qui est permis ;</li><li>à la fin, relis ton algorithme ligne par ligne et vérifie chaque opération : est-elle dans la liste ?</li></ol>`},
+ "a-affichage":{
+  "La méthode":`<p><b>Une procédure qui affiche</b> ne renvoie rien : son « résultat », c'est ce qui s'écrit à l'écran, dans l'ordre. Et <b>l'ordre des lignes change tout</b>.</p>
+<p><b>Deux procédures presque pareilles.</b></p>
+${PS(`PROCÉDURE : A (E n : entier)
+DÉBUT
+    si n > 0 alors
+        afficher n
+        A(n-1)
+    fin si;
+FIN
+
+PROCÉDURE : B (E n : entier)
+DÉBUT
+    si n > 0 alors
+        B(n-1)
+        afficher n
+    fin si;
+FIN`)}
+<p><b>A(3)</b> affiche 3, puis lance A(2), qui affiche 2 et lance A(1), qui affiche 1 et lance A(0), qui ne fait rien. À l'écran : <b>3 2 1</b>.</p>
+<p><b>B(3)</b> lance d'abord B(2), et n'affiche son 3 qu'une fois B(2) complètement fini. Résultat : <b>1 2 3</b>. Pour le trouver sans se perdre, on part du bas :</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>appel</th><th>ce qu'il fait</th><th>affiche</th></tr></thead><tbody><tr><td>B(0)</td><td>n &gt; 0 est faux : rien</td><td>(rien)</td></tr><tr><td>B(1)</td><td>B(0), puis afficher 1</td><td>1</td></tr><tr><td>B(2)</td><td>B(1), puis afficher 2</td><td>1 2</td></tr><tr><td>B(3)</td><td>B(2), puis afficher 3</td><td>1 2 3</td></tr></tbody></table></div>
+<p><b>Le geste clé :</b> dans chaque ligne, je <b>remplace</b> l'appel par ce que j'ai trouvé à la ligne d'au-dessus.</p>
+<p><b>Ça marche aussi avec deux appels.</b> C fait : C(n-1), puis afficher n, puis encore C(n-1). C(0) n'affiche rien.</p>
+<ul><li>C(1) : rien, 1, rien. Donc « 1 ».</li><li>C(2) : C(1), 2, C(1). Donc « 1 2 1 ».</li><li>C(3) : C(2), 3, C(2). Donc « 1 2 1 3 1 2 1 ».</li></ul>
+<p><b>Sur la copie,</b> écris ces lignes intermédiaires : elles montrent ta méthode, et le correcteur peut donner des points même si la dernière ligne est fausse.</p>`},
+ "a-listes":{
+  "Les quatre opérations":`<p><b>Une liste,</b> c'est une suite d'éléments, comme un train : on n'a accès qu'au premier wagon. Pour atteindre le troisième, il faut détacher les deux premiers. Pas de numéro de case comme dans un tableau.</p>
+<p><b>Les quatre opérations, sur L = [7, 1, 5] :</b></p>
+<ul><li><b>tête(L) = 7</b> : le premier élément. C'est un <b>élément</b> (ici un entier), pas une liste.</li><li><b>queue(L) = [1, 5]</b> : tout sauf le premier. C'est une <b>liste</b>.</li><li><b>cons(4, L) = [4, 7, 1, 5]</b> : une nouvelle liste, avec 4 ajouté devant.</li><li><b>estVide(L) = false</b> : L contient des éléments. estVide([ ]) vaut true.</li></ul>
+<p><b>Deux cas qui piègent.</b> queue([5]) = [ ] : la queue d'une liste d'un seul élément est la liste vide (ce n'est pas une erreur). Mais tête([ ]) et queue([ ]) sont des erreurs : une liste vide n'a pas de premier élément.</p>
+<p><b>Atteindre un élément plus loin :</b> on enlève des wagons avec queue, puis on prend la tête. Le troisième élément de L, c'est tête(queue(queue(L))).</p>
+<ul><li>queue(L) = [1, 5]</li><li>queue([1, 5]) = [5]</li><li>tête([5]) = 5</li></ul>
+<p><b>Lire de l'intérieur vers l'extérieur,</b> comme pour des parenthèses en maths.</p>
+<p><b>Surveiller les types.</b> tête donne un élément. On ne peut donc pas lui appliquer une opération qui attend une liste : queue(tête(L)) n'a pas de sens.</p>`,
+  "Le schéma récursif":`<p><b>Toutes les fonctions sur les listes, ou presque, suivent le même plan :</b></p>
+<ul><li>si la liste est vide, je donne la réponse directement (le cas de base) ;</li><li>sinon, je m'occupe de la tête moi-même, et je laisse la fonction s'occuper de la queue (l'appel récursif).</li></ul>
+<p><b>Exemple : compter les éléments pairs d'une liste.</b></p>
+${PS(`FONCTION : nbPairs (E L : liste d'entiers) : entier
+SPÉCIFICATIONS : Renvoie le nombre d'éléments pairs de L
+DÉBUT
+    si estVide(L) alors
+        Renvoyer 0
+    sinon si tête(L) mod 2 = 0 alors
+        Renvoyer 1 + nbPairs(queue(L))
+    sinon
+        Renvoyer nbPairs(queue(L))
+    fin si;
+FIN`)}
+<p><b>Je déroule nbPairs([4, 7, 2]).</b></p>
+<ul><li>La tête 4 est paire : 1 + nbPairs([7, 2]).</li><li>La tête 7 est impaire : nbPairs([2]), sans rien ajouter.</li><li>La tête 2 est paire : 1 + nbPairs([ ]).</li><li>La liste est vide : 0.</li></ul>
+<p>En remontant : 1 + (0 + (1 + 0)) = 2. Il y a bien deux nombres pairs, 4 et 2.</p>
+<p><b>La version avec une boucle.</b> On garde une copie M de la liste, et on lui enlève sa tête à chaque tour, jusqu'à ce qu'elle soit vide :</p>
+${PS(`cpt ← 0
+M ← L
+tant que non estVide(M) faire
+    si tête(M) mod 2 = 0 alors
+        cpt ← cpt + 1
+    fin si;
+    M ← queue(M)
+fin tq;
+Renvoyer cpt`)}
+<p>Sans la ligne « M ← queue(M) », M ne raccourcit jamais, et la boucle ne s'arrête pas.</p>`,
+  "D'un tableau à une liste":`<p><b>Le problème.</b> cons ajoute toujours <b>devant</b>. Si on ajoute les éléments les uns après les autres, le dernier ajouté se retrouve en premier.</p>
+<p><b>Essai naïf avec T = [6, 9, 4], dans l'ordre des cases :</b></p>
+<ul><li>au départ L = [ ] ;</li><li>cons(6, L) donne [6] ;</li><li>cons(9, L) donne [9, 6] ;</li><li>cons(4, L) donne [4, 9, 6].</li></ul>
+<p>La liste est à l'envers.</p>
+<p><b>La solution : parcourir le tableau en partant de la fin.</b> « pour i de taille(T)-1 à 0 par pas de -1 » fait prendre à i les valeurs 2, 1, 0.</p>
+<ul><li>i = 2 : cons(T[2], L) = cons(4, [ ]) donne [4] ;</li><li>i = 1 : cons(9, [4]) donne [9, 4] ;</li><li>i = 0 : cons(6, [9, 4]) donne [6, 9, 4].</li></ul>
+<p>Cette fois, la liste est dans le même ordre que le tableau.</p>
+<p><b>À retenir :</b> avec cons, on construit la liste en commençant par son <b>dernier</b> élément.</p>
+<p><b>Et si on ne veut garder que certains éléments ?</b> On met un « si » dans la boucle : on fait le cons seulement pour les cases qui conviennent, et on saute les autres.</p>`},
+ "a-motifs":{
+  "La méthode":`<p><b>Comment l'écran écrit :</b> de gauche à droite, une ligne après l'autre, sans jamais revenir en arrière. Pour dessiner une figure, il faut donc savoir, pour chaque ligne, <b>combien d'espaces</b> écrire d'abord, puis <b>combien d'étoiles</b>.</p>
+<p><b>Exemple : ce triangle, pour n = 4.</b></p>
+${PS(`   *
+  **
+ ***
+****`)}
+<p><b>Étape 1 : un tableau, ligne par ligne.</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>ligne i</th><th>espaces</th><th>étoiles</th></tr></thead><tbody><tr><td>1</td><td>3</td><td>1</td></tr><tr><td>2</td><td>2</td><td>2</td></tr><tr><td>3</td><td>1</td><td>3</td></tr><tr><td>4</td><td>0</td><td>4</td></tr></tbody></table></div>
+<p><b>Étape 2 : trouver la règle.</b> Les étoiles : autant que le numéro de la ligne, donc i. Les espaces : ce qui manque pour arriver à 4, donc n − i. Sur chaque ligne, espaces + étoiles = n.</p>
+<p><b>Étape 3 : traduire.</b> Une boucle sur les lignes ; dedans, une petite boucle par morceau, puis le retour à la ligne.</p>
+${PS(`PROCÉDURE : triangleDroit (E n : entier)
+DÉBUT
+    pour i de 1 à n faire
+        pour k de 1 à n-i faire
+            affEspace()
+        fin pour;
+        pour k de 1 à i faire
+            affEtoile()
+        fin pour;
+        affRL()
+    fin pour;
+FIN`)}
+<p><b>Étape 4 : vérifier la première et la dernière ligne.</b> Ligne 1 : n − 1 = 3 espaces, 1 étoile. Ligne 4 : 0 espace (« pour k de 1 à 0 » ne fait aucun tour), 4 étoiles. C'est bon.</p>
+<p><b>L'oubli classique :</b> affRL(). Sans lui, tout s'écrit sur une seule ligne. Il se place dans la grande boucle, après les petites.</p>`},
+ "a-tableaux2d":{
+  "Deux boucles imbriquées":`<p><b>Un tableau 2D, c'est une grille,</b> comme une salle de cinéma : des rangées (les lignes) et des sièges dans chaque rangée (les colonnes). Pour désigner un siège, il faut deux numéros : la rangée et la place.</p>
+<p><b>Exemple : M = [[2, 0, 7], [5, 1, 4]].</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th></th><th>colonne 0</th><th>colonne 1</th><th>colonne 2</th></tr></thead><tbody><tr><th>ligne 0</th><td>2</td><td>0</td><td>7</td></tr><tr><th>ligne 1</th><td>5</td><td>1</td><td>4</td></tr></tbody></table></div>
+<ul><li>M[0] = [2, 0, 7] : toute la ligne 0, qui est elle-même un tableau ;</li><li>M[1][0] = 5 : ligne 1, colonne 0. D'abord la ligne, ensuite la colonne ;</li><li>taille(M) = 2 lignes, taille(M[0]) = 3 colonnes.</li></ul>
+<p><b>Passer sur toutes les cases :</b> deux boucles l'une dans l'autre. Celle de dehors choisit la ligne ; celle de dedans parcourt les cases de cette ligne. C'est l'ordre de lecture d'un livre : (0,0), (0,1), (0,2), puis (1,0), (1,1), (1,2).</p>
+<p><b>Exemple : compter les cases qui valent plus de 3.</b></p>
+${PS(`cpt ← 0
+pour i de 0 à taille(M)-1 faire
+    pour j de 0 à taille(M[0])-1 faire
+        si M[i][j] > 3 alors
+            cpt ← cpt + 1
+        fin si;
+    fin pour;
+fin pour;
+Renvoyer cpt`)}
+<p>Pour M, les cases 7, 5 et 4 dépassent 3 : la fonction renvoie 3.</p>
+<p><b>Le jeu de la vie,</b> en mots simples : chaque case est vivante ou morte. Ses voisines sont les 8 cases qui la touchent (moins au bord : une case de coin n'en a que 3). À chaque étape :</p>
+<ul><li>une case vivante reste en vie si elle a 2 ou 3 voisines vivantes. Avec 0 ou 1, elle meurt d'isolement ; avec plus de 3, elle meurt étouffée ;</li><li>une case morte devient vivante si elle a exactement 3 voisines vivantes.</li></ul>`},
+ "a-dicos":{
+  "Le dictionnaire":`<p><b>Tableau ou dictionnaire ?</b> Dans un tableau, chaque case a un <b>numéro</b> : 0, 1, 2… Dans un dictionnaire, chaque case a un <b>nom</b>, qu'on appelle sa clé. C'est comme une fiche d'inscription : « nom : … », « note : … », « admis : … ».</p>
+<p><b>Exemple :</b></p>
+${PS(`E : dictionnaire('nom': chaîne, 'note': nombre, 'admis': booléen)
+E['nom'] ← "Léa"
+E['note'] ← 13.5
+E['admis'] ← true`)}
+<ul><li>E['note'] vaut 13,5 : on écrit la clé entre crochets, comme un numéro de case ;</li><li>une clé avec sa valeur forme un <b>champ</b>. E a 3 champs ;</li><li>les valeurs n'ont pas toutes le même type (une chaîne, un nombre, un booléen). Dans un tableau, toutes les cases ont le même type.</li></ul>
+<p><b>Parcourir un dictionnaire :</b> « pour k dans E faire » fait prendre à k chaque <b>clé</b> : 'nom', puis 'note', puis 'admis'. Pour avoir la valeur qui va avec, on écrit E[k].</p>
+${PS(`pour k dans E faire
+    afficher k, " : ", E[k]
+fin pour;`)}
+<p>Cela affiche « nom : Léa », « note : 13.5 », « admis : true ».</p>
+<p><b>Tester si une clé existe :</b> « 'note' dans E » vaut true ; « 'age' dans E » vaut false. On fait ce test avant de lire une clé qui pourrait manquer : lire E['age'] serait une erreur.</p>
+<p><b>Comparer deux dictionnaires,</b> c'est vérifier qu'ils ont exactement les mêmes clés, et la même valeur pour chaque clé.</p>`},
+ "a-piles":{
+  "Piles et files":`<p><b>Une pile, c'est une pile d'assiettes.</b> On pose une assiette sur le dessus (empiler), on reprend celle du dessus (dépiler). La dernière posée est la première reprise. Le dessus s'appelle le <b>sommet</b>.</p>
+<p><b>Une file, c'est la file d'attente à la boulangerie.</b> On arrive à la fin (enfiler), on sert celui qui est devant (défiler). Le premier arrivé est le premier servi.</p>
+<p><b>Même suite d'opérations, deux résultats.</b> J'ajoute 5, puis 8, puis 2.</p>
+<ul><li><b>Pile :</b> depiler donne 2, puis 8, puis 5. L'ordre est inversé.</li><li><b>File :</b> defiler donne 5, puis 8, puis 2. L'ordre est conservé.</li></ul>
+<p><b>Ce qu'on a le droit de faire :</b> seulement ces opérations, plus estVide. Pas de numéro de case, pas de tête ni de queue : pour voir ce qu'il y a au fond d'une pile, il faut dépiler tout ce qui est au-dessus.</p>
+<p><b>Transvaser une pile dans une autre,</b> c'est dépiler P élément par élément, et empiler chaque élément dans Q, jusqu'à ce que P soit vide :</p>
+${PS(`tant que non estVide(P) faire
+    x ← depiler(P)
+    empiler(x, Q)
+fin tq;`)}
+<p>Avec P qui contient 5, 8, 2 (2 au sommet) :</p>
+<ul><li>je dépile 2 et je l'empile dans Q : Q contient 2 ;</li><li>je dépile 8 : Q contient 2, 8 ;</li><li>je dépile 5 : Q contient 2, 8, 5, avec 5 au sommet.</li></ul>
+<p>Q contient les mêmes nombres que P, <b>dans l'ordre inverse</b>. C'est la clé des casse-têtes sur les piles : chaque transvasement retourne l'ordre.</p>`}}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
