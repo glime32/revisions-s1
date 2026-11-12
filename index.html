@@ -15357,7 +15357,88 @@ fin pour;`)}
 <p>Exemple avec [6, 2, 9, 4] :</p>
 <ul><li>je prends 2 : il va avant 6. [2, 6, 9, 4] ;</li><li>je prends 9 : il est déjà à sa place. [2, 6, 9, 4] ;</li><li>je prends 4 : il se glisse entre 2 et 6 ; 6 et 9 se décalent d'une case. [2, 4, 6, 9].</li></ul>
 <p><b>Le coût : θ(n²) pour les deux.</b> Sélection : pour trouver le plus petit, il faut parcourir tout le reste, et on recommence n − 1 fois. Insertion : dans le pire cas, chaque valeur doit remonter toute la partie déjà triée.</p>
-<p><b>Leur différence.</b> Le tri par sélection fait toujours le même travail, même si le tableau est déjà trié. Le tri par insertion, lui, va vite quand le tableau est presque trié : chaque valeur est déjà à peu près à sa place, il n'y a presque rien à décaler.</p>`} /*SUITE-ALGO*/}
+<p><b>Leur différence.</b> Le tri par sélection fait toujours le même travail, même si le tableau est déjà trié. Le tri par insertion, lui, va vite quand le tableau est presque trié : chaque valeur est déjà à peu près à sa place, il n'y a presque rien à décaler.</p>`},
+ "a-forme":{
+  "Le squelette, toujours le même":`<p><b>Un algorithme,</b> c'est une recette : une suite d'instructions précises, qu'on peut suivre sans réfléchir. Au contrôle, tu l'écris en « pseudo-code » : du français codifié, pas un vrai langage de programmation.</p>
+<p><b>Il a toujours la même forme, comme une fiche de recette :</b></p>
+<ul><li><b>la première ligne (la « signature »)</b> dit son nom, ce qu'on lui donne, et ce qu'il rend ;</li><li><b>SPÉCIFICATIONS</b> : une phrase qui dit ce qu'il fait ;</li><li><b>Variable</b> : la liste des « boîtes » dont il a besoin pour travailler ;</li><li><b>DÉBUT … FIN</b> : les instructions.</li></ul>
+<p><b>FONCTION ou PROCÉDURE ?</b></p>
+<ul><li>Il <b>calcule une réponse</b> et la rend avec « Renvoyer » : c'est une FONCTION. On écrit le type de la réponse au bout de la première ligne.</li><li>Il <b>fait quelque chose</b> sans rendre de réponse (afficher à l'écran, modifier un tableau qu'on lui a donné) : c'est une PROCÉDURE. Rien au bout de la ligne, et pas de « Renvoyer ».</li></ul>
+<p><b>Un paramètre,</b> c'est une donnée qu'on fournit à l'algorithme. La lettre placée devant dit ce qu'il en fait. E (entrée) : il la lit seulement. ES (entrée-sortie) : il la lit et la modifie. S (sortie) : il la remplit.</p>
+<p><b>Un type,</b> c'est la sorte d'une valeur : entier, nombre, booléen (vrai ou faux), tableau…</p>
+<p><b>Exemple de signature :</b> « FONCTION : double (E x : entier) : entier ». Son nom est double. On lui donne un entier x, qu'il ne fait que lire. Il rend un entier.</p>
+<p><b>Les blocs se ferment.</b> Tout ce qui s'ouvre avec « si », « pour » ou « tant que » se ferme avec « fin si; », « fin pour; », « fin tq; ». Comme une parenthèse : sans la fermeture, on ne sait pas où le bloc s'arrête.</p>
+<p><b>Ce qu'on ne met pas dans « Variable » :</b> les paramètres (ils sont déjà dans la signature) et le compteur d'une boucle « pour ».</p>`,
+  "Lire cet algorithme ligne par ligne":`<p><b>Pour comprendre un algorithme, le mieux est de le faire tourner à la main</b> sur un petit exemple. Je prends x = 8 et T = [3, 8, 5].</p>
+<p><b>Avant la boucle :</b> cpt ← 0. La boîte cpt contient 0.</p>
+<p><b>La boucle.</b> taille(T) vaut 3, donc i prend les valeurs 0, 1, 2.</p>
+<ul><li>i = 0 : T[0] vaut 3. Est-ce égal à 8 ? Non. On ne fait rien.</li><li>i = 1 : T[1] vaut 8. Est-ce égal à 8 ? Oui. cpt ← cpt + 1 : cpt passe de 0 à 1.</li><li>i = 2 : T[2] vaut 5. Non. Rien.</li></ul>
+<p><b>Après la boucle :</b> Renvoyer cpt &gt; 0. cpt vaut 1, et 1 &gt; 0 est vrai : l'algorithme renvoie true.</p>
+<p><b>Ce que fait donc cet algorithme :</b> il compte combien de cases valent x, puis il répond à la question « y en a-t-il au moins une ? ».</p>
+<p><b>Trois points qui piègent au début :</b></p>
+<ul><li><b>← et = ne veulent pas dire la même chose.</b> « cpt ← 0 » est un ordre : mets 0 dans cpt. « T[i] = x » est une question : est-ce égal ? La réponse est vrai ou faux.</li><li><b>« cpt ← cpt + 1 »</b> se lit de droite à gauche : je calcule cpt + 1 avec l'ancienne valeur, puis je range le résultat dans cpt.</li><li><b>Les cases commencent à 0.</b> Dans [3, 8, 5], T[0] = 3, T[1] = 8, T[2] = 5. Il n'y a pas de T[3].</li></ul>`,
+  "Trouve les erreurs":`<p><b>Le jeu :</b> chaque algorithme affiché contient des fautes de forme. Ce sont celles qui font perdre des points au contrôle alors que l'idée est bonne.</p>
+<p><b>La liste de contrôle, à passer dans cet ordre :</b></p>
+<ol><li><b>La première ligne.</b> Y a-t-il FONCTION ou PROCÉDURE ? Chaque paramètre a-t-il sa lettre (E, S, ES) et son type ? Si c'est une fonction, le type du résultat est-il écrit au bout ?</li><li><b>La ligne Variable.</b> Chaque nom qui reçoit une valeur avec ← dans le corps doit y être déclaré, sauf les paramètres et les compteurs de « pour ».</li><li><b>Les fermetures.</b> Je compte les « si », les « pour » et les « tant que », et je vérifie que chacun a son « fin si; », « fin pour; » ou « fin tq; », au bon endroit.</li><li><b>Le Renvoyer.</b> Une fonction doit en avoir un ; une procédure n'en a pas.</li></ol>
+<p><b>Pourquoi la place du « fin pour; » compte.</b> Tout ce qui est écrit avant « fin pour; » est répété à chaque tour. Tout ce qui est écrit après n'est fait qu'une fois, quand la boucle est finie.</p>
+<p><b>Un conseil pour la copie :</b> décale vers la droite les lignes qui sont à l'intérieur d'un bloc. On voit tout de suite ce qui est dedans, ce qui est dehors, et s'il manque une fermeture.</p>`},
+ "a-expressions":{
+  "Les types : entier, nombre, booléen, chaîne":`<p><b>Un type,</b> c'est la sorte d'une valeur. Comme dans la vie : « 3 » est un nombre, « oui » est une réponse, « Paul » est un mot. On ne fait pas les mêmes choses avec : on peut additionner deux nombres, pas deux réponses.</p>
+<p><b>Les quatre types de base :</b></p>
+<ul><li><b>entier</b> : un nombre sans virgule. 12, 0, −7.</li><li><b>nombre</b> : un nombre avec ou sans virgule. 3,14 ou 12.</li><li><b>booléen</b> : la réponse à une question fermée. Deux valeurs seulement : true (vrai) et false (faux).</li><li><b>chaîne</b> : du texte, écrit entre guillemets. "bonjour".</li></ul>
+<p><b>Attention aux guillemets :</b> 12 est un entier ; "12" est une chaîne, le texte formé des caractères 1 et 2.</p>
+<p><b>Une expression,</b> c'est un calcul écrit, qui a une valeur. « 4 + 2 * 3 » est une expression. Sa valeur est 10 (la multiplication d'abord), et son type est entier.</p>
+<p><b>Trouver le type d'une expression :</b> je fais le calcul, je regarde le résultat, et je dis de quelle sorte il est.</p>
+<ul><li>7 − 9 vaut −2 : entier ;</li><li>1,5 + 2 vaut 3,5 : nombre ;</li><li>7 &gt; 9 vaut false : booléen. Une comparaison est une question, sa réponse est vrai ou faux.</li></ul>`,
+  "Les opérateurs du cours (p. 12)":`<p><b>Un opérateur,</b> c'est un signe qui fait un calcul : +, &lt;, « et »… Il y en a trois familles.</p>
+<p><b>1. Les calculs.</b> + − * sont l'addition, la soustraction, la multiplication. Il y a <b>trois</b> signes autour de la division :</p>
+<ul><li>« / » : la division normale, avec virgule. 7 / 2 = 3,5 ;</li><li>« div » : le quotient entier, « combien de fois ça rentre ». 7 div 2 = 3 ;</li><li>« mod » : le reste. 7 mod 2 = 1, car 7 = 2 × 3 + 1.</li></ul>
+<p>Pense à un partage : 7 bonbons pour 2 enfants. Chacun en a 3 (div), et il en reste 1 (mod).</p>
+<p><b>À quoi sert mod :</b> « n mod 2 = 0 » veut dire « n est pair ». « n mod 3 = 0 » veut dire « n est divisible par 3 ».</p>
+<p><b>2. Les comparaisons.</b> = ≠ &lt; ≤ &gt; ≥. Elles posent une question ; la réponse est un booléen. 4 ≤ 4 vaut true.</p>
+<p><b>3. Les opérateurs logiques,</b> pour combiner des booléens :</p>
+<ul><li>« a et b » est vrai quand <b>les deux</b> sont vrais ;</li><li>« a ou b » est vrai quand <b>au moins un</b> des deux est vrai ;</li><li>« non a » inverse : vrai devient faux, faux devient vrai.</li></ul>
+<p><b>L'évaluation paresseuse.</b> L'ordinateur lit de gauche à droite, et s'arrête dès qu'il connaît la réponse. Dans « a et b », si a est faux, le tout est faux : inutile de regarder b. Dans « a ou b », si a est vrai, le tout est vrai : inutile de regarder b. Exemple : « 2 &gt; 3 et (1/0 = 5) » vaut false, sans jamais calculer 1/0.</p>
+<p><b>cond(a, b, c)</b> est un « si » en une ligne : si a est vrai, la valeur est b ; sinon, c'est c. Exemple : cond(4 &gt; 9, 1, 0) vaut 0, car 4 &gt; 9 est faux.</p>`,
+  "Appeler une fonction donnée par l'énoncé : proche? et reste":`<p><b>Appeler une fonction,</b> c'est s'en servir : on écrit son nom, et entre parenthèses les valeurs qu'on lui donne (les « arguments »). L'appel vaut la réponse de la fonction.</p>
+<p><b>Comme une touche de calculatrice.</b> Tu ne sais pas comment la touche √ fait son calcul, et tu n'en as pas besoin : tu sais ce qu'elle rend. Ici c'est pareil : l'énoncé donne la signature et les spécifications de la fonction, pas son corps.</p>
+<p><b>Lire une signature pour savoir appeler.</b> Imagine « FONCTION : carre (E x : entier) : entier », qui renvoie x × x.</p>
+<ul><li>Elle attend <b>un</b> argument, de type entier ;</li><li>elle renvoie un entier.</li></ul>
+<p>Donc carre(4) vaut 16. carre(4, 2) est une erreur : un argument de trop. carre(true) est une erreur : mauvais type.</p>
+<p><b>Les appels emboîtés.</b> On calcule de l'intérieur vers l'extérieur, comme avec des parenthèses. carre(carre(2)) : d'abord carre(2) = 4, puis carre(4) = 16.</p>
+<p><b>La méthode pour toute expression avec des appels :</b></p>
+<ol><li>je compte les arguments : est-ce le bon nombre ?</li><li>je regarde leurs types : est-ce ceux que la signature attend ?</li><li>je calcule, en commençant par ce qui est le plus à l'intérieur.</li></ol>
+<p><b>Le point d'interrogation</b> dans un nom comme « proche? » fait partie du nom. C'est une habitude pour les fonctions qui répondent par vrai ou faux.</p>`},
+ "a-boucles":{
+  "La syntaxe du cours":`<p><b>Une boucle</b> sert à répéter des instructions sans les recopier. Il y en a deux sortes.</p>
+<p><b>La boucle « pour » : je sais combien de fois.</b> « pour i de 1 à 4 faire … fin pour; » répète le bloc 4 fois. La variable i est un compteur : elle vaut 1 au premier tour, puis 2, puis 3, puis 4. Les deux bornes sont comprises.</p>
+<p><b>La boucle « tant que » : je ne sais pas combien de fois.</b> Elle répète le bloc tant qu'une condition est vraie. Avant chaque tour, elle pose la question ; si la réponse est faux, elle s'arrête. Exemple : « tant que x &lt; 100 faire x ← x * 2 fin tq; ». En partant de x = 10 : 20, 40, 80, 160. À 160, la condition est fausse : arrêt.</p>
+<p><b>Le danger du tant que.</b> Si rien dans le bloc ne fait changer la condition, elle reste vraie pour toujours, et la boucle ne s'arrête jamais.</p>
+<p><b>« par pas de »</b> change la marche du compteur. Sans rien, i avance de 1 en 1. « pour i de 0 à 8 par pas de 2 » donne 0, 2, 4, 6, 8. Avec un pas négatif, on recule : « pour i de 3 à 1 par pas de -1 » donne 3, 2, 1.</p>
+<p><b>Le « si »</b> n'est pas une boucle : il fait un choix, une seule fois. Si la condition est vraie, on fait le premier bloc ; sinon, on fait le bloc du « sinon ». Le « sinon » est facultatif.</p>
+<p><b>afficher et Renvoyer, la différence :</b></p>
+<ul><li>« afficher x » écrit x à l'écran, et <b>continue</b>. On peut afficher dix fois de suite.</li><li>« Renvoyer x » donne la réponse finale, et <b>arrête tout</b>. Ce qui est écrit après n'est pas exécuté.</li></ul>`,
+  "Déroule une boucle pas à pas":`<p><b>Faire une trace,</b> c'est jouer à l'ordinateur : on exécute l'algorithme à la main, ligne par ligne, en notant la valeur de chaque variable. C'est la meilleure façon de comprendre ce que fait une boucle, et c'est une question qui tombe au contrôle.</p>
+<p><b>Comment s'y prendre :</b></p>
+<ol><li>je trace un tableau, avec une colonne par variable ;</li><li>la première ligne contient les valeurs avant la boucle ;</li><li>avant chaque tour, je vérifie si la boucle continue ;</li><li>à chaque tour, j'ajoute une ligne avec les nouvelles valeurs.</li></ol>
+<p><b>Exemple.</b></p>
+${PS(`s ← 0
+pour i de 1 à 3 faire
+    s ← s + i
+fin pour;`)}
+<div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th>moment</th><th class="var">i</th><th class="var">s</th></tr></thead><tbody><tr><td>avant la boucle</td><td></td><td>0</td></tr><tr><td>fin du tour 1</td><td>1</td><td>1</td></tr><tr><td>fin du tour 2</td><td>2</td><td>3</td></tr><tr><td>fin du tour 3</td><td>3</td><td>6</td></tr></tbody></table></div>
+<p>À la fin, s vaut 6 : c'est 1 + 2 + 3.</p>
+<p><b>Les deux erreurs classiques :</b> oublier la ligne de départ, et changer une valeur « de tête » sans écrire la ligne. Écris tout, même si c'est lent.</p>`},
+ "a-tableaux":{
+  "Trois schémas qui couvrent presque tout":`<p><b>Un tableau,</b> c'est une rangée de cases numérotées, qui contiennent chacune une valeur. T = [5, 12, 7] a trois cases : T[0] = 5, T[1] = 12, T[2] = 7. La numérotation commence à 0, et taille(T) vaut 3.</p>
+<p><b>Pour passer sur toutes les cases,</b> une seule ligne à connaître par cœur : « pour i de 0 à taille(T)-1 faire ». i prend chaque numéro de case, et T[i] est la case en cours.</p>
+<p><b>Presque tous les exercices sur les tableaux suivent l'un de ces trois modèles.</b></p>
+<p><b>1. Accumuler : je fais un total.</b> Comme compter l'argent d'une tirelire : je pars de 0, et j'ajoute chaque pièce. Trois moments : <b>avant</b> la boucle, je mets le total à 0 ; <b>dans</b> la boucle, j'ajoute la case ; <b>après</b> la boucle, je renvoie le total. Pour T = [5, 12, 7] : som vaut 0, puis 5, puis 17, puis 24.</p>
+<p>Pour un produit, on part de 1 (et pas de 0, sinon tout vaut 0). Pour compter des cases, on part de 0 et on ajoute 1.</p>
+<p><b>2. Chercher : je réponds par vrai ou faux.</b> « Est-ce que toutes les cases sont plus petites que 10 ? » Je regarde les cases une par une. Dès que j'en vois une qui contredit (12 ≥ 10), je connais la réponse : je renvoie false tout de suite. Si j'arrive au bout sans en avoir vu, je renvoie true, <b>après</b> la boucle.</p>
+<p>Le piège : on ne peut pas répondre true dans la boucle. Voir une case qui convient ne dit rien sur les suivantes.</p>
+<p><b>3. Fabriquer : je construis un nouveau tableau.</b> Je déclare un tableau R de la bonne taille dans « Variable », je remplis ses cases une par une dans la boucle, et je le renvoie après. Pour T = [5, 12, 7] et « le double de chaque valeur » : R = [10, 24, 14].</p>
+<p><b>Devant un énoncé, pose-toi la question :</b> me demande-t-on un total, une réponse vrai ou faux, ou un nouveau tableau ? Tu sais alors quel modèle suivre.</p>`} /*SUITE-ALGO*/}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
