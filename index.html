@@ -601,6 +601,9 @@ pre.console{margin:0;background:#020403;color:#B9F7CF;border:2px solid #10301F;b
 .rwl.on{opacity:1;background:var(--cobalt-voile)}
 .mathq{font-family:var(--f-math);font-size:1.35rem;margin:0}
 .mth{font-family:var(--f-math);font-size:1.08em}
+.mi{font-family:var(--f-math);font-size:1.06em;font-weight:inherit}
+.mi .mi{font-size:1em}
+h1 .mi,h2 .mi,h3 .mi{font-size:.92em;font-weight:600}
 sup,sub{line-height:0}
 .formula{font-family:var(--f-math);font-size:1.08rem;background:var(--voile);border:1px solid var(--trait);border-radius:10px;padding:8px 12px;margin:6px 0}
 svg.plot{display:block;width:100%;height:auto;max-width:none}
@@ -1353,7 +1356,66 @@ function plotter(w,h,xmin,xmax,ymin,ymax){
   return {X,Y,ix,iy,axes,path,area,fmt};
 }
 
-window.W={esc,sup,mth,code,hlCode,tracer,calltree,sortviz,dicho,listlab,drill,rewrite,plotter};
+/* ------------------------------------------------------------------
+   Formules au fil du texte : une formule écrite dans une phrase passe en police mathématique.
+   Le texte est coupé en mots. Un mot « fort » porte un signe de maths (=, +, ′, une lettre grecque, f(x), 4t…) ;
+   un mot « faible » est une lettre seule, un nombre, un nom de fonction. Une suite de mots forts et faibles
+   qui contient au moins un mot fort est une formule ; une lettre seule (sauf « a » et « y ») aussi.
+   tout = false : seulement les titres en police Gloock.
+------------------------------------------------------------------ */
+const FORT=/[=+−×÷<>≤≥≠≈±⇒⇔→←↔⟶↦∈∉⊂⊆∪∩∀∃∞∫√′″∑∏∘∖∅ℝℕℤℚℂα-ωΑ-Ω⁰¹²³⁴-⁹ⁿˣʸᵘᵉⁱᵏᵗᵃᵇ⁺⁻₀-₉ₐₑₙₚₓₖ]/;
+const FONC=/^(ln|log|exp|cos|sin|tan|lim|arg|max|min|det|ker|im|Re|Im|Vect|Card|dx|dt|du|dy|dθ)$/;
+const FR2=new Set("et ou si on en de du la le il un ne se ce te me je tu au ça où or ni va as es eu lu vu su pu dû né ma ta sa là ah oh eh ex cf vs no ok km cm mm kg id tp td cc".split(" "));
+const SUJET=new Set(["on","il","elle","qui","y","ça","cela","ceci","l'on","qu'on","qu'il","n'y","l’on","qu’on","qu’il","n’y"]);
+const HORS="pre,code,kbd,svg,.vec,select,textarea,input,script,style,.formula,.redac,.mth,.mathq,.mi,.mat,.sys,.badge,.tag,.btn,.w-ctrl,.rw,.console,.blankcode,.bugs,.mono,.muted.small,.lp-kicker,.kicker";
+function genre(brut,avant,apres){
+  const t=brut.replace(/^[«(\[]+/,"").replace(/[.,;:!?…»)\]]+$/,"");
+  if(!t)return "x";
+  if(/^[a-z]\)$/.test(brut)||/^\([a-z]\)[.,:]?$/.test(brut)||brut==="p."||/^\d+(e|er|re|nd|de|ème|ʳᵉ|ᵉʳ|ᵉ|ᵈᵉ|ⁿᵈ)$/.test(t))return "x";
+  avant=avant.replace(/^[«(\[]+/,"");
+  if(/[A-Za-zÀ-ÿ]{3,}/.test(t.replace(/\b(ln|log|exp|cos|sin|tan|lim|arg|max|min|det|ker|Vect|Card)\b/g,""))&&!/^[A-Za-z]′*\(/.test(t))return "x";
+  if(t==="a")return SUJET.has(avant.toLowerCase())?"x":"f";
+  if(t==="y")return /^(il|ils|on|nous|vous|elle|elles|tu|je|pour|faut|peut|va|qu'il|qu’il|s'il|s’il)$/i.test(avant)&&!FORT.test(apres)?"x":"L";
+  if(FORT.test(t)||/^[A-Za-z]′*\(/.test(t)||/^[−-]?\d+[a-zA-Z]{1,2}$/.test(t)||/^(ln|log|exp|cos|sin|tan|arg|det|ker|Vect|Card)\(/.test(t))return "F";
+  if(/^\(?[A-Za-z0-9]{1,2}(\/\(?[A-Za-z0-9]{1,2}\)?)+$/.test(t)&&/[A-Za-z]/.test(t)&&!t.toLowerCase().split("/").some(x=>FR2.has(x)))return "F";
+  if(/^[A-Za-z]$/.test(t))return /^\d/.test(avant)&&/^[hsmg]$/.test(t)?"x":"L";
+  if(/^[−-]?\d+([.,]\d+)?(\/\d+)?$/.test(t)||FONC.test(t)||/^[A-Z]{1,3}\d{0,2}$/.test(t))return "f";
+  if(/^[a-z]{2}$/.test(t)&&!FR2.has(t))return "f";
+  return "x";
+}
+function formules(root,tout){
+  if(!root||root.closest(HORS))return;
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT,{acceptNode:e=>e.matches(HORS)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const L=[];let e=root;do{if(e.nodeType===1&&!e.matches(HORS))L.push(e);}while((e=tw.nextNode()));
+  L.forEach(P=>{
+    if(P.closest(".mi"))return;
+    let ok=false;for(const c of P.childNodes)if(c.nodeType===3&&/\S/.test(c.nodeValue)){ok=true;break;}
+    if(!ok)return;
+    if(!tout&&!getComputedStyle(P).fontFamily.includes("Gloock"))return;
+    const txt=[...P.childNodes].filter(c=>c.nodeType===3).map(c=>c.nodeValue).join(" ");
+    if(!FORT.test(txt)&&!P.querySelector(":scope>sup,:scope>sub,:scope>.vec")&&!/(^|[\s(])[A-Za-z]($|[\s.,;:)])/.test(txt))return;
+    /* un nœud par mot et par espace */
+    [...P.childNodes].forEach(c=>{if(c.nodeType!==3)return;const m=c.nodeValue.split(/(\s+)/).filter(x=>x!=="");if(m.length<2)return;
+      const f=document.createDocumentFragment();m.forEach(x=>f.appendChild(document.createTextNode(x)));P.replaceChild(f,c);});
+    const N=[...P.childNodes],mot=i=>N[i]&&N[i].nodeType===3&&/\S/.test(N[i].nodeValue)?N[i].nodeValue:"";
+    const voisin=(i,d)=>{for(let j=i+d;j>=0&&j<N.length;j+=d){if(N[j].nodeType!==3)return "";if(/\S/.test(N[j].nodeValue))return N[j].nodeValue;}return "";};
+    const G=N.map((c,i)=>c.nodeType===3?(/\S/.test(c.nodeValue)?genre(c.nodeValue,voisin(i,-1).replace(/[.,;:]+$/,""),voisin(i,1)):"e"):c.nodeType===1&&c.matches("sup,sub,.vec")?"F":"x");
+    /* un mot ordinaire qui porte un exposant ou un indice fait partie de la formule */
+    N.forEach((c,k)=>{if(k&&c.nodeType===1&&c.matches("sup,sub")&&G[k-1]==="x"&&N[k-1].nodeType===3)G[k-1]="F";});
+    let i=0;while(i<N.length){
+      if(G[i]!=="F"&&G[i]!=="f"&&G[i]!=="L"){i++;continue;}
+      let j=i,fin=i,fort=false;
+      /* une parenthèse ouverte sur un mot faible, « (TD 2) », ferme la formule */
+      while(j<N.length&&G[j]!=="x"&&!(j>i&&G[j]!=="F"&&G[j]!=="e"&&N[j].nodeValue[0]==="(")){if(G[j]!=="e"){fin=j;if(G[j]==="F")fort=true;}j++;}
+      const enrobe=(a,b)=>{const s=document.createElement("span");s.className="mi";P.insertBefore(s,N[a]);for(let k=a;k<=b;k++)s.appendChild(N[k]);};
+      /* sans signe de maths : une liste de lettres (« x, y ») passe en entier, sinon chaque lettre seule */
+      const lettres=()=>{let l=false;for(let k=i;k<=fin;k++){if(G[k]==="e")continue;if(G[k]==="L")l=true;else if(!/^[A-Za-z][.,;:]?$/.test(N[k].nodeValue))return false;}return l;};
+      if(fort||lettres())enrobe(i,fin);else for(let k=i;k<=fin;k++)if(G[k]==="L")enrobe(k,k);
+      i=G[j]==="x"||j>=N.length?j+1:j;}
+    P.normalize();});
+}
+
+window.W={esc,sup,mth,formules,code,hlCode,tracer,calltree,sortviz,dicho,listlab,drill,rewrite,plotter};
 })();
 
 </script>
@@ -15908,6 +15970,15 @@ if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
 window.addEventListener("hashchange",route);
+/* formules en police mathématique : les titres des matières de maths ; tout le texte avec ?maths=1 (essai).
+   Seuls les morceaux de page qui viennent de changer sont repassés. */
+{const MATHS=["calc","ana","lin","geo","rai"],tout=new URLSearchParams(location.search).get("maths")==="1",main=$("#main");
+ const obs=new MutationObserver(M=>{const p=(location.hash||"#/").slice(2).split("/").filter(Boolean),sid=p[0]==="lecon"?p[1]:p[0];
+   if(SIDS.includes(sid)&&!MATHS.includes(sid))return;
+   const R=[...new Set(M.map(m=>m.target))].filter(e=>e.isConnected);obs.disconnect();
+   try{R.filter(e=>!R.some(x=>x!==e&&x.contains(e))).forEach(e=>W.formules(e,tout));}catch(e){console.error(e);}
+   obs.observe(main,{childList:true,subtree:true});});
+ obs.observe(main,{childList:true,subtree:true});}
 route();
 /* hors ligne : seulement dans la version installable (celle qui a un manifeste et un sw.js à côté) */
 if("serviceWorker" in navigator&&document.querySelector('link[rel="manifest"]')&&(location.protocol==="https:"||location.hostname==="localhost")){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}
