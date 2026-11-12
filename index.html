@@ -14301,6 +14301,9 @@ Object.keys(CLAIR).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=CLAIR[sid][L.
    Le texte du cours reste affiché dessous, tel quel. */
 (function(){
 const C=s=>W.code(s,"ml");
+const v=s=>`<span class="vec">${s}</span>`;
+const sys=(...ls)=>`<span class="sys">${ls.map(l=>`<span>${l}</span>`).join("")}</span>`;
+const mat=(R,aug)=>`<span class="mat${aug?" aug":""}" style="--n:${R[0].length}">${R.map(r=>r.map((x,j)=>`<span${aug&&j===r.length-1?' class="au"':""}>${String(x).replace(/^-/,"−")}</span>`).join("")).join("")}</span>`;
 const DEBUT={
 calc:{
  "c-domaine":{
@@ -14570,7 +14573,183 @@ ${C(`let rec maxListe : int list -> int = function
   li -> if List.tl li = [] then List.hd li
         else let m = maxListe (List.tl li) in
              if List.hd li > m then List.hd li else m`)}
-<p>maxListe [4; 9; 2] : le plus grand de [9; 2] est 9 ; on compare 4 et 9 ; résultat 9.</p>`}}
+<p>maxListe [4; 9; 2] : le plus grand de [9; 2] est 9 ; on compare 4 et 9 ; résultat 9.</p>`}},
+lin:{
+ "l-repere":{
+  "Un repère, deux nombres":`<p><b>À quoi sert un repère.</b> À donner une <b>adresse</b> à chaque point du plan, avec deux nombres.</p>
+<p><b>De quoi il est fait :</b> un point de départ O (l'origine) et deux flèches ${v("i")} et ${v("j")} qui donnent deux directions.</p>
+<p><b>Lire une adresse.</b> Dire que M a pour coordonnées (3, 2), c'est dire : « en partant de O, j'avance 3 fois de la flèche ${v("i")}, puis 2 fois de la flèche ${v("j")}, et j'arrive en M ». On l'écrit ${v("OM")} = 3${v("i")} + 2${v("j")}.</p>
+<p><b>Pourquoi « non colinéaires ».</b> Deux flèches colinéaires ont la même direction. Avec elles, on ne ferait qu'avancer et reculer sur une seule droite : impossible d'atteindre les autres points du plan. Il faut donc deux directions vraiment différentes.</p>
+<p><b>Pourquoi « unique ».</b> Chaque point a une seule adresse : il n'y a qu'une façon d'arriver en M avec ces deux flèches. C'est ce qui permet de dire « les coordonnées sont égales, donc x = … et y = … » dans les exercices.</p>`,
+  "Vérifier qu'on a bien un repère":`<p><b>La question.</b> On te donne deux flèches, et tu dois dire si elles peuvent servir de repère. Il suffit de vérifier qu'elles n'ont pas la même direction.</p>
+<p><b>Le test, avec les coordonnées.</b> Pour deux flèches de coordonnées (a, b) et (c, d), on calcule le nombre ad − bc.</p>
+<ul><li>S'il est différent de 0 : les directions sont différentes, c'est un repère.</li><li>S'il vaut 0 : elles sont colinéaires, ce n'est pas un repère.</li></ul>
+<p><b>Exemple qui marche.</b> (3, 1) et (1, 2) : 3 × 2 − 1 × 1 = 5. Ce n'est pas 0 : on a un repère.</p>
+<p><b>Exemple qui rate.</b> (2, 4) et (1, 2) : 2 × 2 − 4 × 1 = 0. Elles sont colinéaires. On le voit aussi directement : (2, 4) = 2 × (1, 2), la première est le double de la seconde.</p>
+<p><b>Dans l'espace</b>, il faut trois flèches, et elles ne doivent pas être toutes les trois dans un même plan.</p>`,
+  "Changer de repère : de R′ vers R":`<p><b>L'idée.</b> Un même point peut avoir deux adresses, une dans chaque repère. Changer de repère, c'est traduire une adresse dans l'autre.</p>
+<p><b>Le nouveau repère</b> R′ a une origine A et deux flèches ${v("u")} et ${v("v")}. Tout ce qu'on sait de lui est écrit dans l'ancien repère R.</p>
+<p><b>Exemple chiffré</b> (d'autres nombres que ceux du cours) : A = (2, 0), ${v("u")} = (1, 1), ${v("v")} = (0, 2).</p>
+<p>Un point M a pour adresse (3, 1) dans R′. Cela veut dire : je pars de A, j'avance 3 fois de ${v("u")}, puis 1 fois de ${v("v")}.</p>
+<ul><li>A : (2, 0)</li><li>3 fois ${v("u")} : (3, 3)</li><li>1 fois ${v("v")} : (0, 2)</li><li>total : (2 + 3 + 0, 0 + 3 + 2) = (5, 5).</li></ul>
+<p>L'adresse de M dans R est donc (5, 5).</p>
+<p><b>La formule générale</b>, pour une adresse (x′, y′) quelconque dans R′ : on fait le même calcul avec des lettres. x = 2 + x′ et y = x′ + 2y′.</p>`,
+  "Changer de repère : de R vers R′":`<p><b>Le sens inverse.</b> Cette fois on connaît l'adresse (x, y) dans l'ancien repère, et on veut l'adresse (x′, y′) dans le nouveau.</p>
+<p><b>La méthode.</b> On reprend les deux formules de l'écran précédent, et on les regarde comme un système dont les inconnues sont x′ et y′.</p>
+<p>Avec l'exemple d'avant : x = 2 + x′ et y = x′ + 2y′.</p>
+<ol><li>La première donne tout de suite x′ = x − 2.</li><li>On remplace dans la seconde : y = (x − 2) + 2y′, donc 2y′ = y − x + 2, donc y′ = (y − x + 2)/2.</li></ol>
+<p><b>Vérification avec un point connu.</b> Pour M = (5, 5) : x′ = 5 − 2 = 3 et y′ = (5 − 5 + 2)/2 = 1. On retrouve bien l'adresse (3, 1).</p>
+<p><b>Un autre contrôle rapide :</b> l'origine A du nouveau repère doit avoir pour adresse (0, 0) dans ce repère. Avec A = (2, 0) : x′ = 0 et y′ = (0 − 2 + 2)/2 = 0. C'est bon.</p>`},
+ "l-rn":{
+  "ℝⁿ et ses deux opérations":`<p><b>Un vecteur de ℝⁿ</b>, c'est simplement une <b>liste de n nombres</b>, écrite entre parenthèses. (1, 4) est un vecteur de ℝ² ; (1, 4, 2) est un vecteur de ℝ³. Les nombres de la liste s'appellent ses composantes.</p>
+<p><b>Deux opérations, et seulement deux :</b></p>
+<ul><li><b>additionner deux vecteurs</b> de même taille, case par case : (1, 4, 2) + (3, 0, 5) = (1 + 3, 4 + 0, 2 + 5) = (4, 4, 7) ;</li><li><b>multiplier un vecteur par un nombre</b>, en multipliant chaque case : 2 × (1, 4, 2) = (2, 8, 4).</li></ul>
+<p><b>Le vocabulaire.</b> Un « scalaire », c'est juste un nombre réel, par opposition à un vecteur. Le « vecteur nul » est celui dont toutes les cases valent 0 : (0, 0, 0) dans ℝ³.</p>
+<p><b>Ce qui n'existe pas :</b> additionner un vecteur de ℝ² et un vecteur de ℝ³ (pas la même taille), ou multiplier deux vecteurs entre eux.</p>`,
+  "Les 8 règles de calcul (Proposition 10)":`<p><b>Ce que disent ces huit règles, en une phrase :</b> avec des vecteurs, l'addition et la multiplication par un nombre se comportent comme avec des nombres ordinaires. On peut changer l'ordre, regrouper, développer.</p>
+<p><b>Voir une règle sur des nombres.</b> Prenons la dernière, λ(x + y) = λx + λy, avec λ = 2, x = (1, 2) et y = (3, 5).</p>
+<ul><li>À gauche : x + y = (4, 7), puis 2 × (4, 7) = (8, 14).</li><li>À droite : 2x = (2, 4) et 2y = (6, 10), puis (2, 4) + (6, 10) = (8, 14).</li></ul>
+<p>On obtient la même chose des deux côtés.</p>
+<p><b>Comment on démontre une règle.</b> Un exemple ne suffit pas : il faut que ce soit vrai pour tous les vecteurs. L'idée est toujours la même : on regarde <b>une case à la fois</b>. Dans une case, il n'y a que des nombres, et pour les nombres la règle est déjà connue. Si c'est vrai dans chaque case, c'est vrai pour le vecteur entier.</p>
+<p><b>À retenir pour le contrôle :</b> pas les huit règles une par une, mais cette façon de les démontrer, « composante par composante ».</p>`,
+  "Vecteurs canoniques":`<p><b>Ce sont les vecteurs les plus simples :</b> un seul 1, et des 0 partout ailleurs. Dans ℝ³, il y en a trois : e₁ = (1, 0, 0), e₂ = (0, 1, 0), e₃ = (0, 0, 1). Le numéro dit où est le 1.</p>
+<p><b>À quoi ils servent.</b> Ce sont des briques : n'importe quel vecteur se fabrique avec eux, et il suffit de lire ses cases.</p>
+<p>Exemple : (4, 0, 7) = 4e₁ + 0e₂ + 7e₃. Vérification : 4 × (1, 0, 0) = (4, 0, 0), 7 × (0, 0, 1) = (0, 0, 7), et la somme fait bien (4, 0, 7).</p>
+<p><b>Dans l'autre sens :</b> 2e₁ − e₃ dans ℝ³, c'est (2, 0, −1). La case 2 vaut 0 parce que e₂ n'apparaît pas.</p>`,
+  "Résoudre une équation dont l'inconnue est un vecteur":`<p><b>L'idée.</b> Comme les vecteurs se calculent comme des nombres, on résout une équation où l'inconnue est un vecteur exactement comme une équation ordinaire : on isole l'inconnue.</p>
+<p><b>Exemple simple.</b> On cherche le vecteur x tel que 3x + u = v, avec u = (1, 2) et v = (7, 8).</p>
+<ol><li>On enlève u des deux côtés : 3x = v − u.</li><li>On divise par 3 : x = (v − u)/3.</li><li>On calcule : v − u = (6, 6), donc x = (2, 2).</li></ol>
+<p>Vérification : 3 × (2, 2) + (1, 2) = (6, 6) + (1, 2) = (7, 8). C'est bien v.</p>
+<p><b>Avec deux vecteurs inconnus</b> et deux équations, on fait comme pour un système de deux équations avec des nombres : on exprime l'une des inconnues avec la première équation, et on remplace dans la seconde.</p>
+<p><b>La seule chose interdite :</b> diviser par un vecteur. On ne divise que par des nombres.</p>`,
+  "λx = 0 si et seulement si λ = 0 ou x = 0":`<p><b>Ce que dit la phrase.</b> Un nombre λ multiplié par un vecteur x donne le vecteur nul dans deux cas seulement : quand le nombre vaut 0, ou quand le vecteur est déjà nul. C'est la même idée qu'avec les nombres : a × b = 0 seulement si a = 0 ou b = 0.</p>
+<p><b>« Si et seulement si »</b> veut dire qu'il y a <b>deux choses à démontrer</b>, une dans chaque sens.</p>
+<p><b>Sens 1 (le facile).</b> Si λ = 0 ou si x est le vecteur nul, alors λx est nul.</p>
+<ul><li>Si λ = 0 : chaque case de 0 × x vaut 0 fois quelque chose, donc 0.</li><li>Si x est nul : chaque case de λx vaut λ fois 0, donc 0.</li></ul>
+<p><b>Sens 2.</b> Si λx est nul, alors λ = 0 ou x est nul. On coupe en deux cas :</p>
+<ul><li>si λ = 0, on a ce qu'on voulait, c'est fini ;</li><li>sinon, λ n'est pas 0, donc on a le droit de <b>diviser par λ</b>. Dans chaque case, λ × xᵢ = 0 donne xᵢ = 0. Toutes les cases de x sont nulles : x est le vecteur nul.</li></ul>
+<p><b>Pourquoi couper en deux cas.</b> Parce qu'on ne peut pas diviser par 0. Avant de diviser par λ, il faut donc avoir mis de côté le cas λ = 0.</p>
+<p>Exemple : 3x = (0, 0). Ici λ = 3 n'est pas nul, donc x = (0, 0).</p>`},
+ "l-equation":{
+  "Équation linéaire":`<p><b>« Linéaire »</b> veut dire : chaque inconnue est seulement <b>multipliée par un nombre</b>, puis on additionne le tout. Rien d'autre.</p>
+<ul><li>3x + 2y = 7 est linéaire.</li><li>x² + y = 1 ne l'est pas : il y a un carré.</li><li>xy = 2 ne l'est pas : deux inconnues sont multipliées entre elles.</li></ul>
+<p><b>Les mots.</b> Dans 3x + 2y = 7 : 3 et 2 sont les <b>coefficients</b> (les nombres devant les inconnues), et 7 est le <b>second membre</b> (ce qui est à droite du signe =).</p>
+<p><b>« Homogène »</b> veut dire que le second membre vaut 0 : 3x + 2y = 0.</p>
+<p><b>Une subtilité du cours.</b> Être linéaire dépend de ce qu'on décide d'appeler « inconnue ». Si m est un nombre fixé qu'on ne cherche pas (un paramètre), alors mx + y = 1 est linéaire en x et y : le coefficient de x est m.</p>`,
+  "Toutes les solutions : une représentation paramétrique":`<p><b>Le constat.</b> Une seule équation avec deux inconnues a une infinité de solutions. Pour x + y = 5 : (0, 5), (1, 4), (2, 3), (10, −5)… On ne peut pas les écrire toutes : il faut une façon de les décrire.</p>
+<p><b>La méthode.</b> On laisse une inconnue libre, et on calcule l'autre avec elle.</p>
+<ol><li>Je choisis x librement. Je l'appelle t, pour montrer qu'il peut prendre n'importe quelle valeur.</li><li>Alors y est forcé : y = 5 − t.</li><li>Les solutions sont tous les couples (t, 5 − t).</li></ol>
+<p><b>L'écriture :</b> S = {(t, 5 − t) | t ∈ ℝ}. Elle se lit : « S est l'ensemble des couples (t, 5 − t), pour tous les réels t ». La lettre t s'appelle un <b>paramètre</b>.</p>
+<p><b>Essaie avec un nombre.</b> Pour t = 2 : (2, 3), et 2 + 3 = 5. Pour t = −1 : (−1, 6), et −1 + 6 = 5. Chaque valeur de t donne une solution.</p>
+<p><b>Une inconnue absente de l'équation est libre elle aussi.</b> Dans x + y = 5 vue avec trois inconnues x, y, z, rien n'est imposé à z : il faut un deuxième paramètre pour lui.</p>`,
+  "Système linéaire et solutions":`<p><b>Un système</b>, c'est plusieurs équations qui doivent être vraies <b>en même temps</b>, avec les mêmes inconnues.</p>
+<p><b>Tester une solution.</b> Prenons le système x + y = 3 et x − y = 1.</p>
+<ul><li>Le couple (2, 1) : 2 + 1 = 3, vrai ; 2 − 1 = 1, vrai. Les deux sont vraies : <b>c'est une solution</b>.</li><li>Le couple (3, 0) : 3 + 0 = 3, vrai ; 3 − 0 = 3, et pas 1. Une équation est fausse : <b>ce n'est pas une solution</b>.</li></ul>
+<p>Une seule équation fausse suffit pour dire non.</p>
+<p><b>Combien de solutions ?</b> Il n'y a que trois possibilités : aucune, une seule, ou une infinité. Jamais exactement deux.</p>
+<p><b>Pour s'en souvenir</b>, pense à deux droites dans le plan (chaque équation à deux inconnues est une droite) : elles sont parallèles (aucun point commun), elles se coupent (un seul), ou elles sont confondues (une infinité).</p>
+<p><b>Le mot du cours :</b> un système sans aucune solution est dit « incompatible ».</p>`},
+ "l-matrice-aug":{
+  "La matrice augmentée":`<p><b>L'idée.</b> Dans un système, les lettres x, y, z ne servent qu'à dire « à quelle place est chaque nombre ». On peut donc ne garder que les nombres, rangés dans un tableau. Ce tableau s'appelle la matrice augmentée.</p>
+<p><b>Comment la remplir :</b> une ligne par équation, une colonne par inconnue, et une dernière colonne, après une barre, pour les nombres de droite.</p>
+<p>Exemple : ${sys("x + 2y = 5","3x − y = 1")} devient ${mat([[1,2,5],[3,-1,1]],1)}</p>
+<p>Ligne 1 : « 1 x, 2 y, égale 5 ». Ligne 2 : « 3 x, −1 y, égale 1 ».</p>
+<p><b>Le piège : une inconnue absente compte pour 0.</b> ${sys("x + z = 2","y − z = 1")} avec les inconnues x, y, z devient ${mat([[1,0,1,2],[0,1,-1,1]],1)}</p>
+<p>Dans la première équation, il n'y a pas de y : on écrit 0 dans la colonne de y. Si on l'oublie, tous les nombres se décalent et tout est faux.</p>`,
+  "Les trois opérations élémentaires":`<p><b>La question.</b> Quels gestes a-t-on le droit de faire sur un système sans changer ses solutions ? Il y en a exactement trois.</p>
+<ol><li><b>Échanger deux lignes.</b> L'ordre des équations n'a aucune importance.</li><li><b>Multiplier une ligne par un nombre qui n'est pas 0.</b> x + y = 2 et 3x + 3y = 6 disent la même chose.</li><li><b>Ajouter à une ligne un multiple d'une autre ligne.</b> C'est le geste le plus utile : il sert à faire apparaître des zéros.</li></ol>
+<p><b>Lire la notation.</b> « L₂ ← L₂ − 3L₁ » veut dire : la nouvelle ligne 2, c'est l'ancienne ligne 2, moins 3 fois la ligne 1. La ligne 1, elle, ne change pas.</p>
+<p><b>Exemple</b> sur ${mat([[1,2,5],[3,-1,1]],1)} avec L₂ ← L₂ − 3L₁. On calcule case par case :</p>
+<ul><li>3 − 3 × 1 = 0</li><li>−1 − 3 × 2 = −7</li><li>1 − 3 × 5 = −14</li></ul>
+<p>On obtient ${mat([[1,2,5],[0,-7,-14]],1)} : le 3 est devenu 0. La ligne 2 dit maintenant −7y = −14, une équation avec une seule inconnue.</p>
+<p><b>Pourquoi pas « multiplier par 0 » ?</b> La ligne deviendrait 0 = 0 : on aurait effacé une équation, donc perdu une information.</p>`,
+  "Regrouper des opérations, et le piège":`<p><b>Ce qui est permis.</b> Pour aller plus vite, on peut faire plusieurs opérations dans la même étape, à une condition : la ligne dont on se sert <b>ne doit pas être modifiée</b> dans cette étape.</p>
+<p>Exemple permis : L₂ ← L₂ − 3L₁ et L₃ ← L₃ + 2L₁ en même temps. Les deux utilisent L₁, et L₁ ne bouge pas.</p>
+<p><b>Le piège.</b> Faire en même temps L₂ ← L₂ + L₃ et L₃ ← L₃ + L₂. Les deux nouvelles lignes valent « ancienne L₂ + ancienne L₃ » : elles sont identiques. On avait deux équations différentes, il n'en reste qu'une : on a perdu une information, et le résultat sera faux.</p>
+<p><b>Le conseil.</b> En cas de doute, une seule opération à la fois. Et à chaque étape, une ligne sert d'outil (celle du pivot) et reste telle quelle ; on modifie seulement les autres.</p>`},
+ "l-echelon":{
+  "Matrice échelonnée":`<p><b>« Échelonnée » veut dire « en escalier ».</b> Quand on descend d'une ligne, elle commence par <b>plus de zéros</b> que celle du dessus.</p>
+<p>Exemple : ${mat([[1,2,3],[0,4,5],[0,0,6]])} La ligne 1 commence par 0 zéro, la ligne 2 par 1 zéro, la ligne 3 par 2 zéros. Ça augmente à chaque fois : elle est échelonnée.</p>
+<p>Contre-exemple : ${mat([[1,2,3],[0,0,5],[0,4,6]])} La ligne 2 commence par 2 zéros, et la ligne 3 par 1 seul. Ça diminue : elle n'est pas échelonnée.</p>
+<p><b>Le pivot</b> d'une ligne, c'est son premier nombre qui n'est pas 0. Dans le premier exemple, les pivots sont 1, 4 et 6.</p>
+<p><b>Deuxième règle :</b> si une ligne ne contient que des zéros, elle doit être tout en bas.</p>
+<p><b>Pourquoi on veut cette forme.</b> Parce qu'un système en escalier se résout tout seul, de bas en haut : la dernière équation n'a qu'une inconnue, on la trouve, puis on remonte.</p>`,
+  "Échelonnée réduite":`<p><b>C'est l'escalier, nettoyé au maximum.</b> Deux conditions de plus :</p>
+<ul><li>chaque pivot vaut 1 ;</li><li>dans la colonne d'un pivot, tous les autres nombres valent 0 (au-dessous, mais aussi <b>au-dessus</b>).</li></ul>
+<p>Exemple : ${mat([[1,0,2],[0,1,3]],1)} Les pivots sont les deux 1, et chacun est seul dans sa colonne.</p>
+<p><b>L'intérêt.</b> On lit la réponse sans aucun calcul. Si ce tableau est la matrice augmentée d'un système en x, y, il dit : x = 2 et y = 3.</p>
+<p><b>Par comparaison</b>, ${mat([[1,2,5],[0,-7,-14]],1)} est échelonnée mais pas réduite : le pivot de la ligne 2 vaut −7, et il y a un 2 au-dessus de lui. Il reste du calcul à faire pour trouver x et y.</p>`,
+  "Variables principales, variables libres":`<p><b>Une fois le système en escalier, on regarde chaque colonne d'inconnue.</b></p>
+<ul><li>Si la colonne contient un pivot, l'inconnue est <b>principale</b> : on va la calculer.</li><li>Sinon, elle est <b>libre</b> : elle peut prendre n'importe quelle valeur, et on lui donne un nom de paramètre (t, par exemple).</li></ul>
+<p><b>Exemple</b>, avec les inconnues x, y, z : ${mat([[1,2,0,4],[0,0,1,3]],1)}</p>
+<ol><li>Les pivots sont dans les colonnes 1 et 3 : x et z sont principales. La colonne 2 n'a pas de pivot : y est libre, je pose y = t.</li><li>Je pars du bas. La ligne 2 dit z = 3.</li><li>La ligne 1 dit x + 2y = 4, donc x = 4 − 2t.</li><li>Les solutions : S = {(4 − 2t, t, 3) | t ∈ ℝ}. Il y en a une infinité, une pour chaque t.</li></ol>
+<p><b>Combien de solutions ?</b> S'il y a au moins une inconnue libre : une infinité. Si toutes sont principales : une seule.</p>
+<p><b>Le cas « aucune solution ».</b> Une ligne comme 0 0 0 | 5 dit 0 = 5, ce qui est faux quoi qu'on fasse. Dès qu'on en voit une, on s'arrête : le système n'a pas de solution.</p>`},
+ "l-pivot":{
+  "L'algorithme":`<p><b>Le but.</b> Transformer la matrice augmentée en escalier, avec les trois opérations permises. Pour cela, on fabrique des <b>zéros sous les pivots</b>, colonne après colonne, de gauche à droite.</p>
+<p><b>Un exemple complet, le plus petit possible :</b> ${sys("x + 2y = 5","3x − y = 1")}</p>
+<ol><li>J'écris la matrice augmentée : ${mat([[1,2,5],[3,-1,1]],1)}</li><li>Colonne 1 : le pivot est le 1 en haut à gauche. Dessous, il y a un 3, que je veux changer en 0. Comme 3 = 3 × 1, je fais L₂ ← L₂ − 3L₁.</li><li>J'obtiens ${mat([[1,2,5],[0,-7,-14]],1)} : c'est un escalier.</li><li>Je lis de bas en haut. Ligne 2 : −7y = −14, donc y = 2.</li><li>Ligne 1 : x + 2y = 5, donc x = 5 − 4 = 1.</li><li>La solution est (1, 2). Je vérifie dans la deuxième équation de départ : 3 × 1 − 2 = 1. C'est bon.</li></ol>
+<p><b>Comment trouver l'opération.</b> Pour annuler un nombre a placé sous un pivot p, on fait : ligne ← ligne − (a/p) × ligne du pivot. Avec un pivot égal à 1, c'est simplement « moins a fois la ligne du pivot ».</p>
+<p><b>Si le nombre en haut à gauche vaut 0</b>, il ne peut pas servir de pivot : on échange deux lignes pour en mettre un autre à sa place.</p>
+<p>Avec plus d'équations, on recommence : colonne 2, puis colonne 3, en ne touchant plus aux lignes déjà traitées.</p>`,
+  "Rédiger sur la copie":`<p><b>Le correcteur doit pouvoir suivre chaque étape.</b> Même avec le bon résultat, une copie sans les opérations perd des points. Voici ce qu'on attend, dans l'ordre :</p>
+<ol><li>la matrice augmentée du système ;</li><li>à chaque étape, <b>le nom de l'opération</b> (par exemple L₂ ← L₂ − 3L₁), puis la nouvelle matrice ;</li><li>une <b>phrase de conclusion</b>, avec l'ensemble des solutions : « S = {(1, 2)} », ou « S = {(4 − 2t, t, 3) | t ∈ ℝ} », ou « le système est incompatible : S = ∅ ». Le signe ∅ veut dire « l'ensemble vide » : aucune solution ;</li><li>si tu as le temps, une vérification : tu remplaces ta solution dans une équation de départ.</li></ol>
+<p><b>Deux lignes particulières :</b></p>
+<ul><li>0 0 0 | 0 dit « 0 = 0 ». C'est toujours vrai : cette ligne n'apporte rien, on peut l'oublier.</li><li>0 0 0 | 5 dit « 0 = 5 ». C'est toujours faux : on s'arrête et on conclut qu'il n'y a pas de solution.</li></ul>`},
+ "l-compat":{
+  "Second membre en lettres":`<p><b>Ce qui change.</b> À droite du signe =, il y a des lettres a, b, c à la place des nombres. Ce sont des nombres qu'on ne connaît pas encore. La question devient : pour quelles valeurs de ces lettres le système a-t-il des solutions ?</p>
+<p><b>La méthode ne change pas :</b> on fait le pivot comme d'habitude, et dans la dernière colonne on calcule avec les lettres.</p>
+<p><b>Exemple :</b> ${sys("x + y = a","2x + 2y = b")}</p>
+<ol><li>Matrice augmentée : ${mat([[1,1,"a"],[2,2,"b"]],1)}</li><li>L₂ ← L₂ − 2L₁ : ${mat([[1,1,"a"],[0,0,"b − 2a"]],1)}</li><li>La ligne 2 dit : 0 = b − 2a.</li></ol>
+<p><b>Lire le résultat.</b> Si b − 2a n'est pas 0, la ligne 2 est fausse : aucune solution. Si b − 2a = 0, elle dit 0 = 0 : il reste x + y = a, qui a des solutions.</p>
+<p>Le système a donc des solutions <b>si et seulement si b − 2a = 0</b>. Cette égalité s'appelle la condition de compatibilité.</p>
+<p><b>Avec des nombres :</b> a = 1 et b = 2 conviennent (2 − 2 = 0). a = 1 et b = 5 ne conviennent pas : on aurait x + y = 1 et 2x + 2y = 5, ce qui est impossible puisque 2x + 2y vaut le double de x + y, donc 2.</p>`,
+  "Un paramètre m : couper en cas":`<p><b>Ce qui change.</b> La lettre m est maintenant dans les coefficients, devant les inconnues. C'est un nombre fixé, mais on ne sait pas lequel. La réponse dépendra de sa valeur.</p>
+<p><b>Le danger :</b> diviser par quelque chose qui vaut peut-être 0.</p>
+<p><b>Exemple.</b> Après le pivot, on arrive à l'équation (m − 2) y = 3.</p>
+<ul><li><b>Si m ≠ 2</b>, alors m − 2 n'est pas 0, on a le droit de diviser : y = 3/(m − 2).</li><li><b>Si m = 2</b>, l'équation devient 0 × y = 3, c'est-à-dire 0 = 3. C'est faux : aucune solution.</li></ul>
+<p><b>Autre exemple :</b> (m − 2) y = 0.</p>
+<ul><li>Si m ≠ 2 : y = 0.</li><li>Si m = 2 : l'équation devient 0 = 0, toujours vraie. Rien n'est imposé à y : il est libre, et il y a une infinité de solutions.</li></ul>
+<p><b>La méthode :</b></p>
+<ol><li>je fais le pivot, en choisissant si possible un pivot sans m (quitte à échanger deux lignes) ;</li><li>dès que je veux diviser par une expression avec m, je cherche les valeurs de m qui l'annulent ;</li><li>je traite d'abord le cas général (je divise), puis chaque valeur spéciale à part, en remplaçant m par sa valeur ;</li><li>je termine par un bilan : « si m ≠ 2 : … ; si m = 2 : … ».</li></ol>`},
+ "l-colineaire":{
+  "Vecteurs colinéaires":`<p><b>Deux vecteurs sont colinéaires quand l'un est un multiple de l'autre.</b> Par exemple (6, 9) = 3 × (2, 3) : ils ont la même direction, l'un est juste trois fois plus long.</p>
+<p><b>Le test dans ℝ².</b> Pour (a, b) et (c, d), on calcule ad − bc. S'il vaut 0, ils sont colinéaires ; sinon, non.</p>
+<ul><li>(6, 9) et (2, 3) : 6 × 3 − 9 × 2 = 0. Colinéaires.</li><li>(1, 2) et (2, 5) : 1 × 5 − 2 × 2 = 1. Pas colinéaires.</li></ul>
+<p><b>Dans ℝ³ ou plus</b>, on cherche le multiplicateur avec la première case, puis on vérifie les autres. (2, 4, 6) est-il un multiple de (1, 2, 5) ? Pour la première case, il faudrait multiplier par 2. Mais alors la troisième case donnerait 5 × 2 = 10, et pas 6. Ils ne sont pas colinéaires.</p>
+<p><b>Le cas du vecteur nul.</b> (0, 0) = 0 × (2, 3) : le vecteur nul est un multiple de n'importe quel vecteur. Il est donc colinéaire à tous.</p>`,
+  "Combinaison linéaire":`<p><b>Une combinaison linéaire, c'est une recette :</b> tant de fois ce vecteur, plus tant de fois celui-là. Par exemple 2 × (1, 0) + 3 × (0, 1) = (2, 3). Les nombres 2 et 3 sont les coefficients.</p>
+<p><b>La question type :</b> « le vecteur w est-il une combinaison linéaire de v₁ et v₂ ? ». Autrement dit : existe-t-il des quantités a et b telles que a v₁ + b v₂ = w ?</p>
+<p><b>La méthode, sur un exemple :</b> w = (5, 7), v₁ = (1, 1), v₂ = (1, 2).</p>
+<ol><li>J'écris ce que je cherche : a (1, 1) + b (1, 2) = (5, 7).</li><li>Je calcule le côté gauche case par case : (a + b, a + 2b).</li><li>J'écris une équation par case : a + b = 5 et a + 2b = 7.</li><li>Je résous : en soustrayant la première de la seconde, b = 2. Puis a = 3.</li><li>Conclusion : oui, (5, 7) = 3 (1, 1) + 2 (1, 2).</li></ol>
+<p>Vérification : 3 (1, 1) = (3, 3), 2 (1, 2) = (2, 4), et la somme fait (5, 7).</p>
+<p><b>Trois fins possibles pour le système :</b></p>
+<ul><li>aucune solution : w n'est pas une combinaison linéaire ;</li><li>une seule solution : il l'est, d'une seule façon ;</li><li>une infinité de solutions : il l'est, d'une infinité de façons.</li></ul>`},
+ "l-vect":{
+  "Vect(v₁, …, vₖ)":`<p><b>Vect(…) est un ensemble :</b> tous les vecteurs qu'on peut fabriquer avec les vecteurs donnés, par toutes les combinaisons linéaires possibles.</p>
+<p><b>Avec un seul vecteur.</b> Vect((1, 2)) contient tous les multiples de (1, 2) : (2, 4), (−1, −2), (0, 0), (0,5 ; 1)… Dans le plan, ces points forment une droite qui passe par l'origine.</p>
+<p><b>Avec deux vecteurs</b> qui n'ont pas la même direction, on obtient un plan qui passe par l'origine.</p>
+<p><b>Lire la formule du cours.</b> Vect(v₁, …, vₖ) = {λ₁v₁ + … + λₖvₖ | λ₁, …, λₖ ∈ ℝ} se lit : « l'ensemble des vecteurs λ₁v₁ + … + λₖvₖ, pour tous les choix possibles des nombres λ₁, …, λₖ ».</p>
+<p><b>Deux choses toujours vraies :</b></p>
+<ul><li>le vecteur nul est dans Vect(…) : il suffit de prendre tous les coefficients égaux à 0 ;</li><li>chaque vecteur de départ est dans Vect(…) : on lui met le coefficient 1, et 0 aux autres.</li></ul>`,
+  "Enlever un vecteur sans changer Vect":`<p><b>L'idée.</b> Si un des vecteurs se fabrique déjà avec les autres, il n'apporte rien de nouveau. On peut l'enlever de la liste : l'ensemble fabriqué reste le même.</p>
+<p><b>Exemple.</b> Dans Vect((1, 0), (0, 1), (2, 3)), le troisième vecteur est inutile : (2, 3) = 2 (1, 0) + 3 (0, 1). Donc Vect((1, 0), (0, 1), (2, 3)) = Vect((1, 0), (0, 1)).</p>
+<p><b>La règle :</b> on peut retirer un vecteur <b>si et seulement si</b> il est combinaison linéaire des autres.</p>
+<p><b>La précaution.</b> On en retire <b>un seul à la fois</b>, puis on refait le test avec ceux qui restent. Exemple : u = (1, 2) et v = (2, 4). Chacun est un multiple de l'autre, donc on peut retirer u, ou bien v. Mais pas les deux : il ne resterait plus rien pour fabriquer la droite.</p>`,
+  "Tester si un vecteur est dans Vect":`<p><b>« w est dans Vect(u, v) »</b> veut dire exactement : « w est une combinaison linéaire de u et v ». C'est donc la méthode de la leçon précédente : on cherche les coefficients avec un système.</p>
+<p><b>Exemple où ça marche.</b> u = (1, 0, 1), v = (0, 1, 1), w = (2, 3, 5).</p>
+<ol><li>Je cherche a et b avec a u + b v = w, c'est-à-dire (a, b, a + b) = (2, 3, 5).</li><li>Case 1 : a = 2. Case 2 : b = 3.</li><li>Case 3 : a + b doit valoir 5. Or 2 + 3 = 5 : c'est bon.</li><li>Conclusion : w = 2u + 3v, donc w est dans Vect(u, v).</li></ol>
+<p><b>Exemple où ça rate.</b> Même u et v, mais w′ = (2, 3, 4). Les deux premières cases donnent encore a = 2 et b = 3. La troisième demanderait a + b = 4, alors que 2 + 3 = 5. Le système n'a pas de solution : w′ n'est pas dans Vect(u, v).</p>
+<p><b>À retenir :</b> il faut que <b>toutes</b> les cases marchent avec les mêmes coefficients. Une seule qui rate suffit pour dire non.</p>`},
+ "l-sev":{
+  "La définition":`<p><b>L'idée.</b> Un sous-espace vectoriel, c'est une partie F de ℝⁿ dont <b>on ne sort jamais</b> en faisant les deux opérations des vecteurs : additionner, et multiplier par un nombre.</p>
+<p><b>Les trois conditions, en français :</b></p>
+<ol><li>le vecteur nul est dans F ;</li><li>si je prends deux vecteurs de F et que je les additionne, le résultat est encore dans F ;</li><li>si je prends un vecteur de F et que je le multiplie par un nombre, le résultat est encore dans F.</li></ol>
+<p><b>Un exemple qui marche :</b> F = l'ensemble des (x, y) tels que y = 2x.</p>
+<ul><li>(0, 0) est dedans : 0 = 2 × 0.</li><li>(1, 2) et (3, 6) sont dedans. Leur somme est (4, 8), et 8 = 2 × 4 : encore dedans.</li><li>5 × (1, 2) = (5, 10), et 10 = 2 × 5 : encore dedans.</li></ul>
+<p>(Pour une vraie démonstration, on le fait avec des lettres et pas seulement sur des exemples.)</p>
+<p><b>Un exemple qui rate :</b> G = l'ensemble des (x, y) tels que y = 2x + 1. Le vecteur nul (0, 0) n'est pas dedans, car 0 n'est pas égal à 2 × 0 + 1. La première condition est fausse : G n'est pas un sous-espace vectoriel.</p>
+<p><b>Pour le contrôle.</b> La définition est une question de cours annoncée : il faut savoir l'écrire mot pour mot, avec ses trois conditions. Le signe ∀ qu'on y trouve se lit « pour tout ».</p>`}}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
