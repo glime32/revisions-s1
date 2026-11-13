@@ -557,6 +557,10 @@ details.day summary span{color:var(--graphite);font-size:.9rem}
 .ev{position:absolute;left:3px;right:3px;border-radius:8px;padding:3px 6px;font-size:.74rem;line-height:1.25;overflow:hidden;display:grid;align-content:start;text-decoration:none}
 .ev b{font-size:.78rem}
 .ev.cls{background:var(--voile);color:var(--graphite);border:1px solid var(--trait)}
+.ev.cls{cursor:pointer}
+.ev.cls:hover,.ev.cls:focus-visible{border-color:var(--encre);outline:none}
+.ev.cls.skip{opacity:.6;border-style:dashed}
+.ev.cls.skip b{text-decoration:line-through}
 .ev.exam{background:var(--rouge);color:#000}
 .ev.exam b{color:#000}
 .ev.rev{background:color-mix(in srgb,var(--sc) 20%,#000);color:var(--encre);border-left:4px solid var(--sc)}
@@ -16803,6 +16807,8 @@ function home(){
   const nx=up[0]?SUBJ[up[0]]:null,mixed=A.hub.mixOn===t0;
   let h=`<div class="page wide home">${ttl(dayName(t0,true),nx?`${exW(nx)==="CC"?"Prochain CC":"Prochain "+exW(nx).toLowerCase()} : <b>${nx.name}</b>, ${examLine(nx)} (${jx(nx)}).`:"Tous les CC sont passés.")}`;
   if(exToday.length)h+=`<div class="examday">${exToday.map(S=>`<p><b>${exW(S)} de ${S.name} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, ${exam(S).place}. ${S.examMorning||""}</p>`).join("")}</div>`;
+  const hNow=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0"),CJ=A.coursJour(t0).filter(c=>c.end>hNow);
+  if(CJ.length)h+=`<div class="examcard" style="--sc:var(--graphite)"><div><b>Tes cours d'aujourd'hui.</b> Tu n'y vas pas ? Clique dessus : le créneau devient de la révision. Reclique pour annuler.</div><div class="filters" id="skipc">${CJ.map(c=>`<button class="btn" data-skipc="${c.day}:${c.start}" data-v="${c.skip?"":"rev"}" aria-pressed="${!!c.skip}">${c.name}, ${c.start.replace(":","h")}${c.skip?" : révision à la place":""}</button>`).join("")}</div></div>`;
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
   /* le gros bouton : une leçon commencée, sinon les cartes du jour, sinon la suite du programme, sinon du repos */
   const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
@@ -16839,6 +16845,7 @@ function home(){
   if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes passent après les autres : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
   h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
   $("#main").innerHTML=h+`</div>`;
+  const sk=$("#skipc");if(sk)sk.addEventListener("click",e=>{const b=e.target.closest("[data-skipc]");if(!b)return;A.emit({k:"set",key:"skip:"+b.dataset.skipc,v:b.dataset.v});home();});
   const tp=$("#toprog");if(tp)tp.addEventListener("click",()=>{const el=$(".tiroir.prog");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
   bindTicks($("#main"),home);badges();}
 
@@ -17067,7 +17074,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
+const hub={theme:local.theme,exams:{},skip:{},edtPC:"1",rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -17088,7 +17095,7 @@ function themeDe(S,l,c){if(!S||!S.themes)return null;
   return S.THX[l?"l:"+l:"c:"+c]||null;}
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(e.key==="edtPC")hub.edtPC=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -17109,7 +17116,7 @@ function applyEv(e){
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.edtPC="1";hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -17265,8 +17272,11 @@ const HOLIDAY={"2026-11-11":"11 novembre, férié"};
 /* jours où il ne révise pas : leur temps de travail est reporté sur la veille. Jeudi 12/11 : cours puis CC jusqu'à 18 h 15, rien le soir (dit le 11/11). */
 const SANS_REVISION={"2026-11-12":1};
 const WIN=[[480,750],[840,1140],[1200,1350]];/* 8h-12h30, 14h-19h, 20h-22h30 */
+/* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours */
+const estCC=(day,c)=>SIDS.some(id=>{const e=exam(SUBJ[id]);return e.day===day&&Math.abs(mm(e.start)-mm(c[0]))<=20;});
+const coursJour=day=>(CLASSES[day]||[]).filter(c=>!estCC(day,c)).map(c=>({day,start:c[0],end:c[1],name:c[2],detail:c[3],sid:c[4],skip:hub.skip[day+":"+c[0]]||""}));
 function busyOf(day){
-  const b=[];(CLASSES[day]||[]).forEach(c=>{const isExam=SIDS.some(id=>{const e=exam(SUBJ[id]);return e.day===day&&Math.abs(mm(e.start)-mm(c[0]))<=20;});if(!isExam)b.push([mm(c[0]),mm(c[1])]);});
+  const b=[];coursJour(day).forEach(c=>{if(!c.skip)b.push([mm(c.start),mm(c.end)]);});
   SIDS.forEach(id=>{const e=exam(SUBJ[id]);if(e.day===day)b.push([mm(e.start)-30,mm(e.end)+10]);});
   return b.sort((x,y)=>x[0]-y[0]);
 }
@@ -17278,7 +17288,7 @@ const lenFor=u=>u>45?u+PAUSE:u;
 function doneTodayMin(){const t0=today();let s=0;J.forEach(e=>{if(ymd(new Date(e.t))!==t0)return;const S=SUBJ[e.s];if(!S)return;
   if(e.k==="les"){const T=S.TB["L-"+e.l];s+=e.dur||(T?T.min:15);}else if(e.k==="task"&&e.v){const T=S.TB[e.x];if(T)s+=T.min;}});return s;}
 function dayCap(day){if(SANS_REVISION[day])return 0;const n=addDays(day,1);return capBase(day)+(SANS_REVISION[n]?capBase(n):0);}
-function capBase(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[180,90,120],normal:[270,150,180],intensif:[360,210,270]}[hub.rythme||"normal"]||[270,150,180];return Math.max(0,(free?R[0]:(CLASSES[day]&&CLASSES[day].length?R[1]:R[2]))-15);}/* 15 min gardées chaque jour pour « Réviser » */
+function capBase(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[180,90,120],normal:[270,150,180],intensif:[360,210,270]}[hub.rythme||"normal"]||[270,150,180];return Math.max(0,(free?R[0]:(coursJour(day).some(c=>!c.skip)?R[1]:R[2]))-15);}/* 15 min gardées chaque jour pour « Réviser » */
 function freeBlocks(day,from,capOv){
   let iv=[];WIN.forEach(([a,b])=>{a=Math.max(a,from);if(b-a>=30)iv.push([a,b]);});
   busyOf(day).forEach(([s,e])=>{const out=[];iv.forEach(([a,b])=>{if(e+10<=a||s-10>=b){out.push([a,b]);return;}if(s-10-a>=30)out.push([a,s-10]);if(b-(e+10)>=30)out.push([e+10,b]);});iv=out;});
@@ -17437,17 +17447,26 @@ function edt(){
   const P=plan(),t0=today();const last=SIDS.map(id=>exam(SUBJ[id]).day).sort().pop();
   const days=[];for(let d=t0;d<=last&&days.length<9;d=addDays(d,1))days.push(d);
   const H0=7*60+30,H1=23*60,PX=0.78;
-  const col=d=>{let s="";(CLASSES[d]||[]).forEach(c=>{const isEx=SIDS.some(id=>{const e=exam(SUBJ[id]);return e.day===d&&Math.abs(mm(e.start)-mm(c[0]))<=20;});if(isEx)return;s+=`<div class="ev cls" style="top:${(mm(c[0])-H0)*PX}px;height:${(mm(c[1])-mm(c[0]))*PX}px"><b>${c[2]}</b><span>${hh(mm(c[0]))}, ${c[3]}</span></div>`;});
+  const col=d=>{let s="";coursJour(d).forEach(c=>{s+=`<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="top:${(mm(c.start)-H0)*PX}px;height:${(mm(c.end)-mm(c.start))*PX}px"><b>${c.name}</b><span>${hh(mm(c.start))}, ${c.skip?(c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;});
     SIDS.forEach(id=>{const S=SUBJ[id],e=exam(S);if(e.day===d)s+=`<a class="ev exam" href="#/${id}" style="top:${(mm(e.start)-H0)*PX}px;height:${Math.max(40,(mm(e.end)-mm(e.start))*PX)}px"><b>${exW(S)} ${S.name}</b><span>${hh(mm(e.start))}, ${e.place}</span></a>`;});
     P.blocks.filter(b=>b.day===d).forEach(b=>{const S=SUBJ[b.sid];const done=b.tasks.every(tid=>isDone(b.sid,S.TB[tid]));s+=`<a class="ev rev${done?" done":""}" href="#/${b.sid}" style="--sc:${S.color};top:${(b.start-H0)*PX}px;height:${(b.end-b.start)*PX}px"><b>${S.name}</b><span>${hh(b.start)}–${hh(b.end)}${done?", fait":""}</span></a>`;});
     return s;};
   let hours="";for(let h=8;h<=22;h++)hours+=`<span style="top:${(h*60-H0)*PX}px">${h}h</span>`;
   $("#main").innerHTML=`<div class="page" style="max-width:1280px"><div class="title-row"><h1>Emploi du temps de la semaine</h1></div>
-   <p class="lead">Tes cours (gris), tes CC (rouge) et les créneaux de révision placés dans les trous (couleur de la matière). Clique sur un créneau pour ouvrir la matière.</p>
+   <p class="lead">Tes cours (gris), tes CC (rouge) et les créneaux de révision placés dans les trous (couleur de la matière). Clique sur un créneau de révision pour ouvrir la matière. <b>Clique sur un cours</b> si tu n'y vas pas : le créneau devient de la révision.</p>
+   <div id="clbox" class="examcard" style="--sc:var(--graphite)" hidden></div>
    <div class="edt-legend">${SIDS.map(id=>`<span><i class="sdot" style="background:${SUBJ[id].color}"></i>${SUBJ[id].name}</span>`).join("")}<span><i class="sdot" style="background:var(--graphite)"></i>cours</span><span><i class="sdot" style="background:var(--rouge)"></i>CC</span></div>
    <div class="edt-wrap"><div class="edt" style="grid-template-columns:44px repeat(${days.length},minmax(128px,1fr));min-width:${44+days.length*128}px"><div></div>${days.map(d=>`<div class="edt-h${d===t0?" today":""}">${dayName(d,true,true)}${HOLIDAY[d]?`<small>férié</small>`:""}</div>`).join("")}
     <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
-   <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p></div>`;
+   <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p>
+   <div class="filters" id="edtpc"><span class="muted">Sur ordinateur, ouvrir le site sur cet emploi du temps :</span><button class="btn" data-pc="1" aria-pressed="${hub.edtPC!=="0"}">oui</button><button class="btn" data-pc="0" aria-pressed="${hub.edtPC==="0"}">non</button><a class="btn" href="#/jour">Page « Aujourd'hui »</a></div></div>`;
+  const box=$("#clbox");
+  const ouvre=el=>{const[d,h]=el.dataset.cl.split("|"),c=coursJour(d).find(x=>x.start===h);if(!c)return;
+    box.innerHTML=`<div><b>${c.name}</b>, ${dayName(d,true)} à ${h.replace(":","h")}, ${c.detail}.</div><div class="filters">${[["rev","Je n'y vais pas : je révise à la place"],["abs","Je n'y suis pas allé"],["","J'y vais (ou j'y suis allé)"]].map(([v,t])=>`<button class="btn" data-sk="${v}" aria-pressed="${c.skip===v}">${t}</button>`).join("")}</div>`;
+    box.hidden=false;box.dataset.k=d+":"+h;box.scrollIntoView({behavior:"smooth",block:"nearest"});};
+  $("#main").querySelectorAll(".ev.cls").forEach(el=>{el.addEventListener("click",()=>ouvre(el));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ouvre(el);}});});
+  box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk});edt();});
+  $("#edtpc").addEventListener("click",e=>{const b=e.target.closest("[data-pc]");if(!b)return;emit({k:"set",key:"edtPC",v:b.dataset.pc});document.querySelectorAll("#edtpc [data-pc]").forEach(x=>x.setAttribute("aria-pressed",x===b));});
 }
 
 /* ---------- examens et coefficients ---------- */
@@ -17842,7 +17861,7 @@ function render(parts){
     const X=APP.ext.routes||{};
     main.className=first==="lecon"&&SIDS.includes(parts[1])?"s-"+parts[1]:"";
     CUR={sid:null,page:X[first]||["edt","examens","mix","methode"].includes(first)?first:"today"};
-    if(X[first])X[first](parts.slice(1));else if(first==="edt")edt();else if(first==="examens")examens();else if(first==="mix")mix();else if(first==="methode")methode();else if(APP.ext.home)APP.ext.home();else hubHome();
+    if(X[first])X[first](parts.slice(1));else if(first==="edt"||(first===""&&hub.edtPC!=="0"&&matchMedia("(min-width: 1100px)").matches))edt();else if(first==="examens")examens();else if(first==="mix")mix();else if(first==="methode")methode();else if(APP.ext.home)APP.ext.home();else hubHome();
   }
   document.body.classList.toggle("in-lesson",first==="lecon");
   const tab=tabOf(parts);
@@ -17859,7 +17878,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,coursJour,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
