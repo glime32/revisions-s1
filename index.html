@@ -17220,7 +17220,224 @@ ps                 # liste tes processus, avec leur PID
 kill 4321          # arrête le processus de PID 4321
 kill -9 4321       # l'arrête de force`,"sh")}
 <p><b>Au clavier :</b> Ctrl-C arrête le programme au premier plan ; Ctrl-D envoie « fin de fichier » (dans un terminal vide, ça ferme bash).</p>
-<p><b>Premier plan</b> veut dire : bash attend la fin avant de te rendre la main. <b>Arrière-plan</b> : le programme tourne pendant que tu continues à taper.</p>`} /*SUITE-USI*/}
+<p><b>Premier plan</b> veut dire : bash attend la fin avant de te rendre la main. <b>Arrière-plan</b> : le programme tourne pendant que tu continues à taper.</p>`},
+ "u-redir":{
+  "Trois flux et leurs redirections":`<p><b>Chaque programme a trois « tuyaux » :</b></p>
+<ul><li>l'<b>entrée</b> (numéro 0) : ce qu'il lit, d'habitude le clavier ;</li><li>la <b>sortie</b> (numéro 1) : ce qu'il affiche, d'habitude l'écran ;</li><li>la <b>sortie d'erreur</b> (numéro 2) : ses messages d'erreur, à l'écran aussi.</li></ul>
+<p><b>Rediriger,</b> c'est brancher un tuyau ailleurs, sur un fichier :</p>
+${W.code(`ls > liste.txt        # la sortie va dans liste.txt (vidé avant)
+date >> journal.txt   # la sortie s'ajoute à la fin de journal.txt
+sort < noms.txt       # sort lit noms.txt au lieu du clavier
+ls /rien 2> err.txt   # le message d'erreur va dans err.txt`,"sh")}
+<p><b>Le piège :</b> un seul &gt; vide le fichier avant d'écrire. Pour ajouter à la fin, il en faut deux : &gt;&gt;.</p>`,
+  "Enchaîner : ; && ||":`<p><b>Chaque commande finit avec un code de retour :</b> 0 si elle a réussi, un autre nombre sinon. On le lit dans $?.</p>
+<p><b>Trois façons d'enchaîner deux commandes :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Écrit</th><th>La deuxième s'exécute…</th></tr></thead><tbody>
+<tr><td>a ; b</td><td>toujours</td></tr><tr><td>a &amp;&amp; b</td><td>seulement si a a réussi</td></tr><tr><td>a || b</td><td>seulement si a a échoué</td></tr></tbody></table></div>
+${W.code(`mkdir tp && cd tp              # n'entre dans tp que si sa création a marché
+cat notes.txt || echo "absent"  # affiche « absent » si le fichier n'existe pas`,"sh")}`,
+  "Tubes et filtres":`<p><b>Un tube |</b> branche la sortie d'une commande sur l'entrée de la suivante. Les deux tournent en même temps.</p>
+<p><b>Un filtre</b> lit son entrée, la transforme, et écrit le résultat. On enchaîne les filtres pour obtenir ce qu'on veut :</p>
+${W.code(`ls | wc -l                         # combien de fichiers ?
+cat notes.txt | grep "maths"       # les lignes qui contiennent maths
+cat notes.txt | sort | head -n 3   # les 3 premières lignes, une fois triées
+cut -d: -f1 /etc/passwd            # le 1er champ de chaque ligne, séparé par :`,"sh")}
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Filtre</th><th>Rôle</th></tr></thead><tbody>
+<tr><td>grep motif</td><td>garde les lignes qui contiennent le motif</td></tr>
+<tr><td>wc -l</td><td>compte les lignes</td></tr>
+<tr><td>sort</td><td>trie (-n en nombres, -r à l'envers)</td></tr>
+<tr><td>head, tail</td><td>les premières, les dernières lignes</td></tr>
+<tr><td>cut</td><td>garde certains champs</td></tr></tbody></table></div>`},
+ "u-find":{
+  "La forme de find":`<p><b>find cherche des fichiers</b> dans un dossier et tous ses sous-dossiers. Sa forme : où chercher, quoi chercher, quoi faire.</p>
+${W.code(`find . -name "*.pdf"               # tous les .pdf sous le dossier courant
+find ~ -type d -name "tp*"          # les dossiers dont le nom commence par tp
+find . -name "*.tmp" -exec rm {} \;  # supprime chaque .tmp trouvé`,"sh")}
+<ul><li>le départ : . (ici), ~ (ton dossier), / (tout le disque) ;</li><li>-name "motif" : le nom, avec * (n'importe quoi) et ? (un caractère) ;</li><li>-type f : seulement les fichiers ; -type d : seulement les dossiers ;</li><li>-exec … {} \; : une commande pour chaque fichier trouvé ; {} est remplacé par son nom.</li></ul>
+<p><b>Attention :</b> le motif de -name s'écrit comme dans bash (*.pdf), pas comme une expression régulière.</p>`},
+ "u-regex":{
+  "Les briques":`<p><b>Une expression régulière décrit une forme de texte.</b> On la construit avec des briques :</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Brique</th><th>Sens</th><th>Exemple qui correspond</th></tr></thead><tbody>
+<tr><td>.</td><td>un caractère quelconque</td><td>c.t : cat, cot, c4t (mais pas ct)</td></tr>
+<tr><td>[0-9]</td><td>un chiffre</td><td>[0-9][0-9] : 42</td></tr>
+<tr><td>a*</td><td>a, 0 fois ou plus</td><td>ba* : b, ba, baaa</td></tr>
+<tr><td>a+</td><td>a, au moins une fois</td><td>ba+ : ba, baaa (pas b seul)</td></tr>
+<tr><td>a?</td><td>a, 0 ou 1 fois</td><td>colou?r : color, colour</td></tr>
+<tr><td>{2}</td><td>exactement 2 fois</td><td>[0-9]{2} : 07</td></tr>
+<tr><td>(jpg|png)</td><td>l'un ou l'autre</td><td>jpg ou png</td></tr></tbody></table></div>
+<p><b>Avec grep,</b> les briques + ? {} | et les parenthèses demandent l'option -E : grep -E "[0-9]+" fichier.</p>`,
+  "Ancrer avec ^ et $":`<p><b>Sans ancre,</b> le motif peut être n'importe où dans la ligne : grep pdf garde aussi « monpdfs.txt ».</p>
+<ul><li><b>^</b> colle le motif au <b>début</b> : ^Bonjour garde les lignes qui commencent par Bonjour ;</li><li><b>$</b> colle le motif à la <b>fin</b> : \\.pdf$ garde les lignes qui finissent par .pdf (le \\. est un vrai point).</li></ul>
+<p><b>Les deux ensemble :</b> toute la ligne doit avoir la forme. ^[0-9]+$ : une ligne faite seulement de chiffres.</p>
+<p><b>La méthode pour écrire une expression :</b></p>
+<ol><li>écris un exemple qui doit correspondre, comme 2026-11-13 ;</li><li>coupe-le en morceaux : 4 chiffres, un tiret, 2 chiffres, un tiret, 2 chiffres ;</li><li>traduis chaque morceau : [0-9]{4}-[0-9]{2}-[0-9]{2} ;</li><li>ajoute ^ et $ si toute la ligne doit avoir cette forme.</li></ol>`},
+ "u-bash1":{
+  "Les variables":`<p><b>Une variable bash garde un texte.</b> On l'affecte sans espace autour du =, et on la lit avec $.</p>
+${W.code(`ville=Montpellier
+echo $ville                # Montpellier
+echo "J'habite à $ville"   # J'habite à Montpellier
+echo 'Je dis $ville'       # entre apostrophes : affiche Je dis $ville
+n=5
+n=$((n + 1))               # calcul : n vaut 6
+fichiers=$(ls)             # le résultat d'une commande
+read nom                   # lit un mot tapé au clavier`,"sh")}
+<p><b>Les trois pièges :</b></p>
+<ul><li>pas d'espace autour du = : ville = Montpellier est une erreur ;</li><li>entre guillemets " ", la variable est remplacée ; entre apostrophes ' ', non ;</li><li>une variable contient du texte : pour calculer, il faut $(( … )).</li></ul>`,
+  "Un script et ses paramètres":`<p><b>Un script</b> est un fichier qui contient des commandes bash, exécutées l'une après l'autre.</p>
+${W.code(`#!/bin/bash
+# somme.sh : additionne ses deux paramètres
+echo "$0 a reçu $# paramètres"
+echo "Somme : $(($1 + $2))"`,"sh")}
+<p>Pour le lancer : chmod u+x somme.sh (le rendre exécutable), puis ./somme.sh 3 4. Il affiche « ./somme.sh a reçu 2 paramètres », puis « Somme : 7 ».</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Écrit</th><th>Contient</th><th>Ici</th></tr></thead><tbody>
+<tr><td>$0</td><td>le nom du script</td><td>./somme.sh</td></tr><tr><td>$1, $2</td><td>les paramètres</td><td>3, puis 4</td></tr>
+<tr><td>$#</td><td>leur nombre</td><td>2</td></tr><tr><td>$@</td><td>tous les paramètres</td><td>3 4</td></tr>
+<tr><td>$?</td><td>le code de retour de la dernière commande</td><td>0 si elle a réussi</td></tr></tbody></table></div>
+<p>La première ligne, #!/bin/bash, dit quel programme doit lire le fichier.</p>`},
+ "u-bash2":{
+  "if et les tests":`<p><b>if en bash :</b> on teste une condition entre [[ et ]], avec des espaces obligatoires autour.</p>
+${W.code(`if [[ -f "$1" ]]
+then
+  echo "$1 est un fichier"
+elif [[ -d "$1" ]]
+then
+  echo "$1 est un dossier"
+else
+  echo "$1 n'existe pas"
+fi`,"sh")}
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Test</th><th>Vrai si…</th></tr></thead><tbody>
+<tr><td>-f "$x"</td><td>x est un fichier ordinaire</td></tr><tr><td>-d "$x"</td><td>x est un dossier</td></tr>
+<tr><td>-e "$x"</td><td>x existe</td></tr><tr><td>$a -eq $b</td><td>les nombres sont égaux (-lt plus petit, -gt plus grand)</td></tr>
+<tr><td>"$a" == "$b"</td><td>les textes sont égaux</td></tr></tbody></table></div>
+<p>Le bloc se ferme par fi (if à l'envers).</p>`,
+  "Les boucles":`<p><b>for parcourt une liste</b> de mots ou de fichiers ; le bloc est entre do et done.</p>
+${W.code(`for f in *.jpg             # chaque .jpg du dossier courant
+do
+  echo "image : $f"
+done
+
+i=1
+while [[ $i -le 3 ]]       # tant que i ≤ 3
+do
+  echo "tour $i"
+  i=$((i + 1))
+done`,"sh")}
+<p>La deuxième boucle affiche tour 1, tour 2, tour 3, puis s'arrête.</p>
+<p><b>À retenir :</b> *.jpg est remplacé par bash par la liste des fichiers : pas besoin d'écrire ls. Et dans while, il faut que quelque chose change (ici i), sinon la boucle ne s'arrête jamais.</p>`},
+ "u-py1":{
+  "Listes et chaînes":`<p><b>Les listes Python :</b> des éléments entre crochets, numérotés à partir de 0.</p>
+${W.code(`notes = [12, 8, 15]
+notes.append(10)        # [12, 8, 15, 10]
+notes[0]                # 12, le premier
+notes[-1]               # 10, le dernier
+notes[1:3]              # [8, 15] : de l'indice 1 inclus à 3 exclu
+len(notes)              # 4
+15 in notes             # True`,"py")}
+<p><b>Les chaînes</b> se découpent de la même façon, mais ne se modifient pas :</p>
+${W.code(`mot = "Python"
+mot[0]                  # 'P'
+mot[::-1]               # 'nohtyP', à l'envers
+"a;b;c".split(";")      # ['a', 'b', 'c']
+"-".join(["a", "b"])    # 'a-b'
+int("12") + 1           # 13 : on convertit avant de calculer`,"py")}`,
+  "Blocs, boucles, fonctions":`<p><b>En Python, c'est le décalage (l'indentation) qui dit ce qui est dans un bloc,</b> après les deux-points.</p>
+${W.code(`def mention(note):
+    if note >= 16:
+        return "très bien"
+    elif note >= 10:
+        return "admis"
+    else:
+        return "ajourné"
+
+for n in [17, 11, 6]:
+    print(n, mention(n))`,"py")}
+<p>Résultat : 17 très bien, 11 admis, 6 ajourné.</p>
+<ul><li>def définit une fonction, return rend son résultat ;</li><li>for v in liste parcourt les valeurs ; for i in range(len(liste)) parcourt les indices ;</li><li>while condition: répète tant que la condition est vraie.</li></ul>`},
+ "u-py2":{
+  "Les dictionnaires":`<p><b>Un dictionnaire</b> associe une valeur à une clé, comme un vrai dictionnaire associe une définition à un mot.</p>
+${W.code(`stock = {}                 # vide
+stock["pommes"] = 3        # crée la clé pommes
+stock["pommes"] += 2       # 5 : la clé existe déjà
+
+# compter les mots d'une liste
+compte = {}
+for m in ["a", "b", "a"]:
+    if m in compte:
+        compte[m] += 1
+    else:
+        compte[m] = 1
+# compte vaut {'a': 2, 'b': 1}
+
+for cle, valeur in compte.items():
+    print(cle, valeur)`,"py")}
+<p><b>Le piège :</b> compte[m] += 1 sur une clé qui n'existe pas encore provoque une erreur. D'où le test if m in compte.</p>`,
+  "Lire un fichier, découper un CSV":`<p><b>Un fichier CSV</b> est un fichier texte où chaque ligne contient des champs séparés par des virgules.</p>
+${W.code(`# notes.csv contient :  Léa,14
+#                        Tom,9
+import sys
+fichier = open(sys.argv[1])        # le nom vient de la ligne de commande
+for ligne in fichier:
+    champs = ligne.strip().split(",")
+    nom, note = champs[0], int(champs[1])
+    if note >= 10:
+        print(nom, "admis")
+fichier.close()`,"py")}
+<p>Lancé avec python3 admis.py notes.csv, il affiche « Léa admis ».</p>
+<ul><li>strip() enlève le retour à la ligne de la fin ;</li><li>split(",") coupe la ligne en champs ;</li><li>tout ce qu'on lit est du texte : int() pour calculer.</li></ul>`},
+ "u-py3":{
+  "Le squelette du parcours":`<p><b>Le but :</b> traiter tous les fichiers d'un dossier, y compris ceux qui sont dans des sous-dossiers, sur plusieurs étages.</p>
+<p><b>L'idée :</b> une fonction qui traite un dossier, et qui se rappelle elle-même pour chaque sous-dossier.</p>
+${W.code(`import os, sys
+
+def parcours(dossier):
+    for nom in os.listdir(dossier):          # les noms, sans le chemin
+        chemin = os.path.join(dossier, nom)
+        if os.path.isdir(chemin):
+            parcours(chemin)                 # même travail un étage plus bas
+        else:
+            print(chemin)                    # ici, le traitement d'un fichier
+
+parcours(sys.argv[1])`,"py")}
+<p><b>Pourquoi ça s'arrête :</b> un dossier qui ne contient aucun sous-dossier ne fait aucun nouvel appel.</p>
+<p><b>Pour adapter :</b> on remplace le print par ce que demande l'énoncé, par exemple « si le nom finit par .csv, l'ouvrir et le lire ».</p>`,
+  "Ce qui rapporte des points":`<p><b>À l'examen, ce genre d'exercice rapporte beaucoup sur les gestes de base</b>, même si le programme n'est pas parfait.</p>
+<p><b>Ce que les correcteurs cherchent, ligne par ligne :</b></p>
+<ul><li>une fonction récursive qui parcourt les dossiers ;</li><li>os.listdir pour lister un dossier ;</li><li>le test qui sélectionne les bons fichiers (par exemple nom.endswith(".csv")) ;</li><li>open, puis une boucle sur les lignes, puis split ;</li><li>un dictionnaire pour regrouper ou compter.</li></ul>
+<p><b>Le conseil :</b> écris d'abord le squelette de l'écran précédent, puis ajoute les morceaux un par un. Même si tu bloques sur un détail, chaque geste correct rapporte ses points.</p>`},
+ "u-c":{
+  "Interpréter ou compiler":`<p><b>Deux façons de faire tourner un programme :</b></p>
+<ul><li><b>l'interpréteur</b> (bash, python3) lit le programme et l'exécute directement, à chaque lancement ;</li><li><b>le compilateur</b> (gcc, pour le C) traduit le programme une fois pour toutes en code machine. On lance ensuite ce code, plus rapide.</li></ul>
+${W.code(`gcc -Wall bonjour.c -o bonjour    # compile : crée le programme bonjour
+./bonjour                         # le lance`,"sh")}
+<p><b>Ce que fait gcc, en quatre étapes :</b></p>
+<ol><li>le <b>préprocesseur</b> traite les #include et #define (gcc -E) ;</li><li>la <b>compilation</b> traduit le C en assembleur ; c'est là qu'apparaissent les erreurs de syntaxe (gcc -S) ;</li><li>l'<b>assemblage</b> donne un fichier objet .o (gcc -c) ;</li><li>l'<b>édition de liens</b> assemble les .o et les bibliothèques en un programme.</li></ol>`,
+  "main, argc, argv":`<p><b>Un programme C commence par la fonction main.</b> Elle reçoit les mots tapés sur la ligne de commande.</p>
+${W.code(`#include <stdio.h>
+#include <stdlib.h>
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage : %s nombre\\n", argv[0]);
+        return 1;
+    }
+    int n = atoi(argv[1]);        /* le texte "7" devient le nombre 7 */
+    printf("%d\\n", n * n);
+    return 0;
+}`,"c")}
+<p>Avec ./carre 7 : argc vaut 2 (le nom du programme compte), argv[0] est "./carre", argv[1] est "7". Le programme affiche 49.</p>
+<ul><li>return 0 : tout s'est bien passé ; un autre nombre signale une erreur (visible dans $?) ;</li><li>%d affiche un entier, %s une chaîne, %f un nombre à virgule.</li></ul>`,
+  "Passage par valeur et mémoire":`<p><b>En C, une fonction reçoit toujours une copie</b> de ce qu'on lui donne.</p>
+${W.code(`void ajoute_un(int x) {
+    x = x + 1;          /* ne change que la copie */
+}
+int main(void) {
+    int n = 5;
+    ajoute_un(n);
+    /* n vaut toujours 5 */
+    return 0;
+}`,"c")}
+<p><b>Pour modifier une variable de l'appelant,</b> on donne son <b>adresse</b> (un pointeur) : la fonction sait alors où elle est rangée. Un tableau est toujours passé par son adresse : une fonction peut donc modifier ses cases.</p>
+<p><b>Trois endroits en mémoire :</b></p>
+<ul><li>la <b>pile</b> : les variables locales, le temps de la fonction ;</li><li>le <b>tas</b> : la mémoire réservée avec malloc, jusqu'au free ;</li><li>la zone <b>statique</b> : les variables globales, pendant tout le programme.</li></ul>`}}
 };
 const LES=window.LESSONS||{},MATHS=["calc","lin","ana","geo","rai"];
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
