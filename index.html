@@ -483,6 +483,10 @@ svg .arrow-ok{fill:var(--vert)}
 .mi .ig .is{font-size:1.7em;line-height:1}
 .mi .ib{display:inline-flex;flex-direction:column;justify-content:space-between;font-size:.72em;line-height:1.15;vertical-align:middle;margin-left:.08em}
 .mi .ib sup,.mi .ib sub{line-height:1.2;vertical-align:baseline;font-size:1em}
+.mi .lm{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.1;margin-right:.18em}
+.mi .lm .lb{font-size:.68em}
+.mi .ne{position:relative;display:inline-block}
+.mi .ne::after{content:"/";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);line-height:1}
 .expl.no>b:first-child{color:var(--rouge)}
 .score{font:400 3rem/1 var(--f-serif);color:var(--head);font-variant-numeric:tabular-nums}
 details.ex{background:var(--feuille);border:2px solid var(--trait);border-radius:16px;transition:border-color .2s}
@@ -1447,6 +1451,9 @@ function fractions(t){
 }
 /* mise en forme d'une formule déjà repérée : exposants, fractions, lettres en italique */
 function orne(span){
+  textes(span).forEach(nd=>{if(!nd.nodeValue.includes("≠")||nd.parentNode.closest(".ne"))return;const f=document.createDocumentFragment();
+    nd.nodeValue.split("≠").forEach((x,k)=>{if(k){const e=document.createElement("span");e.className="ne";e.textContent="=";e.setAttribute("aria-label","≠");f.appendChild(e);}if(x)f.appendChild(document.createTextNode(x));});
+    nd.parentNode.replaceChild(f,nd);});
   textes(span).forEach(nd=>{const v=nd.nodeValue;if(!/[′″⁰¹²³⁴-⁹⁺⁻⁼⁽⁾ⁿⁱˣʸᵘᵉᵏᵗᵃᵇᶜᵈᵐᵖʳˢᵛʷᶻʰʲˡᵒᶠᵍᶿ₀-₉₊₋₌₍₎ₐₑₒₓₕₖₗₘₙₚₛₜᵢⱼᵣᵤᵥ]/.test(v))return;
     const f=document.createDocumentFragment();let cur=null,genre="";
     for(const c of v){const g=HAUT[c]?"sup":BAS[c]?"sub":"";
@@ -1470,7 +1477,7 @@ function orne(span){
 }
 /* écriture explicite : $…$ marque une formule ; dedans, ^{…} exposant, _{…} indice, ∫_{a}^{b} et ]_{a}^{b} avec bornes empilées */
 const BORNES='<span class="ib"><sup>$2</sup><sub>$1</sub></span>';
-function tx(s){return String(s).replace(/\$([^$]+)\$/g,(m,x)=>`<span class="mx">${x.replace(/∫_\{([^}]*)\}\^\{([^}]*)\}/g,'<span class="ig"><span class="is">∫</span>'+BORNES+'</span>').replace(/\]_\{([^}]*)\}\^\{([^}]*)\}/g,"]"+BORNES).replace(/\^\{([^}]*)\}/g,"<sup>$1</sup>").replace(/_\{([^}]*)\}/g,"<sub>$1</sub>")}</span>`);}
+function tx(s){return String(s).replace(/\$([^$]+)\$/g,(m,x)=>`<span class="mx">${x.replace(/∫_\{([^}]*)\}\^\{([^}]*)\}/g,'<span class="ig"><span class="is">∫</span>'+BORNES+'</span>').replace(/\]_\{([^}]*)\}\^\{([^}]*)\}/g,"]"+BORNES).replace(/lim_\{([^}]*)\}/g,'<span class="lm"><span>lim</span><span class="lb">$1</span></span>').replace(/\^\{([^}]*)\}/g,"<sup>$1</sup>").replace(/_\{([^}]*)\}/g,"<sub>$1</sub>")}</span>`);}
 function formules(root,tout){
   if(!root||root.closest(HORS))return;
   [...(root.matches(".mx")?[root]:[]),...root.querySelectorAll(".mx")].forEach(m=>{m.className="mi";orne(m);});
@@ -8399,97 +8406,97 @@ const quizLin=({sec})=>[
 `<div class="title-row"><h1>S'entraîner : le CC1 d'algèbre</h1></div>
 <p class="lead">Le programme du CC1 (chapitres 1 à 4), en tableaux d'exemples et en mini-quiz : calculer avec des vecteurs, les équations et leurs solutions, le pivot de Gauss, les représentations paramétriques, les combinaisons linéaires, Vect, les sous-espaces vectoriels et les repères. Chaque partie : la règle, des exemples, puis les quiz.</p>`,
 
-sec(1,"Calculer avec des vecteurs de ℝⁿ",`<p><b>La règle :</b> on additionne <b>coordonnée par coordonnée</b>, et on multiplie chaque coordonnée par le nombre.</p>`+
+sec(1,"Calculer avec des vecteurs de ℝⁿ",W.tx(`<p><b>La règle :</b> on additionne <b>coordonnée par coordonnée</b>, et on multiplie chaque coordonnée par le nombre.</p>`+
 LT(["Calcul","Résultat","Pourquoi"],[
-[v("(1, 2)")+" + "+v("(3, −1)"),v("(4, 1)"),"1 + 3 = 4 et 2 + (−1) = 1"],
-["3 · "+v("(2, −1, 0)"),v("(6, −3, 0)"),"chaque coordonnée fois 3"],
-[v("(1, 2, −1)")+" − "+v("(0, 1, 1)"),v("(1, 1, −2)"),"coordonnée par coordonnée"],
-["2 · "+v("(1, 0)")+" + 3 · "+v("(0, 1)"),v("(2, 3)"),"(2, 0) + (0, 3)"]])+
-LZ(LQ(`Calcule ${v("(2, −1, 4)")} + ${v("(1, 3, −2)")}.`,v("(3, 2, 2)"),VA(3,2,2),"2 + 1 = 3, −1 + 3 = 2, 4 + (−2) = 2."),
-LQ(`Calcule −2 · ${v("(1, −3, 0)")}.`,v("(−2, 6, 0)"),VA(-2,6,0),"Chaque coordonnée fois −2 : −2, 6, 0. Attention : −2 × (−3) = +6."),
-LQ(`Calcule 3 · ${v("(1, 1)")} − ${v("(2, 5)")}.`,v("(1, −2)"),VA(1,-2),"3 · (1, 1) = (3, 3). Puis (3, 3) − (2, 5) = (1, −2)."))),
+["$(1, 2) + (3, −1)$","$(4, 1)$","$1 + 3 = 4$ et $2 + (−1) = 1$"],
+["$3 · (2, −1, 0)$","$(6, −3, 0)$","chaque coordonnée multipliée par $3$"],
+["$(1, 2, −1) − (0, 1, 1)$","$(1, 1, −2)$","coordonnée par coordonnée"],
+["$2 · (1, 0) + 3 · (0, 1)$","$(2, 3)$","$(2, 0) + (0, 3)$"]])+
+LZ(LQ("Calcule $(2, −1, 4) + (1, 3, −2)$.","$(3, 2, 2)$",VA(3,2,2),"$2 + 1 = 3$, $−1 + 3 = 2$ et $4 + (−2) = 2$."),
+LQ("Calcule $−2 · (1, −3, 0)$.","$(−2, 6, 0)$",VA(-2,6,0),"Chaque coordonnée multipliée par $−2$. Attention : $−2 × (−3) = 6$."),
+LQ("Calcule $3 · (1, 1) − (2, 5)$.","$(1, −2)$",VA(1,-2),"$3 · (1, 1) = (3, 3)$, puis $(3, 3) − (2, 5) = (1, −2)$.")))),
 
-sec(2,"Équations linéaires : est-ce une solution ?",`<p><b>La méthode :</b> on remplace x, y, z par les nombres proposés, et on regarde si l'égalité est vraie. Pour un système, il faut que <b>toutes</b> les équations soient vraies.</p>`+
+sec(2,"Équations linéaires : est-ce une solution ?",W.tx(`<p><b>La méthode :</b> on remplace $x$, $y$, $z$ par les nombres proposés, et on regarde si l'égalité est vraie. Pour un système, il faut que <b>toutes</b> les équations soient vraies.</p>`+
 LT(["Équation","Proposé","Calcul","Solution ?"],[
-["x + y − z = 3",v("(1, 2, 0)"),"1 + 2 − 0 = 3","oui"],
-["2x − y = 4",v("(3, 1)"),"6 − 1 = 5, pas 4","non"],
-[sys("x + y = 3","x − y = 1"),v("(2, 1)"),"2 + 1 = 3 et 2 − 1 = 1","oui"],
-[sys("x + y = 3","x − y = 1"),v("(3, 0)"),"3 + 0 = 3, mais 3 − 0 = 3, pas 1","non"]])+
-LZ(LQ(`${v("(1, 1, 1)")} est-il solution de 2x − y + z = 3 ?`,"non",NON,"2 × 1 − 1 + 1 = 2, et pas 3. Ce n'est pas une solution."),
-LQ(`${v("(0, 3, 1)")} est-il solution de x + y − 2z = 1 ?`,"oui",OUI,"0 + 3 − 2 × 1 = 1. C'est bien une solution."))),
+["$x + y − z = 3$","$(1, 2, 0)$","$1 + 2 − 0 = 3$","oui"],
+["$2x − y = 4$","$(3, 1)$","$6 − 1 = 5$, et pas $4$","non"],
+[`$${sys("x + y = 3","x − y = 1")}$`,"$(2, 1)$","$2 + 1 = 3$ et $2 − 1 = 1$","oui"],
+[`$${sys("x + y = 3","x − y = 1")}$`,"$(3, 0)$","$3 + 0 = 3$, mais $3 − 0 = 3$, et pas $1$","non"]])+
+LZ(LQ("$(1, 1, 1)$ est-il solution de $2x − y + z = 3$ ?","non",NON,"$2 × 1 − 1 + 1 = 2$, et pas $3$. Ce n'est pas une solution."),
+LQ("$(0, 3, 1)$ est-il solution de $x + y − 2z = 1$ ?","oui",OUI,"$0 + 3 − 2 × 1 = 1$. C'est bien une solution.")))),
 
-sec(3,"Toutes les solutions d'une équation : la représentation paramétrique",`<p><b>La méthode :</b> on garde une inconnue « principale » (souvent x), et on laisse les autres <b>libres</b> : on les appelle s, t (des paramètres, n'importe quels nombres). Puis on exprime x avec s et t.</p>
-<p><b>Exemple :</b> x + 2y − z = 4 dans ℝ³. On pose y = s et z = t (libres). Alors x = 4 − 2s + t.</p>`+F(`Les solutions sont les ${v("(4 − 2s + t, s, t)")}, pour s et t réels.`)+
-LT(["Équation","Libres","Solutions"],[
-["x + y = 2, dans ℝ²","y = t",v("(2 − t, t)")],
-["x − 3y = 2, dans ℝ²","y = t",v("(2 + 3t, t)")],
-["x + y + z = 1, dans ℝ³","y = s, z = t",v("(1 − s − t, s, t)")]])+
-`<p><b>Pour compter les paramètres :</b> une équation dans ℝⁿ (avec x présent) laisse n − 1 inconnues libres.</p>`+
-LZ(LQ(`Représentation paramétrique des solutions de x − 2y = 5 dans ℝ² (avec y = t) ?`,v("(5 + 2t, t)"),["(5+2t, t)","(2t+5, t)","5+2t;t","2t+5;t"],"On pose y = t. Alors x = 5 + 2y = 5 + 2t. Les solutions sont les (5 + 2t, t)."),
-LQ(`Dans ℝ⁴, combien de paramètres (inconnues libres) pour les solutions de x + y − z + w = 0 ?`,"3",["3"],"4 inconnues, 1 équation : 4 − 1 = 3 inconnues libres (y, z, w)."))),
+sec(3,"Toutes les solutions d'une équation : la représentation paramétrique",W.tx(`<p><b>La méthode :</b> on garde une inconnue « principale » (souvent $x$), et on laisse les autres <b>libres</b> : on les appelle $s$, $t$ (des paramètres, qui peuvent valoir n'importe quel réel). Puis on exprime $x$ avec $s$ et $t$.</p>
+<p><b>Exemple :</b> $x + 2y − z = 4$ dans $ℝ³$. On pose $y = s$ et $z = t$. Alors $x = 4 − 2s + t$.</p>`+F("Les solutions sont les $(4 − 2s + t, s, t)$, avec $s, t ∈ ℝ$.")+
+LT(["Équation","Inconnues libres","Solutions"],[
+["$x + y = 2$, dans $ℝ²$","$y = t$","$(2 − t, t)$"],
+["$x − 3y = 2$, dans $ℝ²$","$y = t$","$(2 + 3t, t)$"],
+["$x + y + z = 1$, dans $ℝ³$","$y = s$, $z = t$","$(1 − s − t, s, t)$"]])+
+`<p><b>Pour compter les paramètres :</b> une équation dans $ℝⁿ$ (avec $x$ présent) laisse $n − 1$ inconnues libres.</p>`+
+LZ(LQ("Représentation paramétrique des solutions de $x − 2y = 5$ dans $ℝ²$, avec $y = t$ ?","$(5 + 2t, t)$",["(5+2t, t)","(2t+5, t)","5+2t;t","2t+5;t"],"On pose $y = t$. Alors $x = 5 + 2y = 5 + 2t$. Les solutions sont les $(5 + 2t, t)$, avec $t ∈ ℝ$."),
+LQ("Dans $ℝ⁴$, combien de paramètres (inconnues libres) pour les solutions de $x + y − z + w = 0$ ?","$3$",["3"],"$4$ inconnues et $1$ équation : $4 − 1 = 3$ inconnues libres ($y$, $z$ et $w$).")))),
 
-sec(4,"Le pivot de Gauss",`<p><b>L'idée :</b> on transforme le système, ligne par ligne, pour faire apparaître des 0 sous la diagonale (en escalier). Puis on remonte. Les opérations permises :</p>
-<ul><li>remplacer une ligne par elle-même moins un multiple d'une autre : L₂ ← L₂ − 2L₁ ;</li><li>échanger deux lignes ;</li><li>multiplier une ligne par un nombre qui n'est pas 0.</li></ul>
-<p><b>Exemple complet :</b></p>`+F(sys("x + y + z = 6","2x + y − z = 1","x − y + 2z = 5"))+
-`<ol><li>On écrit la matrice augmentée : ${mat([[1,1,1,6],[2,1,-1,1],[1,-1,2,5]],{aug:1})}</li>
-<li>L₂ ← L₂ − 2L₁ et L₃ ← L₃ − L₁ (pour faire des 0 sous le premier 1) : ${mat([[1,1,1,6],[0,-1,-3,-11],[0,-2,1,-1]],{aug:1})}</li>
-<li>L₃ ← L₃ − 2L₂ (pour faire un 0 sous le −1) : ${mat([[1,1,1,6],[0,-1,-3,-11],[0,0,7,21]],{aug:1})}</li>
-<li>On remonte : 7z = 21 donc z = 3. Puis −y − 3 × 3 = −11, donc y = 2. Puis x + 2 + 3 = 6, donc x = 1.</li>
-<li>On vérifie dans les 3 équations : 1 + 2 + 3 = 6 ; 2 + 2 − 3 = 1 ; 1 − 2 + 6 = 5. Juste.</li></ol>`+F(`La solution est ${v("(1, 2, 3)")}.`)+
+sec(4,"Le pivot de Gauss",W.tx(`<p><b>L'idée :</b> on transforme le système, ligne par ligne, pour faire apparaître des $0$ sous la diagonale (en escalier). Puis on remonte. Les opérations permises :</p>
+<ul><li>remplacer une ligne par elle-même moins un multiple d'une autre : $L₂ ← L₂ − 2L₁$ ;</li><li>échanger deux lignes ;</li><li>multiplier une ligne par un nombre non nul.</li></ul>
+<p><b>Exemple complet :</b></p>`+F(`$${sys("x + y + z = 6","2x + y − z = 1","x − y + 2z = 5")}$`)+
+`<ol><li>On écrit la matrice augmentée : $${mat([[1,1,1,6],[2,1,-1,1],[1,-1,2,5]],{aug:1})}$</li>
+<li>$L₂ ← L₂ − 2L₁$ et $L₃ ← L₃ − L₁$, pour faire des $0$ sous le premier $1$ : $${mat([[1,1,1,6],[0,-1,-3,-11],[0,-2,1,-1]],{aug:1})}$</li>
+<li>$L₃ ← L₃ − 2L₂$, pour faire un $0$ sous le $−1$ : $${mat([[1,1,1,6],[0,-1,-3,-11],[0,0,7,21]],{aug:1})}$</li>
+<li>On remonte : $7z = 21$, donc $z = 3$. Puis $−y − 3 × 3 = −11$, donc $y = 2$. Puis $x + 2 + 3 = 6$, donc $x = 1$.</li>
+<li>On vérifie dans les $3$ équations : $1 + 2 + 3 = 6$ ; $2 + 2 − 3 = 1$ ; $1 − 2 + 6 = 5$. Juste.</li></ol>`+F("La solution est $(1, 2, 3)$.")+
 LT(["Ce qu'on trouve à la fin","Ce que ça veut dire"],[
-["une ligne 0 = 0","elle ne sert à rien : on la supprime"],
-["une ligne 0 = 3 (un nombre pas nul)","le système n'a <b>aucune</b> solution"],
+["une ligne $0 = 0$","elle ne sert à rien : on la supprime"],
+["une ligne $0 = 3$ (un nombre non nul)","le système n'a <b>aucune</b> solution"],
 ["autant de pivots que d'inconnues","une seule solution"],
 ["moins de pivots que d'inconnues","une infinité de solutions : les inconnues sans pivot sont libres"]])+
 `<p>Plus de détails : <a href="#/lin/p/m-pivot">Méthode : pivot de Gauss</a>.</p>`+
-LZ(LQ(`Avec L₁ = (1 2 | 5) et L₂ = (3 1 | 5), que devient L₂ après L₂ ← L₂ − 3L₁ ? (écris les 3 nombres)`,"(0 −5 | −10)",["(0, -5, -10)","0;-5;-10","0 -5 -10","0,-5|-10","0 -5 | -10"],"3 − 3 × 1 = 0, 1 − 3 × 2 = −5, 5 − 3 × 5 = −10."),
-LQ(`Résous le système : x + 2y = 5 et 3x + y = 5. Donne (x, y).`,v("(1, 2)"),VA(1,2),"L₂ ← L₂ − 3L₁ donne −5y = −10, donc y = 2. Puis x = 5 − 2 × 2 = 1. Vérifie : 3 × 1 + 2 = 5."),
-LQ(`Combien de solutions a le système x + y = 1 et 2x + 2y = 3 ?`,"aucune",["aucune","0","~aucune","~pas de solution","∅","ensemblevide"],"L₂ ← L₂ − 2L₁ donne 0 = 1 : c'est impossible. Le système n'a aucune solution."),
-LQ(`Après le pivot, il reste 2 pivots pour 3 inconnues. Combien de paramètres libres dans les solutions ?`,"1",["1","un"],"3 inconnues − 2 pivots = 1 inconnue libre."))),
+LZ(LQ("Avec $L₁ = (1  2 | 5)$ et $L₂ = (3  1 | 5)$, que devient $L₂$ après $L₂ ← L₂ − 3L₁$ ? Écris les $3$ nombres.","$(0  −5 | −10)$",["(0, -5, -10)","0;-5;-10","0 -5 -10","0,-5|-10","0 -5 | -10"],"$3 − 3 × 1 = 0$, $1 − 3 × 2 = −5$ et $5 − 3 × 5 = −10$."),
+LQ("Résous le système $x + 2y = 5$ et $3x + y = 5$. Donne $(x, y)$.","$(1, 2)$",VA(1,2),"$L₂ ← L₂ − 3L₁$ donne $−5y = −10$, donc $y = 2$. Puis $x = 5 − 2 × 2 = 1$. Vérifie : $3 × 1 + 2 = 5$."),
+LQ("Combien de solutions a le système $x + y = 1$ et $2x + 2y = 3$ ?","aucune",["aucune","0","~aucune","~pas de solution","∅","ensemblevide"],"$L₂ ← L₂ − 2L₁$ donne $0 = 1$ : c'est impossible. Le système n'a aucune solution."),
+LQ("Après le pivot, il reste $2$ pivots pour $3$ inconnues. Combien de paramètres libres dans les solutions ?","$1$",["1","un"],"$3$ inconnues moins $2$ pivots : $1$ inconnue libre.")))),
 
-sec(5,"Combinaisons linéaires et vecteurs colinéaires",`<p><b>Une combinaison linéaire</b> de u et v, c'est un vecteur de la forme a·u + b·v, avec a et b des nombres. <b>Deux vecteurs sont colinéaires</b> si l'un est un multiple de l'autre. Dans ℝ², le test rapide : u = (a, b) et v = (c, d) sont colinéaires quand ad − bc = 0.</p>`+
+sec(5,"Combinaisons linéaires et vecteurs colinéaires",W.tx(`<p><b>Une combinaison linéaire</b> de $u$ et $v$, c'est un vecteur de la forme $a u + b v$, avec $a$ et $b$ réels. <b>Deux vecteurs sont colinéaires</b> si l'un est un multiple de l'autre. Dans $ℝ²$, le test rapide : $(a, b)$ et $(c, d)$ sont colinéaires quand $ad − bc = 0$.</p>`+
 LT(["Question","Calcul","Réponse"],[
-[`${v("(6, 9)")} et ${v("(2, 3)")} colinéaires ?`,"(6, 9) = 3 · (2, 3)","oui"],
-[`${v("(1, 2)")} et ${v("(2, 3)")} colinéaires ?`,"1 × 3 − 2 × 2 = −1, pas 0","non"],
-[`${v("(5, 4)")} = a·${v("(1, 1)")} + b·${v("(1, −1)")} ?`,sys("a + b = 5","a − b = 4"),"a = 9/2, b = 1/2"]])+
-`<p><b>Méthode pour trouver a et b :</b> on écrit l'égalité coordonnée par coordonnée, ce qui donne un système, puis on le résout.</p>`+
-LZ(LQ(`${v("(4, −6)")} et ${v("(−2, 3)")} sont-ils colinéaires ?`,"oui",OUI,"(4, −6) = −2 · (−2, 3). Ou le test : 4 × 3 − (−6) × (−2) = 12 − 12 = 0."),
-LQ(`${v("(1, 3)")} et ${v("(2, 5)")} sont-ils colinéaires ?`,"non",NON,"1 × 5 − 3 × 2 = 5 − 6 = −1, pas 0 : ils ne sont pas colinéaires."),
-LQ(`On cherche a et b avec ${v("(3, 1)")} = a·${v("(1, 1)")} + b·${v("(1, −1)")}. Que vaut a ?`,"2",["2"],"Coordonnée par coordonnée : a + b = 3 et a − b = 1. En additionnant : 2a = 4, donc a = 2."),
-LQ(`Même question : que vaut b ?`,"1",["1"],"a + b = 3 avec a = 2, donc b = 1. Vérifie : 2 − 1 = 1."))),
+["$(6, 9)$ et $(2, 3)$ colinéaires ?","$(6, 9) = 3 · (2, 3)$","oui"],
+["$(1, 2)$ et $(2, 3)$ colinéaires ?","$1 × 3 − 2 × 2 = −1 ≠ 0$","non"],
+["$(5, 4) = a · (1, 1) + b · (1, −1)$ ?",`$${sys("a + b = 5","a − b = 4")}$`,"$a = 9/2$ et $b = 1/2$"]])+
+`<p><b>Méthode pour trouver $a$ et $b$ :</b> on écrit l'égalité coordonnée par coordonnée, ce qui donne un système, puis on le résout.</p>`+
+LZ(LQ("$(4, −6)$ et $(−2, 3)$ sont-ils colinéaires ?","oui",OUI,"$(4, −6) = −2 · (−2, 3)$. Le test donne aussi $4 × 3 − (−6) × (−2) = 12 − 12 = 0$."),
+LQ("$(1, 3)$ et $(2, 5)$ sont-ils colinéaires ?","non",NON,"$1 × 5 − 3 × 2 = −1 ≠ 0$ : ils ne sont pas colinéaires."),
+LQ("On cherche $a$ et $b$ avec $(3, 1) = a · (1, 1) + b · (1, −1)$. Que vaut $a$ ?","$2$",["2"],"Coordonnée par coordonnée : $a + b = 3$ et $a − b = 1$. En additionnant : $2a = 4$, donc $a = 2$."),
+LQ("Même question : que vaut $b$ ?","$1$",["1"],"$a + b = 3$ avec $a = 2$, donc $b = 1$. Vérifie : $2 − 1 = 1$.")))),
 
-sec(6,"Vect : tous les vecteurs qu'on peut fabriquer",`<p><b>Vect(u, v)</b> est l'ensemble de toutes les combinaisons a·u + b·v. Pour savoir si w est dans Vect(u, v) : on cherche a et b avec w = a·u + b·v. S'il y en a, oui ; si le système est impossible, non.</p>
-<p><b>Exemple :</b> u = ${v("(1, 0, 1)")}, v = ${v("(0, 1, 1)")}. Alors a·u + b·v = ${v("(a, b, a + b)")}.</p>`+
-LT(["w","On cherche","Dans Vect(u, v) ?"],[
-[v("(1, 1, 2)"),"a = 1, b = 1, et a + b = 2 : bon","oui"],
-[v("(1, 1, 1)"),"a = 1, b = 1, mais a + b = 2, pas 1","non"],
-[v("(0, 0, 0)"),"a = 0, b = 0","oui, toujours"]])+
-LZ(LQ(`Avec les mêmes u et v : ${v("(2, 3, 5)")} est-il dans Vect(u, v) ?`,"oui",OUI,"Il faut a = 2, b = 3, et a + b = 5 : c'est bien 5. Oui : (2, 3, 5) = 2u + 3v."),
-LQ(`Et ${v("(2, 3, 4)")} ?`,"non",NON,"Il faudrait a = 2, b = 3, donc a + b = 5. Mais la 3e coordonnée vaut 4 : impossible. Non."))),
+sec(6,"Vect : tous les vecteurs qu'on peut fabriquer",W.tx(`<p><b>$Vect(u, v)$</b> est l'ensemble de toutes les combinaisons $a u + b v$. Pour savoir si $w$ est dans $Vect(u, v)$ : on cherche $a$ et $b$ avec $w = a u + b v$. S'il y en a, oui ; si le système est impossible, non.</p>
+<p><b>Exemple :</b> $u = (1, 0, 1)$ et $v = (0, 1, 1)$. Alors $a u + b v = (a, b, a + b)$.</p>`+
+LT(["$w$","On cherche $a$ et $b$","$w ∈ Vect(u, v)$ ?"],[
+["$(1, 1, 2)$","$a = 1$, $b = 1$, et $a + b = 2$ : bon","oui"],
+["$(1, 1, 1)$","$a = 1$, $b = 1$, mais $a + b = 2 ≠ 1$","non"],
+["$(0, 0, 0)$","$a = 0$, $b = 0$","oui, toujours"]])+
+LZ(LQ("Avec les mêmes $u$ et $v$ : $(2, 3, 5)$ est-il dans $Vect(u, v)$ ?","oui",OUI,"Il faut $a = 2$, $b = 3$, et $a + b = 5$ : c'est bien $5$. Oui : $(2, 3, 5) = 2u + 3v$."),
+LQ("Et $(2, 3, 4)$ ?","non",NON,"Il faudrait $a = 2$ et $b = 3$, donc $a + b = 5$. Mais la troisième coordonnée vaut $4$ : impossible. Non.")))),
 
-sec(7,"Sous-espace vectoriel",`<p><b>La définition</b> (question de cours possible au CC1). Une partie F de ℝⁿ est un <b>sous-espace vectoriel</b> si :</p><ol><li>le vecteur nul 0 est dans F ;</li><li>si u et v sont dans F, alors u + v est dans F ;</li><li>si u est dans F et λ est un réel, alors λu est dans F.</li></ol>
-<p><b>Pour dire non</b>, un seul contre-exemple suffit. Le plus rapide : regarder si 0 est dans F.</p>`+
-LT(["F","Sous-espace ?","Pourquoi"],[
-["{(x, y) : x + y = 0}","oui","une équation avec 0 à droite (et sans carré)"],
-["{(x, y) : x + y = 1}","non","0 + 0 = 0, pas 1 : 0 n'est pas dans F"],
-["{(x, y) : x ≥ 0}","non","(1, 0) est dans F, mais −1 · (1, 0) = (−1, 0) n'y est pas"],
-["{(x, y) : xy = 0}","non","(1, 0) et (0, 1) sont dans F, mais leur somme (1, 1) n'y est pas"],
-["{(x, y, z) : x − 2y + z = 0}","oui","une équation avec 0 à droite"]])+
+sec(7,"Sous-espace vectoriel",W.tx(`<p><b>La définition</b> (question de cours possible au CC1). Une partie $F$ de $ℝⁿ$ est un <b>sous-espace vectoriel</b> si :</p><ol><li>le vecteur nul $0$ est dans $F$ ;</li><li>si $u$ et $v$ sont dans $F$, alors $u + v$ est dans $F$ ;</li><li>si $u$ est dans $F$ et $λ ∈ ℝ$, alors $λu$ est dans $F$.</li></ol>
+<p><b>Pour dire non</b>, un seul contre-exemple suffit. Le plus rapide : regarder si $0$ est dans $F$.</p>`+
+LT(["$F$","Sous-espace ?","Pourquoi"],[
+["${(x, y) ∈ ℝ² : x + y = 0}$","oui","une équation linéaire avec $0$ à droite"],
+["${(x, y) ∈ ℝ² : x + y = 1}$","non","$0 + 0 = 0 ≠ 1$ : le vecteur nul n'est pas dans $F$"],
+["${(x, y) ∈ ℝ² : x ≥ 0}$","non","$(1, 0) ∈ F$, mais $−1 · (1, 0) = (−1, 0) ∉ F$"],
+["${(x, y) ∈ ℝ² : xy = 0}$","non","$(1, 0)$ et $(0, 1)$ sont dans $F$, mais leur somme $(1, 1)$ n'y est pas"],
+["${(x, y, z) ∈ ℝ³ : x − 2y + z = 0}$","oui","une équation linéaire avec $0$ à droite"]])+
 `<p>Plus de détails : <a href="#/lin/p/m-sev">Méthode : est-ce un sous-espace vectoriel ?</a> et <a href="#/lin/p/cours">Les 2 questions de cours</a>.</p>`+
-LZ(LQ(`{(x, y) ∈ ℝ² : 2x − y = 0} est-il un sous-espace vectoriel ?`,"oui",OUI,"Une équation linéaire avec 0 à droite : 0 y est (2 × 0 − 0 = 0), et la somme et les multiples restent dedans."),
-LQ(`{(x, y) ∈ ℝ² : y = x + 1} est-il un sous-espace vectoriel ?`,"non",NON,"Le vecteur nul n'y est pas : 0 ≠ 0 + 1."),
-LQ(`{(x, y) ∈ ℝ² : y = x²} est-il un sous-espace vectoriel ?`,"non",NON,"(1, 1) est dans F (1 = 1²). Mais 2 · (1, 1) = (2, 2) n'y est pas : 2 ≠ 2² = 4."),
-LQ(`Quelle condition vérifie-t-on en premier pour montrer que F est un sous-espace vectoriel ?`,"le vecteur nul est dans F",["0 ∈ F","0∈f","~vecteurnul","~0appartient","~0estdans","~0dans"],"On commence toujours par vérifier que 0 est dans F : c'est le plus rapide, et s'il n'y est pas, c'est fini (non)."))),
+LZ(LQ("${(x, y) ∈ ℝ² : 2x − y = 0}$ est-il un sous-espace vectoriel ?","oui",OUI,"Une équation linéaire avec $0$ à droite : $0$ y est ($2 × 0 − 0 = 0$), et les sommes et les multiples restent dedans."),
+LQ("${(x, y) ∈ ℝ² : y = x + 1}$ est-il un sous-espace vectoriel ?","non",NON,"Le vecteur nul n'y est pas : $0 ≠ 0 + 1$."),
+LQ("${(x, y) ∈ ℝ² : y = x²}$ est-il un sous-espace vectoriel ?","non",NON,"$(1, 1) ∈ F$ car $1 = 1²$. Mais $2 · (1, 1) = (2, 2)$ n'y est pas : $2 ≠ 2² = 4$."),
+LQ("Quelle condition vérifie-t-on en premier pour montrer que $F$ est un sous-espace vectoriel ?","le vecteur nul est dans $F$",["0 ∈ F","0∈f","~vecteurnul","~0appartient","~0estdans","~0dans"],"On commence toujours par vérifier que $0 ∈ F$ : c'est le plus rapide, et s'il n'y est pas, c'est fini (la réponse est non).")))),
 
-sec(8,"Repères et coordonnées",`<p><b>Un repère de ℝ²</b>, c'est deux vecteurs u et v <b>non colinéaires</b>. Les <b>coordonnées</b> d'un vecteur w dans ce repère sont les nombres a et b tels que w = a·u + b·v.</p>
-<p><b>Exemple :</b> u = ${v("(1, 1)")}, v = ${v("(1, −1)")}. Ce sont bien deux vecteurs non colinéaires : 1 × (−1) − 1 × 1 = −2, pas 0.</p>`+
-LT(["w","Système","Coordonnées (a, b)"],[
-[v("(5, 3)"),sys("a + b = 5","a − b = 3"),"(4, 1)"],
-[v("(2, 0)"),sys("a + b = 2","a − b = 0"),"(1, 1)"],
-[v("(0, 2)"),sys("a + b = 0","a − b = 2"),"(1, −1)"]])+
-LZ(LQ(`Dans le repère u = ${v("(1, 1)")}, v = ${v("(1, −1)")}, quelle est la première coordonnée a de ${v("(7, 1)")} ?`,"4",["4"],"a + b = 7 et a − b = 1. En additionnant : 2a = 8, donc a = 4."),
-LQ(`Et la deuxième coordonnée b ?`,"3",["3"],"a + b = 7 avec a = 4, donc b = 3. Vérifie : 4 − 3 = 1."),
-LQ(`${v("(2, 4)")} et ${v("(1, 2)")} forment-ils un repère de ℝ² ?`,"non",NON,"2 × 2 − 4 × 1 = 0 : ils sont colinéaires ((2, 4) = 2 · (1, 2)). Ce n'est pas un repère.")))
+sec(8,"Repères et coordonnées",W.tx(`<p><b>Un repère de $ℝ²$</b>, c'est deux vecteurs $u$ et $v$ <b>non colinéaires</b>. Les <b>coordonnées</b> d'un vecteur $w$ dans ce repère sont les nombres $a$ et $b$ tels que $w = a u + b v$.</p>
+<p><b>Exemple :</b> $u = (1, 1)$ et $v = (1, −1)$. Ils ne sont pas colinéaires : $1 × (−1) − 1 × 1 = −2 ≠ 0$.</p>`+
+LT(["$w$","Système","Coordonnées $(a, b)$"],[
+["$(5, 3)$",`$${sys("a + b = 5","a − b = 3")}$`,"$(4, 1)$"],
+["$(2, 0)$",`$${sys("a + b = 2","a − b = 0")}$`,"$(1, 1)$"],
+["$(0, 2)$",`$${sys("a + b = 0","a − b = 2")}$`,"$(1, −1)$"]])+
+LZ(LQ("Dans le repère $u = (1, 1)$, $v = (1, −1)$, quelle est la première coordonnée $a$ de $(7, 1)$ ?","$4$",["4"],"$a + b = 7$ et $a − b = 1$. En additionnant : $2a = 8$, donc $a = 4$."),
+LQ("Et la deuxième coordonnée $b$ ?","$3$",["3"],"$a + b = 7$ avec $a = 4$, donc $b = 3$. Vérifie : $4 − 3 = 1$."),
+LQ("$(2, 4)$ et $(1, 2)$ forment-ils un repère de $ℝ²$ ?","non",NON,"$2 × 2 − 4 × 1 = 0$ : ils sont colinéaires, car $(2, 4) = 2 · (1, 2)$. Ce n'est pas un repère."))))
 ].join("\n");
 const mPivot=({sec})=>`<div class="title-row"><h1>Méthode : le pivot de Gauss</h1></div><p class="lead">C'est la méthode qui résout n'importe quel système linéaire. Elle est dans la liste annoncée pour le CC1 (TD 2, exercice 10), et elle sert aussi pour les exercices 12 et 13, et pour les combinaisons linéaires.</p>
  ${sec(1,"Quand s'en servir, et ce qu'il faut savoir avant",`<ul><li><b>Quand</b> : dès qu'il faut résoudre un système de plusieurs équations linéaires (chaque inconnue est seulement multipliée par un nombre).</li><li><b>Ce qu'on cherche</b> : toutes les valeurs des inconnues qui rendent toutes les équations vraies en même temps. Il peut y en avoir une seule, une infinité, ou aucune.</li><li><b>Avant</b>, il faut savoir écrire la matrice augmentée (le tableau des nombres du système, avec les seconds membres après une barre) et connaître les trois opérations permises sur les lignes.</li></ul>`)}
@@ -8741,92 +8748,92 @@ const quizAna=({sec})=>[
 `<div class="title-row"><h1>S'entraîner : le CC1 d'analyse</h1></div>
 <p class="lead">Le programme du CC1 (feuilles de TD 1 à 3), en tableaux d'exemples et en mini-quiz : quantificateurs, valeur absolue, partie entière, bornes, suites, limites de suites et de fonctions. Chaque partie : la règle, des exemples, puis les quiz.</p>`,
 
-sec(1,"Quantificateurs : ∀ et ∃",`<p><b>∀</b> se lit « pour tout » : la phrase doit être vraie pour <b>chaque</b> valeur. <b>∃</b> se lit « il existe » : il suffit d'<b>une</b> valeur qui marche. Pour montrer qu'une phrase en ∀ est fausse, un seul contre-exemple suffit.</p>`+
+sec(1,"Quantificateurs : ∀ et ∃",W.tx(`<p><b>$∀$</b> se lit « pour tout » : la phrase doit être vraie pour <b>chaque</b> valeur. <b>$∃$</b> se lit « il existe » : il suffit d'<b>une</b> valeur qui marche. Pour montrer qu'une phrase en $∀$ est fausse, un seul contre-exemple suffit.</p>`+
 AT(["Phrase","Vraie ?","Pourquoi"],[
-["∀x ∈ ℝ, x² ≥ 0","vrai","un carré est toujours positif ou nul"],
-["∃x ∈ ℝ, x² = −1","faux","aucun carré n'est négatif"],
-["∀x ∈ ℝ, x² > 0","faux","contre-exemple : x = 0"],
-["∀x ∈ ℝ, ∃y ∈ ℝ, y > x","vrai","pour chaque x, y = x + 1 marche"],
-["∃y ∈ ℝ, ∀x ∈ ℝ, y > x","faux","aucun nombre n'est plus grand que tous les autres"]])+
-`<p><b>Nier une phrase :</b> on échange ∀ et ∃, et on nie la fin. La négation de « ∀x, f(x) > 0 » est « ∃x, f(x) ≤ 0 ». Le contraire de &gt; est ≤ (et pas &lt;).</p>`+
-AZ(AQ("Vrai ou faux : ∀x ∈ ℝ, x + 1 > x ?","vrai",VR,"Ajouter 1 rend toujours plus grand, pour n'importe quel x."),
-AQ("Vrai ou faux : ∃n ∈ ℕ, n < 0 ?","faux",FX,"Les entiers naturels sont 0, 1, 2… : aucun n'est négatif."),
-AQ("Vrai ou faux : ∀x ∈ ℝ, x² > x ?","faux",FX,"Contre-exemple : x = 1/2. x² = 1/4, qui est plus petit que 1/2. Un seul contre-exemple suffit."),
-AQ("La négation de « ∀x ∈ ℝ, f(x) > 0 » commence par quel quantificateur ? (écris ∃ ou « il existe »)","∃ (il existe)",["∃","ilexiste","~existe"],"On échange ∀ et ∃ : « ∃x ∈ ℝ, f(x) ≤ 0 »."),
-AQ("Dans cette négation, par quoi remplace-t-on « > 0 » ?","≤ 0",["≤0","<=0","≤","<="],"Le contraire de « strictement plus grand que 0 », c'est « plus petit ou égal à 0 » : ≤ 0."))),
+["$∀x ∈ ℝ, x² ≥ 0$","vrai","un carré est toujours positif ou nul"],
+["$∃x ∈ ℝ, x² = −1$","faux","aucun carré n'est négatif"],
+["$∀x ∈ ℝ, x² &gt; 0$","faux","contre-exemple : $x = 0$"],
+["$∀x ∈ ℝ, ∃y ∈ ℝ, y &gt; x$","vrai","pour chaque $x$, $y = x + 1$ marche"],
+["$∃y ∈ ℝ, ∀x ∈ ℝ, y &gt; x$","faux","aucun nombre n'est plus grand que tous les autres"]])+
+`<p><b>Nier une phrase :</b> on échange $∀$ et $∃$, et on nie la fin. La négation de « $∀x ∈ ℝ, f(x) &gt; 0$ » est « $∃x ∈ ℝ, f(x) ≤ 0$ ». Le contraire de $&gt;$ est $≤$, et pas $&lt;$.</p>`+
+AZ(AQ("Vrai ou faux : $∀x ∈ ℝ, x + 1 &gt; x$ ?","vrai",VR,"Ajouter $1$ rend toujours plus grand, pour n'importe quel $x$."),
+AQ("Vrai ou faux : $∃n ∈ ℕ, n &lt; 0$ ?","faux",FX,"Les entiers naturels sont $0, 1, 2, …$ : aucun n'est négatif."),
+AQ("Vrai ou faux : $∀x ∈ ℝ, x² &gt; x$ ?","faux",FX,"Contre-exemple : $x = 1/2$. Alors $x² = 1/4$, qui est plus petit que $1/2$. Un seul contre-exemple suffit."),
+AQ("La négation de « $∀x ∈ ℝ, f(x) &gt; 0$ » commence par quel quantificateur ? Écris $∃$ ou « il existe ».","$∃$ (il existe)",["∃","ilexiste","~existe"],"On échange $∀$ et $∃$ : « $∃x ∈ ℝ, f(x) ≤ 0$ »."),
+AQ("Dans cette négation, par quoi remplace-t-on « $&gt; 0$ » ?","$≤ 0$",["≤0","<=0","≤","<="],"Le contraire de « strictement plus grand que $0$ », c'est « plus petit ou égal à $0$ » : $≤ 0$.")))),
 
-sec(2,"Valeur absolue et distance",`<p><b>|x|</b> est la distance entre x et 0 : on enlève le signe. <b>|x − a|</b> est la distance entre x et a. Donc <b>|x − a| &lt; r</b> veut dire : x est à moins de r de a, c'est-à-dire a − r &lt; x &lt; a + r.</p>`+
+sec(2,"Valeur absolue et distance",W.tx(`<p><b>$|x|$</b> est la distance entre $x$ et $0$ : on enlève le signe. <b>$|x − a|$</b> est la distance entre $x$ et $a$. Donc <b>$|x − a| &lt; r$</b> veut dire : $x$ est à moins de $r$ de $a$, c'est-à-dire $a − r &lt; x &lt; a + r$.</p>`+
 AT(["Écrit","Veut dire","Intervalle"],[
-["|−3|","3",""],
-["|x| ≤ 2","−2 ≤ x ≤ 2","[−2, 2]"],
-["|x − 2| < 1","x à moins de 1 de 2 : 1 < x < 3","]1, 3["],
-["|x + 1| ≤ 3","|x − (−1)| ≤ 3 : −4 ≤ x ≤ 2","[−4, 2]"]])+
-`<p><b>L'inégalité triangulaire :</b> |a + b| ≤ |a| + |b|. Exemple : |3 + (−5)| = 2, et |3| + |−5| = 8.</p>`+
-AZ(AQ("Que vaut |−7| ?","7",["7"],"On enlève le signe : 7."),
-AQ("|x − 5| < 2 équivaut à ? < x < ?. Quel est le nombre de gauche ?","3",["3"],"x est à moins de 2 de 5 : entre 5 − 2 = 3 et 5 + 2 = 7."),
-AQ("Et le nombre de droite ?","7",["7"],"5 + 2 = 7. Donc 3 < x < 7."),
-AQ("Écris l'intervalle des x tels que |x + 2| ≤ 1.","[−3, −1]",["[-3,-1]","[-3;-1]"],"|x + 2| = |x − (−2)| : x est à au plus 1 de −2, donc −3 ≤ x ≤ −1. Les crochets sont fermés car c'est ≤."))),
+["$|−3|$","$3$",""],
+["$|x| ≤ 2$","$−2 ≤ x ≤ 2$","$[−2, 2]$"],
+["$|x − 2| &lt; 1$","$x$ est à moins de $1$ de $2$ : $1 &lt; x &lt; 3$","$]1, 3[$"],
+["$|x + 1| ≤ 3$","$|x − (−1)| ≤ 3$ : $−4 ≤ x ≤ 2$","$[−4, 2]$"]])+
+`<p><b>L'inégalité triangulaire :</b> $|a + b| ≤ |a| + |b|$. Exemple : $|3 + (−5)| = 2$, et $|3| + |−5| = 8$.</p>`+
+AZ(AQ("Que vaut $|−7|$ ?","$7$",["7"],"On enlève le signe : $7$."),
+AQ("$|x − 5| &lt; 2$ équivaut à $… &lt; x &lt; …$. Quel est le nombre de gauche ?","$3$",["3"],"$x$ est à moins de $2$ de $5$ : entre $5 − 2 = 3$ et $5 + 2 = 7$."),
+AQ("Et le nombre de droite ?","$7$",["7"],"$5 + 2 = 7$. Donc $3 &lt; x &lt; 7$."),
+AQ("Écris l'intervalle des $x$ tels que $|x + 2| ≤ 1$.","$[−3, −1]$",["[-3,-1]","[-3;-1]"],"$|x + 2| = |x − (−2)|$ : $x$ est à au plus $1$ de $−2$, donc $−3 ≤ x ≤ −1$. Les crochets sont fermés, car c'est $≤$.")))),
 
-sec(3,"Partie entière",`<p><b>E(x)</b> (ou ⌊x⌋) est le plus grand entier <b>inférieur ou égal</b> à x. Pour un nombre positif, on coupe la virgule. Pour un nombre négatif, attention : on descend.</p>`+
-AT(["x","E(x)","Pourquoi"],[
-["3,7","3","3 ≤ 3,7 < 4"],
-["5","5","5 est déjà un entier"],
-["−1,2","−2","−2 ≤ −1,2 < −1 : on descend, pas −1"],
-["−4","−4",""]])+
-`<p><b>À retenir :</b> E(x) ≤ x &lt; E(x) + 1.</p>`+
-AZ(AQ("Que vaut E(2,9) ?","2",["2"],"2 ≤ 2,9 < 3 : E(2,9) = 2."),
-AQ("Que vaut E(−0,5) ?","−1",["-1"],"−1 ≤ −0,5 < 0 : E(−0,5) = −1. Ce n'est pas 0, car 0 est plus grand que −0,5."),
-AQ("Que vaut E(−3) ?","−3",["-3"],"−3 est un entier : E(−3) = −3."))),
+sec(3,"Partie entière",W.tx(`<p><b>$E(x)$</b> (ou $⌊x⌋$) est le plus grand entier <b>inférieur ou égal</b> à $x$. Pour un nombre positif, on coupe la virgule. Pour un nombre négatif, attention : on descend.</p>`+
+AT(["$x$","$E(x)$","Pourquoi"],[
+["$3,7$","$3$","$3 ≤ 3,7 &lt; 4$"],
+["$5$","$5$","$5$ est déjà un entier"],
+["$−1,2$","$−2$","$−2 ≤ −1,2 &lt; −1$ : on descend, ce n'est pas $−1$"],
+["$−4$","$−4$",""]])+
+`<p><b>À retenir :</b> $E(x) ≤ x &lt; E(x) + 1$.</p>`+
+AZ(AQ("Que vaut $E(2,9)$ ?","$2$",["2"],"$2 ≤ 2,9 &lt; 3$, donc $E(2,9) = 2$."),
+AQ("Que vaut $E(−0,5)$ ?","$−1$",["-1"],"$−1 ≤ −0,5 &lt; 0$, donc $E(−0,5) = −1$. Ce n'est pas $0$, car $0$ est plus grand que $−0,5$."),
+AQ("Que vaut $E(−3)$ ?","$−3$",["-3"],"$−3$ est un entier : $E(−3) = −3$.")))),
 
-sec(4,"Majorant, borne supérieure, maximum",`<p><b>Un majorant</b> de A, c'est un nombre plus grand ou égal à tous les éléments de A. <b>La borne supérieure</b> sup A est le <b>plus petit</b> des majorants. <b>Le maximum</b> max A, c'est la borne supérieure quand elle est <b>dans</b> A. Même chose vers le bas : minorant, borne inférieure inf A, minimum.</p>`+
-AT(["A","sup A","max A ?","inf A","min A ?"],[
-["[0, 1[","1","non : 1 n'est pas dans A","0","oui : 0"],
-["]2, 5]","5","oui : 5","2","non"],
-["{1/n : n ≥ 1} = {1 ; 1/2 ; 1/3 ; …}","1","oui : 1 (pour n = 1)","0","non : 1/n n'est jamais 0"],
-["ℕ","n'existe pas (pas majorée)","non","0","oui : 0"]])+
-AZ(AQ("Que vaut sup ]2, 5[ ?","5",["5"],"5 est un majorant, et aucun nombre plus petit que 5 ne l'est : sup = 5."),
-AQ("]2, 5[ a-t-il un maximum ?","non",NONa,"Le sup vaut 5, mais 5 n'est pas dans ]2, 5[ (crochet ouvert). Pas de maximum."),
-AQ("Que vaut inf {1/n : n ≥ 1} ?","0",["0"],"1/n s'approche de 0 aussi près qu'on veut, sans jamais l'atteindre : inf = 0."),
-AQ("Que vaut sup {1 − 1/n : n ≥ 1} ?","1",["1"],"1 − 1/n vaut 0, 1/2, 2/3, 3/4… : toujours sous 1, et de plus en plus près. sup = 1, mais pas de maximum."))),
+sec(4,"Majorant, borne supérieure, maximum",W.tx(`<p><b>Un majorant</b> de $A$, c'est un nombre plus grand ou égal à tous les éléments de $A$. <b>La borne supérieure</b> $sup A$ est le <b>plus petit</b> des majorants. <b>Le maximum</b> $max A$, c'est la borne supérieure quand elle est <b>dans</b> $A$. Même chose vers le bas : minorant, borne inférieure $inf A$, minimum $min A$.</p>`+
+AT(["$A$","$sup A$","$max A$ ?","$inf A$","$min A$ ?"],[
+["$[0, 1[$","$1$","non : $1 ∉ A$","$0$","oui : $0$"],
+["$]2, 5]$","$5$","oui : $5$","$2$","non"],
+["${1/n : n ≥ 1}$","$1$","oui : $1$, pour $n = 1$","$0$","non : $1/n$ ne vaut jamais $0$"],
+["$ℕ$","n'existe pas : $ℕ$ n'est pas majoré","non","$0$","oui : $0$"]])+
+AZ(AQ("Que vaut $sup ]2, 5[$ ?","$5$",["5"],"$5$ est un majorant, et aucun nombre plus petit que $5$ ne l'est : $sup ]2, 5[ = 5$."),
+AQ("$]2, 5[$ a-t-il un maximum ?","non",NONa,"Le $sup$ vaut $5$, mais $5$ n'est pas dans $]2, 5[$ (crochet ouvert). Pas de maximum."),
+AQ("Que vaut $inf {1/n : n ≥ 1}$ ?","$0$",["0"],"$1/n$ s'approche de $0$ aussi près qu'on veut, sans jamais l'atteindre : $inf = 0$."),
+AQ("Que vaut $sup {1 − 1/n : n ≥ 1}$ ?","$1$",["1"],"$1 − 1/n$ vaut $0$, $1/2$, $2/3$, $3/4$, … : toujours sous $1$, et de plus en plus près. $sup = 1$, mais pas de maximum.")))),
 
-sec(5,"Suites : calculer et étudier la monotonie",`<p><b>Croissante</b> : chaque terme est plus grand ou égal au précédent, uₙ₊₁ ≥ uₙ. <b>La méthode :</b> calcule uₙ₊₁ − uₙ et regarde son signe.</p>`+
-AT(["uₙ","uₙ₊₁ − uₙ","Conclusion"],[
-["2n + 1","2(n + 1) + 1 − (2n + 1) = 2","croissante"],
-["1/n (n ≥ 1)","1/(n + 1) − 1/n = −1/(n(n + 1))","décroissante"],
-["n²","(n + 1)² − n² = 2n + 1","croissante"],
-["(−1)ⁿ","2 ou −2 selon n","ni l'une ni l'autre"]])+
-`<p><b>Une suite définie par récurrence</b> : on calcule les termes un par un. Avec u₀ = 2 et uₙ₊₁ = uₙ + 3 : u₁ = 5, u₂ = 8, u₃ = 11.</p>`+
-AZ(AQ("La suite uₙ = 3 − n est-elle croissante ou décroissante ?","décroissante",["décroissante","decroissante","~décroiss","~decroiss"],"uₙ₊₁ − uₙ = (3 − (n + 1)) − (3 − n) = −1, toujours négatif : décroissante."),
-AQ("u₀ = 1 et uₙ₊₁ = 2uₙ. Que vaut u₄ ?","16",["16"],"u₁ = 2, u₂ = 4, u₃ = 8, u₄ = 16."),
-AQ("Pour uₙ = n² + n, que vaut uₙ₊₁ − uₙ ? (en fonction de n)","2n + 2",["2n+2","2(n+1)","2+2n"],"(n + 1)² + (n + 1) − n² − n = n² + 2n + 1 + n + 1 − n² − n = 2n + 2. C'est positif : la suite est croissante."))),
+sec(5,"Suites : calculer et étudier la monotonie",W.tx(`<p><b>Croissante</b> : chaque terme est plus grand ou égal au précédent, $u_{n+1} ≥ u_{n}$. <b>La méthode :</b> calcule $u_{n+1} − u_{n}$ et regarde son signe.</p>`+
+AT(["$u_{n}$","$u_{n+1} − u_{n}$","Conclusion"],[
+["$2n + 1$","$2(n + 1) + 1 − (2n + 1) = 2$","croissante"],
+["$1/n$, pour $n ≥ 1$","$1/(n + 1) − 1/n = −1/(n(n + 1))$","décroissante"],
+["$n²$","$(n + 1)² − n² = 2n + 1$","croissante"],
+["$(−1)ⁿ$","$2$ ou $−2$ selon $n$","ni croissante ni décroissante"]])+
+`<p><b>Une suite définie par récurrence</b> : on calcule les termes un par un. Avec $u_{0} = 2$ et $u_{n+1} = u_{n} + 3$ : $u_{1} = 5$, $u_{2} = 8$, $u_{3} = 11$.</p>`+
+AZ(AQ("La suite $u_{n} = 3 − n$ est-elle croissante ou décroissante ?","décroissante",["décroissante","decroissante","~décroiss","~decroiss"],"$u_{n+1} − u_{n} = (3 − (n + 1)) − (3 − n) = −1$, toujours négatif : la suite est décroissante."),
+AQ("$u_{0} = 1$ et $u_{n+1} = 2u_{n}$. Que vaut $u_{4}$ ?","$16$",["16"],"$u_{1} = 2$, $u_{2} = 4$, $u_{3} = 8$, $u_{4} = 16$."),
+AQ("Pour $u_{n} = n² + n$, que vaut $u_{n+1} − u_{n}$, en fonction de $n$ ?","$2n + 2$",["2n+2","2(n+1)","2+2n"],"$(n + 1)² + (n + 1) − n² − n = n² + 2n + 1 + n + 1 − n² − n = 2n + 2$. C'est positif : la suite est croissante.")))),
 
-sec(6,"Limites de suites",`<p><b>La définition :</b> uₙ tend vers ℓ si, pour tout ε &gt; 0, il existe un rang N tel que, pour tout n ≥ N, |uₙ − ℓ| &lt; ε. En mots : à partir d'un certain rang, uₙ est aussi près de ℓ qu'on veut.</p>
-<p><b>Exemple :</b> uₙ = 1/n et ε = 0,1. On veut 1/n &lt; 0,1, c'est-à-dire n &gt; 10. Donc N = 11 convient.</p>`+
-AT(["uₙ","Limite","Comment"],[
-["1/n","0",""],
-["(2n + 1)/(n + 3)","2","on factorise par n en haut et en bas : (2 + 1/n)/(1 + 3/n)"],
-["n² − n","+∞","n(n − 1), produit de deux termes qui tendent vers +∞"],
-["(−1)ⁿ","pas de limite","elle vaut 1, −1, 1, −1…"],
-["(−1)ⁿ/n","0","gendarmes : −1/n ≤ (−1)ⁿ/n ≤ 1/n"],
-["√(n + 1) − √n","0","quantité conjuguée : 1/(√(n + 1) + √n)"]])+
-`<p><b>Deux théorèmes à citer :</b> les <b>gendarmes</b> (coincée entre deux suites qui ont la même limite) ; la <b>limite monotone</b> (croissante et majorée, donc convergente).</p>`+
-AZ(AQ("Limite de (3n² + 1)/(n² − 2) ?","3",["3"],"On factorise par n² : (3 + 1/n²)/(1 − 2/n²), qui tend vers 3/1 = 3."),
-AQ("Limite de (2n − 1)/(5n) ?","2/5",["2/5","0.4","0,4"],"(2n − 1)/(5n) = 2/5 − 1/(5n), qui tend vers 2/5."),
-AQ("Limite de (n + 1)/n² ?","0",["0"],"(n + 1)/n² = 1/n + 1/n², qui tend vers 0."),
-AQ("Pour uₙ = 1/n et ε = 0,01, quel est le plus petit rang N tel que 1/n < ε pour tout n ≥ N ?","101",["101"],"1/n < 0,01 veut dire n > 100. Le plus petit entier qui convient est 101."),
-AQ("uₙ est croissante et majorée par 5. Converge-t-elle ?","oui",OUIa,"C'est le théorème de la limite monotone : croissante et majorée, donc convergente."),
-AQ("Sa limite vaut-elle forcément 5 ?","non",NONa,"Non : 5 est un majorant, mais la limite peut être plus petite. Par exemple 1 − 1/n est majorée par 5 et tend vers 1."))),
+sec(6,"Limites de suites",W.tx(`<p><b>La définition :</b> $u_{n}$ tend vers $ℓ$ si, pour tout $ε &gt; 0$, il existe un rang $N$ tel que, pour tout $n ≥ N$, $|u_{n} − ℓ| &lt; ε$. En mots : à partir d'un certain rang, $u_{n}$ est aussi près de $ℓ$ qu'on veut.</p>
+<p><b>Exemple :</b> $u_{n} = 1/n$ et $ε = 0,1$. On veut $1/n &lt; 0,1$, c'est-à-dire $n &gt; 10$. Donc $N = 11$ convient.</p>`+
+AT(["Limite","Résultat","Comment"],[
+["$lim_{n→+∞} 1/n$","$0$",""],
+["$lim_{n→+∞} (2n + 1)/(n + 3)$","$2$","on factorise par $n$ en haut et en bas : $(2 + 1/n)/(1 + 3/n)$"],
+["$lim_{n→+∞} (n² − n)$","$+∞$","$n(n − 1)$ : un produit de deux termes qui tendent vers $+∞$"],
+["$(−1)ⁿ$","pas de limite","elle vaut $1, −1, 1, −1, …$"],
+["$lim_{n→+∞} (−1)ⁿ/n$","$0$","gendarmes : $−1/n ≤ (−1)ⁿ/n ≤ 1/n$"],
+["$lim_{n→+∞} (√(n + 1) − √n)$","$0$","quantité conjuguée : $1/(√(n + 1) + √n)$"]])+
+`<p><b>Deux théorèmes à citer :</b> les <b>gendarmes</b> (une suite coincée entre deux suites qui ont la même limite) ; la <b>limite monotone</b> (croissante et majorée, donc convergente).</p>`+
+AZ(AQ("Que vaut $lim_{n→+∞} (3n² + 1)/(n² − 2)$ ?","$3$",["3"],"On factorise par $n²$ : $(3 + 1/n²)/(1 − 2/n²)$, qui tend vers $3/1 = 3$."),
+AQ("Que vaut $lim_{n→+∞} (2n − 1)/(5n)$ ?","$2/5$",["2/5","0.4","0,4"],"$(2n − 1)/(5n) = 2/5 − 1/(5n)$, qui tend vers $2/5$."),
+AQ("Que vaut $lim_{n→+∞} (n + 1)/n²$ ?","$0$",["0"],"$(n + 1)/n² = 1/n + 1/n²$, qui tend vers $0$."),
+AQ("Pour $u_{n} = 1/n$ et $ε = 0,01$, quel est le plus petit rang $N$ tel que $1/n &lt; ε$ pour tout $n ≥ N$ ?","$101$",["101"],"$1/n &lt; 0,01$ veut dire $n &gt; 100$. Le plus petit entier qui convient est $101$."),
+AQ("$(u_{n})$ est croissante et majorée par $5$. Converge-t-elle ?","oui",OUIa,"C'est le théorème de la limite monotone : croissante et majorée, donc convergente."),
+AQ("Sa limite vaut-elle forcément $5$ ?","non",NONa,"Non : $5$ est un majorant, mais la limite peut être plus petite. Par exemple $1 − 1/n$ est majorée par $5$ et tend vers $1$.")))),
 
-sec(7,"Limites de fonctions",`<p><b>Les mêmes règles que pour les suites</b>, et en plus des limites en un point x₀. Si on remplace x par x₀ et qu'on obtient 0/0, on <b>factorise</b> pour simplifier.</p>`+
+sec(7,"Limites de fonctions",W.tx(`<p><b>Les mêmes règles que pour les suites</b>, et en plus des limites en un point $x₀$. Si on remplace $x$ par $x₀$ et qu'on obtient $0/0$, on <b>factorise</b> pour simplifier.</p>`+
 AT(["Limite","Calcul","Résultat"],[
-["(x² − 1)/(x − 1) en 1","(x − 1)(x + 1)/(x − 1) = x + 1","2"],
-["(2x + 3)/(x − 1) en +∞","(2 + 3/x)/(1 − 1/x)","2"],
-["sin(x)/x en +∞","−1/x ≤ sin(x)/x ≤ 1/x","0 (gendarmes)"],
-["1/x en 0, à droite","1 divisé par un petit positif","+∞"]])+
-AZ(AQ("Limite de (x² − 4)/(x − 2) quand x tend vers 2 ?","4",["4"],"x² − 4 = (x − 2)(x + 2). Après simplification : x + 2, qui vaut 4 en x = 2."),
-AQ("Limite de (5x − 1)/(x + 2) quand x tend vers +∞ ?","5",["5"],"On factorise par x : (5 − 1/x)/(1 + 2/x), qui tend vers 5."),
-AQ("Limite de 1/x quand x tend vers 0 par la gauche (x < 0) ?","−∞",["-∞","-inf","-infini","moinsinfini"],"1 divisé par un nombre négatif très petit : très grand en valeur absolue, et négatif. −∞."),
-AQ("Limite de x² quand x tend vers −∞ ?","+∞",INF,"Un carré est positif, et il devient de plus en plus grand : +∞.")))
+["$lim_{x→1} (x² − 1)/(x − 1)$","$(x − 1)(x + 1)/(x − 1) = x + 1$","$2$"],
+["$lim_{x→+∞} (2x + 3)/(x − 1)$","$(2 + 3/x)/(1 − 1/x)$","$2$"],
+["$lim_{x→+∞} sin(x)/x$","$−1/x ≤ sin(x)/x ≤ 1/x$","$0$, par les gendarmes"],
+["$lim_{x→0⁺} 1/x$","$1$ divisé par un petit nombre positif","$+∞$"]])+
+AZ(AQ("Que vaut $lim_{x→2} (x² − 4)/(x − 2)$ ?","$4$",["4"],"$x² − 4 = (x − 2)(x + 2)$. Après simplification, il reste $x + 2$, qui vaut $4$ en $x = 2$."),
+AQ("Que vaut $lim_{x→+∞} (5x − 1)/(x + 2)$ ?","$5$",["5"],"On factorise par $x$ : $(5 − 1/x)/(1 + 2/x)$, qui tend vers $5$."),
+AQ("Que vaut $lim_{x→0⁻} 1/x$ (quand $x$ tend vers $0$ en restant négatif) ?","$−∞$",["-∞","-inf","-infini","moinsinfini"],"$1$ divisé par un nombre négatif très proche de $0$ : un nombre négatif très grand en valeur absolue. $−∞$."),
+AQ("Que vaut $lim_{x→−∞} x²$ ?","$+∞$",INF,"Un carré est positif, et il devient de plus en plus grand : $+∞$."))))
 ].join("\n");
 
 /* ---------- chapitre 1 : les réels ---------- */
