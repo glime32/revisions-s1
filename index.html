@@ -325,7 +325,7 @@ main.is-enter :is(.piece,.swatch,.fiche,.task,.blk,details.ex,details.day,.kcard
 .lead{font-size:1.14rem;line-height:1.6;max-width:68ch;color:var(--icy)}
 .today-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 
-.sec{display:grid;gap:14px;min-width:0}
+.sec{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr)}
 .sec>h2{display:flex;align-items:center;gap:12px;font:400 1.5rem/1.15 var(--f-serif);color:var(--head)}
 .sec>h2::after{content:"";flex:1;min-width:20px;height:2px;border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 60%,transparent),transparent)}
 .sec>h2 .num{flex:none;width:30px;height:30px;border-radius:9px;background:var(--sc);color:#000;display:grid;place-items:center;font:850 .92rem var(--f-sans);box-shadow:3px 3px 0 color-mix(in srgb,var(--sc) 40%,#000)}
@@ -6550,7 +6550,7 @@ const F2T=(head,rows,cc=[0,1])=>`<div style="overflow-x:auto"><table class="tbl"
 const F2V=(head,rows)=>F2T(head,rows,[0,1]);
 const F2Q=(q,code,ok,ex)=>`<div class="qbox mq" data-ok="${esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p>${code?M(code):""}<div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : <code>${esc(ok[0])}</code></b><br>${ex}</div></div>`;
 const F2E=(titre,ligne,sens,corps)=>`<h3>${titre}</h3><p class="muted">Sur ta feuille :</p>${M(ligne)}<p><b>Ce que ça veut dire.</b> ${sens}</p>${corps}`;
-const F2Z=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ».</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const F2Z=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ».</p><div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)">${q.join("")}</div>`;
 const feuille2=({sec})=>[
 `<div class="title-row"><h1>Ma feuille expliquée</h1></div>
 <p class="lead">Ta feuille A4, morceau par morceau. Pour chaque morceau : la ligne de ta feuille, ce qu'elle veut dire, beaucoup d'exemples, le piège, puis un mini-quiz pour vérifier que tu as compris. Cette page n'est pas à recopier : tu recopies <a href="#/pf/p/feuille">Ma feuille à recopier</a>.</p>
@@ -7835,7 +7835,7 @@ const formulaire=({sec})=>`<div class="title-row"><h1>Formulaire de calculus</h1
  ${sec(7,"Les PDF du cours",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["calc/form_prim_deriv.pdf","Primitives et dérivées"],["calc/form_trigo.pdf","Trigonométrie"],["calc/form_medoc.pdf","Formulaire de cours"],["calc/cc1_2025_corr.pdf","Corrigé CC1 2025"],["calc/td1.pdf","TD 1"],["calc/td2.pdf","TD 2"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 const CT=(head,rows)=>`<div style="overflow-x:auto"><table class="tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const CQ=(q,show,ok,ex)=>`<div class="qbox mq" data-ok="${W.esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn" data-mq="pow" title="Mettre en exposant" aria-label="Mettre en exposant">xⁿ</button><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="mq-apercu" hidden></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : ${show}</b><br>${ex}</div></div>`;
-const CZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour un exposant de plusieurs caractères, appuie sur le bouton xⁿ et écris dedans (ou tape ^( … ) toi-même). Tu peux taper sqrt(x) pour √x. Les espaces, les parenthèses, les * et le « + C » ne comptent pas.</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const CZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour un exposant de plusieurs caractères, appuie sur le bouton xⁿ et écris dedans (ou tape ^( … ) toi-même). Tu peux taper sqrt(x) pour √x. Les espaces, les parenthèses, les * et le « + C » ne comptent pas.</p><div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)">${q.join("")}</div>`;
 const quizCalc=({sec})=>[
 `<div class="title-row"><h1>S'entraîner : formules et équations différentielles</h1></div>
 <p class="lead">Le programme du CC1, en tableaux d'exemples et en mini-quiz : dérivées, primitives, intégrales, équations différentielles d'ordre 1, limites, trigonométrie. Pour chaque partie : la règle, des exemples, puis les quiz. Les formules à savoir par cœur sont aussi dans le <a href="#/calc/p/formulaire">formulaire</a>.</p>`,
@@ -8414,7 +8414,7 @@ const cours=({sec})=>`<div class="title-row"><h1>Les 2 questions de cours du CC1
 /* une page par méthode : quand s'en servir, l'idée, les étapes, des exemples rédigés en entier, les pièges */
 const LT=(head,rows)=>`<div style="overflow-x:auto"><table class="tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const LQ=(q,show,ok,ex)=>`<div class="qbox mq" data-ok="${W.esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn" data-mq="pow" title="Mettre en exposant" aria-label="Mettre en exposant">xⁿ</button><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="mq-apercu" hidden></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : ${show}</b><br>${ex}</div></div>`;
-const LZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour un vecteur, écris (1, 4, 5) ou 1;4;5. Pour oui ou non, écris oui ou non.</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const LZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour un vecteur, écris (1, 4, 5) ou 1;4;5. Pour oui ou non, écris oui ou non.</p><div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)">${q.join("")}</div>`;
 const VA=(...x)=>{const a=x.map(String);return [`(${a.join(", ")})`,a.join(";"),a.join(" ")];};
 const OUI=["oui","~oui"],NON=["non","~non"];
 const quizLin=({sec})=>[
@@ -8757,7 +8757,7 @@ const concepts=[];const add=(ch,o)=>{o.ch=ch;concepts.push(o);};
 
 const AT=(head,rows)=>`<div style="overflow-x:auto"><table class="tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const AQ=(q,show,ok,ex)=>`<div class="qbox mq" data-ok="${W.esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn" data-mq="pow" title="Mettre en exposant" aria-label="Mettre en exposant">xⁿ</button><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="mq-apercu" hidden></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : ${show}</b><br>${ex}</div></div>`;
-const AZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour vrai ou faux, écris vrai ou faux ; pour l'infini, +inf ou +∞ ; pour une fraction, 2/5.</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const AZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour vrai ou faux, écris vrai ou faux ; pour l'infini, +inf ou +∞ ; pour une fraction, 2/5.</p><div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)">${q.join("")}</div>`;
 const VR=["vrai","~vrai"],FX=["faux","~faux"],OUIa=["oui","~oui"],NONa=["non","~non"],INF=["+∞","∞","+inf","inf","+infini","infini","plusinfini"];
 const quizAna=({sec})=>[
 `<div class="title-row"><h1>S'entraîner : le CC1 d'analyse</h1></div>
