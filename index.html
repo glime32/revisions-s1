@@ -479,6 +479,10 @@ svg .arrow-ok{fill:var(--vert)}
 .mq-row input{flex:1 1 12em;min-width:0;font:inherit;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
 .mq-row input:focus{outline:none;border-color:var(--violet-hi)}
 .mq-apercu{color:var(--graphite);font-size:1rem}
+.mi .ig{display:inline-flex;align-items:center;vertical-align:middle;margin-right:.12em}
+.mi .ig .is{font-size:1.7em;line-height:1}
+.mi .ib{display:inline-flex;flex-direction:column;justify-content:space-between;font-size:.72em;line-height:1.15;vertical-align:middle;margin-left:.08em}
+.mi .ib sup,.mi .ib sub{line-height:1.2;vertical-align:baseline;font-size:1em}
 .expl.no>b:first-child{color:var(--rouge)}
 .score{font:400 3rem/1 var(--f-serif);color:var(--head);font-variant-numeric:tabular-nums}
 details.ex{background:var(--feuille);border:2px solid var(--trait);border-radius:16px;transition:border-color .2s}
@@ -1464,8 +1468,12 @@ function orne(span){
       f.appendChild(document.createTextNode(v.slice(k,pos)));const i=document.createElement("i");i.textContent=m;f.appendChild(i);k=pos+m.length;return m;});
     if(!k)return;f.appendChild(document.createTextNode(v.slice(k)));p.replaceChild(f,nd);});
 }
+/* écriture explicite : $…$ marque une formule ; dedans, ^{…} exposant, _{…} indice, ∫_{a}^{b} et ]_{a}^{b} avec bornes empilées */
+const BORNES='<span class="ib"><sup>$2</sup><sub>$1</sub></span>';
+function tx(s){return String(s).replace(/\$([^$]+)\$/g,(m,x)=>`<span class="mx">${x.replace(/∫_\{([^}]*)\}\^\{([^}]*)\}/g,'<span class="ig"><span class="is">∫</span>'+BORNES+'</span>').replace(/\]_\{([^}]*)\}\^\{([^}]*)\}/g,"]"+BORNES).replace(/\^\{([^}]*)\}/g,"<sup>$1</sup>").replace(/_\{([^}]*)\}/g,"<sub>$1</sub>")}</span>`);}
 function formules(root,tout){
   if(!root||root.closest(HORS))return;
+  [...(root.matches(".mx")?[root]:[]),...root.querySelectorAll(".mx")].forEach(m=>{m.className="mi";orne(m);});
   const ferme=e=>{const d=e.parentElement&&e.parentElement.closest("details");return d&&!d.open&&e.tagName!=="SUMMARY"&&!e.closest("summary");};
   const tw=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT,{acceptNode:e=>e.matches(HORS)||ferme(e)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
   const L=[];let e=root;do{if(e.nodeType===1&&!e.matches(HORS))L.push(e);}while((e=tw.nextNode()));
@@ -1520,7 +1528,7 @@ function mq(root){
       inp.value=inp.value.slice(0,a)+"^("+inp.value.slice(a,z)+")"+inp.value.slice(z);inp.focus();inp.setSelectionRange(p,p);maj();});
   });
 }
-window.W={mq,esc,sup,mth,formules,code,hlCode,tracer,calltree,sortviz,dicho,listlab,drill,rewrite,plotter};
+window.W={mq,tx,esc,sup,mth,formules,code,hlCode,tracer,calltree,sortviz,dicho,listlab,drill,rewrite,plotter};
 })();
 
 </script>
@@ -7803,107 +7811,110 @@ const formulaire=({sec})=>`<div class="title-row"><h1>Formulaire de calculus</h1
  ${sec(5,"Équations différentielles d'ordre 1",`<p>(E) : y′ + ay = b. Équation homogène (E₀) : y′ + ay = 0. A est une primitive de a.</p><ul><li><b>Proposition 4.1.</b> Les solutions de (E₀) sont les fonctions t ↦ C e<sup>−A(t)</sup> où C ∈ ℝ.</li><li><b>Proposition 4.2 (variation de la constante).</b> Soit c une primitive de t ↦ b(t)e<sup>A(t)</sup>. La fonction t ↦ c(t)e<sup>−A(t)</sup> est solution de (E).</li><li><b>Proposition 4.3.</b> Soit y une solution de (E). Les solutions de (E) sont les fonctions de la forme y + y₀ où y₀ est une solution de (E₀).</li></ul><p>En pratique : 1. les solutions de (E₀), C e<sup>−A(x)</sup> ; 2. une solution particulière, c(x) e<sup>−A(x)</sup> ; 3. on additionne ; 4. la condition initiale donne C.</p>`)}
  ${sec(6,"Trigonométrie",`<ul><li>cos² + sin² = 1 ; cos(−x) = cos x ; sin(−x) = −sin x.</li><li>cos(a + b) = cos a cos b − sin a sin b ; sin(a + b) = sin a cos b + cos a sin b.</li><li>cos 2a = 2cos²a − 1 = 1 − 2sin²a ; sin 2a = 2 sin a cos a.</li><li>Valeurs : cos(π/6) = √3/2, cos(π/4) = √2/2, cos(π/3) = 1/2 ; sin(π/6) = 1/2, sin(π/4) = √2/2, sin(π/3) = √3/2.</li></ul>`)}
  ${sec(7,"Les PDF du cours",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["calc/form_prim_deriv.pdf","Primitives et dérivées"],["calc/form_trigo.pdf","Trigonométrie"],["calc/form_medoc.pdf","Formulaire de cours"],["calc/cc1_2025_corr.pdf","Corrigé CC1 2025"],["calc/td1.pdf","TD 1"],["calc/td2.pdf","TD 2"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
-const sp=t=>`<sup>${t}</sup>`;
 const CT=(head,rows)=>`<div style="overflow-x:auto"><table class="tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const CQ=(q,show,ok,ex)=>`<div class="qbox mq" data-ok="${W.esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn" data-mq="pow" title="Mettre en exposant" aria-label="Mettre en exposant">xⁿ</button><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="mq-apercu" hidden></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : ${show}</b><br>${ex}</div></div>`;
-const CZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour un exposant de plusieurs caractères, appuie sur le bouton xⁿ et écris dedans (ou tape ^( … ) toi-même). Tu peux aussi taper sqrt(x) pour √x. Les espaces, les parenthèses, les * et le « + C » ne comptent pas.</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const CZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour un exposant de plusieurs caractères, appuie sur le bouton xⁿ et écris dedans (ou tape ^( … ) toi-même). Tu peux taper sqrt(x) pour √x. Les espaces, les parenthèses, les * et le « + C » ne comptent pas.</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
 const quizCalc=({sec})=>[
 `<div class="title-row"><h1>S'entraîner : formules et équations différentielles</h1></div>
 <p class="lead">Le programme du CC1, en tableaux d'exemples et en mini-quiz : dérivées, primitives, intégrales, équations différentielles d'ordre 1, limites, trigonométrie. Pour chaque partie : la règle, des exemples, puis les quiz. Les formules à savoir par cœur sont aussi dans le <a href="#/calc/p/formulaire">formulaire</a>.</p>`,
 
-sec(1,"Dérivées",`<p><b>La règle d'or :</b> repère la forme (un produit, une composée, une puissance…), puis applique la ligne du formulaire qui va avec.</p>`+
-CT(["f(x)","f′(x)","Pourquoi"],[
-[`x³`,`3x²`,`(xⁿ)′ = n xⁿ⁻¹`],
-[`5x² − 3x + 1`,`10x − 3`,`terme par terme ; une constante se dérive en 0`],
-[`e${sp("2x")}`,`2e${sp("2x")}`,`(e${sp("u")})′ = u′ e${sp("u")}, avec u = 2x, u′ = 2`],
-[`ln(x² + 1)`,`2x/(x² + 1)`,`(ln u)′ = u′/u, avec u = x² + 1`],
-[`sin(3x)`,`3 cos(3x)`,`on dérive sin, puis on multiplie par la dérivée de 3x`],
-[`x e${sp("x")}`,`e${sp("x")} + x e${sp("x")}`,`produit : (uv)′ = u′v + uv′`],
-[`1/x`,`−1/x²`,``],
-[`√x`,`1/(2√x)`,``],
-[`(2x + 1)³`,`6(2x + 1)²`,`(uⁿ)′ = n u′ uⁿ⁻¹ : 3 × 2 × (2x + 1)²`]])+
-CZ(CQ(`Dérive f(x) = x⁴.`,`4x³`,["4x³","4x^3"],"(xⁿ)′ = n xⁿ⁻¹ avec n = 4 : 4x³."),
-CQ(`Dérive f(x) = e${sp("5x")}.`,`5e${sp("5x")}`,["5e^(5x)","5e5x"],`(e${sp("u")})′ = u′ e${sp("u")} avec u = 5x, donc u′ = 5.`),
-CQ(`Dérive f(x) = ln(x² + 3).`,`2x/(x² + 3)`,["2x/(x^2+3)"],"(ln u)′ = u′/u avec u = x² + 3, u′ = 2x."),
-CQ(`Dérive f(x) = cos(2x).`,`−2 sin(2x)`,["-2sin(2x)","-2sin2x"],"La dérivée de cos est −sin, puis on multiplie par la dérivée de 2x, qui vaut 2 : −2 sin(2x)."),
-CQ(`Dérive f(x) = x² e${sp("x")}.`,`2x e${sp("x")} + x² e${sp("x")}`,["2xe^x+x^2e^x","x^2e^x+2xe^x","(2x+x^2)e^x","(x^2+2x)e^x","x(x+2)e^x","xe^x(x+2)","(x+2)xe^x","e^x(x^2+2x)","e^x(2x+x^2)"],`Un produit uv avec u = x² et v = e${sp("x")}. u′ = 2x, v′ = e${sp("x")}. (uv)′ = 2x e${sp("x")} + x² e${sp("x")}, qu'on peut aussi écrire (x² + 2x) e${sp("x")}.`))),
+sec(1,"Dérivées",W.tx(`<p><b>La règle d'or :</b> repère la forme (un produit, une composée, une puissance…), puis applique la ligne du formulaire qui va avec.</p>`+
+CT(["$f(x)$","$f′(x)$","Pourquoi"],[
+["$x³$","$3x²$","$(xⁿ)′ = n xⁿ⁻¹$"],
+["$5x² − 3x + 1$","$10x − 3$","terme par terme ; une constante se dérive en $0$"],
+["$e^{2x}$","$2e^{2x}$","$(e^{u})′ = u′ e^{u}$, avec $u = 2x$ et $u′ = 2$"],
+["$ln(x² + 1)$","$2x/(x² + 1)$","$(ln u)′ = u′/u$, avec $u = x² + 1$"],
+["$sin(3x)$","$3 cos(3x)$","on dérive $sin$, puis on multiplie par la dérivée de $3x$"],
+["$x e^{x}$","$e^{x} + x e^{x}$","produit : $(uv)′ = u′v + uv′$"],
+["$1/x$","$−1/x²$",""],
+["$√x$","$1/(2√x)$",""],
+["$(2x + 1)³$","$6(2x + 1)²$","$(uⁿ)′ = n u′ uⁿ⁻¹$, donc $3 × 2 × (2x + 1)²$"]])+
+CZ(CQ("Dérive $f(x) = x⁴$.","$4x³$",["4x³","4x^3"],"$(xⁿ)′ = n xⁿ⁻¹$ avec $n = 4$ : $4x³$."),
+CQ("Dérive $f(x) = e^{5x}$.","$5e^{5x}$",["5e^(5x)","5e5x"],"$(e^{u})′ = u′ e^{u}$ avec $u = 5x$, donc $u′ = 5$."),
+CQ("Dérive $f(x) = ln(x² + 3)$.","$2x/(x² + 3)$",["2x/(x^2+3)"],"$(ln u)′ = u′/u$ avec $u = x² + 3$ et $u′ = 2x$."),
+CQ("Dérive $f(x) = cos(2x)$.","$−2 sin(2x)$",["-2sin(2x)","-2sin2x"],"La dérivée de $cos$ est $−sin$, puis on multiplie par la dérivée de $2x$, qui vaut $2$ : $−2 sin(2x)$."),
+CQ("Dérive $f(x) = x² e^{x}$.","$2x e^{x} + x² e^{x}$",["2xe^x+x^2e^x","x^2e^x+2xe^x","(2x+x^2)e^x","(x^2+2x)e^x","x(x+2)e^x","xe^x(x+2)","(x+2)xe^x","e^x(x^2+2x)","e^x(2x+x^2)"],"Un produit $uv$ avec $u = x²$ et $v = e^{x}$. $u′ = 2x$ et $v′ = e^{x}$. Donc $(uv)′ = 2x e^{x} + x² e^{x}$, qu'on peut aussi écrire $(x² + 2x) e^{x}$.")))),
 
-sec(2,"Primitives",`<p><b>Une primitive de f</b>, c'est une fonction F dont la dérivée est f. Pour vérifier une réponse, <b>dérive-la</b> : tu dois retomber sur f.</p>`+
-CT(["f(x)","Une primitive F(x)","Pourquoi"],[
-[`x²`,`x³/3`,`xᵅ donne xᵅ⁺¹/(α + 1)`],
-[`e${sp("3x")}`,`e${sp("3x")}/3`,`on divise par le 3 qui sortirait en dérivant`],
-[`1/x`,`ln x, pour x > 0`,``],
-[`cos x`,`sin x`,``],
-[`sin x`,`−cos x`,`attention au signe`],
-[`2x/(x² + 1)`,`ln(x² + 1)`,`la forme u′/u donne ln u`],
-[`x e${sp("x²")}`,`e${sp("x²")}/2`,`presque u′ e${sp("u")} avec u = x² : il manque un facteur 2, on divise par 2`],
-[`1/x²`,`−1/x`,``]])+
-CZ(CQ(`Une primitive de f(x) = x³ ?`,`x⁴/4`,["x^4/4","1/4x^4","0.25x^4","x4/4"],"xᵅ donne xᵅ⁺¹/(α + 1) : x⁴/4. Vérifie : la dérivée de x⁴/4 est 4x³/4 = x³."),
-CQ(`Une primitive de f(x) = e${sp("2x")} ?`,`e${sp("2x")}/2`,["e^(2x)/2","1/2e^(2x)","0.5e^(2x)","e2x/2"],`Si on dérive e${sp("2x")}, on obtient 2e${sp("2x")} : un 2 de trop. Donc on divise par 2.`),
-CQ(`Une primitive de f(x) = 2x/(x² + 5) ?`,`ln(x² + 5)`,["ln(x^2+5)"],"C'est u′/u avec u = x² + 5 (u′ = 2x). Une primitive de u′/u est ln u. Ici x² + 5 est toujours positif."),
-CQ(`Une primitive de f(x) = cos(3x) ?`,`sin(3x)/3`,["sin(3x)/3","1/3sin(3x)","sin3x/3"],"En dérivant sin(3x), on obtient 3 cos(3x) : un 3 de trop. Donc on divise par 3."),
-CQ(`Une primitive de f(x) = 3x² e${sp("x³")} ?`,`e${sp("x³")}`,["e^(x^3)","e^x^3","ex3"],`C'est exactement u′ e${sp("u")} avec u = x³ (u′ = 3x²). Une primitive de u′ e${sp("u")} est e${sp("u")}.`))),
+sec(2,"Primitives",W.tx(`<p><b>Une primitive de $f$</b>, c'est une fonction $F$ dont la dérivée est $f$. Pour vérifier une réponse, <b>dérive-la</b> : tu dois retomber sur $f$.</p>`+
+CT(["$f(x)$","Une primitive $F(x)$","Pourquoi"],[
+["$x²$","$x³/3$","$xᵅ$ donne $xᵅ⁺¹/(α + 1)$"],
+["$e^{3x}$","$e^{3x}/3$","on divise par le $3$ qui sortirait en dérivant"],
+["$1/x$","$ln x$, pour $x > 0$",""],
+["$cos x$","$sin x$",""],
+["$sin x$","$−cos x$","attention au signe"],
+["$2x/(x² + 1)$","$ln(x² + 1)$","la forme $u′/u$ donne $ln u$"],
+["$x e^{x²}$","$e^{x²}/2$","presque $u′ e^{u}$ avec $u = x²$ : il manque un facteur $2$, on divise par $2$"],
+["$1/x²$","$−1/x$",""]])+
+CZ(CQ("Une primitive de $f(x) = x³$ ?","$x⁴/4$",["x^4/4","1/4x^4","0.25x^4","x4/4"],"$xᵅ$ donne $xᵅ⁺¹/(α + 1)$ : $x⁴/4$. Vérifie : la dérivée de $x⁴/4$ est $4x³/4 = x³$."),
+CQ("Une primitive de $f(x) = e^{2x}$ ?","$e^{2x}/2$",["e^(2x)/2","1/2e^(2x)","0.5e^(2x)","e2x/2"],"Si on dérive $e^{2x}$, on obtient $2e^{2x}$ : un $2$ de trop. Donc on divise par $2$."),
+CQ("Une primitive de $f(x) = 2x/(x² + 5)$ ?","$ln(x² + 5)$",["ln(x^2+5)"],"C'est $u′/u$ avec $u = x² + 5$ et $u′ = 2x$. Une primitive de $u′/u$ est $ln u$. Ici $x² + 5$ est toujours positif."),
+CQ("Une primitive de $f(x) = cos(3x)$ ?","$sin(3x)/3$",["sin(3x)/3","1/3sin(3x)","sin3x/3"],"En dérivant $sin(3x)$, on obtient $3 cos(3x)$ : un $3$ de trop. Donc on divise par $3$."),
+CQ("Une primitive de $f(x) = 3x² e^{x³}$ ?","$e^{x³}$",["e^(x^3)","e^x^3","ex3"],"C'est exactement $u′ e^{u}$ avec $u = x³$ et $u′ = 3x²$. Une primitive de $u′ e^{u}$ est $e^{u}$.")))),
 
-sec(3,"Intégrales",`<p><b>La méthode :</b> trouve une primitive F, puis calcule F(b) − F(a). On l'écrit [F(x)] entre a et b.</p>`+
+sec(3,"Intégrales",W.tx(`<p><b>La méthode :</b> trouve une primitive $F$ de $f$, puis calcule $F(b) − F(a)$. On l'écrit avec des crochets :</p>`+F("$∫_{a}^{b} f(x) dx = [F(x)]_{a}^{b} = F(b) − F(a)$")+
 CT(["Intégrale","Calcul","Résultat"],[
-[`∫ de 0 à 1 de 2x dx`,`F(x) = x² : 1² − 0²`,`1`],
-[`∫ de 0 à 1 de e${sp("x")} dx`,`F(x) = e${sp("x")} : e¹ − e⁰`,`e − 1`],
-[`∫ de 1 à e de 1/x dx`,`F(x) = ln x : ln e − ln 1`,`1 − 0 = 1`],
-[`∫ de 0 à π de sin x dx`,`F(x) = −cos x : −cos π − (−cos 0)`,`1 + 1 = 2`]])+
-`<p><b>Intégration par parties</b> (quand il y a un produit, par exemple x × e${sp("x")}) : ∫ f g′ = [f g] − ∫ f′ g. On choisit f = ce qui devient plus simple en dérivant (souvent x), g′ = ce qu'on sait intégrer.</p>
-<p>Exemple : ∫ de 0 à 1 de x e${sp("x")} dx. f = x, g′ = e${sp("x")}, donc f′ = 1 et g = e${sp("x")}.</p><ol><li>[f g] = [x e${sp("x")}] entre 0 et 1 = 1 × e − 0 = e.</li><li>∫ f′ g = ∫ de 0 à 1 de e${sp("x")} dx = e − 1.</li><li>Résultat : e − (e − 1) = 1.</li></ol><p>Plus de détails : <a href="#/calc/p/m-ipp">Méthode : intégration par parties</a>.</p>`+
-CZ(CQ(`Calcule l'intégrale de 0 à 2 de 3x² dx.`,`8`,["8"],"Une primitive de 3x² est x³. Puis 2³ − 0³ = 8."),
-CQ(`Calcule l'intégrale de 0 à π de cos x dx.`,`0`,["0"],"Une primitive de cos x est sin x. Puis sin π − sin 0 = 0 − 0 = 0."),
-CQ(`Calcule l'intégrale de 0 à 1 de e${sp("2x")} dx.`,`(e² − 1)/2`,["(e^2-1)/2","e^2/2-1/2","1/2(e^2-1)","0.5(e^2-1)","(e2-1)/2"],`Une primitive de e${sp("2x")} est e${sp("2x")}/2. Puis e²/2 − e⁰/2 = (e² − 1)/2.`),
-CQ(`Calcule l'intégrale de 1 à 2 de 1/x dx.`,`ln 2`,["ln2","ln(2)"],"Une primitive de 1/x est ln x. Puis ln 2 − ln 1 = ln 2 − 0 = ln 2."),
-CQ(`Par parties : calcule l'intégrale de 0 à π de x sin x dx.`,`π`,["π","pi"],"f = x, g′ = sin x, donc f′ = 1 et g = −cos x. [−x cos x] entre 0 et π = −π cos π − 0 = π. Puis − ∫ f′ g = + ∫ de 0 à π de cos x dx = 0. Résultat : π."))),
+["$∫_{0}^{1} 2x dx$","$[x²]_{0}^{1} = 1² − 0²$","$1$"],
+["$∫_{0}^{1} e^{x} dx$","$[e^{x}]_{0}^{1} = e¹ − e⁰$","$e − 1$"],
+["$∫_{1}^{e} 1/x dx$","$[ln x]_{1}^{e} = ln e − ln 1$","$1 − 0 = 1$"],
+["$∫_{0}^{π} sin x dx$","$[−cos x]_{0}^{π} = −cos π + cos 0$","$1 + 1 = 2$"]])+
+`<p><b>Intégration par parties</b>, quand il y a un produit comme $x e^{x}$ :</p>`+F("$∫_{a}^{b} f g′ = [f g]_{a}^{b} − ∫_{a}^{b} f′ g$")+
+`<p>On choisit $f$ = ce qui devient plus simple en dérivant (souvent $x$), et $g′$ = ce qu'on sait intégrer.</p>
+<p>Exemple : $∫_{0}^{1} x e^{x} dx$, avec $f = x$ et $g′ = e^{x}$, donc $f′ = 1$ et $g = e^{x}$.</p>
+<ol><li>$[x e^{x}]_{0}^{1} = 1 × e − 0 = e$.</li><li>$∫_{0}^{1} 1 × e^{x} dx = [e^{x}]_{0}^{1} = e − 1$.</li><li>Résultat : $e − (e − 1) = 1$.</li></ol>
+<p>Plus de détails : <a href="#/calc/p/m-ipp">Méthode : intégration par parties</a>.</p>`+
+CZ(CQ("Calcule $∫_{0}^{2} 3x² dx$.","$8$",["8"],"Une primitive de $3x²$ est $x³$. Donc $[x³]_{0}^{2} = 2³ − 0³ = 8$."),
+CQ("Calcule $∫_{0}^{π} cos x dx$.","$0$",["0"],"Une primitive de $cos x$ est $sin x$. Donc $[sin x]_{0}^{π} = sin π − sin 0 = 0$."),
+CQ("Calcule $∫_{0}^{1} e^{2x} dx$.","$(e² − 1)/2$",["(e^2-1)/2","e^2/2-1/2","1/2(e^2-1)","0.5(e^2-1)","(e2-1)/2"],"Une primitive de $e^{2x}$ est $e^{2x}/2$. Donc $[e^{2x}/2]_{0}^{1} = e²/2 − e⁰/2 = (e² − 1)/2$."),
+CQ("Calcule $∫_{1}^{2} 1/x dx$.","$ln 2$",["ln2","ln(2)"],"Une primitive de $1/x$ est $ln x$. Donc $[ln x]_{1}^{2} = ln 2 − ln 1 = ln 2$."),
+CQ("Par parties : calcule $∫_{0}^{π} x sin x dx$.","$π$",["π","pi"],"$f = x$ et $g′ = sin x$, donc $f′ = 1$ et $g = −cos x$. Alors $[−x cos x]_{0}^{π} = −π cos π − 0 = π$, et $− ∫_{0}^{π} 1 × (−cos x) dx = ∫_{0}^{π} cos x dx = 0$. Résultat : $π$.")))),
 
-sec(4,"Équations différentielles d'ordre 1",`<p><b>Ce que c'est.</b> Une équation dont l'inconnue est une <b>fonction</b> y, et où apparaît sa dérivée y′. Exemple : y′ + 2y = 0. Résoudre, c'est trouver toutes les fonctions y qui la vérifient.</p>
-<p><b>La forme à reconnaître :</b> y′ + a y = b, où a et b sont des nombres ou des fonctions de x. On appelle A une primitive de a.</p>
-<h3>Étape 1 : l'équation sans second membre (b = 0)</h3><p>Les solutions de y′ + a y = 0 sont <b>y = C e${sp("−A(x)")}</b>, où C est un nombre quelconque. Attention au signe moins dans l'exposant.</p>`+
-CT(["Équation","a(x)","A(x)","Solutions"],[
-[`y′ + 2y = 0`,`2`,`2x`,`C e${sp("−2x")}`],
-[`y′ − 3y = 0`,`−3`,`−3x`,`C e${sp("3x")}`],
-[`y′ + 2x y = 0`,`2x`,`x²`,`C e${sp("−x²")}`],
-[`y′ + y/x = 0, pour x > 0`,`1/x`,`ln x`,`C e${sp("−ln x")} = C/x`]])+
-`<h3>Étape 2 : une solution particulière</h3><p><b>Le raccourci</b>, quand a et b sont des <b>nombres</b> : la constante y = b/a marche. Vérifie : sa dérivée vaut 0, donc il reste a × b/a = b.</p>`+
+sec(4,"Équations différentielles d'ordre 1",W.tx(`<p><b>Ce que c'est.</b> Une équation dont l'inconnue est une <b>fonction</b> $y$, et où apparaît sa dérivée $y′$. Exemple : $y′ + 2y = 0$. Résoudre, c'est trouver toutes les fonctions $y$ qui la vérifient.</p>
+<p><b>La forme à reconnaître :</b> $y′ + a y = b$, où $a$ et $b$ sont des nombres ou des fonctions de $x$. On appelle $A$ une primitive de $a$.</p>
+<h3>Étape 1 : l'équation sans second membre ($b = 0$)</h3><p>Les solutions de $y′ + a y = 0$ sont</p>`+F("$y = C e^{−A(x)}$")+`<p>où $C$ est un nombre quelconque. Attention au signe moins dans l'exposant.</p>`+
+CT(["Équation","$a(x)$","$A(x)$","Solutions"],[
+["$y′ + 2y = 0$","$2$","$2x$","$C e^{−2x}$"],
+["$y′ − 3y = 0$","$−3$","$−3x$","$C e^{3x}$"],
+["$y′ + 2x y = 0$","$2x$","$x²$","$C e^{−x²}$"],
+["$y′ + y/x = 0$, pour $x > 0$","$1/x$","$ln x$","$C e^{−ln x} = C/x$"]])+
+`<h3>Étape 2 : une solution particulière</h3><p><b>Le raccourci</b>, quand $a$ et $b$ sont des <b>nombres</b> : la constante $y = b/a$ marche. Vérifie : sa dérivée vaut $0$, donc il reste $a × b/a = b$.</p>`+
 CT(["Équation","Solution particulière","Vérification"],[
-[`y′ + 2y = 6`,`3`,`0 + 2 × 3 = 6`],
-[`y′ + 5y = 10`,`2`,`0 + 5 × 2 = 10`],
-[`y′ − y = 4`,`−4`,`a = −1 : 4/(−1) = −4 ; 0 − (−4) = 4`]])+
-`<p><b>Sinon, la variation de la constante</b> : on cherche y = c(x) e${sp("−A(x)")}, et on trouve <b>c′(x) = b(x) e${sp("A(x)")}</b>. Il suffit de trouver une primitive c(x). Détails : <a href="#/calc/p/m-varcst">Méthode : variation de la constante</a>.</p>
-<p>Exemple : y′ + 2x y = 2x. a = 2x, A = x², b = 2x.</p><ol><li>c′(x) = 2x e${sp("x²")}.</li><li>Une primitive : c(x) = e${sp("x²")}.</li><li>Solution particulière : c(x) e${sp("−x²")} = e${sp("x²")} e${sp("−x²")} = 1.</li><li>Vérification : la dérivée de 1 est 0, et 0 + 2x × 1 = 2x. Juste.</li></ol>
-<h3>Étape 3 : toutes les solutions, puis la condition initiale</h3><p><b>Toutes les solutions = la solution particulière + C e${sp("−A(x)")}.</b> Ensuite, une condition comme y(0) = 5 donne la valeur de C : on remplace x par 0.</p>
-<p>Exemple complet : y′ + 2y = 6 avec y(0) = 5.</p><ol><li>Sans second membre : C e${sp("−2x")}.</li><li>Particulière (raccourci) : 6/2 = 3.</li><li>Toutes : y = 3 + C e${sp("−2x")}.</li><li>y(0) = 3 + C × e⁰ = 3 + C. On veut 5, donc C = 2.</li><li>Réponse : y = 3 + 2e${sp("−2x")}.</li></ol>`+
-CZ(CQ(`Toutes les solutions de y′ + 3y = 0 ?`,`C e${sp("−3x")}`,["Ce^(-3x)","Ce-3x"],`a = 3, A = 3x. Les solutions sont C e${sp("−A")} = C e${sp("−3x")}. Le signe moins vient de la formule.`),
-CQ(`Toutes les solutions de y′ − 4y = 0 ?`,`C e${sp("4x")}`,["Ce^(4x)","Ce4x"],`a = −4, donc A = −4x, et −A = 4x. Les solutions sont C e${sp("4x")}.`),
-CQ(`Pour y′ + 2x y = 0, que vaut A(x) ?`,`x²`,["x^2","x²"],"a(x) = 2x. Une primitive de 2x est x²."),
-CQ(`Toutes les solutions de y′ + 2x y = 0 ?`,`C e${sp("−x²")}`,["Ce^(-x^2)","Ce-x2"],`A(x) = x², donc les solutions sont C e${sp("−x²")}.`),
-CQ(`Une solution particulière constante de y′ + 4y = 8 ?`,`2`,["2"],"a = 4, b = 8 : b/a = 2. Vérifie : 0 + 4 × 2 = 8."),
-CQ(`Une solution particulière constante de y′ − 2y = 6 ?`,`−3`,["-3"],"Ici a = −2 (attention au signe). b/a = 6/(−2) = −3. Vérifie : 0 − 2 × (−3) = 6."),
-CQ(`On a trouvé y = 1 + C e${sp("−x")}, et on veut y(0) = 4. Que vaut C ?`,`3`,["3"],"y(0) = 1 + C × e⁰ = 1 + C. On veut 4, donc C = 3."),
-CQ(`On a trouvé y = C e${sp("2x")}, et on veut y(0) = 7. Que vaut C ?`,`7`,["7"],"y(0) = C × e⁰ = C. Donc C = 7."),
-CQ(`Résous y′ + y = 1 avec y(0) = 0. Donne la fonction y.`,`1 − e${sp("−x")}`,["1-e^(-x)","-e^(-x)+1","1-e-x"],`Sans second membre : C e${sp("−x")}. Particulière : 1/1 = 1. Toutes : y = 1 + C e${sp("−x")}. y(0) = 1 + C = 0, donc C = −1. Réponse : y = 1 − e${sp("−x")}.`),
-CQ(`Pour y′ + y = e${sp("x")}, la variation de la constante donne c′(x) = b(x) e${sp("A(x)")}. Que vaut c′(x) ?`,`e${sp("2x")}`,["e^(2x)","e2x"],`a = 1, donc A = x. b = e${sp("x")}. c′(x) = e${sp("x")} × e${sp("x")} = e${sp("2x")}.`),
-CQ(`Toujours pour y′ + y = e${sp("x")} : une solution particulière ?`,`e${sp("x")}/2`,["e^x/2","1/2e^x","0.5e^x","ex/2"],`Une primitive de e${sp("2x")} est c(x) = e${sp("2x")}/2. Puis c(x) e${sp("−x")} = e${sp("2x")}/2 × e${sp("−x")} = e${sp("x")}/2. Vérifie : e${sp("x")}/2 + e${sp("x")}/2 = e${sp("x")}.`))),
+["$y′ + 2y = 6$","$3$","$0 + 2 × 3 = 6$"],
+["$y′ + 5y = 10$","$2$","$0 + 5 × 2 = 10$"],
+["$y′ − y = 4$","$−4$","$a = −1$, donc $4/(−1) = −4$ ; et $0 − (−4) = 4$"]])+
+`<p><b>Sinon, la variation de la constante</b> : on cherche $y = c(x) e^{−A(x)}$, et on trouve</p>`+F("$c′(x) = b(x) e^{A(x)}$")+
+`<p>Il suffit de trouver une primitive $c(x)$. Détails : <a href="#/calc/p/m-varcst">Méthode : variation de la constante</a>.</p>
+<p>Exemple : $y′ + 2x y = 2x$. Ici $a = 2x$, $A = x²$ et $b = 2x$.</p><ol><li>$c′(x) = 2x e^{x²}$.</li><li>Une primitive : $c(x) = e^{x²}$.</li><li>Solution particulière : $c(x) e^{−x²} = e^{x²} e^{−x²} = 1$.</li><li>Vérification : la dérivée de $1$ est $0$, et $0 + 2x × 1 = 2x$. Juste.</li></ol>
+<h3>Étape 3 : toutes les solutions, puis la condition initiale</h3><p><b>Toutes les solutions = la solution particulière + $C e^{−A(x)}$.</b> Ensuite, une condition comme $y(0) = 5$ donne la valeur de $C$ : on remplace $x$ par $0$.</p>
+<p>Exemple complet : $y′ + 2y = 6$ avec $y(0) = 5$.</p><ol><li>Sans second membre : $C e^{−2x}$.</li><li>Solution particulière (raccourci) : $6/2 = 3$.</li><li>Toutes les solutions : $y = 3 + C e^{−2x}$.</li><li>$y(0) = 3 + C e⁰ = 3 + C$. On veut $5$, donc $C = 2$.</li><li>Réponse : $y = 3 + 2e^{−2x}$.</li></ol>`+
+CZ(CQ("Toutes les solutions de $y′ + 3y = 0$ ?","$C e^{−3x}$",["Ce^(-3x)","Ce-3x"],"$a = 3$, donc $A = 3x$. Les solutions sont $C e^{−A(x)} = C e^{−3x}$. Le signe moins vient de la formule."),
+CQ("Toutes les solutions de $y′ − 4y = 0$ ?","$C e^{4x}$",["Ce^(4x)","Ce4x"],"$a = −4$, donc $A = −4x$ et $−A = 4x$. Les solutions sont $C e^{4x}$."),
+CQ("Pour $y′ + 2x y = 0$, que vaut $A(x)$ ?","$x²$",["x^2","x²"],"$a(x) = 2x$, et une primitive de $2x$ est $x²$."),
+CQ("Toutes les solutions de $y′ + 2x y = 0$ ?","$C e^{−x²}$",["Ce^(-x^2)","Ce-x2"],"$A(x) = x²$, donc les solutions sont $C e^{−x²}$."),
+CQ("Une solution particulière constante de $y′ + 4y = 8$ ?","$2$",["2"],"$a = 4$ et $b = 8$, donc $b/a = 2$. Vérifie : $0 + 4 × 2 = 8$."),
+CQ("Une solution particulière constante de $y′ − 2y = 6$ ?","$−3$",["-3"],"Ici $a = −2$ (attention au signe). $b/a = 6/(−2) = −3$. Vérifie : $0 − 2 × (−3) = 6$."),
+CQ("On a trouvé $y = 1 + C e^{−x}$, et on veut $y(0) = 4$. Que vaut $C$ ?","$3$",["3"],"$y(0) = 1 + C e⁰ = 1 + C$. On veut $4$, donc $C = 3$."),
+CQ("On a trouvé $y = C e^{2x}$, et on veut $y(0) = 7$. Que vaut $C$ ?","$7$",["7"],"$y(0) = C e⁰ = C$, donc $C = 7$."),
+CQ("Résous $y′ + y = 1$ avec $y(0) = 0$. Donne la fonction $y$.","$y = 1 − e^{−x}$",["1-e^(-x)","-e^(-x)+1","1-e-x"],"Sans second membre : $C e^{−x}$. Solution particulière : $1/1 = 1$. Toutes les solutions : $y = 1 + C e^{−x}$. Puis $y(0) = 1 + C = 0$, donc $C = −1$. Réponse : $y = 1 − e^{−x}$."),
+CQ("Pour $y′ + y = e^{x}$, la variation de la constante donne $c′(x) = b(x) e^{A(x)}$. Que vaut $c′(x)$ ?","$e^{2x}$",["e^(2x)","e2x"],"$a = 1$ donc $A = x$, et $b = e^{x}$. Donc $c′(x) = e^{x} × e^{x} = e^{2x}$."),
+CQ("Toujours pour $y′ + y = e^{x}$ : une solution particulière ?","$e^{x}/2$",["e^x/2","1/2e^x","0.5e^x","ex/2"],"Une primitive de $e^{2x}$ est $c(x) = e^{2x}/2$. Puis $c(x) e^{−x} = e^{2x}/2 × e^{−x} = e^{x}/2$. Vérifie : $e^{x}/2 + e^{x}/2 = e^{x}$.")))),
 
-sec(5,"Limites : croissances comparées",`<p><b>La règle :</b> en +∞, l'exponentielle l'emporte sur les puissances de x, et les puissances de x l'emportent sur ln x. « L'emporte » veut dire : c'est elle qui décide de la limite.</p>`+
+sec(5,"Limites : croissances comparées",W.tx(`<p><b>La règle :</b> en $+∞$, l'exponentielle l'emporte sur les puissances de $x$, et les puissances de $x$ l'emportent sur $ln x$. « L'emporte » veut dire : c'est elle qui décide de la limite.</p>`+
 CT(["Limite","Résultat","Pourquoi"],[
-[`ln x / x, en +∞`,`0`,`x l'emporte sur ln x, qui est en haut`],
-[`e${sp("x")}/x², en +∞`,`+∞`,`e${sp("x")} l'emporte, et il est en haut`],
-[`x e${sp("−x")} = x/e${sp("x")}, en +∞`,`0`,`e${sp("x")} l'emporte, et il est en bas`],
-[`x ln x, en 0 (x > 0)`,`0`,`x l'emporte sur ln x`]])+
-CZ(CQ(`Limite de x³ e${sp("−x")} quand x tend vers +∞ ?`,`0`,["0"],`x³ e${sp("−x")} = x³/e${sp("x")}. L'exponentielle l'emporte et elle est en bas : 0.`),
-CQ(`Limite de e${sp("x")}/x⁵ quand x tend vers +∞ ?`,`+∞`,["+∞","∞","+inf","inf","plusinfini","+infini","infini"],"L'exponentielle l'emporte sur toutes les puissances, et elle est en haut : +∞."),
-CQ(`Limite de (ln x)/x² quand x tend vers +∞ ?`,`0`,["0"],"Les puissances de x l'emportent sur ln x, et x² est en bas : 0."))),
+["$lim_{x→+∞} ln(x)/x$","$0$","$x$ l'emporte sur $ln x$, qui est en haut"],
+["$lim_{x→+∞} e^{x}/x²$","$+∞$","$e^{x}$ l'emporte, et il est en haut"],
+["$lim_{x→+∞} x e^{−x}$","$0$","$x e^{−x} = x/e^{x}$ : $e^{x}$ l'emporte, et il est en bas"],
+["$lim_{x→0⁺} x ln x$","$0$","$x$ l'emporte sur $ln x$"]])+
+CZ(CQ("Que vaut $lim_{x→+∞} x³ e^{−x}$ ?","$0$",["0"],"$x³ e^{−x} = x³/e^{x}$. L'exponentielle l'emporte et elle est en bas : $0$."),
+CQ("Que vaut $lim_{x→+∞} e^{x}/x⁵$ ?","$+∞$",["+∞","∞","+inf","inf","plusinfini","+infini","infini"],"L'exponentielle l'emporte sur toutes les puissances, et elle est en haut : $+∞$."),
+CQ("Que vaut $lim_{x→+∞} ln(x)/x²$ ?","$0$",["0"],"Les puissances de $x$ l'emportent sur $ln x$, et $x²$ est en bas : $0$.")))),
 
-sec(6,"Trigonométrie : les valeurs à connaître",CT(["x","0","π/6","π/4","π/3","π/2","π"],[
-[`cos x`,`1`,`√3/2`,`√2/2`,`1/2`,`0`,`−1`],
-[`sin x`,`0`,`1/2`,`√2/2`,`√3/2`,`1`,`0`]])+
-CZ(CQ(`Que vaut cos(π/3) ?`,`1/2`,["1/2","0.5"],"Dans le tableau : cos(π/3) = 1/2."),
-CQ(`Que vaut sin(π/4) ?`,`√2/2`,["√2/2","sqrt(2)/2","1/√2","1/sqrt(2)"],"sin(π/4) = cos(π/4) = √2/2."),
-CQ(`Que vaut cos(π) ?`,`−1`,["-1"],"Un demi-tour sur le cercle : cos(π) = −1."),
-CQ(`Que vaut sin(π/6) ?`,`1/2`,["1/2","0.5"],"sin(π/6) = 1/2.")))
+sec(6,"Trigonométrie : les valeurs à connaître",W.tx(CT(["$x$","$0$","$π/6$","$π/4$","$π/3$","$π/2$","$π$"],[
+["$cos x$","$1$","$√3/2$","$√2/2$","$1/2$","$0$","$−1$"],
+["$sin x$","$0$","$1/2$","$√2/2$","$√3/2$","$1$","$0$"]])+
+CZ(CQ("Que vaut $cos(π/3)$ ?","$1/2$",["1/2","0.5"],"Dans le tableau : $cos(π/3) = 1/2$."),
+CQ("Que vaut $sin(π/4)$ ?","$√2/2$",["√2/2","sqrt(2)/2","1/√2","1/sqrt(2)"],"$sin(π/4) = cos(π/4) = √2/2$."),
+CQ("Que vaut $cos(π)$ ?","$−1$",["-1"],"Un demi-tour sur le cercle : $cos(π) = −1$."),
+CQ("Que vaut $sin(π/6)$ ?","$1/2$",["1/2","0.5"],"$sin(π/6) = 1/2$."))))
 ].join("\n");
 /* une page par méthode : quand s'en servir, l'idée, les étapes, des exemples rédigés en entier, les pièges */
 const mVarcst=({sec})=>`<div class="title-row"><h1>Méthode : la variation de la constante</h1></div><p class="lead">Elle sert à résoudre une équation différentielle d'ordre 1 avec un second membre, y′ + a(x) y = b(x). C'est la méthode de ton chargé de TD : elle marche à tous les coups, même quand a(x) n'est pas une constante.</p>
