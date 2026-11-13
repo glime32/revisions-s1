@@ -6068,7 +6068,7 @@ let rec liSuff : int list -> int list list = function
  q:"Quel est le type de [[1; 2]; []; [8]] ?",a:"int list list.",rel:["pf-listes-rec"]});
 
 /* ---------- pas au contrôle ---------- */
-add(8,{id:"pf-poly",ex:"ct",type:"def",out:"Ton mail le dit : pas de polymorphisme au contrôle. Dans tes réponses, écris les types de l'énoncé (int list). Garde cette fiche pour l'examen de janvier.",ref:"Cours, TD ex. 37 et suivants",t:"Le polymorphisme : le type 'a",short:"Polymorphisme ('a)",
+add(8,{id:"pf-poly",ex:"ct",type:"def",out:"Le polymorphisme est au programme de l'examen de janvier. Au CC, le site le disait hors programme, à tort : le CC d'octobre 2025 avait déjà des types 'a.",ref:"Cours, TD ex. 37 et suivants",t:"Le polymorphisme : le type 'a",short:"Polymorphisme ('a)",
  plain:`Quand une fonction ne regarde pas vraiment le type des éléments, OCaml lui donne un type ${hl("'a")} (« alpha »), qui veut dire « n'importe quel type, mais le même partout ». Ainsi derListe marche sur des listes d'entiers, de chaînes, etc.`,
  fig:()=>h=>{h.innerHTML=M(`let rec derListe li = if List.tl li = [] then List.hd li else derListe (List.tl li)
 (* derListe : 'a list -> 'a *)
@@ -6310,7 +6310,7 @@ let h = function (x, y) ->
 
 let g = fun x y ->
   x < List.hd(y)`)}`,who:"Mon corrigé",
-  sol:`<p>int, 5 ; int list, [2; 2] ; bool, false (« un » vient après « trois »).</p><p>f : int * bool -> int ; h : int * int list -> int ; g : 'a -> 'a list -> bool. Le 'a de g, c'est du polymorphisme : il n'est pas au programme de ton contrôle, une question comme celle-là ne devrait pas tomber.</p>`,go:"pf-signature"},
+  sol:`<p>int, 5 ; int list, [2; 2] ; bool, false (« un » vient après « trois »).</p><p>f : int * bool -> int ; h : int * int list -> int ; g : 'a -> 'a list -> bool. Le 'a de g, c'est du polymorphisme : n'importe quel type. Le CC d'octobre 2025 en avait aussi, et il est au programme de l'examen de janvier.</p>`,go:"pf-signature"},
  {src:"Partiel octobre 2021 · Q2 · 3 pts",t:"memeParite",en:"Définissez en OCaml la fonction memeParite : ℕ × ℕ → Bool qui vérifie si deux entiers naturels sont de même parité, c'est-à-dire s'ils sont tous les deux pairs ou tous les deux impairs. Exemples : memeParite(4,6) vaut true ; memeParite(3,7) vaut true ; memeParite(4,3) vaut false. (En tête du sujet : « Pour les questions 2, 3, 4, 5, 6 vous devez dans votre réponse donner la signature de la fonction. »)",who:"Mon corrigé",go:"pf-signature",sol:M(`let memeParite : int * int -> bool = function
   (a, b) -> a mod 2 = b mod 2`)+`<p>Deux entiers ont la même parité quand ils ont le même reste dans la division par 2. L'énoncé écrit memeParite(4,6), avec une virgule : la fonction prend un couple, d'où la signature int * int -> bool.</p>`},
  {src:"Partiel octobre 2021 · Q3 · 3 pts",t:"queDesUn",en:"Définissez la fonction queDesUn : ℕ → Bool qui teste si l'écriture décimale d'un entier naturel n'est composée que du chiffre 1. Exemples : queDesUn(1111) et queDesUn(1) valent true ; queDesUn(110) et queDesUn(8) valent false.",who:"Mon corrigé",go:"pf-rec-ex",sol:M(`let rec queDesUn : int -> bool = function
@@ -6960,7 +6960,7 @@ const types=({sec})=>`<div class="title-row"><h1>Entraînement : types et valeur
 const infos=({sec})=>`<div class="title-row"><h1>Le contrôle de programmation fonctionnelle en bref</h1></div>
  ${sec(1,"Quand et où",`<p>Vendredi 13 novembre à 9h45, d'après le mail de David Delahaye du 5 novembre. Amphi 5.01 si ton nom de famille commence par une lettre de A à M, amphi 5.03 de N à Z. L'épreuve dure 1 h (1 h 20 avec un tiers-temps).</p>`)}
  ${sec(2,"Le poids",`<p>Note finale = 0,30 × contrôle écrit + 0,03 × TP noté + 0,67 × examen de janvier. Coefficient 5 dans le semestre.</p>`)}
- ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Le seul document autorisé est une feuille A4 recto-verso, écrite comme tu veux : prépare-la avec la page « Ma feuille à recopier ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme (mail du prof du 5/11) : tout ce qui a été vu jusqu'aux listes incluses, <b>sans le filtrage</b> (TD ex. 1 à 31). Pas de polymorphisme.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Écris les fonctions sur les listes avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, comme partout sur le site.</li></ul>`)}
+ ${sec(3,"À quoi ressemble le sujet",`<ul><li>1 h, sur papier. Le seul document autorisé est une feuille A4 recto-verso, écrite comme tu veux : prépare-la avec la page « Ma feuille à recopier ».</li><li>Types et valeurs d'expressions, signatures de fonctions.</li><li>4 à 5 fonctions à écrire en OCaml (entiers, chiffres, diviseurs, listes), avec leur signature.</li><li>Programme (mail du prof du 5/11) : tout ce qui a été vu jusqu'aux listes incluses, <b>sans le filtrage</b> (TD ex. 1 à 31). Le mail ne parlait pas du polymorphisme, mais le CC d'octobre 2025 avait des types 'a : sache les lire.</li><li>Sur papier : pas d'ordinateur pour vérifier tes types. Écris les fonctions sur les listes avec la forme du cours <code>if li = [] then … else … List.hd li … List.tl li</code>, comme partout sur le site.</li></ul>`)}
  ${sec(4,"Documents",`<p style="display:flex;gap:8px;flex-wrap:wrap">${[["pf/cours.pdf","Cours complet"],["pf/td.pdf","Feuille de TD"],["pf/partiel_oct2021.pdf","Partiel 2021"],["pf/exam_jan2024_sujet.pdf","Examen 2024"]].map(f=>`<a class="btn" href="../Moodle-S1/${f[0]}" target="_blank" rel="noopener">${f[1]}</a>`).join("")}</p>`)}`;
 
 /* ================== examen de janvier (CT, 67 % de la note, 2 h, une feuille A4 recto-verso) ==================
@@ -7453,7 +7453,7 @@ SUBJ.pf={name:"Prog. fonctionnelle",code:"HAI102I",color:"#8C9BFF",coef:5,share:
  exams:[{id:"cc1",label:"CC",day:"2026-11-13",start:"09:45",end:"10:45",place:"amphi 5.01 si ton nom commence par A à M, 5.03 sinon",dur:"1 h",share:0.30,unsure:""},
         {id:"ct",label:"Examen",day:"2027-01-11",start:"09:00",end:"11:00",place:"salle à confirmer",dur:"2 h",share:0.67,covers:["cc1","ct"],from:"2026-11-14",pace:{until:"2026-12-18",perDay:25},docs:"une feuille A4 recto-verso (seul document autorisé)",unsure:"Date supposée (l'examen était le 11 janvier en 2024) : je la corrigerai quand elle sera dans Prose.",prog:"Tout le cours : en plus du programme du CC, le filtrage, le polymorphisme, les types somme (dont récursifs), les enregistrements, les exceptions, l'ordre supérieur et les itérateurs de List, la récursivité terminale (TD ex. 32 à 59)."}],
  docs:"une feuille A4 recto-verso, écrite comme tu veux (seul document autorisé)",examMinutes:60,examMorning:"Refais l'entraînement « types et valeurs » une fois, relis ta feuille A4, puis les erreurs classiques.",
- prog:"Sur papier. D'après le mail du prof (5/11) : tout ce qui a été vu jusqu'aux listes incluses, sans le filtrage (TD ex. 1 à 31). Types, fonctions et signatures, récursivité sur les entiers et les listes. Pas de polymorphisme.",
+ prog:"Sur papier. D'après le mail du prof (5/11) : tout ce qui a été vu jusqu'aux listes incluses, sans le filtrage (TD ex. 1 à 31). Types, fonctions et signatures, récursivité sur les entiers et les listes. Le mail ne parlait pas du polymorphisme ; le CC d'octobre 2025 avait des types 'a.",
  chapters:{1:"1. Expressions et types",2:"2. Fonctions et signatures",3:"3. Récursivité sur les entiers",4:"4. Listes (TD ex. 22 à 31)",5:"5. À relire avant le contrôle",6:"6. nbOcc et listes de listes",7:"7. Le filtrage",8:"8. Polymorphisme et types",9:"9. Exceptions",10:"10. Ordre supérieur et itérateurs",11:"11. Récursivité terminale et fonctions utiles"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"Exercice",
  tdIntro:"Les exercices de la feuille de TD jusqu'aux listes, corrigés par moi en OCaml (pas de corrigé officiel), dans la forme du cours, sans match. Les ★★★ ressemblent le plus au contrôle. Écris ta réponse sur une feuille avant d'ouvrir le corrigé.",
@@ -17674,7 +17674,8 @@ const HOLIDAY={"2026-11-11":"11 novembre, férié"};
 const SANS_REVISION={"2026-11-12":1};
 const WIN=[[480,750],[840,1140],[1200,1350]];/* 8h-12h30, 14h-19h, 20h-22h30 */
 /* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours */
-const estCC=(day,c)=>SIDS.some(id=>{const e=exam(SUBJ[id]);return e.day===day&&Math.abs(mm(e.start)-mm(c[0]))<=20;});
+const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day);
+const estCC=(day,c)=>epreuvesDu(day).some(x=>Math.abs(mm(x.e.start)-mm(c[0]))<=20);
 const coursJour=day=>(CLASSES[day]||[]).filter(c=>!estCC(day,c)).map(c=>({day,start:c[0],end:c[1],name:c[2],detail:c[3],sid:c[4],skip:hub.skip[day+":"+c[0]]||""}));
 function busyOf(day){
   const b=[];coursJour(day).forEach(c=>{if(!c.skip)b.push([mm(c.start),mm(c.end)]);});
@@ -17851,7 +17852,7 @@ function edt(){
   const nowMin=n0.getHours()*60+n0.getMinutes();
   const H0=7*60+30,H1=23*60,PX=0.78;
   const col=d=>{let s="";coursJour(d).forEach(c=>{s+=`<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="top:${(mm(c.start)-H0)*PX}px;height:${(mm(c.end)-mm(c.start))*PX}px"><b>${c.name}</b><span>${hh(mm(c.start))}, ${c.skip?(c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;});
-    SIDS.forEach(id=>{const S=SUBJ[id],e=exam(S);if(e.day===d)s+=`<a class="ev exam" href="#/${id}" style="top:${(mm(e.start)-H0)*PX}px;height:${Math.max(40,(mm(e.end)-mm(e.start))*PX)}px"><b>${exW(S)} ${S.name}</b><span>${hh(mm(e.start))}, ${e.place}</span></a>`;});
+    epreuvesDu(d).forEach(({S,e})=>{s+=`<a class="ev exam" href="#/${S.id}" style="top:${(mm(e.start)-H0)*PX}px;height:${Math.max(40,(mm(e.end||e.start)-mm(e.start))*PX)}px"><b>${e.label||"CC"} ${S.name}</b><span>${hh(mm(e.start))}, ${e.place}</span></a>`;});
     P.blocks.filter(b=>b.day===d).forEach(b=>{const S=SUBJ[b.sid];const done=b.tasks.every(tid=>isDone(b.sid,S.TB[tid]));s+=`<a class="ev rev${done?" done":""}" href="#/${b.sid}" style="--sc:${S.color};top:${(b.start-H0)*PX}px;height:${(b.end-b.start)*PX}px"><b>${S.name}</b><span>${hh(b.start)}–${hh(b.end)}${done?", fait":""}</span></a>`;});
     if(d===t0&&nowMin>H0&&nowMin<H1)s+=`<div class="edt-now" style="top:${(nowMin-H0)*PX}px"><span>${hh(nowMin)}</span></div>`;
     return s;};
