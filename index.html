@@ -15346,7 +15346,85 @@ calc:{
 <p><b>Exemple 2 : le côté droit est une exponentielle.</b> y′ + 2y = e<sup>x</sup>. J'essaie y = A e<sup>x</sup> (un nombre fois la même exponentielle). Sa dérivée est A e<sup>x</sup>. Donc y′ + 2y = 3A e<sup>x</sup>. Il faut 3A = 1, donc A = 1/3. Solution particulière : y = (1/3) e<sup>x</sup>.</p>
 <p><b>Le tableau à retenir :</b></p>
 <ul><li>côté droit = polynôme → j'essaie un polynôme du même degré ;</li><li>côté droit = e<sup>kx</sup> → j'essaie A e<sup>kx</sup> ;</li><li>côté droit = cos x ou sin x → j'essaie α cos x + β sin x (les deux, même si un seul apparaît).</li></ul>
-<p><b>Quand le raccourci rate.</b> Si le côté droit est déjà une solution de l'équation avec 0 à droite (par exemple y′ + 2y = e<sup>−2x</sup>), l'essai A e<sup>−2x</sup> donne 0 et pas e<sup>−2x</sup>. Dans ce cas, on essaie A x e<sup>−2x</sup>, ou on prend la variation de la constante, qui marche toujours.</p>`}},
+<p><b>Quand le raccourci rate.</b> Si le côté droit est déjà une solution de l'équation avec 0 à droite (par exemple y′ + 2y = e<sup>−2x</sup>), l'essai A e<sup>−2x</sup> donne 0 et pas e<sup>−2x</sup>. Dans ce cas, on essaie A x e<sup>−2x</sup>, ou on prend la variation de la constante, qui marche toujours.</p>`},
+ "c2-ed2":{
+  "Les trois cas":`<p><b>Une équation d'ordre 2</b> fait intervenir $y″$, la dérivée de la dérivée : $y″ + ay′ + by = 0$, avec $a$ et $b$ des nombres.</p>
+<p><b>L'astuce :</b> on essaie $y = e^{rx}$. Alors $y′ = r e^{rx}$ et $y″ = r² e^{rx}$. En remplaçant : $e^{rx}(r² + ar + b) = 0$. Comme $e^{rx}$ n'est jamais nul, il faut $r² + ar + b = 0$ : c'est l'<b>équation caractéristique</b>.</p>
+<p><b>Trois cas, selon $Δ = a² − 4b$ :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Équation</th><th>Racines</th><th>Solutions</th></tr></thead><tbody>
+<tr><td>$y″ − 5y′ + 6y = 0$</td><td>$r² − 5r + 6 = (r − 2)(r − 3)$ : $2$ et $3$</td><td>$C_{1}e^{2x} + C_{2}e^{3x}$</td></tr>
+<tr><td>$y″ + 4y′ + 4y = 0$</td><td>$(r + 2)² = 0$ : $−2$, racine double</td><td>$(C_{1} + C_{2}x)e^{−2x}$</td></tr>
+<tr><td>$y″ + 2y′ + 5y = 0$</td><td>$Δ = −16$ : $−1 ± 2i$</td><td>$e^{−x}(C_{1}cos 2x + C_{2}sin 2x)$</td></tr></tbody></table></div>
+<p><b>Dans le troisième cas,</b> les racines s'écrivent $α ± iβ$ : $α = −1$ va dans l'exponentielle, $β = 2$ dans le cosinus et le sinus.</p>`,
+  "Deux conditions initiales":`<p><b>Il y a deux constantes</b> $C_{1}$ et $C_{2}$, donc il faut deux conditions pour les trouver : en général $y(0)$ et $y′(0)$.</p>
+<p><b>Exemple :</b> $y″ − 5y′ + 6y = 0$ avec $y(0) = 2$ et $y′(0) = 5$.</p>
+<ol><li>Les solutions : $y = C_{1}e^{2x} + C_{2}e^{3x}$.</li><li>On dérive <b>avant</b> de remplacer : $y′ = 2C_{1}e^{2x} + 3C_{2}e^{3x}$.</li><li>En $x = 0$ (avec $e⁰ = 1$) : $C_{1} + C_{2} = 2$ et $2C_{1} + 3C_{2} = 5$.</li><li>On résout : de la première, $C_{1} = 2 − C_{2}$ ; dans la seconde, $4 − 2C_{2} + 3C_{2} = 5$, donc $C_{2} = 1$ et $C_{1} = 1$.</li><li>Réponse : $y = e^{2x} + e^{3x}$.</li></ol>
+<p><b>Vérification :</b> $y(0) = 1 + 1 = 2$ et $y′(0) = 2 + 3 = 5$.</p>`},
+ "c2-ed2-sm":{
+  "Le principe et les formes":`<p><b>Même plan qu'à l'ordre 1 :</b> toutes les solutions = les solutions sans second membre + <b>une</b> solution particulière $y_{p}$.</p>
+<p><b>On cherche $y_{p}$ de la même forme que le second membre :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Second membre</th><th>On essaie</th></tr></thead><tbody>
+<tr><td>une constante</td><td>une constante $c$</td></tr>
+<tr><td>un polynôme de degré $n$</td><td>un polynôme de degré $n$</td></tr>
+<tr><td>$e^{kx}$</td><td>$B e^{kx}$ ; $B x e^{kx}$ si $k$ est racine ; $B x² e^{kx}$ si racine double</td></tr>
+<tr><td>$cos(ωx)$ ou $sin(ωx)$</td><td>$α cos(ωx) + β sin(ωx)$</td></tr></tbody></table></div>
+<p><b>Exemple</b> avec $y″ − 5y′ + 6y$ (racines $2$ et $3$) :</p>
+<ul><li>second membre $12$ : on essaie $y = c$. Ses dérivées sont nulles, donc $6c = 12$ et $c = 2$ ;</li><li>second membre $e^{x}$ : $1$ n'est pas racine, on essaie $B e^{x}$. Comme $y′ = y″ = B e^{x}$ : $B − 5B + 6B = 2B = 1$, donc $B = 1/2$ ;</li><li>second membre $e^{2x}$ : $2$ est racine, il faut essayer $B x e^{2x}$.</li></ul>
+<p><b>Ensuite :</b> on remplace dans l'équation et on identifie les coefficients.</p>`},
+ "c2-cx-alg":{
+  "Calculer avec i":`<p><b>Un nombre complexe</b> s'écrit $z = a + ib$, où $a$ et $b$ sont des réels, et où $i$ est un nombre tel que $i² = −1$. $a$ est la partie réelle, $b$ la partie imaginaire.</p>
+<p><b>On calcule comme d'habitude, et on remplace $i²$ par $−1$ :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Calcul</th><th>Résultat</th></tr></thead><tbody>
+<tr><td>$(3 + 2i) + (1 − i)$</td><td>$4 + i$</td></tr>
+<tr><td>$(1 + 2i)(3 − i) = 3 − i + 6i − 2i²$</td><td>$3 + 5i + 2 = 5 + 5i$</td></tr>
+<tr><td>conjugué de $3 + 4i$</td><td>$3 − 4i$ (on change le signe de $i$)</td></tr>
+<tr><td>$(3 + 4i)(3 − 4i)$</td><td>$9 + 16 = 25$, un réel</td></tr>
+<tr><td>module de $3 + 4i$</td><td>$√(9 + 16) = 5$</td></tr></tbody></table></div>
+<p><b>Diviser :</b> on multiplie en haut et en bas par le conjugué du bas, qui devient réel.</p>
+<p>$(1 + 3i)/(1 − i) = (1 + 3i)(1 + i)/((1 − i)(1 + i)) = (1 + 4i + 3i²)/2 = (−2 + 4i)/2 = −1 + 2i$.</p>`},
+ "c2-cx-exp":{
+  "La forme exponentielle":`<p><b>Un complexe est un point du plan.</b> Au lieu de donner ses coordonnées $(a, b)$, on peut donner sa distance à l'origine $r$ (le <b>module</b>) et l'angle $θ$ qu'il fait avec l'axe horizontal (l'<b>argument</b>). On écrit $z = r e^{iθ}$.</p>
+<p><b>La méthode :</b> $r = √(a² + b²)$, puis on cherche l'angle dont le cosinus vaut $a/r$ et le sinus $b/r$.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>$z$</th><th>$r$</th><th>$cos θ$, $sin θ$</th><th>Forme exponentielle</th></tr></thead><tbody>
+<tr><td>$1 + i$</td><td>$√2$</td><td>$√2/2$, $√2/2$</td><td>$√2 e^{iπ/4}$</td></tr>
+<tr><td>$−√3 + i$</td><td>$2$</td><td>$−√3/2$, $1/2$</td><td>$2 e^{i5π/6}$</td></tr>
+<tr><td>$−3i$</td><td>$3$</td><td>$0$, $−1$</td><td>$3 e^{−iπ/2}$</td></tr></tbody></table></div>
+<p><b>Le conseil :</b> place le point sur un dessin pour savoir dans quel quart du plan est l'angle. L'argument principal est celui qui est entre $−π$ (exclu) et $π$.</p>`,
+  "Calculer en forme exponentielle":`<p><b>En forme exponentielle, les calculs deviennent simples :</b></p>
+<ul><li><b>produit :</b> on multiplie les modules et on ajoute les arguments. $(2e^{iπ/3})(3e^{iπ/6}) = 6e^{iπ/2} = 6i$ ;</li><li><b>quotient :</b> on divise les modules et on soustrait les arguments. $6e^{iπ/2}/(2e^{iπ/3}) = 3e^{iπ/6}$ ;</li><li><b>puissance :</b> $(r e^{iθ})ⁿ = rⁿ e^{inθ}$. $(√2 e^{iπ/4})⁴ = 4 e^{iπ} = −4$.</li></ul>
+<p><b>Vérification de la puissance :</b> $(1 + i)² = 1 + 2i − 1 = 2i$, puis $(2i)² = −4$. Même résultat.</p>
+<p><b>Le piège du signe moins :</b> dans $−3e^{iπ/4}$, le module n'est pas $−3$ (un module est positif). Comme $−1 = e^{iπ}$, on écrit $3e^{i(π/4 + π)} = 3e^{i5π/4}$, d'argument principal $5π/4 − 2π = −3π/4$.</p>`},
+ "c2-cx-euler":{
+  "Moivre":`<p><b>La formule de Moivre :</b> $(cos θ + i sin θ)ⁿ = cos(nθ) + i sin(nθ)$. C'est juste $(e^{iθ})ⁿ = e^{inθ}$, écrit avec cos et sin.</p>
+<p><b>À quoi ça sert :</b> retrouver les formules de $cos(nθ)$ et $sin(nθ)$. On développe à gauche, puis on identifie les parties réelles et imaginaires.</p>
+<p><b>Exemple avec $n = 2$ :</b> $(cos θ + i sin θ)² = cos²θ + 2i cos θ sin θ − sin²θ$.</p>
+<ul><li>partie réelle : $cos 2θ = cos²θ − sin²θ$ ;</li><li>partie imaginaire : $sin 2θ = 2 sin θ cos θ$.</li></ul>
+<p>On retrouve les formules de duplication bien connues. Pour $n = 3$, la leçon fait le même calcul avec un cube.</p>`,
+  "Euler : linéariser":`<p><b>Les formules d'Euler</b> écrivent cos et sin avec des exponentielles :</p>
+<p>$cos θ = (e^{iθ} + e^{−iθ})/2$ et $sin θ = (e^{iθ} − e^{−iθ})/(2i)$.</p>
+<p><b>Linéariser</b>, c'est transformer une puissance comme $cos²θ$ en une somme de cosinus sans puissance. Utile pour calculer une primitive.</p>
+<p><b>Exemple :</b> $cos²θ$.</p>
+<ol><li>On met au carré : $((e^{iθ} + e^{−iθ})/2)² = (e^{2iθ} + 2 + e^{−2iθ})/4$.</li><li>On regroupe : $e^{2iθ} + e^{−2iθ} = 2cos 2θ$.</li><li>Résultat : $cos²θ = (2cos 2θ + 2)/4 = (1 + cos 2θ)/2$.</li></ol>
+<p><b>Vérification avec $θ = 0$ :</b> à gauche $cos² 0 = 1$, à droite $(1 + 1)/2 = 1$.</p>`},
+ "c2-cx-eq":{
+  "Racine carrée d'un complexe":`<p><b>On cherche $δ = x + iy$ tel que $δ² = w$.</b> On utilise trois équations :</p>
+<ul><li>$x² − y²$ = la partie réelle de $w$ ;</li><li>$2xy$ = la partie imaginaire de $w$ ;</li><li>$x² + y²$ = le module de $w$.</li></ul>
+<p><b>Exemple :</b> $w = 3 + 4i$, de module $√(9 + 16) = 5$.</p>
+<ol><li>$x² − y² = 3$ et $x² + y² = 5$. En additionnant : $2x² = 8$, donc $x² = 4$. En soustrayant : $2y² = 2$, donc $y² = 1$.</li><li>$2xy = 4$ est positif : $x$ et $y$ ont le même signe.</li><li>Donc $δ = 2 + i$ ou $δ = −2 − i$.</li></ol>
+<p><b>Vérification :</b> $(2 + i)² = 4 + 4i + i² = 3 + 4i$.</p>
+<p><b>Il y a toujours deux racines carrées, opposées.</b> Pour un réel négatif c'est direct : les racines de $−9$ sont $3i$ et $−3i$.</p>`,
+  "Équation du second degré dans ℂ":`<p><b>Dans ℂ, toute équation $az² + bz + c = 0$ a des solutions,</b> même quand $Δ$ est négatif.</p>
+<p><b>La méthode :</b> on calcule $Δ = b² − 4ac$, on cherche $δ$ tel que $δ² = Δ$, puis $z = (−b ± δ)/(2a)$.</p>
+<p><b>Exemple :</b> $z² − 2z + 5 = 0$.</p>
+<ol><li>$Δ = 4 − 20 = −16$.</li><li>$δ = 4i$, car $(4i)² = −16$.</li><li>$z = (2 ± 4i)/2$, donc $z = 1 + 2i$ ou $z = 1 − 2i$.</li></ol>
+<p><b>Vérification avec $1 + 2i$ :</b> $(1 + 2i)² = 1 + 4i − 4 = −3 + 4i$, puis $−3 + 4i − 2(1 + 2i) + 5 = −3 + 4i − 2 − 4i + 5 = 0$.</p>
+<p><b>Si $Δ$ est un complexe,</b> on cherche $δ$ avec la méthode de l'écran précédent.</p>`},
+ "c2-cx-racn":{
+  "La méthode":`<p><b>On cherche les $z$ tels que $zⁿ = w$.</b> On passe en forme exponentielle : $w = R e^{iφ}$ et $z = r e^{iθ}$. Alors $zⁿ = rⁿ e^{inθ}$.</p>
+<ul><li>les modules : $rⁿ = R$, donc $r$ est la racine $n$-ième de $R$ ;</li><li>les arguments : $nθ = φ + 2kπ$, donc $θ = (φ + 2kπ)/n$, pour $k = 0, 1, …, n − 1$.</li></ul>
+<p><b>Il y a exactement $n$ solutions</b>, réparties régulièrement sur un cercle.</p>
+<p><b>Exemple :</b> $z⁴ = 16$. $16 = 16 e^{i0}$, donc $r = 2$ et $θ = kπ/2$ : les solutions sont $2$, $2i$, $−2$ et $−2i$. Vérification : $(2i)⁴ = 16 i⁴ = 16$.</p>
+<p><b>Exemple :</b> $z³ = 8i = 8e^{iπ/2}$. $r = 2$ et $θ = π/6 + 2kπ/3$ : $2e^{iπ/6}$, $2e^{i5π/6}$ et $2e^{−iπ/2} = −2i$. Vérification : $(−2i)³ = −8i³ = 8i$.</p>`}},
 pf:{
  "p-types":{
   "OCaml répond un type, puis une valeur":`<p><b>L'image à garder.</b> OCaml est une calculatrice très stricte. Tu lui donnes un calcul (on dit une <b>expression</b>), terminé par <code>;;</code>. Il répond deux choses, toujours dans cet ordre : la <b>sorte</b> du résultat, puis le <b>résultat</b>.</p>
