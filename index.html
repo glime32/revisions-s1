@@ -17090,11 +17090,141 @@ geo:{
   "Ce qu'on en déduit":`<p><b>1. Le cercle de diamètre.</b> Un point $M$ voit $[AB]$ sous un angle droit exactement quand il est sur le cercle de diamètre $[AB]$.</p>
 <p>Exemple : $A$ et $B$ à distance $10$. Tous les points $M$ tels que $AMB$ soit rectangle en $M$ forment le cercle de centre le milieu de $[AB]$ et de rayon $5$ (sans $A$ ni $B$).</p>
 <p>La raison : l'angle inscrit vaut $π/2$, donc l'angle au centre vaut $π$ : le centre est sur $[AB]$, en son milieu.</p>
-<p><b>2. Quatre points sur un même cercle (cocycliques).</b> $A$, $B$, $C$, $D$ sont sur un même cercle (ou alignés) exactement quand $C$ et $D$ voient $[AB]$ sous le même angle. C'est la conséquence « tous les angles inscrits sur le même arc sont égaux », lue à l'envers.</p>`}}
+<p><b>2. Quatre points sur un même cercle (cocycliques).</b> $A$, $B$, $C$, $D$ sont sur un même cercle (ou alignés) exactement quand $C$ et $D$ voient $[AB]$ sous le même angle. C'est la conséquence « tous les angles inscrits sur le même arc sont égaux », lue à l'envers.</p>`}},
+usi:{
+ "u-intro":{
+  "Un système d'exploitation":`<p><b>Un ordinateur, c'est du matériel :</b> un processeur qui calcule, de la mémoire, un disque, un écran, un clavier. Seul, il ne sait rien faire d'utile.</p>
+<p><b>Le système d'exploitation</b> (Linux, Windows, macOS…) est le logiciel qui se place entre ce matériel et toi. Il fait trois choses :</p>
+<ul><li>il <b>partage</b> le matériel entre tous les programmes qui tournent en même temps (multi-tâches) et entre les utilisateurs (multi-utilisateurs) ;</li><li>il <b>range</b> les données en fichiers et en dossiers, et décide qui a le droit de les lire ;</li><li>il te donne une <b>interface</b> : des fenêtres, ou un terminal où l'on tape des commandes.</li></ul>
+<p><b>Exemple :</b> quand tu enregistres un fichier, ce n'est pas ton éditeur de texte qui écrit sur le disque. Il demande au système, qui s'en occupe.</p>`,
+  "Les couches d'Unix":`<p><b>Unix est construit en couches</b>, comme un oignon. Chaque couche ne parle qu'à ses voisines.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Couche</th><th>Rôle</th><th>Exemple</th></tr></thead><tbody>
+<tr><td>applications</td><td>ce que tu lances</td><td>bash, Firefox, python3</td></tr>
+<tr><td>bibliothèques</td><td>des fonctions toutes prêtes</td><td>printf, du C (man 3)</td></tr>
+<tr><td>noyau</td><td>le seul qui parle au matériel</td><td>fork, open (man 2)</td></tr>
+<tr><td>matériel</td><td>la machine</td><td>processeur, disque</td></tr></tbody></table></div>
+<p><b>Un appel noyau</b> (ou appel système), c'est une application qui demande un service au noyau : « ouvre ce fichier », « crée un processus ».</p>
+<p><b>Le terminal</b> fait tourner un interpréteur de commandes, bash : tu tapes une commande, il l'exécute. Tout le cours se fait comme ça.</p>`},
+ "u-chemins":{
+  "Un seul arbre":`<p><b>Sous Unix, tous les fichiers sont rangés dans un seul arbre.</b> En haut, la racine, notée /. Dedans, des dossiers, qui contiennent d'autres dossiers et des fichiers.</p>
+<p><b>Un chemin</b> dit comment descendre jusqu'à un fichier. /home/dupont/notes.txt : depuis la racine, on entre dans home, puis dans dupont, et on trouve notes.txt.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Écrit</th><th>Veut dire</th></tr></thead><tbody>
+<tr><td>/</td><td>la racine</td></tr><tr><td>~</td><td>ton dossier personnel, par exemple /home/dupont</td></tr>
+<tr><td>.</td><td>le dossier où tu es</td></tr><tr><td>..</td><td>le dossier au-dessus</td></tr></tbody></table></div>
+<p><b>Absolu ou relatif :</b></p>
+<ul><li>un chemin <b>absolu</b> commence par / : il marche de n'importe où (/home/dupont/notes.txt) ;</li><li>un chemin <b>relatif</b> part du dossier où tu es. Si tu es dans /home, dupont/notes.txt mène au même fichier.</li></ul>
+<p><b>Exemple :</b> tu es dans /home/dupont/tp. Le chemin ../notes.txt remonte d'un cran (dans /home/dupont) et trouve notes.txt.</p>`,
+  "Les commandes de base":`<p><b>Les commandes à connaître, avec un exemple chacune :</b></p>
+${W.code(`pwd                  # où suis-je ? affiche /home/dupont
+cd tp                # entre dans le dossier tp
+cd ..                # remonte d'un cran
+cd                   # revient dans ton dossier personnel
+ls                   # liste le contenu ; ls -l en détail, ls -a avec les cachés
+mkdir projet         # crée le dossier projet
+cp a.txt b.txt       # copie a.txt en b.txt
+mv b.txt c.txt       # renomme b.txt en c.txt (ou le déplace)
+rm c.txt             # supprime c.txt, sans corbeille
+cat a.txt            # affiche le contenu de a.txt
+man ls               # le manuel de ls (q pour quitter)`,"sh")}
+<p>Le texte après # est un commentaire : bash ne le lit pas.</p>
+<p><b>Attention :</b> rm supprime pour de bon, il n'y a pas de corbeille. rm -r supprime un dossier et tout ce qu'il contient.</p>
+<p><b>Plusieurs commandes sur une ligne :</b> on les sépare par ;. mkdir essai ; cd essai crée le dossier puis y entre.</p>`,
+  "Les dossiers du système":`<p><b>Chaque dossier sous la racine a un rôle.</b> Les plus utiles :</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Dossier</th><th>Ce qu'il contient</th></tr></thead><tbody>
+<tr><td>/bin, /usr/bin</td><td>les commandes : ls, bash, python3…</td></tr>
+<tr><td>/etc</td><td>les réglages du système ; /etc/passwd liste les comptes</td></tr>
+<tr><td>/home</td><td>un dossier par utilisateur</td></tr>
+<tr><td>/tmp</td><td>des fichiers temporaires, effacés au redémarrage</td></tr>
+<tr><td>/dev</td><td>les périphériques (disques, clés…), vus comme des fichiers</td></tr>
+<tr><td>/proc</td><td>des informations sur les programmes en cours</td></tr></tbody></table></div>
+<p><b>Pour savoir où est rangée une commande :</b> which ls répond /usr/bin/ls.</p>`},
+ "u-droits":{
+  "Une ligne de ls -l":`<p><b>ls -l affiche une ligne par fichier.</b> Prenons celle-ci :</p>
+${W.code(`-rwxr-x--- 1 dupont etu 2048 nov. 13 09:30 script.sh`,"sh")}
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Morceau</th><th>Veut dire</th></tr></thead><tbody>
+<tr><td>-</td><td>le type : - fichier ordinaire, d dossier, l lien symbolique</td></tr>
+<tr><td>rwxr-x---</td><td>les droits : 3 lettres pour le propriétaire, 3 pour le groupe, 3 pour les autres</td></tr>
+<tr><td>1</td><td>le nombre de liens (voir la leçon sur les inodes)</td></tr>
+<tr><td>dupont etu</td><td>le propriétaire, puis le groupe</td></tr>
+<tr><td>2048</td><td>la taille, en octets</td></tr>
+<tr><td>nov. 13 09:30</td><td>la date de dernière modification</td></tr>
+<tr><td>script.sh</td><td>le nom</td></tr></tbody></table></div>`,
+  "Utilisateurs et groupes":`<p><b>Chaque utilisateur a un nom et un numéro</b>, l'uid. whoami affiche ton nom.</p>
+<p><b>Chaque utilisateur fait partie d'un ou plusieurs groupes</b> (par exemple le groupe des étudiants). id affiche tout d'un coup : ton uid, ton groupe principal et tous tes groupes.</p>
+<p><b>Un fichier appartient</b> à celui qui l'a créé, et à son groupe principal. C'est ce qu'on lit dans ls -l.</p>
+<p><b>root</b> (uid 0) est l'administrateur : il a tous les droits sur tout.</p>
+<p><b>Pourquoi ça compte :</b> les droits d'un fichier sont donnés à trois catégories, le propriétaire, son groupe et tous les autres. Il faut savoir dans quelle catégorie tu es.</p>`,
+  "Les 9 droits et l'octal":`<p><b>Trois droits :</b> r (read) lire, w (write) écrire, x (execute) exécuter. Pour trois catégories : le propriétaire (u), le groupe (g), les autres (o).</p>
+<p><b>En chiffres (octal) :</b> r vaut 4, w vaut 2, x vaut 1. On additionne pour chaque catégorie.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Chiffres</th><th>Lettres</th><th>Calcul</th></tr></thead><tbody>
+<tr><td>750</td><td>rwx r-x ---</td><td>7 = 4 + 2 + 1, 5 = 4 + 1, 0 = rien</td></tr>
+<tr><td>640</td><td>rw- r-- ---</td><td>6 = 4 + 2, 4 = r, 0 = rien</td></tr>
+<tr><td>711</td><td>rwx --x --x</td><td>7, puis 1 = x seul</td></tr></tbody></table></div>
+<p><b>Changer les droits :</b></p>
+${W.code(`chmod 750 script.sh      # en chiffres
+chmod u+x script.sh      # ajoute x au propriétaire
+chmod go-w notes.txt     # enlève w au groupe et aux autres`,"sh")}`,
+  "Les droits sur un répertoire":`<p><b>Sur un dossier, les trois lettres ne veulent pas dire la même chose :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Droit</th><th>Sur un dossier</th></tr></thead><tbody>
+<tr><td>r</td><td>voir la liste des noms (ls)</td></tr>
+<tr><td>w</td><td>créer, supprimer ou renommer des fichiers dedans</td></tr>
+<tr><td>x</td><td>entrer dedans (cd) et atteindre un fichier dont on connaît le nom</td></tr></tbody></table></div>
+<p><b>La conséquence surprenante :</b> pour supprimer un fichier, il faut w (et x) sur le <b>dossier</b> qui le contient. Les droits du fichier lui-même ne comptent pas. On peut donc supprimer un fichier qu'on n'a pas le droit de lire, si on a w sur le dossier.</p>`},
+ "u-umask":{
+  "Le masque":`<p><b>Quand tu crées un fichier,</b> quels droits a-t-il ? Le système part d'une base et retire ce que dit le <b>umask</b>.</p>
+<ul><li>base d'un fichier : 666 (rw-rw-rw-) ;</li><li>base d'un dossier : 777 (rwxrwxrwx).</li></ul>
+<p><b>Le umask liste les droits à enlever.</b> Chaque chiffre du umask retire ses droits à la catégorie correspondante.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>umask</th><th>Nouveau fichier</th><th>Nouveau dossier</th></tr></thead><tbody>
+<tr><td>022</td><td>644 rw-r--r--</td><td>755 rwxr-xr-x</td></tr>
+<tr><td>007</td><td>660 rw-rw----</td><td>770 rwxrwx---</td></tr></tbody></table></div>
+<p><b>Exemple :</b> umask 007 retire tout aux autres (le 7 de la fin) et rien au propriétaire ni au groupe. Le fichier passe de 666 à 660.</p>
+<p><b>Les commandes :</b> umask seul affiche la valeur actuelle ; umask 027 la change pour les fichiers créés ensuite.</p>`},
+ "u-inodes":{
+  "Inode et répertoire":`<p><b>Sur le disque, chaque fichier a une fiche :</b> son inode. Elle contient tout sur le fichier (type, droits, propriétaire, taille, dates, où sont ses données), <b>sauf son nom</b>. Chaque inode a un numéro.</p>
+<p><b>Le nom est rangé dans le dossier.</b> Un dossier, c'est une liste de couples (nom, numéro d'inode), comme un annuaire.</p>
+<p><b>Exemple :</b> le dossier tp contient la ligne « exo.py → 1234 ». Pour ouvrir exo.py, le système cherche le nom dans tp, trouve le numéro 1234, puis lit l'inode 1234.</p>
+<p><b>Conséquence :</b> deux noms différents peuvent mener au même inode, donc au même fichier. C'est un lien dur.</p>
+<p><b>Les commandes :</b> ls -i affiche le numéro d'inode de chaque fichier, ls -l le nombre de noms (liens) qui mènent à lui.</p>`,
+  "Lien dur, lien symbolique":`<p><b>Deux façons de donner un autre nom à un fichier.</b></p>
+<p><b>Le lien dur</b> (ln original nouveau) : un deuxième nom pour le <b>même inode</b>. Les deux noms sont parfaitement égaux. Supprimer l'un ne touche pas l'autre ; les données ne disparaissent que quand le dernier nom est supprimé.</p>
+<p><b>Le lien symbolique</b> (ln -s cible raccourci) : un petit fichier à part, qui contient seulement le chemin de la cible. C'est un raccourci. Si la cible est supprimée, le raccourci pointe dans le vide : il est cassé.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th></th><th>Lien dur</th><th>Lien symbolique</th></tr></thead><tbody>
+<tr><td>Inode</td><td>le même</td><td>un nouveau</td></tr>
+<tr><td>Vers un dossier</td><td>interdit</td><td>possible</td></tr>
+<tr><td>Si l'original est supprimé</td><td>rien ne change</td><td>le lien est cassé</td></tr></tbody></table></div>`},
+ "u-taille":{
+  "L'arbre des blocs":`<p><b>Le disque est découpé en blocs</b>, de taille fixe (par exemple 4 Kio). Les données d'un fichier occupent des blocs, et l'inode garde leurs adresses.</p>
+<p><b>Le problème :</b> l'inode est petit, il ne peut garder que quelques adresses. L'astuce : certaines adresses mènent à des blocs qui contiennent eux-mêmes des adresses.</p>
+<ul><li>10 adresses directes : 10 blocs de données ;</li><li>1 simple indirecte : un bloc rempli de n adresses, donc n blocs de données ;</li><li>1 double indirecte : n × n blocs ;</li><li>1 triple indirecte : n × n × n blocs.</li></ul>
+<p><b>n</b> est le nombre d'adresses dans un bloc : taille d'un bloc / taille d'une adresse.</p>
+<p><b>Exemple :</b> blocs de 1 Kio (1024 octets) et adresses de 4 octets : n = 1024 / 4 = 256. Taille maximale : (10 + 256 + 256² + 256³) blocs de 1 Kio.</p>
+<p><b>Rappel :</b> 1 Kio = 2¹⁰ octets, 1 Mio = 2²⁰, 1 Gio = 2³⁰.</p>`},
+ "u-processus":{
+  "Programme et processus":`<p><b>Un programme</b> est un fichier sur le disque, par exemple /usr/bin/ls. <b>Un processus</b> est ce programme en train de tourner. Si tu lances ls deux fois en même temps, il y a deux processus pour un seul programme.</p>
+<p>Chaque processus a un numéro, le <b>PID</b>, et un parent (celui qui l'a lancé), le <b>PPID</b>.</p>
+<p><b>Trois états :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>État</th><th>Veut dire</th><th>Exemple</th></tr></thead><tbody>
+<tr><td>actif (élu)</td><td>il utilise le processeur en ce moment</td><td>un calcul en cours</td></tr>
+<tr><td>prêt</td><td>il n'attend que le processeur</td><td>il attend son tour</td></tr>
+<tr><td>bloqué</td><td>il attend autre chose</td><td>une frappe au clavier, une lecture sur le disque</td></tr></tbody></table></div>
+<p><b>L'ordonnanceur</b> choisit, parmi les processus prêts, celui qui devient actif. Un processus bloqué ne peut pas devenir actif directement : il redevient d'abord prêt.</p>`,
+  "fork, exec, wait":`<p><b>Ce qui se passe quand tu tapes ls dans bash :</b></p>
+<ol><li><b>fork</b> : bash se clone. Il y a maintenant deux bash identiques, le parent et l'enfant. fork renvoie le PID de l'enfant au parent, et 0 à l'enfant : c'est comme ça qu'ils savent qui est qui.</li><li><b>exec</b> : l'enfant remplace son propre code par celui de ls. Il devient ls, en gardant le même terminal.</li><li><b>wait</b> : le parent (bash) attend que l'enfant ait fini, récupère son code de retour, puis réaffiche l'invite.</li></ol>
+<p><b>Avec ls &amp;</b> (arrière-plan), bash n'attend pas : il rend la main tout de suite.</p>
+<p><b>Les commandes internes</b> comme cd ou echo sont faites par bash lui-même, sans fork : cd doit changer le dossier de bash, pas celui d'un enfant.</p>`,
+  "Premier plan, arrière-plan, arrêter":`<p><b>Les commandes pour gérer les processus :</b></p>
+${W.code(`sleep 100 &        # lance en arrière-plan : bash rend la main
+jobs               # liste les tâches de fond : [1] sleep 100
+%1                 # ramène la tâche 1 au premier plan
+ps                 # liste tes processus, avec leur PID
+kill 4321          # arrête le processus de PID 4321
+kill -9 4321       # l'arrête de force`,"sh")}
+<p><b>Au clavier :</b> Ctrl-C arrête le programme au premier plan ; Ctrl-D envoie « fin de fichier » (dans un terminal vide, ça ferme bash).</p>
+<p><b>Premier plan</b> veut dire : bash attend la fin avant de te rendre la main. <b>Arrière-plan</b> : le programme tourne pendant que tu continues à taper.</p>`} /*SUITE-USI*/}
 };
-const LES=window.LESSONS||{};
+const LES=window.LESSONS||{},MATHS=["calc","lin","ana","geo","rai"];
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
-  L.steps.forEach(s=>{if(s.k==="learn"&&M[s.h])s.debut=W.tx(M[s.h]);});}));
+  L.steps.forEach(s=>{if(s.k==="learn"&&M[s.h])s.debut=MATHS.includes(sid)?W.tx(M[s.h]):M[s.h];});}));
 window.DEBUT=DEBUT;
 })();
 
