@@ -15571,7 +15571,167 @@ ${C(`let rec maxListe : int list -> int = function
   li -> if List.tl li = [] then List.hd li
         else let m = maxListe (List.tl li) in
              if List.hd li > m then List.hd li else m`)}
-<p>maxListe [4; 9; 2] : le plus grand de [9; 2] est 9 ; on compare 4 et 9 ; résultat 9.</p>`}},
+<p>maxListe [4; 9; 2] : le plus grand de [9; 2] est 9 ; on compare 4 et 9 ; résultat 9.</p>`},
+ "p-match":{
+  "match … with":`<p><b>match, c'est un aiguillage.</b> On compare une valeur à plusieurs motifs, de haut en bas, et on prend le <b>premier</b> qui correspond.</p>
+${C(`let signe n = match n with
+  | 0 -> "nul"
+  | n when n > 0 -> "positif"
+  | _ -> "négatif"`)}
+<ul><li>signe 0 : le premier motif, 0, correspond : "nul".</li><li>signe 5 : 0 ne correspond pas ; le deuxième, avec la condition when n &gt; 0, oui : "positif".</li><li>signe (-3) : seul le dernier, _, correspond. _ attrape tout : "négatif".</li></ul>
+<p><b>Sur une liste,</b> le motif x :: r donne un nom à la tête et à la queue. Pour [4; 7] : x = 4 et r = [7].</p>
+<p><b>L'ordre compte :</b> si _ était écrit en premier, il attraperait tout, et les autres cas ne serviraient jamais.</p>`},
+ "p2-match":{
+  "Un cas par forme":`<p><b>Une liste a toujours une de ces deux formes :</b> soit vide, [] ; soit une tête suivie d'une queue, e :: tl. Avec le filtrage, on écrit un cas pour chacune. Plus besoin de List.hd ni de List.tl.</p>
+${C(`let rec somme = function
+  | [] -> 0
+  | e :: tl -> e + somme tl`)}
+<p><b>Ce que calcule somme [3; 4] :</b></p>
+${C(`somme [3; 4]
+= 3 + somme [4]          (e = 3, tl = [4])
+= 3 + 4 + somme []       (e = 4, tl = [])
+= 3 + 4 + 0
+= 7`)}
+<p><b>La même fonction sans filtrage :</b> if l = [] then 0 else List.hd l + somme (List.tl l). Le filtrage fait la même chose, en plus court : il teste la forme et donne les noms en même temps.</p>
+<p><b>function ou match :</b> function filtre directement le paramètre (sans lui donner de nom) ; match l with filtre une valeur qu'on a nommée.</p>`,
+  "Motifs utiles":`<p><b>Les motifs qui reviennent :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Motif</th><th>Correspond à</th><th>Exemple</th></tr></thead><tbody>
+<tr><td>[x]</td><td>une liste d'exactement un élément</td><td>[5] : x = 5</td></tr>
+<tr><td>x :: y :: tl</td><td>au moins deux éléments</td><td>[1; 2; 3] : x = 1, y = 2, tl = [3]</td></tr>
+<tr><td>(a, b) :: tl</td><td>une liste de couples</td><td>[(1, "un")] : a = 1, b = "un", tl = []</td></tr>
+<tr><td>e :: tl when e &gt; 0</td><td>une tête positive</td><td>[3; 1] oui, [-2] non</td></tr>
+<tr><td>e :: tl as l</td><td>comme e :: tl, et l est toute la liste</td><td></td></tr></tbody></table></div>
+<p><b>Exemple : le dernier élément d'une liste.</b></p>
+${C(`let rec dernier = function
+  | [] -> failwith "vide"
+  | [x] -> x
+  | _ :: tl -> dernier tl`)}
+<p>dernier [4; 8; 2] : ni vide ni un seul élément, donc dernier [8; 2], puis dernier [2], qui correspond à [x] : 2.</p>`},
+ "p2-curry":{
+  "Curryfiée ou pas":`<p><b>Deux façons d'écrire une fonction à deux paramètres :</b></p>
+${C(`let aire l h = l * h          (* int -> int -> int *)
+let aire2 (l, h) = l * h      (* int * int -> int *)`)}
+<ul><li>aire est <b>curryfiée</b> : elle prend l, puis h, séparés par des espaces. Appel : aire 3 4.</li><li>aire2 prend <b>un seul</b> paramètre, un couple. Appel : aire2 (3, 4).</li></ul>
+<p><b>Lire le type :</b> int -> int -> int se lit « reçoit un int, puis un int, rend un int ». int * int -> int se lit « reçoit un couple de deux int, rend un int ».</p>
+<p><b>Les sujets de janvier demandent la forme curryfiée.</b></p>`,
+  "fun et application partielle":`<p><b>L'application partielle :</b> une fonction curryfiée peut recevoir ses paramètres un par un. Si on ne lui donne que le premier, on obtient une nouvelle fonction qui attend le suivant.</p>
+${C(`let aire l h = l * h
+let triple = aire 3      (* int -> int : attend h *)
+triple 5                 (* 15 *)`)}
+<p><b>fun fabrique une fonction sans lui donner de nom :</b></p>
+${C(`(fun x -> x * x) 4                  (* 16 *)
+List.map (fun x -> x * x) [1; 2; 3]  (* [1; 4; 9] *)`)}
+<p>C'est pratique pour passer une petite fonction à une autre, comme ici à List.map.</p>
+<p><b>Les deux écritures sont les mêmes :</b> let f x y = … et let f = fun x y -> ….</p>`},
+ "p2-poly":{
+  "Les 'a":`<p><b>'a se lit « alpha »</b> et veut dire « n'importe quel type ». OCaml l'écrit quand rien n'oblige une valeur à être d'un type précis : la fonction marche alors pour tous les types.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Fonction</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td>let premier (a, b) = a</td><td>'a * 'b -> 'a</td><td>a et b peuvent être de types différents ; on rend a</td></tr>
+<tr><td>let double l = l @ l</td><td>'a list -> 'a list</td><td>@ colle deux listes, sans regarder leurs éléments</td></tr>
+<tr><td>let f x y = if x then [y] else []</td><td>bool -> 'a -> 'a list</td><td>if x force x : bool ; y n'est contraint par rien</td></tr></tbody></table></div>
+<p><b>Exemples d'appels :</b> premier (3, "x") vaut 3 ; premier ("x", true) vaut "x". La même fonction marche avec des types différents.</p>
+<p><b>La méthode :</b> un type inconnu par paramètre, puis chaque opération ajoute une contrainte : + force int, if force bool, :: force « même type que les éléments de la liste ». Ce qui n'est contraint par rien reste un 'a.</p>`},
+ "p2-somme":{
+  "Définir et construire":`<p><b>Un type somme</b> dit qu'une valeur est <b>soit</b> d'une forme, <b>soit</b> d'une autre. Chaque forme a un nom qui commence par une majuscule : un <b>constructeur</b>.</p>
+${C(`type forme =
+  | Cercle of float          (* le rayon *)
+  | Rect of float * float    (* largeur, hauteur *)
+
+let c = Cercle 2.
+let r = Rect (3., 4.)`)}
+<p><b>of</b> dit ce que le constructeur transporte : un float pour Cercle, un couple de float pour Rect.</p>
+<p><b>Un type sans données</b> s'écrit sans of : type jour = Lundi | Mardi | Mercredi.</p>`,
+  "Filtrer":`<p><b>Pour utiliser une valeur d'un type somme,</b> on filtre : un cas par constructeur, et le motif donne un nom aux données.</p>
+${C(`let aire = function
+  | Cercle r -> 3.14 *. r *. r
+  | Rect (l, h) -> l *. h`)}
+<ul><li>aire (Rect (3., 4.)) : le motif Rect (l, h) donne l = 3. et h = 4., donc 12.</li><li>aire (Cercle 1.) : r = 1., donc 3.14.</li></ul>
+<p><b>Les motifs s'emboîtent</b> avec ceux des listes :</p>
+${C(`let rec nb_cercles = function
+  | [] -> 0
+  | Cercle _ :: tl -> 1 + nb_cercles tl
+  | Rect _ :: tl -> nb_cercles tl`)}
+<p>nb_cercles [Cercle 1.; Rect (2., 3.); Cercle 5.] vaut 2.</p>`},
+ "p2-rectype":{
+  "Une liste maison":`<p><b>Un type peut se contenir lui-même :</b> c'est comme ça qu'on fabrique des listes ou des arbres.</p>
+${C(`type ma_liste = Vide | Cons of int * ma_liste`)}
+<p>La liste [1; 2] s'écrit alors Cons (1, Cons (2, Vide)) : 1 devant le reste, qui est 2 devant la liste vide.</p>
+<p><b>Les fonctions s'écrivent comme sur les vraies listes :</b> Vide joue le rôle de [], et Cons (x, r) celui de x :: r.</p>
+${C(`let rec somme = function
+  | Vide -> 0
+  | Cons (x, r) -> x + somme r`)}
+<p>somme (Cons (1, Cons (2, Vide))) = 1 + 2 + 0 = 3.</p>
+<p><b>Un arbre,</b> c'est la même idée avec deux sous-arbres : type arbre = Feuille | Noeud of int * arbre * arbre.</p>`},
+ "p2-record":{
+  "Champs nommés":`<p><b>Un enregistrement</b> regroupe plusieurs valeurs, chacune avec un nom : comme une fiche.</p>
+${C(`type etudiant = {nom : string; note : float}
+
+let e = {nom = "Léa"; note = 14.5}
+e.note                       (* 14.5 *)
+let e2 = {e with note = 16.}`)}
+<ul><li>dans le type, on écrit champ : type ; dans la valeur, champ = valeur ;</li><li>e.note lit le champ note ;</li><li>{e with note = 16.} fabrique une <b>copie</b> de e où seule la note change. e lui-même ne change pas : il vaut toujours 14.5.</li></ul>`},
+ "p2-exc":{
+  "Lever une exception":`<p><b>Une exception arrête le calcul</b> quand quelque chose ne va pas, avec un message.</p>
+${C(`let div a b =
+  if b = 0 then failwith "division par zéro"
+  else a / b`)}
+<ul><li>div 7 2 vaut 3 : aucun problème.</li><li>div 7 0 lève l'exception Failure "division par zéro" : le calcul s'arrête là.</li></ul>
+<p><b>Les exceptions toutes prêtes :</b> failwith "…" lève Failure, invalid_arg "…" lève Invalid_argument. OCaml lève aussi Not_found, Division_by_zero ou Match_failure.</p>
+<p><b>Sa propre exception :</b></p>
+${C(`exception Trop_grand of int
+let verifie x = if x > 100 then raise (Trop_grand x) else x`)}
+<p>verifie 150 lève Trop_grand 150. Le nom commence par une majuscule, et of dit ce qu'elle transporte.</p>`,
+  "Rattraper avec try … with":`<p><b>try … with rattrape une exception</b> pour donner une réponse à la place.</p>
+${C(`try div 7 0 with Failure _ -> 0     (* 0 *)
+try div 7 2 with Failure _ -> 0     (* 3 *)`)}
+<ul><li>Dans le premier cas, div 7 0 lève Failure : le with la rattrape et donne 0.</li><li>Dans le second, rien n'est levé : le try donne simplement le résultat, 3.</li></ul>
+<p><b>Si l'exception ne correspond à aucun cas du with,</b> elle n'est pas rattrapée : elle continue et arrête le programme.</p>`},
+ "p2-ordre-sup":{
+  "Une fonction en paramètre":`<p><b>En OCaml, une fonction peut recevoir une autre fonction.</b></p>
+${C(`let deux_fois f x = f (f x)
+deux_fois (fun x -> x + 3) 10    (* 16 *)`)}
+<p>deux_fois applique f deux fois : 10 + 3 = 13, puis 13 + 3 = 16.</p>
+<p><b>my_map applique une fonction à chaque élément :</b></p>
+${C(`my_map (fun x -> x + 1) [5; 6]
+= (5 + 1) :: my_map (fun x -> x + 1) [6]
+= 6 :: (6 + 1) :: my_map (fun x -> x + 1) []
+= 6 :: 7 :: []
+= [6; 7]`)}
+<p><b>L'intérêt :</b> le parcours de la liste est écrit une seule fois. C'est la fonction passée en paramètre qui décide quoi faire de chaque élément.</p>`},
+ "p2-iter":{
+  "Les itérateurs":`<p><b>OCaml a des fonctions toutes prêtes pour parcourir une liste.</b> On leur donne une fonction et une liste.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Appel</th><th>Résultat</th><th>Ce que ça fait</th></tr></thead><tbody>
+<tr><td>List.map (fun x -> x * 10) [1; 2]</td><td>[10; 20]</td><td>transforme chaque élément</td></tr>
+<tr><td>List.filter (fun x -> x mod 2 = 0) [1; 2; 3; 4]</td><td>[2; 4]</td><td>garde ceux qui vérifient le test</td></tr>
+<tr><td>List.for_all (fun x -> x &gt; 0) [3; -1]</td><td>false</td><td>tous vérifient-ils le test ?</td></tr>
+<tr><td>List.exists (fun x -> x &gt; 0) [3; -1]</td><td>true</td><td>au moins un vérifie-t-il le test ?</td></tr></tbody></table></div>
+<p>Elles évitent d'écrire soi-même la récursion à chaque fois.</p>`,
+  "fold_left et fold_right":`<p><b>fold réduit une liste à une seule valeur</b>, en l'accumulant élément par élément. On donne une valeur de départ et une fonction qui dit comment un élément change l'accumulateur.</p>
+<p><b>fold_left parcourt de gauche à droite.</b> La fonction reçoit (accumulateur, élément).</p>
+${C(`List.fold_left (fun acc e -> acc * e) 1 [2; 3; 4]
+= ((1 * 2) * 3) * 4
+= 24`)}
+<p><b>fold_right part de la droite.</b> La fonction reçoit (élément, accumulateur), et la liste vient avant la valeur de départ.</p>
+${C(`List.fold_right (fun e acc -> e + acc) [2; 3; 4] 0
+= 2 + (3 + (4 + 0))
+= 9`)}
+<p><b>La méthode :</b> la valeur de départ est le résultat pour la liste vide (1 pour un produit, 0 pour une somme, [] pour une liste).</p>`},
+ "p2-terminal":{
+  "Appel terminal, accumulateur":`<p><b>Le problème :</b> dans la somme récursive habituelle, chaque appel laisse une addition en attente.</p>
+${C(`somme [1; 2; 3] = 1 + (2 + (3 + 0))`)}
+<p>Les additions attendent que les appels du dessous aient fini. Avec une très longue liste, la mémoire déborde.</p>
+<p><b>La solution : un accumulateur</b>, qui porte le résultat au fur et à mesure.</p>
+${C(`let rec somme_acc l acc = match l with
+  | [] -> acc
+  | e :: tl -> somme_acc tl (acc + e)
+
+somme_acc [1; 2; 3] 0
+-> somme_acc [2; 3] 1
+-> somme_acc [3] 3
+-> somme_acc [] 6
+-> 6`)}
+<p>Ici l'appel récursif est la <b>toute dernière</b> opération : rien n'attend. On dit qu'il est <b>terminal</b>.</p>
+<p><b>La valeur de départ</b> de l'accumulateur est celle du cas de base : 0 pour une somme, 1 pour un produit, [] pour une liste.</p>`}},
 lin:{
  "l-repere":{
   "Un repère, deux nombres":`<p><b>À quoi sert un repère.</b> À donner une <b>adresse</b> à chaque point du plan, avec deux nombres.</p>
