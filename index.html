@@ -15722,7 +15722,149 @@ lin:{
 <p><b>Exemple dans le plan :</b> $F$ est la droite $y − 2x = 0$, et $a = (0, 1)$.</p>
 <ol><li>On remplace $x$ par $x − 0$ et $y$ par $y − 1$ : $(y − 1) − 2x = 0$.</li><li>On simplifie : $y − 2x = 1$, c'est-à-dire $y = 2x + 1$.</li></ol>
 <p>On retrouve la droite décalée.</p>
-<p><b>Ce qu'on remarque :</b> le second membre n'est plus $0$. C'est le signe que l'ensemble ne passe pas par $0$ : ce n'est pas un sous-espace vectoriel.</p>`}},
+<p><b>Ce qu'on remarque :</b> le second membre n'est plus $0$. C'est le signe que l'ensemble ne passe pas par $0$ : ce n'est pas un sous-espace vectoriel.</p>`},
+ "l-matrices":{
+  "Vocabulaire":`<p><b>Une matrice, c'est un tableau de nombres</b>, rangés en lignes et en colonnes.</p>
+<p>Exemple : $A = ${mat([[1,4,-2],[0,3,5]])}$. Elle a $2$ lignes et $3$ colonnes : sa <b>taille</b> est $2 × 3$ (toujours les lignes d'abord).</p>
+<p><b>Le coefficient</b> $a_{ij}$ est celui de la ligne $i$ et de la colonne $j$ :</p>
+<ul><li>$a_{13} = −2$ : ligne $1$, colonne $3$ ;</li><li>$a_{21} = 0$ : ligne $2$, colonne $1$.</li></ul>
+<p><b>Les matrices à connaître :</b></p>
+<ul><li><b>carrée</b> : autant de lignes que de colonnes ;</li><li><b>nulle</b> : que des $0$ ;</li><li><b>identité</b> $I_{2} = ${mat([[1,0],[0,1]])}$ : des $1$ sur la diagonale, des $0$ ailleurs ;</li><li><b>diagonale</b> : des $0$ partout sauf sur la diagonale, comme $diag(3, 7) = ${mat([[3,0],[0,7]])}$.</li></ul>`,
+  "Somme et multiplication par un scalaire":`<p><b>Additionner deux matrices :</b> case par case. Il faut qu'elles aient la même taille.</p>
+<p>$${mat([[1,2],[3,4]])} + ${mat([[0,-1],[2,2]])} = ${mat([[1,1],[5,6]])}$</p>
+<p>Case en haut à gauche : $1 + 0 = 1$ ; en haut à droite : $2 + (−1) = 1$ ; et ainsi de suite.</p>
+<p><b>Multiplier par un nombre</b> (un « scalaire ») : on multiplie chaque case.</p>
+<p>$3 × ${mat([[1,-2],[0,4]])} = ${mat([[3,-6],[0,12]])}$</p>
+<p><b>Interdit :</b> additionner une matrice $2 × 2$ et une matrice $2 × 3$. Il manquerait des cases en face.</p>`,
+  "Matrice fois colonne":`<p><b>Multiplier une matrice par une colonne :</b> chaque ligne de la matrice « rencontre » la colonne. On multiplie terme à terme et on additionne.</p>
+<p>$${mat([[1,2],[3,-1]])} × ${mat([[2],[5]])} = ${mat([[12],[1]])}$</p>
+<ul><li>ligne $1$ : $1 × 2 + 2 × 5 = 2 + 10 = 12$ ;</li><li>ligne $2$ : $3 × 2 + (−1) × 5 = 6 − 5 = 1$.</li></ul>
+<p><b>Autre lecture, par colonnes :</b> le résultat est $2$ fois la première colonne plus $5$ fois la seconde : $2(1, 3) + 5(2, −1) = (2 + 10, 6 − 5) = (12, 1)$. Même résultat.</p>
+<p><b>À quoi ça sert :</b> un système s'écrit $AX = B$. Le système « $x + 2y = 4$ et $3x − y = 5$ » devient $${mat([[1,2],[3,-1]])} × ${mat([["x"],["y"]])} = ${mat([[4],[5]])}$ : les coefficients dans $A$, les inconnues dans $X$, les seconds membres dans $B$.</p>`,
+  "Le produit AB":`<p><b>Quand peut-on multiplier ?</b> Il faut que le nombre de <b>colonnes</b> de $A$ soit égal au nombre de <b>lignes</b> de $B$. Une matrice $2 × 3$ fois une $3 × 4$ donne une $2 × 4$ : les tailles « du milieu » se touchent et disparaissent.</p>
+<p><b>La règle : case (ligne $i$, colonne $j$) = ligne $i$ de $A$ fois colonne $j$ de $B$.</b></p>
+<p>$${mat([[1,2],[0,1]])} × ${mat([[3,0],[1,4]])} = ${mat([[5,8],[1,4]])}$</p>
+<ul><li>case $(1, 1)$ : ligne $(1, 2)$ fois colonne $(3, 1)$ : $1 × 3 + 2 × 1 = 5$ ;</li><li>case $(1, 2)$ : ligne $(1, 2)$ fois colonne $(0, 4)$ : $0 + 8 = 8$ ;</li><li>case $(2, 1)$ : ligne $(0, 1)$ fois colonne $(3, 1)$ : $0 + 1 = 1$ ;</li><li>case $(2, 2)$ : ligne $(0, 1)$ fois colonne $(0, 4)$ : $0 + 4 = 4$.</li></ul>
+<p><b>Dans l'autre ordre,</b> $${mat([[3,0],[1,4]])} × ${mat([[1,2],[0,1]])} = ${mat([[3,6],[1,6]])}$ : ce n'est pas pareil.</p>`,
+  "Les règles qui marchent":`<p><b>Ce qui marche comme avec les nombres :</b></p>
+<ul><li>$(AB)C = A(BC)$ : on peut regrouper comme on veut ;</li><li>$A(B + C) = AB + AC$ : on peut développer ;</li><li>$I × A = A$ : l'identité joue le rôle du $1$.</li></ul>
+<p><b>Ce qui ne marche PAS :</b></p>
+<ul><li>$AB$ et $BA$ ne sont en général pas égaux (exemple à l'écran précédent) ;</li><li>$AB = 0$ n'oblige pas $A$ ou $B$ à être nulle. Avec $A = ${mat([[0,1],[0,0]])}$, on a $A × A = ${mat([[0,0],[0,0]])}$, alors que $A$ n'est pas nulle.</li></ul>
+<p><b>La conséquence piège :</b> $(A + B)² = A² + AB + BA + B²$. On ne peut pas regrouper $AB + BA$ en $2AB$, puisque $AB ≠ BA$.</p>`},
+ "l2-inverse":{
+  "Inverser une matrice":`<p><b>L'idée vient des nombres :</b> l'inverse de $5$ est $1/5$, car $5 × 1/5 = 1$. Pour une matrice carrée $A$, son inverse $A^{−1}$ est la matrice telle que $A × A^{−1} = I$, l'identité.</p>
+<p><b>Exemple :</b> $A = ${mat([[2,0],[0,5]])}$. Son inverse est $${mat([["1/2",0],[0,"1/5"]])}$ : on vérifie que le produit donne $${mat([[1,0],[0,1]])}$.</p>
+<p><b>À quoi ça sert :</b> pour résoudre $AX = Y$, on multiplie par $A^{−1}$ et on obtient directement $X = A^{−1} Y$, comme on divise par $5$ pour résoudre $5x = 10$.</p>
+<p><b>Toutes ne sont pas inversibles,</b> comme $0$ n'a pas d'inverse. La matrice nulle, par exemple, ne l'est pas.</p>
+<p><b>Un raccourci :</b> pour des matrices carrées, il suffit de vérifier $AB = I$ ; on a alors automatiquement $BA = I$.</p>`,
+  "Taille 2, et les règles":`<p><b>Pour une matrice $2 × 2$, il y a une formule.</b> Pour $A = ${mat([["a","b"],["c","d"]])}$, on calcule $ad − bc$.</p>
+<ul><li>Si $ad − bc = 0$ : $A$ n'est pas inversible.</li><li>Sinon : on échange $a$ et $d$, on change le signe de $b$ et $c$, et on divise par $ad − bc$.</li></ul>
+<p><b>Exemple :</b> $A = ${mat([[2,1],[5,3]])}$. $ad − bc = 2 × 3 − 1 × 5 = 1$. Donc $A^{−1} = ${mat([[3,-1],[-5,2]])}$.</p>
+<p><b>Vérification :</b> $${mat([[2,1],[5,3]])} × ${mat([[3,-1],[-5,2]])} = ${mat([[1,0],[0,1]])}$ (case $(1, 1)$ : $6 − 5 = 1$ ; case $(1, 2)$ : $−2 + 2 = 0$…).</p>
+<p><b>Non inversible :</b> $${mat([[2,4],[1,2]])}$, car $2 × 2 − 4 × 1 = 0$. Ses lignes sont proportionnelles.</p>
+<p><b>La règle du produit :</b> $(AB)^{−1} = B^{−1} A^{−1}$. L'ordre s'inverse.</p>`},
+ "l2-gauss-inv":{
+  "La méthode":`<p><b>Pour inverser une matrice plus grande,</b> on utilise le pivot de Gauss sur un grand tableau.</p>
+<ol><li>On écrit $A$ à gauche et $I$ à droite.</li><li>On fait le pivot sur les lignes, en appliquant chaque opération aux deux moitiés.</li><li>Quand la gauche est devenue $I$, la droite est $A^{−1}$.</li></ol>
+<p><b>Exemple :</b> $A = ${mat([[1,2],[1,3]])}$.</p>
+<ul><li>Départ : $${mat([[1,2,1,0],[1,3,0,1]])}$ (gauche : $A$ ; droite : $I$).</li><li>$L_{2} ← L_{2} − L_{1}$ : $${mat([[1,2,1,0],[0,1,-1,1]])}$.</li><li>$L_{1} ← L_{1} − 2L_{2}$ : $${mat([[1,0,3,-2],[0,1,-1,1]])}$.</li></ul>
+<p>La gauche est $I$ : $A^{−1} = ${mat([[3,-2],[-1,1]])}$. La formule de taille $2$ donne la même chose ($ad − bc = 1$).</p>
+<p><b>Si une ligne de zéros apparaît à gauche,</b> on s'arrête : $A$ n'est pas inversible.</p>`,
+  "Vérifier son résultat":`<p><b>Une erreur de signe arrive vite.</b> Avant de rendre, on vérifie que $A × A^{−1} = I$, au moins sur une ligne.</p>
+<p><b>Avec l'exemple précédent :</b> la première ligne de $A$ est $(1, 2)$.</p>
+<ul><li>fois la première colonne de $A^{−1}$, $(3, −1)$ : $3 − 2 = 1$. Bon, on attend $1$ ;</li><li>fois la deuxième colonne, $(−2, 1)$ : $−2 + 2 = 0$. Bon, on attend $0$.</li></ul>
+<p><b>À retenir :</b> dire que $A$ est inversible, c'est la même chose que dire :</p>
+<ul><li>le pivot transforme $A$ en $I$ ;</li><li>$AX = 0$ n'a que la solution $X = 0$ ;</li><li>$AX = Y$ a une seule solution, quel que soit $Y$.</li></ul>`},
+ "l2-relation":{
+  "L'idée":`<p><b>Le but :</b> à partir d'une égalité entre $A$, $A²$ et $I$, écrire « $A × (quelque chose) = I$ ». Le « quelque chose » est alors $A^{−1}$.</p>
+<p><b>Exemple :</b> on sait que $A² = 4A − 3I$.</p>
+<ol><li>On met tout ce qui contient $A$ du même côté : $A² − 4A = −3I$.</li><li>On factorise par $A$ : $A(A − 4I) = −3I$.</li><li>On divise par $−3$ (on multiplie par $−1/3$) : $A × (−1/3)(A − 4I) = I$.</li></ol>
+<p>Donc $A$ est inversible et $A^{−1} = (1/3)(4I − A)$.</p>
+<p><b>Deux règles :</b> on ne « divise » jamais par une matrice ; et on a le droit de factoriser $A² − 4A$ en $A(A − 4I)$, car $A × I = A$.</p>`,
+  "Pour le CC2 : deux formes plus dures":`<p><b>Même idée, en plus long.</b> Les écrans suivants viennent des CC2 et de l'examen de janvier.</p>
+<ul><li>Une matrice de taille $4$ : on calcule $A²$ à la main, on trouve une relation comme $A² = 2A + I$, puis on fait comme à l'écran précédent.</li><li>Une relation entre deux matrices, comme $AB = A + B$ : on cherche un produit qui donne $I$.</li></ul>
+<p>Dans tous les cas, le but est le même : faire apparaître « (une matrice) × (une autre) $= I$ ».</p>`,
+  "Examen de janvier 2026 : AB = A + B":`<p><b>On sait que $AB = A + B$.</b> On veut montrer que $I − A$ est inversible.</p>
+<ol><li>On développe $(I − A)(I − B)$, en gardant l'ordre : $I − B − A + AB$.</li><li>On remplace $AB$ par $A + B$ : $I − B − A + A + B$.</li><li>Tout se simplifie : il reste $I$.</li></ol>
+<p>Donc $(I − A)(I − B) = I$ : $I − A$ est inversible, et son inverse est $I − B$.</p>
+<p><b>La suite :</b> une matrice et son inverse commutent, donc $(I − B)(I − A) = I$ aussi. En développant : $I − A − B + BA = I$, donc $BA = A + B$. Et comme $AB = A + B$, on obtient $AB = BA$.</p>`},
+ "l2-libre":{
+  "Libre, liée":`<p><b>Une famille de vecteurs est liée</b> quand l'un d'eux peut s'écrire avec les autres. Sinon, elle est <b>libre</b> : chaque vecteur apporte une direction nouvelle.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Famille</th><th>Libre ou liée</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td>$(1, 0)$, $(0, 1)$</td><td>libre</td><td>aucun n'est un multiple de l'autre</td></tr>
+<tr><td>$(1, 2)$, $(3, 6)$</td><td>liée</td><td>$(3, 6) = 3(1, 2)$</td></tr>
+<tr><td>$(1, 0, 1)$, $(0, 1, 1)$, $(1, 1, 2)$</td><td>liée</td><td>le troisième est la somme des deux premiers</td></tr>
+<tr><td>$(1, 0)$, $(0, 1)$, $(2, 5)$</td><td>liée</td><td>3 vecteurs dans $ℝ²$ : toujours liée</td></tr></tbody></table></div>
+<p><b>La définition officielle :</b> la famille est libre si la seule façon d'obtenir $0$ en combinant les vecteurs est de tout multiplier par $0$. Avec $(1, 2)$ et $(3, 6)$, on a $3(1, 2) − 1(3, 6) = 0$ avec des coefficients non nuls : liée.</p>
+<p><b>Le test en pratique :</b> on résout le système « combinaison $= 0$ » par le pivot. Une seule solution (tout à $0$) : libre. Une inconnue libre : liée.</p>`,
+  "Examen de janvier 2026, ex. 5":`<p><b>Ce qu'on veut montrer :</b> si $v_{1}, …, v_{k}$ sont libres, et qu'en ajoutant $v$ la famille devient liée, alors $v$ s'écrit avec $v_{1}, …, v_{k}$.</p>
+<p><b>L'idée :</b> les $v_{i}$ seuls ne peuvent pas faire $0$. Si l'ajout de $v$ permet de faire $0$, c'est forcément grâce à $v$.</p>
+<p><b>La preuve, pas à pas :</b></p>
+<ol><li>La famille avec $v$ est liée : il existe des nombres $λ_{1}, …, λ_{k}, α$, pas tous nuls, avec $λ_{1}v_{1} + … + λ_{k}v_{k} + αv = 0$.</li><li>Si $α$ valait $0$, il resterait une combinaison nulle des $v_{i}$ seuls, avec des $λ_{i}$ pas tous nuls : impossible, ils sont libres. Donc $α ≠ 0$.</li><li>On peut alors diviser par $α$ : $v = −(λ_{1}/α)v_{1} − … − (λ_{k}/α)v_{k}$.</li></ol>`},
+ "l2-base":{
+  "Une base":`<p><b>Une base</b>, c'est une famille de vecteurs avec laquelle on peut écrire <b>tous</b> les vecteurs, et chacun d'<b>une seule façon</b>.</p>
+<ul><li>« tous » : la famille est génératrice ;</li><li>« une seule façon » : elle est libre.</li></ul>
+<p><b>La base canonique de $ℝ²$ :</b> $(1, 0)$ et $(0, 1)$. Tout $(x, y)$ s'écrit $x(1, 0) + y(0, 1)$.</p>
+<p><b>Une autre base de $ℝ²$ :</b> $(1, 1)$ et $(1, −1)$. Le vecteur $(5, 3)$ s'écrit $4(1, 1) + 1(1, −1)$ : ses <b>coordonnées</b> dans cette base sont $(4, 1)$.</p>
+<p><b>Le nombre de vecteurs est fixé :</b> une base de $ℝⁿ$ a toujours exactement $n$ vecteurs. Deux vecteurs ne suffisent pas pour $ℝ³$, quatre sont trop.</p>
+<p><b>Le test pour $n$ vecteurs de $ℝⁿ$ :</b> le pivot sur la matrice de leurs coordonnées donne $n$ pivots.</p>`},
+ "l2-applin":{
+  "Définition":`<p><b>Une application linéaire</b> respecte l'addition et la multiplication par un nombre : $f(x + x′) = f(x) + f(x′)$ et $f(λx) = λf(x)$.</p>
+<p><b>Le test rapide :</b> chaque coordonnée doit être une combinaison des variables, sans constante ajoutée, sans produit de variables, sans carré.</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>$f(x, y)$</th><th>Linéaire ?</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td>$(2x + y, x − y)$</td><td>oui</td><td>que des combinaisons de $x$ et $y$</td></tr>
+<tr><td>$(x + 1, y)$</td><td>non</td><td>la constante $+1$ : $f(0, 0) = (1, 0) ≠ (0, 0)$</td></tr>
+<tr><td>$(xy, x)$</td><td>non</td><td>un produit de variables</td></tr>
+<tr><td>$(x², y)$</td><td>non</td><td>un carré</td></tr></tbody></table></div>
+<p><b>Le premier réflexe :</b> calculer $f(0)$. Une application linéaire envoie toujours $0$ sur $0$. Si ce n'est pas le cas, c'est fini : pas linéaire.</p>`,
+  "La matrice de f":`<p><b>Toute application linéaire s'écrit $f(X) = AX$.</b> Pour trouver $A$ : chaque <b>ligne</b> contient les coefficients d'une coordonnée.</p>
+<p><b>Exemple :</b> $f(x, y) = (x + 2y, 3x − y, y)$.</p>
+<ul><li>première coordonnée, $x + 2y$ : ligne $(1, 2)$ ;</li><li>deuxième, $3x − y$ : ligne $(3, −1)$ ;</li><li>troisième, $y = 0x + 1y$ : ligne $(0, 1)$.</li></ul>
+<p>Donc $A = ${mat([[1,2],[3,-1],[0,1]])}$.</p>
+<p><b>Autre lecture :</b> les colonnes de $A$ sont les images des vecteurs de base. $f(1, 0) = (1, 3, 0)$ : c'est la première colonne.</p>
+<p><b>La taille :</b> autant de lignes que l'arrivée a de coordonnées ($3$), autant de colonnes que le départ ($2$).</p>`},
+ "l2-ker-im":{
+  "Noyau et image":`<p><b>Deux ensembles associés à une application linéaire $f$ :</b></p>
+<ul><li>le <b>noyau</b> $ker f$ : les vecteurs que $f$ envoie sur $0$. On le trouve en résolvant $f(X) = 0$ ;</li><li>l'<b>image</b> $im f$ : tous les résultats possibles $f(X)$. C'est le $Vect$ des colonnes de la matrice.</li></ul>
+<p><b>Exemple :</b> $f(x, y) = (x − y, 2x − 2y)$.</p>
+<ul><li>Noyau : $x − y = 0$ (la deuxième équation est la même fois $2$), donc $y = x$ : $ker f = Vect((1, 1))$.</li><li>Image : $f(x, y) = (x − y)(1, 2)$, donc $im f = Vect((1, 2))$.</li></ul>
+<p><b>À quoi ça sert :</b></p>
+<ul><li>$f$ est injective exactement quand $ker f = \{0\}$. Ici le noyau contient $(1, 1)$ : $f$ n'est pas injective ($f(1, 1) = f(0, 0) = 0$) ;</li><li>$f$ est surjective quand l'image est tout l'espace d'arrivée. Ici c'est une droite de $ℝ²$ : pas surjective.</li></ul>`,
+  "Les deux preuves de cours":`<p><b>Preuve 1 : le noyau est un sous-espace vectoriel.</b> On vérifie les trois conditions :</p>
+<ul><li>$0$ est dedans, car $f(0) = 0$ ;</li><li>si $f(x) = 0$ et $f(x′) = 0$, alors $f(x + x′) = f(x) + f(x′) = 0$ : la somme est dedans ;</li><li>si $f(x) = 0$, alors $f(λx) = λf(x) = 0$ : les multiples sont dedans.</li></ul>
+<p><b>Preuve 2 : si $ker f = \{0\}$, alors $f$ est injective.</b></p>
+<ol><li>On prend $x$ et $x′$ avec la même image : $f(x) = f(x′)$.</li><li>Alors $f(x − x′) = f(x) − f(x′) = 0$, donc $x − x′$ est dans le noyau.</li><li>Le noyau ne contient que $0$ : $x − x′ = 0$, donc $x = x′$.</li></ol>
+<p>Ces deux preuves formaient l'exercice 1 de l'examen de janvier 2026.</p>`},
+ "l2-composee":{
+  "Composée et produit de matrices":`<p><b>Composer,</b> c'est enchaîner : $f ∘ g$ veut dire « d'abord $g$, puis $f$ ». Il faut que ce qui sort de $g$ puisse entrer dans $f$.</p>
+<p><b>La règle :</b> la matrice de $f ∘ g$ est le produit $Mat(f) × Mat(g)$, dans cet ordre.</p>
+<p><b>Exemple :</b> $g(x) = (x, 2x)$, de $ℝ$ dans $ℝ²$, et $f(a, b) = a + b$, de $ℝ²$ dans $ℝ$.</p>
+<ul><li>Directement : $(f ∘ g)(x) = f(x, 2x) = x + 2x = 3x$.</li><li>Avec les matrices : $Mat(f) = ${mat([[1,1]])}$ et $Mat(g) = ${mat([[1],[2]])}$. Leur produit vaut $1 × 1 + 1 × 2 = 3$.</li></ul>
+<p>Les deux méthodes donnent $3x$.</p>
+<p><b>Le piège :</b> $f ∘ g$ et $g ∘ f$ ne sont pas la même chose ; parfois l'une n'existe même pas.</p>`},
+ "l2-inter":{
+  "F ∩ G est un sous-espace":`<p><b>$F ∩ G$</b> contient les vecteurs qui sont à la fois dans $F$ et dans $G$.</p>
+<p><b>Exemple dans $ℝ³$ :</b> $F$ est le plan $z = 0$ et $G$ le plan $x = 0$. Les vecteurs des deux à la fois vérifient $x = 0$ et $z = 0$ : ce sont les $(0, y, 0)$, une droite.</p>
+<p><b>Pourquoi c'est toujours un sous-espace</b> (question de cours) :</p>
+<ul><li>$0$ est dans $F$ et dans $G$, donc dans $F ∩ G$ ;</li><li>si $x$ et $y$ sont dans $F ∩ G$ : $x + y$ est dans $F$ (car $F$ est un sous-espace), et dans $G$ pour la même raison ;</li><li>même raisonnement pour $λx$.</li></ul>
+<p><b>Attention, l'union ne marche pas :</b> $F ∪ G$ n'est pas un sous-espace en général. Dans le plan, avec les deux axes : $(1, 0) + (0, 1) = (1, 1)$, qui n'est sur aucun des deux axes.</p>`,
+  "Montrer F = G":`<p><b>Pour montrer que deux sous-espaces sont égaux,</b> on montre les deux inclusions : $F ⊂ G$, puis $G ⊂ F$.</p>
+<p><b>L'astuce quand $G = Vect(g_{1}, g_{2})$ :</b> pour montrer $G ⊂ F$, il suffit de vérifier que $g_{1}$ et $g_{2}$ sont dans $F$. Comme $F$ est un sous-espace, il contient alors toutes leurs combinaisons.</p>
+<p><b>Exemple :</b> $F$ est le plan $x + y − z = 0$ et $G = Vect((1, 0, 1), (0, 1, 1))$.</p>
+<ul><li>$(1, 0, 1)$ : $1 + 0 − 1 = 0$, dans $F$ ;</li><li>$(0, 1, 1)$ : $0 + 1 − 1 = 0$, dans $F$.</li></ul>
+<p>Donc $G ⊂ F$. Pour l'autre inclusion, on résout l'équation de $F$ : $z = x + y$, donc $(x, y, x + y) = x(1, 0, 1) + y(0, 1, 1)$, qui est dans $G$. Donc $F = G$.</p>`},
+ "l2-projection":{
+  "Vecteur normal et décomposition":`<p><b>Le vecteur normal :</b> pour un plan d'équation $ax + by + cz = 0$, le vecteur $n = (a, b, c)$ est perpendiculaire au plan.</p>
+<p><b>L'idée de la projection :</b> tout vecteur $v$ se coupe en deux morceaux : un morceau $w$ dans le plan, et un morceau le long de $n$. C'est comme l'ombre d'un objet sur le sol, à midi.</p>
+<p>$v = w + λn$, avec $λ = (ax + by + cz)/(a² + b² + c²)$.</p>
+<p><b>Exemple simple :</b> le sol, $z = 0$, avec $n = (0, 0, 1)$. Pour $v = (2, 3, 5)$ : $λ = 5/1 = 5$, et $w = (2, 3, 5) − 5(0, 0, 1) = (2, 3, 0)$. L'ombre de $v$ sur le sol, c'est bien $(2, 3, 0)$.</p>
+<p><b>Exemple :</b> le plan $x + y + z = 0$, $n = (1, 1, 1)$, et $v = (1, 2, 3)$. $λ = (1 + 2 + 3)/3 = 2$, donc $w = (1, 2, 3) − 2(1, 1, 1) = (−1, 0, 1)$. Vérification : $−1 + 0 + 1 = 0$, $w$ est bien dans le plan.</p>`,
+  "La symétrie":`<p><b>La symétrie par rapport au plan,</b> c'est le reflet dans un miroir : on garde le morceau $w$ qui est dans le plan, et on retourne le morceau perpendiculaire.</p>
+<p>$s(v) = w − λn = v − 2λn$.</p>
+<p><b>Exemple avec le sol</b> $z = 0$ : $v = (2, 3, 5)$ devient $(2, 3, −5)$. Le point passe de l'autre côté, à la même distance.</p>
+<p><b>Exemple</b> avec le plan $x + y + z = 0$ et $v = (1, 2, 3)$ ($λ = 2$) : $s(v) = (1, 2, 3) − 4(1, 1, 1) = (−3, −2, −1)$.</p>
+<p><b>Lien avec la projection :</b> le projeté $w$ est le milieu de $v$ et de $s(v)$. Donc $s(v) = 2p(v) − v$, et en matrices $Mat(s) = 2Mat(p) − I_{3}$.</p>
+<p><b>Deux vérifications utiles :</b> projeter deux fois ne change rien ($p ∘ p = p$) ; faire deux fois la symétrie ramène au départ ($s ∘ s = id$).</p>`}},
 ana:{
  "a-quantif":{
   "∀ et ∃":`<p><b>Deux signes pour dire deux choses très différentes.</b></p>
