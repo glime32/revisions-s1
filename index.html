@@ -16484,7 +16484,143 @@ ${PS(`tant que non estVide(P) faire
 fin tq;`)}
 <p>Avec P qui contient 5, 8, 2 (2 au sommet) :</p>
 <ul><li>je dépile 2 et je l'empile dans Q : Q contient 2 ;</li><li>je dépile 8 : Q contient 2, 8 ;</li><li>je dépile 5 : Q contient 2, 8, 5, avec 5 au sommet.</li></ul>
-<p>Q contient les mêmes nombres que P, <b>dans l'ordre inverse</b>. C'est la clé des casse-têtes sur les piles : chaque transvasement retourne l'ordre.</p>`}}
+<p>Q contient les mêmes nombres que P, <b>dans l'ordre inverse</b>. C'est la clé des casse-têtes sur les piles : chaque transvasement retourne l'ordre.</p>`}},
+rai:{
+ "r-logique":{
+  "Les connecteurs":`<p><b>Une proposition</b>, c'est une phrase qui est soit vraie, soit fausse. « $3 &gt; 1$ » est vraie ; « $2 = 5$ » est fausse. « Range ta chambre » n'en est pas une.</p>
+<p><b>On les combine avec 5 mots :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Écrit</th><th>Se lit</th><th>Vrai quand…</th></tr></thead><tbody>
+<tr><td>non P</td><td>« non P »</td><td>P est fausse</td></tr>
+<tr><td>P et Q</td><td>« P et Q »</td><td>les deux sont vraies</td></tr>
+<tr><td>P ou Q</td><td>« P ou Q »</td><td>au moins une est vraie (les deux, ça compte aussi)</td></tr>
+<tr><td>P ⇒ Q</td><td>« si P, alors Q »</td><td>toujours, <b>sauf</b> si P est vraie et Q fausse</td></tr>
+<tr><td>P ⇔ Q</td><td>« P si et seulement si Q »</td><td>P et Q ont la même valeur</td></tr></tbody></table></div>
+<p><b>Exemples avec des nombres :</b></p>
+<ul><li>« $3 &gt; 1$ et $2 = 5$ » : fausse, car la deuxième est fausse.</li><li>« $3 &gt; 1$ ou $2 = 5$ » : vraie, car la première suffit.</li><li>« si $3 &gt; 1$, alors $2 = 5$ » : fausse. On part de vrai et on arrive à faux.</li><li>« si $2 = 5$, alors $3 &gt; 1$ » : vraie. Quand le « si » est faux, l'implication est toujours vraie.</li></ul>
+<p><b>Le point qui surprend :</b> « P ⇒ Q » ne dit rien quand P est fausse. Une promesse « si tu as 20, je t'invite » n'est pas trahie si tu n'as pas 20.</p>`,
+  "Équivalences et lois de De Morgan":`<p><b>Équivalentes</b> veut dire : deux propositions qui ont toujours la même valeur, quoi que valent P et Q. On l'écrit ≡.</p>
+<p><b>Les lois de De Morgan : pour nier un « et » ou un « ou », on nie chaque morceau et on échange « et » et « ou ».</b></p>
+<ul><li>non(P et Q) ≡ (non P) ou (non Q). Exemple : le contraire de « il fait beau et chaud », c'est « il ne fait pas beau, ou il ne fait pas chaud ».</li><li>non(P ou Q) ≡ (non P) et (non Q). Exemple : le contraire de « je prends du thé ou du café », c'est « je ne prends ni thé ni café ».</li></ul>
+<p><b>Nier une implication :</b> non(P ⇒ Q) ≡ P et (non Q). Le contraire de « s'il pleut, je prends un parapluie », c'est « il pleut et je ne prends pas de parapluie ». Ce n'est <b>pas</b> une autre implication.</p>
+<p><b>⇔, c'est deux implications :</b> P ⇔ Q ≡ (P ⇒ Q) et (Q ⇒ P).</p>
+<p><b>Pour vérifier une équivalence,</b> on fait les tables de vérité des deux côtés : 4 lignes (V V, V F, F V, F F) et on compare.</p>`},
+ "r-quantif":{
+  "Traduire avec ∀ et ∃":`<p><b>Deux symboles :</b></p>
+<ul><li><b>$∀$</b> se lit « pour tout » : la propriété doit marcher pour chaque élément.</li><li><b>$∃$</b> se lit « il existe » : il suffit d'un élément qui marche.</li></ul>
+<p><b>Traduire une phrase en symboles :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Phrase</th><th>En symboles</th></tr></thead><tbody>
+<tr><td>Tout réel au carré est positif.</td><td>$∀x ∈ ℝ, x² ≥ 0$</td></tr>
+<tr><td>Il existe un entier plus grand que $100$.</td><td>$∃n ∈ ℕ, n &gt; 100$</td></tr>
+<tr><td>Tout entier pair est la somme de deux impairs.</td><td>$∀n ∈ ℕ$, (n pair) ⇒ ($∃a, ∃b$ impairs, $n = a + b$)</td></tr></tbody></table></div>
+<p><b>« Tout … qui … » devient un $∀$ avec une implication :</b> « tout entier pair est … » = « pour tout entier n, si n est pair, alors … ».</p>
+<p><b>L'ordre compte.</b> « $∀x, ∃y, y &gt; x$ » : pour chaque $x$, on trouve un $y$ plus grand (on peut prendre $y = x + 1$) : vrai. « $∃y, ∀x, y &gt; x$ » : un même $y$ plus grand que tous les nombres : faux.</p>`,
+  "Nier une phrase quantifiée":`<p><b>La recette, de gauche à droite :</b></p>
+<ol><li>chaque $∀$ devient $∃$ ;</li><li>chaque $∃$ devient $∀$ ;</li><li>on nie la propriété de la fin. Les « $∈ ℝ$ », eux, ne changent pas.</li></ol>
+<p><b>Exemple 1.</b> « $∀x ∈ ℝ, x² ≥ 0$ » se nie en « $∃x ∈ ℝ, x² &lt; 0$ ». Le contraire de $≥$ est $&lt;$.</p>
+<p><b>Exemple 2.</b> « $∃n ∈ ℕ, ∀m ∈ ℕ, m ≤ n$ » (il y a un plus grand entier) se nie en « $∀n ∈ ℕ, ∃m ∈ ℕ, m &gt; n$ » (pour tout entier, il y en a un plus grand).</p>
+<p><b>Les pièges de la fin :</b></p>
+<ul><li>le contraire de $a &lt; x &lt; b$ est « $x ≤ a$ ou $x ≥ b$ » (c'est un « et » caché, il devient un « ou ») ;</li><li>le contraire de « P ⇒ Q » est « P et non Q ».</li></ul>
+<p><b>Avec des mots :</b> « tous les chats sont gris » se nie en « il existe un chat qui n'est pas gris », et pas en « aucun chat n'est gris ».</p>`},
+ "r-preuves":{
+  "Comment commencer":`<p><b>La première ligne d'une preuve dépend de la forme de ce qu'on veut montrer.</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>On veut montrer</th><th>On écrit d'abord</th></tr></thead><tbody>
+<tr><td>$∀x ∈ E$, P(x)</td><td>« Soit $x ∈ E$. » Puis on prouve P(x) pour ce $x$ quelconque.</td></tr>
+<tr><td>$∃x ∈ E$, P(x)</td><td>« Posons $x = …$ » (on donne un $x$ précis), puis on vérifie P(x).</td></tr>
+<tr><td>P ⇒ Q</td><td>« Supposons P. » Puis on montre Q.</td></tr>
+<tr><td>P ⇔ Q</td><td>Deux parties : P ⇒ Q, puis Q ⇒ P.</td></tr></tbody></table></div>
+<p><b>Exemple :</b> montrer que $∀n ∈ ℕ, ∃m ∈ ℕ, m &gt; 2n$.</p>
+<p>« Soit $n ∈ ℕ$. Posons $m = 2n + 1$, qui est bien un entier naturel. Alors $m = 2n + 1 &gt; 2n$. »</p>
+<p>On a d'abord pris un $n$ quelconque (pour le $∀$), puis donné un $m$ précis qui dépend de $n$ (pour le $∃$).</p>
+<p><b>Pour montrer qu'un « $∀$ » est faux,</b> un seul contre-exemple suffit. « $∀x ∈ ℝ, x² &gt; 0$ » est faux : $x = 0$ donne $0² = 0$.</p>`},
+ "r-contraposee":{
+  "Contraposée et réciproque":`<p><b>Trois phrases à ne pas confondre</b>, à partir de « si P, alors Q » :</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Nom</th><th>Phrase</th><th>Même sens ?</th></tr></thead><tbody>
+<tr><td>de départ</td><td>P ⇒ Q</td><td></td></tr>
+<tr><td>contraposée</td><td>non Q ⇒ non P</td><td><b>oui</b>, toujours</td></tr>
+<tr><td>réciproque</td><td>Q ⇒ P</td><td><b>non</b>, pas forcément</td></tr></tbody></table></div>
+<p><b>Exemple :</b> « si un nombre est un multiple de 4, alors il est pair ».</p>
+<ul><li>contraposée : « s'il n'est pas pair, alors ce n'est pas un multiple de 4 ». Vraie aussi ;</li><li>réciproque : « s'il est pair, alors c'est un multiple de 4 ». Fausse : 6 est pair mais pas multiple de 4.</li></ul>
+<p><b>À quoi sert la contraposée :</b> parfois « non Q » donne une information plus facile à utiliser. Pour montrer « si $n²$ est pair, alors $n$ est pair », on montre plutôt « si $n$ est impair, alors $n²$ est impair » : $n = 2k + 1$ donne $n² = 4k² + 4k + 1 = 2(2k² + 2k) + 1$, impair.</p>`,
+  "Par l'absurde et par disjonction de cas":`<p><b>Par l'absurde :</b> on suppose le contraire de ce qu'on veut montrer, et on tombe sur quelque chose d'impossible. Donc le contraire était faux : ce qu'on voulait est vrai.</p>
+<p><b>Exemple :</b> « il n'y a pas de plus grand entier ». Supposons qu'il y en ait un, $N$. Alors $N + 1$ est un entier, et $N + 1 &gt; N$ : $N$ n'était pas le plus grand. Contradiction.</p>
+<p><b>La première ligne est importante :</b> on écrit exactement la négation de ce qu'on veut montrer. Pour « $∀x$, P(x) ⇒ Q(x) », le contraire est « il existe $x$ tel que P(x) et non Q(x) ».</p>
+<p><b>Par disjonction de cas :</b> on coupe en cas qui couvrent toutes les possibilités, et on traite chacun.</p>
+<p><b>Exemple :</b> « $n(n + 1)$ est pair pour tout entier $n$ ».</p>
+<ul><li>si $n$ est pair, le produit contient un nombre pair : il est pair ;</li><li>si $n$ est impair, alors $n + 1$ est pair : le produit est pair.</li></ul>
+<p>Les deux cas couvrent tous les entiers : c'est démontré.</p>`},
+ "r-recurrence":{
+  "Le schéma":`<p><b>L'image des dominos :</b> si le premier tombe, et si chaque domino qui tombe fait tomber le suivant, alors ils tombent tous.</p>
+<p><b>Les 4 étapes, à écrire dans cet ordre :</b></p>
+<ol><li><b>Énoncer</b> la propriété : « Pour $n ∈ ℕ$, notons P(n) : $1 + 2 + … + n = n(n + 1)/2$. »</li><li><b>Initialisation</b> (le premier domino) : on vérifie P(0) ou P(1). Pour $n = 1$ : à gauche $1$, à droite $1 × 2/2 = 1$. Vrai.</li><li><b>Hérédité</b> (chaque domino fait tomber le suivant) : « Soit $n$. Supposons P(n). Montrons P(n + 1). » On part de $1 + … + n + (n + 1)$, on remplace $1 + … + n$ par $n(n + 1)/2$ (c'est P(n)), et on calcule : $n(n + 1)/2 + (n + 1) = (n + 1)(n + 2)/2$. C'est P(n + 1).</li><li><b>Conclusion</b> : « Par récurrence, P(n) est vraie pour tout $n ≥ 1$. »</li></ol>
+<p><b>L'erreur classique :</b> oublier l'initialisation. Une hérédité seule ne prouve rien : les dominos tombent les uns sur les autres, mais si aucun ne commence, rien ne bouge.</p>`,
+  "Inégalités par récurrence":`<p><b>Même schéma, mais avec des inégalités.</b> Dans l'hérédité, on part du terme de rang $n + 1$, on fait apparaître celui de rang $n$, et on utilise l'hypothèse.</p>
+<p><b>Exemple :</b> pour tout $n ≥ 1$, $3ⁿ ≥ 2n + 1$.</p>
+<ol><li>Initialisation, $n = 1$ : $3¹ = 3$ et $2 × 1 + 1 = 3$. On a bien $3 ≥ 3$.</li><li>Hérédité : on suppose $3ⁿ ≥ 2n + 1$. Alors $3ⁿ⁺¹ = 3 × 3ⁿ ≥ 3(2n + 1) = 6n + 3$.</li><li>Il reste à voir que $6n + 3 ≥ 2(n + 1) + 1 = 2n + 3$ : c'est vrai, car $6n ≥ 2n$.</li><li>Donc $3ⁿ⁺¹ ≥ 2(n + 1) + 1$ : c'est la propriété au rang $n + 1$.</li></ol>
+<p><b>La règle à surveiller :</b> on peut multiplier les deux côtés d'une inégalité par un nombre <b>positif</b> sans changer le sens. Ici on a multiplié par $3$.</p>`},
+ "r-ensembles":{
+  "Décrire un ensemble":`<p><b>Trois façons d'écrire un ensemble :</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Façon</th><th>Exemple</th><th>Ce que ça donne</th></tr></thead><tbody>
+<tr><td>en listant (extension)</td><td>$\{1, 3, 5\}$</td><td>trois éléments : 1, 3 et 5</td></tr>
+<tr><td>par une propriété (compréhension)</td><td>$\{x ∈ ℝ | x² = 4\}$</td><td>les réels dont le carré vaut 4 : $\{−2, 2\}$</td></tr>
+<tr><td>avec un paramètre</td><td>$\{3k | k ∈ ℤ\}$</td><td>les multiples de 3 : …, −3, 0, 3, 6, …</td></tr></tbody></table></div>
+<p><b>Deux symboles à ne pas mélanger :</b></p>
+<ul><li><b>$∈$</b> « appartient à » : entre un <b>élément</b> et un ensemble. $3 ∈ \{1, 3, 5\}$.</li><li><b>$⊂$</b> « est inclus dans » : entre deux <b>ensembles</b>. $\{1, 3\} ⊂ \{1, 3, 5\}$ : tous les éléments du premier sont dans le second.</li></ul>
+<p><b>Deux ensembles sont égaux</b> quand chacun est inclus dans l'autre : on le montre en deux temps (double inclusion).</p>`,
+  "Parties et produit":`<p><b>Les parties d'un ensemble</b> $E$, ce sont tous les ensembles qu'on peut former avec ses éléments, y compris l'ensemble vide $∅$ et $E$ lui-même. On les range dans un nouvel ensemble, noté $P(E)$.</p>
+<p><b>Exemple :</b> $E = \{1, 2, 3\}$. Ses parties :</p>
+<ul><li>sans élément : $∅$ ;</li><li>un élément : $\{1\}$, $\{2\}$, $\{3\}$ ;</li><li>deux éléments : $\{1, 2\}$, $\{1, 3\}$, $\{2, 3\}$ ;</li><li>trois éléments : $\{1, 2, 3\}$.</li></ul>
+<p>Cela fait $8 = 2³$ parties. En général, $n$ éléments donnent $2ⁿ$ parties : pour chaque élément, on choisit de le prendre ou non.</p>
+<p><b>Attention aux symboles :</b> $\{1\} ∈ P(E)$ (c'est un élément de $P(E)$) et $\{1\} ⊂ E$ (c'est une partie de $E$).</p>
+<p><b>Le produit cartésien</b> $A × B$ est l'ensemble des couples $(a, b)$ avec $a ∈ A$ et $b ∈ B$. Exemple : $\{1, 2\} × \{x, y\} = \{(1, x), (1, y), (2, x), (2, y)\}$.</p>`},
+ "r-operations":{
+  "Les opérations":`<p><b>Trois opérations</b>, avec $A = \{1, 2, 3, 4\}$ et $B = \{3, 4, 5\}$ :</p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Écrit</th><th>Se lit</th><th>Contient</th><th>Ici</th></tr></thead><tbody>
+<tr><td>$A ∪ B$</td><td>A union B</td><td>ce qui est dans A <b>ou</b> dans B</td><td>$\{1, 2, 3, 4, 5\}$</td></tr>
+<tr><td>$A ∩ B$</td><td>A inter B</td><td>ce qui est dans A <b>et</b> dans B</td><td>$\{3, 4\}$</td></tr>
+<tr><td>$A ∖ B$</td><td>A privé de B</td><td>ce qui est dans A <b>mais pas</b> dans B</td><td>$\{1, 2\}$</td></tr></tbody></table></div>
+<p><b>Le complémentaire</b> de $A$ dans un ensemble $E$ qui le contient : tout ce qui est dans $E$ mais pas dans $A$. Avec $E = \{1, …, 6\}$, le complémentaire de $A$ est $\{5, 6\}$.</p>
+<p><b>De Morgan, version ensembles :</b> le complémentaire d'une union est l'intersection des complémentaires, et inversement. C'est la même règle que pour « non(P ou Q) ».</p>
+<p><b>Avec des intervalles,</b> on dessine une droite et on colorie : c'est le plus sûr.</p>`,
+  "Prouver une égalité d'ensembles":`<p><b>Pour montrer que deux ensembles sont égaux, deux méthodes.</b></p>
+<p><b>1. Double inclusion.</b> On montre $A ⊂ B$, puis $B ⊂ A$. Pour $A ⊂ B$, la première ligne est toujours : « Soit $x ∈ A$. » Puis on montre que $x ∈ B$.</p>
+<p><b>2. Par équivalences.</b> On traduit chaque symbole en logique : $∪$ devient « ou », $∩$ devient « et », $∖$ devient « et non ». Puis on transforme la phrase.</p>
+<p><b>Exemple :</b> montrer $A ∖ B = A ∩ B̄$ (le complémentaire de B).</p>
+<p>$x ∈ A ∖ B$ ⇔ ($x ∈ A$ et $x ∉ B$) ⇔ ($x ∈ A$ et $x ∈ B̄$) ⇔ $x ∈ A ∩ B̄$.</p>
+<p>Chaque flèche est une simple traduction : c'est démontré.</p>
+<p><b>Conseil :</b> avant de prouver, teste sur un petit exemple chiffré pour être sûr que l'égalité est vraie.</p>`},
+ "r-image":{
+  "Les définitions":`<p><b>Une application</b> $f : E → F$ associe à chaque élément $x$ de $E$ un seul élément $f(x)$ de $F$.</p>
+<p><b>Deux ensembles à savoir calculer.</b> On prend $f(x) = x + 1$, de $ℤ$ dans $ℤ$.</p>
+<ul><li><b>L'image directe</b> $f(A)$ : on applique $f$ à tous les éléments de $A$. Avec $A = \{0, 1, 2\}$ : $f(A) = \{1, 2, 3\}$.</li><li><b>L'image réciproque</b> $f⁻¹(B)$ : les $x$ dont l'image tombe dans $B$. Avec $B = \{5, 10\}$ : on résout $x + 1 = 5$ et $x + 1 = 10$, donc $f⁻¹(B) = \{4, 9\}$.</li></ul>
+<p><b>Le piège de la notation :</b> $f⁻¹(B)$ existe <b>toujours</b>, même si $f$ n'a pas de réciproque. Exemple avec $f(x) = x²$ : $f⁻¹(\{9\}) = \{−3, 3\}$, deux antécédents. Et $f⁻¹(\{−1\}) = ∅$ : aucun réel n'a pour carré $−1$.</p>
+<p><b>Pour s'y retrouver :</b> $f(A)$ est dans l'ensemble d'arrivée, $f⁻¹(B)$ dans l'ensemble de départ.</p>`},
+ "r-injective":{
+  "Les trois définitions":`<p><b>On regarde combien de flèches arrivent sur chaque élément de l'ensemble d'arrivée.</b></p>
+<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Mot</th><th>Chaque élément d'arrivée reçoit…</th><th>En phrase</th></tr></thead><tbody>
+<tr><td>injective</td><td>au plus une flèche</td><td>deux départs différents ne vont jamais au même endroit</td></tr>
+<tr><td>surjective</td><td>au moins une flèche</td><td>tout le monde à l'arrivée est atteint</td></tr>
+<tr><td>bijective</td><td>exactement une flèche</td><td>les deux à la fois</td></tr></tbody></table></div>
+<p><b>Exemples de $ℝ$ dans $ℝ$ :</b></p>
+<ul><li>$f(x) = 2x$ : bijective. Chaque $y$ a un seul antécédent, $y/2$.</li><li>$f(x) = x²$ : pas injective ($f(2) = f(−2) = 4$), pas surjective ($−1$ n'est le carré de personne).</li><li>$f(x) = eˣ$ : injective, mais pas surjective ($0$ et les négatifs ne sont jamais atteints).</li></ul>`,
+  "Les méthodes":`<p><b>Prouver qu'une application est injective :</b> « Soient $x$ et $x′$ tels que $f(x) = f(x′)$. » Puis on calcule jusqu'à obtenir $x = x′$.</p>
+<p>Exemple avec $f(x) = 3x − 2$ : si $3x − 2 = 3x′ − 2$, alors $3x = 3x′$, donc $x = x′$. Injective.</p>
+<p><b>Prouver qu'elle est surjective :</b> « Soit $y$ dans l'ensemble d'arrivée. » On résout $f(x) = y$ pour trouver un $x$ qui convient, et on vérifie qu'il est bien dans l'ensemble de départ.</p>
+<p>Même exemple : $3x − 2 = y$ donne $x = (y + 2)/3$, qui est un réel. Surjective de $ℝ$ dans $ℝ$.</p>
+<p><b>Pour dire non,</b> un contre-exemple : deux éléments différents de même image (pas injective), ou un élément jamais atteint (pas surjective).</p>
+<p><b>Les ensembles comptent.</b> $f(x) = 3x − 2$ de $ℤ$ dans $ℤ$ n'est plus surjective : pour $y = 0$, il faudrait $x = 2/3$, qui n'est pas un entier.</p>`},
+ "r-composition":{
+  "La composée":`<p><b>Composer,</b> c'est enchaîner deux applications : on applique d'abord $f$, puis $g$ au résultat. On note $g ∘ f$, et on lit « $g$ rond $f$ ».</p>
+<p><b>On lit de droite à gauche :</b> $(g ∘ f)(x) = g(f(x))$. Celle qui est écrite à droite agit en premier.</p>
+<p><b>Exemple :</b> $f(x) = x + 1$ et $g(x) = x²$.</p>
+<ul><li>$(g ∘ f)(2) = g(f(2)) = g(3) = 9$ ;</li><li>$(f ∘ g)(2) = f(g(2)) = f(4) = 5$.</li></ul>
+<p>Les deux résultats sont différents : en général, $g ∘ f ≠ f ∘ g$.</p>
+<p><b>Condition pour que $g ∘ f$ existe :</b> ce qui sort de $f$ doit pouvoir entrer dans $g$. Si $f$ fabrique des couples et que $g$ attend un nombre, on ne peut pas enchaîner.</p>`,
+  "Les deux résultats à savoir prouver":`<p><b>Deux résultats du cours, avec leur preuve à connaître.</b></p>
+<p><b>1. Si $g ∘ f$ est injective, alors $f$ est injective.</b> Idée : si $f$ envoyait deux éléments au même endroit, $g$ les enverrait encore au même endroit, et $g ∘ f$ ne serait pas injective.</p>
+<p>Preuve : « Soient $x$ et $x′$ tels que $f(x) = f(x′)$. On applique $g$ : $g(f(x)) = g(f(x′))$. Comme $g ∘ f$ est injective, $x = x′$. »</p>
+<p><b>2. Si $g ∘ f$ est surjective, alors $g$ est surjective.</b> Idée : tout ce qui est atteint par $g ∘ f$ est atteint par $g$, puisque $g$ agit en dernier.</p>
+<p>Preuve : « Soit $z$. Comme $g ∘ f$ est surjective, il existe $x$ tel que $g(f(x)) = z$. Alors $y = f(x)$ vérifie $g(y) = z$. »</p>
+<p><b>Pour retenir :</b> la première appliquée ($f$) hérite de l'injectivité, la dernière ($g$) de la surjectivité.</p>`}}
 };
 const LES=window.LESSONS||{};
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
