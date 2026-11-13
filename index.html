@@ -8716,6 +8716,102 @@ window.SUBJ=window.SUBJ||{};
 const hl=s=>`<span class="hl">${s}</span>`,F=s=>`<div class="formula">${s}</div>`;
 const concepts=[];const add=(ch,o)=>{o.ch=ch;concepts.push(o);};
 
+const AT=(head,rows)=>`<div style="overflow-x:auto"><table class="tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const AQ=(q,show,ok,ex)=>`<div class="qbox mq" data-ok="${W.esc(ok.join("§")).replace(/"/g,"&quot;")}"><p class="qtxt">${q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse"><button type="button" class="btn pri" data-mq="ok">Valider</button><button type="button" class="btn" data-mq="voir">Voir la réponse</button></div><div class="verdict" hidden></div><div class="expl" hidden><b>La réponse : ${show}</b><br>${ex}</div></div>`;
+const AZ=(...q)=>`<p><b>Mini-quiz.</b> Écris ta réponse, puis « Valider ». Pour vrai ou faux, écris vrai ou faux ; pour l'infini, +inf ou +∞ ; pour une fraction, 2/5.</p><div style="display:grid;gap:12px">${q.join("")}</div>`;
+const VR=["vrai","~vrai"],FX=["faux","~faux"],OUIa=["oui","~oui"],NONa=["non","~non"],INF=["+∞","∞","+inf","inf","+infini","infini","plusinfini"];
+const quizAna=({sec})=>[
+`<div class="title-row"><h1>S'entraîner : le CC1 d'analyse</h1></div>
+<p class="lead">Le programme du CC1 (feuilles de TD 1 à 3), en tableaux d'exemples et en mini-quiz : quantificateurs, valeur absolue, partie entière, bornes, suites, limites de suites et de fonctions. Chaque partie : la règle, des exemples, puis les quiz.</p>`,
+
+sec(1,"Quantificateurs : ∀ et ∃",`<p><b>∀</b> se lit « pour tout » : la phrase doit être vraie pour <b>chaque</b> valeur. <b>∃</b> se lit « il existe » : il suffit d'<b>une</b> valeur qui marche. Pour montrer qu'une phrase en ∀ est fausse, un seul contre-exemple suffit.</p>`+
+AT(["Phrase","Vraie ?","Pourquoi"],[
+["∀x ∈ ℝ, x² ≥ 0","vrai","un carré est toujours positif ou nul"],
+["∃x ∈ ℝ, x² = −1","faux","aucun carré n'est négatif"],
+["∀x ∈ ℝ, x² > 0","faux","contre-exemple : x = 0"],
+["∀x ∈ ℝ, ∃y ∈ ℝ, y > x","vrai","pour chaque x, y = x + 1 marche"],
+["∃y ∈ ℝ, ∀x ∈ ℝ, y > x","faux","aucun nombre n'est plus grand que tous les autres"]])+
+`<p><b>Nier une phrase :</b> on échange ∀ et ∃, et on nie la fin. La négation de « ∀x, f(x) > 0 » est « ∃x, f(x) ≤ 0 ». Le contraire de &gt; est ≤ (et pas &lt;).</p>`+
+AZ(AQ("Vrai ou faux : ∀x ∈ ℝ, x + 1 > x ?","vrai",VR,"Ajouter 1 rend toujours plus grand, pour n'importe quel x."),
+AQ("Vrai ou faux : ∃n ∈ ℕ, n < 0 ?","faux",FX,"Les entiers naturels sont 0, 1, 2… : aucun n'est négatif."),
+AQ("Vrai ou faux : ∀x ∈ ℝ, x² > x ?","faux",FX,"Contre-exemple : x = 1/2. x² = 1/4, qui est plus petit que 1/2. Un seul contre-exemple suffit."),
+AQ("La négation de « ∀x ∈ ℝ, f(x) > 0 » commence par quel quantificateur ? (écris ∃ ou « il existe »)","∃ (il existe)",["∃","ilexiste","~existe"],"On échange ∀ et ∃ : « ∃x ∈ ℝ, f(x) ≤ 0 »."),
+AQ("Dans cette négation, par quoi remplace-t-on « > 0 » ?","≤ 0",["≤0","<=0","≤","<="],"Le contraire de « strictement plus grand que 0 », c'est « plus petit ou égal à 0 » : ≤ 0."))),
+
+sec(2,"Valeur absolue et distance",`<p><b>|x|</b> est la distance entre x et 0 : on enlève le signe. <b>|x − a|</b> est la distance entre x et a. Donc <b>|x − a| &lt; r</b> veut dire : x est à moins de r de a, c'est-à-dire a − r &lt; x &lt; a + r.</p>`+
+AT(["Écrit","Veut dire","Intervalle"],[
+["|−3|","3",""],
+["|x| ≤ 2","−2 ≤ x ≤ 2","[−2, 2]"],
+["|x − 2| < 1","x à moins de 1 de 2 : 1 < x < 3","]1, 3["],
+["|x + 1| ≤ 3","|x − (−1)| ≤ 3 : −4 ≤ x ≤ 2","[−4, 2]"]])+
+`<p><b>L'inégalité triangulaire :</b> |a + b| ≤ |a| + |b|. Exemple : |3 + (−5)| = 2, et |3| + |−5| = 8.</p>`+
+AZ(AQ("Que vaut |−7| ?","7",["7"],"On enlève le signe : 7."),
+AQ("|x − 5| < 2 équivaut à ? < x < ?. Quel est le nombre de gauche ?","3",["3"],"x est à moins de 2 de 5 : entre 5 − 2 = 3 et 5 + 2 = 7."),
+AQ("Et le nombre de droite ?","7",["7"],"5 + 2 = 7. Donc 3 < x < 7."),
+AQ("Écris l'intervalle des x tels que |x + 2| ≤ 1.","[−3, −1]",["[-3,-1]","[-3;-1]"],"|x + 2| = |x − (−2)| : x est à au plus 1 de −2, donc −3 ≤ x ≤ −1. Les crochets sont fermés car c'est ≤."))),
+
+sec(3,"Partie entière",`<p><b>E(x)</b> (ou ⌊x⌋) est le plus grand entier <b>inférieur ou égal</b> à x. Pour un nombre positif, on coupe la virgule. Pour un nombre négatif, attention : on descend.</p>`+
+AT(["x","E(x)","Pourquoi"],[
+["3,7","3","3 ≤ 3,7 < 4"],
+["5","5","5 est déjà un entier"],
+["−1,2","−2","−2 ≤ −1,2 < −1 : on descend, pas −1"],
+["−4","−4",""]])+
+`<p><b>À retenir :</b> E(x) ≤ x &lt; E(x) + 1.</p>`+
+AZ(AQ("Que vaut E(2,9) ?","2",["2"],"2 ≤ 2,9 < 3 : E(2,9) = 2."),
+AQ("Que vaut E(−0,5) ?","−1",["-1"],"−1 ≤ −0,5 < 0 : E(−0,5) = −1. Ce n'est pas 0, car 0 est plus grand que −0,5."),
+AQ("Que vaut E(−3) ?","−3",["-3"],"−3 est un entier : E(−3) = −3."))),
+
+sec(4,"Majorant, borne supérieure, maximum",`<p><b>Un majorant</b> de A, c'est un nombre plus grand ou égal à tous les éléments de A. <b>La borne supérieure</b> sup A est le <b>plus petit</b> des majorants. <b>Le maximum</b> max A, c'est la borne supérieure quand elle est <b>dans</b> A. Même chose vers le bas : minorant, borne inférieure inf A, minimum.</p>`+
+AT(["A","sup A","max A ?","inf A","min A ?"],[
+["[0, 1[","1","non : 1 n'est pas dans A","0","oui : 0"],
+["]2, 5]","5","oui : 5","2","non"],
+["{1/n : n ≥ 1} = {1 ; 1/2 ; 1/3 ; …}","1","oui : 1 (pour n = 1)","0","non : 1/n n'est jamais 0"],
+["ℕ","n'existe pas (pas majorée)","non","0","oui : 0"]])+
+AZ(AQ("Que vaut sup ]2, 5[ ?","5",["5"],"5 est un majorant, et aucun nombre plus petit que 5 ne l'est : sup = 5."),
+AQ("]2, 5[ a-t-il un maximum ?","non",NONa,"Le sup vaut 5, mais 5 n'est pas dans ]2, 5[ (crochet ouvert). Pas de maximum."),
+AQ("Que vaut inf {1/n : n ≥ 1} ?","0",["0"],"1/n s'approche de 0 aussi près qu'on veut, sans jamais l'atteindre : inf = 0."),
+AQ("Que vaut sup {1 − 1/n : n ≥ 1} ?","1",["1"],"1 − 1/n vaut 0, 1/2, 2/3, 3/4… : toujours sous 1, et de plus en plus près. sup = 1, mais pas de maximum."))),
+
+sec(5,"Suites : calculer et étudier la monotonie",`<p><b>Croissante</b> : chaque terme est plus grand ou égal au précédent, uₙ₊₁ ≥ uₙ. <b>La méthode :</b> calcule uₙ₊₁ − uₙ et regarde son signe.</p>`+
+AT(["uₙ","uₙ₊₁ − uₙ","Conclusion"],[
+["2n + 1","2(n + 1) + 1 − (2n + 1) = 2","croissante"],
+["1/n (n ≥ 1)","1/(n + 1) − 1/n = −1/(n(n + 1))","décroissante"],
+["n²","(n + 1)² − n² = 2n + 1","croissante"],
+["(−1)ⁿ","2 ou −2 selon n","ni l'une ni l'autre"]])+
+`<p><b>Une suite définie par récurrence</b> : on calcule les termes un par un. Avec u₀ = 2 et uₙ₊₁ = uₙ + 3 : u₁ = 5, u₂ = 8, u₃ = 11.</p>`+
+AZ(AQ("La suite uₙ = 3 − n est-elle croissante ou décroissante ?","décroissante",["décroissante","decroissante","~décroiss","~decroiss"],"uₙ₊₁ − uₙ = (3 − (n + 1)) − (3 − n) = −1, toujours négatif : décroissante."),
+AQ("u₀ = 1 et uₙ₊₁ = 2uₙ. Que vaut u₄ ?","16",["16"],"u₁ = 2, u₂ = 4, u₃ = 8, u₄ = 16."),
+AQ("Pour uₙ = n² + n, que vaut uₙ₊₁ − uₙ ? (en fonction de n)","2n + 2",["2n+2","2(n+1)","2+2n"],"(n + 1)² + (n + 1) − n² − n = n² + 2n + 1 + n + 1 − n² − n = 2n + 2. C'est positif : la suite est croissante."))),
+
+sec(6,"Limites de suites",`<p><b>La définition :</b> uₙ tend vers ℓ si, pour tout ε &gt; 0, il existe un rang N tel que, pour tout n ≥ N, |uₙ − ℓ| &lt; ε. En mots : à partir d'un certain rang, uₙ est aussi près de ℓ qu'on veut.</p>
+<p><b>Exemple :</b> uₙ = 1/n et ε = 0,1. On veut 1/n &lt; 0,1, c'est-à-dire n &gt; 10. Donc N = 11 convient.</p>`+
+AT(["uₙ","Limite","Comment"],[
+["1/n","0",""],
+["(2n + 1)/(n + 3)","2","on factorise par n en haut et en bas : (2 + 1/n)/(1 + 3/n)"],
+["n² − n","+∞","n(n − 1), produit de deux termes qui tendent vers +∞"],
+["(−1)ⁿ","pas de limite","elle vaut 1, −1, 1, −1…"],
+["(−1)ⁿ/n","0","gendarmes : −1/n ≤ (−1)ⁿ/n ≤ 1/n"],
+["√(n + 1) − √n","0","quantité conjuguée : 1/(√(n + 1) + √n)"]])+
+`<p><b>Deux théorèmes à citer :</b> les <b>gendarmes</b> (coincée entre deux suites qui ont la même limite) ; la <b>limite monotone</b> (croissante et majorée, donc convergente).</p>`+
+AZ(AQ("Limite de (3n² + 1)/(n² − 2) ?","3",["3"],"On factorise par n² : (3 + 1/n²)/(1 − 2/n²), qui tend vers 3/1 = 3."),
+AQ("Limite de (2n − 1)/(5n) ?","2/5",["2/5","0.4","0,4"],"(2n − 1)/(5n) = 2/5 − 1/(5n), qui tend vers 2/5."),
+AQ("Limite de (n + 1)/n² ?","0",["0"],"(n + 1)/n² = 1/n + 1/n², qui tend vers 0."),
+AQ("Pour uₙ = 1/n et ε = 0,01, quel est le plus petit rang N tel que 1/n < ε pour tout n ≥ N ?","101",["101"],"1/n < 0,01 veut dire n > 100. Le plus petit entier qui convient est 101."),
+AQ("uₙ est croissante et majorée par 5. Converge-t-elle ?","oui",OUIa,"C'est le théorème de la limite monotone : croissante et majorée, donc convergente."),
+AQ("Sa limite vaut-elle forcément 5 ?","non",NONa,"Non : 5 est un majorant, mais la limite peut être plus petite. Par exemple 1 − 1/n est majorée par 5 et tend vers 1."))),
+
+sec(7,"Limites de fonctions",`<p><b>Les mêmes règles que pour les suites</b>, et en plus des limites en un point x₀. Si on remplace x par x₀ et qu'on obtient 0/0, on <b>factorise</b> pour simplifier.</p>`+
+AT(["Limite","Calcul","Résultat"],[
+["(x² − 1)/(x − 1) en 1","(x − 1)(x + 1)/(x − 1) = x + 1","2"],
+["(2x + 3)/(x − 1) en +∞","(2 + 3/x)/(1 − 1/x)","2"],
+["sin(x)/x en +∞","−1/x ≤ sin(x)/x ≤ 1/x","0 (gendarmes)"],
+["1/x en 0, à droite","1 divisé par un petit positif","+∞"]])+
+AZ(AQ("Limite de (x² − 4)/(x − 2) quand x tend vers 2 ?","4",["4"],"x² − 4 = (x − 2)(x + 2). Après simplification : x + 2, qui vaut 4 en x = 2."),
+AQ("Limite de (5x − 1)/(x + 2) quand x tend vers +∞ ?","5",["5"],"On factorise par x : (5 − 1/x)/(1 + 2/x), qui tend vers 5."),
+AQ("Limite de 1/x quand x tend vers 0 par la gauche (x < 0) ?","−∞",["-∞","-inf","-infini","moinsinfini"],"1 divisé par un nombre négatif très petit : très grand en valeur absolue, et négatif. −∞."),
+AQ("Limite de x² quand x tend vers −∞ ?","+∞",INF,"Un carré est positif, et il devient de plus en plus grand : +∞.")))
+].join("\n");
+
 /* ---------- chapitre 1 : les réels ---------- */
 add(1,{id:"ana-quantif",type:"meth",ref:"Chapitres 1 à 3 ; TD 2, ex. 1, 3, 4 ; TD 3, ex. 1 et 5",t:"Quantificateurs et négation",short:"∀, ∃ et négation",cc:"vrai/faux du CC : 4 points en 2024",
  plain:`∀ veut dire « pour tout », ∃ « il existe ». L'${hl("ordre")} compte : ce qui suit un ∃ peut dépendre de ce qui est avant. Pour nier une phrase, on ${hl("échange ∀ et ∃")} et on nie la fin.`,
@@ -9037,7 +9133,7 @@ SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"r
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
  tdIntro:"Les trois feuilles de TD en entier (68 exercices), énoncés recopiés tels quels : l'enseignante a annoncé que les exercices du CC1 en seront issus. Quand un corrigé officiel existe sur Moodle, il est recopié et c'est écrit au-dessus du corrigé ; sinon le corrigé est rédigé par moi, d'après le cours. Les ★★★ ressemblent le plus aux anciens CC1. Fais-les sur papier avant d'ouvrir le corrigé.",annIntro:"Les deux derniers CC1 en entier : énoncés recopiés, corrigés officiels.",
  quizIntro:"Des questions de cours, puis les « vrai ou faux » des feuilles de TD 1 à 3. Au CC, la partie « vrai/faux et tableau » vaut 8 points, et une réponse fausse peut en enlever.",
- pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Rédactions modèles",html:recettes}],
+ pages:[{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Rédactions modèles",html:recettes},{id:"quiz-cc1",t:"S'entraîner : le CC1 en mini-quiz",html:quizAna}],
  /* thèmes du CC1 et leur poids moyen dans les CC1 de 2024-2025 et 2025-2026 (sur 20) */
  themes:[
   {id:"bornes",t:"Majorant, maximum, borne supérieure, point adhérent",pts:5.5,src:"la question de cours et le tableau inf, min, max, sup, les deux années",les:["a-bornes","a-carac-sup"],fiches:["ana-bornes","ana-sup"]},
@@ -9057,6 +9153,7 @@ SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"r
  {id:"blanc2",t:"Annale CC1 2024-2025 en 1 h",min:65,p:2,manual:true,links:[["annales","Annales et chrono"]]},
  {id:"quiz",t:"Quiz de cours et vrai/faux des TD : au moins 80 %",min:25,p:1,quiz:0.8,last:true,links:[["quiz","Quiz de cours"]]},
  {id:"review",t:"Veille du CC : « Réviser » jusqu'à 0 carte, puis les fiches en rouge",min:25,p:1,manual:true,review:true,last:true,links:[["#/reviser","Réviser"]]}]};
+SUBJ.ana.pages.find(p=>p.id==="quiz-cc1").render=(root,ctx)=>{root.innerHTML=quizAna(ctx);W.mq(root);};
 })();
 
 </script>
