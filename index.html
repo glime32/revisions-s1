@@ -554,6 +554,12 @@ details.day summary span{color:var(--graphite);font-size:.9rem}
 .edt-hours span{position:absolute;right:6px;font-size:.74rem;color:var(--graphite);transform:translateY(-50%)}
 .edt-col{position:relative;border-left:1px solid var(--trait);background:repeating-linear-gradient(to bottom,transparent 0 46px,var(--trait) 46px 46.8px);background-position:0 23.4px}
 .edt-col.hol{background-color:var(--voile)}
+.edt-col.today{background-color:color-mix(in srgb,var(--violet-hi) 16%,transparent);box-shadow:inset 2px 0 0 var(--violet-hi),inset -2px 0 0 var(--violet-hi)}
+.edt-col.past,.edt-h.past{opacity:.55}
+.edt-h.today{box-shadow:inset 2px 0 0 var(--violet-hi),inset -2px 0 0 var(--violet-hi)}
+.edt-now{position:absolute;left:0;right:0;height:2px;background:var(--violet-hi);z-index:2;pointer-events:none}
+.edt-now::before{content:"";position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--violet-hi)}
+.edt-now span{position:absolute;right:4px;top:-18px;font-size:.7rem;font-weight:700;color:var(--violet-hi)}
 .ev{position:absolute;left:3px;right:3px;border-radius:8px;padding:3px 6px;font-size:.74rem;line-height:1.25;overflow:hidden;display:grid;align-content:start;text-decoration:none}
 .ev b{font-size:.78rem}
 .ev.cls{background:var(--voile);color:var(--graphite);border:1px solid var(--trait)}
@@ -17547,21 +17553,25 @@ function hubHome(){
 }
 
 /* ---------- emploi du temps ---------- */
+let EDTW=0;/* semaine affichée : 0 = cette semaine, -1 la précédente, 1 la suivante */
 function edt(){
-  const P=plan(),t0=today();const last=SIDS.map(id=>exam(SUBJ[id]).day).sort().pop();
-  const days=[];for(let d=t0;d<=last&&days.length<9;d=addDays(d,1))days.push(d);
+  const P=plan(),t0=today(),n0=NOW(),[ty,tm,td]=t0.split("-").map(Number),lundi=addDays(t0,-((new Date(ty,tm-1,td).getDay()+6)%7)+7*EDTW);
+  const days=[];for(let i=0;i<7;i++)days.push(addDays(lundi,i));
+  const nowMin=n0.getHours()*60+n0.getMinutes();
   const H0=7*60+30,H1=23*60,PX=0.78;
   const col=d=>{let s="";coursJour(d).forEach(c=>{s+=`<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="top:${(mm(c.start)-H0)*PX}px;height:${(mm(c.end)-mm(c.start))*PX}px"><b>${c.name}</b><span>${hh(mm(c.start))}, ${c.skip?(c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;});
     SIDS.forEach(id=>{const S=SUBJ[id],e=exam(S);if(e.day===d)s+=`<a class="ev exam" href="#/${id}" style="top:${(mm(e.start)-H0)*PX}px;height:${Math.max(40,(mm(e.end)-mm(e.start))*PX)}px"><b>${exW(S)} ${S.name}</b><span>${hh(mm(e.start))}, ${e.place}</span></a>`;});
     P.blocks.filter(b=>b.day===d).forEach(b=>{const S=SUBJ[b.sid];const done=b.tasks.every(tid=>isDone(b.sid,S.TB[tid]));s+=`<a class="ev rev${done?" done":""}" href="#/${b.sid}" style="--sc:${S.color};top:${(b.start-H0)*PX}px;height:${(b.end-b.start)*PX}px"><b>${S.name}</b><span>${hh(b.start)}–${hh(b.end)}${done?", fait":""}</span></a>`;});
+    if(d===t0&&nowMin>H0&&nowMin<H1)s+=`<div class="edt-now" style="top:${(nowMin-H0)*PX}px"><span>${hh(nowMin)}</span></div>`;
     return s;};
   let hours="";for(let h=8;h<=22;h++)hours+=`<span style="top:${(h*60-H0)*PX}px">${h}h</span>`;
   $("#main").innerHTML=`<div class="page" style="max-width:1280px"><div class="title-row"><h1>Emploi du temps de la semaine</h1></div>
+   <div class="filters" id="edtnav"><button class="btn" data-w="-1">‹ Semaine précédente</button><button class="btn" data-w="0" aria-pressed="${EDTW===0}">Cette semaine</button><button class="btn" data-w="1">Semaine suivante ›</button><span class="muted">Du ${dayName(days[0],false)} au ${dayName(days[6],false)}</span></div>
    <p class="lead">Tes cours (gris), tes CC (rouge) et les créneaux de révision placés dans les trous (couleur de la matière). Clique sur un créneau de révision pour ouvrir la matière. <b>Clique sur un cours</b> si tu n'y vas pas : le créneau devient de la révision.</p>
    <div id="clbox" class="examcard" style="--sc:var(--graphite)" hidden></div>
    <div class="edt-legend">${SIDS.map(id=>`<span><i class="sdot" style="background:${SUBJ[id].color}"></i>${SUBJ[id].name}</span>`).join("")}<span><i class="sdot" style="background:var(--graphite)"></i>cours</span><span><i class="sdot" style="background:var(--rouge)"></i>CC</span></div>
-   <div class="edt-wrap"><div class="edt" style="grid-template-columns:44px repeat(${days.length},minmax(128px,1fr));min-width:${44+days.length*128}px"><div></div>${days.map(d=>`<div class="edt-h${d===t0?" today":""}">${dayName(d,true,true)}${HOLIDAY[d]?`<small>férié</small>`:""}</div>`).join("")}
-    <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
+   <div class="edt-wrap"><div class="edt" style="grid-template-columns:44px repeat(${days.length},minmax(128px,1fr));min-width:${44+days.length*128}px"><div></div>${days.map(d=>`<div class="edt-h${d===t0?" today":""}${d<t0?" past":""}">${dayName(d,true,true)}${d===t0?`<small>aujourd'hui</small>`:HOLIDAY[d]?`<small>${HOLIDAY[d]==="11 novembre, férié"?"férié":"vacances"}</small>`:""}</div>`).join("")}
+    <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}${d===t0?" today":""}${d<t0?" past":""}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
    <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p>
    <div class="filters" id="edtpc"><span class="muted">Sur ordinateur, ouvrir le site sur cet emploi du temps :</span><button class="btn" data-pc="1" aria-pressed="${hub.edtPC!=="0"}">oui</button><button class="btn" data-pc="0" aria-pressed="${hub.edtPC==="0"}">non</button><a class="btn" href="#/jour">Page « Aujourd'hui »</a></div></div>`;
   const box=$("#clbox");
@@ -17570,6 +17580,8 @@ function edt(){
     box.hidden=false;box.dataset.k=d+":"+h;box.scrollIntoView({behavior:"smooth",block:"nearest"});};
   $("#main").querySelectorAll(".ev.cls").forEach(el=>{el.addEventListener("click",()=>ouvre(el));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ouvre(el);}});});
   box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk});edt();});
+  $("#edtnav").addEventListener("click",e=>{const b=e.target.closest("[data-w]");if(!b)return;const w=+b.dataset.w;EDTW=w===0?0:EDTW+w;edt();});
+  const tc=$(".edt-col.today");if(tc&&EDTW===0){const wr=$(".edt-wrap");wr.scrollLeft=Math.max(0,tc.offsetLeft-60);}
   $("#edtpc").addEventListener("click",e=>{const b=e.target.closest("[data-pc]");if(!b)return;emit({k:"set",key:"edtPC",v:b.dataset.pc});document.querySelectorAll("#edtpc [data-pc]").forEach(x=>x.setAttribute("aria-pressed",x===b));});
 }
 
