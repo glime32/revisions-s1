@@ -15786,6 +15786,7 @@ lin:{
 <p><b>Le vocabulaire.</b> Un « scalaire », c'est juste un nombre réel, par opposition à un vecteur. Le « vecteur nul » est celui dont toutes les cases valent 0 : (0, 0, 0) dans ℝ³.</p>
 <p><b>Ce qui n'existe pas :</b> additionner un vecteur de ℝ² et un vecteur de ℝ³ (pas la même taille), ou multiplier deux vecteurs entre eux.</p>`,
   "Les 8 règles de calcul (Proposition 10)":`<p><b>Ce que disent ces huit règles, en une phrase :</b> avec des vecteurs, l'addition et la multiplication par un nombre se comportent comme avec des nombres ordinaires. On peut changer l'ordre, regrouper, développer.</p>
+<p><b>Les lettres du cours.</b> x, y, z désignent des vecteurs ; λ et μ (les lettres grecques « lambda » et « mu ») désignent des nombres ; 0<sub>ℝⁿ</sub> est le vecteur nul de ℝⁿ.</p>
 <p><b>Voir une règle sur des nombres.</b> Prenons la dernière, λ(x + y) = λx + λy, avec λ = 2, x = (1, 2) et y = (3, 5).</p>
 <ul><li>À gauche : x + y = (4, 7), puis 2 × (4, 7) = (8, 14).</li><li>À droite : 2x = (2, 4) et 2y = (6, 10), puis (2, 4) + (6, 10) = (8, 14).</li></ul>
 <p>On obtient la même chose des deux côtés.</p>
@@ -15803,6 +15804,7 @@ lin:{
 <p><b>La seule chose interdite :</b> diviser par un vecteur. On ne divise que par des nombres.</p>`,
   "λx = 0 si et seulement si λ = 0 ou x = 0":`<p><b>Ce que dit la phrase.</b> Un nombre λ multiplié par un vecteur x donne le vecteur nul dans deux cas seulement : quand le nombre vaut 0, ou quand le vecteur est déjà nul. C'est la même idée qu'avec les nombres : a × b = 0 seulement si a = 0 ou b = 0.</p>
 <p><b>« Si et seulement si »</b> veut dire qu'il y a <b>deux choses à démontrer</b>, une dans chaque sens.</p>
+<p><b>Les lettres.</b> λ est un nombre, x un vecteur de ℝⁿ, et xᵢ sa case numéro i : pour x = (4, 0, 7), x₁ = 4, x₂ = 0 et x₃ = 7. Le cours écrit 0<sub>ℝⁿ</sub> pour le vecteur nul.</p>
 <p><b>Sens 1 (le facile).</b> Si λ = 0 ou si x est le vecteur nul, alors λx est nul.</p>
 <ul><li>Si λ = 0 : chaque case de 0 × x vaut 0 fois quelque chose, donc 0.</li><li>Si x est nul : chaque case de λx vaut λ fois 0, donc 0.</li></ul>
 <p><b>Sens 2.</b> Si λx est nul, alors λ = 0 ou x est nul. On coupe en deux cas :</p>
@@ -15838,6 +15840,7 @@ lin:{
   "Les trois opérations élémentaires":`<p><b>La question.</b> Quels gestes a-t-on le droit de faire sur un système sans changer ses solutions ? Il y en a exactement trois.</p>
 <ol><li><b>Échanger deux lignes.</b> L'ordre des équations n'a aucune importance.</li><li><b>Multiplier une ligne par un nombre qui n'est pas 0.</b> x + y = 2 et 3x + 3y = 6 disent la même chose.</li><li><b>Ajouter à une ligne un multiple d'une autre ligne.</b> C'est le geste le plus utile : il sert à faire apparaître des zéros.</li></ol>
 <p><b>Lire la notation.</b> « L₂ ← L₂ − 3L₁ » veut dire : la nouvelle ligne 2, c'est l'ancienne ligne 2, moins 3 fois la ligne 1. La ligne 1, elle, ne change pas.</p>
+<p>Le cours écrit aussi Lᵢ pour « la ligne numéro i » (i est un numéro quelconque), Lᵢ ↔ Lⱼ pour « échanger les lignes i et j », et λ pour un nombre.</p>
 <p><b>Exemple</b> sur ${mat([[1,2,5],[3,-1,1]],1)} avec L₂ ← L₂ − 3L₁. On calcule case par case :</p>
 <ul><li>3 − 3 × 1 = 0</li><li>−1 − 3 × 2 = −7</li><li>1 − 3 × 5 = −14</li></ul>
 <p>On obtient ${mat([[1,2,5],[0,-7,-14]],1)} : le 3 est devenu 0. La ligne 2 dit maintenant −7y = −14, une équation avec une seule inconnue.</p>
@@ -15851,7 +15854,8 @@ lin:{
 <p>Exemple : ${mat([[1,2,3],[0,4,5],[0,0,6]])} La ligne 1 commence par 0 zéro, la ligne 2 par 1 zéro, la ligne 3 par 2 zéros. Ça augmente à chaque fois : elle est échelonnée.</p>
 <p>Contre-exemple : ${mat([[1,2,3],[0,0,5],[0,4,6]])} La ligne 2 commence par 2 zéros, et la ligne 3 par 1 seul. Ça diminue : elle n'est pas échelonnée.</p>
 <p><b>Le pivot</b> d'une ligne, c'est son premier nombre qui n'est pas 0. Dans le premier exemple, les pivots sont 1, 4 et 6.</p>
-<p><b>Deuxième règle :</b> si une ligne ne contient que des zéros, elle doit être tout en bas.</p>
+<p><b><p>Le cours note Z(Lᵢ) le nombre de zéros au début de la ligne i : dans le premier exemple, Z vaut 0, puis 1, puis 2.</p>
+Deuxième règle :</b> si une ligne ne contient que des zéros, elle doit être tout en bas.</p>
 <p><b>Pourquoi on veut cette forme.</b> Parce qu'un système en escalier se résout tout seul, de bas en haut : la dernière équation n'a qu'une inconnue, on la trouve, puis on remonte.</p>`,
   "Échelonnée réduite":`<p><b>C'est l'escalier, nettoyé au maximum.</b> Deux conditions de plus :</p>
 <ul><li>chaque pivot vaut 1 ;</li><li>dans la colonne d'un pivot, tous les autres nombres valent 0 (au-dessous, mais aussi <b>au-dessus</b>).</li></ul>
@@ -15899,6 +15903,7 @@ lin:{
 <p><b>Le cas du vecteur nul.</b> (0, 0) = 0 × (2, 3) : le vecteur nul est un multiple de n'importe quel vecteur. Il est donc colinéaire à tous.</p>`,
   "Combinaison linéaire":`<p><b>Une combinaison linéaire, c'est une recette :</b> tant de fois ce vecteur, plus tant de fois celui-là. Par exemple 2 × (1, 0) + 3 × (0, 1) = (2, 3). Les nombres 2 et 3 sont les coefficients.</p>
 <p><b>La question type :</b> « le vecteur w est-il une combinaison linéaire de v₁ et v₂ ? ». Autrement dit : existe-t-il des quantités a et b telles que a v₁ + b v₂ = w ?</p>
+<p><b>L'écriture du cours :</b> λ₁v₁ + λ₂v₂ + … + λₖvₖ. Les λ sont les coefficients (des nombres), les v sont les vecteurs, numérotés de 1 à k, et « … » veut dire « et ainsi de suite jusqu'au dernier ».</p>
 <p><b>La méthode, sur un exemple :</b> w = (5, 7), v₁ = (1, 1), v₂ = (1, 2).</p>
 <ol><li>J'écris ce que je cherche : a (1, 1) + b (1, 2) = (5, 7).</li><li>Je calcule le côté gauche case par case : (a + b, a + 2b).</li><li>J'écris une équation par case : a + b = 5 et a + 2b = 7.</li><li>Je résous : en soustrayant la première de la seconde, b = 2. Puis a = 3.</li><li>Conclusion : oui, (5, 7) = 3 (1, 1) + 2 (1, 2).</li></ol>
 <p>Vérification : 3 (1, 1) = (3, 3), 2 (1, 2) = (2, 4), et la somme fait (5, 7).</p>
@@ -15907,13 +15912,14 @@ lin:{
  "l-vect":{
   "Vect(v₁, …, vₖ)":`<p><b>Vect(…) est un ensemble :</b> tous les vecteurs qu'on peut fabriquer avec les vecteurs donnés, par toutes les combinaisons linéaires possibles.</p>
 <p><b>Avec un seul vecteur.</b> Vect((1, 2)) contient tous les multiples de (1, 2) : (2, 4), (−1, −2), (0, 0), (0,5 ; 1)… Dans le plan, ces points forment une droite qui passe par l'origine.</p>
-<p><b>Avec deux vecteurs</b> qui n'ont pas la même direction, on obtient un plan qui passe par l'origine.</p>
+<p><b>Avec deux vecteurs</b> qui n'ont pas la même direction, on obtient un plan qui passe par l'origine (dans ℝ³ ; dans ℝ², c'est tout le plan).</p>
 <p><b>Lire la formule du cours.</b> Vect(v₁, …, vₖ) = {λ₁v₁ + … + λₖvₖ | λ₁, …, λₖ ∈ ℝ} se lit : « l'ensemble des vecteurs λ₁v₁ + … + λₖvₖ, pour tous les choix possibles des nombres λ₁, …, λₖ ».</p>
 <p><b>Deux choses toujours vraies :</b></p>
 <ul><li>le vecteur nul est dans Vect(…) : il suffit de prendre tous les coefficients égaux à 0 ;</li><li>chaque vecteur de départ est dans Vect(…) : on lui met le coefficient 1, et 0 aux autres.</li></ul>`,
   "Enlever un vecteur sans changer Vect":`<p><b>L'idée.</b> Si un des vecteurs se fabrique déjà avec les autres, il n'apporte rien de nouveau. On peut l'enlever de la liste : l'ensemble fabriqué reste le même.</p>
 <p><b>Exemple.</b> Dans Vect((1, 0), (0, 1), (2, 3)), le troisième vecteur est inutile : (2, 3) = 2 (1, 0) + 3 (0, 1). Donc Vect((1, 0), (0, 1), (2, 3)) = Vect((1, 0), (0, 1)).</p>
 <p><b>La règle :</b> on peut retirer un vecteur <b>si et seulement si</b> il est combinaison linéaire des autres.</p>
+<p>Le cours l'écrit avec le signe ⊆, qui se lit « est inclus dans » : tout vecteur du premier ensemble est aussi dans le second.</p>
 <p><b>La précaution.</b> On en retire <b>un seul à la fois</b>, puis on refait le test avec ceux qui restent. Exemple : u = (1, 2) et v = (2, 4). Chacun est un multiple de l'autre, donc on peut retirer u, ou bien v. Mais pas les deux : il ne resterait plus rien pour fabriquer la droite.</p>`,
   "Tester si un vecteur est dans Vect":`<p><b>« w est dans Vect(u, v) »</b> veut dire exactement : « w est une combinaison linéaire de u et v ». C'est donc la méthode de la leçon précédente : on cherche les coefficients avec un système.</p>
 <p><b>Exemple où ça marche.</b> u = (1, 0, 1), v = (0, 1, 1), w = (2, 3, 5).</p>
@@ -15928,18 +15934,20 @@ lin:{
 <ul><li>(0, 0) est dedans : 0 = 2 × 0.</li><li>(1, 2) et (3, 6) sont dedans. Leur somme est (4, 8), et 8 = 2 × 4 : encore dedans.</li><li>5 × (1, 2) = (5, 10), et 10 = 2 × 5 : encore dedans.</li></ul>
 <p>(Pour une vraie démonstration, on le fait avec des lettres et pas seulement sur des exemples.)</p>
 <p><b>Un exemple qui rate :</b> G = l'ensemble des (x, y) tels que y = 2x + 1. Le vecteur nul (0, 0) n'est pas dedans, car 0 n'est pas égal à 2 × 0 + 1. La première condition est fausse : G n'est pas un sous-espace vectoriel.</p>
-<p><b>Pour le contrôle.</b> La définition est une question de cours annoncée : il faut savoir l'écrire mot pour mot, avec ses trois conditions. Le signe ∀ qu'on y trouve se lit « pour tout ».</p>`},
+<p><b>Pour le contrôle.</b> La définition est une question de cours annoncée : il faut savoir l'écrire mot pour mot, avec ses trois conditions. Le signe ∀ qu'on y trouve se lit « pour tout », le signe ∈ se lit « appartient à » (x ∈ F : x est dans F), et 0<sub>ℝⁿ</sub> est le vecteur nul de ℝⁿ.</p>`},
  "l-homogene":{
   "Système homogène, système homogène associé":`<p><b>Homogène</b> veut dire : tous les seconds membres (les nombres à droite du signe $=$) valent $0$.</p>
 <p><b>Exemple :</b> $x + y = 0$ et $2x − y = 0$. Ce système est homogène.</p>
 <p><b>Il a toujours au moins une solution :</b> $(0, 0)$. En mettant $0$ partout, chaque équation donne $0 = 0$. Il reste à savoir s'il en a d'autres. Il n'y a que deux cas : soit $(0, 0)$ est la seule, soit il y en a une infinité.</p>
 <p><b>Le système homogène associé</b> à un système, c'est le même système où on remplace tous les seconds membres par $0$.</p>
 <ul><li>Système de départ : $x + 2y = 5$ et $3x − y = 1$.</li><li>Système homogène associé : $x + 2y = 0$ et $3x − y = 0$.</li></ul>
+<p><b>Les notations du cours.</b> Le système de départ s'appelle Σ (sigma, le S grec) et son système homogène associé Σ₀. Leurs ensembles de solutions s'appellent $S$ et $S₀$.</p>
 <p><b>Plus d'inconnues que d'équations : une infinité de solutions.</b> Exemple : la seule équation $x + y − z = 0$, avec $3$ inconnues. Il y a au plus un pivot par équation, donc ici $1$ pivot pour $3$ inconnues : $2$ inconnues sont libres. On trouve par exemple $(1, 0, 1)$, $(0, 1, 1)$, $(2, 3, 5)$… une infinité.</p>`,
   "Toutes les solutions = une solution + les solutions de Σ₀":`<p><b>L'idée.</b> Pour trouver <b>toutes</b> les solutions d'un système, on n'a pas besoin de tout recommencer : il suffit d'<b>une</b> solution, à laquelle on ajoute toutes les solutions du système homogène associé.</p>
 <p><b>Exemple :</b> $x + y = 3$.</p>
 <ol><li>Une solution, trouvée à l'œil : $s = (3, 0)$, car $3 + 0 = 3$.</li><li>Le système homogène associé, $x + y = 0$ : ses solutions sont les $(t, −t)$, pour $t$ réel.</li><li>Toutes les solutions : $(3, 0) + (t, −t) = (3 + t, −t)$.</li></ol>
 <p><b>Vérification avec $t = 1$ :</b> on obtient $(4, −1)$, et $4 + (−1) = 3$. C'est bien une solution.</p>
+<p><b>Dans le cours</b>, c'est écrit $S = s + S₀$ : $S$ est l'ensemble de toutes les solutions, $s$ la solution trouvée à l'œil, et $S₀$ l'ensemble des solutions du système homogène associé. Ici, $s = (3, 0)$ et $S₀$ contient les $(t, −t)$.</p>
 <p><b>Pourquoi ça marche.</b> Prends deux solutions, par exemple $(4, −1)$ et $(3, 0)$. Leur différence $(1, −1)$ vérifie $1 + (−1) = 0$ : elle est solution du système homogène. C'est toujours vrai : en soustrayant deux égalités qui ont le même second membre, on obtient $0$ à droite.</p>`},
  "l-sev2":{
   "Les raccourcis à connaître":`<p><b>Rappel.</b> Un sous-espace vectoriel (sev) est un ensemble de vecteurs qui contient $0$, et qui est stable par addition et par multiplication par un nombre. Le vérifier à la main est long. Le cours donne <b>deux raccourcis</b> pour répondre oui.</p>
@@ -15965,7 +15973,7 @@ lin:{
 <p><b>Avec des vecteurs (Vect) :</b> on compte les vecteurs non colinéaires.</p>
 <ul><li>$Vect((1, 1, 0))$ : un vecteur non nul, c'est une droite.</li><li>$Vect((1, 0, 0), (0, 1, 0))$ : deux vecteurs non colinéaires, c'est un plan (celui d'équation $z = 0$).</li></ul>
 <p><b>Avec des équations, dans $ℝ³$ :</b> chaque équation indépendante enlève une dimension.</p>
-<ul><li>une équation, comme $x + y − z = 0$ : un plan ;</li><li>deux équations indépendantes : une droite.</li></ul>`},
+<ul><li>une équation, comme $x + y − z = 0$ : un plan ;</li><li>deux équations indépendantes : une droite. « Indépendantes » veut dire que l'une n'est pas un multiple de l'autre : $x + y = 0$ et $2x + 2y = 0$ disent la même chose et ne comptent que pour une.</li></ul>`},
  "l-affine":{
   "Sous-espace affine":`<p><b>L'idée :</b> un sous-espace vectoriel passe toujours par $0$. Un sous-espace <b>affine</b>, c'est le même ensemble, mais <b>décalé</b> : il ne passe plus forcément par $0$.</p>
 <p><b>Exemple dans le plan :</b></p>
@@ -15985,6 +15993,7 @@ lin:{
  "l-matrices":{
   "Vocabulaire":`<p><b>Une matrice, c'est un tableau de nombres</b>, rangés en lignes et en colonnes.</p>
 <p>Exemple : $A = ${mat([[1,4,-2],[0,3,5]])}$. Elle a $2$ lignes et $3$ colonnes : sa <b>taille</b> est $2 × 3$ (toujours les lignes d'abord).</p>
+<p><b>Les notations du cours :</b> $M_{n,p}(ℝ)$ est l'ensemble des matrices à $n$ lignes et $p$ colonnes, et $M_{n}(ℝ)$ celui des matrices carrées $n × n$. $L_{i}(A)$ est la ligne $i$ de $A$, et $C_{j}(A)$ sa colonne $j$.</p>
 <p><b>Le coefficient</b> $a_{ij}$ est celui de la ligne $i$ et de la colonne $j$ :</p>
 <ul><li>$a_{13} = −2$ : ligne $1$, colonne $3$ ;</li><li>$a_{21} = 0$ : ligne $2$, colonne $1$.</li></ul>
 <p><b>Les matrices à connaître :</b></p>
@@ -16009,6 +16018,7 @@ lin:{
 <ul><li>$(AB)C = A(BC)$ : on peut regrouper comme on veut ;</li><li>$A(B + C) = AB + AC$ : on peut développer ;</li><li>$I × A = A$ : l'identité joue le rôle du $1$.</li></ul>
 <p><b>Ce qui ne marche PAS :</b></p>
 <ul><li>$AB$ et $BA$ ne sont en général pas égaux (exemple à l'écran précédent) ;</li><li>$AB = 0$ n'oblige pas $A$ ou $B$ à être nulle. Avec $A = ${mat([[0,1],[0,0]])}$, on a $A × A = ${mat([[0,0],[0,0]])}$, alors que $A$ n'est pas nulle.</li></ul>
+<p>$A²$ veut dire $A × A$.</p>
 <p><b>La conséquence piège :</b> $(A + B)² = A² + AB + BA + B²$. On ne peut pas regrouper $AB + BA$ en $2AB$, puisque $AB ≠ BA$.</p>`},
  "l2-inverse":{
   "Inverser une matrice":`<p><b>L'idée vient des nombres :</b> l'inverse de $5$ est $1/5$, car $5 × 1/5 = 1$. Pour une matrice carrée $A$, son inverse $A^{−1}$ est la matrice telle que $A × A^{−1} = I$, l'identité.</p>
@@ -16046,7 +16056,7 @@ lin:{
   "Examen de janvier 2026 : AB = A + B":`<p><b>On sait que $AB = A + B$.</b> On veut montrer que $I − A$ est inversible.</p>
 <ol><li>On développe $(I − A)(I − B)$, en gardant l'ordre : $I − B − A + AB$.</li><li>On remplace $AB$ par $A + B$ : $I − B − A + A + B$.</li><li>Tout se simplifie : il reste $I$.</li></ol>
 <p>Donc $(I − A)(I − B) = I$ : $I − A$ est inversible, et son inverse est $I − B$.</p>
-<p><b>La suite :</b> une matrice et son inverse commutent, donc $(I − B)(I − A) = I$ aussi. En développant : $I − A − B + BA = I$, donc $BA = A + B$. Et comme $AB = A + B$, on obtient $AB = BA$.</p>`},
+<p><b>La suite :</b> une matrice et son inverse commutent (le produit dans un sens est égal au produit dans l'autre : $MN = NM$), donc $(I − B)(I − A) = I$ aussi. En développant : $I − A − B + BA = I$, donc $BA = A + B$. Et comme $AB = A + B$, on obtient $AB = BA$.</p>`},
  "l2-libre":{
   "Libre, liée":`<p><b>Une famille de vecteurs est liée</b> quand l'un d'eux peut s'écrire avec les autres. Sinon, elle est <b>libre</b> : chaque vecteur apporte une direction nouvelle.</p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Famille</th><th>Libre ou liée</th><th>Pourquoi</th></tr></thead><tbody>
@@ -16069,6 +16079,7 @@ lin:{
 <p><b>Le test pour $n$ vecteurs de $ℝⁿ$ :</b> le pivot sur la matrice de leurs coordonnées donne $n$ pivots.</p>`},
  "l2-applin":{
   "Définition":`<p><b>Une application linéaire</b> respecte l'addition et la multiplication par un nombre : $f(x + x′) = f(x) + f(x′)$ et $f(λx) = λf(x)$.</p>
+<p><b>La notation</b> $f : ℝⁿ → ℝᵐ$ veut dire : $f$ prend un vecteur de $ℝⁿ$ et rend un vecteur de $ℝᵐ$. Par exemple, $f(x, y) = (x + y, x, y)$ va de $ℝ²$ dans $ℝ³$. Dans la définition, $x$ et $x′$ sont deux vecteurs du départ, et $λ$ un nombre.</p>
 <p><b>Le test rapide :</b> chaque coordonnée doit être une combinaison des variables, sans constante ajoutée, sans produit de variables, sans carré.</p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>$f(x, y)$</th><th>Linéaire ?</th><th>Pourquoi</th></tr></thead><tbody>
 <tr><td>$(2x + y, x − y)$</td><td>oui</td><td>que des combinaisons de $x$ et $y$</td></tr>
@@ -16087,6 +16098,7 @@ lin:{
 <ul><li>le <b>noyau</b> $ker f$ : les vecteurs que $f$ envoie sur $0$. On le trouve en résolvant $f(X) = 0$ ;</li><li>l'<b>image</b> $im f$ : tous les résultats possibles $f(X)$. C'est le $Vect$ des colonnes de la matrice.</li></ul>
 <p><b>Exemple :</b> $f(x, y) = (x − y, 2x − 2y)$.</p>
 <ul><li>Noyau : $x − y = 0$ (la deuxième équation est la même fois $2$), donc $y = x$ : $ker f = Vect((1, 1))$.</li><li>Image : $f(x, y) = (x − y)(1, 2)$, donc $im f = Vect((1, 2))$.</li></ul>
+<p><b>Deux mots à connaître :</b></p><ul><li>$f$ est <b>injective</b> quand deux vecteurs différents ont toujours des images différentes : jamais $f(x) = f(x′)$ avec $x ≠ x′$ ;</li><li>$f$ est <b>surjective</b> quand chaque vecteur de l'arrivée est l'image d'au moins un vecteur du départ.</li></ul><p>$\{0\}$ est l'ensemble qui ne contient que le vecteur nul.</p>
 <p><b>À quoi ça sert :</b></p>
 <ul><li>$f$ est injective exactement quand $ker f = \{0\}$. Ici le noyau contient $(1, 1)$ : $f$ n'est pas injective ($f(1, 1) = f(0, 0) = 0$) ;</li><li>$f$ est surjective quand l'image est tout l'espace d'arrivée. Ici c'est une droite de $ℝ²$ : pas surjective.</li></ul>`,
   "Les deux preuves de cours":`<p><b>Preuve 1 : le noyau est un sous-espace vectoriel.</b> On vérifie les trois conditions :</p>
@@ -16106,8 +16118,8 @@ lin:{
 <p><b>Exemple dans $ℝ³$ :</b> $F$ est le plan $z = 0$ et $G$ le plan $x = 0$. Les vecteurs des deux à la fois vérifient $x = 0$ et $z = 0$ : ce sont les $(0, y, 0)$, une droite.</p>
 <p><b>Pourquoi c'est toujours un sous-espace</b> (question de cours) :</p>
 <ul><li>$0$ est dans $F$ et dans $G$, donc dans $F ∩ G$ ;</li><li>si $x$ et $y$ sont dans $F ∩ G$ : $x + y$ est dans $F$ (car $F$ est un sous-espace), et dans $G$ pour la même raison ;</li><li>même raisonnement pour $λx$.</li></ul>
-<p><b>Attention, l'union ne marche pas :</b> $F ∪ G$ n'est pas un sous-espace en général. Dans le plan, avec les deux axes : $(1, 0) + (0, 1) = (1, 1)$, qui n'est sur aucun des deux axes.</p>`,
-  "Montrer F = G":`<p><b>Pour montrer que deux sous-espaces sont égaux,</b> on montre les deux inclusions : $F ⊂ G$, puis $G ⊂ F$.</p>
+<p><b>Attention, l'union ne marche pas :</b> $F ∪ G$ (les vecteurs qui sont dans $F$ ou dans $G$) n'est pas un sous-espace en général. Dans le plan, avec les deux axes : $(1, 0) + (0, 1) = (1, 1)$, qui n'est sur aucun des deux axes.</p>`,
+  "Montrer F = G":`<p><b>Pour montrer que deux sous-espaces sont égaux,</b> on montre les deux inclusions : $F ⊂ G$, puis $G ⊂ F$. $F ⊂ G$ se lit « $F$ est inclus dans $G$ » : tout vecteur de $F$ est aussi dans $G$.</p>
 <p><b>L'astuce quand $G = Vect(g_{1}, g_{2})$ :</b> pour montrer $G ⊂ F$, il suffit de vérifier que $g_{1}$ et $g_{2}$ sont dans $F$. Comme $F$ est un sous-espace, il contient alors toutes leurs combinaisons.</p>
 <p><b>Exemple :</b> $F$ est le plan $x + y − z = 0$ et $G = Vect((1, 0, 1), (0, 1, 1))$.</p>
 <ul><li>$(1, 0, 1)$ : $1 + 0 − 1 = 0$, dans $F$ ;</li><li>$(0, 1, 1)$ : $0 + 1 − 1 = 0$, dans $F$.</li></ul>
@@ -16115,7 +16127,7 @@ lin:{
  "l2-projection":{
   "Vecteur normal et décomposition":`<p><b>Le vecteur normal :</b> pour un plan d'équation $ax + by + cz = 0$, le vecteur $n = (a, b, c)$ est perpendiculaire au plan.</p>
 <p><b>L'idée de la projection :</b> tout vecteur $v$ se coupe en deux morceaux : un morceau $w$ dans le plan, et un morceau le long de $n$. C'est comme l'ombre d'un objet sur le sol, à midi.</p>
-<p>$v = w + λn$, avec $λ = (ax + by + cz)/(a² + b² + c²)$.</p>
+<p>Si $v = (x, y, z)$, alors $v = w + λn$, avec $λ = (ax + by + cz)/(a² + b² + c²)$. On note $p(v) = w$ : c'est la <b>projection</b> de $v$ sur le plan.</p>
 <p><b>Exemple simple :</b> le sol, $z = 0$, avec $n = (0, 0, 1)$. Pour $v = (2, 3, 5)$ : $λ = 5/1 = 5$, et $w = (2, 3, 5) − 5(0, 0, 1) = (2, 3, 0)$. L'ombre de $v$ sur le sol, c'est bien $(2, 3, 0)$.</p>
 <p><b>Exemple :</b> le plan $x + y + z = 0$, $n = (1, 1, 1)$, et $v = (1, 2, 3)$. $λ = (1 + 2 + 3)/3 = 2$, donc $w = (1, 2, 3) − 2(1, 1, 1) = (−1, 0, 1)$. Vérification : $−1 + 0 + 1 = 0$, $w$ est bien dans le plan.</p>`,
   "La symétrie":`<p><b>La symétrie par rapport au plan,</b> c'est le reflet dans un miroir : on garde le morceau $w$ qui est dans le plan, et on retourne le morceau perpendiculaire.</p>
@@ -16123,12 +16135,13 @@ lin:{
 <p><b>Exemple avec le sol</b> $z = 0$ : $v = (2, 3, 5)$ devient $(2, 3, −5)$. Le point passe de l'autre côté, à la même distance.</p>
 <p><b>Exemple</b> avec le plan $x + y + z = 0$ et $v = (1, 2, 3)$ ($λ = 2$) : $s(v) = (1, 2, 3) − 4(1, 1, 1) = (−3, −2, −1)$.</p>
 <p><b>Lien avec la projection :</b> le projeté $w$ est le milieu de $v$ et de $s(v)$. Donc $s(v) = 2p(v) − v$, et en matrices $Mat(s) = 2Mat(p) − I_{3}$.</p>
-<p><b>Deux vérifications utiles :</b> projeter deux fois ne change rien ($p ∘ p = p$) ; faire deux fois la symétrie ramène au départ ($s ∘ s = id$).</p>`}},
+<p><b>Deux vérifications utiles :</b> projeter deux fois ne change rien ($p ∘ p = p$) ; faire deux fois la symétrie ramène au départ ($s ∘ s = id$, où $id$ est l'application qui ne change rien : $id(v) = v$).</p>`}},
 ana:{
  "a-quantif":{
   "∀ et ∃":`<p><b>Deux signes pour dire deux choses très différentes.</b></p>
 <ul><li><b>∀</b> se lit « pour tout ». Il annonce une phrase qui doit être vraie pour <b>tous</b> les éléments, sans exception.</li><li><b>∃</b> se lit « il existe ». Il annonce une phrase qui doit être vraie pour <b>au moins un</b> élément.</li></ul>
 <p><b>Lire une phrase.</b> « ∀x ∈ ℝ, x² ≥ 0 » se lit : « pour tout nombre réel x, x² est positif ou nul ». C'est vrai : un carré n'est jamais négatif.</p>
+<p><b>Les autres signes de ces phrases.</b> ∈ se lit « appartient à » : x ∈ ℝ veut dire « x est un nombre réel » (ℝ est l'ensemble des réels, ℕ celui des entiers naturels 0, 1, 2…). Le cours écrit aussi P(x) pour « une phrase qui parle de x », comme x² ≥ 0.</p>
 <p><b>Quatre exemples pour sentir la différence :</b></p>
 <ul><li>« ∀x ∈ ℝ, x² &gt; 0 » est <b>fausse</b>. Il suffit d'un seul x qui ne marche pas : x = 0 donne 0, qui n'est pas strictement positif. Ce x s'appelle un contre-exemple.</li><li>« ∃x ∈ ℝ, x² = 9 » est <b>vraie</b>. Il suffit d'en montrer un : x = 3.</li><li>« ∃x ∈ ℝ, x² = −1 » est <b>fausse</b>. Là, un exemple ne suffit pas : il faut expliquer qu'aucun réel ne convient (tous les carrés sont positifs ou nuls).</li></ul>
 <p><b>Le tableau à retenir :</b></p>
@@ -16146,6 +16159,7 @@ ana:{
 <ul><li>∀ devient ∃, et ∃ devient ∀ ;</li><li>la fin de la phrase est remplacée par son contraire : &lt; devient ≥, ≤ devient &gt;, = devient ≠.</li></ul>
 <p><b>Exemple 1.</b> La phrase « ∀n ∈ ℕ, uₙ ≤ 5 » (tous les termes sont au plus 5). Son contraire : « ∃n ∈ ℕ, uₙ &gt; 5 » (au moins un terme dépasse 5).</p>
 <p><b>Exemple 2, avec deux signes.</b> « ∀x ∈ ℝ, ∃y ∈ ℝ, y &gt; x ». On avance de gauche à droite : ∀ devient ∃, ∃ devient ∀, et « y &gt; x » devient « y ≤ x ». Résultat : « ∃x ∈ ℝ, ∀y ∈ ℝ, y ≤ x ».</p>
+<p><b>Les signes du cours.</b> ⇒ veut dire « si… alors… » : P ⇒ Q se lit « si P, alors Q ». Et non(P) désigne le contraire de la phrase P.</p>
 <p><b>Le cas de « si… alors… ».</b> Le contraire de « s'il pleut, je prends un parapluie » est « il pleut <b>et</b> je ne prends pas de parapluie ». On garde la première partie, et on nie la seconde.</p>
 <p><b>La méthode sur la copie :</b> je recopie la phrase, puis je la réécris en changeant chaque ∀ et chaque ∃, sans rien changer d'autre, et à la fin je remplace la dernière affirmation par son contraire.</p>`},
  "a-abs":{
@@ -16188,7 +16202,7 @@ ana:{
 <p><b>Sur l'exemple A = [0, 1[.</b> Ses majorants sont tous les nombres à partir de 1. Le plus petit d'entre eux est 1. Donc sup(A) = 1, même si 1 n'est pas dans A.</p>
 <p><b>Le lien avec le maximum.</b> Quand A a un plus grand élément, c'est lui la borne supérieure. La différence : le maximum doit appartenir à A, la borne supérieure non.</p>
 <p><b>Vers le bas</b>, c'est pareil : la borne inférieure inf(A) est le plus grand des minorants.</p>
-<p><b>Un exemple complet.</b> A = {1, 1/2, 1/3, 1/4, …}, les nombres 1/n.</p>
+<p><b>Un exemple complet.</b> A = {1, 1/2, 1/3, 1/4, …}, les nombres 1/n. Le cours l'écrit {1/n | n ∈ ℕ*} : ℕ* désigne les entiers 1, 2, 3…, sans le 0.</p>
 <ul><li>Le plus grand est 1 : c'est le maximum, donc aussi la borne supérieure.</li><li>Vers le bas, les nombres s'approchent de 0 sans jamais l'atteindre : la borne inférieure est 0, et il n'y a pas de plus petit élément.</li></ul>
 <p><b>Quand elle existe.</b> Dès que A n'est pas vide et qu'il a un majorant, sa borne supérieure existe. Si A n'a aucun plafond (comme l'ensemble des entiers naturels), il n'a pas de borne supérieure.</p>`},
  "a-carac-sup":{
@@ -16249,6 +16263,7 @@ ana:{
 <p><b>La définition en un point x₀</b> a la même forme que pour les suites, avec une lettre de plus : η (êta).</p>
 <ul><li><b>ε</b> : la marge autorisée sur le résultat f(x) ;</li><li><b>η</b> : à quel point x doit être proche de x₀ pour que ça marche.</li></ul>
 <p>« ∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε » se lit : « quelle que soit la marge ε, il y a une distance η telle que : dès que x est à moins de η de x₀, f(x) est à moins de ε de ℓ ».</p>
+<p><b>Les lettres de la définition.</b> I est l'ensemble des x où f est définie (souvent un intervalle), et ⇒ veut dire « si… alors… ». Le cours écrit lim<sub>x→x₀</sub> f(x) = ℓ, qui se lit « la limite de f(x) quand x tend vers x₀ vaut ℓ ».</p>
 <p><b>Exemple : f(x) = 2x, en x₀ = 1.</b> La limite est 2. La distance au résultat : |2x − 2| = 2 |x − 1|.</p>
 <ul><li>On me donne ε = 0,1. Si x est à moins de 0,05 de 1, alors 2 |x − 1| est plus petit que 0,1. Je réponds η = 0,05.</li><li>En général, je réponds η = ε/2.</li></ul>
 <p><b>En +∞</b>, on remplace « x proche de x₀ » par « x plus grand qu'un seuil α » : à partir du seuil α, f(x) est à moins de ε de ℓ.</p>
@@ -16262,6 +16277,7 @@ ana:{
 <ul><li>Pour x positif et très petit : 1/0,1 = 10, puis 1/0,001 = 1000. Les valeurs deviennent très grandes : f(x) tend vers +∞.</li><li>Pour x négatif et très petit : 1/(−0,1) = −10, puis 1/(−0,001) = −1000. Les valeurs deviennent très négatives : f(x) tend vers −∞.</li></ul>
 <p>Le comportement n'est pas le même à droite et à gauche de 0 : il faut pouvoir parler de chaque côté séparément.</p>
 <p><b>Les notations.</b> « x → 0, x &gt; 0 » veut dire que x s'approche de 0 en restant plus grand que 0 : c'est la limite à droite. « x → 0, x &lt; 0 » : la limite à gauche.</p>
+<p>Le cours dit « limite <b>épointée</b> à droite » : x s'approche de x₀ par la droite sans jamais être égal à x₀.</p>
 <p><b>Lire la définition d'une limite infinie.</b> « ∀A &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ f(x) &gt; A » : quelle que soit la barre A, il y a une distance η telle que, dès que x est à moins de η de x₀, f(x) est au-dessus de la barre.</p>
 <p>Avec 1/x à droite de 0 : on me donne A = 1000. Dès que x est entre 0 et 0,001, on a 1/x &gt; 1000. Je réponds η = 0,001.</p>
 <p><b>À retenir :</b> quand une fonction a une valeur interdite, on étudie toujours les deux côtés, et on peut trouver deux résultats différents.</p>`},
@@ -16270,7 +16286,7 @@ ana:{
 <p><b>Avec des limites qui sont des nombres.</b> Si uₙ tend vers 2 et vₙ tend vers 3 :</p>
 <ul><li>uₙ + vₙ tend vers 2 + 3 = 5 ;</li><li>uₙ × vₙ tend vers 2 × 3 = 6 ;</li><li>uₙ/vₙ tend vers 2/3 (à condition que la limite du dénominateur ne soit pas 0).</li></ul>
 <p><b>Avec l'infini</b>, il faut penser en ordres de grandeur :</p>
-<ul><li>« très grand + un nombre » reste très grand : n + 5 tend vers +∞ ;</li><li>« un nombre divisé par très grand » devient tout petit : 3/n tend vers 0 ;</li><li>« très grand × très grand » est très grand : n × n² tend vers +∞.</li></ul>
+<ul><li>« très grand + un nombre » reste très grand : n + 5 tend vers +∞ ;</li><li>« un nombre divisé par très grand » devient tout petit : 3/n tend vers 0 ;</li><li>« un nombre positif divisé par tout petit positif » devient très grand : le cours écrit 1/0⁺ = +∞, où 0⁺ veut dire « vers 0, en restant positif » ;</li><li>« très grand × très grand » est très grand : n × n² tend vers +∞.</li></ul>
 <p><b>Les quatre cas où on ne peut rien dire : les formes indéterminées.</b> Ce sont +∞ − ∞, 0 × ∞, ∞/∞ et 0/0.</p>
 <p>Pourquoi « indéterminées » ? Regarde trois différences du type « très grand moins très grand » :</p>
 <ul><li>n² − n tend vers +∞ ;</li><li>n − n² tend vers −∞ ;</li><li>(n + 1) − n vaut toujours 1.</li></ul>
@@ -16322,6 +16338,7 @@ ana:{
   "Suites extraites":`<p><b>Une suite extraite</b> (on dit aussi sous-suite), c'est ce qu'on obtient en ne gardant que <b>certains termes</b> d'une suite, sans changer leur ordre.</p>
 <p><b>Les deux qu'on utilise tout le temps :</b></p>
 <ul><li>les termes de rang pair, u₀, u₂, u₄… : on note cette suite (u₂ₙ) ;</li><li>les termes de rang impair, u₁, u₃, u₅… : on la note (u₂ₙ₊₁).</li></ul>
+<p><b>L'écriture du cours.</b> Les rangs gardés sont donnés par une fonction φ (la lettre grecque « phi »), toujours croissante : pour les termes pairs, φ(n) = 2n. La suite extraite s'écrit alors (u<sub>φ(n)</sub>).</p>
 <p><b>La règle.</b> Si la suite entière tend vers ℓ, alors toutes ses suites extraites tendent aussi vers ℓ : si tous les termes s'approchent de ℓ, une partie d'entre eux aussi.</p>
 <p><b>On s'en sert surtout à l'envers,</b> pour montrer qu'une suite <b>n'a pas de limite</b> : si deux suites extraites ont des limites différentes, la suite diverge.</p>
 <p><b>Exemple.</b> uₙ = (−1)ⁿ × n/(n + 1).</p>
