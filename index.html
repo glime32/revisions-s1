@@ -14377,7 +14377,7 @@ cut -d: -f1,5,6 /etc/passwd | sort -t: -k2`}<ol><li>${k`sort -r`} : ordre invers
  Q("ls -R | grep \"^2023\" à la place de find ?",["Accepté, mais un peu moins bon","Faux : grep ne peut pas lire la sortie de ls","Meilleur : plus court que find, donc plus de points"],0,"Le corrigé de janvier 2024 l'accepte comme « ligne de commande légèrement moins bonne »."),
  P("TD de Meynard, exercice 12, sur papier",`<p>L'action réalisé sur les fichiers sélectionnés est par défaut de les afficher mais on peut réaliser d'autres actions grâce à l'expression -exec suivie de l'action à réaliser puis d'un ${k`\;`}</p><ol><li>Recherchez tous les fichiers textes d'un de vos répertoires et listez leurs noms (print)</li><li>Recherchez tous les fichiers textes d'un de vos répertoires et listez leurs noms suivi de leur contenu</li><li>Comme la mise en page manque d'espace, refaites l'exercice précédent en ajoutant une ligne blanche entre chaque fichier et un soulignement du nom de fichier ...</li></ol><p>(Prends le répertoire ~/USI, et les fichiers dont le nom finit par .txt. Indice, qui n'est pas dans le TD : on peut écrire plusieurs -exec à la suite ; ${k`echo`} seul affiche une ligne vide.)</p>`,`${SH`find ~/USI -name "*.txt"
 find ~/USI -name "*.txt" -exec echo {} \; -exec cat {} \;
-find ~/USI -name "*.txt" -exec echo {} \; -exec echo "--------" \; -exec cat {} \; -exec echo \;`}<p>${k`{}`} est remplacé par chaque fichier trouvé ; ${k`\;`} termine chaque action. Pour chaque fichier : son nom, un soulignement, son contenu, puis une ligne vide.</p><p>(Corrigé écrit par moi, essayé sur deux fichiers.)</p>`,["Le départ ~/USI et le motif \"*.txt\" entre guillemets","-exec echo {} \; pour le nom, -exec cat {} \; pour le contenu","Chaque -exec fini par \;","Un echo seul pour la ligne blanche"],7),
+find ~/USI -name "*.txt" -exec echo {} \; -exec echo "--------" \; -exec cat {} \; -exec echo \;`}<p>${k`{}`} est remplacé par chaque fichier trouvé ; ${k`\;`} termine chaque action. Pour chaque fichier : son nom, un soulignement, son contenu, puis une ligne vide.</p><p>(Corrigé écrit par moi, essayé sur deux fichiers.)</p>`,["Le départ ~/USI et le motif \"*.txt\" entre guillemets","-exec echo {} \\; pour le nom, -exec cat {} \\; pour le contenu","Chaque -exec finit par \\;","Un echo seul pour la ligne blanche"],7),
  K("Quelles sont les trois parties d'une commande find ?","Le départ (~, ., .., /), les critères (-name \"*.py\", -type f ou d), l'action (-exec cmd {} \\;). Sans action : afficher.")]},
 
 /* ------------------------------------------------------------------ */
@@ -15368,12 +15368,13 @@ calc:{
  "c2-ed2":{
   "Les trois cas":`<p><b>Une équation d'ordre 2</b> fait intervenir $y″$, la dérivée de la dérivée : $y″ + ay′ + by = 0$, avec $a$ et $b$ des nombres.</p>
 <p><b>L'astuce :</b> on essaie $y = e^{rx}$. Alors $y′ = r e^{rx}$ et $y″ = r² e^{rx}$. En remplaçant : $e^{rx}(r² + ar + b) = 0$. Comme $e^{rx}$ n'est jamais nul, il faut $r² + ar + b = 0$ : c'est l'<b>équation caractéristique</b>.</p>
+<p>$Δ$ (« delta ») est le discriminant, comme pour les équations du second degré du lycée. Dans les solutions, $C_{1}$ et $C_{2}$ sont deux constantes, qui peuvent valoir n'importe quel réel.</p>
 <p><b>Trois cas, selon $Δ = a² − 4b$ :</b></p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Équation</th><th>Racines</th><th>Solutions</th></tr></thead><tbody>
 <tr><td>$y″ − 5y′ + 6y = 0$</td><td>$r² − 5r + 6 = (r − 2)(r − 3)$ : $2$ et $3$</td><td>$C_{1}e^{2x} + C_{2}e^{3x}$</td></tr>
 <tr><td>$y″ + 4y′ + 4y = 0$</td><td>$(r + 2)² = 0$ : $−2$, racine double</td><td>$(C_{1} + C_{2}x)e^{−2x}$</td></tr>
 <tr><td>$y″ + 2y′ + 5y = 0$</td><td>$Δ = −16$ : $−1 ± 2i$</td><td>$e^{−x}(C_{1}cos 2x + C_{2}sin 2x)$</td></tr></tbody></table></div>
-<p><b>Dans le troisième cas,</b> les racines s'écrivent $α ± iβ$ : $α = −1$ va dans l'exponentielle, $β = 2$ dans le cosinus et le sinus.</p>`,
+<p><b>Dans le troisième cas,</b> $Δ$ est négatif : il n'y a pas de racine réelle, et les racines sont des nombres complexes. $i$ est le nombre tel que $i² = −1$ (la leçon sur les complexes le présente en détail). Ces racines s'écrivent $α ± iβ$ : $α = −1$ va dans l'exponentielle, $β = 2$ dans le cosinus et le sinus.</p>`,
   "Deux conditions initiales":`<p><b>Il y a deux constantes</b> $C_{1}$ et $C_{2}$, donc il faut deux conditions pour les trouver : en général $y(0)$ et $y′(0)$.</p>
 <p><b>Exemple :</b> $y″ − 5y′ + 6y = 0$ avec $y(0) = 2$ et $y′(0) = 5$.</p>
 <ol><li>Les solutions : $y = C_{1}e^{2x} + C_{2}e^{3x}$.</li><li>On dérive <b>avant</b> de remplacer : $y′ = 2C_{1}e^{2x} + 3C_{2}e^{3x}$.</li><li>En $x = 0$ (avec $e⁰ = 1$) : $C_{1} + C_{2} = 2$ et $2C_{1} + 3C_{2} = 5$.</li><li>On résout : de la première, $C_{1} = 2 − C_{2}$ ; dans la seconde, $4 − 2C_{2} + 3C_{2} = 5$, donc $C_{2} = 1$ et $C_{1} = 1$.</li><li>Réponse : $y = e^{2x} + e^{3x}$.</li></ol>
@@ -15384,13 +15385,15 @@ calc:{
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Second membre</th><th>On essaie</th></tr></thead><tbody>
 <tr><td>une constante</td><td>une constante $c$</td></tr>
 <tr><td>un polynôme de degré $n$</td><td>un polynôme de degré $n$</td></tr>
-<tr><td>$e^{kx}$</td><td>$B e^{kx}$ ; $B x e^{kx}$ si $k$ est racine ; $B x² e^{kx}$ si racine double</td></tr>
+<tr><td>$e^{kx}$</td><td>$B e^{kx}$ ; $B x e^{kx}$ si $k$ est racine ; $B x² e^{kx}$ si racine double (racine de l'équation caractéristique, celle de la leçon d'avant).</td></tr>
 <tr><td>$cos(ωx)$ ou $sin(ωx)$</td><td>$α cos(ωx) + β sin(ωx)$</td></tr></tbody></table></div>
+<p>Dans la dernière ligne du tableau, $ω$ (« oméga ») est un nombre, comme le $2$ de $cos(2x)$.</p>
 <p><b>Exemple</b> avec $y″ − 5y′ + 6y$ (racines $2$ et $3$) :</p>
 <ul><li>second membre $12$ : on essaie $y = c$. Ses dérivées sont nulles, donc $6c = 12$ et $c = 2$ ;</li><li>second membre $e^{x}$ : $1$ n'est pas racine, on essaie $B e^{x}$. Comme $y′ = y″ = B e^{x}$ : $B − 5B + 6B = 2B = 1$, donc $B = 1/2$ ;</li><li>second membre $e^{2x}$ : $2$ est racine, il faut essayer $B x e^{2x}$.</li></ul>
 <p><b>Ensuite :</b> on remplace dans l'équation et on identifie les coefficients.</p>`},
  "c2-cx-alg":{
   "Calculer avec i":`<p><b>Un nombre complexe</b> s'écrit $z = a + ib$, où $a$ et $b$ sont des réels, et où $i$ est un nombre tel que $i² = −1$. $a$ est la partie réelle, $b$ la partie imaginaire.</p>
+<p><b>Deux mots du tableau.</b> Le <b>conjugué</b> de $z = a + ib$ est $a − ib$ : on change le signe devant $i$ ; le cours le note $z̄$. Le <b>module</b> de $z$, noté $|z|$, vaut $√(a² + b²)$ : c'est la distance entre l'origine et le point $(a, b)$.</p>
 <p><b>On calcule comme d'habitude, et on remplace $i²$ par $−1$ :</b></p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Calcul</th><th>Résultat</th></tr></thead><tbody>
 <tr><td>$(3 + 2i) + (1 − i)$</td><td>$4 + i$</td></tr>
@@ -15402,6 +15405,7 @@ calc:{
 <p>$(1 + 3i)/(1 − i) = (1 + 3i)(1 + i)/((1 − i)(1 + i)) = (1 + 4i + 3i²)/2 = (−2 + 4i)/2 = −1 + 2i$.</p>`},
  "c2-cx-exp":{
   "La forme exponentielle":`<p><b>Un complexe est un point du plan.</b> Au lieu de donner ses coordonnées $(a, b)$, on peut donner sa distance à l'origine $r$ (le <b>module</b>) et l'angle $θ$ qu'il fait avec l'axe horizontal (l'<b>argument</b>). On écrit $z = r e^{iθ}$.</p>
+<p><b>Ce que veut dire $e^{iθ}$.</b> C'est une notation : $e^{iθ} = cos θ + i sin θ$, le point du cercle de rayon $1$ qui fait l'angle $θ$ (« thêta »). Donc $z = r e^{iθ}$ veut dire $z = r(cos θ + i sin θ)$. Par exemple $e^{iπ/2} = cos(π/2) + i sin(π/2) = i$.</p>
 <p><b>La méthode :</b> $r = √(a² + b²)$, puis on cherche l'angle dont le cosinus vaut $a/r$ et le sinus $b/r$.</p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>$z$</th><th>$r$</th><th>$cos θ$, $sin θ$</th><th>Forme exponentielle</th></tr></thead><tbody>
 <tr><td>$1 + i$</td><td>$√2$</td><td>$√2/2$, $√2/2$</td><td>$√2 e^{iπ/4}$</td></tr>
@@ -15431,7 +15435,8 @@ calc:{
 <ol><li>$x² − y² = 3$ et $x² + y² = 5$. En additionnant : $2x² = 8$, donc $x² = 4$. En soustrayant : $2y² = 2$, donc $y² = 1$.</li><li>$2xy = 4$ est positif : $x$ et $y$ ont le même signe.</li><li>Donc $δ = 2 + i$ ou $δ = −2 − i$.</li></ol>
 <p><b>Vérification :</b> $(2 + i)² = 4 + 4i + i² = 3 + 4i$.</p>
 <p><b>Il y a toujours deux racines carrées, opposées.</b> Pour un réel négatif c'est direct : les racines de $−9$ sont $3i$ et $−3i$.</p>`,
-  "Équation du second degré dans ℂ":`<p><b>Dans ℂ, toute équation $az² + bz + c = 0$ a des solutions,</b> même quand $Δ$ est négatif.</p>
+  "Équation du second degré dans ℂ":`<p>ℂ est l'ensemble des nombres complexes, comme ℝ est celui des réels.</p>
+<p><b>Dans ℂ, toute équation $az² + bz + c = 0$ a des solutions,</b> même quand $Δ$ est négatif.</p>
 <p><b>La méthode :</b> on calcule $Δ = b² − 4ac$, on cherche $δ$ tel que $δ² = Δ$, puis $z = (−b ± δ)/(2a)$.</p>
 <p><b>Exemple :</b> $z² − 2z + 5 = 0$.</p>
 <ol><li>$Δ = 4 − 20 = −16$.</li><li>$δ = 4i$, car $(4i)² = −16$.</li><li>$z = (2 ± 4i)/2$, donc $z = 1 + 2i$ ou $z = 1 − 2i$.</li></ol>
@@ -15439,7 +15444,7 @@ calc:{
 <p><b>Si $Δ$ est un complexe,</b> on cherche $δ$ avec la méthode de l'écran précédent.</p>`},
  "c2-cx-racn":{
   "La méthode":`<p><b>On cherche les $z$ tels que $zⁿ = w$.</b> On passe en forme exponentielle : $w = R e^{iφ}$ et $z = r e^{iθ}$. Alors $zⁿ = rⁿ e^{inθ}$.</p>
-<ul><li>les modules : $rⁿ = R$, donc $r$ est la racine $n$-ième de $R$ ;</li><li>les arguments : $nθ = φ + 2kπ$, donc $θ = (φ + 2kπ)/n$, pour $k = 0, 1, …, n − 1$.</li></ul>
+<ul><li>les modules : $rⁿ = R$, donc $r$ est la racine $n$-ième de $R$, le nombre positif dont la puissance $n$ vaut $R$ (pour $R = 16$ et $n = 4$ : $r = 2$, car $2⁴ = 16$) ;</li><li>les arguments : $nθ = φ + 2kπ$, donc $θ = (φ + 2kπ)/n$, pour $k = 0, 1, …, n − 1$.</li></ul>
 <p><b>Il y a exactement $n$ solutions</b>, réparties régulièrement sur un cercle.</p>
 <p><b>Exemple :</b> $z⁴ = 16$. $16 = 16 e^{i0}$, donc $r = 2$ et $θ = kπ/2$ : les solutions sont $2$, $2i$, $−2$ et $−2i$. Vérification : $(2i)⁴ = 16 i⁴ = 16$.</p>
 <p><b>Exemple :</b> $z³ = 8i = 8e^{iπ/2}$. $r = 2$ et $θ = π/6 + 2kπ/3$ : $2e^{iπ/6}$, $2e^{i5π/6}$ et $2e^{−iπ/2} = −2i$. Vérification : $(−2i)³ = −8i³ = 8i$.</p>`}},
@@ -15596,6 +15601,7 @@ ${C(`let signe n = match n with
   | 0 -> "nul"
   | n when n > 0 -> "positif"
   | _ -> "négatif"`)}
+<p><b>L'écriture let signe n = …</b> est une façon plus courte d'écrire let signe = function n -> … : le paramètre n est écrit juste après le nom de la fonction.</p>
 <ul><li>signe 0 : le premier motif, 0, correspond : "nul".</li><li>signe 5 : 0 ne correspond pas ; le deuxième, avec la condition when n &gt; 0, oui : "positif".</li><li>signe (-3) : seul le dernier, _, correspond. _ attrape tout : "négatif".</li></ul>
 <p><b>Sur une liste,</b> le motif x :: r donne un nom à la tête et à la queue. Pour [4; 7] : x = 4 et r = [7].</p>
 <p><b>L'ordre compte :</b> si _ était écrit en premier, il attraperait tout, et les autres cas ne serviraient jamais.</p>`},
@@ -15624,7 +15630,8 @@ ${C(`let rec dernier = function
   | [] -> failwith "vide"
   | [x] -> x
   | _ :: tl -> dernier tl`)}
-<p>dernier [4; 8; 2] : ni vide ni un seul élément, donc dernier [8; 2], puis dernier [2], qui correspond à [x] : 2.</p>`},
+<p>dernier [4; 8; 2] : ni vide ni un seul élément, donc dernier [8; 2], puis dernier [2], qui correspond à [x] : 2.</p>
+<p>failwith "vide" arrête le calcul avec le message « vide » : il n'y a pas de dernier élément dans une liste vide. La leçon sur les exceptions y revient.</p>`},
  "p2-curry":{
   "Curryfiée ou pas":`<p><b>Deux façons d'écrire une fonction à deux paramètres :</b></p>
 ${C(`let aire l h = l * h          (* int -> int -> int *)
@@ -15639,10 +15646,10 @@ triple 5                 (* 15 *)`)}
 <p><b>fun fabrique une fonction sans lui donner de nom :</b></p>
 ${C(`(fun x -> x * x) 4                  (* 16 *)
 List.map (fun x -> x * x) [1; 2; 3]  (* [1; 4; 9] *)`)}
-<p>C'est pratique pour passer une petite fonction à une autre, comme ici à List.map.</p>
+<p>C'est pratique pour passer une petite fonction à une autre, comme ici à List.map, qui applique la fonction à chaque élément de la liste (la leçon sur les itérateurs la détaille).</p>
 <p><b>Les deux écritures sont les mêmes :</b> let f x y = … et let f = fun x y -> ….</p>`},
  "p2-poly":{
-  "Les 'a":`<p><b>'a se lit « alpha »</b> et veut dire « n'importe quel type ». OCaml l'écrit quand rien n'oblige une valeur à être d'un type précis : la fonction marche alors pour tous les types.</p>
+  "Les 'a":`<p><b>'a se lit « alpha »</b> et veut dire « n'importe quel type ». OCaml l'écrit quand rien n'oblige une valeur à être d'un type précis : la fonction marche alors pour tous les types. S'il faut un deuxième type quelconque, peut-être différent du premier, OCaml écrit 'b (« bêta »), puis 'c…</p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Fonction</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
 <tr><td>let premier (a, b) = a</td><td>'a * 'b -> 'a</td><td>a et b peuvent être de types différents ; on rend a</td></tr>
 <tr><td>let double l = l @ l</td><td>'a list -> 'a list</td><td>@ colle deux listes, sans regarder leurs éléments</td></tr>
@@ -16452,7 +16459,7 @@ FIN`)}
 <ul><li><b>Le bas de l'échelle (n = 0).</b> L'algorithme renvoie 1. Et 0! = 1. D'accord.</li><li><b>Un barreau de plus.</b> Je suppose que F2(n − 1) renvoie bien (n − 1)!. L'algorithme calcule n × F2(n − 1), donc n × (n − 1)!. Or multiplier (n − 1)! par n donne n! : par exemple 5 × 4! = 5 × 24 = 120 = 5!. Donc F2(n) = n!.</li></ul>
 <p>Si on tient le bas de l'échelle, et si on sait toujours monter d'un barreau, on atteint tous les barreaux : c'est vrai pour tout n.</p>
 <p><b>Les trois choses que le correcteur cherche sur la copie :</b></p>
-<ol><li>l'équation de récurrence, lue sur l'algorithme ;</li><li>l'hypothèse au rang n − 1, écrite en toutes lettres ;</li><li>le calcul qui combine les deux, et la phrase « donc Inv<sub>n</sub> est vrai ».</li></ol>`,
+<ol><li>l'équation de récurrence, lue sur l'algorithme ;</li><li>l'hypothèse au rang n − 1, écrite en toutes lettres ;</li><li>le calcul qui combine les deux, et la phrase « donc Inv<sub>n</sub> est vrai ». Inv<sub>n</sub> est le nom que le cours donne à l'invariant au rang n, ici la phrase « F2(n) = n! ».</li></ol>`,
   "Prouver aussi que l'algorithme se termine":`<p><b>Pourquoi un algorithme récursif pourrait ne jamais finir.</b> Il s'appelle lui-même. Si les appels ne se rapprochent pas du cas de base, ils s'enchaînent sans fin. Exemple : une fonction qui, pour n, appelle n + 1. En partant de 3, elle appelle 4, puis 5, puis 6… Elle n'arrive jamais à 0.</p>
 <p><b>Ce qu'il faut vérifier :</b> chaque appel se fait avec une entrée <b>plus petite</b>, et on finit par tomber sur le cas de base.</p>
 <p><b>Comment l'écrire.</b> On prouve les deux choses dans la même récurrence. La propriété devient : « l'appel avec n <b>se termine</b> et renvoie le bon résultat ».</p>
@@ -16741,6 +16748,7 @@ SPÉCIFICATIONS : Calcule 3 puissance n, avec n ∈ ℕ
 DÉBUT
     Renvoyer cond(n = 0, 1, 3 * p3(n-1))
 FIN`)}
+<p>Dans les SPÉCIFICATIONS, « n ∈ ℕ » veut dire « n est un entier naturel » : 0, 1, 2, 3…</p>
 <p><b>Je déroule p3(3)</b> : chaque appel attend la réponse de celui du dessous.</p>
 <ul><li>p3(3) = 3 × p3(2)</li><li>p3(2) = 3 × p3(1)</li><li>p3(1) = 3 × p3(0)</li><li>p3(0) = 1 : le cas de base, on s'arrête de descendre.</li></ul>
 <p>Puis on remonte : p3(1) = 3, p3(2) = 9, p3(3) = 27. Et 3³ = 27.</p>
@@ -16840,7 +16848,7 @@ ${PS(`   *
 <p><b>Étape 1 : un tableau, ligne par ligne.</b></p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>ligne i</th><th>espaces</th><th>étoiles</th></tr></thead><tbody><tr><td>1</td><td>3</td><td>1</td></tr><tr><td>2</td><td>2</td><td>2</td></tr><tr><td>3</td><td>1</td><td>3</td></tr><tr><td>4</td><td>0</td><td>4</td></tr></tbody></table></div>
 <p><b>Étape 2 : trouver la règle.</b> Les étoiles : autant que le numéro de la ligne, donc i. Les espaces : ce qui manque pour arriver à 4, donc n − i. Sur chaque ligne, espaces + étoiles = n.</p>
-<p><b>Étape 3 : traduire.</b> Une boucle sur les lignes ; dedans, une petite boucle par morceau, puis le retour à la ligne.</p>
+<p><b>Étape 3 : traduire.</b> Une boucle sur les lignes ; dedans, une petite boucle par morceau, puis le retour à la ligne. Le TD 1 donne trois procédures toutes faites : affEtoile() affiche une étoile, affEspace() affiche un espace, et affRL() passe à la ligne.</p>
 ${PS(`PROCÉDURE : triangleDroit (E n : entier)
 DÉBUT
     pour i de 1 à n faire
@@ -16913,6 +16921,7 @@ rai:{
 <tr><td>P ou Q</td><td>« P ou Q »</td><td>au moins une est vraie (les deux, ça compte aussi)</td></tr>
 <tr><td>P ⇒ Q</td><td>« si P, alors Q »</td><td>toujours, <b>sauf</b> si P est vraie et Q fausse</td></tr>
 <tr><td>P ⇔ Q</td><td>« P si et seulement si Q »</td><td>P et Q ont la même valeur</td></tr></tbody></table></div>
+<p>Le cours écrit aussi ces mots avec des symboles : ¬P pour « non P », P ∧ Q pour « P et Q », P ∨ Q pour « P ou Q ». Dans les tables de vérité, V veut dire vrai et F faux.</p>
 <p><b>Exemples avec des nombres :</b></p>
 <ul><li>« $3 &gt; 1$ et $2 = 5$ » : fausse, car la deuxième est fausse.</li><li>« $3 &gt; 1$ ou $2 = 5$ » : vraie, car la première suffit.</li><li>« si $3 &gt; 1$, alors $2 = 5$ » : fausse. On part de vrai et on arrive à faux.</li><li>« si $2 = 5$, alors $3 &gt; 1$ » : vraie. Quand le « si » est faux, l'implication est toujours vraie.</li></ul>
 <p><b>Le point qui surprend :</b> « P ⇒ Q » ne dit rien quand P est fausse. Une promesse « si tu as 20, je t'invite » n'est pas trahie si tu n'as pas 20.</p>`,
@@ -16925,6 +16934,7 @@ rai:{
  "r-quantif":{
   "Traduire avec ∀ et ∃":`<p><b>Deux symboles :</b></p>
 <ul><li><b>$∀$</b> se lit « pour tout » : la propriété doit marcher pour chaque élément.</li><li><b>$∃$</b> se lit « il existe » : il suffit d'un élément qui marche.</li></ul>
+<p><b>Les autres signes.</b> $∈$ se lit « appartient à » : $x ∈ ℝ$ veut dire « $x$ est un réel ». ℕ désigne les entiers naturels (0, 1, 2…), ℤ les entiers relatifs (…, −1, 0, 1…), ℚ les fractions, et ℝ tous les réels.</p>
 <p><b>Traduire une phrase en symboles :</b></p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Phrase</th><th>En symboles</th></tr></thead><tbody>
 <tr><td>Tout réel au carré est positif.</td><td>$∀x ∈ ℝ, x² ≥ 0$</td></tr>
@@ -16958,7 +16968,7 @@ rai:{
 <tr><td>réciproque</td><td>Q ⇒ P</td><td><b>non</b>, pas forcément</td></tr></tbody></table></div>
 <p><b>Exemple :</b> « si un nombre est un multiple de 4, alors il est pair ».</p>
 <ul><li>contraposée : « s'il n'est pas pair, alors ce n'est pas un multiple de 4 ». Vraie aussi ;</li><li>réciproque : « s'il est pair, alors c'est un multiple de 4 ». Fausse : 6 est pair mais pas multiple de 4.</li></ul>
-<p><b>À quoi sert la contraposée :</b> parfois « non Q » donne une information plus facile à utiliser. Pour montrer « si $n²$ est pair, alors $n$ est pair », on montre plutôt « si $n$ est impair, alors $n²$ est impair » : $n = 2k + 1$ donne $n² = 4k² + 4k + 1 = 2(2k² + 2k) + 1$, impair.</p>`,
+<p><b>À quoi sert la contraposée :</b> parfois « non Q » donne une information plus facile à utiliser. Pour montrer « si $n²$ est pair, alors $n$ est pair », on montre plutôt « si $n$ est impair, alors $n²$ est impair » : $n = 2k + 1$, avec $k$ entier, donne $n² = 4k² + 4k + 1 = 2(2k² + 2k) + 1$, impair.</p>`,
   "Par l'absurde et par disjonction de cas":`<p><b>Par l'absurde :</b> on suppose le contraire de ce qu'on veut montrer, et on tombe sur quelque chose d'impossible. Donc le contraire était faux : ce qu'on voulait est vrai.</p>
 <p><b>Exemple :</b> « il n'y a pas de plus grand entier ». Supposons qu'il y en ait un, $N$. Alors $N + 1$ est un entier, et $N + 1 &gt; N$ : $N$ n'était pas le plus grand. Contradiction.</p>
 <p><b>La première ligne est importante :</b> on écrit exactement la négation de ce qu'on veut montrer. Pour « $∀x$, P(x) ⇒ Q(x) », le contraire est « il existe $x$ tel que P(x) et non Q(x) ».</p>
@@ -16981,6 +16991,7 @@ rai:{
 <tr><td>en listant (extension)</td><td>$\{1, 3, 5\}$</td><td>trois éléments : 1, 3 et 5</td></tr>
 <tr><td>par une propriété (compréhension)</td><td>$\{x ∈ ℝ | x² = 4\}$</td><td>les réels dont le carré vaut 4 : $\{−2, 2\}$</td></tr>
 <tr><td>avec un paramètre</td><td>$\{3k | k ∈ ℤ\}$</td><td>les multiples de 3 : …, −3, 0, 3, 6, …</td></tr></tbody></table></div>
+<p>Dans $\{x ∈ ℝ | x² = 4\}$, la barre « | » se lit « tel que » : « l'ensemble des réels $x$ tels que $x² = 4$ ».</p>
 <p><b>Deux symboles à ne pas mélanger :</b></p>
 <ul><li><b>$∈$</b> « appartient à » : entre un <b>élément</b> et un ensemble. $3 ∈ \{1, 3, 5\}$.</li><li><b>$⊂$</b> « est inclus dans » : entre deux <b>ensembles</b>. $\{1, 3\} ⊂ \{1, 3, 5\}$ : tous les éléments du premier sont dans le second.</li></ul>
 <p><b>Deux ensembles sont égaux</b> quand chacun est inclus dans l'autre : on le montre en deux temps (double inclusion).</p>`,
@@ -16997,6 +17008,7 @@ rai:{
 <tr><td>$A ∩ B$</td><td>A inter B</td><td>ce qui est dans A <b>et</b> dans B</td><td>$\{3, 4\}$</td></tr>
 <tr><td>$A ∖ B$</td><td>A privé de B</td><td>ce qui est dans A <b>mais pas</b> dans B</td><td>$\{1, 2\}$</td></tr></tbody></table></div>
 <p><b>Le complémentaire</b> de $A$ dans un ensemble $E$ qui le contient : tout ce qui est dans $E$ mais pas dans $A$. Avec $E = \{1, …, 6\}$, le complémentaire de $A$ est $\{5, 6\}$.</p>
+<p>Le cours note $Ā$ (A avec une barre) le complémentaire de $A$, et $x ∉ B$ veut dire « $x$ n'appartient pas à $B$ ».</p>
 <p><b>De Morgan, version ensembles :</b> le complémentaire d'une union est l'intersection des complémentaires, et inversement. C'est la même règle que pour « non(P ou Q) ».</p>
 <p><b>Avec des intervalles,</b> on dessine une droite et on colorie : c'est le plus sûr.</p>`,
   "Prouver une égalité d'ensembles":`<p><b>Pour montrer que deux ensembles sont égaux, deux méthodes.</b></p>
@@ -17010,7 +17022,7 @@ rai:{
   "Les définitions":`<p><b>Une application</b> $f : E → F$ associe à chaque élément $x$ de $E$ un seul élément $f(x)$ de $F$.</p>
 <p><b>Deux ensembles à savoir calculer.</b> On prend $f(x) = x + 1$, de $ℤ$ dans $ℤ$.</p>
 <ul><li><b>L'image directe</b> $f(A)$ : on applique $f$ à tous les éléments de $A$. Avec $A = \{0, 1, 2\}$ : $f(A) = \{1, 2, 3\}$.</li><li><b>L'image réciproque</b> $f⁻¹(B)$ : les $x$ dont l'image tombe dans $B$. Avec $B = \{5, 10\}$ : on résout $x + 1 = 5$ et $x + 1 = 10$, donc $f⁻¹(B) = \{4, 9\}$.</li></ul>
-<p><b>Le piège de la notation :</b> $f⁻¹(B)$ existe <b>toujours</b>, même si $f$ n'a pas de réciproque. Exemple avec $f(x) = x²$ : $f⁻¹(\{9\}) = \{−3, 3\}$, deux antécédents. Et $f⁻¹(\{−1\}) = ∅$ : aucun réel n'a pour carré $−1$.</p>
+<p><b>Le piège de la notation :</b> $f⁻¹(B)$ existe <b>toujours</b>, même si $f$ n'a pas de réciproque. Exemple avec $f(x) = x²$ : $f⁻¹(\{9\}) = \{−3, 3\}$, deux antécédents (un antécédent de $y$, c'est un $x$ tel que $f(x) = y$). Et $f⁻¹(\{−1\}) = ∅$ : aucun réel n'a pour carré $−1$.</p>
 <p><b>Pour s'y retrouver :</b> $f(A)$ est dans l'ensemble d'arrivée, $f⁻¹(B)$ dans l'ensemble de départ.</p>`},
  "r-injective":{
   "Les trois définitions":`<p><b>On regarde combien de flèches arrivent sur chaque élément de l'ensemble d'arrivée.</b></p>
@@ -17048,7 +17060,8 @@ geo:{
 <tr><td>rapport $3$</td><td>$(3, 6)$</td><td>3 fois plus loin, du même côté</td></tr>
 <tr><td>rapport $1/2$</td><td>$(1/2, 1)$</td><td>deux fois plus près</td></tr>
 <tr><td>rapport $−1$</td><td>$(−1, −2)$</td><td>de l'autre côté de $O$ : c'est la symétrie de centre $O$</td></tr></tbody></table></div>
-<p><b>Ce qu'elles conservent :</b> une translation garde les distances ; une homothétie de rapport $λ$ multiplie toutes les distances par $|λ|$ (rapport $−2$ : distances fois $2$). Les deux envoient une droite sur une droite <b>parallèle</b>, et gardent les angles.</p>`},
+<p><b>Ce qu'elles conservent :</b> une translation garde les distances ; une homothétie de rapport $λ$ multiplie toutes les distances par $|λ|$, c'est-à-dire $λ$ sans son signe (rapport $−2$ : distances fois $2$). Les deux envoient une droite sur une droite <b>parallèle</b>, et gardent les angles.</p>
+<p>Le cours note $t(M)$ l'image de $M$ par la translation $t$, et $h(M)$ son image par l'homothétie $h$ : c'est le point $M′$.</p>`},
  "g2-pythagore":{
   "Le théorème":`<p><b>Le théorème de Pythagore</b> dit deux choses à la fois, une dans chaque sens :</p>
 <ul><li><b>sens direct :</b> si $ABC$ est rectangle en $A$, alors $BC² = AB² + AC²$ ;</li><li><b>réciproque :</b> si $BC² = AB² + AC²$, alors $ABC$ est rectangle en $A$.</li></ul>
@@ -17067,7 +17080,8 @@ geo:{
 <div style="overflow-x:auto"><table class="tbl"><tbody>
 <tr><td>$cos B̂$</td><td>$12/13$</td></tr><tr><td>$sin B̂$</td><td>$5/13$</td></tr><tr><td>$tan B̂$</td><td>$5/12$</td></tr></tbody></table></div>
 <p><b>Pourquoi ça ne dépend que de l'angle :</b> deux triangles rectangles qui ont le même angle aigu sont semblables (l'un est un agrandissement de l'autre), donc leurs rapports de côtés sont les mêmes.</p>`,
-  "Valeurs et symétries":`<p><b>Les valeurs à connaître par cœur :</b></p>
+  "Valeurs et symétries":`<p><b>Les angles sont en radians.</b> $π$ radians, c'est un demi-tour, $180°$. Donc $π/6 = 30°$, $π/4 = 45°$, $π/3 = 60°$ et $π/2 = 90°$ (l'angle droit).</p>
+<p><b>Les valeurs à connaître par cœur :</b></p>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>$x$</th><th>$0$</th><th>$π/6$</th><th>$π/4$</th><th>$π/3$</th><th>$π/2$</th></tr></thead><tbody>
 <tr><td>$cos x$</td><td>$1$</td><td>$√3/2$</td><td>$√2/2$</td><td>$1/2$</td><td>$0$</td></tr>
 <tr><td>$sin x$</td><td>$0$</td><td>$1/2$</td><td>$√2/2$</td><td>$√3/2$</td><td>$1$</td></tr></tbody></table></div>
@@ -17079,6 +17093,7 @@ geo:{
  "g2-aire-alkashi":{
   "Le théorème de l'aire":`<p><b>La formule :</b> l'aire d'un triangle vaut la moitié du produit de deux côtés, multiplié par le sinus de l'angle entre ces deux côtés.</p>
 <p>Aire $= ½ × b × c × sin Â$, où $b$ et $c$ sont les deux côtés qui partent de $A$.</p>
+<p><b>Les noms du cours.</b> $Â$ est l'angle au sommet $A$ (de même $B̂$ et $Ĉ$). Chaque côté porte le nom du sommet d'en face, en minuscule : $a = BC$ (en face de $A$), $b = AC$ et $c = AB$.</p>
 <p><b>Exemple :</b> deux côtés de longueurs $6$ et $4$, qui font un angle de $π/6$. Aire $= ½ × 6 × 4 × sin(π/6) = ½ × 6 × 4 × ½ = 6$.</p>
 <p><b>D'où vient la formule :</b> l'aire, c'est base × hauteur / 2. Si on prend $AB = c$ comme base, la hauteur issue de $C$ vaut $b × sin Â$ (dans le petit triangle rectangle, sin = opposé / hypoténuse). Donc Aire $= c × b sin Â / 2$.</p>
 <p><b>Au CC 2025, cette démonstration valait 2 points</b> : la leçon la déroule étape par étape.</p>`,
@@ -17095,6 +17110,7 @@ geo:{
 <p><b>Ce qu'elle conserve :</b> les distances et les angles. Une droite devient une droite, qui fait avec la première un angle égal à $|α|$. Pour un quart de tour, la droite et son image sont donc perpendiculaires.</p>
 <p><b>Cas particulier :</b> la rotation d'angle $π$ (un demi-tour) est la symétrie de centre $Z$. Avec $Z = O$ : $(x, y)$ devient $(−x, −y)$.</p>`,
   "Produit scalaire":`<p><b>Le produit scalaire</b> de deux vecteurs est un <b>nombre</b> qui mesure à quel point ils vont dans la même direction.</p>
+<p><b>Les notations.</b> $⟨u, v⟩$ est le produit scalaire de $u$ et $v$. $‖u‖$ est la longueur du vecteur $u$ (on dit aussi sa norme). Un repère <b>orthonormé</b> a deux axes perpendiculaires, avec la même unité sur les deux.</p>
 <p><b>Deux façons de le calculer :</b></p>
 <ul><li>avec les longueurs et l'angle : $⟨u, v⟩ = ‖u‖ × ‖v‖ × cos(angle)$ ;</li><li>avec les coordonnées, dans un repère orthonormé : $⟨(x, y), (x′, y′)⟩ = xx′ + yy′$.</li></ul>
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>$u$</th><th>$v$</th><th>$⟨u, v⟩$</th><th>Ce que ça dit</th></tr></thead><tbody>
@@ -17109,7 +17125,7 @@ geo:{
 <tr><td>$d &gt; r$</td><td>$d = 6$</td><td>aucun : la droite passe à côté</td></tr>
 <tr><td>$d = r$</td><td>$d = 4$</td><td>un seul : la droite est <b>tangente</b></td></tr>
 <tr><td>$d &lt; r$</td><td>$d = 2$</td><td>deux : la droite coupe le cercle</td></tr></tbody></table></div>
-<p><b>La distance $d$</b> se mesure avec le projeté orthogonal $M$ du centre $O$ sur la droite : $d = OM$.</p>
+<p><b>La distance $d$</b> se mesure avec le projeté orthogonal $M$ du centre $O$ sur la droite : $M$ est le point de la droite où arrive la perpendiculaire à la droite qui passe par $O$. Alors $d = OM$.</p>
 <p><b>Dans le troisième cas,</b> $M$ est le milieu des deux points d'intersection $A$ et $B$. Par Pythagore dans le triangle $OMA$ : $MA² = r² − d² = 16 − 4 = 12$, donc $MA = √12 = 2√3$.</p>
 <p><b>Pourquoi ça marche :</b> pour tout point $X$ de la droite, $OX² = OM² + XM² ≥ OM²$. Le point de la droite le plus proche du centre est $M$.</p>`,
   "Les tangentes depuis un point extérieur":`<p><b>D'un point $M$ à l'extérieur du cercle,</b> on peut tracer exactement deux tangentes. Elles touchent le cercle en deux points $T$ et $T′$.</p>
@@ -17336,6 +17352,7 @@ usi:{
 <tr><td>noyau</td><td>le seul qui parle au matériel</td><td>fork, open (man 2)</td></tr>
 <tr><td>matériel</td><td>la machine</td><td>processeur, disque</td></tr></tbody></table></div>
 <p><b>Un appel noyau</b> (ou appel système), c'est une application qui demande un service au noyau : « ouvre ce fichier », « crée un processus ».</p>
+<p><b>Les « man 3 » et « man 2 » du tableau :</b> man affiche le manuel d'une commande ou d'une fonction. Il est rangé en sections numérotées : 1 pour les commandes (man ls), 2 pour les appels noyau (man 2 open), 3 pour les fonctions des bibliothèques (man 3 printf). Le numéro sert quand un nom existe dans deux sections : man printf montre la commande printf, man 3 printf la fonction du C.</p>
 <p><b>Le terminal</b> fait tourner un interpréteur de commandes, bash : tu tapes une commande, il l'exécute. Tout le cours se fait comme ça.</p>`},
  "u-chemins":{
   "Un seul arbre":`<p><b>Sous Unix, tous les fichiers sont rangés dans un seul arbre.</b> En haut, la racine, notée /. Dedans, des dossiers, qui contiennent d'autres dossiers et des fichiers.</p>
@@ -17441,7 +17458,7 @@ chmod go-w notes.txt     # enlève w au groupe et aux autres`,"sh")}`,
 <tr><td>bloqué</td><td>il attend autre chose</td><td>une frappe au clavier, une lecture sur le disque</td></tr></tbody></table></div>
 <p><b>L'ordonnanceur</b> choisit, parmi les processus prêts, celui qui devient actif. Un processus bloqué ne peut pas devenir actif directement : il redevient d'abord prêt.</p>`,
   "fork, exec, wait":`<p><b>Ce qui se passe quand tu tapes ls dans bash :</b></p>
-<ol><li><b>fork</b> : bash se clone. Il y a maintenant deux bash identiques, le parent et l'enfant. fork renvoie le PID de l'enfant au parent, et 0 à l'enfant : c'est comme ça qu'ils savent qui est qui.</li><li><b>exec</b> : l'enfant remplace son propre code par celui de ls. Il devient ls, en gardant le même terminal.</li><li><b>wait</b> : le parent (bash) attend que l'enfant ait fini, récupère son code de retour, puis réaffiche l'invite.</li></ol>
+<ol><li><b>fork</b> : bash se clone. Il y a maintenant deux bash identiques, le parent et l'enfant. fork renvoie le PID de l'enfant au parent, et 0 à l'enfant : c'est comme ça qu'ils savent qui est qui.</li><li><b>exec</b> : l'enfant remplace son propre code par celui de ls. Il devient ls, en gardant le même terminal.</li><li><b>wait</b> : le parent (bash) attend que l'enfant ait fini, récupère son code de retour (le nombre que tout programme renvoie en finissant : 0 si tout s'est bien passé, un autre nombre sinon ; bash le garde dans $?), puis réaffiche l'invite.</li></ol>
 <p><b>Avec ls &amp;</b> (arrière-plan), bash n'attend pas : il rend la main tout de suite.</p>
 <p><b>Les commandes internes</b> comme cd ou echo sont faites par bash lui-même, sans fork : cd doit changer le dossier de bash, pas celui d'un enfant.</p>`,
   "Premier plan, arrière-plan, arrêter":`<p><b>Les commandes pour gérer les processus :</b></p>
@@ -17484,7 +17501,7 @@ cut -d: -f1 /etc/passwd            # le 1er champ de chaque ligne, séparé par 
   "La forme de find":`<p><b>find cherche des fichiers</b> dans un dossier et tous ses sous-dossiers. Sa forme : où chercher, quoi chercher, quoi faire.</p>
 ${W.code(`find . -name "*.pdf"               # tous les .pdf sous le dossier courant
 find ~ -type d -name "tp*"          # les dossiers dont le nom commence par tp
-find . -name "*.tmp" -exec rm {} \;  # supprime chaque .tmp trouvé`,"sh")}
+find . -name "*.tmp" -exec rm {} \\;  # supprime chaque .tmp trouvé`,"sh")}
 <ul><li>le départ : . (ici), ~ (ton dossier), / (tout le disque) ;</li><li>-name "motif" : le nom, avec * (n'importe quoi) et ? (un caractère) ;</li><li>-type f : seulement les fichiers ; -type d : seulement les dossiers ;</li><li>-exec … {} \; : une commande pour chaque fichier trouvé ; {} est remplacé par son nom.</li></ul>
 <p><b>Attention :</b> le motif de -name s'écrit comme dans bash (*.pdf), pas comme une expression régulière.</p>`},
  "u-regex":{
@@ -17668,8 +17685,20 @@ int main(void) {
     return 0;
 }`,"c")}
 <p><b>Pour modifier une variable de l'appelant,</b> on donne son <b>adresse</b> (un pointeur) : la fonction sait alors où elle est rangée. Un tableau est toujours passé par son adresse : une fonction peut donc modifier ses cases.</p>
+<p><b>Un pointeur</b> est une variable qui contient une adresse. Trois écritures :</p>
+<ul><li>int *p déclare p comme un pointeur vers un int ;</li><li>&amp;n est l'adresse de n ;</li><li>*p est la case rangée à l'adresse p : on peut la lire et la changer.</li></ul>
+${W.code(`void ajoute_un(int *p) {
+    *p = *p + 1;        /* change la case de l'appelant */
+}
+int main(void) {
+    int n = 5;
+    ajoute_un(&n);
+    /* n vaut 6 */
+    return 0;
+}`,"c")}
+<p><b>Dans l'exemple du cours,</b> s et t sont des adresses. s[0]='M' et t[0]=0.0 écrivent dans les vraies cases de ch et de compl : ch devient "Monjour" et compl[0] vaut 0.0. En revanche i=i+1, s=NULL et t++ ne changent que des copies : n vaut toujours 5.</p>
 <p><b>Trois endroits en mémoire :</b></p>
-<ul><li>la <b>pile</b> : les variables locales, le temps de la fonction ;</li><li>le <b>tas</b> : la mémoire réservée avec malloc, jusqu'au free ;</li><li>la zone <b>statique</b> : les variables globales, pendant tout le programme.</li></ul>`}}
+<ul><li>la <b>pile</b> : les variables locales, le temps de la fonction ;</li><li>le <b>tas</b> : la mémoire qu'on demande soi-même. malloc(10 * sizeof(int)) réserve la place de 10 entiers et renvoie son adresse ; elle reste réservée jusqu'à ce qu'on la rende avec free ;</li><li>la zone <b>statique</b> : les variables globales, pendant tout le programme.</li></ul>`}}
 };
 const LES=window.LESSONS||{},MATHS=["calc","lin","ana","geo","rai"];
 Object.keys(DEBUT).forEach(sid=>(LES[sid]||[]).forEach(L=>{const M=DEBUT[sid][L.id];if(!M)return;
