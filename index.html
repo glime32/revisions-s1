@@ -922,6 +922,24 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .badges .badge{white-space:normal;max-width:100%}
 .mat>.pv{padding:0 .12em}
 
+.jedt{display:flex;gap:6px;min-width:0}
+.jhrs{flex:none;width:34px}
+.jcol{flex:1 1 0;min-width:0}
+.jh{height:34px;display:grid;align-content:center;text-align:center;font-weight:780;font-size:.86rem;color:var(--head);line-height:1.15}
+.jh small{font-weight:500;font-size:.72rem;color:var(--graphite)}
+.jcol.today .jh{background:var(--violet-hi);color:#000;border-radius:10px 10px 0 0}
+.jcol.today .jh small{color:#000}
+.jcol.past{opacity:.7}
+.jcol .jbody{position:relative;border:1px solid var(--trait);border-radius:0 0 10px 10px;background:repeating-linear-gradient(to bottom,var(--trait) 0 1px,transparent 1px var(--hp)),var(--feuille)}
+.jcol.today .jbody{border-color:var(--violet-hi);background:repeating-linear-gradient(to bottom,var(--trait) 0 1px,transparent 1px var(--hp)),color-mix(in srgb,var(--violet-hi) 9%,var(--feuille))}
+.jhrs .jbody{position:relative}
+.jhrs span{position:absolute;right:4px;font-size:.72rem;color:var(--graphite);transform:translateY(-50%)}
+.jcol .ev span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jlink{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:.88rem}
+.jlink a{font-weight:700;white-space:nowrap}
+@media (max-width:700px){.jedt-pc{display:none!important}}
+@media (min-width:701px){.jedt-tel{display:none!important}}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-192.png">
@@ -18346,6 +18364,35 @@ function suite(){
   return nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre";
 }
 
+/* l'emploi du temps sur « Aujourd'hui » : la journée seule sur téléphone ; hier, aujourd'hui et demain sur ordinateur */
+function journees(P){
+  const t0=today(),n=NOW(),now=n.getHours()*60+n.getMinutes(),PX=.8,mm=A.mm;
+  const acts=d=>[].concat(
+    A.coursJour(d).map(c=>({k:"cls",a:mm(c.start),b:mm(c.end),c})),
+    A.epreuvesDu(d).map(({S,e})=>({k:"exam",a:mm(e.start),b:e.end?mm(e.end):mm(e.start)+60,S,e})),
+    P.blocks.filter(b=>b.day===d).map(B=>({k:"rev",a:B.start,b:B.end,B})));
+  const ev=(d,x,h0)=>{const pos=`top:${(x.a-h0)*PX}px;height:${Math.max(18,(x.b-x.a)*PX-2)}px`;
+    if(x.k==="cls"){const c=x.c,fini=d<t0||(d===t0&&x.b<=now);
+      return `<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="${pos}"><b>${c.name}</b><span>${hh(x.a)}, ${c.skip?(fini||c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;}
+    if(x.k==="exam")return `<a class="ev exam" href="#/${x.S.id}" style="${pos}"><b>${x.e.label||"CC"} ${x.S.name}</b><span>${hh(x.a)}, ${x.e.place}</span></a>`;
+    const B=x.B,S=SUBJ[B.sid],t=B.tasks.map(id=>S.TB[id]).find(t=>t&&!isDone(B.sid,t));
+    return `<a class="ev rev${t?"":" done"}" href="${t?hrefTask(B.sid,t):"#/"+B.sid}" style="--sc:${S.color};${pos}"><b>${S.name}</b><span>${hh(B.start)}–${hh(B.end)}${t?" · "+esc(t.t):", fait"}</span></a>`;};
+  const grille=(days,cls)=>{const L=days.map(acts),all=L.flat();
+    if(!all.length)return `<p class="muted ${cls}">Ni cours ni révision ${days.length>1?"hier, aujourd'hui ou demain":"aujourd'hui"}.</p>`;
+    const h0=Math.floor(Math.min(...all.map(x=>x.a))/60)*60,h1=Math.ceil(Math.max(...all.map(x=>x.b))/60)*60,H=(h1-h0)*PX;
+    let hrs="";for(let m=h0;m<=h1;m+=60)hrs+=`<span style="top:${(m-h0)*PX}px">${m/60}h</span>`;
+    return `<div class="jedt ${cls}" style="--hp:${60*PX}px"><div class="jhrs"><div class="jh"></div><div class="jbody" style="height:${H}px">${hrs}</div></div>${days.map((d,i)=>`<div class="jcol${d===t0?" today":""}${d<t0?" past":""}"><div class="jh">${d===t0?"Aujourd'hui":d<t0?"Hier":"Demain"}<small>${dayName(d,true,true)}</small></div><div class="jbody" style="height:${H}px">${L[i].map(x=>ev(d,x,h0)).join("")}${d===t0&&now>=h0&&now<=h1?`<div class="edt-now" style="top:${(now-h0)*PX}px"><span>${hh(now)}</span></div>`:""}</div></div>`).join("")}</div>`;};
+  return tiroir("Emploi du temps",`${grille([addDays(t0,-1),t0,addDays(t0,1)],"jedt-pc")}${grille([t0],"jedt-tel")}<div id="jbox" class="examcard" style="--sc:var(--graphite)" hidden></div><p class="jlink"><span class="muted">Clique sur un cours si tu n'y vas pas (ou si tu n'y es pas allé) : le créneau devient de la révision. Clique sur un créneau de révision pour le commencer.</span> <a href="#/edt">Toute la semaine ›</a></p>`,"jours");}
+function bindJours(){
+  const box=$("#jbox");if(!box)return;
+  const ouvre=el=>{const[d,h]=el.dataset.cl.split("|"),c=A.coursJour(d).find(x=>x.start===h);if(!c)return;
+    const t0=today(),n=NOW(),fini=d<t0||(d===t0&&A.mm(c.end)<=n.getHours()*60+n.getMinutes());
+    const O=fini?[["abs","Je n'y suis pas allé"],["","J'y suis allé"]]:[["rev","Je n'y vais pas : je révise à la place"],["","J'y vais"]];
+    box.innerHTML=`<div><b>${c.name}</b>, ${dayName(d,true)} à ${h.replace(":","h")}, ${c.detail}.</div><div class="filters">${O.map(([v,t])=>`<button class="btn" data-sk="${v}" aria-pressed="${v?!!c.skip:!c.skip}">${t}</button>`).join("")}</div>`;
+    box.hidden=false;box.dataset.k=d+":"+h;box.scrollIntoView({behavior:"smooth",block:"nearest"});};
+  $("#main").querySelectorAll(".jedt .ev.cls").forEach(el=>{el.addEventListener("click",()=>ouvre(el));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ouvre(el);}});});
+  box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;A.emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk});home();});}
+
 function home(){
   const t0=today(),n=NOW(),P=plan(),up=upcoming(),due=dueCards();
   const tb=P.blocks.filter(b=>b.day===t0);
@@ -18355,8 +18402,6 @@ function home(){
   const nx=up[0]?SUBJ[up[0]]:null,mixed=A.hub.mixOn===t0;
   let h=`<div class="page wide home">${ttl(dayName(t0,true),nx?`${exW(nx)==="CC"?"Prochain CC":"Prochain "+exW(nx).toLowerCase()} : <b>${nx.name}</b>, ${examLine(nx)} (${jx(nx)}).`:"Tous les CC sont passés.")}`;
   if(exToday.length)h+=`<div class="examday">${exToday.map(S=>`<p><b>${exW(S)} de ${S.name} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, ${exam(S).place}. ${S.examMorning||""}</p>`).join("")}</div>`;
-  const hNow=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0"),CJ=A.coursJour(t0).filter(c=>c.end>hNow);
-  if(CJ.length)h+=`<div class="examcard" style="--sc:var(--graphite)"><div><b>Tes cours d'aujourd'hui.</b> Tu n'y vas pas ? Clique dessus : le créneau devient de la révision. Reclique pour annuler.</div><div class="filters" id="skipc">${CJ.map(c=>`<button class="btn" data-skipc="${c.day}:${c.start}" data-v="${c.skip?"":"rev"}" aria-pressed="${!!c.skip}">${c.name}, ${c.start.replace(":","h")}${c.skip?" : révision à la place":""}</button>`).join("")}</div></div>`;
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
   /* le gros bouton : une leçon commencée, sinon les cartes du jour, sinon la suite du programme, sinon du repos */
   const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
@@ -18375,6 +18420,7 @@ function home(){
   else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
   h+=`<a class="gobig ${go.c}${go.done?" is-done":""}" href="${go.href}"><span class="gobig__tile" aria-hidden="true">${go.tile}</span><span class="gobig__bar"><span class="gobig__kick">${go.kick}</span><span class="gobig__name">${go.name}</span><span class="gobig__sub">${go.sub}</span></span>${ico("i-arrow","ico gobig__arrow")}</a>`;
   h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}${go.href==="#/mix"?"":`<a href="#/mix">Mini-contrôle mélangé${mixed?` : fait aujourd'hui (${A.hub.mixScore} sur ${A.hub.mixSur})${MD.proch?", à refaire "+qd(MD.proch):""}`:MD.du?" (conseillé aujourd'hui)":MD.proch?` (à refaire ${qd(MD.proch)})`:""}</a>`}<button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
+  h+=journees(P);
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
   /* un seul créneau ouvert : le prochain à faire ; les autres sont repliés */
@@ -18393,7 +18439,7 @@ function home(){
   if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes passent après les autres : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
   h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
   $("#main").innerHTML=h+`</div>`;
-  const sk=$("#skipc");if(sk)sk.addEventListener("click",e=>{const b=e.target.closest("[data-skipc]");if(!b)return;A.emit({k:"set",key:"skip:"+b.dataset.skipc,v:b.dataset.v});home();});
+  bindJours();
   const tp=$("#toprog");if(tp)tp.addEventListener("click",()=>{const el=$(".tiroir.prog");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
   bindTicks($("#main"),home);badges();}
 
@@ -18622,7 +18668,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},skip:{},edtPC:"1",rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
+const hub={theme:local.theme,exams:{},skip:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -18643,7 +18689,7 @@ function themeDe(S,l,c){if(!S||!S.themes)return null;
   return S.THX[l?"l:"+l:"c:"+c]||null;}
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(e.key==="edtPC")hub.edtPC=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -18664,7 +18710,7 @@ function applyEv(e){
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.edtPC="1";hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -19011,8 +19057,7 @@ function edt(){
    <div class="edt-legend">${SIDS.map(id=>`<span><i class="sdot" style="background:${SUBJ[id].color}"></i>${SUBJ[id].name}</span>`).join("")}<span><i class="sdot" style="background:var(--graphite)"></i>cours</span><span><i class="sdot" style="background:var(--rouge)"></i>CC</span></div>
    <div class="edt-wrap"><div class="edt" style="grid-template-columns:44px repeat(${days.length},minmax(128px,1fr));min-width:${44+days.length*128}px"><div></div>${days.map(d=>`<div class="edt-h${d===t0?" today":""}${d<t0?" past":""}">${dayName(d,true,true)}${d===t0?`<small>aujourd'hui</small>`:HOLIDAY[d]?`<small>${HOLIDAY[d]==="11 novembre, férié"?"férié":"vacances"}</small>`:""}</div>`).join("")}
     <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}${d===t0?" today":""}${d<t0?" past":""}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
-   <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p>
-   <div class="filters" id="edtpc"><span class="muted">Sur ordinateur, ouvrir le site sur cet emploi du temps :</span><button class="btn" data-pc="1" aria-pressed="${hub.edtPC!=="0"}">oui</button><button class="btn" data-pc="0" aria-pressed="${hub.edtPC==="0"}">non</button><a class="btn" href="#/jour">Page « Aujourd'hui »</a></div></div>`;
+   <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p></div>`;
   const box=$("#clbox");
   const ouvre=el=>{const[d,h]=el.dataset.cl.split("|"),c=coursJour(d).find(x=>x.start===h);if(!c)return;
     box.innerHTML=`<div><b>${c.name}</b>, ${dayName(d,true)} à ${h.replace(":","h")}, ${c.detail}.</div><div class="filters">${[["rev","Je n'y vais pas : je révise à la place"],["abs","Je n'y suis pas allé"],["","J'y vais (ou j'y suis allé)"]].map(([v,t])=>`<button class="btn" data-sk="${v}" aria-pressed="${c.skip===v}">${t}</button>`).join("")}</div>`;
@@ -19021,7 +19066,6 @@ function edt(){
   box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk});edt();});
   $("#edtnav").addEventListener("click",e=>{const b=e.target.closest("[data-w]");if(!b)return;const w=+b.dataset.w;EDTW=w===0?0:EDTW+w;edt();});
   const tc=$(".edt-col.today");if(tc&&EDTW===0){const wr=$(".edt-wrap");wr.scrollLeft=Math.max(0,tc.offsetLeft-60);}
-  $("#edtpc").addEventListener("click",e=>{const b=e.target.closest("[data-pc]");if(!b)return;emit({k:"set",key:"edtPC",v:b.dataset.pc});document.querySelectorAll("#edtpc [data-pc]").forEach(x=>x.setAttribute("aria-pressed",x===b));});
 }
 
 /* ---------- examens et coefficients ---------- */
@@ -19416,7 +19460,7 @@ function render(parts){
     const X=APP.ext.routes||{};
     main.className=first==="lecon"&&SIDS.includes(parts[1])?"s-"+parts[1]:"";
     CUR={sid:null,page:X[first]||["edt","examens","mix","methode"].includes(first)?first:"today"};
-    if(X[first])X[first](parts.slice(1));else if(first==="edt"||(first===""&&hub.edtPC!=="0"&&matchMedia("(min-width: 1100px)").matches))edt();else if(first==="examens")examens();else if(first==="mix")mix();else if(first==="methode")methode();else if(APP.ext.home)APP.ext.home();else hubHome();
+    if(X[first])X[first](parts.slice(1));else if(first==="edt")edt();else if(first==="examens")examens();else if(first==="mix")mix();else if(first==="methode")methode();else if(APP.ext.home)APP.ext.home();else hubHome();
   }
   document.body.classList.toggle("in-lesson",first==="lecon");
   const tab=tabOf(parts);
@@ -19433,7 +19477,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,coursJour,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,coursJour,epreuvesDu,mm,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
