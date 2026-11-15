@@ -18089,6 +18089,23 @@ const A4={algo:"A5, à recopier ligne par ligne",pf:"A4 recto-verso, à recopier
 /* ================= les cartes « À retenir » et la révision espacée ================= */
 /* empreinte courte d'une question : elle retrouve la question même si la leçon gagne ou perd des écrans */
 const qh=s=>{let h=2166136261;const t=s.k+":"+String(s.q||"")+"|"+String(s.code||(s.lines||[]).join("\n"));for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);};
+/* une question du quiz ou d'une leçon, retrouvée par l'empreinte du carnet ; null si elle n'est plus au programme */
+const QIDX={};
+function quizQ(sid,k){const S=SUBJ[sid];if(!S)return null;
+  if(!QIDX[sid]){const m=QIDX[sid]={};(LES[sid]||[]).forEach(L=>L.steps.forEach(x=>{if(x.k==="qcm")m[A.hq(x)]={q:x,L};}));S.quiz.forEach(x=>{m[A.hq(x)]={q:x,L:null};});}
+  const r=QIDX[sid][k];if(!r)return null;
+  return r.L?(A.inScope(S,r.L)&&!r.q.ctx?r:null):(A.activeQuiz(S).includes(r.q)?r:null);}
+/* les leçons qui expliquent une fiche : celles de ses thèmes, au programme de l'épreuve qui vient */
+function lecsFiche(sid,fid){const S=SUBJ[sid],out=[];
+  (S.themes||[]).forEach(T=>{if((T.fiches||[]).includes(fid))(T.les||[]).forEach(l=>{const L=BYL[sid][l];if(L&&A.inScope(S,L)&&!out.includes(l))out.push(l);});});
+  const suf=x=>x.slice(x.indexOf("-")+1),m=out.filter(l=>suf(l)===suf(fid));/* « ana-extraites » : d'abord la leçon de même nom, « a-extraites » */
+  return m.length?m:out;}
+const expliquee=(sid,fid)=>{const ls=lecsFiche(sid,fid);return ls.length>0&&ls.every(l=>ST[sid].les[l]);};
+/* la leçon à faire (ou à refaire) quand une carte n'a « jamais été vue » */
+function leconDe(sid,cid){
+  if(cid.indexOf("q:")===0){const r=quizQ(sid,cid.slice(2));if(!r)return null;if(r.L)return r.L.id;if(!r.q.link)return null;cid="c:"+r.q.link;}
+  if(cid.indexOf("c:")===0){const ls=lecsFiche(sid,cid.slice(2));return ls.find(l=>!ST[sid].les[l])||ls[0]||null;}
+  const l=cid.replace(/^m:/,"").split("#")[0];return BYL[sid][l]?l:null;}
 function cardOf(sid,cid){
   if(cid.indexOf("c:")===0){const c=SUBJ[sid].BY[cid.slice(2)];return c?{f:c.q,b:c.a,src:`Fiche : ${c.short||c.t}`,link:`#/${sid}/c/${c.id}`}:null;}
   if(cid.indexOf("m:")===0){/* une question ratée dans une leçon : la question d'un côté, la bonne réponse et l'explication de l'autre */
@@ -18099,19 +18116,32 @@ function cardOf(sid,cid){
       return {f:`${s.q}${s.show?W.code(s.show,s.showLang||"txt"):""}${show(fill(()=>"____"))}`,b:`${show(fill((m,n)=>s.b[+n].o[s.b[+n].a]))}${ex}`,src,link};}
     if(s.k==="order")return {f:`${s.q}${s.show?W.code(s.show,s.showLang||"txt"):""}<p class="muted">Écris-le sur une feuille, sans regarder.</p>`,b:`${s.lang==="txt"?`<ol class="par-sol">${s.lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ol>`:W.code(s.lines.join("\n"),lang)}${ex}`,src,link};
     return null;}
+  if(cid.indexOf("q:")===0){/* une question ratée au quiz ou au mini-contrôle : la question, puis la bonne réponse et la fiche au dos */
+    const r=quizQ(sid,cid.slice(2));if(!r)return null;const q=r.q,S=SUBJ[sid],F=q.link&&S.BY[q.link],o=(ST[sid].cards[cid]||{}).o,lang=q.lang||S.lang||"txt";
+    return {f:`${q.q}${q.code?W.code(q.code,lang):""}`,b:`<p><b>${q.o[q.a]}</b></p>${q.e?`<p>${q.e}</p>`:""}${F?`<p><b>La fiche « ${F.short||F.t} » :</b> ${F.plain||""}</p>`:""}`,
+      src:`Question ratée · ${o==="mix"?"mini-contrôle mélangé":r.L?"leçon : "+r.L.t:"quiz de cours"}${F?" · fiche : "+(F.short||F.t):""}`,link:F?`#/${sid}/c/${F.id}`:r.L?`#/lecon/${sid}/${r.L.id}`:`#/${sid}/quiz`};}
   const [lid,n]=cid.split("#"),L=BYL[sid][lid];if(!L)return null;let k=0;
   for(const s of L.steps)if(s.k==="card"){if(k===+n)return {f:s.f,b:s.b,src:`Leçon : ${L.t}`,link:`#/lecon/${sid}/${lid}`};k++;}
   return null;}
 function dueCards(){
   const t=today(),n=NOW(),out=[];
   SIDS.forEach(id=>{const S=SUBJ[id];if(examStart(S)<=n)return;const st=ST[id],eve=(examStart(S)-n)<=36*3600e3;
-    Object.entries(st.cards).forEach(([cid,c])=>{const L=BYL[id][cid.replace(/^m:/,"").split("#")[0]];if(L&&!A.inScope(S,L))return;/* une leçon d'une autre épreuve : pas maintenant */
+    Object.entries(st.cards).forEach(([cid,c])=>{if(st.jv[cid])return;const L=BYL[id][cid.replace(/^m:/,"").split("#")[0]];if(L&&!A.inScope(S,L))return;/* une leçon d'une autre épreuve : pas maintenant */
       if(cardOf(id,cid)&&(c.due<=t||(eve&&c.last!==t)))out.push({sid:id,cid,box:c.box});});
-    S.ORDER.forEach(c=>{if(st.review[c.id]&&c.q&&!c.out)out.push({sid:id,cid:"c:"+c.id,box:-1});});});
+    /* une fiche en rouge : sa question seulement une fois faites les leçons qui l'expliquent (sinon, c'est la question ratée qui revient) */
+    S.ORDER.forEach(c=>{if(st.review[c.id]&&c.q&&!c.out&&!st.jv["c:"+c.id]&&expliquee(id,c.id))out.push({sid:id,cid:"c:"+c.id,box:-1});});});
   out.forEach(o=>{o.rnd=Math.random();});
   out.sort((a,b)=>(examStart(SUBJ[a.sid])-examStart(SUBJ[b.sid]))||(a.box-b.box)||(a.rnd-b.rnd));
   return out;}
 function badges(){const n=dueCards().length;document.querySelectorAll("[data-due]").forEach(b=>{b.textContent=n>99?"99+":String(n);b.hidden=!n;});}
+/* une seule fois par appareil : les questions ratées au quiz et au mini-contrôle avant cette version, retrouvées dans le carnet */
+try{if(!localStorage.getItem("rev-s1-qm-v1"))A.allReps().then(L=>{const bon={},fait={};
+  L=L.filter(r=>r&&r.q&&SUBJ[r.s]&&(r.o==="quiz de cours"||r.o==="mini-contrôle mélangé")).sort((a,b)=>(a.t||0)-(b.t||0));
+  L.forEach(r=>{if(r.ok)bon[r.s+"|"+r.q]=r.t;});
+  L.forEach(r=>{const k=r.s+"|"+r.q;if(r.ok||fait[k]||(bon[k]||0)>r.t||ST[r.s].cards["q:"+r.q]||!quizQ(r.s,r.q))return;fait[k]=1;
+    emit({k:"qm",s:r.s,q:r.q,c:r.fiche||null,o:r.o==="quiz de cours"?"quiz":"mix"});});
+  localStorage.setItem("rev-s1-qm-v1","1");badges();}).catch(()=>{});}catch(e){}
+
 
 /* ================= le lecteur de leçon ================= */
 let LP=null,TIMER=null,DND=null;
@@ -18327,31 +18357,52 @@ function finish(){
   LP=null;$("#redo").addEventListener("click",()=>{progDrop(sid,lid);LP=newLP(sid,lid);drawStep();});badges();}
 
 /* ================= Réviser : les cartes du jour ================= */
+/* la phrase du haut de Réviser : ce que contient vraiment la séance */
+const quand=S=>{const j=jx(S);return /^J-/.test(j)?"dans "+j.slice(2)+" jours":j;};
+function rvLead(){const n={l:0,q:0,m:0,c:0},vu=new Set(),veille=[];
+  (RV?RV.q:[]).forEach(x=>{const k=x.sid+"|"+x.cid;if(vu.has(k)||ST[x.sid].jv[x.cid])return;vu.add(k);const t=x.cid.slice(0,2);n[t==="q:"?"q":t==="m:"?"m":t==="c:"?"c":"l"]++;
+    if(examStart(SUBJ[x.sid])-NOW()<=36*3600e3&&!veille.includes(x.sid))veille.push(x.sid);});
+  const P=[];if(n.l)P.push(`${n.l} ${plural(n.l,"carte")} de tes leçons à revoir`);if(n.q)P.push(`${n.q} ${plural(n.q,"question ratée","questions ratées")} au quiz ou au mini-contrôle`);
+  if(n.m)P.push(`${n.m} ${plural(n.m,"question ratée","questions ratées")} dans tes leçons`);if(n.c)P.push(`${n.c} ${plural(n.c,"fiche")} en rouge`);
+  const liste=P.length>1?P.slice(0,-1).join(", ")+" et "+P[P.length-1]:P[0];
+  const cc=veille.map(id=>{const S=SUBJ[id];return ` ${exam(S).label} ${/^[aeiouéè]/i.test(S.name)?"d'":"de "}${S.name} ${quand(S)} : toutes ses cartes sont là, même celles prévues plus tard.`;}).join("");
+  return `${liste?`Aujourd'hui : ${liste}.`:""}${cc} Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance. « Jamais vu » retire la carte et met la leçon qui l'explique en tête de ton planning.`;}
+function jvMsg(sid,l){const L=l&&BYL[sid][l];
+  if(!L)return "Carte retirée. Aucune leçon ne l'explique : elle ne reviendra que si tu rates encore cette question.";
+  const b=plan().blocks.find(B=>B.sid===sid&&(B.tasks||[]).includes("L-"+l)),t=today();
+  const q=b?`${b.day===t?"aujourd'hui":b.day===addDays(t,1)?"demain":dayName(b.day,false)} à ${hm(b.start)}`:"";
+  return `Carte retirée. La leçon <a href="#/lecon/${sid}/${l}">${esc(L.t)}</a> ${q?"est dans ton planning "+q:"n'entre plus dans ton planning avant l'épreuve : fais-la depuis Apprendre"}. La carte reviendra après.`;}
+const rvDebut=()=>RV.q.map(x=>({s:x.sid,c:x.cid,b:x.box}));
 let RV=null;
 function reviser(){
   if(!RV||RV.end){const sv=A.seanceGet("cartes");RV=null;
     if(sv&&Array.isArray(sv.q)){const q=sv.q.map(x=>({sid:x.s,cid:x.c,box:x.b}));
       if(q.length&&q.every(x=>SUBJ[x.sid]&&cardOf(x.sid,x.cid))){const N={q,i:0,flip:false,tries:{},ok:0,n:0,end:false,total:q.length,run:sv.run,debute:true};
         /* on rejoue les notes déjà données : une carte ratée repart au bout de la file, comme pendant la séance */
-        for(let j=0,nb=A.faites(sv);j<nb&&j<N.q.length;j++){const it=N.q[j],r=sv.rep[j],k=N.tries[it.cid]=(N.tries[it.cid]||0)+1;if(k===1){N.n++;if(r===2)N.ok++;}if(r===0&&k<3)N.q.push(it);N.i=j+1;}
+        for(let j=0,nb=A.faites(sv);j<nb&&j<N.q.length;j++){const it=N.q[j],r=sv.rep[j];if(r<0){N.i=j+1;continue;}const k=N.tries[it.cid]=(N.tries[it.cid]||0)+1;if(k===1){N.n++;if(r===2)N.ok++;}if(r===0&&k<3)N.q.push(it);N.i=j+1;}
         if(N.i<N.q.length){N.repris=N.i>0;RV=N;}}}
     if(!RV){const due=dueCards();RV={q:due.slice(0,30),i:0,flip:false,tries:{},ok:0,n:0,end:false,total:due.length,run:A.nouvRun()};}}
   drawCard();}
 function drawCard(){
-  const top=ttl("Réviser","Les cartes du jour : celles apprises hier ou avant, celles que tu as ratées, les questions que tu as ratées dans tes leçons, et toutes celles du CC de demain. Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance.");
+  const top=ttl("Réviser",rvLead());
   if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts"><a class="btn pri" href="#/apprendre">Faire une leçon</a><a class="btn" href="#/mix">Mini-contrôle mélangé (12 questions)</a></div></div></div>`;RV.end=true;return;}
-  if(RV.i>=RV.q.length){RV.end=true;A.seanceFin("cartes",RV.run);const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">${RV.ok} / ${RV.n}</p><p>Session terminée. ${RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
+  if(RV.i>=RV.q.length){RV.end=true;A.seanceFin("cartes",RV.run);const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty">${RV.n?`<p class="score">${RV.ok} / ${RV.n}</p>`:""}${RV.msg?`<p class="muted">${RV.msg}</p>`:""}<p>Session terminée. ${!RV.n?"":RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
-  if(!c){RV.i++;return drawCard();}
+  if(!c||ST[it.sid].jv[it.cid]){if(c)A.seanceRep("cartes",RV,rvDebut,RV.i,-1);RV.i++;return drawCard();}
   $("#main").innerHTML=`<div class="page">${top}
    <div class="rv s-${it.sid}"><div class="rv-h"><span class="sdot" style="background:${S.color}"></span>${S.name}<span class="muted">· carte ${RV.i+1} sur ${RV.q.length}${RV.repris?" · tu reprends où tu t'étais arrêté":""}</span></div>
     <div class="lp-bar"><i style="width:${Math.round(RV.i/RV.q.length*100)}%"></i></div>
-    <p class="kbdhint"><span class="kb">Clavier : Espace pour retourner la carte · 1 raté, 2 difficile, 3 je savais.</span></p><div class="kcard${RV.flip?"":" fresh"}"><span class="tag">${esc(S.name)}</span><span class="kk">${RV.flip?"La réponse":"Retrouve de mémoire"}</span><p class="kq">${c.f}</p>${RV.flip?`<div class="ka">${c.b}</div><p class="muted" style="font-size:.85rem;margin:0">${esc(c.src)} · <a href="${c.link}">ouvrir</a></p>`:""}</div>
-    ${RV.flip?`<p class="muted">Tu avais trouvé ?</p><div class="acts rate"><button class="btn rev" data-r="0">Raté</button><button class="btn mid" data-r="1">Difficile</button><button class="btn ok" data-r="2">Je savais</button></div>`:`<button class="btn pri big" id="rvflip">Voir la réponse</button>`}</div></div>`;
+    <p class="kbdhint"><span class="kb">Clavier : Espace pour retourner la carte · 1 raté, 2 difficile, 3 je savais.</span></p>${RV.msg?`<p class="muted">${RV.msg}</p>`:""}<div class="kcard${RV.flip?"":" fresh"}"><span class="tag">${esc(S.name)}</span><span class="kk">${RV.flip?"La réponse":"Retrouve de mémoire"}</span><p class="kq">${c.f}</p>${RV.flip?`<div class="ka">${c.b}</div><p class="muted" style="font-size:.85rem;margin:0">${esc(c.src)} · <a href="${c.link}">ouvrir</a></p>`:""}</div>
+    ${RV.flip?`<p class="muted">Tu avais trouvé ?</p><div class="acts rate"><button class="btn rev" data-r="0">Raté</button><button class="btn mid" data-r="1">Difficile</button><button class="btn ok" data-r="2">Je savais</button></div>`:`<button class="btn pri big" id="rvflip">Voir la réponse</button>`}<div class="acts"><button class="btn" id="rvjv">Jamais vu</button></div></div></div>`;
   if(!RV.flip)RV.t0=Date.now();
   A.motsClic(it.sid,document.querySelector(".kcard .kq"));
   const f=$("#rvflip");if(f)f.addEventListener("click",()=>{RV.flip=true;RV.t1=Date.now();drawCard();});
-  document.querySelectorAll("[data-r]").forEach(b=>b.addEventListener("click",()=>{const r=+b.dataset.r;
+  $("#rvjv").addEventListener("click",()=>{const l=leconDe(it.sid,it.cid);
+    emit({k:"jv",s:it.sid,c:it.cid,l:l||null});
+    A.logRep({o:"carte de Réviser",s:it.sid,carte:it.cid,note:"jamais vu",ok:0,texte:A.brut(c.f).slice(0,400)});
+    A.seanceRep("cartes",RV,rvDebut,RV.i,-1);
+    RV.msg=jvMsg(it.sid,l);RV.i++;RV.flip=false;RV.repris=false;drawCard();});
+  document.querySelectorAll("[data-r]").forEach(b=>b.addEventListener("click",()=>{const r=+b.dataset.r;RV.msg=null;
     const k=RV.tries[it.cid]=(RV.tries[it.cid]||0)+1,re=k>1?{re:1}:{};
     if(it.cid.indexOf("c:")===0){emit(Object.assign({k:"cr",s:it.sid,c:it.cid.slice(2),r},re));if(r===2)emit({k:"st",s:it.sid,c:it.cid.slice(2),v:"known"});}
     else emit(Object.assign({k:"card",s:it.sid,c:it.cid,r},re));
@@ -18724,7 +18775,7 @@ let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArr
 const persistJ=()=>{try{localStorage.setItem(JKEY,JSON.stringify(J));}catch(e){}};
 const ST={};
 function cardIds(sid,lid){const L=(LES[sid]||[]).find(x=>x.id===lid);if(!L)return [];const out=[];let n=0;L.steps.forEach(st=>{if(st.k==="card")out.push(lid+"#"+(n++));});return out;}
-function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{}};}
+function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{},prio:{},jv:{}};}
 /* ce qu'on sait d'un thème : chaque réponse (mini-contrôle, quiz, carte, erreur en leçon) ajoute une preuve.
    Une preuve perd la moitié de son poids en 3 jours ; un nouveau mini-contrôle divise encore les anciennes par 2. */
 const jnum=d=>{const[y,m,j]=d.split("-").map(Number);return Math.round(Date.UTC(y,m-1,j)/864e5);};
@@ -18750,9 +18801,11 @@ function applyEv(e){
   else if(e.k==="task"){if(e.v)st.tasks[e.x]=day;else delete st.tasks[e.x];}
   else if(e.k==="quiz"){if(e.n>st.best)st.best=e.n;if(e.goal&&!st.quizOn)st.quizOn=day;}
   else if(e.k==="pos"){st.pos[e.l]=e.reset||typeof e.at!=="number"?null:{i:e.at,sig:e.sig,got:e.got||{},t:e.dur||0,ss:e.ss||{},ts:e.t};}
-  else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;
+  else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;delete st.prio[e.l];Object.keys(st.jv).forEach(k=>{if(st.jv[k]===e.l)delete st.jv[k];});
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
-  else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;const th=themeDe(SUBJ[e.s],e.l);if(th)preuve(st,th,0,1,day);}
+  else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;delete st.jv[id];const th=themeDe(SUBJ[e.s],e.l);if(th)preuve(st,th,0,1,day);}
+  else if(e.k==="qm"){/* question ratée au quiz ou au mini-contrôle mélangé : une carte « q:question », à revoir le jour même */const id="q:"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;c.o=e.o;if(e.c)c.f=e.c;st.cards[id]=c;delete st.jv[id];}
+  else if(e.k==="jv"){/* « Jamais vu » dans Réviser : la carte attend la leçon qui l'explique, placée en tête du planning */st.jv[e.c]=e.l||true;if(e.l)st.prio[e.l]=e.t;}
   else if(e.k==="niv"){st.niv=e.v||0;}
   else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n)preuve(st,e.th,e.ok,e.n,day,e.run,true);}
   else if(e.k==="cr"||e.k==="qr"){/* carte d'une fiche notée dans « Réviser », réponse à une question du quiz */const th=themeDe(SUBJ[e.s],null,e.c);if(th&&!e.re)preuve(st,th,e.k==="cr"?e.r/2:e.ok?1:0,1,day);}
@@ -18792,7 +18845,8 @@ try{const rq=indexedDB.open("rev-s1-reponses",2);
     if(!st.indexNames.contains("id"))st.createIndex("id","id",{unique:true});};
   rq.onsuccess=()=>{REPDB=rq.result;REPQ.splice(0).forEach(repPut);};rq.onerror=()=>{REPDB=false;REPQ.splice(0).forEach(repPut);};}catch(e){REPDB=false;}
 function logRep(r){r.t=Date.now()+TOFF;r.id=DEV+"-"+r.t.toString(36)+"-r"+(rseq++).toString(36);r.jour=ymd(new Date(r.t));r.heure=new Date(r.t).toTimeString().slice(0,8);r.appareil=DEV;repPut(r);}
-function allReps(){return new Promise(res=>{let loc=[];try{loc=JSON.parse(localStorage.getItem("rev-s1-reponses")||"[]");}catch(e){}
+/* le carnet s'ouvre en arrière-plan : on l'attend (6 s au plus) avant de le lire */
+function allReps(n){if(REPDB===null&&(n||0)<40)return new Promise(r=>setTimeout(r,150)).then(()=>allReps((n||0)+1));return new Promise(res=>{let loc=[];try{loc=JSON.parse(localStorage.getItem("rev-s1-reponses")||"[]");}catch(e){}
   if(!REPDB)return res(loc);try{const rq=REPDB.transaction("rep").objectStore("rep").getAll();rq.onsuccess=()=>res(loc.concat(rq.result||[]));rq.onerror=()=>res(loc);}catch(e){res(loc);}});}
 /* pour la synchronisation : les réponses de cet appareil (chacune reçoit un identifiant), et l'ajout de celles des autres appareils sans doublon */
 function repsPropres(){return new Promise(res=>{const out=[];if(!REPDB)return res(out);
@@ -18874,7 +18928,7 @@ document.documentElement.dataset.theme="sombre";
 /* ---------- les étapes ---------- */
 const activeQuiz=S=>S.quiz.filter(q=>!(q.link&&S.BY[q.link]&&S.BY[q.link].out));
 const quizGoal=(S,t)=>{const n=activeQuiz(S).length;return t.quiz<=1?Math.ceil(t.quiz*n):Math.min(t.quiz,n);};
-function isDone(sid,t){const st=ST[sid];if(t.lesson){const L=st.les[t.lesson];return !!L&&(L.best>=0.5||L.n>=2);}/* une leçon ratée (moins de 50 %) reste à refaire une fois */if(t.items)return t.items.every(id=>st.known[id]);if(t.td)return t.td.every(x=>st.td[x]);if(t.quiz)return st.best>=quizGoal(SUBJ[sid],t)||!!st.tasks[t.id];return !!st.tasks[t.id];}
+function isDone(sid,t){const st=ST[sid];if(t.lesson){if(st.prio[t.lesson])return false;const L=st.les[t.lesson];return !!L&&(L.best>=0.5||L.n>=2);}/* une leçon ratée (moins de 50 %) reste à refaire une fois */if(t.items)return t.items.every(id=>st.known[id]);if(t.td)return t.td.every(x=>st.td[x]);if(t.quiz)return st.best>=quizGoal(SUBJ[sid],t)||!!st.tasks[t.id];return !!st.tasks[t.id];}
 function doneOn(sid,t){const st=ST[sid];if(t.lesson)return (st.les[t.lesson]||{}).on||"";if(t.items)return t.items.map(id=>st.knownOn[id]||"").sort().pop();if(t.td)return t.td.map(x=>st.tdOn[x]||"").sort().pop();if(t.quiz)return st.quizOn||st.tasks[t.id]||"";return st.tasks[t.id]||"";}
 
 /* ---------- emploi du temps : Prose (groupe Maths A + double licence), lu le 7/11/2026, jusqu'au 18/12 ----------
@@ -18946,6 +19000,8 @@ function pendingTasks(sid){const S=SUBJ[sid];return S.tasks.filter(t=>inScope(S,
 function buildPlan(){
   const n=NOW(),t0=ymd(n),nowMin=n.getHours()*60+n.getMinutes();
   const active=SIDS.filter(id=>examStart(SUBJ[id])>n&&pendingTasks(id).length);
+  /* une leçon marquée « Jamais vu » dans Réviser passe devant tout le reste */
+  const PRI=new Set();active.forEach(id=>pendingTasks(id).forEach(t=>{if(t.lesson&&ST[id].prio[t.lesson])PRI.add(t);}));const pri=t=>PRI.has(t)?1:0;
   const plan={day:t0,blocks:[],assign:{},bonus:{}};
   if(!active.length)return plan;
   const lastDay=ymd(new Date(Math.max(...active.map(id=>examStart(SUBJ[id]).getTime()))));
@@ -18961,14 +19017,14 @@ function buildPlan(){
   const lastD=Math.max(...dls);plan.have=blocks.reduce((s,b)=>toD(b.day,b.end).getTime()<=lastD?s+work(b.end-b.start):s,0);plan.need=active.reduce((s,id)=>s+pendingTasks(id).filter(t=>t.p===1).reduce((a,t)=>a+t.min,0),0);
   const keep=new Set(),first=active.slice().sort((a,b)=>dl(a)-dl(b))[0],urg=id=>1+0.5*Math.max(0,1-(dl(id)-n.getTime())/(7*864e5)),ew=id=>weight(SUBJ[id])*urg(id)*marge(id),got={},qs={};
   /* quand tout ne tient pas, les leçons et les exercices passent avant le quiz et la veille */
-  active.forEach(id=>{got[id]=0;const P=pendingTasks(id);qs[id]=P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(valeur(id,b)-valeur(id,a))||(a.i-b.i)).concat(P.filter(t=>t.last));});
-  const tier=t=>t.last?1:t.p;
+  active.forEach(id=>{got[id]=0;const P=pendingTasks(id);qs[id]=P.filter(t=>!t.last).sort((a,b)=>(pri(b)-pri(a))||(a.p-b.p)||(valeur(id,b)-valeur(id,a))||(a.i-b.i)).concat(P.filter(t=>t.last));});
+  const tier=t=>t.last||pri(t)?1:t.p;
   [1,2,3].forEach(P=>{const ptr={},L={};active.forEach(id=>{ptr[id]=0;L[id]=qs[id].filter(t=>tier(t)===P);});
     for(;;){let best=null;active.forEach(id=>{if(ptr[id]<L[id].length&&(best===null||got[id]/ew(id)<got[best]/ew(best)))best=id;});if(best===null)break;
       const t=L[best][ptr[best]++],d=dl(best);
       if(dls.every(D=>D<d||load[D]+t.min<=cap[D])){keep.add(best+":"+t.id);dls.forEach(D=>{if(D>=d)load[D]+=t.min;});got[best]+=t.min;}}});
   /* 2. File d'attente de chaque matière : l'essentiel d'abord (p = 1), dans l'ordre du cours ; quiz et fiches en rouge à la fin */
-  const Q={};active.forEach(id=>{const P=pendingTasks(id).filter(t=>keep.has(id+":"+t.id));Q[id]=P.filter(t=>!t.last).sort((a,b)=>(a.p-b.p)||(a.i-b.i)).concat(P.filter(t=>t.last));plan.bonus[id]=pendingTasks(id).filter(t=>!keep.has(id+":"+t.id)).map(t=>t.id);});
+  const Q={};active.forEach(id=>{const P=pendingTasks(id).filter(t=>keep.has(id+":"+t.id));Q[id]=P.filter(t=>!t.last).sort((a,b)=>(pri(b)-pri(a))||(a.p-b.p)||(a.i-b.i)).concat(P.filter(t=>t.last));plan.bonus[id]=pendingTasks(id).filter(t=>!keep.has(id+":"+t.id)).map(t=>t.id);});
   /* 3. Affectation créneau par créneau : la matière la plus en retard sur son temps restant (bonus de coefficient).
         Une étape ne va que dans un créneau assez long. Le quiz et les fiches en rouge attendent les 30 h avant le CC, ou le dernier jour où il reste une séance. */
   const fitsIn=(t,room)=>t.min<=room+15;
@@ -18976,7 +19032,7 @@ function buildPlan(){
   const fenetre=(id,B,bs)=>dl(id)-bs<=30*3600e3||B.day===dernier[id];
   /* rythme réduit avant une date (exam.pace = {until, perDay}) : un peu chaque jour, sans passer devant les CC */
   const dayUse={},paceLeft=(id,day)=>{const p=exam(SUBJ[id]).pace;if(!p||day>=p.until)return Infinity;return Math.max(0,p.perDay-(dayUse[id+"|"+day]||0));},useDay=(id,day,m)=>{dayUse[id+"|"+day]=(dayUse[id+"|"+day]||0)+m;};
-  const ratee=(id,t,B)=>t.lesson&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0;/* leçon ratée aujourd'hui : on la refait demain */
+  const ratee=(id,t,B)=>t.lesson&&!pri(t)&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0;/* leçon ratée aujourd'hui : on la refait demain */
   const fill=(id,B,dur,src,finalWin,ordre)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(ratee(id,t,B))continue;if(!fitsIn(t,dur-used)){if(ordre&&!t.last)break;continue;}tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
   const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(lenFor(used),30));
     tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=25)blocks.splice(i+1,0,{day:B.day,start:B.end,end:full});};
@@ -18997,13 +19053,14 @@ function buildPlan(){
       let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
       const rem=elig.reduce((s,t)=>s+t.min,0);
       let sc=rem/Math.max(avail,1)*(1+0.3*weight(SUBJ[id])/WMAX);
-      if(finalWin&&elig[0].last)sc+=0.6;/* quiz et veille : seulement quand les leçons de la matière sont placées */
+      if(finalWin&&elig[0].last)sc+=0.6;
+      if(pri(elig[0]))sc+=10;/* quiz et veille : seulement quand les leçons de la matière sont placées */
       /* une étape longue qui ne tiendra plus dans aucune séance libre avant son CC passe maintenant */
       let mx=0;for(let j=i+1;j<blocks.length;j++){if(blocks[j].sid)continue;if(toD(blocks[j].day,blocks[j].end).getTime()<=dl(id))mx=Math.max(mx,work(blocks[j].end-blocks[j].start));}
       if(elig.some(t=>!t.last&&fitsIn(t,dur)&&!fitsIn(t,mx)))sc+=5;
       if(sc>bestScore){bestScore=sc;best=id;}});return best;};
     let ordre=true,best=choisir(true);
-    if(!best||!proche(best)){const u=choisir(false);if(u){best=u;ordre=false;}
+    if(!best||(!proche(best)&&!pri(Q[best][0]))){const u=choisir(false);if(u){best=u;ordre=false;}
       else{let r=null;active.forEach(id=>{if(!proche(id)||be>dl(id)||!R1[id].some(t=>fitsIn(t,dur)))return;if(!r||dl(id)<dl(r)||(dl(id)===dl(r)&&weight(SUBJ[id])>weight(SUBJ[r])))r=id;});
         if(r){const f=fill(r,B,dur,R1,false);if(f.tk.length){f.tk.forEach(t=>{const k=plan.bonus[r].indexOf(t.id);if(k>=0)plan.bonus[r].splice(k,1);});useDay(r,B.day,f.used);place(i,r,f.tk,f.used,dur,true);continue;}}}}
     if(!best){freeIdx.push(i);continue;}
@@ -19236,7 +19293,7 @@ function quiz(sid,neuf){
   $("#qbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]");if(o&&qAns===null){qAns=+o.dataset.o;const qq=S.quiz[qOrder[qi]];
       if(qq.link)emit({k:"qr",s:sid,c:qq.link,ok:qAns===qq.a?1:0});
       logRep(Object.assign({o:"quiz de cours",s:sid,fiche:qq.link||null,ok:qAns===qq.a?1:0,ms:Date.now()-(qT0||Date.now())},repQ(qq,qAns)));
-      if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}seanceRep("quiz:"+sid,qS,()=>qOrder.map(i=>({k:hq(S.quiz[i]),p:qPerm[i]||null})),qi,qAns);drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;qRepris=false;drawQ(sid);}if(id==="qre"||id==="qnew")quiz(sid,true);});
+      if(qAns===qq.a)qScore++;else{qMiss.push({sid,q:qq,a:qAns});emit({k:"qm",s:sid,q:hq(qq),c:qq.link||null,o:"quiz"});if(qq.link&&S.BY[qq.link]){setStatus(sid,qq.link,"review");renderSide();}}seanceRep("quiz:"+sid,qS,()=>qOrder.map(i=>({k:hq(S.quiz[i]),p:qPerm[i]||null})),qi,qAns);drawQ(sid);$("#qn")?.focus();return;}const id=e.target.closest("button")?.id;if(id==="qn"){qi++;qAns=null;qRepris=false;drawQ(sid);}if(id==="qre"||id==="qnew")quiz(sid,true);});
 }
 function drawQ(sid){
   const S=SUBJ[sid],Q=S.quiz,n=qOrder.length,box=$("#qbox"),st=ST[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):n;
@@ -19395,7 +19452,7 @@ function mixPage(){const Q=mx.q;
     if((o||ns)&&mx.ans===null){const it=mx.q[mx.i],ok=o&&+o.dataset.o===it.q.a,p=mx.par[it.sid]||(mx.par[it.sid]={ok:0,n:0});mx.ans=o?+o.dataset.o:-1;p.n++;
       logRep(Object.assign({o:"mini-contrôle mélangé",s:it.sid,th:it.th||null,fiche:it.q.link||null,ok:ok?1:0,ms:Date.now()-(mx.t0||Date.now()),passage:mx.run},repQ(it.q,mx.ans)));
       if(it.th)emit({k:"diag",s:it.sid,th:it.th,ok:ok?1:0,n:1,run:mx.run});
-      if(ok){mx.score++;p.ok++;}else{if(mx.ans>=0)mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}
+      if(ok){mx.score++;p.ok++;}else{if(mx.ans>=0)mx.miss.push({sid:it.sid,q:it.q,a:mx.ans});emit({k:"qm",s:it.sid,q:hq(it.q),c:it.q.link||null,o:"mix"});if(it.q.link&&SUBJ[it.sid].BY[it.q.link]){setStatus(it.sid,it.q.link,"review");renderSide();}}
       seanceRep("mix",mx,mixDebut,mx.i,mx.ans);drawMix();$("#mxn")?.focus();return;}
     const id=e.target.closest("button")?.id;if(id==="mxn"){mx.i++;mx.ans=null;mx.repris=false;drawMix();}if(id==="mxre"||id==="mxnew")mix(true);});
 }
@@ -19526,7 +19583,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,coursJour,epreuvesDu,mm,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,coursJour,epreuvesDu,mm,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
