@@ -581,6 +581,18 @@ details.day summary span{color:var(--graphite);font-size:.9rem}
 .ev.exam b{color:#000}
 .ev.rev{background:color-mix(in srgb,var(--sc) 20%,#000);color:var(--encre);border-left:4px solid var(--sc)}
 .ev.rev.done{opacity:.5}
+.ev.rev.in{left:8px;right:8px}
+.ev.mien{left:1px;right:1px;padding:0;border:2px dashed var(--violet-hi);border-radius:10px;background:none;overflow:visible;cursor:pointer}
+.ev.mien:hover,.ev.mien:focus-visible{border-style:solid;outline:none}
+.ev.mien i{position:absolute;z-index:3;left:8px;top:-14px;max-width:calc(100% - 14px);padding:0 4px;border-radius:4px;background:var(--feuille);color:var(--violet-hi);font:800 .6rem/1.35 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.mien span{padding:13px 8px 0;color:var(--graphite);font-size:.74rem}
+.sdot.mien{background:none;border:2px dashed var(--violet-hi)}
+.crrow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.crrow label{display:inline-flex;gap:6px;align-items:center;color:var(--graphite)}
+.crrow input{font:inherit;padding:5px 8px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre);color-scheme:dark}
+.crmsg,.crnote{margin:0;font-size:.88rem;color:var(--graphite)}
+.crmsg:empty{display:none}
+.crmsg.r{color:var(--rouge);font-weight:700}
 
 /* code et composants interactifs */
 pre.code{margin:0;background:#04060D;border:2px solid var(--trait);border-radius:12px;padding:12px 14px;overflow-x:auto;max-width:100%;font:14px/1.6 var(--f-mono);white-space:pre;color:#DCE8F8}
@@ -18468,21 +18480,23 @@ function suite(){
 function journees(P){
   const t0=today(),n=NOW(),now=n.getHours()*60+n.getMinutes(),PX=.8,mm=A.mm;
   const acts=d=>[].concat(
+    A.creneauxDu(d).map(c=>({k:"mien",a:c.a,b:c.b,c})),
     A.coursJour(d).map(c=>({k:"cls",a:mm(c.start),b:mm(c.end),c})),
     A.epreuvesDu(d).map(({S,e})=>({k:"exam",a:mm(e.start),b:e.end?mm(e.end):mm(e.start)+60,S,e})),
     P.blocks.filter(b=>b.day===d).map(B=>({k:"rev",a:B.start,b:B.end,B})));
   const ev=(d,x,h0)=>{const pos=`top:${(x.a-h0)*PX}px;height:${Math.max(18,(x.b-x.a)*PX-2)}px`;
+    if(x.k==="mien")return A.cadreCren(x.c,P,(x.a-h0)*PX,(x.b-x.a)*PX-2);
     if(x.k==="cls"){const c=x.c,fini=d<t0||(d===t0&&x.b<=now);
       return `<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="${pos}"><b>${c.name}</b><span>${hh(x.a)}, ${c.skip?(fini||c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;}
     if(x.k==="exam")return `<a class="ev exam" href="#/${x.S.id}" style="${pos}"><b>${x.e.label||"CC"} ${x.S.name}</b><span>${hh(x.a)}, ${x.e.place}</span></a>`;
     const B=x.B,S=SUBJ[B.sid],t=B.tasks.map(id=>S.TB[id]).find(t=>t&&!isDone(B.sid,t));
-    return `<a class="ev rev${t?"":" done"}" href="${t?hrefTask(B.sid,t):"#/"+B.sid}" style="--sc:${S.color};${pos}"><b>${S.name}</b><span>${hh(B.start)}–${hh(B.end)}${t?" · "+esc(t.t):", fait"}</span></a>`;};
+    return `<a class="ev rev${t?"":" done"}${A.dansCreneau(d,B.start,B.end)?" in":""}" href="${t?hrefTask(B.sid,t):"#/"+B.sid}" style="--sc:${S.color};${pos}"><b>${S.name}</b><span>${hh(B.start)}–${hh(B.end)}${t?" · "+esc(t.t):", fait"}</span></a>`;};
   const grille=(days,cls)=>{const L=days.map(acts),all=L.flat();
     if(!all.length)return `<p class="muted ${cls}">Ni cours ni révision ${days.length>1?"hier, aujourd'hui ou demain":"aujourd'hui"}.</p>`;
-    const h0=Math.floor(Math.min(...all.map(x=>x.a))/60)*60,h1=Math.ceil(Math.max(...all.map(x=>x.b))/60)*60,H=(h1-h0)*PX;
+    const h0=Math.floor(Math.min(...all.map(x=>x.k==="mien"?x.a-20:x.a))/60)*60,h1=Math.ceil(Math.max(...all.map(x=>x.b))/60)*60,H=(h1-h0)*PX;
     let hrs="";for(let m=h0;m<=h1;m+=60)hrs+=`<span style="top:${(m-h0)*PX}px">${m/60}h</span>`;
-    return `<div class="jedt ${cls}" style="--hp:${60*PX}px"><div class="jhrs"><div class="jh"></div><div class="jbody" style="height:${H}px">${hrs}</div></div>${days.map((d,i)=>`<div class="jcol${d===t0?" today":""}${d<t0?" past":""}"><div class="jh">${d===t0?"Aujourd'hui":d<t0?"Hier":"Demain"}<small>${dayName(d,true,true)}</small></div><div class="jbody" style="height:${H}px">${L[i].map(x=>ev(d,x,h0)).join("")}${d===t0&&now>=h0&&now<=h1?`<div class="edt-now" style="top:${(now-h0)*PX}px"><span>${hh(now)}</span></div>`:""}</div></div>`).join("")}</div>`;};
-  return tiroir("Emploi du temps",`${grille([addDays(t0,-1),t0,addDays(t0,1)],"jedt-pc")}${grille([t0],"jedt-tel")}<div id="jbox" class="examcard" style="--sc:var(--graphite)" hidden></div><p class="jlink"><span class="muted">Clique sur un cours si tu n'y vas pas (ou si tu n'y es pas allé) : le créneau devient de la révision. Clique sur un créneau de révision pour le commencer.</span> <a href="#/edt">Toute la semaine ›</a></p>`,"jours");}
+    return `<div class="jedt ${cls}" style="--hp:${60*PX}px"><div class="jhrs"><div class="jh"></div><div class="jbody" style="height:${H}px">${hrs}</div></div>${days.map((d,i)=>`<div class="jcol${d===t0?" today":""}${d<t0?" past":""}"><div class="jh">${d===t0?"Aujourd'hui":d<t0?"Hier":"Demain"}<small>${dayName(d,true,true)}</small></div><div class="jbody" data-day="${d}" data-h0="${h0}" style="height:${H}px">${L[i].map(x=>ev(d,x,h0)).join("")}${d===t0&&now>=h0&&now<=h1?`<div class="edt-now" style="top:${(now-h0)*PX}px"><span>${hh(now)}</span></div>`:""}</div></div>`).join("")}</div>`;};
+  return tiroir("Emploi du temps",`${grille([addDays(t0,-1),t0,addDays(t0,1)],"jedt-pc")}${grille([t0],"jedt-tel")}<div id="jbox" class="examcard" style="--sc:var(--graphite)" hidden></div><p class="jlink"><span class="muted">Clique sur un cours si tu n'y vas pas (ou si tu n'y es pas allé) : le créneau devient de la révision. Clique sur un créneau de révision pour le commencer, dans un trou pour ajouter un créneau à toi.</span> <a href="#" data-cradd>+ Ajouter un créneau</a> <a href="#/edt">Toute la semaine ›</a></p>`,"jours");}
 function bindJours(){
   const box=$("#jbox");if(!box)return;
   const ouvre=el=>{const[d,h]=el.dataset.cl.split("|"),c=A.coursJour(d).find(x=>x.start===h);if(!c)return;
@@ -18491,7 +18505,10 @@ function bindJours(){
     box.innerHTML=`<div><b>${c.name}</b>, ${dayName(d,true)} à ${h.replace(":","h")}, ${c.detail}.</div><div class="filters">${O.map(([v,t])=>`<button class="btn" data-sk="${v}" aria-pressed="${v?!!c.skip:!c.skip}">${t}</button>`).join("")}</div>`;
     box.hidden=false;box.dataset.k=d+":"+h;box.scrollIntoView({behavior:"smooth",block:"nearest"});};
   $("#main").querySelectorAll(".jedt .ev.cls").forEach(el=>{el.addEventListener("click",()=>ouvre(el));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ouvre(el);}});});
-  box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;A.emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk});home();});}
+  box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;A.emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk||"go"});home();});
+  A.lierCren($("#main"),box,.8,col=>+col.dataset.h0,home);
+  const plus=$("#main").querySelector("[data-cradd]");if(plus)plus.addEventListener("click",e=>{e.preventDefault();const n=NOW(),m=Math.ceil((n.getHours()*60+n.getMinutes()+5)/30)*30;
+    A.boiteCren(box,m>21*60?{day:addDays(today(),1),a:14*60}:{day:today(),a:Math.max(m,8*60)},home);});}
 
 function home(){
   const t0=today(),n=NOW(),P=plan(),up=upcoming(),due=dueCards();
@@ -18768,7 +18785,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},skip:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
+const hub={theme:local.theme,exams:{},skip:{},cren:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -18789,7 +18806,7 @@ function themeDe(S,l,c){if(!S||!S.themes)return null;
   return S.THX[l?"l:"+l:"c:"+c]||null;}
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -18812,7 +18829,7 @@ function applyEv(e){
   else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.cren={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -18969,10 +18986,16 @@ const HOLIDAY={"2026-11-11":"11 novembre, férié"};
 /* jours où il ne révise pas : leur temps de travail est reporté sur la veille. Jeudi 12/11 : cours puis CC jusqu'à 18 h 15, rien le soir (dit le 11/11). */
 const SANS_REVISION={"2026-11-12":1};
 const WIN=[[480,750],[840,1140],[1200,1350]];/* 8h-12h30, 14h-19h, 20h-22h30 */
-/* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours */
+/* ses créneaux à lui (clés cren: du journal) : {d:premier jour, a, b:"HH:MM", w:1 chaque semaine, x:[jours enlevés]} */
+const jourSem=day=>{const[y,m,d]=day.split("-").map(Number);return new Date(y,m-1,d).getDay();};
+const creneauxDu=day=>Object.keys(hub.cren).map(id=>({id,c:hub.cren[id]})).filter(({c})=>c.w?day>=c.d&&jourSem(day)===jourSem(c.d)&&!(c.x||[]).includes(day):c.d===day).map(({id,c})=>({id,day,a:mm(c.a),b:mm(c.b),w:!!c.w})).sort((x,y)=>x.a-y.a);
+const dansCreneau=(day,a,b)=>creneauxDu(day).some(s=>a<s.b&&b>s.a);
+/* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours ;
+   un cours dans un de ses créneaux compte comme "rev", sauf s'il a dit qu'il y va ("go") */
 const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day);
 const estCC=(day,c)=>epreuvesDu(day).some(x=>Math.abs(mm(x.e.start)-mm(c[0]))<=20);
-const coursJour=day=>(CLASSES[day]||[]).filter(c=>!estCC(day,c)).map(c=>({day,start:c[0],end:c[1],name:c[2],detail:c[3],sid:c[4],skip:hub.skip[day+":"+c[0]]||""}));
+const skipDe=(day,c)=>{const s=hub.skip[day+":"+c[0]]||"";return s==="go"?"":s||(dansCreneau(day,mm(c[0]),mm(c[1]))?"rev":"");};
+const coursJour=day=>(CLASSES[day]||[]).filter(c=>!estCC(day,c)).map(c=>({day,start:c[0],end:c[1],name:c[2],detail:c[3],sid:c[4],skip:skipDe(day,c)}));
 function busyOf(day){
   const b=[];coursJour(day).forEach(c=>{if(!c.skip)b.push([mm(c.start),mm(c.end)]);});
   SIDS.forEach(id=>{const e=exam(SUBJ[id]);if(e.day===day)b.push([mm(e.start)-30,mm(e.end)+10]);});
@@ -18987,13 +19010,19 @@ function doneTodayMin(){const t0=today();let s=0;J.forEach(e=>{if(ymd(new Date(e
   if(e.k==="les"){const T=S.TB["L-"+e.l];s+=e.dur||(T?T.min:15);}else if(e.k==="task"&&e.v){const T=S.TB[e.x];if(T)s+=T.min;}});return s;}
 function dayCap(day){if(SANS_REVISION[day])return 0;const n=addDays(day,1);return capBase(day)+(SANS_REVISION[n]?capBase(n):0);}
 function capBase(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[180,90,120],normal:[270,150,180],intensif:[360,210,270]}[hub.rythme||"normal"]||[270,150,180];return Math.max(0,(free?R[0]:(coursJour(day).some(c=>!c.skip)?R[1]:R[2]))-15);}/* 15 min gardées chaque jour pour « Réviser » */
+const decoupe=(iv,busy)=>{busy.forEach(([s,e])=>{const out=[];iv.forEach(([a,b])=>{if(e+10<=a||s-10>=b){out.push([a,b]);return;}if(s-10-a>=30)out.push([a,s-10]);if(b-(e+10)>=30)out.push([e+10,b]);});iv=out;});return iv;};
+const seances=iv=>{const r=[];iv.forEach(([a,b])=>{let t=a;while(b-t>=30){const len=Math.min(SEANCE,b-t);r.push([t,t+len]);t+=len+GAP;}});return r;};
+/* ses créneaux sont remplis en entier, en plus du temps habituel du jour (choix du 17/11) ; le temps habituel va dans les fenêtres WIN, hors de ses créneaux */
+const seancesMiennes=(day,from)=>seances(decoupe(creneauxDu(day).map(s=>[Math.max(s.a,from),s.b]).filter(([a,b])=>b-a>=30),busyOf(day)));
 function freeBlocks(day,from,capOv){
+  const res=seancesMiennes(day,from);
   let iv=[];WIN.forEach(([a,b])=>{a=Math.max(a,from);if(b-a>=30)iv.push([a,b]);});
-  busyOf(day).forEach(([s,e])=>{const out=[];iv.forEach(([a,b])=>{if(e+10<=a||s-10>=b){out.push([a,b]);return;}if(s-10-a>=30)out.push([a,s-10]);if(b-(e+10)>=30)out.push([e+10,b]);});iv=out;});
-  const blocks=[];iv.forEach(([a,b])=>{let t=a;while(b-t>=30){const len=Math.min(SEANCE,b-t);blocks.push([t,t+len]);t+=len+GAP;}});
-  let cap=capOv==null?dayCap(day):capOv;const res=[];for(const[a,b]of blocks){if(cap<25)break;let len=b-a;if(work(len)>cap)len=cap>45?cap+PAUSE:cap;res.push([a,a+len]);cap-=work(len);}
-  return res;
+  iv=decoupe(iv,busyOf(day).concat(creneauxDu(day).map(s=>[s.a,s.b])));
+  let cap=capOv==null?dayCap(day):capOv;for(const[a,b]of seances(iv)){if(cap<25)break;let len=b-a;if(work(len)>cap)len=cap>45?cap+PAUSE:cap;res.push([a,a+len]);cap-=work(len);}
+  return res.sort((x,y)=>x[0]-y[0]);
 }
+/* le travail fait aujourd'hui dans ses créneaux ne mange pas le temps habituel */
+const mienAvant=(day,until)=>seancesMiennes(day,0).reduce((s,[a,b])=>a<until?s+work(Math.min(b,until)-a):s,0);
 
 /* ---------- le plan de la semaine ---------- */
 function pendingTasks(sid){const S=SUBJ[sid];return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t));}
@@ -19005,7 +19034,7 @@ function buildPlan(){
   const plan={day:t0,blocks:[],assign:{},bonus:{}};
   if(!active.length)return plan;
   const lastDay=ymd(new Date(Math.max(...active.map(id=>examStart(SUBJ[id]).getTime()))));
-  let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){freeBlocks(d,d===t0?Math.ceil((nowMin+10)/5)*5:0,d===t0?Math.max(0,dayCap(t0)-doneTodayMin()):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
+  let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){freeBlocks(d,d===t0?Math.ceil((nowMin+10)/5)*5:0,d===t0?Math.max(0,dayCap(t0)-Math.max(0,doneTodayMin()-mienAvant(t0,nowMin))):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
   const dl=id=>examStart(SUBJ[id]).getTime();
   /* 1. Ce qu'on garde, quand tout ne tient pas : le temps est partagé entre les matières en proportion du poids de chaque CC
         dans la moyenne (coefficient × part du CC), de sa proximité (bonus dans les 7 jours) et des points qu'il reste
@@ -19150,28 +19179,75 @@ function edt(){
   const days=[];for(let i=0;i<7;i++)days.push(addDays(lundi,i));
   const nowMin=n0.getHours()*60+n0.getMinutes();
   const H0=7*60+30,H1=23*60,PX=0.78;
-  const col=d=>{let s="";coursJour(d).forEach(c=>{s+=`<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="top:${(mm(c.start)-H0)*PX}px;height:${(mm(c.end)-mm(c.start))*PX}px"><b>${c.name}</b><span>${hh(mm(c.start))}, ${c.skip?(c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;});
+  const col=d=>{let s=creneauxDu(d).map(c=>cadreCren(c,P,(c.a-H0)*PX,(c.b-c.a)*PX)).join("");coursJour(d).forEach(c=>{s+=`<div class="ev cls${c.skip?" skip":""}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="top:${(mm(c.start)-H0)*PX}px;height:${(mm(c.end)-mm(c.start))*PX}px"><b>${c.name}</b><span>${hh(mm(c.start))}, ${c.skip?(c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;});
     epreuvesDu(d).forEach(({S,e})=>{s+=`<a class="ev exam" href="#/${S.id}" style="top:${(mm(e.start)-H0)*PX}px;height:${Math.max(40,(mm(e.end||e.start)-mm(e.start))*PX)}px"><b>${e.label||"CC"} ${S.name}</b><span>${hh(mm(e.start))}, ${e.place}</span></a>`;});
-    P.blocks.filter(b=>b.day===d).forEach(b=>{const S=SUBJ[b.sid];const done=b.tasks.every(tid=>isDone(b.sid,S.TB[tid]));s+=`<a class="ev rev${done?" done":""}" href="#/${b.sid}" style="--sc:${S.color};top:${(b.start-H0)*PX}px;height:${(b.end-b.start)*PX}px"><b>${S.name}</b><span>${hh(b.start)}–${hh(b.end)}${done?", fait":""}</span></a>`;});
+    P.blocks.filter(b=>b.day===d).forEach(b=>{const S=SUBJ[b.sid];const done=b.tasks.every(tid=>isDone(b.sid,S.TB[tid]));s+=`<a class="ev rev${done?" done":""}${dansCreneau(d,b.start,b.end)?" in":""}" href="#/${b.sid}" style="--sc:${S.color};top:${(b.start-H0)*PX}px;height:${(b.end-b.start)*PX}px"><b>${S.name}</b><span>${hh(b.start)}–${hh(b.end)}${done?", fait":""}</span></a>`;});
     if(d===t0&&nowMin>H0&&nowMin<H1)s+=`<div class="edt-now" style="top:${(nowMin-H0)*PX}px"><span>${hh(nowMin)}</span></div>`;
     return s;};
   let hours="";for(let h=8;h<=22;h++)hours+=`<span style="top:${(h*60-H0)*PX}px">${h}h</span>`;
   $("#main").innerHTML=`<div class="page" style="max-width:1280px"><div class="title-row"><h1>Emploi du temps de la semaine</h1></div>
    <div class="filters" id="edtnav"><button class="btn" data-w="-1">‹ Semaine précédente</button><button class="btn" data-w="0" aria-pressed="${EDTW===0}">Cette semaine</button><button class="btn" data-w="1">Semaine suivante ›</button><span class="muted">Du ${dayName(days[0],false)} au ${dayName(days[6],false)}</span></div>
-   <p class="lead">Tes cours (gris), tes CC (rouge) et les créneaux de révision placés dans les trous (couleur de la matière). Clique sur un créneau de révision pour ouvrir la matière. <b>Clique sur un cours</b> si tu n'y vas pas : le créneau devient de la révision.</p>
+   <p class="lead">Tes cours (gris), tes CC (rouge) et les créneaux de révision placés dans les trous (couleur de la matière). Clique sur un créneau de révision pour ouvrir la matière. <b>Clique sur un cours</b> si tu n'y vas pas : le créneau devient de la révision. <b>Clique dans un trou</b> pour ajouter un créneau à toi (pointillés violets), une fois ou chaque semaine : il s'ajoute au temps habituel du jour.</p>
    <div id="clbox" class="examcard" style="--sc:var(--graphite)" hidden></div>
-   <div class="edt-legend">${SIDS.map(id=>`<span><i class="sdot" style="background:${SUBJ[id].color}"></i>${SUBJ[id].name}</span>`).join("")}<span><i class="sdot" style="background:var(--graphite)"></i>cours</span><span><i class="sdot" style="background:var(--rouge)"></i>CC</span></div>
+   <div class="edt-legend">${SIDS.map(id=>`<span><i class="sdot" style="background:${SUBJ[id].color}"></i>${SUBJ[id].name}</span>`).join("")}<span><i class="sdot" style="background:var(--graphite)"></i>cours</span><span><i class="sdot" style="background:var(--rouge)"></i>CC</span><span><i class="sdot mien"></i>ton créneau</span></div>
    <div class="edt-wrap"><div class="edt" style="grid-template-columns:44px repeat(${days.length},minmax(128px,1fr));min-width:${44+days.length*128}px"><div></div>${days.map(d=>`<div class="edt-h${d===t0?" today":""}${d<t0?" past":""}">${dayName(d,true,true)}${d===t0?`<small>aujourd'hui</small>`:HOLIDAY[d]?`<small>${HOLIDAY[d]==="11 novembre, férié"?"férié":"vacances"}</small>`:""}</div>`).join("")}
-    <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}${d===t0?" today":""}${d<t0?" past":""}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
+    <div class="edt-hours" style="height:${(H1-H0)*PX}px">${hours}</div>${days.map(d=>`<div class="edt-col${HOLIDAY[d]?" hol":""}${d===t0?" today":""}${d<t0?" past":""}" data-day="${d}" style="height:${(H1-H0)*PX}px">${col(d)}</div>`).join("")}</div></div>
    <p class="muted" style="font-size:.9rem">L'emploi du temps vient de Prose (lu le 7 novembre, jusqu'au 18 décembre). Les heures de CC se modifient dans <a href="#/examens">Examens et coefficients</a>.</p></div>`;
   const box=$("#clbox");
   const ouvre=el=>{const[d,h]=el.dataset.cl.split("|"),c=coursJour(d).find(x=>x.start===h);if(!c)return;
     box.innerHTML=`<div><b>${c.name}</b>, ${dayName(d,true)} à ${h.replace(":","h")}, ${c.detail}.</div><div class="filters">${[["rev","Je n'y vais pas : je révise à la place"],["abs","Je n'y suis pas allé"],["","J'y vais (ou j'y suis allé)"]].map(([v,t])=>`<button class="btn" data-sk="${v}" aria-pressed="${c.skip===v}">${t}</button>`).join("")}</div>`;
     box.hidden=false;box.dataset.k=d+":"+h;box.scrollIntoView({behavior:"smooth",block:"nearest"});};
   $("#main").querySelectorAll(".ev.cls").forEach(el=>{el.addEventListener("click",()=>ouvre(el));el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ouvre(el);}});});
-  box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk});edt();});
+  box.addEventListener("click",e=>{const b=e.target.closest("[data-sk]");if(!b)return;emit({k:"set",key:"skip:"+box.dataset.k,v:b.dataset.sk||"go"});edt();});
+  lierCren($("#main"),box,PX,()=>H0,edt);
   $("#edtnav").addEventListener("click",e=>{const b=e.target.closest("[data-w]");if(!b)return;const w=+b.dataset.w;EDTW=w===0?0:EDTW+w;edt();});
   const tc=$(".edt-col.today");if(tc&&EDTW===0){const wr=$(".edt-wrap");wr.scrollLeft=Math.max(0,tc.offsetLeft-60);}
+}
+
+/* ---------- ses créneaux : cadre sur la grille, boîte pour ajouter, changer les heures ou enlever ---------- */
+const hhmm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+function cadreCren(c,P,top,h){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
+  return `<div class="ev mien" role="button" tabindex="0" data-cr="${c.id}|${c.day}" title="${t}, ${hh(c.a)}–${hh(c.b)}" style="top:${top}px;height:${h}px"><i>${t}</i>${vide&&!fini?"<span>rien de prévu</span>":""}</div>`;}
+function boiteCren(box,o,refresh){
+  const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0;
+  const a0=c?c.a:hhmm(o.a),b0=c?c.b:hhmm(Math.min(o.a+120,23*60));
+  const heures=`<label>de <input type="time" step="900" data-f="a" value="${a0}"></label><label>à <input type="time" step="900" data-f="b" value="${b0}"></label>`;
+  box.innerHTML=c?`<div><b>Ton créneau</b>, ${c.w?"chaque "+jr(day):dayName(day,false)}, de ${hh(mm(c.a))} à ${hh(mm(c.b))}.</div>
+    <div class="crrow">${heures}<button class="btn" data-cr="heures">Changer les heures</button></div>${c.w?`<p class="crnote muted">Les nouvelles heures valent pour tous les ${jr(day)}s.</p>`:""}
+    <div class="filters">${c.w?`<button class="btn" data-cr="sauf">Enlever ce ${jr(day)} seulement</button><button class="btn" data-cr="tout">Enlever tous les ${jr(day)}s</button>`:`<button class="btn" data-cr="tout">Enlever ce créneau</button>`}<button class="btn" data-cr="non">Fermer</button></div><p class="crmsg"></p>`
+   :`<div><b>Ajouter un créneau de révision</b></div>
+    <div class="crrow"><label>Jour <input type="date" data-f="d" value="${day}" min="${today()}"></label>${heures}</div>
+    <div class="filters"><button class="btn" data-rep="0" aria-pressed="true">Une fois</button><button class="btn" data-rep="1" aria-pressed="false">Chaque ${jr(day)}</button></div>
+    <div class="filters"><button class="btn pri" data-cr="ajout">Ajouter</button><button class="btn" data-cr="non">Annuler</button></div><p class="crmsg"></p>`;
+  box.hidden=false;box.dataset.k="";
+  const val=f=>{const i=box.querySelector(`[data-f="${f}"]`);return i?i.value:"";},msg=box.querySelector(".crmsg");
+  const verif=()=>{const a=val("a"),b=val("b");if(!c){day=val("d");if(!/^\d{4}-\d\d-\d\d$/.test(day))return{err:"Choisis un jour."};if(day<today())return{err:"Ce jour est passé."};}
+    if(!/^\d\d:\d\d$/.test(a)||!/^\d\d:\d\d$/.test(b))return{err:"Choisis les deux heures."};
+    const A=mm(a),B=mm(b);if(A<7*60+30||B>23*60)return{err:"Choisis des heures entre 7h30 et 23h."};if(B-A<30)return{err:"Un créneau dure au moins 30 min."};
+    const autre=creneauxDu(day).find(s=>s.id!==id&&A<s.b&&B>s.a);if(autre)return{err:`Tu as déjà un créneau de ${hh(autre.a)} à ${hh(autre.b)} ce jour-là : clique dessus pour changer ses heures.`};
+    const cours=(CLASSES[day]||[]).filter(k=>!estCC(day,k)&&mm(k[0])<B&&mm(k[1])>A&&hub.skip[day+":"+k[0]]!=="go"&&hub.skip[day+":"+k[0]]!=="abs").map(k=>`${k[2]} (${hh(mm(k[0]))})`);
+    const cc=epreuvesDu(day).filter(({e})=>mm(e.start)<B&&mm(e.end||e.start)+10>A).map(({S,e})=>`${e.label||"CC"} ${/^[aeiouéèh]/i.test(S.name)?"d'":"de "}${S.name} à ${hh(mm(e.start))}`);
+    return{a,b,info:[cours.length?`Pendant ce créneau, tu as cours : ${cours.join(", ")}. ${cours.length>1?"Ces cours deviennent":"Ce cours devient"} « je révise à la place » (clique dessus si tu y vas quand même).`:"",cc.length?`Ton ${cc.join(", ")} reste à part : pas de révision pendant l'épreuve.`:""].filter(Boolean).join(" ")};};
+  const montre=()=>{const r=verif();msg.textContent=r.err||r.info||"";msg.classList.toggle("r",!!r.err);return r;};
+  box.querySelectorAll("input").forEach(i=>i.addEventListener("input",()=>{if(!c&&i.dataset.f==="d"&&val("d"))box.querySelector('[data-rep="1"]').textContent="Chaque "+jr(val("d"));montre();}));
+  box.querySelectorAll("[data-rep]").forEach(b=>b.addEventListener("click",()=>{rep=+b.dataset.rep;box.querySelectorAll("[data-rep]").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.rep===rep)));}));
+  box.querySelectorAll("[data-cr]").forEach(b=>b.addEventListener("click",()=>{const k=b.dataset.cr;
+    if(k==="non"){box.hidden=true;return;}
+    if(k==="ajout"||k==="heures"){const r=montre();if(r.err)return;
+      if(k==="ajout")emit({k:"set",key:"cren:"+nouvRun(),v:rep?{d:day,a:r.a,b:r.b,w:1}:{d:day,a:r.a,b:r.b}});
+      else emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{a:r.a,b:r.b})});}
+    else if(k==="sauf")emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{x:(c.x||[]).concat(day)})});
+    else if(k==="tout")emit({k:"set",key:"cren:"+id,v:""});
+    box.hidden=true;refresh();}));
+  if(!c)montre();
+  box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+/* clic dans un trou d'une colonne (data-day) = ajouter ; clic sur un cadre = changer ou enlever */
+function lierCren(root,box,PX,h0De,refresh){
+  root.querySelectorAll(".edt-col[data-day],.jbody[data-day]").forEach(col=>col.addEventListener("click",e=>{if(e.target!==col)return;const d=col.dataset.day;if(d<today())return;
+    const m=Math.round((h0De(col)+e.offsetY/PX)/15)*15;boiteCren(box,{day:d,a:Math.min(Math.max(m,8*60),21*60)},refresh);}));
+  root.querySelectorAll(".ev.mien").forEach(el=>{const go=()=>{const[id,d]=el.dataset.cr.split("|");if(hub.cren[id])boiteCren(box,{id,day:d},refresh);};
+    el.addEventListener("click",e=>{if(e.target.closest(".ev")!==el)return;go();});el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});
 }
 
 /* ---------- examens et coefficients ---------- */
@@ -19583,7 +19659,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,coursJour,epreuvesDu,mm,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cadreCren,lierCren,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
