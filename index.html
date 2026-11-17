@@ -18182,7 +18182,7 @@ const GEN=window.GEN={defs:{},par:{},
   /* un tirage : la graine suffit à retrouver l'exercice */
   tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
   add(sid,defs){const S=SUBJ[sid];GEN.defs[sid]=(GEN.defs[sid]||[]).concat(defs);
-    defs.forEach(d=>{d.sid=sid;GEN.par[d.id]=d;if(!S||!S.tasks)return;
+    defs.forEach(d=>{d.sid=sid;GEN.par[d.id]=d;if(!S||!S.tasks||d.fixe)return;/* une récitation a déjà son étape dans le planning de la matière */
       const T=(S.themes||[]).find(x=>x.id===d.th),t={id:"en-"+d.id,t:"Entraînement : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)),min:15,p:1,train:d.id,links:[["#/entrainer/"+sid+"/"+d.id,"S'entraîner"]],why:"Des exercices tirés au hasard, du plus simple au niveau du CC, jusqu'à 3 justes de suite."};
       if(d.ex)t.ex=d.ex;S.tasks.push(t);if(T)(T.tasks=T.tasks||[]).push(t.id);});}};
 })();
@@ -18666,6 +18666,143 @@ function tireEnlever(R){for(;;){const t=R.choix(["col2","lib2","somme","somme","
     else V=B;}
   if(V.every(v=>v.every(x=>Math.abs(x)<=9)&&v.some(x=>x!==0))&&new Set(V.map(v=>v.join())).size===V.length)return V;}}
 
+/* ---------- AL6 : changer de repère ; AL7 : calculer dans ℝⁿ ---------- */
+const ve=s=>`<span class="vec">${s}</span>`,PR=["x′","y′"],XY=["x","y"],IJ=["i","j"];
+const cvec=(co,noms)=>comb(co,noms.map(ve));
+const rep2=(o,a,b)=>`(${o} ; ${ve(a)}, ${ve(b)})`;
+const colU=P=>[P[0][0],P[1][0]],colV=P=>[P[0][1],P[1][1]];
+const poseUV=P=>`${ve("u")} = ${cvec(colU(P),IJ)} et ${ve("v")} = ${cvec(colV(P),IJ)}`;
+const casesXY=(id,noms,titre)=>({k:"cases",id,noms,titre});
+const lisXY=(o,noms)=>noms.map(x=>nombre((o||{})[x]));
+const INC="Remplis chaque case avec un nombre, par exemple 3, -2 ou 1/2.";
+const fauxTxt=(F)=>`Pas tout à fait : ${et(F)} ${F.length>1?"sont faux":"est faux"}.`;
+/* du repère (O ; u, v) vers (O ; i, j) : il suffit de remplacer */
+function repAncien(P,xp){const x=fois(P,xp),melange=fois([colU(P),colV(P)],xp);
+  const E=[{w:`${ve("OM")} = ${cvec(xp,["u","v"])}`,why:`C'est la définition : dire que les coordonnées de M dans le repère ${rep2("O","u","v")} sont (x′, y′), c'est dire que ${ve("OM")} = x′${ve("u")} + y′${ve("v")}.`,pts:0.5},
+    {w:`Devant ${ve("i")} : ${fx(`${verifTxt(P[0],xp)} = ${nb(x[0])}`)}.<br>Devant ${ve("j")} : ${fx(`${verifTxt(P[1],xp)} = ${nb(x[1])}`)}.`,why:`On remplace ${ve("u")} par ${cvec(colU(P),IJ)} et ${ve("v")} par ${cvec(colV(P),IJ)}, puis on regroupe ce qui est devant ${ve("i")} et ce qui est devant ${ve("j")}.`,pts:1.5},
+    {w:`<b>Les coordonnées de M dans le repère ${rep2("O","i","j")} sont ${fx(vt(x))}.</b>`,why:`${ve("OM")} = ${cvec(x,IJ)} : les coordonnées sont les nombres devant ${ve("i")} et devant ${ve("j")}.`,pts:0.5}];
+  function juge(rep){const v=lisXY(rep.c,XY);if(v.some(z=>!z))return {incomplet:INC};const F=XY.filter((_,i)=>!egal(v[i],x[i]));if(!F.length)return {ok:true};
+    const m=egal(v[0],melange[0])&&egal(v[1],melange[1]);
+    return {ok:false,faux:F,resume:fauxTxt(F),diag:{etape:1,type:m?"coefficients de u et de v mélangés":"regroupement devant i et j",titre:"Où ça part : le regroupement.",msg:m?`Tu as pris pour x les deux coefficients de ${ve("u")}. Il faut prendre, dans ${ve("u")} et dans ${ve("v")}, ce qui est devant ${ve("i")} : ${fx(`${verifTxt(P[0],xp)} = ${nb(x[0])}`)}.`:`Devant ${ve("i")} : ${fx(`${verifTxt(P[0],xp)} = ${nb(x[0])}`)}. Devant ${ve("j")} : ${fx(`${verifTxt(P[1],xp)} = ${nb(x[1])}`)}.`}};}
+  return {sig:"RA"+JSON.stringify([P,xp]),q:`Dans le plan muni du repère ${rep2("O","i","j")}, on pose ${poseUV(P)}. Dans le repère ${rep2("O","u","v")}, les coordonnées du point M sont ${fx(vt(xp))}. Quelles sont ses coordonnées (x, y) dans le repère ${rep2("O","i","j")} ?`,corps:"",
+    texte:`u = ${vt(colU(P))}, v = ${vt(colV(P))} dans (O ; i, j) ; M = ${vt(xp)} dans (O ; u, v) ; coordonnées dans (O ; i, j) ?`,champs:[casesXY("c",XY)],juge,etapes:E,bonne:fx(vt(x)),bonneTxt:vt(x),
+    repBonne:{c:{x:String(x[0]),y:String(x[1])}},repFausse:{c:{x:String(melange[0]+(melange[0]===x[0]?1:0)),y:String(melange[1])}},nature:"ancien"};}
+/* nouvelle origine, mêmes vecteurs */
+function repOrigine(O2,m,vers){const r=vers?[m[0]-O2[0],m[1]-O2[1]]:[m[0]+O2[0],m[1]+O2[1]],inv=vers?[m[0]+O2[0],m[1]+O2[1]]:[m[0]-O2[0],m[1]-O2[1]],N=vers?PR:XY;
+  const E=[{w:`${ve("OM")} = ${ve("OO′")} + ${ve("O′M")}${vers?`, donc ${ve("O′M")} = ${ve("OM")} − ${ve("OO′")}`:""}`,why:`C'est la relation de Chasles : pour aller de O à M, on peut passer par O′. Les coordonnées de M dans R′ sont celles du vecteur ${ve("O′M")}, celles dans R sont celles de ${ve("OM")}.`,pts:1},
+    {w:`${fx(`${N[0]} = ${nb(m[0])} ${vers?"−":"+"} ${par(O2[0])} = ${nb(r[0])}`)} et ${fx(`${N[1]} = ${nb(m[1])} ${vers?"−":"+"} ${par(O2[1])} = ${nb(r[1])}`)}`,why:`Les vecteurs du repère ne changent pas : on ${vers?"retire":"ajoute"} seulement les coordonnées de O′, une par une.`,pts:1},
+    {w:`<b>Les coordonnées de M dans le repère ${vers?"R′":"R"} sont ${fx(vt(r))}.</b>`,why:`On répond par une phrase qui dit dans quel repère on se place.`,pts:0.5}];
+  function juge(rep){const v=lisXY(rep.c,N);if(v.some(z=>!z))return {incomplet:INC};const F=N.filter((_,i)=>!egal(v[i],r[i]));if(!F.length)return {ok:true};
+    const s=egal(v[0],inv[0])&&egal(v[1],inv[1]);
+    return {ok:false,faux:F,resume:fauxTxt(F),diag:{etape:s?0:1,type:s?"origine ajoutée au lieu d'être retirée (ou l'inverse)":"calcul des coordonnées",titre:s?"Où ça part : le sens de la relation.":"Où ça part : le calcul.",msg:s?`${ve("OM")} = ${ve("OO′")} + ${ve("O′M")}. Ici on cherche ${vers?`${ve("O′M")} : il faut retirer`:`${ve("OM")} : il faut ajouter`} les coordonnées de O′.`:`${fx(`${N[0]} = ${nb(r[0])}`)} et ${fx(`${N[1]} = ${nb(r[1])}`)}.`}};}
+  return {sig:"RO"+JSON.stringify([O2,m,vers]),q:`Le plan est muni du repère R = ${rep2("O","i","j")}. Les coordonnées du point O′ dans R sont ${fx(vt(O2))}. On prend un nouveau repère R′ = ${rep2("O′","i","j")} : mêmes vecteurs, nouvelle origine. Les coordonnées du point M dans ${vers?"R":"R′"} sont ${fx(vt(m))}. Quelles sont ses coordonnées ${vers?"(x′, y′) dans R′":"(x, y) dans R"} ?`,corps:"",
+    texte:`O′ = ${vt(O2)} dans R ; R′ = (O′ ; i, j) ; M = ${vt(m)} dans ${vers?"R":"R′"} ; coordonnées dans ${vers?"R′":"R"} ?`,champs:[casesXY("c",N)],juge,etapes:E,bonne:fx(vt(r)),bonneTxt:vt(r),
+    repBonne:{c:{[N[0]]:String(r[0]),[N[1]]:String(r[1])}},repFausse:{c:{[N[0]]:String(inv[0]),[N[1]]:String(inv[1])}},nature:vers?"vers":"depuis"};}
+/* de (O ; i, j) vers le nouveau repère : un système 2 × 2 (avec, ou non, une nouvelle origine et un point dans l'autre sens) */
+function repNouveau(P,O2,xp,nB){const deux=!!nB,mA=fois(P,xp).map((z,i)=>z+O2[i]),sec=[mA[0]-O2[0],mA[1]-O2[1]],R=echelonne(P,sec),sol=solution(R,PR),{remonte}=lecteur(R,sol,PR),mB=deux?fois(P,nB).map((z,i)=>z+O2[i]):null,orig=O2[0]||O2[1],direct=fois(P,mA);
+  const Rp=orig?"R′":rep2("O","u","v"),E=[];
+  if(orig)E.push({w:`Pour tout point M : ${ve("OM")} = ${ve("OO′")} + x′${ve("u")} + y′${ve("v")}, donc ${fx(`x = ${comb([O2[0]?1:0].concat(P[0]),[nb(O2[0])].concat(PR)).replace(/^1(?=[^0-9])/,"")}`)} et ${fx(`y = ${comb([O2[1]?1:0].concat(P[1]),[nb(O2[1])].concat(PR))}`)}.`,why:`On passe par O′ (relation de Chasles), puis on écrit ${ve("O′M")} = x′${ve("u")} + y′${ve("v")} et on remplace ${ve("u")} et ${ve("v")} par leur écriture avec ${ve("i")} et ${ve("j")}.`,pts:1});
+  if(deux)E.push({w:`Pour B, on remplace x′ et y′ par ${nb(nB[0])} et ${nb(nB[1])} : ${fx(`x = ${O2[0]?nb(O2[0])+" + ":""}${verifTxt(P[0],nB).replace(/^−/,"(−").replace(/^\(−(\d+)/,"(−$1)")} = ${nb(mB[0])}`)} et ${fx(`y = ${O2[1]?nb(O2[1])+" + ":""}${verifTxt(P[1],nB).replace(/^−(\d+)/,"(−$1)")} = ${nb(mB[1])}`)}. <b>Les coordonnées de B dans R sont ${fx(vt(mB))}.</b>`,why:`Dans ce sens, il n'y a qu'à remplacer.`,pts:1});
+  E.push({w:`${deux?"Pour A, on":"On"} cherche x′ et y′ : <span class="sys"><span>$${comb(P[0],PR)} = ${nb(sec[0])}$</span><span>$${comb(P[1],PR)} = ${nb(sec[1])}$</span></span>`,why:orig?`On remplace x et y par les coordonnées de ${deux?"A":"M"}, et on fait passer les coordonnées de O′ de l'autre côté : ${fx(`${nb(mA[0])} − ${par(O2[0])} = ${nb(sec[0])}`)} et ${fx(`${nb(mA[1])} − ${par(O2[1])} = ${nb(sec[1])}`)}.`:`${ve("OM")} = x′${ve("u")} + y′${ve("v")} : ce qui est devant ${ve("i")} doit valoir ${nb(mA[0])}, ce qui est devant ${ve("j")} doit valoir ${nb(mA[1])}. Les inconnues sont x′ et y′.`,pts:1});
+  const iSys=E.length-1;etapesOps(E,R,PR,M=>mat(M,true),"L'opération se fait sur toute la ligne, second membre compris.");
+  E.push({w:`${R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>")}<br><b>Les coordonnées de ${deux?"A":"M"} dans ${Rp} sont ${fx(vt(xp))}.</b>`,why:`On remonte de la dernière ligne à la première. Vérification : ${cvec(xp,["u","v"])} donne bien ${fx(`${verifTxt(P[0],xp)} = ${nb(sec[0])}`)} devant ${ve("i")}.`,pts:1.5});
+  function juge(rep){const a=lisXY(rep.A,PR),b=deux?lisXY(rep.B,XY):[];if(a.concat(b).some(z=>!z))return {incomplet:INC};
+    const F=PR.filter((_,i)=>!egal(a[i],xp[i])).concat(deux?XY.filter((_,i)=>!egal(b[i],mB[i])):[]);if(!F.length)return {ok:true};
+    const fa=F.filter(z=>PR.includes(z)),sens=egal(a[0],direct[0])&&egal(a[1],direct[1]);
+    return {ok:false,faux:F,resume:fauxTxt(F),diag:fa.length?{etape:sens?iSys:E.length-1,type:sens?"changement de repère dans le mauvais sens":"résolution du système du changement de repère",titre:sens?"Où ça part : le sens du calcul.":"Où ça part : le système en x′ et y′.",msg:sens?`Tu as remplacé x′ et y′ par les coordonnées de ${deux?"A":"M"}, mais ce sont ses coordonnées x et y qu'on connaît : x′ et y′ sont les inconnues du système.`:`Le système donne ${fx(`x′ = ${nb(xp[0])}`)} et ${fx(`y′ = ${nb(xp[1])}`)}. Reprends les opérations ci-dessous.`}:{etape:1,type:"remplacement dans les formules du changement de repère",titre:"Où ça part : le point B.",msg:`Pour B il suffit de remplacer : ${fx(`x = ${nb(mB[0])}`)} et ${fx(`y = ${nb(mB[1])}`)}.`}};}
+  const debut=orig?`Le plan est muni du repère R = ${rep2("O","i","j")}. On pose ${poseUV(P)}, et O′ est le point de coordonnées ${fx(vt(O2))} dans R. On note R′ = ${rep2("O′","u","v")}.`:`Dans le plan muni du repère ${rep2("O","i","j")}, on pose ${poseUV(P)}.`;
+  return {sig:"RN"+JSON.stringify([P,O2,xp,nB||0]),q:deux?`${debut} Les coordonnées du point A dans R sont ${fx(vt(mA))} : quelles sont ses coordonnées dans R′ ? Les coordonnées du point B dans R′ sont ${fx(vt(nB))} : quelles sont ses coordonnées dans R ?`:`${debut} Les coordonnées du point M dans le repère ${orig?"R":rep2("O","i","j")} sont ${fx(vt(mA))}. Quelles sont ses coordonnées (x′, y′) dans le repère ${Rp} ?`,corps:"",
+    texte:`u = ${vt(colU(P))}, v = ${vt(colV(P))}${orig?`, O′ = ${vt(O2)}`:""} ; ${deux?`A = ${vt(mA)} dans R → R′ ; B = ${vt(nB)} dans R′ → R`:`M = ${vt(mA)} dans l'ancien repère → nouveau repère`}`,
+    champs:deux?[casesXY("A",PR,"Coordonnées de A dans R′ :"),casesXY("B",XY,"Coordonnées de B dans R :")]:[casesXY("A",PR)],juge,etapes:E,bonne:deux?`A : ${fx(vt(xp))} dans R′ ; B : ${fx(vt(mB))} dans R`:fx(vt(xp)),bonneTxt:deux?`A = ${vt(xp)} dans R′ ; B = ${vt(mB)} dans R`:vt(xp),
+    repBonne:Object.assign({A:{"x′":String(xp[0]),"y′":String(xp[1])}},deux?{B:{x:String(mB[0]),y:String(mB[1])}}:{}),repFausse:Object.assign({A:{"x′":String(direct[0]+(direct[0]===xp[0]&&direct[1]===xp[1]?1:0)),"y′":String(direct[1])}},deux?{B:{x:String(mB[0]),y:String(mB[1])}}:{}),nature:deux?"deux":"nouveau"};}
+/* comme le TD 1, exercice 1 : est-ce un repère, puis les formules avec x et y */
+function repFormules(P){const [a,b]=P[0],[c,d]=P[1],det=a*d-b*c,oui=det!==0;let E,S=null,ex=null;
+  if(!oui){const l=div(b||d,b?a:c);E=[{w:`${ve("v")} = ${nb(l)}${ve("u")} : les deux vecteurs sont colinéaires. <b>${rep2("O","u","v")} n'est pas un repère du plan.</b>`,why:`Un point et deux vecteurs forment un repère du plan seulement si les deux vecteurs ne sont pas colinéaires, c'est-à-dire si aucun n'est un multiple de l'autre. Ici ${fx(`${nb(a)} × ${par(d)} − ${par(c)} × ${par(b)} = 0`)}.`,pts:2}];}
+  else{const B=[[1,0],[0,1]],R=echelonne(P,B);S=[];
+    for(let r=1;r>=0;r--){const L=R.E[r],e={c:Q(0),k:{}};XY.forEach((x,i)=>{if(!nul(L[2+i]))e.k[x]=q(L[2+i]);});for(let t=r+1;t<2;t++){if(nul(L[t]))continue;Object.keys(S[t].k).forEach(z=>{e.k[z]=sub(e.k[z]||Q(0),mul(L[t],S[t].k[z]));});}
+      Object.keys(e.k).forEach(z=>{e.k[z]=div(e.k[z],L[r]);if(nul(e.k[z]))delete e.k[z];});S[r]=e;}
+    ex=S.map(e=>aff(e,XY));const L2=R.E[1];
+    E=[{w:`${ve("u")} et ${ve("v")} ne sont pas colinéaires : ${fx(`${nb(a)} × ${par(d)} − ${par(c)} × ${par(b)} = ${nb(det)}`)}, qui n'est pas nul. <b>${rep2("O","u","v")} est un repère du plan.</b>`,why:`Un point et deux vecteurs forment un repère du plan quand les deux vecteurs ne sont pas colinéaires : leurs coordonnées (${nb(a)}, ${nb(c)}) et (${nb(b)}, ${nb(d)}) ne sont pas proportionnelles.`,pts:1},
+      {w:`${ve("OM")} = x′${ve("u")} + y′${ve("v")} donne : <span class="sys"><span>$${comb(P[0],PR)} = x$</span><span>$${comb(P[1],PR)} = y$</span></span>`,why:`On remplace ${ve("u")} et ${ve("v")} par leur écriture avec ${ve("i")} et ${ve("j")} : ce qui est devant ${ve("i")} vaut x, ce qui est devant ${ve("j")} vaut y. Les inconnues sont x′ et y′ ; x et y restent en lettres.`,pts:1},
+      {w:`Matrice augmentée du système : ${matL(P.map((l,i)=>l.concat(B[i])),2,2,XY)}`,why:`Les seconds membres sont les lettres x et y.`,pts:0.5}];
+    etapesOps(E,R,PR,M=>matL(M,2,2,XY),"La même opération se fait sur les lettres du second membre.");
+    E.push({w:`Ligne 2 : ${fx(`${comb(L2.slice(0,2),PR)} = ${lettres(vecL(L2,2,2,XY),XY)}`)}, donc ${fx(`y′ = ${ex[1]}`)}.<br>Ligne 1 : ${fx(`${comb(R.E[0].slice(0,2),PR)} = x`)}, donc <b>${fx(`x′ = ${ex[0]}`)}</b> et <b>${fx(`y′ = ${ex[1]}`)}</b>.`,why:`On remonte : la ligne 2 donne y′, puis on remplace dans la ligne 1. Vérification avec le point de coordonnées (x′, y′) = (1, 0), qui est l'extrémité de ${ve("u")} : ${fx(`(x, y) = ${vt(colU(P))}`)} donne bien ${fx(`x′ = ${nb(add(mul(S[0].k.x||0,a),mul(S[0].k.y||0,c)))}`)}.`,pts:1.5});}
+  function juge(rep){if(!rep.rep)return {incomplet:"Choisis d'abord oui ou non."};
+    if(rep.rep==="non")return oui?{ok:false,faux:["rep"],resume:"Ce n'est pas ça : c'est bien un repère.",diag:{etape:0,type:"vecteurs crus colinéaires",titre:"Où ça part : la colinéarité.",msg:`${fx(`${nb(a)} × ${par(d)} − ${par(c)} × ${par(b)} = ${nb(det)}`)} n'est pas nul : aucun des deux vecteurs n'est un multiple de l'autre.`}}:{ok:true};
+    if(!oui)return {ok:false,faux:["rep"],resume:"Ce n'est pas ça : ce n'est pas un repère.",diag:{etape:0,type:"colinéarité non vue",titre:"Où ça part : la colinéarité.",msg:`${ve("v")} est un multiple de ${ve("u")} : avec deux vecteurs colinéaires, on ne peut atteindre que les points d'une droite.`}};
+    const e=PR.map(x=>affine((rep.f||{})[x],XY));if(e.some(z=>!z))return {incomplet:"Écris x′ et y′ avec x et y, par exemple (x + y)/2 ou 2x - y."};
+    const F=PR.filter((_,i)=>!nul(e[i].c)||XY.some(z=>!egal(e[i].k[z]||Q(0),S[i].k[z]||Q(0))));if(!F.length)return {ok:true};
+    const sens=egal(e[0].k.x||Q(0),a)&&egal(e[0].k.y||Q(0),b)&&egal(e[1].k.x||Q(0),c)&&egal(e[1].k.y||Q(0),d);
+    return {ok:false,faux:F,resume:fauxTxt(F),diag:{etape:sens?1:E.length-1,type:sens?"formules écrites dans le mauvais sens":"résolution du système avec x et y en lettres",titre:sens?"Où ça part : le sens des formules.":"Où ça part : la remontée.",msg:sens?`Tu as écrit les formules qui donnent x et y avec x′ et y′. On demande l'inverse : il faut résoudre le système, dont les inconnues sont x′ et y′.`:`${fx(`x′ = ${ex[0]}`)} et ${fx(`y′ = ${ex[1]}`)}.`}};}
+  return {sig:"RF"+JSON.stringify(P),q:`Dans le plan muni du repère ${rep2("O","i","j")}, on pose ${poseUV(P)}. Est-ce que ${rep2("O","u","v")} est aussi un repère du plan ? Si oui : on note (x, y) les coordonnées d'un point M dans ${rep2("O","i","j")} ; écris ses coordonnées (x′, y′) dans ${rep2("O","u","v")} en fonction de x et de y.`,corps:"",
+    texte:`u = ${vt(colU(P))}, v = ${vt(colV(P))} : (O ; u, v) est-il un repère ? formules de x′ et y′ avec x et y`,
+    champs:[{k:"choix",id:"rep",o:[["oui","Oui, c'est un repère"],["non","Non"]]},{k:"cases",id:"f",noms:PR,si:{rep:"oui"},large:true,aide:"Écris chaque coordonnée avec x et y, par exemple (x + y)/2 ou 2x - y."}],juge,etapes:E,
+    bonne:oui?`oui ; ${fx(`x′ = ${ex[0]}`)} et ${fx(`y′ = ${ex[1]}`)}`:"non : les deux vecteurs sont colinéaires",bonneTxt:oui?`oui ; x′ = ${ex[0]} ; y′ = ${ex[1]}`:"non (vecteurs colinéaires)",
+    repBonne:oui?{rep:"oui",f:{"x′":ex[0].replace(/−/g,"-"),"y′":ex[1].replace(/−/g,"-")}}:{rep:"non"},repFausse:oui?{rep:"oui",f:{"x′":comb(P[0],XY).replace(/−/g,"-")+"+x","y′":comb(P[1],XY).replace(/−/g,"-")}}:{rep:"oui",f:{"x′":"x","y′":"y"}},nature:oui?"oui":"non"};}
+/* une matrice de passage dont le pivot est ±1 et le déterminant petit : le système 2 × 2 tombe juste */
+function passage(R,dets,m,dmax){m=m||3;for(;;){const a=R.choix([1,1,-1]),b=R.ent(-m,m),c=R.ent(-m,m),det=R.choix(dets),d=(det+b*c)/a;if(Math.abs(d)<=(dmax||5)&&(b||c))return [[a,b],[c,d]];}}
+const point=(R,m)=>{for(;;){const p=[R.ent(-m,m),R.ent(-m,m)];if(p[0]||p[1])return p;}};
+
+function calculRn(R){const n=R.choix([3,3,4]),u=vAlea(R,n,4),v=vAlea(R,n,4),al=R.choix([2,3,-2,-1,4,-3]),be=R.choix([1,-1,2,-2,3,-3]),r=u.map((x,i)=>al*x+be*v[i]),ex=comb([al,be],["u","v"]),au=u.map(x=>al*x),bv=v.map(x=>be*x);
+  const E=[{w:`${fx(`${comb([al],["u"])} = ${vt(au)}`)} et ${fx(`${comb([be],["v"])} = ${vt(bv)}`)}`,why:`Multiplier un vecteur par un nombre, c'est multiplier chacune de ses composantes par ce nombre. Attention aux signes.`,pts:1},
+    {w:`<b>${fx(`${ex} = ${vt(r)}`)}</b>`,why:`On additionne composante par composante : la première avec la première, la deuxième avec la deuxième, et ainsi de suite.`,pts:1}];
+  function juge(rep){const w=liste(rep.vec,n);if(!w)return {incomplet:`Écris un vecteur de ${n} nombres, par exemple (${[1,-2,3,0].slice(0,n).join(", ")}).`};const F=w.map((x,i)=>egal(x,r[i])?-1:i).filter(i=>i>=0);if(!F.length)return {ok:true};
+    const signe=F.every(i=>egal(w[i],al*u[i]-be*v[i]));
+    return {ok:false,faux:["vec"],resume:`Pas tout à fait : ${F.length>1?"les composantes":"la composante"} ${et(F.map(i=>String(i+1)))} ${F.length>1?"sont fausses":"est fausse"}.`,diag:{etape:signe?0:1,type:signe?"signe en multipliant un vecteur":"calcul composante par composante",titre:signe?`Où ça part : le produit ${comb([be],["v"])}.`:"Où ça part : l'addition des composantes.",msg:signe?`${fx(`${comb([be],["v"])} = ${vt(bv)}`)} : le signe porte sur chaque composante.`:`Par exemple pour la composante ${F[0]+1} : ${fx(`${nb(au[F[0]])} + ${par(bv[F[0]])} = ${nb(r[F[0]])}`)}.`}};}
+  return {sig:"RC"+JSON.stringify([u,v,al,be]),q:`Dans ${fx("ℝ"+["","","²","³","⁴"][n])}, on pose ${fx("u = "+vt(u))} et ${fx("v = "+vt(v))}. Calcule le vecteur ${fx(ex)}.`,corps:"",texte:`u = ${vt(u)}, v = ${vt(v)} ; calculer ${ex}`,
+    champs:[{k:"champ",id:"vec",nom:"vecteur",label:`$${ex} =$`,ex:`par exemple (${[1,-2,3,0].slice(0,n).join(", ")})`}],juge,etapes:E,bonne:fx(vt(r)),bonneTxt:vt(r),repBonne:{vec:"("+r.join(", ")+")"},repFausse:{vec:"("+r.map((x,i)=>i?x:x+1).join(", ")+")"},nature:"calcul"};}
+function equationRn(R){const n=R.choix([2,3,3]),x=vAlea(R,n,3),v=vAlea(R,n,3),al=R.choix([2,3,-2,4]),be=R.choix([1,2,-1,3]),forme=R.ent(0,1),u=forme?v.map((z,i)=>be*z+al*x[i]):v.map((z,i)=>be*z-al*x[i]);
+  const eq=forme?`u − ${al<0?"("+nb(al)+")":al}x = ${comb([be],["v"])}`:`${comb([al],["x"])} + u = ${comb([be],["v"])}`,dr=forme?u.map((z,i)=>z-be*v[i]):v.map((z,i)=>be*z-u[i]),drT=forme?`u − ${comb([be],["v"]).replace(/^−/,"(−")+(be<0?")":"")}`:`${comb([be],["v"])} − u`;
+  const E=[{w:`${fx(`${comb([al],["x"])} = ${drT}`)}`,why:`On isole le terme en x, comme dans une équation avec des nombres : ce qui change de côté change de signe.`,pts:1},
+    {w:`${fx(`${drT} = ${vt(dr)}`)}`,why:`On calcule le vecteur de droite, composante par composante.`,pts:1},
+    {w:`<b>${fx(`x = ${vt(x)}`)}</b>`,why:`On divise chaque composante par ${nb(al)}. Vérification sur la première composante : ${fx(forme?`${nb(u[0])} − ${par(al)} × ${par(x[0])} = ${nb(be*v[0])}`:`${nb(al)} × ${par(x[0])} + ${par(u[0])} = ${nb(be*v[0])}`)}.`,pts:1}];
+  function juge(rep){const w=liste(rep.vec,n);if(!w)return {incomplet:`Écris un vecteur de ${n} nombres, par exemple (${[1,-2,3].slice(0,n).join(", ")}).`};const F=w.map((z,i)=>egal(z,x[i])?-1:i).filter(i=>i>=0);if(!F.length)return {ok:true};
+    const pasDiv=F.length&&w.every((z,i)=>egal(z,dr[i])),signe=w.every((z,i)=>egal(z,-x[i]));
+    return {ok:false,faux:["vec"],resume:`Pas tout à fait : ${F.length>1?"les composantes":"la composante"} ${et(F.map(i=>String(i+1)))} ${F.length>1?"sont fausses":"est fausse"}.`,diag:{etape:pasDiv?2:signe?0:1,type:pasDiv?"division oubliée":signe?"signe en isolant x":"équation entre vecteurs",titre:pasDiv?"Où ça part : la dernière étape.":signe?"Où ça part : l'isolement de x.":"Où ça part : le calcul du vecteur de droite.",msg:pasDiv?`Tu as trouvé ${fx(comb([al],["x"]))}, pas x : il reste à diviser chaque composante par ${nb(al)}.`:signe?`${fx(`${comb([al],["x"])} = ${drT}`)} : vérifie le signe de chaque terme qui change de côté.`:`${fx(`${drT} = ${vt(dr)}`)}, puis on divise par ${nb(al)}.`}};}
+  return {sig:"RE"+JSON.stringify([u,v,al,be,forme]),q:`Dans ${fx("ℝ"+["","","²","³"][n])}, on pose ${fx("u = "+vt(u))} et ${fx("v = "+vt(v))}. Trouve le vecteur x tel que ${fx(eq)}.`,corps:"",texte:`u = ${vt(u)}, v = ${vt(v)} ; trouver x tel que ${eq}`,
+    champs:[{k:"champ",id:"vec",nom:"vecteur x",label:"$x =$",ex:`par exemple (${[1,-2,3].slice(0,n).join(", ")})`}],juge,etapes:E,bonne:fx("x = "+vt(x)),bonneTxt:"x = "+vt(x),repBonne:{vec:"("+x.join(", ")+")"},repFausse:{vec:"("+dr.map((z,i)=>z===x[i]?z+1:z).join(", ")+")"},nature:"equation"};}
+
+/* ---------- les démonstrations de la liste du prof : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
+const ZN="0<sub>ℝⁿ</sub>";
+const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+  etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
+const RECITS=[
+ {id:"AC1",t:"Question de cours : la définition d'un sous-espace vectoriel",th:"cours",cc:3,pages:["cours"],
+  q:"Question de cours annoncée pour le CC1 : écris la définition d'un sous-espace vectoriel de ℝⁿ (définition 36 du poly).",corps:"",
+  l:[["Soit F un sous-ensemble de ℝⁿ. On dit que F est un sous-espace vectoriel de ℝⁿ si les trois conditions suivantes sont vérifiées :","On commence par dire de quoi on parle : une partie F de ℝⁿ.",0.5],
+   [`${ZN} ∈ F ;`,"F contient le vecteur nul.",0.5],
+   ["∀x, y ∈ F, x + y ∈ F ;","F est stable par addition. Le « pour tout » (∀) compte : sans lui, la phrase ne dit rien.",0.5],
+   ["∀x ∈ F, ∀λ ∈ ℝ, λx ∈ F.","F est stable par multiplication par les scalaires, c'est-à-dire par les nombres réels.",0.5]]},
+ {id:"AC2",t:"Question de cours : la démonstration de la proposition 37",th:"cours",cc:8,
+  q:"Question de cours annoncée pour le CC1 : démontre la proposition 37 du poly. Soient v₁, …, vₖ ∈ ℝⁿ, avec k ∈ ℕ*. Alors Vect(v₁, …, vₖ) est un sous-espace vectoriel de ℝⁿ.",corps:"<p>Rappel : Vect(v₁, …, vₖ) est l'ensemble des combinaisons linéaires λ₁v₁ + … + λₖvₖ, où λ₁, …, λₖ sont des réels.</p>",
+  l:[["On démontre les trois conditions de la définition d'un sous-espace vectoriel.","Annoncer le plan montre que tu connais la définition.",0.5],
+   [`${ZN} = 0v₁ + … + 0vₖ : le vecteur nul est une combinaison linéaire de v₁, …, vₖ, donc il appartient à Vect(v₁, …, vₖ).`,"Première condition : tous les coefficients valent 0. Le poly écrit seulement « voir plus haut » ; cette égalité est à écrire sur la copie.",1],
+   ["Soient x, y ∈ Vect(v₁, …, vₖ). Il existe des scalaires λ₁, …, λₖ et μ₁, …, μₖ tels que x = λ₁v₁ + … + λₖvₖ et y = μ₁v₁ + … + μₖvₖ.","Être dans Vect, c'est s'écrire comme combinaison linéaire. Il faut deux jeux de coefficients différents : rien ne dit que x et y ont les mêmes.",1],
+   ["x + y = (λ₁v₁ + … + λₖvₖ) + (μ₁v₁ + … + μₖvₖ) = (λ₁ + μ₁)v₁ + … + (λₖ + μₖ)vₖ","On regroupe les termes en v₁, puis en v₂, et ainsi de suite.",1],
+   ["donc x + y ∈ Vect(v₁, …, vₖ).","C'est une combinaison linéaire de v₁, …, vₖ. La conclusion doit être écrite.",0.5],
+   ["Soient x ∈ Vect(v₁, …, vₖ) et α ∈ ℝ. Il existe des scalaires λ₁, …, λₖ tels que x = λ₁v₁ + … + λₖvₖ.","Troisième condition : même début, avec un seul vecteur et un nombre α.",0.5],
+   ["αx = α(λ₁v₁ + … + λₖvₖ) = (αλ₁)v₁ + … + (αλₖ)vₖ","On distribue α. Le poly écrit « λx » à cet endroit : c'est une coquille, le scalaire s'appelle α.",1],
+   ["donc αx ∈ Vect(v₁, …, vₖ).","Encore une combinaison linéaire de v₁, …, vₖ : les trois conditions sont démontrées.",0.5]]},
+ {id:"AC3",t:"TD 1, exercice 7 : démontrer que λx = 0 seulement si x = 0 ou λ = 0",th:"rn",cc:6,
+  q:`Exercice de la liste annoncée pour le CC1 (TD 1, exercice 7). Soient x ∈ ℝⁿ et λ ∈ ℝ. Montre que λx = ${ZN} si et seulement si x = ${ZN} ou λ = 0.`,corps:`<p>Rappel : ${ZN} est le vecteur nul de ℝⁿ, celui dont toutes les composantes valent 0, et x = (x₁, …, xₙ).</p>`,
+  l:[[`Sens ⇐. Si λ = 0, alors λx = (0 × x₁, …, 0 × xₙ) = ${ZN}.`,"« Si et seulement si » : il y a deux sens à démontrer. Celui-ci est un calcul, composante par composante.",1],
+   [`Si x = ${ZN}, alors λx = (λ × 0, …, λ × 0) = ${ZN}.`,"Le « ou » demande de traiter les deux cas.",1],
+   [`Sens ⇒. Supposons λx = ${ZN}, c'est-à-dire λxᵢ = 0 pour tout i.`,"Une égalité entre vecteurs, c'est une égalité entre nombres pour chaque composante.",1],
+   ["Si λ = 0, c'est fini.","La conclusion « x = 0 ou λ = 0 » est déjà vraie.",0.5],
+   ["Sinon, λ ≠ 0 : on peut diviser par λ, et chaque égalité λxᵢ = 0 donne xᵢ = 0.","On ne divise que par un nombre non nul : c'est pour cela qu'on sépare les deux cas.",1],
+   [`Donc x = ${ZN}.`,"Toutes les composantes de x sont nulles.",0.5]]},
+ {id:"AC4",t:"TD 3, exercice 4 : les propriétés de Vect (démonstrations)",th:"vect",cc:10,
+  q:"Exercice de la liste annoncée pour le CC1 (TD 3, exercice 4). Soient u, v, w ∈ ℝⁿ. Réponds aux quatre questions.",corps:"<p>Rappel : Vect(u, v, w) est l'ensemble de toutes les combinaisons linéaires au + bv + cw, où a, b, c sont des réels.</p><ol><li>Justifier que le vecteur nul, ainsi que u, v et w, appartiennent à Vect(u, v, w).</li><li>Soient x, y ∈ Vect(u, v) et α, β ∈ ℝ. Montrer que αx + βy ∈ Vect(u, v).</li><li>Donner une représentation paramétrique de Vect((2, −1, 3)).</li><li>Montrer que, pour tout λ ∈ ℝ, Vect(λu) ⊆ Vect(u). Quand a-t-on égalité ?</li></ol>",
+  l:[[`Question 1. ${ZN} = 0u + 0v + 0w, u = 1u + 0v + 0w, v = 0u + 1v + 0w et w = 0u + 0v + 1w : ce sont des combinaisons linéaires de u, v, w.`,"Pour montrer qu'un vecteur est dans Vect, on l'écrit comme combinaison linéaire, avec ses coefficients.",1],
+   ["Question 2. Il existe des réels a, b, c, d tels que x = au + bv et y = cu + dv.","On traduit « x et y sont dans Vect(u, v) ».",0.5],
+   ["αx + βy = α(au + bv) + β(cu + dv) = (αa + βc)u + (αb + βd)v","On développe, puis on regroupe ce qui est devant u et ce qui est devant v.",1],
+   ["C'est une combinaison linéaire de u et v : αx + βy ∈ Vect(u, v).","La conclusion doit être écrite.",0.5],
+   ["Question 3. Vect((2, −1, 3)) est l'ensemble des multiples de (2, −1, 3) : {(2t, −t, 3t) | t ∈ ℝ}.","Avec un seul vecteur, les combinaisons linéaires sont ses multiples. Le paramètre t parcourt tous les réels.",1],
+   ["Question 4. Un élément de Vect(λu) s'écrit μ(λu) = (μλ)u, avec μ ∈ ℝ : c'est un multiple de u, donc un élément de Vect(u). D'où Vect(λu) ⊆ Vect(u).","Pour montrer une inclusion, on prend un élément quelconque du premier ensemble et on montre qu'il est dans le second.",1],
+   ["Si λ ≠ 0 : u = (1/λ)(λu) est dans Vect(λu), donc tout multiple de u aussi. Il y a égalité.","On peut diviser par λ parce qu'il n'est pas nul.",0.5],
+   [`Si λ = 0 : Vect(λu) = {${ZN}}. Il y a égalité seulement si u = ${ZN}.`,"Le cas λ = 0 se traite à part.",0.5],
+   [`Conclusion : il y a égalité si et seulement si λ ≠ 0 ou u = ${ZN}.`,"On rassemble les deux cas en une phrase.",0.5]]}];
+
 const petit=(A,b,ma,mb)=>A.every(r=>r.every(x=>Math.abs(x)<=ma))&&b.every(x=>Math.abs(x)<=mb)&&A.every(r=>r.filter(x=>x!==0).length>=2)&&A[0].every((_,j)=>A.some(r=>r[j]!==0));
 const bas=(R,n,m)=>{const L=[];for(let i=0;i<n;i++){L.push([]);for(let j=0;j<n;j++)L[i].push(j===i?1:j<i?R.nz(-m,m):0);}return L;};
 /* matrice échelonnée à pivots choisis : zéros avant le pivot de chaque ligne, petits entiers après */
@@ -18714,8 +18851,19 @@ G.add("lin",[
    {t:"dans ℝ² : écrire w avec deux vecteurs",cc:3,gen:R=>combinaison(...tireCombi(R,2,2,true,4),{force:true})},
    {t:"dans ℝ³, avec deux vecteurs : oui ou non",cc:4,gen:R=>combinaison(...tireCombi(R,3,2,R()<0.6,3))},
    {t:"avec trois vecteurs, dans ℝ³ ou ℝ⁴",cc:6,gen:R=>{const r=R();return combinaison(...(r<0.3?tireCombi(R,3,3,true,2):r<0.8?tireCombi(R,4,3,R()<0.5,2):tireLies(R)));}},
-   {t:"avec un paramètre t : pour quelle valeur de t",cc:5,gen:R=>{const [V,w]=tireCombi(R,3,2,true,3);return combinaisonT(V,w,R.ent(1,2));}}]}
-]);
+   {t:"avec un paramètre t : pour quelle valeur de t",cc:5,gen:R=>{const [V,w]=tireCombi(R,3,2,true,3);return combinaisonT(V,w,R.ent(1,2));}}]},
+ {id:"AL6",t:"Changer de repère",th:"repere",pts:1.5,lecons:["l-repere"],
+  paliers:[
+   {t:"du nouveau repère vers l'ancien",cc:3,gen:R=>repAncien(passage(R,[1,-1,2,-2,3,-3]),point(R,4))},
+   {t:"nouvelle origine, mêmes vecteurs",cc:2,gen:R=>repOrigine(point(R,5),point(R,6),R()<0.6)},
+   {t:"de l'ancien repère vers le nouveau",cc:5,gen:R=>repNouveau(passage(R,[1,-1,2,-2,3]),[0,0],point(R,4))},
+   {t:"nouvelle origine et nouveaux vecteurs, un point dans chaque sens",cc:7,gen:R=>repNouveau(passage(R,[1,-1,2,-2]),point(R,4),point(R,4),point(R,3))},
+   {t:"comme au TD 1, exercice 1 : est-ce un repère, puis les formules",cc:7,gen:R=>{if(R()<0.2){for(;;){const a=R.nz(-3,3),c=R.nz(-4,4),l=R.choix([2,-2,3,-1,-3]);if(Math.abs(l*c)<=9&&Math.abs(l*a)<=9)return repFormules([[a,l*a],[c,l*c]]);}}return repFormules(passage(R,[1,-1,2,-2,3,-3],4,9));}}]},
+ {id:"AL7",t:"Calculer avec des vecteurs de ℝⁿ",tache:"calculer avec des vecteurs de ℝⁿ",th:"rn",pts:1.5,lecons:["l-rn"],
+  paliers:[
+   {t:"calculer une combinaison comme 2u − 3v",cc:2,gen:calculRn},
+   {t:"trouver le vecteur x d'une équation entre vecteurs",cc:3,gen:equationRn}]}
+].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
 </script>
@@ -18786,6 +18934,18 @@ function dueCards(){
   out.forEach(o=>{o.rnd=Math.random();});
   out.sort((a,b)=>(examStart(SUBJ[a.sid])-examStart(SUBJ[b.sid]))||(a.box-b.box)||(a.rnd-b.rnd));
   return out;}
+/* cartes à revoir un jour donné : aujourd'hui celles du jour ; plus tard, celles déjà prévues ce jour-là + la moyenne des nouvelles cartes des 7 derniers jours */
+function cartesDu(day){if(day<=today())return dueCards().length;let c=0;
+  SIDS.forEach(id=>{const S=SUBJ[id],st=ST[id];if(exam(S).day<day)return;
+    Object.entries(st.cards).forEach(([cid,k])=>{if(k.due!==day||st.jv[cid])return;const L=BYL[id][cid.replace(/^m:/,"").split("#")[0]];if(L&&!A.inScope(S,L))return;if(cardOf(id,cid))c++;});});
+  return c+A.neuvesParJour();}
+const dureeTxt=min=>min<1?"moins d'une minute":min<20?Math.round(min)+" min":hm(min);
+const secTxt=ms=>{const s=Math.round(ms/1000);return s<60?s+" s":Math.floor(s/60)+" min"+(s%60?" "+String(s%60).padStart(2,"0"):"");};
+const dureeCartes=n=>dureeTxt(n*A.tempsCarte().ms/60000);
+/* une seule fois par appareil : le temps des cartes déjà notées dans le carnet, envoyé avec le journal */
+try{if(!localStorage.getItem("rev-s1-carnet-cartes")){const t0=Date.now();A.repsPropres().then(L=>{let r=0,ms=0,p=0;
+  L.forEach(x=>{if(!x||x.o!=="carte de Réviser"||x.note==="jamais vu"||!(x.ms>0)||(x.t||0)>=t0)return;r++;ms+=Math.min(180000,x.ms);if((x.essai||1)===1)p++;});
+  if(r)emit({k:"set",key:"carnet:"+A.device(),v:{r,ms,p}});localStorage.setItem("rev-s1-carnet-cartes","1");}).catch(()=>{});}}catch(e){}
 function badges(){const n=dueCards().length;document.querySelectorAll("[data-due]").forEach(b=>{b.textContent=n>99?"99+":String(n);b.hidden=!n;});}
 /* une seule fois par appareil : les questions ratées au quiz et au mini-contrôle avant cette version, retrouvées dans le carnet */
 try{if(!localStorage.getItem("rev-s1-qm-v1"))A.allReps().then(L=>{const bon={},fait={};
@@ -19019,7 +19179,9 @@ function rvLead(){const n={l:0,q:0,m:0,c:0},vu=new Set(),veille=[];
   if(n.m)P.push(`${n.m} ${plural(n.m,"question ratée","questions ratées")} dans tes leçons`);if(n.c)P.push(`${n.c} ${plural(n.c,"fiche")} en rouge`);
   const liste=P.length>1?P.slice(0,-1).join(", ")+" et "+P[P.length-1]:P[0];
   const cc=veille.map(id=>{const S=SUBJ[id];return ` ${exam(S).label} ${/^[aeiouéè]/i.test(S.name)?"d'":"de "}${S.name} ${quand(S)} : toutes ses cartes sont là, même celles prévues plus tard.`;}).join("");
-  return `${liste?`Aujourd'hui : ${liste}.`:""}${cc} Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance. « Jamais vu » retire la carte et met la leçon qui l'explique en tête de ton planning.`;}
+  const nb=RV?RV.total:0,T=A.tempsCarte();
+  const tps=nb?`<b>${nb} ${plural(nb,"carte")} aujourd'hui, environ ${dureeCartes(nb)}</b> à ton rythme (${T.n>=20?`${secTxt(T.ms)} par carte, mesuré sur tes ${Math.min(300,T.n)} dernières cartes`:`environ ${secTxt(T.ms)} par carte pour l'instant : le site mesure ton temps à chaque carte`}). `:"";
+  return `${tps}${liste?`Aujourd'hui : ${liste}.`:""}${cc} Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance. « Jamais vu » retire la carte et met la leçon qui l'explique en tête de ton planning.`;}
 function jvMsg(sid,l){const L=l&&BYL[sid][l];
   if(!L)return "Carte retirée. Aucune leçon ne l'explique : elle ne reviendra que si tu rates encore cette question.";
   const b=plan().blocks.find(B=>B.sid===sid&&(B.tasks||[]).includes("L-"+l)),t=today();
@@ -19043,7 +19205,7 @@ function drawCard(){
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
   if(!c||ST[it.sid].jv[it.cid]){if(c)A.seanceRep("cartes",RV,rvDebut,RV.i,-1);RV.i++;return drawCard();}
   $("#main").innerHTML=`<div class="page">${top}
-   <div class="rv s-${it.sid}"><div class="rv-h"><span class="sdot" style="background:${S.color}"></span>${S.name}<span class="muted">· carte ${RV.i+1} sur ${RV.q.length}${RV.repris?" · tu reprends où tu t'étais arrêté":""}</span></div>
+   <div class="rv s-${it.sid}"><div class="rv-h"><span class="sdot" style="background:${S.color}"></span>${S.name}<span class="muted">· carte ${RV.i+1} sur ${RV.q.length} · encore environ ${dureeCartes(RV.q.length-RV.i)}${RV.repris?" · tu reprends où tu t'étais arrêté":""}</span></div>
     <div class="lp-bar"><i style="width:${Math.round(RV.i/RV.q.length*100)}%"></i></div>
     <p class="kbdhint"><span class="kb">Clavier : Espace pour retourner la carte · 1 raté, 2 difficile, 3 je savais.</span></p>${RV.msg?`<p class="muted">${RV.msg}</p>`:""}<div class="kcard${RV.flip?"":" fresh"}"><span class="tag">${esc(S.name)}</span><span class="kk">${RV.flip?"La réponse":"Retrouve de mémoire"}</span><p class="kq">${c.f}</p>${RV.flip?`<div class="ka">${c.b}</div><p class="muted" style="font-size:.85rem;margin:0">${esc(c.src)} · <a href="${c.link}">ouvrir</a></p>`:""}</div>
     ${RV.flip?`<p class="muted">Tu avais trouvé ?</p><div class="acts rate"><button class="btn rev" data-r="0">Raté</button><button class="btn mid" data-r="1">Difficile</button><button class="btn ok" data-r="2">Je savais</button></div>`:`<button class="btn pri big" id="rvflip">Voir la réponse</button>`}<div class="acts"><button class="btn" id="rvjv">Jamais vu</button></div></div></div>`;
@@ -19057,6 +19219,7 @@ function drawCard(){
     RV.msg=jvMsg(it.sid,l);RV.i++;RV.flip=false;RV.repris=false;drawCard();});
   document.querySelectorAll("[data-r]").forEach(b=>b.addEventListener("click",()=>{const r=+b.dataset.r;RV.msg=null;
     const k=RV.tries[it.cid]=(RV.tries[it.cid]||0)+1,re=k>1?{re:1}:{};
+    const ms=Date.now()-(RV.t0||Date.now());if(ms>0)re.ms=Math.min(180000,ms);
     if(it.cid.indexOf("c:")===0){emit(Object.assign({k:"cr",s:it.sid,c:it.cid.slice(2),r},re));if(r===2)emit({k:"st",s:it.sid,c:it.cid.slice(2),v:"known"});}
     else emit(Object.assign({k:"card",s:it.sid,c:it.cid,r},re));
     A.logRep({o:"carte de Réviser",s:it.sid,carte:it.cid,note:["raté","difficile","je savais"][r],r,ok:r===2?1:0,essai:k,texte:A.brut(c.f).slice(0,400),reponse:A.brut(c.b).slice(0,600),msAvantRetour:(RV.t1||Date.now())-(RV.t0||Date.now()),ms:Date.now()-(RV.t0||Date.now())});
@@ -19174,7 +19337,7 @@ function home(){
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(MD.need){go={href:"#/mix",c:"c-bleu",tile:"?",kick:"D'abord · environ 10 min",name:"Mini-contrôle mélangé",sub:`12 questions de toutes tes matières. À revérifier aujourd'hui : ${MD.noms.slice(0,4).join(", ")}. Tes réponses mettent tes priorités à jour : le programme du jour se refait.`};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
-  else if(due.length){go={href:"#/reviser",c:"c-bleu",tile:due.length>99?"99+":String(due.length),kick:"Continuer · d'abord 5 à 15 min",name:`Réviser ${due.length} ${plural(due.length,"carte")}`,sub:"Les cartes du jour, avant d'apprendre du nouveau : c'est ce qui fait tenir ce que tu as déjà appris."};
+  else if(due.length){go={href:"#/reviser",c:"c-bleu",tile:due.length>99?"99+":String(due.length),kick:`Continuer · environ ${dureeCartes(due.length)}`,name:`Réviser ${due.length} ${plural(due.length,"carte")}`,sub:"Les cartes du jour, avant d'apprendre du nouveau : c'est ce qui fait tenir ce que tu as déjà appris."};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(nextT&&nextT.today)go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:nL?String(nL.i+1):ico("i-pen"),kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:lessonInfo(nextT.t)+"."};
   else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
@@ -19372,7 +19535,7 @@ setInterval(()=>syncBadge(),60000);
 
 return {
   routes:{lecon:lessonRoute,apprendre,reviser:()=>{RV=null;sync();reviser();},entrainer,plus,synchro,methode,continuer:()=>location.replace(suite())},
-  home,subject,badges,sync,partsOf:(sid,lid)=>{const L=BYL[sid]&&BYL[sid][lid];return L?parts(L,sid).length:1;},
+  home,subject,badges,sync,cartesDu,partsOf:(sid,lid)=>{const L=BYL[sid]&&BYL[sid][lid];return L?parts(L,sid).length:1;},
   onChange(){badges();clearTimeout(deb);deb=setTimeout(sync,4000);}
 };
 }};
@@ -19398,7 +19561,7 @@ const horloge=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+Strin
 const theme=d=>(SUBJ[d.sid].themes||[]).find(T=>T.id===d.th)||null;
 const estCC=S=>/^CC/.test(A.exam(S).label||"CC"),auCC=S=>estCC(S)?"au CC":"à l'examen",duCC=S=>estCC(S)?"du CC":"de l'examen";
 const points=d=>{const T=theme(d),p=T?T.pts:d.pts;return p?`environ ${virg(p)} ${p>=2?"points":"point"} ${auCC(SUBJ[d.sid])}`:"";};
-const dernier=d=>d.paliers.length-1;
+const dernier=d=>d.paliers.length-1,seuil=d=>d.seuil||3;
 const defs=sid=>(GEN.defs[sid]||[]).filter(d=>SUBJ[sid]&&A.inScope(SUBJ[sid],d));
 const matieres=()=>A.SIDS.filter(sid=>defs(sid).length).sort((a,b)=>A.examStart(SUBJ[a])-A.examStart(SUBJ[b]));
 
@@ -19414,8 +19577,8 @@ function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n=
     else if(e.m==="p"){
       if(e.r===2||(e.r===1&&e.lent&&g.lv===last))return;/* aidé, ou juste mais trop lent au dernier palier : ni juste ni faux */
       if(e.r===1){g.ok++;g.ko=0;if(e.pap)g.pap=1;
-        if(g.lv<last){if(g.ok>=3){g.lv++;g.ok=0;g.pap=0;}}
-        else if(g.ok>=3&&g.pap){g.val=day;g.np=0;g.du=A.addDays(day,ECARTS[0]);g.passe=day;g.ok=0;g.pap=0;g.trav=false;g.eo=g.ek=0;}}
+        if(g.lv<last){if(g.ok>=seuil(d)){g.lv++;g.ok=0;g.pap=0;}}
+        else if(g.ok>=seuil(d)&&g.pap){g.val=day;g.np=0;g.du=A.addDays(day,ECARTS[0]);g.passe=day;g.ok=0;g.pap=0;g.trav=false;g.eo=g.ek=0;}}
       else{g.ko++;g.ok=0;g.pap=0;if(g.ko>=2){g.lv=Math.max(0,g.lv-1);g.ko=0;}}}
     else if(e.m==="e"&&g.val){jr.e+=e.ms||0;
       if(e.r===1)g.eo++;else if(e.r===0)g.ek++;
@@ -19434,7 +19597,7 @@ function moment(d){if(etat(d.id).n)return true;const T=theme(d);if(!T)return tru
 const ccMin=(d,lv)=>d.paliers[lv].cc||4;
 /* son temps comparé au temps du CC, mesuré sur ses réponses justes (1,2 tant qu'on ne sait pas) */
 const rythme=g=>g.nok>=3?Math.min(2.5,Math.max(0.5,g.rt/g.nok)):1.2;
-function dureeTache(d){const g=etat(d.id);let m=0;for(let k=g.n?g.lv:Math.max(0,dernier(d)-1);k<=dernier(d);k++)m+=(3-(k===g.lv?g.ok:0))*ccMin(d,k)*rythme(g);return Math.min(20,Math.max(6,Math.round(m)));}
+function dureeTache(d){const g=etat(d.id);let m=0;for(let k=g.n?g.lv:Math.max(0,dernier(d)-1);k<=dernier(d);k++)m+=(seuil(d)-(k===g.lv?g.ok:0))*ccMin(d,k)*rythme(g);return Math.min(20,Math.max(6,Math.round(m)));}
 
 /* ---------- l'entretien du jour : les passages dus, dans la limite de 15 minutes ---------- */
 function entretien(tout){const t0=A.today(),n=A.NOW(),L=[];let fait=0;
@@ -19458,7 +19621,8 @@ function rangee(x){const d=x.d,g=x.g,N=d.paliers.length,pts=points(d),du=echeanc
   const auj=!!du&&du<=A.today(),inclus=auj&&entretien().some(y=>y.d.id===d.id);
   if(g.val){meta=`<span class="pill ok">réussi</span> ${!du?"":inclus?"à refaire aujourd'hui":auj?`à refaire demain (${MAXJOUR} min d'entretien déjà faites aujourd'hui)`:"revient "+quand(du)}`;btn="Refaire";pri=inclus;}
   else if(!g.n){meta="Pas commencé";btn="Commencer";if(!moment(d)){meta=`Pas commencé · d'abord la leçon « ${af[0].t} »`;pri=false;}}
-  else meta=`${g.trav?'<span class="pill rev">à retravailler</span> ':""}Palier ${g.lv+1} sur ${N}`;
+  else meta=`${g.trav?'<span class="pill rev">à retravailler</span> ':""}${d.fixe?"À refaire sur papier":`Palier ${g.lv+1} sur ${N}`}`;
+  if(d.fixe&&!g.val&&!g.n)meta=meta.replace("Pas commencé","À écrire de mémoire, sur papier");
   return `<li class="task"><button class="tick" disabled title="Se coche toute seule quand la méthode est réussie" aria-label="Se coche toute seule"></button><div><div class="tt">${d.t}</div><div class="meta">${meta}${pts?" · "+pts:""}</div></div><a class="btn${pri?" pri":""} go" href="${inclus?"#/entrainer/jour":`#/entrainer/${d.sid}/${d.id}`}">${btn}</a></li>`;}
 const liens=()=>`<p class="gomore"><a href="#/entrainer/rapport">Mon rapport d'entraînement</a></p>`;
 function bloc(){const M=matieres();if(!M.length)return "";const J=jour();let h="";
@@ -19483,11 +19647,11 @@ function prochain(){const S=P.sess;
     P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek;}
   else{const d=P.d,g=etat(d.id);P.g=g;
     if(g.val){P.lv=dernier(d);P.m="x";}
-    else if(!g.n){P.lv=dernier(d);P.m="pl";}
+    else if(!g.n&&!d.fixe){P.lv=dernier(d);P.m="pl";}
     else{P.lv=g.lv;P.m="p";}
-    P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=2&&!g.pap;}
+    P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=seuil(d)-1&&!g.pap;}
   P.exo=tirage(P.d,P.lv,P.g);P.aide=false;P.res=null;P.papier=false;
-  if(P.exo.champs.some(c=>c.k==="trous"))P.papierExige=false;else if(P.papierExige)P.papier=true;
+  if(P.exo.papier)P.papierExige=P.papier=true;else if(P.exo.champs.some(c=>c.k==="trous"))P.papierExige=false;else if(P.papierExige)P.papier=true;
   let t0=Date.now();try{const s=JSON.parse(sessionStorage.getItem("rev-s1-exo")||"null");if(s&&s.c===P.exo.cle&&t0-s.t<30*60e3)t0=s.t;else sessionStorage.setItem("rev-s1-exo",JSON.stringify({c:P.exo.cle,t:t0}));}catch(e){}
   P.t0=t0;S.dernierG=P.d.id;dessine();}
 function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:0,run:A.nouvRun(),avant:{},refaire:null,dernierG:null,faits:[],tout:!!tout}};
@@ -19495,7 +19659,7 @@ function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:
 
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
-  if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
@@ -19520,16 +19684,17 @@ function lienMethode(d){const S=SUBJ[d.sid],p=(d.pages||[]).map(id=>S.pages.find
 
 function dessine(){
   const d=P.d,e=P.exo,S=SUBJ[d.sid],g=P.g,N=d.paliers.length,jr=P.mode==="jour",retour=jr?"#/":"#/entrainer/"+d.sid;
-  const cible=P.m==="e"?1:3,acquis=P.m==="p"?g.ok:0;
+  const cible=P.m==="e"?1:seuil(d),acquis=P.m==="p"?g.ok:0;
   let avant="";
   if(P.m==="pl")avant=`<p class="prekick">Pour commencer · un exercice du niveau ${duCC(S)}</p><p class="muted">S'il est juste, tu passes directement au dernier palier. Si tu ne sais pas le faire, clique sur « Je ne sais pas » : tu commenceras par plus simple.</p>`;
   else if(P.m==="x")avant=`<p class="prekick">Exercice en plus · il ne change pas tes passages</p>`;
+  else if(e.papier)avant=`<p class="prekick">Sur papier · de mémoire, puis tu coches ligne par ligne</p>`;
   else if(P.papierExige)avant=`<p class="prekick">Sur papier · ${jr?"ce passage se fait comme "+auCC(S):"pour valider le dernier palier"}</p>`;
   $("#main").className="s-"+d.sid;
   $("#main").innerHTML=`<div class="lp s-${d.sid}">
    <div class="lp-top"><a class="lp-x" href="${retour}" aria-label="Quitter l'entraînement">✕</a><div class="lp-bar" role="progressbar" aria-label="Réponses justes de suite" aria-valuemin="0" aria-valuemax="${cible}" aria-valuenow="${acquis}"><i style="width:${Math.min(100,acquis/cible*100)}%"></i></div><span class="lp-n" id="en-chrono">0:00</span></div>
-   <div class="lp-kicker">${jr?"Entretien du jour · "+S.name:S.name+" · "+d.t}<span class="lp-left">${P.m==="p"?` · ${g.ok} ${plur(g.ok,"juste")} de suite sur 3`:P.m==="e"?` · exercice ${P.sess.n+1}`:""}</span></div>
-   ${jr||P.m==="x"?"":pastilles(P.lv,N)}
+   <div class="lp-kicker">${jr?"Entretien du jour · "+S.name:S.name+" · "+d.t}<span class="lp-left">${P.m==="p"&&seuil(d)>1?` · ${g.ok} ${plur(g.ok,"juste")} de suite sur ${seuil(d)}`:P.m==="e"?` · exercice ${P.sess.n+1}`:""}</span></div>
+   ${jr||P.m==="x"||N<2?"":pastilles(P.lv,N)}
    <div class="lp-body" id="lpb"></div>
    <div class="lp-foot" id="en-pied"></div>
    <p class="kbdhint"><span class="kb">Clavier : Entrée pour valider, puis pour passer à la suite. </span>Si tu fermes, tu retrouveras le même exercice.</p></div>`;
@@ -19537,8 +19702,8 @@ function dessine(){
   const tic=()=>{const c=$("#en-chrono");if(c)c.textContent=horloge(Date.now()-P.t0);else stop();};
   stop();tic();TIC=setInterval(tic,1000);
   if(P.papier){
-    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion.</div>`);
-    $("#en-pied").innerHTML=`${P.papierExige?"":`<button class="btn" id="en-ecran">Répondre à l'écran</button>`}<button class="btn pri big" id="en-fini">J'ai fini : voir la correction</button>`;
+    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. ${e.papier?"Écris-la en entier, comme sur ta copie.":"Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion."}</div>`);
+    $("#en-pied").innerHTML=`${P.papierExige||e.papier?"":`<button class="btn" id="en-ecran">Répondre à l'écran</button>`}<button class="btn pri big" id="en-fini">J'ai fini : voir la correction</button>`;
     const ec=$("#en-ecran");if(ec)ec.addEventListener("click",()=>{P.papier=false;dessine();});
     $("#en-fini").addEventListener("click",corrigePapier);}
   else{
@@ -19566,24 +19731,25 @@ function enregistre(r,o){
   if(r!==2&&d.th)A.emit({k:"diag",s:d.sid,th:d.th,ok:Math.round((r===1?(P.lv+1)/N:0.6*P.lv/N)*100)/100,n:1,run:P.sess.run});
   A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle},o.carnet||{}));
   const ap=etat(d.id);
-  if(ap.val&&!av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:true});else if(!ap.val&&av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:false});
+  if(SUBJ[d.sid].TB["en-"+d.id]){if(ap.val&&!av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:true});else if(!ap.val&&av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:false});}
   P.sess.n++;if(r===1)P.sess.ok++;P.sess.faits.push(d.id);P.sess.refaire=r===0&&P.m==="e"&&ap.val?d.id:null;
   try{sessionStorage.removeItem("rev-s1-exo");}catch(x){}
   return {av,ap,ms,lent,cc};}
 function changement(d,av,ap){const N=d.paliers.length;
-  if(ap.val&&!av.val)return ` 3 justes de suite au dernier palier : méthode réussie. Elle revient ${quand(echeance(d,ap))} dans l'entretien du jour.`;
+  if(ap.val&&!av.val)return ` ${d.fixe?"C'est réussi":seuil(d)+" justes de suite au dernier palier : méthode réussie"}. ${d.fixe?"Tu la referas":"Elle revient"} ${quand(echeance(d,ap))} dans l'entretien du jour.`;
   if(!ap.val&&av.val)return ` Deux erreurs sur ce passage : la méthode est à retravailler, à partir du palier ${ap.lv+1}.`;
   if(av.val&&ap.val&&ap.ek>av.ek)return ` Une erreur : un deuxième exercice du même type décide du passage.`;
   if(av.val&&ap.val&&ap.passe!==av.passe)return ` Passage réussi : le prochain est ${quand(echeance(d,ap))}.`;
+  if(d.fixe)return "";
   if(!av.n&&ap.lv===N-1&&ap.ok===1)return ` Tu passes directement au dernier palier.`;
   if(!av.n)return ` Tu commences au palier ${ap.lv+1} : ${d.paliers[ap.lv].t}.`;
-  if(ap.lv>av.lv)return ` 3 justes de suite : palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
+  if(ap.lv>av.lv)return ` ${seuil(d)} justes de suite : palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
   if(ap.lv<av.lv)return ` 2 fausses de suite : retour au palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
   return "";}
 function pied(R){const fini=P.mode==="jour"?!entretien(P.sess.tout).length:(R.ap.val&&!R.av.val);
   $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}<button class="btn pri big" id="en-suiv">${fini?"Terminer":"Exercice suivant"}</button>`;
   const s=$("#en-suiv");s.addEventListener("click",()=>fini?fin():prochain());const st=$("#en-stop");if(st)st.addEventListener("click",fin);s.focus();
-  const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()?1:0):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/3):0;bar.style.width=Math.min(100,v*100)+"%";}}
+  const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()?1:0):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/seuil(P.d)):0;bar.style.width=Math.min(100,v*100)+"%";}}
 function valide(nsp){
   const d=P.d,e=P.exo,b=$("#lpb"),fb=$("#en-fb");if(P.res)return;
   const rep=nsp?{}:lire(e),j=nsp?{ok:false,resume:"Pas de réponse : voici la correction."}:e.juge(rep);
@@ -19640,11 +19806,11 @@ function corrigePapier(){const d=P.d,e=P.exo,b=$("#lpb"),tot=e.etapes.reduce((s,
 /* ---------- fin de séance ---------- */
 function fin(){stop();const S0=P.sess,ids=[...new Set(S0.faits)],jr=P.mode==="jour",sid=P.d?P.d.sid:null;
   const lignes=ids.map(id=>{const d=GEN.par[id],av=S0.avant[id]||neuf(),ap=etat(id),N=d.paliers.length;let t;
-    if(ap.val&&!av.val)t=`méthode réussie. Prochain passage : ${quand(echeance(d,ap))}, dans l'entretien du jour.`;
+    if(ap.val&&!av.val)t=`${d.fixe?"réussi":"méthode réussie"}. Prochain passage : ${quand(echeance(d,ap))}, dans l'entretien du jour.`;
     else if(!ap.val&&av.val)t=`à retravailler, à partir du palier ${ap.lv+1} sur ${N}.`;
     else if(ap.val)t=ap.passe!==av.passe?`passage réussi. Le prochain : ${quand(echeance(d,ap))}.`:ap.ek?"passage commencé : une erreur, il reste un exercice pour décider.":"toujours réussie.";
     else if(ap.lv!==av.lv||!av.n)t=`palier ${av.n?av.lv+1+" → ":""}${ap.lv+1} sur ${N}.`;
-    else t=`palier ${ap.lv+1} sur ${N}, ${ap.ok} ${plur(ap.ok,"juste")} de suite sur 3.`;
+    else t=d.fixe?"à refaire.":`palier ${ap.lv+1} sur ${N}, ${ap.ok} ${plur(ap.ok,"juste")} de suite sur ${seuil(d)}.`;
     return `<p><b>${d.t}</b> : ${t}</p>`;}).join("");
   const reste=jr?[]:ordre(sid).filter(x=>!x.g.val&&x.d.id!==P.d.id&&moment(x.d)),suiv=reste[0],reussie=!jr&&!!etat(P.d.id).val,rp=jr?reportes():0;
   $("#main").className=sid&&!jr?"s-"+sid:"";
@@ -19722,6 +19888,8 @@ const LES=window.LESSONS||{};
 /* Les durées suivent ton rythme : le temps vraiment passé sur tes leçons est mesuré, et les estimations sont multipliées
    d'autant (3,5 par défaut, d'après ta première séance de géométrie). Une leçon « late » passe après l'examen blanc. */
 const SPEED={def:3.5,by:{},all:[]};
+/* cartes de Réviser : L = [ms (3 min au plus), 1er passage ?, jour] de chaque carte notée, neuves = cartes créées par jour, carnet = temps déjà notés dans le carnet de chaque appareil */
+const CARTES={L:[],neuves:{},carnet:{}};
 function factor(sid){const v=hub.vitesse;if(v&&v!=="auto"&&+v>0)return +v;const a=(sid&&SPEED.by[sid])||[];const pool=a.length>=2?a:SPEED.all;if(!pool.length)return SPEED.def;
   const x=pool.slice(-6).sort((p,q)=>p-q),k=x.length;return Math.min(6,Math.max(1,k%2?x[(k-1)/2]:(x[k/2-1]+x[k/2])/2));}
 const measured=sid=>(hub.vitesse&&hub.vitesse!=="auto")?"manuel":((SPEED.by[sid]||[]).length>=2||SPEED.all.length)?"mesuré":"estimé";
@@ -19779,9 +19947,11 @@ function preuve(st,th,ok,n,day,run,test){const d=st.diag[th]||(st.diag[th]={});
 function themeDe(S,l,c){if(!S||!S.themes)return null;
   if(!S.THX){S.THX={};S.themes.forEach(T=>{(T.les||[]).forEach(x=>{S.THX["l:"+x]=T.id;});(T.fiches||[]).forEach(x=>{S.THX["c:"+x]=T.id;});});}
   return S.THX[l?"l:"+l:"c:"+c]||null;}
+const neuve=day=>{CARTES.neuves[day]=(CARTES.neuves[day]||0)+1;};
+const mesureCarte=(e,day)=>{if(e.ms>0)CARTES.L.push([Math.min(180000,e.ms),e.re?0:1,day]);};
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("carnet:")===0){CARTES.carnet[e.key.slice(7)]=e.v;}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -19794,17 +19964,17 @@ function applyEv(e){
   else if(e.k==="quiz"){if(e.n>st.best)st.best=e.n;if(e.goal&&!st.quizOn)st.quizOn=day;}
   else if(e.k==="pos"){st.pos[e.l]=e.reset||typeof e.at!=="number"?null:{i:e.at,sig:e.sig,got:e.got||{},t:e.dur||0,ss:e.ss||{},ts:e.t};}
   else if(e.k==="les"){st.pos[e.l]=null;const L=st.les[e.l]||{n:0,best:0};L.n++;L.best=Math.max(L.best,e.sc||0);L.last=e.sc||0;L.on=day;L.dur=e.dur||0;L.ts=e.t;st.les[e.l]=L;delete st.prio[e.l];Object.keys(st.jv).forEach(k=>{if(st.jv[k]===e.l)delete st.jv[k];});
-    if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c])st.cards[c]={box:0,n:0,due:addDays(day,1)};});}
-  else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;delete st.jv[id];const th=themeDe(SUBJ[e.s],e.l);if(th)preuve(st,th,0,1,day);}
-  else if(e.k==="qm"){/* question ratée au quiz ou au mini-contrôle mélangé : une carte « q:question », à revoir le jour même */const id="q:"+e.q,c=st.cards[id]||{n:0};c.box=0;c.due=day;c.o=e.o;if(e.c)c.f=e.c;st.cards[id]=c;delete st.jv[id];}
+    if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c]){st.cards[c]={box:0,n:0,due:addDays(day,1)};neuve(day);}});}
+  else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q;if(!st.cards[id])neuve(day);const c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;delete st.jv[id];const th=themeDe(SUBJ[e.s],e.l);if(th)preuve(st,th,0,1,day);}
+  else if(e.k==="qm"){/* question ratée au quiz ou au mini-contrôle mélangé : une carte « q:question », à revoir le jour même */const id="q:"+e.q;if(!st.cards[id])neuve(day);const c=st.cards[id]||{n:0};c.box=0;c.due=day;c.o=e.o;if(e.c)c.f=e.c;st.cards[id]=c;delete st.jv[id];}
   else if(e.k==="jv"){/* « Jamais vu » dans Réviser : la carte attend la leçon qui l'explique, placée en tête du planning */st.jv[e.c]=e.l||true;if(e.l)st.prio[e.l]=e.t;}
   else if(e.k==="niv"){st.niv=e.v||0;}
   else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n)preuve(st,e.th,e.ok,e.n,day,e.run,true);}
-  else if(e.k==="cr"||e.k==="qr"){/* carte d'une fiche notée dans « Réviser », réponse à une question du quiz */const th=themeDe(SUBJ[e.s],null,e.c);if(th&&!e.re)preuve(st,th,e.k==="cr"?e.r/2:e.ok?1:0,1,day);}
-  else if(e.k==="card"){const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
+  else if(e.k==="cr"||e.k==="qr"){/* carte d'une fiche notée dans « Réviser », réponse à une question du quiz */const th=themeDe(SUBJ[e.s],null,e.c);if(th&&!e.re)preuve(st,th,e.k==="cr"?e.r/2:e.ok?1:0,1,day);if(e.k==="cr")mesureCarte(e,day);}
+  else if(e.k==="card"){mesureCarte(e,day);const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.cren={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.cren={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];CARTES.L=[];CARTES.neuves={};CARTES.carnet={};hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -19984,7 +20154,17 @@ const lenFor=u=>u>45?u+PAUSE:u;
 function doneTodayMin(){const t0=today();let s=0;J.forEach(e=>{if(ymd(new Date(e.t))!==t0)return;const S=SUBJ[e.s];if(!S)return;
   if(e.k==="les"){const T=S.TB["L-"+e.l];s+=e.dur||(T?T.min:15);}else if(e.k==="task"&&e.v){const T=S.TB[e.x];if(T)s+=T.min;}});return s;}
 function dayCap(day){if(SANS_REVISION[day])return 0;const n=addDays(day,1);return capBase(day)+(SANS_REVISION[n]?capBase(n):0);}
-function capBase(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[180,90,120],normal:[270,150,180],intensif:[360,210,270]}[hub.rythme||"normal"]||[270,150,180];return Math.max(0,(free?R[0]:(coursJour(day).some(c=>!c.skip)?R[1]:R[2]))-15);}/* 15 min gardées chaque jour pour « Réviser » */
+/* temps d'une carte : 1 min au départ, puis le temps mesuré (retours des ratées compris) prend le dessus : moitié après 20 cartes, presque tout après 60 */
+function tempsCarte(){const L=CARTES.L.slice(-300);let ms=0,n=0;L.forEach(([m,p])=>{ms+=m;n+=p;});
+  const C=Object.values(CARTES.carnet).filter(c=>c&&c.r>0),R=C.reduce((a,c)=>a+c.r,0),f=R?Math.min(1,Math.max(0,300-L.length)/R):0;
+  C.forEach(c=>{ms+=f*c.ms;n+=f*(c.p||c.r);});
+  const w=1-Math.pow(.5,n/20);return{ms:n?w*ms/n+(1-w)*60000:60000,n:Math.round(n)};}
+const neuvesParJour=()=>{const t=today();let s=0;for(let i=1;i<=7;i++)s+=CARTES.neuves[addDays(t,-i)]||0;return s/7;};
+/* minutes gardées pour « Réviser » un jour donné : les cartes du jour × ton temps par carte, 45 min au plus (choix du 18/11) ;
+   aujourd'hui, les cartes déjà notées comptent aussi, pour que le temps réservé ne passe pas aux leçons */
+function minCartes(day){const X=APP.ext;if(!X||!X.cartesDu)return 15;const n=X.cartesDu(day)+(day===today()?CARTES.L.filter(x=>x[2]===day&&x[1]).length:0);
+  return Math.min(45,Math.round(n*tempsCarte().ms/60000));}
+function capBase(day){const[y,m,d]=day.split("-").map(Number),dw=new Date(y,m-1,d).getDay();const free=dw===0||dw===6||HOLIDAY[day];const R={leger:[180,90,120],normal:[270,150,180],intensif:[360,210,270]}[hub.rythme||"normal"]||[270,150,180];return Math.max(0,(free?R[0]:(coursJour(day).some(c=>!c.skip)?R[1]:R[2]))-minCartes(day));}
 const decoupe=(iv,busy)=>{busy.forEach(([s,e])=>{const out=[];iv.forEach(([a,b])=>{if(e+10<=a||s-10>=b){out.push([a,b]);return;}if(s-10-a>=30)out.push([a,s-10]);if(b-(e+10)>=30)out.push([e+10,b]);});iv=out;});return iv;};
 const seances=iv=>{const r=[];iv.forEach(([a,b])=>{let t=a;while(b-t>=30){const len=Math.min(SEANCE,b-t);r.push([t,t+len]);t+=len+GAP;}});return r;};
 /* ses créneaux sont remplis en entier, en plus du temps habituel du jour (choix du 17/11) ; le temps habituel va dans les fenêtres WIN, hors de ses créneaux */
@@ -20634,7 +20814,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cadreCren,lierCren,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cadreCren,lierCren,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
