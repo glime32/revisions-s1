@@ -18133,7 +18133,7 @@ const f=s=>"$"+s+"$";
 const fx=s=>`<span class="en-nb">$${s}$</span>`;
 const sys=(A,b,noms)=>`<span class="sys">${A.map((r,i)=>`<span>$${comb(r,noms)} = ${nb(b[i])}$</span>`).join("")}</span>`;
 const mat=(R,aug)=>{const c=R[0].length;return `<span class="mat" style="--n:${c}">${R.map(r=>r.map((x,j)=>`<span${aug&&j===c-1?' class="au"':""}>${typeof x==="string"?x:nb(x)}</span>`).join("")).join("")}</span>`;};
-const ligne=(i,m,j)=>{m=q(m);const a=Q(Math.abs(m.n),m.d),co=egal(a,1)?"":nb(a);return `L_{${i}} ← L_{${i}} ${m.n<0?"+":"−"} ${co}L_{${j}}`;};
+const ligne=(i,m,j)=>{m=q(m);const a=Q(Math.abs(m.n),m.d),co=egal(a,1)?"":a.d===1?nb(a):"("+nb(a)+")";return `L_{${i}} ← L_{${i}} ${m.n<0?"+":"−"} ${co}L_{${j}}`;};
 const trou=(id,large)=>`<input class="en-in${large?" en-large":""}" data-c="${id}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Case à compléter">`;
 
 /* rang, et « cette ligne est-elle une conséquence du système ? » */
@@ -18214,10 +18214,10 @@ function echelonne(A,b){const M=A.map((r,i)=>r.concat(b[i]).map(q)),n=M.length,c
     piv.push(j);r++;}
   return {pas,E:M,piv,rang:r,c};}
 /* solutions lues sur la matrice échelonnée : chaque inconnue en fonction des inconnues libres */
-function solution(R){const {E,piv,rang,c}=R;
+function solution(R,noms){const {E,piv,rang,c}=R;noms=noms||NOMS;
   for(let i=rang;i<E.length;i++)if(!nul(E[i][c]))return {nature:"zero",lig:i};
   const libres=[];for(let j=0;j<c;j++)if(!piv.includes(j))libres.push(j);
-  const S=[];libres.forEach(j=>{S[j]={c:Q(0),k:{[NOMS[j]]:Q(1)}};});
+  const S=[];libres.forEach(j=>{S[j]={c:Q(0),k:{[noms[j]]:Q(1)}};});
   for(let r=rang-1;r>=0;r--){const j=piv[r],e={c:E[r][c],k:{}};
     for(let t=j+1;t<c;t++){if(nul(E[r][t]))continue;const s=S[t];e.c=sub(e.c,mul(E[r][t],s.c));Object.keys(s.k).forEach(v=>{e.k[v]=sub(e.k[v]||Q(0),mul(E[r][t],s.k[v]));});}
     e.c=div(e.c,E[r][j]);Object.keys(e.k).forEach(v=>{e.k[v]=div(e.k[v],E[r][j]);if(nul(e.k[v]))delete e.k[v];});S[j]=e;}
@@ -18233,13 +18233,8 @@ function etapesOps(E,R,N,rend,fin){const idx={};
     else{idx[P.col]=E.length;E.push({w:`${et(P.ops.map(o=>fx(ligne(o.i+1,o.m,P.lig+1))))} : ${rend(P.M)}`,why:`Le pivot de la ligne ${P.lig+1} est ${nb(P.piv)}, dans la colonne de ${N[P.col]}. Il faut des zéros sous lui : ${P.ops.map(o=>`à la ligne ${o.i+1} il y a ${nb(o.v)}, donc on ${q(o.m).n>0?"retire":"ajoute"} ${nFois(o.m)}la ligne ${P.lig+1}`).join(" ; ")}. ${fin}`,pts:1});}});
   return idx;}
 
-function systeme(A,b,palier){
-  const n=A.length,c=A[0].length,N=NOMS.slice(0,c),R=echelonne(A,b),sol=solution(R),M0=A.map((r,i)=>r.concat([b[i]])),homog=b.every(x=>x===0);
-  const lib=sol.nature==="inf"?sol.libres.map(j=>N[j]):[],princ=R.piv.map(j=>N[j]);
-  const E=[{w:`Matrice augmentée du système : ${mat(M0,true)}`,why:`Une colonne par inconnue (${N.join(", ")}), puis les seconds membres après la barre.${A.some(r=>r.includes(0))?" Une inconnue absente d'une équation compte pour 0.":""}`,pts:0.5}];
-  const idx=etapesOps(E,R,N,M=>mat(M,true),"Chaque opération se fait sur toute la ligne, second membre compris.");
-  const iLect=E.length;
-  /* une ligne de la remontée : « Ligne 2 : y + 3z = −3, donc y = −3 − 3 × (−1) = 0 » */
+/* les lignes de la remontée, pour un système échelonné R et ses solutions sol : « Ligne 2 : y + 3z = −3, donc y = −3 − 3 × (−1) = 0 » */
+function lecteur(R,sol,N){const c=R.c,lib=sol.nature==="inf"?sol.libres.map(j=>N[j]):[];
   const symb=(r,signe)=>{const j=R.piv[r],L=R.E[r],p=L[j];let s=nul(L[c])?"":nb(L[c]);for(let t=j+1;t<c;t++){if(nul(L[t]))continue;const a=abs(L[t]),neg=q(L[t]).n<0;s=suite(s,signe&&signe.t===t?neg:!neg,(egal(a,1)?"":nb(a))+N[t]);}
     s=s||"0";return egal(p,1)?s:`(${s}) / ${par(p)}`;};
   const remonte=r=>{const j=R.piv[r],L=R.E[r],p=L[j],eq=`${comb(L.slice(0,c),N)} = ${nb(L[c])}`,autres=[];for(let t=j+1;t<c;t++)if(!nul(L[t]))autres.push(t);
@@ -18247,6 +18242,15 @@ function systeme(A,b,palier){
     if(sol.nature==="inf")return `Ligne ${r+1} : ${fx(eq)}, donc ${fx(`${N[j]} = ${symb(r)}`)}${autres.every(t=>lib.includes(N[t]))&&egal(p,1)?"":`, c'est-à-dire ${fx(`${N[j]} = ${aff(sol.S[j],N)}`)}`}.`;
     let num=nul(L[c])?"":nb(L[c]);autres.forEach(t=>{const a=abs(L[t]);num=suite(num,q(L[t]).n>0,(egal(a,1)?"":nb(a)+" × ")+par(sol.S[t].c));});
     return `Ligne ${r+1} : ${fx(eq)}, donc ${fx(`${N[j]} = ${egal(p,1)?num:`(${num}) / ${par(p)}`} = ${nb(sol.S[j].c)}`)}.`;};
+  return {symb,remonte};}
+
+function systeme(A,b,palier){
+  const n=A.length,c=A[0].length,N=NOMS.slice(0,c),R=echelonne(A,b),sol=solution(R),M0=A.map((r,i)=>r.concat([b[i]])),homog=b.every(x=>x===0);
+  const lib=sol.nature==="inf"?sol.libres.map(j=>N[j]):[],princ=R.piv.map(j=>N[j]);
+  const E=[{w:`Matrice augmentée du système : ${mat(M0,true)}`,why:`Une colonne par inconnue (${N.join(", ")}), puis les seconds membres après la barre.${A.some(r=>r.includes(0))?" Une inconnue absente d'une équation compte pour 0.":""}`,pts:0.5}];
+  const idx=etapesOps(E,R,N,M=>mat(M,true),"Chaque opération se fait sur toute la ligne, second membre compris.");
+  const iLect=E.length;
+  const {symb,remonte}=lecteur(R,sol,N);
   let bonne,bonneTxt,repBonne;
   if(sol.nature==="zero"){const L=R.E[sol.lig];
     E.push({w:`La ligne ${sol.lig+1} dit ${fx(`0 = ${nb(L[c])}`)} : c'est impossible. <b>${fx("S = ∅")}</b>`,why:`Une ligne « 0 = un nombre non nul » n'est vraie pour aucune valeur des inconnues : le système n'a aucune solution. À ne pas confondre avec « 0 = 0 », qui est toujours vraie et n'empêche rien.`,pts:1});
@@ -18369,9 +18373,9 @@ function exemple2(R){let a12,a21,a22,d,x0,y0,b1,b2;
 /* ---------- AL2 : seconds membres a, b, c, puis paramètre m ---------- */
 const LET=["a","b","c"],rangM=G.outils.rang,fl=G.outils.f,propre=G.outils.propre;
 /* un second membre en lettres, les termes positifs d'abord : « b − 3a » */
-const lettres=k=>{const K=LET.filter(x=>k[x]&&!nul(k[x])).sort((x,y)=>(q(k[y]).n>0)-(q(k[x]).n>0));return K.length?comb(K.map(x=>k[x]),K):"0";};
-const vecL=(l,c,n)=>Object.fromEntries(LET.slice(0,n).map((x,i)=>[x,q(l[c+i])]));
-const matL=(M,c,n)=>mat(M.map(l=>l.slice(0,c).concat([lettres(vecL(l,c,n))])),true);
+const lettres=(k,L)=>{const K=(L||LET).filter(x=>k[x]&&!nul(k[x])).sort((x,y)=>(q(k[y]).n>0)-(q(k[x]).n>0));return K.length?comb(K.map(x=>k[x]),K):"0";};
+const vecL=(l,c,n,L)=>Object.fromEntries((L||LET).slice(0,n).map((x,i)=>[x,q(l[c+i])]));
+const matL=(M,c,n,L)=>mat(M.map(l=>l.slice(0,c).concat([lettres(vecL(l,c,n,L),L)])),true);
 const affLV=(e,N)=>{const L=lettres(e.k),V=comb(N.map(x=>e.k[x]||0),N);return V==="0"?L:L==="0"?V:L+(V[0]==="−"?" − "+V.slice(1):" + "+V);};
 function condTxt(kc,Ln){const L=Ln.slice().reverse().find(x=>egal(abs(kc[x]),1));if(!L)return lettres(kc)+" = 0";
   const s=q(kc[L]).n,autre={};Ln.forEach(x=>{if(x!==L)autre[x]=mul(kc[x],-s);});return L+" = "+lettres(autre);}
@@ -18537,6 +18541,131 @@ function param3(R){for(;;){const deux=R()<0.7,k1=R.ent(-3,3);let k2;do k2=R.ent(
   const M=L.map(l=>U[0].map((_,j)=>l.reduce((s,x,k)=>padd(s,pmul([x],U[k][j])),[0])));
   if(M.every(l=>l.every(p=>pz(p).every(x=>Math.abs(q(x).n)<=12))&&l.slice(0,3).filter(p=>!pnul(pz(p))).length>=2)&&[0,1,2].every(j=>M.some(l=>!pnul(pz(l[j])))))return {M,c:3,rac};}}
 
+/* ---------- AL4 : combinaison linéaire ou pas ; AL3 : Vect ---------- */
+const COEF=["a","b","c"],XYZ=["x","y","z","t"];
+const vt=v=>"("+v.map(nb).join(", ")+")";
+const vl=L=>"("+L.join(", ")+")";
+const colonnes=V=>V[0].map((_,i)=>V.map(v=>v[i]));
+const combV=(co,V)=>V[0].map((_,i)=>co.reduce((s,x,j)=>add(s,mul(x,V[j][i])),Q(0)));
+const rangV=V=>rangM(V.map(v=>v.map(q)));
+const rangOrd=k=>["première","deuxième","troisième","quatrième"][k];
+const vecteurs=(G,V,cible,w)=>`<p>${G.map((g,i)=>fx(`${g} = ${vt(V[i])}`)).join("<br>")}${cible?`<br>${fx(`${cible} = ${typeof w==="string"?w:vt(w)}`)}`:""}</p>`;
+/* w est-il combinaison linéaire des vecteurs de V ? o : noms des vecteurs, mot « Vect », question fermée ou non */
+function combinaison(V,w,o){o=o||{};
+  const k=V.length,C=COEF.slice(0,k),Gn=o.gen||(k===1?["u"]:[...Array(k)].map((_,i)=>"u_{"+(i+1)+"}")),cible=o.cible||"w",A=colonnes(V),R=echelonne(A,w),sol=solution(R,C),oui=sol.nature!=="zero",{remonte}=lecteur(R,sol,C);
+  const ecrit=cible+" = "+C.map((c,i)=>c+Gn[i]).join(" + "),co0=oui?sol.S.map(e=>e.c):null,M0=A.map((r,i)=>r.concat([w[i]]));
+  const E=[{w:`On cherche ${k>1?"des nombres ":"un nombre "}${et(C)} tel${k>1?"s":""} que ${fx(ecrit)}. Composante par composante : ${sys(A,w,C)}`,why:`Deux vecteurs sont égaux quand leurs composantes sont égales une à une : cela donne une équation par composante. ${k>1?"Les inconnues sont":"L'inconnue est"} ${et(C)}.`,pts:1}];
+  let iLect;
+  if(k===1){const i0=V[0].findIndex(x=>x!==0),a0=div(w[i0],V[0][i0]),mauvaise=w.findIndex((x,i)=>!egal(mul(a0,V[0][i]),x));iLect=1;
+    E.push({w:`La ${rangOrd(i0)} équation donne ${fx("a = "+nb(a0))}. ${mauvaise<0?`Les autres sont alors vraies aussi : <b>${fx(`${cible} = ${comb([a0],Gn)}`)}</b>${o.vect?`, donc ${cible} appartient à Vect(${Gn[0]})`:""}.`:`Mais la ${rangOrd(mauvaise)} donnerait ${fx(`${nb(a0)} × ${par(V[0][mauvaise])} = ${nb(mul(a0,V[0][mauvaise]))}`)}, pas ${nb(w[mauvaise])}. <b>Aucun nombre a ne convient : ${cible} n'${o.vect?`appartient pas à Vect(${Gn[0]})`:`est pas un multiple de ${Gn[0]}`}.</b>`}`,why:`Avec un seul vecteur, une équation suffit à trouver a. Il faut ensuite vérifier que ce même a marche pour toutes les composantes.`,pts:1.5});}
+  else{E.push({w:`Matrice augmentée du système : ${mat(M0,true)}`,why:`Ses colonnes sont ${et(Gn.map(g=>fx(g)))}, puis ${cible} après la barre.`,pts:0.5});
+    etapesOps(E,R,C,M=>mat(M,true),"L'opération se fait sur toute la ligne, second membre compris.");iLect=E.length;
+    const appart=o.vect?`${cible} ${oui?"appartient":"n'appartient pas"} à ${fx(`Vect(${Gn.join(", ")})`)}`:"";
+    if(!oui)E.push({w:`La ligne ${sol.lig+1} dit ${fx("0 = "+nb(R.E[sol.lig][k]))} : c'est impossible. <b>${cible} n'est pas une combinaison linéaire de ${et(Gn.map(g=>fx(g)))}${appart?" : "+appart:""}.</b>`,why:`Aucune valeur de ${et(C)} ne rend toutes les équations vraies en même temps.`,pts:1.5});
+    else if(sol.nature==="une")E.push({w:`${R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>")}<br><b>${fx(`${cible} = ${comb(co0,Gn)}`)}</b>${appart?", donc "+appart:""}. Vérification sur la première composante : ${fx(`${verifTxt(A[0],co0)} = ${nb(w[0])}`)}.`,why:`Chaque coefficient a son pivot : une seule écriture possible. On remonte de la dernière ligne à la première, puis on vérifie.`,pts:1.5});
+    else{const lib=sol.libres.map(j=>C[j]);E.push({w:`${et(lib)} n'a pas de pivot : c'est une inconnue libre, elle peut prendre n'importe quelle valeur.<br>${R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>")}<br>Avec ${lib.map(x=>x+" = 0").join(" et ")} : <b>${fx(`${cible} = ${comb(co0,Gn)}`)}</b>${appart?", donc "+appart:""}.`,why:`Il y a une infinité d'écritures possibles, parce que ${et(Gn.map(g=>fx(g)))} sont liés entre eux. Une seule suffit pour répondre oui.`,pts:1.5});}}
+  function juge(rep){
+    if(!o.force&&!rep.rep)return {incomplet:"Choisis d'abord oui ou non."};
+    if(!o.force&&rep.rep==="non"){if(!oui)return {ok:true};
+      return {ok:false,faux:["rep"],resume:`Ce n'est pas ça : ${fx(`${cible} = ${comb(co0,Gn)}`)}.`,diag:{etape:iLect,type:"combinaison linéaire non trouvée",titre:"Où ça part : la résolution du système.",msg:`Le système a ${sol.nature==="une"?"une solution":"des solutions"}. Si tu as trouvé une ligne « 0 = un nombre non nul », il y a une erreur de calcul dans une opération : reprends-les ci-dessous.`}};}
+    const v=C.map(x=>nombre((rep.co||{})[x]));if(v.some(x=>!x))return {incomplet:`Remplis ${k>1?"chaque case":"la case"} avec un nombre, par exemple 3, -2 ou 1/2.`};
+    const res=combV(v,V),mal=res.map((x,i)=>egal(x,w[i])?-1:i).filter(i=>i>=0);
+    if(!mal.length)return {ok:true};
+    const obtenu=`avec tes nombres, ${fx(`${comb(v,Gn)} = ${vt(res)}`)} : la ${rangOrd(mal[0])} composante devrait valoir ${nb(w[mal[0]])}`;
+    if(!oui)return {ok:false,faux:["rep"],resume:`Ce n'est pas ça : ${obtenu}.`,diag:{etape:iLect,type:"combinaison linéaire qui n'existe pas",titre:"Où ça part : la lecture du système.",msg:`${k===1?"Le nombre a trouvé avec une composante ne marche pas pour les autres":`La ligne ${sol.lig+1} de la matrice échelonnée dit ${fx("0 = "+nb(R.E[sol.lig][k]))}`} : aucun choix de ${et(C)} ne convient. Vérifier ses coefficients composante par composante évite cette erreur.`}};
+    const faux=sol.nature==="une"?C.filter((x,i)=>!egal(v[i],co0[i])):C.slice();
+    return {ok:false,faux,resume:`Pas tout à fait : ${obtenu}.`,diag:{etape:iLect,type:"coefficients d'une combinaison linéaire",titre:k===1?"Où ça part : le nombre a.":"Où ça part : la résolution du système.",msg:sol.nature==="une"?`Les bons coefficients sont ${C.map((x,i)=>`${x} = ${nb(co0[i])}`).join(", ")}${faux.length<k?` : ${et(faux)} ${faux.length>1?"sont faux":"est faux"}`:""}.`:`Reprends la remontée ci-dessous.`}};}
+  const quoi=k===1?`un multiple de ${fx(Gn[0])}`:`une combinaison linéaire de ${et(Gn.map(g=>fx(g)))}`,def=k===1?`existe-t-il un nombre a tel que ${fx(ecrit)}`:`existe-t-il des nombres ${et(C)} tels que ${fx(ecrit)}`;
+  const q0=o.force?`Écris le vecteur ${cible} comme combinaison linéaire de ${et(Gn.map(g=>fx(g)))} : trouve les nombres ${et(C)} tels que ${fx(ecrit)}.`
+    :o.vect?`${fx(`Vect(${Gn.join(", ")})`)} est l'ensemble ${k===1?`de tous les multiples a${Gn[0]}, où a est un nombre réel`:`de toutes les combinaisons linéaires ${C.map((c,i)=>c+Gn[i]).join(" + ")}, où ${et(C)} sont des nombres réels`}. Le vecteur ${cible} appartient-il à ${fx(`Vect(${Gn.join(", ")})`)} ? Si oui, donne ${k===1?"le nombre a":"des nombres "+et(C)+" qui conviennent"}.`
+    :`Le vecteur ${cible} est-il ${quoi} ? Autrement dit : ${def} ? Si oui, donne ${k===1?"ce nombre":"des nombres qui conviennent"}.`;
+  const champs=(o.force?[]:[{k:"choix",id:"rep",o:[["oui","Oui"],["non","Non"]]}]).concat([{k:"cases",id:"co",noms:C,si:o.force?null:{rep:"oui"}}]);
+  const bon=oui?{co:Object.fromEntries(C.map((x,i)=>[x,brut(co0[i])]))}:{};if(!o.force)bon.rep=oui?"oui":"non";
+  const mauvais=oui?(o.force?{co:Object.fromEntries(C.map((x,i)=>[x,brut(add(co0[i],1))]))}:{rep:"non"}):{rep:"oui",co:Object.fromEntries(C.map(x=>[x,"1"]))};
+  return {sig:"C"+JSON.stringify([V,w,o.vect?1:0]),q:q0,corps:vecteurs(Gn,V,cible,w),texte:Gn.map((g,i)=>g.replace(/[_{}]/g,"")+" = "+vt(V[i])).join(", ")+" ; "+cible+" = "+vt(w)+(o.vect?" ; appartient à Vect ?":" ; combinaison linéaire ?"),
+    champs,juge,etapes:E,bonne:oui?`${o.force?"":"oui, "}${fx(`${cible} = ${comb(co0,Gn)}`)}`:"non",bonneTxt:oui?`${o.force?"":"oui : "}${cible} = ${comb(co0,Gn.map(g=>g.replace(/[_{}]/g,"")))}`:"non",repBonne:bon,repFausse:mauvais,nature:oui?sol.nature:"non"};
+}
+/* pour quelle valeur de t le vecteur w, dont une composante vaut t, est-il combinaison linéaire de u₁ et u₂ ? */
+function combinaisonT(V,w,it){const k=V.length,C=COEF.slice(0,k),Gn=[...Array(k)].map((_,i)=>"u_{"+(i+1)+"}"),A=colonnes(V),n=w.length;
+  const B=w.map((x,i)=>i===it?[0,1]:[x,0]),R=echelonne(A,B),rhs=l=>aff({c:l[k],k:{t:l[k+1]}},["t"]),rend=M=>mat(M.map(l=>l.slice(0,k).concat([rhs(l)])),true);
+  const L=R.E[R.rang],t0=div(mul(L[k],-1),L[k+1]),wT=w.map((x,i)=>i===it?"t":nb(x)),w0=w.map((x,i)=>i===it?t0:x),sol=solution(echelonne(A,w0),C),co0=sol.S.map(e=>e.c);
+  const ecrit="w = "+C.map((c,i)=>c+Gn[i]).join(" + ");
+  const E=[{w:`On cherche ${et(C)} tels que ${fx(ecrit)}. Composante par composante : <span class="sys">${A.map((r,i)=>`<span>$${comb(r,C)} = ${wT[i]}$</span>`).join("")}</span>`,why:`Une équation par composante. Les inconnues sont ${et(C)} ; t reste en lettre dans le second membre.`,pts:1},
+    {w:`Matrice augmentée du système : ${rend(A.map((r,i)=>r.concat(B[i])))}`,why:`Ses colonnes sont ${et(Gn.map(g=>fx(g)))}, puis w après la barre.`,pts:0.5}];
+  etapesOps(E,R,C,rend,"La même opération se fait sur le second membre, t compris.");const iLect=E.length;
+  E.push({w:`La ligne ${R.rang+1} dit ${fx("0 = "+rhs(L))}. Le système a une solution seulement si <b>${fx("t = "+nb(t0))}</b>.`,why:`Une ligne « 0 = quelque chose » n'est vraie que si ce quelque chose vaut 0.`,pts:1.5});
+  E.push({w:`Pour ${fx("t = "+nb(t0))}, on trouve ${C.map((x,i)=>fx(`${x} = ${nb(co0[i])}`)).join(" et ")} : ${fx(`w = ${comb(co0,Gn)}`)}.`,why:`On remplace t par sa valeur et on remonte, pour vérifier que w s'écrit bien avec ${et(Gn.map(g=>fx(g)))}.`,pts:0.5});
+  function juge(rep){const v=nombre((rep.val||{}).t);if(!v)return {incomplet:"Écris la valeur de t : un nombre, par exemple 3, -2 ou 1/2."};
+    if(egal(v,t0))return {ok:true};
+    return {ok:false,faux:["t"],resume:`Pas tout à fait : pour t = ${nb(v)}, le vecteur w n'est pas une combinaison linéaire de ${et(Gn.map(g=>fx(g)))}.`,diag:{etape:iLect,type:egal(v,mul(t0,-1))?"signe en isolant t":"valeur du paramètre t",titre:"Où ça part : la dernière ligne du système.",msg:`Elle dit ${fx("0 = "+rhs(L))}, donc ${fx("t = "+nb(t0))}.${egal(v,mul(t0,-1))?" Tu as le bon nombre avec le mauvais signe : attention en faisant passer un terme de l'autre côté.":""}`}};}
+  return {sig:"T"+JSON.stringify([V,w,it]),q:`Le vecteur w dépend d'un nombre t. Pour quelle valeur de t est-il une combinaison linéaire de ${et(Gn.map(g=>fx(g)))}, c'est-à-dire ${fx(ecrit)} pour certains nombres ${et(C)} ?`,
+    corps:vecteurs(Gn,V,"w","("+wT.join(", ")+")"),texte:Gn.map((g,i)=>g.replace(/[_{}]/g,"")+" = "+vt(V[i])).join(", ")+" ; w = ("+wT.join(", ")+") ; pour quel t ?",
+    champs:[{k:"cases",id:"val",noms:["t"]}],juge,etapes:E,bonne:fx("t = "+nb(t0)),bonneTxt:"t = "+brut(t0),repBonne:{val:{t:brut(t0)}},repFausse:{val:{t:brut(add(t0,1))}},nature:"t"};
+}
+/* quels vecteurs peut-on enlever sans changer le sous-espace engendré ? */
+function enlever(V){const k=V.length,Gn=["u","v","w"].slice(0,k),C=COEF.slice(0,k),A=colonnes(V),zeros=V[0].map(()=>0),R=echelonne(A,zeros),sol=solution(R,C),r=rangV(V);
+  const ote=Gn.filter((_,i)=>rangV(V.filter((_,j)=>j!==i))===r),garde=Gn.filter(g=>!ote.includes(g));
+  const E=[{w:`On cherche une relation ${fx(C.map((c,i)=>c+Gn[i]).join(" + ")+" = 0")} avec des nombres ${et(C)} qui ne sont pas tous nuls : <span class="sys">${A.map(l=>`<span>$${comb(l,C)} = 0$</span>`).join("")}</span>`,why:`Un vecteur peut être enlevé quand il est combinaison linéaire des autres : tout ce qu'on fabriquait avec lui se fabrique alors sans lui. Une telle relation, c'est exactement ça.`,pts:1},
+    {w:`Matrice augmentée du système : ${mat(A.map(l=>l.concat([0])),true)}`,why:`Ses colonnes sont ${et(Gn)}, et les seconds membres valent tous 0.`,pts:0.5}];
+  etapesOps(E,R,C,M=>mat(M,true),"Les seconds membres restent nuls.");const iLect=E.length;
+  if(sol.nature==="une")E.push({w:`Chaque inconnue a son pivot : la seule solution est ${fx(C.join(" = ")+" = 0")}. <b>Aucun vecteur n'est combinaison linéaire des autres : on ne peut en enlever aucun.</b>`,why:`Il n'existe pas de relation entre ${et(Gn)} : chacun apporte une direction que les autres n'ont pas.`,pts:1.5});
+  else{const lib=C[sol.libres[0]],rel=sol.S.map(e=>add(e.c,e.k[lib]||Q(0))),d=rel.reduce((m,x)=>m*q(x).d/((a,b)=>{while(b){[a,b]=[b,a%b];}return a;})(m,q(x).d),1),ent=rel.map(x=>mul(x,d));
+    const expr=i=>{const autres=Gn.map((g,j)=>j===i?0:div(mul(ent[j],-1),ent[i]));return `${Gn[i]} = ${comb(autres,Gn)}`;};
+    E.push({w:`${lib} n'a pas de pivot : avec ${fx(lib+" = "+nb(d))}, on trouve la relation <b>${fx(comb(ent,Gn)+" = 0")}</b>.`,why:`Une inconnue libre donne des solutions non nulles : il y a donc bien une relation entre les vecteurs.`,pts:1});
+    E.push({w:`${ote.map(g=>fx(expr(Gn.indexOf(g)))).join(" ; ")}. <b>On peut enlever ${ote.join(", ou ")}${ote.length>1?" (un seul à la fois)":""}.</b>${garde.length?` ${et(garde)} n'apparaît pas dans la relation : on ne peut pas l'enlever.`:""}`,why:`Chaque vecteur qui a un coefficient non nul dans la relation s'écrit avec les autres : c'est lui qu'on peut enlever. Après en avoir enlevé un, les vecteurs qui restent n'ont plus de relation entre eux.`,pts:1});}
+  function juge(rep){const S=rep.ens||[];if(!S.length)return {incomplet:"Coche au moins une case : un ou plusieurs vecteurs, ou « Aucun »."};
+    const choisi=S.filter(x=>x!=="0"),trop=choisi.filter(g=>!ote.includes(g)),manque=ote.filter(g=>!choisi.includes(g));
+    if(!trop.length&&!manque.length)return {ok:true};
+    const iDer=E.length-1;
+    return {ok:false,faux:["ens"],resume:`Pas tout à fait : ${trop.length?`on ne peut pas enlever ${et(trop)}`:""}${trop.length&&manque.length?", et ":""}${manque.length?`on peut aussi enlever ${et(manque)}`:""}.`,
+      diag:{etape:iDer,type:trop.length?"vecteur enlevé à tort":"vecteur qu'on pouvait enlever",titre:"Où ça part : ce que dit la relation entre les vecteurs.",msg:sol.nature==="une"?`Il n'y a aucune relation entre ${et(Gn)} : aucun n'est combinaison linéaire des autres.`:`On peut enlever un vecteur seulement s'il a un coefficient non nul dans la relation : ${ote.length?et(ote):"aucun"}.`}};}
+  return {sig:"E"+JSON.stringify(V),q:`Le sous-espace engendré ${fx(`Vect(${Gn.join(", ")})`)} est l'ensemble de toutes les combinaisons linéaires ${C.map((c,i)=>c+Gn[i]).join(" + ")}, où ${et(C)} sont des nombres réels. Quels vecteurs peut-on enlever, un seul à la fois, sans changer ce sous-espace ? Coche chacun d'eux, ou « Aucun ».`,
+    corps:vecteurs(Gn,V),texte:Gn.map((g,i)=>g+" = "+vt(V[i])).join(", ")+" ; quels vecteurs enlever ?",
+    champs:[{k:"multi",id:"ens",o:Gn.map(g=>[g,g]).concat([["0","Aucun"]]),seul:"0"}],juge,etapes:E,bonne:ote.length?ote.join(", ou "):"aucun",bonneTxt:ote.length?ote.join(" ou "):"aucun",
+    repBonne:{ens:ote.length?ote:["0"]},repFausse:{ens:ote.length?["0"]:[Gn[0]]},nature:ote.length+"/"+k};
+}
+/* décrire Vect(V) par des équations en x, y, z (t) */
+function equations(V){const k=V.length,n=V[0].length,Gn=k===1?["u"]:["u","v"],C=COEF.slice(0,k),X=XYZ.slice(0,n),A=colonnes(V),B=X.map((_,i)=>X.map((_,j)=>i===j?1:0)),R=echelonne(A,B),rend=M=>matL(M,k,n,X);
+  const eqs=[];for(let i=R.rang;i<n;i++){let v=X.map((_,j)=>q(R.E[i][k+j]));if(v.find(x=>!nul(x)).n<0)v=v.map(x=>mul(x,-1));eqs.push(v);}
+  const txt=v=>comb(v,X)+" = 0",ne=eqs.length;
+  const E=[{w:`Un vecteur ${fx(vl(X))} est dans ${fx(`Vect(${Gn.join(", ")})`)} quand il existe ${et(C)} avec ${fx(`${vl(X)} = ${C.map((c,i)=>c+Gn[i]).join(" + ")}`)} : <span class="sys">${A.map((l,i)=>`<span>$${comb(l,C)} = ${X[i]}$</span>`).join("")}</span>`,why:`C'est la définition de Vect. On obtient un système dont les inconnues sont ${et(C)}, et dont les seconds membres sont les lettres ${et(X)}.`,pts:1},
+    {w:`Matrice augmentée du système : ${rend(A.map((l,i)=>l.concat(B[i])))}`,why:`Ses colonnes sont ${et(Gn)}, puis ${et(X)} en lettres après la barre.`,pts:0.5}];
+  etapesOps(E,R,C,rend,"La même opération se fait sur les lettres du second membre.");const iLect=E.length;
+  E.push({w:`${ne>1?`Les lignes ${et([...Array(ne)].map((_,i)=>String(R.rang+1+i)))} disent`:`La ligne ${R.rang+1} dit`} ${eqs.map((v,i)=>fx("0 = "+lettres(vecL(R.E[R.rang+i],k,n,X),X))).join(" et ")}. <b>${fl(`Vect(${Gn.join(", ")}) = {${vl(X)} ∈ ℝ${["","","²","³","⁴"][n]} | ${eqs.map(txt).join(" et ")}}`)}</b>`,why:`Le système a une solution exactement quand ${ne>1?"ces seconds membres valent":"ce second membre vaut"} 0 : ${ne>1?"ce sont les équations":"c'est l'équation"} du sous-espace.`,pts:1.5});
+  E.push({w:`Vérification : ${Gn.map((g,j)=>`pour ${g}, ${fx(`${verifTxt(eqs[0],V[j])} = 0`)}`).join(" ; ")}.`,why:`Chaque vecteur qui engendre le sous-espace doit vérifier ${ne>1?"les équations":"l'équation"} : c'est rapide à contrôler.`,pts:0.5});
+  function juge(rep){const T=eqs.map((_,i)=>egalite((rep["e"+(i+1)]||""),X));
+    if(T.some(v=>v===null))return {incomplet:`Écris ${ne>1?"chaque équation":"l'équation"} comme une égalité entre ${et(X)}, par exemple ${X[0]} + 2${X[1]} - ${X[n-1]} = 0.`};
+    const faux=[];let msg="";
+    T.forEach((v,i)=>{if(v===false){faux.push("e"+(i+1));msg=msg||`L'équation ${ne>1?i+1+" ":""}doit être une égalité entre ${et(X)} sans nombre seul (un sous-espace vectoriel contient le vecteur nul).`;return;}
+      const j=V.findIndex(u=>!nul(v.reduce((s,co,t)=>add(s,mul(co,u[t])),Q(0))));
+      if(j>=0){faux.push("e"+(i+1));msg=msg||`Ton équation ${ne>1?i+1+" ":""}n'est pas vérifiée par ${fx(`${Gn[j]} = ${vt(V[j])}`)} : elle donne ${fx(`${verifTxt(v,V[j])} = ${nb(v.reduce((s,co,t)=>add(s,mul(co,V[j][t])),Q(0)))}`)}, pas 0.`;}});
+    if(!faux.length&&rangM(T)===ne)return {ok:true};
+    if(!faux.length){faux.push("e2");msg="Tes deux équations disent la même chose (l'une est un multiple de l'autre) : il en faut deux vraiment différentes.";}
+    return {ok:false,faux,resume:"Pas tout à fait : "+msg.charAt(0).toLowerCase()+msg.slice(1),diag:{etape:iLect,type:"équation d'un sous-espace engendré",titre:"Où ça part : les lettres dans la colonne des seconds membres.",msg:`${ne>1?"Les bonnes équations sont":"La bonne équation est"} ${eqs.map(v=>fx(txt(v))).join(" et ")} (ou des multiples). Reprends les opérations sur les lettres, ci-dessous.`}};}
+  const champs=eqs.map((_,i)=>({k:"champ",id:"e"+(i+1),nom:"équation "+(i+1),label:ne>1?`Équation ${i+1} :`:"L'équation :",ex:`par exemple ${X[0]} + 2${X[1]} - ${X[n-1]} = 0`}));
+  return {sig:"Q"+JSON.stringify(V),q:`${fx(`Vect(${Gn.join(", ")})`)} est l'ensemble ${k===1?"de tous les multiples au, où a est un nombre réel":`de toutes les combinaisons linéaires ${C.map((c,i)=>c+Gn[i]).join(" + ")}, où ${et(C)} sont des nombres réels`}. Décris ce sous-espace de ℝ${["","","²","³","⁴"][n]} par ${ne>1?ne+" équations":"une équation"} : ${ne>1?"des égalités":"une égalité"} entre ${et(X)}, ${ne>1?"vraies":"vraie"} exactement pour les vecteurs ${vl(X)} du sous-espace.`,
+    corps:vecteurs(Gn,V),texte:Gn.map((g,i)=>g+" = "+vt(V[i])).join(", ")+" ; équations de Vect("+Gn.join(", ")+")",
+    champs,juge,etapes:E,bonne:eqs.map(v=>fx(txt(v))).join(" et "),bonneTxt:eqs.map(txt).join(" et "),repBonne:Object.fromEntries(eqs.map((v,i)=>["e"+(i+1),txt(v).replace(/−/g,"-")])),repFausse:Object.fromEntries(eqs.map((v,i)=>["e"+(i+1),X[0]+" + "+X[1]+" = 0"])),nature:ne+"eq"};
+}
+/* tirages : vecteurs à petites composantes entières */
+const vAlea=(R,n,m)=>{for(;;){const v=[...Array(n)].map(()=>R.ent(-m,m));if(v.filter(x=>x!==0).length>=Math.min(2,n))return v;}};
+const libres=V=>rangV(V)===V.length;
+/* des vecteurs libres dont l'échelonnement tombe juste : les colonnes d'une matrice (triangulaire à diagonale 1) × (échelonnée à pivots 1) */
+function tireLibres(R,n,k,m){for(;;){const V=colonnes(prod(bas(R,n,m),haut(R,n,k,[...Array(k).keys()],null,m)));if(V.every(v=>v.every(x=>Math.abs(x)<=9)&&v.filter(x=>x!==0).length>=Math.min(2,n)))return V;}}
+function tireCombi(R,n,k,oui,m){for(;;){const V=tireLibres(R,n,k,m),co=[...Array(k)].map(()=>R.nz(-3,3)),w=combV(co,V).map(x=>x.n);
+  if(!oui){if(n===k)continue;w[R.ent(k,n-1)]+=R.nz(-2,2);}
+  if(w.every(x=>Math.abs(x)<=14)&&w.some(x=>x!==0))return [V,w];}}
+function tireLies(R){for(;;){const V=tireLibres(R,3,2,2),u3=combV([R.nz(-2,2),R.nz(-2,2)],V).map(x=>x.n),w=combV([R.nz(-3,3),R.nz(-3,3)],V).map(x=>x.n);
+  if(u3.concat(w).every(x=>Math.abs(x)<=12)&&u3.filter(x=>x!==0).length>=2&&w.some(x=>x!==0))return [V.concat([u3]),w];}}
+function tireEnlever(R){for(;;){const t=R.choix(["col2","lib2","somme","somme","mult","lib3","lib3"]);let V;
+  if(t==="col2"){const u=[R.choix([1,-1]),R.nz(-4,4)],l=R.choix([2,-2,3,-1,-3,4]);V=[u,u.map(x=>x*l)];}
+  else if(t==="lib2")V=tireLibres(R,2,2,4);
+  else{const B=tireLibres(R,3,t==="lib3"?3:2,2);
+    if(t==="somme"){const a=R.nz(-2,2),b=R.nz(-2,2);V=B.concat([combV([a,b],B).map(x=>x.n)]);}
+    else if(t==="mult"){const l=R.choix([2,-1,3,-2]),w=B[0].map(x=>x*l);V=R()<0.5?[B[0],B[1],w]:[B[0],w,B[1]];}
+    else V=B;}
+  if(V.every(v=>v.every(x=>Math.abs(x)<=9)&&v.some(x=>x!==0))&&new Set(V.map(v=>v.join())).size===V.length)return V;}}
+
 const petit=(A,b,ma,mb)=>A.every(r=>r.every(x=>Math.abs(x)<=ma))&&b.every(x=>Math.abs(x)<=mb)&&A.every(r=>r.filter(x=>x!==0).length>=2)&&A[0].every((_,j)=>A.some(r=>r[j]!==0));
 const bas=(R,n,m)=>{const L=[];for(let i=0;i<n;i++){L.push([]);for(let j=0;j<n;j++)L[i].push(j===i?1:j<i?R.nz(-m,m):0);}return L;};
 /* matrice échelonnée à pivots choisis : zéros avant le pivot de chaque ligne, petits entiers après */
@@ -18572,7 +18701,20 @@ G.add("lin",[
    {t:"3 équations, seconds membres a, b, c : la condition",cc:5,gen:R=>avecLettres(R()<0.75?rang2(R,"inf")[0]:carre3(R,0)[0],false)},
    {t:"paramètre m, 2 équations : aucune solution, une seule ou une infinité",cc:6,gen:R=>{const x=param2(R);return avecM(x.M,x.c,x.rac);}},
    {t:"paramètre m, 3 équations : les trois cas",cc:8,gen:R=>{const x=param3(R);return avecM(x.M,x.c,x.rac);}},
-   {t:"comme au CC : la condition sur a, b, c, puis les solutions",cc:9,gen:R=>avecLettres(lettresCC(R),true)}]}
+   {t:"comme au CC : la condition sur a, b, c, puis les solutions",cc:9,gen:R=>avecLettres(lettresCC(R),true)}]},
+ {id:"AL3",t:"Vect : appartenir, enlever un vecteur, équations",tache:"Vect (appartenir, enlever un vecteur, équations)",th:"vect",pts:4,apres:["AL1"],lecons:["l-vect"],
+  paliers:[
+   {t:"v est-il dans Vect(u) ?",cc:2,gen:R=>{for(;;){const n=R.choix([2,3,3]),u=vAlea(R,n,4),l=R.choix([2,-2,3,-1,-3,4,5]),v=u.map(x=>x*l);if(R()<0.45)v[R.ent(0,n-1)]+=R.nz(-2,2);if(v.every(x=>Math.abs(x)<=12))return combinaison([u],v,{gen:["u"],cible:"v",vect:true});}}},
+   {t:"w est-il dans Vect(u, v) ? avec quels coefficients",cc:4,gen:R=>combinaison(...tireCombi(R,3,2,R()<0.6,3),{gen:["u","v"],cible:"w",vect:true})},
+   {t:"quels vecteurs enlever sans changer le sous-espace engendré",cc:5,gen:R=>enlever(tireEnlever(R))},
+   {t:"une équation du plan Vect(u, v) de ℝ³",cc:5,gen:R=>equations(tireLibres(R,3,2,3))},
+   {t:"comme au CC : décrire un Vect par deux équations",cc:8,gen:R=>equations(R()<0.7?tireLibres(R,4,2,2):tireLibres(R,3,1,4))}]},
+ {id:"AL4",t:"Combinaison linéaire ou pas",th:"cl",pts:2,apres:["AL1"],lecons:["l-colineaire"],
+  paliers:[
+   {t:"dans ℝ² : écrire w avec deux vecteurs",cc:3,gen:R=>combinaison(...tireCombi(R,2,2,true,4),{force:true})},
+   {t:"dans ℝ³, avec deux vecteurs : oui ou non",cc:4,gen:R=>combinaison(...tireCombi(R,3,2,R()<0.6,3))},
+   {t:"avec trois vecteurs, dans ℝ³ ou ℝ⁴",cc:6,gen:R=>{const r=R();return combinaison(...(r<0.3?tireCombi(R,3,3,true,2):r<0.8?tireCombi(R,4,3,R()<0.5,2):tireLies(R)));}},
+   {t:"avec un paramètre t : pour quelle valeur de t",cc:5,gen:R=>{const [V,w]=tireCombi(R,3,2,true,3);return combinaisonT(V,w,R.ent(1,2));}}]}
 ]);
 })();
 
@@ -19354,18 +19496,21 @@ function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
 function lire(e){const rep={},b=$("#lpb");
   e.champs.forEach(c=>{
     if(c.k==="choix"){const on=b.querySelector(`[data-ch="${c.id}"] [aria-pressed="true"]`);if(on)rep[c.id]=on.dataset.v;}
     else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
+    else if(c.k==="multi")rep[c.id]=[...b.querySelectorAll(`[data-multi="${c.id}"] [aria-pressed="true"]`)].map(x=>x.dataset.v);
     else if(c.k==="champ"){const i=b.querySelector(`[data-ch="${c.id}"] input`);rep[c.id]=i?i.value:"";}
     else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);rep[id]=i?i.value:"";});});
   return rep;}
 function repTexte(e,rep){return e.champs.map(c=>{
   if(c.k==="choix"){const o=c.o.find(x=>x[0]===rep[c.id]);return o?o[1]:"(pas de choix)";}
   if(c.k==="cases"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return c.noms.map(x=>x+" = "+((rep[c.id]||{})[x]||"?")).join(", ");}
+  if(c.k==="multi")return (rep[c.id]||[]).map(v=>(c.o.find(o=>o[0]===v)||[v,v])[1]).join(", ")||"(rien de coché)";
   if(c.k==="champ"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.id)+" : "+(rep[c.id]||"(vide)");}
   if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
 const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
@@ -19401,6 +19546,8 @@ function dessine(){
     $("#en-pied").innerHTML=`<button class="btn" id="en-nsp">Je ne sais pas</button><button class="btn pri big" id="en-ok">Valider</button>`;
     const si=()=>b.querySelectorAll("[data-si]").forEach(z=>{const[c,v]=z.dataset.si.split(":"),on=b.querySelector(`[data-ch="${c}"] [aria-pressed="true"]`);z.hidden=!(on&&on.dataset.v===v);});
     b.querySelectorAll(".filters[data-ch] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;x.parentNode.querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));si();const i=b.querySelector("[data-si]:not([hidden]) input");if(i)i.focus();}));
+    b.querySelectorAll(".filters[data-multi] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const g=x.parentNode,seul=g.dataset.seul,on=x.getAttribute("aria-pressed")!=="true";x.setAttribute("aria-pressed",on);
+      if(on)g.querySelectorAll("button").forEach(y=>{if(y!==x&&(x.dataset.v===seul||y.dataset.v===seul))y.setAttribute("aria-pressed","false");});}));
     b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
     const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
     const pap=$("#en-pap");if(pap)pap.addEventListener("click",()=>{P.papier=true;dessine();});
