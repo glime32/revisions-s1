@@ -957,6 +957,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .en-case{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .en-in{font:inherit;width:4.4em;min-width:0;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
 .en-in.en-large{width:8.5em}
+.en-case.en-long{flex-wrap:wrap;white-space:normal}
 .en-in:focus{outline:none;border-color:var(--violet-hi)}
 .en-in[aria-invalid="true"]{border-color:var(--rouge)}
 .mat .en-in{width:3.4em;padding:3px 6px;text-align:center}
@@ -18202,7 +18203,7 @@ const suite=(s,moins,corps)=>s?`${s} ${moins?"−":"+"} ${corps}`:(moins?"−":"
 
 /* ---------- AL1 : pivot de Gauss ---------- */
 /* échelonnement par le chemin du cours : premier nombre non nul de la colonne comme pivot, zéros en dessous */
-function echelonne(A,b){const M=A.map((r,i)=>r.concat([b[i]]).map(q)),n=M.length,c=A[0].length,pas=[],piv=[];let r=0;
+function echelonne(A,b){const M=A.map((r,i)=>r.concat(b[i]).map(q)),n=M.length,c=A[0].length,pas=[],piv=[];let r=0;
   for(let j=0;j<c&&r<n;j++){let p=-1;for(let i=r;i<n;i++)if(!nul(M[i][j])){p=i;break;}
     if(p<0)continue;
     if(p!==r){[M[r],M[p]]=[M[p],M[r]];pas.push({k:"ech",a:r,b:p,col:j,M:M.map(x=>x.slice())});}
@@ -18223,14 +18224,18 @@ const verifTxt=(l,v)=>{let s="";l.forEach((co,k)=>{co=q(co);if(!co.n)return;cons
   if(!s&&egal(a,1)){s=nb(mul(co,v[k]));return;}
   s+=(s?(co.n<0?" − ":" + "):(co.n<0?"−":""))+(egal(a,1)?par(v[k]):nb(a)+" × "+par(v[k]));});return s||"0";};
 
+/* les étapes d'échange et de mise à zéro, communes aux systèmes à nombres et à lettres ; rend le numéro d'étape de chaque colonne */
+function etapesOps(E,R,N,rend,fin){const idx={};
+  R.pas.forEach(P=>{
+    if(P.k==="ech")E.push({w:`${fx(`L_{${P.a+1}} ↔ L_{${P.b+1}}`)} : ${rend(P.M)}`,why:`Dans la colonne de ${N[P.col]}, la ligne ${P.a+1} a un 0 : elle ne peut pas donner le pivot. On l'échange avec la ligne ${P.b+1}, qui a un nombre non nul dans cette colonne.`,pts:0.5});
+    else{idx[P.col]=E.length;E.push({w:`${et(P.ops.map(o=>fx(ligne(o.i+1,o.m,P.lig+1))))} : ${rend(P.M)}`,why:`Le pivot de la ligne ${P.lig+1} est ${nb(P.piv)}, dans la colonne de ${N[P.col]}. Il faut des zéros sous lui : ${P.ops.map(o=>`à la ligne ${o.i+1} il y a ${nb(o.v)}, donc on ${q(o.m).n>0?"retire":"ajoute"} ${nFois(o.m)}la ligne ${P.lig+1}`).join(" ; ")}. ${fin}`,pts:1});}});
+  return idx;}
+
 function systeme(A,b,palier){
   const n=A.length,c=A[0].length,N=NOMS.slice(0,c),R=echelonne(A,b),sol=solution(R),M0=A.map((r,i)=>r.concat([b[i]])),homog=b.every(x=>x===0);
   const lib=sol.nature==="inf"?sol.libres.map(j=>N[j]):[],princ=R.piv.map(j=>N[j]);
   const E=[{w:`Matrice augmentée du système : ${mat(M0,true)}`,why:`Une colonne par inconnue (${N.join(", ")}), puis les seconds membres après la barre.${A.some(r=>r.includes(0))?" Une inconnue absente d'une équation compte pour 0.":""}`,pts:0.5}];
-  const idx={};
-  R.pas.forEach(P=>{
-    if(P.k==="ech")E.push({w:`${fx(`L_{${P.a+1}} ↔ L_{${P.b+1}}`)} : ${mat(P.M,true)}`,why:`Dans la colonne de ${N[P.col]}, la ligne ${P.a+1} a un 0 : elle ne peut pas donner le pivot. On l'échange avec la ligne ${P.b+1}, qui a un nombre non nul dans cette colonne.`,pts:0.5});
-    else{idx[P.col]=E.length;E.push({w:`${et(P.ops.map(o=>fx(ligne(o.i+1,o.m,P.lig+1))))} : ${mat(P.M,true)}`,why:`Le pivot de la ligne ${P.lig+1} est ${nb(P.piv)}, dans la colonne de ${N[P.col]}. Il faut des zéros sous lui : ${P.ops.map(o=>`à la ligne ${o.i+1} il y a ${nb(o.v)}, donc on ${q(o.m).n>0?"retire":"ajoute"} ${nFois(o.m)}la ligne ${P.lig+1}`).join(" ; ")}. Chaque opération se fait sur toute la ligne, second membre compris.`,pts:1});}});
+  const idx=etapesOps(E,R,N,M=>mat(M,true),"Chaque opération se fait sur toute la ligne, second membre compris.");
   const iLect=E.length;
   /* une ligne de la remontée : « Ligne 2 : y + 3z = −3, donc y = −3 − 3 × (−1) = 0 » */
   const symb=(r,signe)=>{const j=R.piv[r],L=R.E[r],p=L[j];let s=nul(L[c])?"":nb(L[c]);for(let t=j+1;t<c;t++){if(nul(L[t]))continue;const a=abs(L[t]),neg=q(L[t]).n<0;s=suite(s,signe&&signe.t===t?neg:!neg,(egal(a,1)?"":nb(a))+N[t]);}
@@ -19169,16 +19174,19 @@ function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
 function lire(e){const rep={},b=$("#lpb");
   e.champs.forEach(c=>{
     if(c.k==="choix"){const on=b.querySelector(`[data-ch="${c.id}"] [aria-pressed="true"]`);if(on)rep[c.id]=on.dataset.v;}
     else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
+    else if(c.k==="champ"){const i=b.querySelector(`[data-ch="${c.id}"] input`);rep[c.id]=i?i.value:"";}
     else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);rep[id]=i?i.value:"";});});
   return rep;}
 function repTexte(e,rep){return e.champs.map(c=>{
   if(c.k==="choix"){const o=c.o.find(x=>x[0]===rep[c.id]);return o?o[1]:"(pas de choix)";}
   if(c.k==="cases"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return c.noms.map(x=>x+" = "+((rep[c.id]||{})[x]||"?")).join(", ");}
+  if(c.k==="champ"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.id)+" : "+(rep[c.id]||"(vide)");}
   if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
 const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
 const etapesHTML=(e,marque)=>`<ol class="wex">${e.etapes.map((x,k)=>`<li><div>${k===marque?'<span class="pill rev">ton erreur</span> ':""}${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`;
