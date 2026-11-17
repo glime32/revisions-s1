@@ -18192,7 +18192,9 @@ const GEN=window.GEN={defs:{},par:{},
 /* Algèbre : générateurs d'exercices du CC1 (la liste annoncée par le prof le 11/11) */
 (function(){
 "use strict";
-const G=window.GEN,{Q,q,add,sub,mul,div,egal,nul,nb,brut,par,comb,aff,fx,sys,mat,ligne,trou,dansLignes,nombre,liste,affine}=G.outils;
+const G=window.GEN,{Q,q,add,sub,mul,div,egal,nul,nb,brut,par,comb,aff,sys,mat,ligne,trou,dansLignes,nombre,liste,affine}=G.outils;
+/* une formule courte ne se coupe pas en fin de ligne ; une longue peut, sinon elle déborderait sur un téléphone */
+const fx=s=>s.replace(/[_{}]/g,"").length>30?G.outils.f(s):G.outils.fx(s);
 const NOMS=["x","y","z","t"];
 const prod=(L,U)=>L.map(l=>U[0].map((_,j)=>l.reduce((s,x,k)=>s+x*U[k][j],0)));
 const fois=(M,v)=>M.map(r=>r.reduce((s,x,k)=>s+x*v[k],0));
@@ -18256,8 +18258,8 @@ function systeme(A,b,palier){
     repBonne={nature:"une",sol:Object.fromEntries(N.map((x,i)=>[x,brut(v[i])]))};}
   else{const ex=sol.S.map(e=>aff(e,N)),p0=sol.S.map(e=>e.c);
     E.push({w:`${et(princ)} ${princ.length>1?"ont":"a"} un pivot. ${et(lib)} n'${lib.length>1?"en ont":"en a"} pas : ${lib.length>1?"ce sont des inconnues libres":"c'est une inconnue libre"}.<br>${R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>")}`,why:`Une inconnue libre peut prendre n'importe quelle valeur : il y a donc une infinité de solutions. On écrit les autres inconnues en fonction ${lib.length>1?"d'elles":"d'elle"}, en remontant de la dernière ligne à la première.`,pts:1.5});
-    E.push({w:`<b>${fx(`S = {(${ex.join(", ")}), ${lib.join(", ")} ∈ ℝ}`)}</b>. Vérification avec ${lib.map(x=>x+" = 0").join(" et ")} : ${fx(`(${p0.map(nb).join(", ")})`)} donne bien ${fx(`${verifTxt(A[0],p0)} = ${nb(b[0])}`)} dans l'équation 1.`,why:`Une solution pour chaque valeur ${lib.length>1?"des inconnues libres":"de "+lib[0]}. On vérifie sur un cas simple.`,pts:0.5});
-    bonne=`une infinité de solutions, ${fx(`S = {(${ex.join(", ")}), ${lib.join(", ")} ∈ ℝ}`)}`;bonneTxt="une infinité : ("+ex.join(", ").replace(/−/g,"-")+"), "+lib.join(", ")+" libre"+(lib.length>1?"s":"");
+    E.push({w:`<b>${G.outils.f(`S = {(${ex.join(", ")}), ${lib.join(", ")} ∈ ℝ}`)}</b>. Vérification avec ${lib.map(x=>x+" = 0").join(" et ")} : ${fx(`(${p0.map(nb).join(", ")})`)} donne bien ${fx(`${verifTxt(A[0],p0)} = ${nb(b[0])}`)} dans l'équation 1.`,why:`Une solution pour chaque valeur ${lib.length>1?"des inconnues libres":"de "+lib[0]}. On vérifie sur un cas simple.`,pts:0.5});
+    bonne=`une infinité de solutions, ${G.outils.f(`S = {(${ex.join(", ")}), ${lib.join(", ")} ∈ ℝ}`)}`;bonneTxt="une infinité : ("+ex.join(", ").replace(/−/g,"-")+"), "+lib.join(", ")+" libre"+(lib.length>1?"s":"");
     repBonne={nature:"inf",par:Object.fromEntries(N.map((x,i)=>[x,ex[i].replace(/−/g,"-")]))};}
   const iFin=E.length-1;
 
@@ -18364,7 +18366,178 @@ function exemple2(R){let a12,a21,a22,d,x0,y0,b1,b2;
     champs:[{k:"trous",ids:["p","q","y","x"]}],juge,etapes:E,bonne:fx(`S = {(${nb(x0)}, ${nb(y0)})}`),bonneTxt:`cases ${d}, ${q2} ; y = ${y0}, x = ${x0}`,repBonne:{p:String(d),q:String(q2),y:String(y0),x:String(x0)},nature:"une"};
 }
 
-const petit=(A,b,ma,mb)=>A.every(r=>r.every(x=>Math.abs(x)<=ma))&&b.every(x=>Math.abs(x)<=mb)&&A.every(r=>r.filter(x=>x!==0).length>=2);
+/* ---------- AL2 : seconds membres a, b, c, puis paramètre m ---------- */
+const LET=["a","b","c"],rangM=G.outils.rang,fl=G.outils.f,propre=G.outils.propre;
+/* un second membre en lettres, les termes positifs d'abord : « b − 3a » */
+const lettres=k=>{const K=LET.filter(x=>k[x]&&!nul(k[x])).sort((x,y)=>(q(k[y]).n>0)-(q(k[x]).n>0));return K.length?comb(K.map(x=>k[x]),K):"0";};
+const vecL=(l,c,n)=>Object.fromEntries(LET.slice(0,n).map((x,i)=>[x,q(l[c+i])]));
+const matL=(M,c,n)=>mat(M.map(l=>l.slice(0,c).concat([lettres(vecL(l,c,n))])),true);
+const affLV=(e,N)=>{const L=lettres(e.k),V=comb(N.map(x=>e.k[x]||0),N);return V==="0"?L:L==="0"?V:L+(V[0]==="−"?" − "+V.slice(1):" + "+V);};
+function condTxt(kc,Ln){const L=Ln.slice().reverse().find(x=>egal(abs(kc[x]),1));if(!L)return lettres(kc)+" = 0";
+  const s=q(kc[L]).n,autre={};Ln.forEach(x=>{if(x!==L)autre[x]=mul(kc[x],-s);});return L+" = "+lettres(autre);}
+/* l'égalité tapée, « c = 2a - b » : son vecteur sur (a, b, c) ; null si elle est illisible, false si elle ne peut pas être une condition */
+function egalite(s,Ln){const p=String(s||"").split("=");if(p.length!==2)return null;const g=affine(p[0],Ln),d=affine(p[1],Ln);if(!g||!d)return null;
+  if(!egal(g.c,d.c))return false;const v=Ln.map(x=>sub(g.k[x]||Q(0),d.k[x]||Q(0)));return v.every(nul)?false:v;}
+const prop=(u,v)=>{const i=v.findIndex(x=>!nul(x));if(i<0||nul(u[i]))return false;const r=div(u[i],v[i]);return u.every((x,j)=>egal(x,mul(r,v[j])));};
+
+function avecLettres(A,resoudre){
+  const n=A.length,c=A[0].length,N=NOMS.slice(0,c),Ln=LET.slice(0,n),B=A.map((_,i)=>Ln.map((_,j)=>i===j?1:0)),R=echelonne(A,B),E0=R.E,M0=A.map((r,i)=>r.concat(B[i])),rend=M=>matL(M,c,n);
+  const iz=R.rang<n?R.rang:-1,kc=iz>=0?vecL(E0[iz],c,n):null,kv=kc?Ln.map(x=>kc[x]):null,cond=kc?condTxt(kc,Ln):null;
+  const lib=N.filter((_,j)=>!R.piv.includes(j)),princ=R.piv.map(j=>N[j]);
+  const E=[{w:`Matrice augmentée du système : ${rend(M0)}`,why:`${et(Ln)} sont des nombres fixés qu'on ne connaît pas : on les garde en lettres dans la colonne des seconds membres.`,pts:0.5}];
+  etapesOps(E,R,N,rend,"La même opération se fait sur les lettres du second membre.");
+  const iOps=E.length-1,iLect=E.length;
+  if(kc)E.push({w:`La ligne ${iz+1} dit ${fx(`0 = ${lettres(kc)}`)}. <b>Le système a au moins une solution si, et seulement si, ${fx(cond)}.</b>`,why:`Une ligne « 0 = quelque chose » n'est vraie que si ce quelque chose vaut 0. Quand c'est le cas, elle devient « 0 = 0 » et les autres lignes donnent les solutions. Sinon, il n'y a aucune solution.`,pts:1.5});
+  else E.push({w:`Chaque ligne a un pivot : aucune ligne ne dit « 0 = … ». <b>Le système a au moins une solution pour toutes les valeurs de ${et(Ln)}.</b>`,why:`Il ne peut y avoir une condition que si une ligne perd tous ses coefficients. Ici, ça n'arrive pas.`,pts:1});
+  let S=null,ex=null;const iSol=E.length;
+  if(resoudre){S=[];lib.forEach(x=>{S[N.indexOf(x)]={c:Q(0),k:{[x]:Q(1)}};});
+    for(let r=R.rang-1;r>=0;r--){const j=R.piv[r],L=E0[r],e={c:Q(0),k:{}};Ln.forEach((x,i)=>{if(!nul(L[c+i]))e.k[x]=q(L[c+i]);});
+      for(let t=j+1;t<c;t++){if(nul(L[t]))continue;const s=S[t];Object.keys(s.k).forEach(v=>{e.k[v]=sub(e.k[v]||Q(0),mul(L[t],s.k[v]));});}
+      Object.keys(e.k).forEach(v=>{e.k[v]=div(e.k[v],L[j]);if(nul(e.k[v]))delete e.k[v];});S[j]=e;}
+    ex=S.map(e=>affLV(e,N));
+    const lig=r=>{const j=R.piv[r],L=E0[r],eq=`${comb(L.slice(0,c),N)} = ${lettres(vecL(L,c,n))}`;let s=lettres(vecL(L,c,n)),seul=true;if(s==="0")s="";
+      for(let t=j+1;t<c;t++){if(nul(L[t]))continue;seul=false;const a=abs(L[t]);s=suite(s,q(L[t]).n>0,(egal(a,1)?"":nb(a))+N[t]);}
+      s=s||"0";if(!egal(L[j],1))s=`(${s}) / ${par(L[j])}`;const fin=affLV(S[j],N);
+      return seul&&egal(L[j],1)?`Ligne ${r+1} : ${fx(eq)}.`:`Ligne ${r+1} : ${fx(eq)}, donc ${fx(`${N[j]} = ${s}`)}${s===fin?"":`, c'est-à-dire ${fx(`${N[j]} = ${fin}`)}`}.`;};
+    E.push({w:`${kc?`Quand ${fx(cond)} : `:""}${et(princ)} ${princ.length>1?"ont":"a"} un pivot${lib.length?`, ${et(lib)} ${lib.length>1?"sont libres":"est libre"}`:""}.<br>${R.piv.map((_,r)=>lig(R.piv.length-1-r)).join("<br>")}`,why:`${lib.length?"Une inconnue libre est une inconnue sans pivot : elle peut prendre n'importe quelle valeur. ":""}On remonte de la dernière ligne utile à la première, en gardant les lettres.`,pts:1.5});
+    E.push({w:`<b>${kc?`Si ${fx(cond)} : `:""}${fl(`S = {(${ex.join(", ")})${lib.length?`, ${lib.join(", ")} ∈ ℝ`:""}}`)}${kc?`. Sinon : ${fx("S = ∅")}`:""}.</b>`,why:`On conclut par l'ensemble des solutions${kc?", avec les deux cas puisqu'il y a une condition":""}.`,pts:0.5});}
+  /* sa dernière ligne échelonnée, « 0 0 0 c-2a+b » : coefficients nuls et bon second membre, à un multiple près */
+  const cherche=kc?{L:[{q:`Écris la dernière ligne de ta matrice échelonnée : ses ${c} coefficients, puis son second membre en lettres, séparés par des espaces (par exemple ${"0 ".repeat(c)}${Ln[n-1]}-2${Ln[0]}).`,
+      juge(s){const t=propre(s).split(" ");if(t.length<c+1)return null;const co=t.slice(0,c).map(nombre),e=affine(t.slice(c).join(""),Ln);if(co.some(x=>!x)||!e)return null;return co.every(nul)&&nul(e.c)&&prop(Ln.map(x=>e.k[x]||Q(0)),kv);},
+      siFaux:{etape:iOps,titre:"Où ça part : les lettres pendant les opérations.",msg:`La bonne dernière ligne est ${fx(`${"0 ".repeat(c)}| ${lettres(kc)}`)}. Refais chaque opération sur la colonne des lettres : ce qu'on fait à une ligne, on le fait aussi à son second membre.`}}],
+    sinon:{etape:iLect,titre:"Où ça part : l'écriture de la condition.",msg:`Ta dernière ligne est juste : elle dit ${fx(`0 = ${lettres(kc)}`)}. La condition est donc ${fx(cond)}. Vérifie les signes quand tu isoles une lettre.`}}:null;
+  function juge(rep){
+    if(!rep.quand)return {incomplet:"Choisis d'abord : pour toutes les valeurs, ou seulement à une condition."};
+    let v=null;if(rep.quand==="cond"){v=egalite(rep.cond,Ln);if(v===null)return {incomplet:`Écris la condition comme une égalité entre ${et(Ln)}, par exemple ${Ln[n-1]} = 2${Ln[0]}.`};}
+    let e=null;if(resoudre){e=N.map(x=>affine((rep.par||{})[x]));if(e.some(x=>!x))return {incomplet:`Remplis chaque case des solutions : une expression avec ${et(Ln)}${lib.length?" et les inconnues libres":""}, par exemple ${Ln[1]} - 2${Ln[0]}${lib.length?" + "+lib[0]:""}.`};}
+    const faux=[];let resume="",diag=null,ch=null;
+    const okCond=kc?rep.quand==="cond"&&!!v&&prop(v,kv):rep.quand==="tout";
+    if(!okCond){
+      if(kc&&rep.quand==="tout"){faux.push("quand");resume="Ce n'est pas ça : il y a une condition sur les lettres.";diag={etape:iLect,type:"0 = 0 confondu avec 0 = expression",titre:"Où ça part : la lecture de la dernière ligne.",msg:`La ligne ${iz+1} de la matrice échelonnée dit ${fx(`0 = ${lettres(kc)}`)}. Elle n'est vraie que si ${fx(cond)}. Si tu as trouvé « 0 = 0 », l'opération a été oubliée sur les lettres du second membre.`};}
+      else if(!kc){faux.push("quand");resume="Ce n'est pas ça : il y a une solution pour toutes les valeurs des lettres.";diag={etape:iLect,type:"condition en trop",titre:"Où ça part : la lecture de la matrice échelonnée.",msg:`Chaque ligne garde un pivot : aucune ne devient « 0 = … ». Il n'y a donc pas de condition.`};}
+      else{faux.push("cond");resume="Pas tout à fait : ce n'est pas la bonne condition.";
+        const k=v?Ln.findIndex((_,i)=>!nul(kv[i])&&prop(v.map((x,j)=>j===i?mul(x,-1):x),kv)):-1;
+        if(k>=0)diag={etape:iLect,type:"signe dans la condition",titre:"Où ça part : un signe dans la condition.",msg:`La dernière ligne dit ${fx(`0 = ${lettres(kc)}`)}, donc ${fx(cond)}. Dans ta condition, le signe de ${Ln[k]} est inversé.`};
+        else ch=cherche;}}
+    if(resoudre){
+      const P=[...new Set(e.flatMap(x=>Object.keys(x.k)))].filter(x=>!Ln.includes(x));
+      const res=A.map((l,i)=>{const r={c:Q(0),k:{}};l.forEach((co,j)=>{r.c=add(r.c,mul(co,e[j].c));Object.keys(e[j].k).forEach(x=>{r.k[x]=add(r.k[x]||Q(0),mul(co,e[j].k[x]));});});r.k[Ln[i]]=sub(r.k[Ln[i]]||Q(0),1);return r;});
+      if(kc){const L0=Ln.slice().reverse().find(x=>!nul(kc[x]));res.forEach(r=>{const co=r.k[L0]||Q(0);Ln.forEach(x=>{if(x!==L0)r.k[x]=sub(r.k[x]||Q(0),mul(co,div(kc[x],kc[L0])));});delete r.k[L0];});}
+      const dirs=P.map(x=>e.map(y=>y.k[x]||Q(0))),okSol=res.every(r=>nul(r.c)&&Object.values(r.k).every(nul))&&(lib.length?P.length>0&&rangM(dirs)===lib.length:true);
+      if(!okSol){
+        if(lib.every(x=>{const y=e[N.indexOf(x)];return nul(y.c)&&Object.keys(y.k).length===1&&y.k[x]&&egal(y.k[x],1);}))N.forEach((x,i)=>{const s=S[i],d=e[i];if(!nul(d.c)||new Set(Object.keys(s.k).concat(Object.keys(d.k))).size!==Object.keys(s.k).length||Object.keys(s.k).some(y=>!d.k[y]||!egal(s.k[y],d.k[y])))faux.push(x);});
+        else N.forEach(x=>faux.push(x));
+        resume=okCond?`La condition est juste, mais pas les solutions${faux.length<c?` : ${et(faux.filter(x=>N.includes(x)))} ${faux.length>1?"sont faux":"est faux"}`:""}.`:resume+" Les solutions ne conviennent pas non plus.";
+        if(okCond)diag={etape:iSol,type:"expression d'une inconnue",titre:"Où ça part : la remontée avec les lettres.",msg:`Reprends la remontée ligne par ligne, ci-dessous : chaque inconnue qui a un pivot s'écrit avec ${et(Ln.slice(0,2))}${lib.length?" et "+et(lib):""}.`};}
+      else if(okCond)return {ok:true};}
+    else if(okCond)return {ok:true};
+    return {ok:false,faux,resume,diag,cherche:ch};}
+  const repBonne=kc?{quand:"cond",cond:cond.replace(/−/g,"-")}:{quand:"tout"},repFausse=kc?{quand:"cond",cond:Ln[n-1]+" = 7"+Ln[0]}:{quand:"cond",cond:Ln[n-1]+" = "+Ln[0]};
+  if(resoudre)repFausse.par=repBonne.par=Object.fromEntries(N.map((x,i)=>[x,ex[i].replace(/−/g,"-")]));
+  const champs=[{k:"choix",id:"quand",o:[["tout","Pour toutes les valeurs"],["cond","Seulement à une condition"]]},
+    {k:"champ",id:"cond",nom:"condition",si:{quand:"cond"},label:"La condition :",ex:`par exemple ${Ln[n-1]} = 2${Ln[0]}`,aide:`Une égalité entre ${et(Ln)}.`}];
+  if(resoudre)champs.push({k:"cases",id:"par",noms:N,large:true,aide:`Les solutions, quand il y en a : écris chaque inconnue avec ${et(Ln)} et les inconnues libres. Une inconnue libre est une inconnue sans pivot, qui peut prendre n'importe quelle valeur : pour elle, écris son nom (par exemple ${N[c-1]} = ${N[c-1]}).`});
+  const bonne=`${kc?`seulement si ${fx(cond)}`:`pour toutes les valeurs de ${et(Ln)}`}${resoudre?` ; alors ${fl(`S = {(${ex.join(", ")})${lib.length?`, ${lib.join(", ")} ∈ ℝ`:""}}`)}`:""}`;
+  return {sig:"L"+JSON.stringify([A,resoudre?1:0]),
+    q:resoudre?`Dans ce système, les inconnues sont ${et(N)}. Les lettres ${et(Ln)} sont des paramètres : des nombres réels fixés, mais qu'on ne connaît pas. À quelle condition sur ${et(Ln)} le système a-t-il au moins une solution, et quelles sont alors ses solutions ?`:`Dans ce système, les inconnues sont ${et(N)}. Les lettres ${et(Ln)} sont des nombres réels fixés, mais qu'on ne connaît pas. Pour quelles valeurs de ${et(Ln)} le système a-t-il au moins une solution ?`,
+    corps:`<span class="sys">${A.map((r,i)=>`<span>$${comb(r,N)} = ${Ln[i]}$</span>`).join("")}</span>`,texte:A.map((r,i)=>comb(r,N)+" = "+Ln[i]).join(" ; "),
+    champs,juge,etapes:E,bonne,bonneTxt:(kc?"seulement si "+cond:"pour toutes les valeurs")+(resoudre?" ; solutions : ("+ex.join(", ")+")":""),repBonne,repFausse,nature:kc?"cond":"tout"};
+}
+
+/* polynômes en m : la liste des coefficients, du degré 0 au plus haut */
+const pz=p=>{p=p.map(q);while(p.length>1&&nul(p[p.length-1]))p.pop();return p;};
+const pnul=p=>p.length===1&&nul(p[0]),pcst=p=>p.length===1;
+const padd=(a,b)=>pz([...Array(Math.max(a.length,b.length))].map((_,k)=>add(a[k]||0,b[k]||0)));
+const pmul=(a,b)=>{const r=[...Array(a.length+b.length-1)].map(()=>Q(0));a.forEach((x,i)=>b.forEach((y,j)=>{r[i+j]=add(r[i+j],mul(x,y));}));return pz(r);};
+const psub=(a,b)=>padd(a,b.map(x=>mul(x,-1)));
+const pev=(a,x)=>a.reduceRight((s,co)=>add(mul(s,x),co),Q(0));
+const MONO=["","m","m²","m³","m⁴"];
+function poly(p){p=pz(p);let T=[];for(let k=p.length-1;k>=0;k--){const x=q(p[k]);if(x.n)T.push([x,k]);}if(!T.length)return "0";
+  if(T[0][0].n<0&&T[T.length-1][0].n>0)T.reverse();
+  return T.map(([x,k],i)=>{const a=abs(x);return (i?(x.n<0?" − ":" + "):(x.n<0?"−":""))+(k&&egal(a,1)?"":nb(a))+MONO[k];}).join("");}
+const mono=p=>pz(p).filter(x=>!nul(x)).length<=1;
+/* « mx + y », « (m − 1)x + 2y » */
+function combM(l,noms){let s="";l.forEach((p,k)=>{p=pz(p);if(pnul(p))return;
+  if(mono(p)){const d=p.length-1,x=q(p[d]),a=abs(x);s+=(s?(x.n<0?" − ":" + "):(x.n<0?"−":""))+(egal(a,1)?"":nb(a))+MONO[d]+noms[k];}
+  else s+=(s?" + ":"")+"("+poly(p)+")"+noms[k];});return s||"0";}
+const ligneM=(i,m,j)=>{m=pz(m);if(pcst(m))return ligne(i,m[0],j);if(mono(m)){const d=m.length-1,x=q(m[d]),a=abs(x);return `L_{${i}} ← L_{${i}} ${x.n<0?"+":"−"} ${egal(a,1)?"":nb(a)}${MONO[d]}L_{${j}}`;}return `L_{${i}} ← L_{${i}} − (${poly(m)})L_{${j}}`;};
+const foisM=m=>{m=pz(m);return pcst(m)?nFois(m[0]):(mono(m)?poly(m.map(abs)):"("+poly(m)+")")+" fois ";};
+const retire=m=>{m=pz(m);return !mono(m)||q(m[m.length-1]).n>0;};
+/* échelonnement tant qu'un pivot ne dépend pas de m ; il s'arrête sur la ligne à discuter */
+function echelonneM(M0,c){const M=M0.map(l=>l.map(pz)),pas=[];let r=0;
+  for(let j=0;j<c&&r<M.length;j++){let p=-1;for(let i=r;i<M.length;i++)if(pcst(M[i][j])&&!pnul(M[i][j])){p=i;break;}
+    if(p<0){if(M.slice(r).every(l=>pnul(l[j])))continue;break;}
+    if(p!==r){[M[r],M[p]]=[M[p],M[r]];pas.push({k:"ech",a:r,b:p,col:j,M:M.map(l=>l.slice())});}
+    const ops=[];for(let i=r+1;i<M.length;i++){if(pnul(M[i][j]))continue;const v=M[i][j],m=v.map(x=>div(x,M[r][j][0]));M[i]=M[i].map((x,t)=>psub(x,pmul(m,M[r][t])));ops.push({i,m,v});}
+    if(ops.length)pas.push({k:"zer",lig:r,col:j,piv:M[r][j][0],ops,M:M.map(l=>l.slice())});
+    r++;}
+  return {pas,E:M,r};}
+const divLin=(p,k)=>{const n=p.length-1,o=new Array(n).fill(Q(0));let r=Q(0);for(let i=n;i>=1;i--){r=add(p[i],mul(r,k));o[i-1]=r;}return pz(o);};
+function reduit(f){let n=pz(f.n),d=pz(f.d);if(pnul(n))return {n:[Q(0)],d:[Q(1)]};
+  for(let k=-6;k<=6;k++)while(d.length>1&&n.length>1&&nul(pev(d,k))&&nul(pev(n,k))){n=divLin(n,k);d=divLin(d,k);}
+  if(pcst(d)){n=n.map(x=>div(x,d[0]));d=[Q(1)];}else if(q(d[d.length-1]).n<0){n=n.map(x=>mul(x,-1));d=d.map(x=>mul(x,-1));}
+  return {n,d};}
+const fracTxt=f=>pcst(f.d)?poly(f.n):`${mono(f.n)?poly(f.n):"("+poly(f.n)+")"}/(${poly(f.d)})`;
+function valeursM(s){s=propre(s).toLowerCase().replace(/\.$/,"");if(!s)return null;if(/^(aucune?|aucune valeur|rien|non|jamais|∅|\/)$/.test(s))return [];
+  const P=s.replace(/m ?=/g," ").split(/\s*;\s*|\s+et\s+|\s+ou\s+|\s*,\s+|\s+/).filter(Boolean).map(nombre);return P.length&&P.every(Boolean)?P.filter((x,i)=>P.findIndex(y=>egal(x,y))===i):null;}
+
+function avecM(M0,c,rac){
+  const N=NOMS.slice(0,c),Mi=M0.map(l=>l.map(pz)),rend=M=>mat(M.map(l=>l.map(poly)),true),X=echelonneM(Mi,c),r=X.r,E0=X.E,jd=c-1,P=E0[r][jd],Rm=E0[r][c];
+  const racs=rac.slice().sort((a,b)=>a-b),nat=k=>nul(pev(Rm,k))?"inf":"zero",Z=racs.filter(k=>nat(k)==="zero"),I=racs.filter(k=>nat(k)==="inf");
+  const lead=q(P[P.length-1]),facteurs=(egal(lead,1)?"":egal(lead,-1)?"−":nb(lead))+racs.map(k=>k===0?"m":`(m ${k<0?"+ "+(-k):"− "+k})`).join("");
+  const E=[{w:`Matrice augmentée du système : ${rend(Mi)}`,why:`m est un nombre fixé qu'on ne connaît pas : on le garde en lettre. Une colonne par inconnue (${N.join(", ")}), puis les seconds membres après la barre.`,pts:0.5}];
+  X.pas.forEach(S=>{
+    if(S.k==="ech")E.push({w:`${fx(`L_{${S.a+1}} ↔ L_{${S.b+1}}`)} : ${rend(S.M)}`,why:`On choisit un pivot qui ne dépend pas de m : la ligne ${S.b+1} a un nombre dans la colonne de ${N[S.col]}. On ne prend jamais comme pivot une expression qui peut valoir 0.`,pts:0.5});
+    else E.push({w:`${et(S.ops.map(o=>fx(ligneM(o.i+1,o.m,S.lig+1))))} : ${rend(S.M)}`,why:`Le pivot de la ligne ${S.lig+1} est ${nb(S.piv)}. Il faut des zéros sous lui : ${S.ops.map(o=>`à la ligne ${o.i+1} il y a ${poly(o.v)}, donc on ${retire(o.m)?"retire":"ajoute"} ${foisM(o.m)}la ligne ${S.lig+1}`).join(" ; ")}. L'opération se fait sur toute la ligne, second membre compris.`,pts:1});});
+  const iDisc=E.length;
+  E.push({w:`Dans la ligne ${r+1}, le coefficient de ${N[jd]} est ${fx(poly(P))}. Il vaut 0 pour ${racs.map(k=>fx("m = "+nb(k))).join(" et pour ")}.`,why:`C'est le dernier pivot, et il dépend de m. ${racs.length>1?`On le factorise : ${fx(`${poly(P)} = ${facteurs}`)}.`:`On résout ${fx(poly(P)+" = 0")}.`} Il faut traiter à part ${racs.length>1?"ces valeurs":"cette valeur"} de m.`,pts:1});
+  const val=[];val[jd]=reduit({n:Rm,d:P});
+  for(let rr=r-1;rr>=0;rr--){const L=E0[rr];let acc={n:L[c],d:[Q(1)]};for(let t=rr+1;t<c;t++){if(pnul(L[t]))continue;acc={n:psub(pmul(acc.n,val[t].d),pmul(pmul(L[t],val[t].n),acc.d)),d:pmul(acc.d,val[t].d)};}
+    val[rr]=reduit({n:acc.n.map(x=>div(x,L[rr][0])),d:acc.d});}
+  E.push({w:`Si ${fx(racs.map(k=>"m ≠ "+nb(k)).join(" et "))} : ce pivot n'est pas nul, chaque inconnue a le sien, donc <b>une seule solution</b>. ${[...Array(c).keys()].reverse().map(j=>fx(`${N[j]} = ${fracTxt(val[j])}`)).join(", puis ")}.`,why:`On peut diviser par ${poly(P)} puisqu'il n'est pas nul, puis on remonte comme d'habitude.`,pts:1});
+  racs.forEach(k=>{const v=pev(Rm,k);
+    if(!nul(v))E.push({w:`Si ${fx("m = "+nb(k))} : la ligne ${r+1} devient ${fx("0 = "+nb(v))}, ce qui est impossible. <b>Aucune solution.</b>`,why:`On remplace m par ${nb(k)} dans la matrice échelonnée. Une ligne « 0 = un nombre non nul » n'est jamais vraie.`,pts:1});
+    else{const so=solution({E:E0.map(l=>l.map(p=>pev(p,k))),piv:[...Array(r).keys()],rang:r,c}),ex=so.S.map(e=>aff(e,N));
+      E.push({w:`Si ${fx("m = "+nb(k))} : la ligne ${r+1} devient ${fx("0 = 0")}, toujours vraie. Il reste ${r} ${r>1?"lignes":"ligne"} pour ${c} inconnues : <b>une infinité de solutions</b>, ${fl(`S = {(${ex.join(", ")}), ${so.libres.map(j=>N[j]).join(", ")} ∈ ℝ}`)}.`,why:`On remplace m par ${nb(k)} dans la matrice échelonnée. ${N[jd]} n'a plus de pivot : c'est une inconnue libre, elle peut prendre n'importe quelle valeur.`,pts:1});}});
+  const liste2=L=>L.length?L.map(nb).join(" et "):"aucune valeur";
+  function juge(rep){const z=valeursM(rep.zero),i=valeursM(rep.inf);
+    if(!z||!i)return {incomplet:"Remplis les deux cases avec des valeurs de m, par exemple 1 ; -2. S'il n'y en a pas, écris : aucune."};
+    const dans=(L,k)=>L.some(x=>egal(x,k)),memes=(L,K)=>L.length===K.length&&K.every(k=>dans(L,k)),okZ=memes(z,Z),okI=memes(i,I);
+    if(okZ&&okI)return {ok:true};
+    const faux=[];if(!okZ)faux.push("zero");if(!okI)faux.push("inf");
+    const tous=z.concat(i),manque=racs.filter(k=>!dans(tous,k)),trop=tous.filter(x=>!racs.some(k=>egal(x,k)));let resume,diag;
+    if(manque.length||trop.length){resume=`Pas tout à fait : ${manque.length?`il manque ${et(manque.map(k=>"m = "+nb(k)))}`:""}${manque.length&&trop.length?", et ":""}${trop.length?`${et(trop.map(x=>"m = "+nb(x)))} n'${trop.length>1?"annulent":"annule"} pas le dernier pivot`:""}.`;
+      diag={etape:iDisc,type:"valeurs de m qui annulent le pivot",titre:"Où ça part : les valeurs de m à traiter à part.",msg:`Le dernier pivot est ${fx(poly(P))}${racs.length>1?`, c'est-à-dire ${fx(facteurs)}`:""} : il vaut 0 seulement pour ${et(racs.map(k=>"m = "+nb(k)))}.`};}
+    else{const k=racs.find(k=>dans(z,k)!==(nat(k)==="zero")||dans(i,k)!==(nat(k)==="inf"));resume="Pas tout à fait : ce sont les bonnes valeurs de m, mais pas dans la bonne case.";
+      diag={etape:iDisc+2+racs.indexOf(k),type:"0 = 0 confondu avec 0 = nombre",titre:`Où ça part : le cas m = ${nb(k)}.`,msg:`On remplace m par ${nb(k)} dans le second membre ${fx(poly(Rm))} : la ligne ${r+1} devient ${fx("0 = "+nb(pev(Rm,k)))}. ${nat(k)==="zero"?"C'est impossible, donc aucune solution.":"C'est toujours vrai, donc une infinité de solutions."}`};}
+    return {ok:false,faux,resume,diag};}
+  const lignes=Mi.map(l=>combM(l.slice(0,c),N)+" = "+poly(l[c]));
+  return {sig:"M"+JSON.stringify(Mi.map(l=>l.map(p=>p.map(x=>x.n)))),
+    q:`Dans ce système, les inconnues sont ${et(N)}, et m est un paramètre : un nombre réel fixé, mais qu'on ne connaît pas. Selon la valeur de m, le système a une seule solution, aucune, ou une infinité. Pour quelles valeurs de m n'en a-t-il aucune ? Pour lesquelles en a-t-il une infinité ?`,
+    corps:`<span class="sys">${lignes.map(l=>`<span>$${l}$</span>`).join("")}</span>`,texte:lignes.join(" ; "),
+    champs:[{k:"champ",id:"zero",nom:"aucune solution pour m",label:"Aucune solution quand $m =$",ex:"valeurs, ou aucune"},
+      {k:"champ",id:"inf",nom:"une infinité pour m",label:"Une infinité de solutions quand $m =$",ex:"valeurs, ou aucune",aide:"Pour toutes les autres valeurs de m, le système a une seule solution. Sépare plusieurs valeurs par un point-virgule (1 ; -2). S'il n'y en a pas, écris : aucune."}],
+    juge,etapes:E,bonne:`aucune solution pour ${fx("m = "+liste2(Z))} ; une infinité pour ${fx("m = "+liste2(I))} ; une seule solution pour les autres valeurs de m`.replace(/\$m = aucune valeur\$/g,"aucune valeur de m"),
+    bonneTxt:`aucune solution : ${Z.length?"m = "+liste2(Z):"aucune valeur"} ; une infinité : ${I.length?"m = "+liste2(I):"aucune valeur"}`,repFausse:{zero:I.length?I.join(" ; "):"aucune",inf:Z.length?Z.join(" ; "):"aucune"},repBonne:{zero:Z.length?Z.join(" ; "):"aucune",inf:I.length?I.join(" ; "):"aucune"},nature:Z.length+"z"+I.length+"i",racines:racs};
+}
+function lettres2(R){for(;;){const p=R.choix([1,1,2,-1,3,-2,4,5]),a=R.nz(-7,7),k=R.choix([2,-2,3,-1,-3,4,-4,5]),A=[[p,a],R()<0.7?[k*p,k*a]:[k*p,k*a+R.nz(-4,4)]];if(petit(A,[0],24,1))return A;}}
+function lettresCC(R){for(;;){const t=R.choix(["34r2","34r2","34r2","34r3","33r2"]);let A;
+  if(t==="33r2")A=rang2(R,"inf")[0];else A=prod(bas(R,3,2),haut(R,3,4,t==="34r3"?R.choix([[0,1,2],[0,1,3]]):R.choix([[0,1],[0,2]]),null,2));
+  if(petit(A,[0],9,1)&&new Set(A.map(r=>r.join())).size===A.length)return A;}}
+function param2(R){for(;;){const f=R.choix(["carre","carre","lin","lin","prod"]),u=[R.ent(-2,3),R.ent(-1,1)],v=[R.ent(-3,3),R.ent(-2,2)];let A,B,rac,ordre=R()<0.5;
+  if(f==="carre"){const k=R.choix([1,1,2,2,3]);A=[[1],[0,1],u];B=[[0,1],[k*k],v];rac=[k,-k];}
+  else if(f==="prod"){A=[[1],[0,1],u];B=[[0,1],[0,1],v];rac=[0,1];}
+  else{const al=R.nz(-3,3),be=R.nz(-3,3);A=[[1],[al],[R.ent(-3,4)]];B=[[be],[0,1],v];rac=[al*be];ordre=true;}
+  if(pnul(pz(A[2]))&&pnul(pz(B[2])))continue;
+  return {M:ordre?[A,B]:[B,A],c:2,rac};}}
+function param3(R){for(;;){const deux=R()<0.7,k1=R.ent(-3,3);let k2;do k2=R.ent(-3,3);while(k2===k1);
+  const rac=deux?[k1,k2]:[k1],Pm=deux?pmul([-k1,1],[-k2,1]):pz([-k1,1]),rho=R.nz(-2,2),t=R.choix(deux?["un","un","un","aucun","deux"]:["un","aucun"]);
+  const Rm=t==="un"?pz([-k1*rho,rho]):t==="deux"?Pm.map(x=>mul(x,rho)):pz([R.nz(-3,3)]);
+  const U=[[[1],[R.ent(-2,3)],[R.ent(-2,3)],[R.ent(-3,4)]],[[0],[1],[R.nz(-2,3)],[R.ent(-3,4)]],[[0],[0],Pm,Rm]],L=bas(R,3,2);
+  const M=L.map(l=>U[0].map((_,j)=>l.reduce((s,x,k)=>padd(s,pmul([x],U[k][j])),[0])));
+  if(M.every(l=>l.every(p=>pz(p).every(x=>Math.abs(q(x).n)<=12))&&l.slice(0,3).filter(p=>!pnul(pz(p))).length>=2)&&[0,1,2].every(j=>M.some(l=>!pnul(pz(l[j])))))return {M,c:3,rac};}}
+
+const petit=(A,b,ma,mb)=>A.every(r=>r.every(x=>Math.abs(x)<=ma))&&b.every(x=>Math.abs(x)<=mb)&&A.every(r=>r.filter(x=>x!==0).length>=2)&&A[0].every((_,j)=>A.some(r=>r[j]!==0));
 const bas=(R,n,m)=>{const L=[];for(let i=0;i<n;i++){L.push([]);for(let j=0;j<n;j++)L[i].push(j===i?1:j<i?R.nz(-m,m):0);}return L;};
 /* matrice échelonnée à pivots choisis : zéros avant le pivot de chaque ligne, petits entiers après */
 const haut=(R,n,c,cols,pv,m)=>{const U=[];for(let i=0;i<n;i++){U.push(new Array(c).fill(0));if(i>=cols.length)continue;U[i][cols[i]]=pv?pv[i]:1;for(let j=cols[i]+1;j<c;j++)U[i][j]=cols.includes(j)&&R()<0.3?0:R.ent(-m,m);}return U;};
@@ -18392,7 +18565,14 @@ G.add("lin",[
    {t:"3 équations, 3 inconnues, pivots égaux à 1",cc:4,gen:R=>systeme(...carre3(R,0),1)},
    {t:"avec un échange de lignes ou un pivot différent de 1",cc:4,gen:R=>systeme(...carre3(R,R()<0.5?1:2),2)},
    {t:"aucune solution, une seule ou une infinité",cc:5,gen:R=>{const k=R.choix(["zero","zero","zero","inf","inf","inf","une","une"]);return systeme(...(k==="une"?carre3(R,R.ent(0,2)):rang2(R,k)),3);}},
-   {t:"comme au CC : 3 équations et 4 inconnues, ou système homogène 4 × 4",cc:6,gen:R=>systeme(...commeAuCC(R),4)}]}
+   {t:"comme au CC : 3 équations et 4 inconnues, ou système homogène 4 × 4",cc:6,gen:R=>systeme(...commeAuCC(R),4)}]},
+ {id:"AL2",t:"Seconds membres a, b, c et paramètre m",tache:"seconds membres a, b, c et paramètre m",th:"param",pts:4,apres:["AL1"],lecons:["l-compat"],
+  paliers:[
+   {t:"2 équations : y a-t-il une condition sur a et b ?",cc:3,gen:R=>avecLettres(lettres2(R),false)},
+   {t:"3 équations, seconds membres a, b, c : la condition",cc:5,gen:R=>avecLettres(R()<0.75?rang2(R,"inf")[0]:carre3(R,0)[0],false)},
+   {t:"paramètre m, 2 équations : aucune solution, une seule ou une infinité",cc:6,gen:R=>{const x=param2(R);return avecM(x.M,x.c,x.rac);}},
+   {t:"paramètre m, 3 équations : les trois cas",cc:8,gen:R=>{const x=param3(R);return avecM(x.M,x.c,x.rac);}},
+   {t:"comme au CC : la condition sur a, b, c, puis les solutions",cc:9,gen:R=>avecLettres(lettresCC(R),true)}]}
 ]);
 })();
 
@@ -19097,7 +19277,7 @@ function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n=
       else{g.ko++;g.ok=0;g.pap=0;if(g.ko>=2){g.lv=Math.max(0,g.lv-1);g.ko=0;}}}
     else if(e.m==="e"&&g.val){jr.e+=e.ms||0;
       if(e.r===1)g.eo++;else if(e.r===0)g.ek++;
-      if(g.eo>=2){if(!g.ek)g.np++;g.du=A.addDays(day,ECARTS[Math.min(g.np,ECARTS.length-1)]);g.passe=day;g.eo=g.ek=0;}
+      if(g.eo>=1){if(!g.ek)g.np++;g.du=A.addDays(day,ECARTS[Math.min(g.np,ECARTS.length-1)]);g.passe=day;g.eo=g.ek=0;}
       else if(g.ek>=2){g.val=null;g.du=null;g.trav=true;g.lv=Math.max(0,last-1);g.ok=g.ko=g.pap=0;g.eo=g.ek=0;}}});
   CACHE={n:J.length,der,E};return E;}
 const etat=id=>etats()[id]||neuf();
@@ -19120,11 +19300,11 @@ function entretien(tout){const t0=A.today(),n=A.NOW(),L=[];let fait=0;
   const sc=x=>{const S=SUBJ[x.d.sid],T=theme(x.d);return A.weight(S)/(1+Math.max(0,(A.examStart(S)-n)/864e5))*((T&&T.pts)||1);};
   L.sort((a,b)=>sc(b)-sc(a));
   let reste=MAXJOUR-fait/60000;const out=[];
-  L.forEach(x=>{x.min=Math.max(1,2-x.g.eo)*ccMin(x.d,dernier(x.d))*rythme(x.g);if(tout||x.g.eo+x.g.ek>0||reste>=x.min||(!out.length&&!fait)){out.push(x);reste-=x.min;}});
+  L.forEach(x=>{x.min=ccMin(x.d,dernier(x.d))*rythme(x.g);if(tout||x.g.ek>0||reste>=x.min||(!out.length&&!fait)){out.push(x);reste-=x.min;}});
   return out;}
 const reportes=()=>entretien(true).length-entretien().length;
 function jour(){const L=entretien();if(!L.length)return null;
-  return {n:L.reduce((s,x)=>s+Math.max(1,2-x.g.eo),0),min:Math.max(2,Math.round(L.reduce((s,x)=>s+x.min,0))),noms:[...new Set(L.map(x=>SUBJ[x.d.sid].name))]};}
+  return {n:L.length,min:Math.max(2,Math.round(L.reduce((s,x)=>s+x.min,0))),noms:[...new Set(L.map(x=>SUBJ[x.d.sid].name))]};}
 
 /* ---------- listes : onglet « S'entraîner », page d'une matière, tuile ---------- */
 function ordre(sid){const L=defs(sid).map(d=>({d,g:etat(d.id),gain:theme(d)?A.gainTheme(sid,theme(d)):0}));
@@ -19157,8 +19337,8 @@ function palierDepart(d){const T=theme(d),m=T?A.maitrise(d.sid,T):null,N=d.palie
 function prochain(){const S=P.sess;
   if(P.mode==="jour"){const L=entretien(S.tout);if(!L.length)return fin();
     let x=S.refaire&&L.find(y=>y.d.id===S.refaire);
-    if(!x){const autres=L.filter(y=>y.d.id!==S.dernierG);x=(autres.length?autres:L).slice().sort((a,b)=>(a.g.eo+a.g.ek)-(b.g.eo+b.g.ek))[0];}
-    P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&x.g.eo===1;}
+    if(!x){const autres=L.filter(y=>y.d.id!==S.dernierG);x=(autres.length?autres:L)[0];}
+    P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek;}
   else{const d=P.d,g=etat(d.id);P.g=g;
     if(g.val){P.lv=dernier(d);P.m="x";}
     else if(!g.n){P.lv=dernier(d);P.m="pl";}
@@ -19195,7 +19375,7 @@ function lienMethode(d){const S=SUBJ[d.sid],p=(d.pages||[]).map(id=>S.pages.find
 
 function dessine(){
   const d=P.d,e=P.exo,S=SUBJ[d.sid],g=P.g,N=d.paliers.length,jr=P.mode==="jour",retour=jr?"#/":"#/entrainer/"+d.sid;
-  const cible=P.m==="e"?2:3,acquis=P.m==="e"?g.eo:P.m==="p"?g.ok:0;
+  const cible=P.m==="e"?1:3,acquis=P.m==="p"?g.ok:0;
   let avant="";
   if(P.m==="pl")avant=`<p class="prekick">Pour commencer · un exercice du niveau ${duCC(S)}</p><p class="muted">S'il est juste, tu passes directement au dernier palier. Si tu ne sais pas le faire, clique sur « Je ne sais pas » : tu commenceras par plus simple.</p>`;
   else if(P.m==="x")avant=`<p class="prekick">Exercice en plus · il ne change pas tes passages</p>`;
@@ -19246,6 +19426,7 @@ function enregistre(r,o){
 function changement(d,av,ap){const N=d.paliers.length;
   if(ap.val&&!av.val)return ` 3 justes de suite au dernier palier : méthode réussie. Elle revient ${quand(echeance(d,ap))} dans l'entretien du jour.`;
   if(!ap.val&&av.val)return ` Deux erreurs sur ce passage : la méthode est à retravailler, à partir du palier ${ap.lv+1}.`;
+  if(av.val&&ap.val&&ap.ek>av.ek)return ` Une erreur : un deuxième exercice du même type décide du passage.`;
   if(av.val&&ap.val&&ap.passe!==av.passe)return ` Passage réussi : le prochain est ${quand(echeance(d,ap))}.`;
   if(!av.n&&ap.lv===N-1&&ap.ok===1)return ` Tu passes directement au dernier palier.`;
   if(!av.n)return ` Tu commences au palier ${ap.lv+1} : ${d.paliers[ap.lv].t}.`;
@@ -19255,7 +19436,7 @@ function changement(d,av,ap){const N=d.paliers.length;
 function pied(R){const fini=P.mode==="jour"?!entretien(P.sess.tout).length:(R.ap.val&&!R.av.val);
   $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}<button class="btn pri big" id="en-suiv">${fini?"Terminer":"Exercice suivant"}</button>`;
   const s=$("#en-suiv");s.addEventListener("click",()=>fini?fin():prochain());const st=$("#en-stop");if(st)st.addEventListener("click",fin);s.focus();
-  const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()&&!ap.eo?1:ap.eo/2):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/3):0;bar.style.width=Math.min(100,v*100)+"%";}}
+  const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()?1:0):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/3):0;bar.style.width=Math.min(100,v*100)+"%";}}
 function valide(nsp){
   const d=P.d,e=P.exo,b=$("#lpb"),fb=$("#en-fb");if(P.res)return;
   const rep=nsp?{}:lire(e),j=nsp?{ok:false,resume:"Pas de réponse : voici la correction."}:e.juge(rep);
@@ -19314,7 +19495,7 @@ function fin(){stop();const S0=P.sess,ids=[...new Set(S0.faits)],jr=P.mode==="jo
   const lignes=ids.map(id=>{const d=GEN.par[id],av=S0.avant[id]||neuf(),ap=etat(id),N=d.paliers.length;let t;
     if(ap.val&&!av.val)t=`méthode réussie. Prochain passage : ${quand(echeance(d,ap))}, dans l'entretien du jour.`;
     else if(!ap.val&&av.val)t=`à retravailler, à partir du palier ${ap.lv+1} sur ${N}.`;
-    else if(ap.val)t=ap.passe!==av.passe?`passage réussi. Le prochain : ${quand(echeance(d,ap))}.`:ap.eo+ap.ek?`passage commencé (${ap.eo} juste sur 2).`:"toujours réussie.";
+    else if(ap.val)t=ap.passe!==av.passe?`passage réussi. Le prochain : ${quand(echeance(d,ap))}.`:ap.ek?"passage commencé : une erreur, il reste un exercice pour décider.":"toujours réussie.";
     else if(ap.lv!==av.lv||!av.n)t=`palier ${av.n?av.lv+1+" → ":""}${ap.lv+1} sur ${N}.`;
     else t=`palier ${ap.lv+1} sur ${N}, ${ap.ok} ${plur(ap.ok,"juste")} de suite sur 3.`;
     return `<p><b>${d.t}</b> : ${t}</p>`;}).join("");
