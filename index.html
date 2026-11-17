@@ -951,6 +951,17 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .jlink a{font-weight:700;white-space:nowrap}
 @media (max-width:700px){.jedt-pc{display:none!important}}
 @media (min-width:701px){.jedt-tel{display:none!important}}
+/* entraînement : cases de réponse (mêmes valeurs que les champs des mini-quiz) */
+.en-nb{white-space:nowrap}
+.en-rep{display:grid;gap:12px;min-width:0}
+.en-case{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.en-in{font:inherit;width:4.4em;min-width:0;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
+.en-in.en-large{width:8.5em}
+.en-in:focus{outline:none;border-color:var(--violet-hi)}
+.en-in[aria-invalid="true"]{border-color:var(--rouge)}
+.mat .en-in{width:3.4em;padding:3px 6px;text-align:center}
+.en-cherche{display:grid;gap:14px}
+.pcheck label>span{flex:1;min-width:0}
 
 </style>
 <link rel="manifest" href="manifest.webmanifest">
@@ -18079,6 +18090,309 @@ window.LEX.usi=[
 
 </script>
 <script>
+/* Générateurs d'exercices : un énoncé tiré au hasard, une réponse tapée, une correction calculée par le programme.
+   Chargé avant app.js : chaque générateur ajoute aussi son étape « Entraînement » au planning de son thème.
+   Ce fichier ne touche pas à la page : il tourne aussi dans deno (tools/verifier-generateurs.js). */
+(function(){
+"use strict";
+const SUBJ=window.SUBJ||{};
+
+/* hasard reproductible : la même graine redonne le même exercice sur n'importe quel appareil */
+function alea(graine){let a=graine>>>0;
+  const f=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};
+  f.ent=(x,y)=>x+Math.floor(f()*(y-x+1));
+  f.nz=(x,y)=>{let v;do v=f.ent(x,y);while(v===0);return v;};
+  f.choix=L=>L[Math.floor(f()*L.length)];
+  f.mel=L=>{L=L.slice();for(let i=L.length-1;i>0;i--){const j=Math.floor(f()*(i+1));[L[i],L[j]]=[L[j],L[i]];}return L;};
+  return f;}
+const hache=s=>{let h=2166136261;s=String(s);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);};
+
+/* fractions exactes */
+const pgcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
+function Q(n,d){if(d==null)d=1;if(d<0){n=-n;d=-d;}const g=pgcd(n,d);return {n:n/g,d:d/g};}
+const q=x=>typeof x==="number"?Q(x,1):x;
+const add=(a,b)=>{a=q(a);b=q(b);return Q(a.n*b.d+b.n*a.d,a.d*b.d);};
+const sub=(a,b)=>{a=q(a);b=q(b);return Q(a.n*b.d-b.n*a.d,a.d*b.d);};
+const mul=(a,b)=>{a=q(a);b=q(b);return Q(a.n*b.n,a.d*b.d);};
+const div=(a,b)=>{a=q(a);b=q(b);return Q(a.n*b.d,a.d*b.n);};
+const egal=(a,b)=>{a=q(a);b=q(b);return a.n===b.n&&a.d===b.d;};
+const nul=a=>q(a).n===0;
+const entier=a=>q(a).d===1;
+
+/* écriture : vrai signe moins, fractions a/b (empilées par le site dans une formule $…$) */
+const nb=x=>{x=q(x);return (x.n<0?"−":"")+Math.abs(x.n)+(x.d===1?"":"/"+x.d);};
+const brut=x=>{x=q(x);return x.n+(x.d===1?"":"/"+x.d);};
+const par=x=>q(x).n<0?"("+nb(x)+")":nb(x);
+function comb(c,noms){let s="";c.forEach((x,k)=>{x=q(x);if(!x.n)return;const a=Math.abs(x.n),co=x.d===1?(a===1?"":String(a)):"("+a+"/"+x.d+")";
+  s+=(s?(x.n<0?" − ":" + "):(x.n<0?"−":""))+co+noms[k];});return s||"0";}
+/* expression affine { c, k:{nom:coef} } : « 2 − z », « 1 + 3z », « z » */
+function aff(e,ordre){const K=(ordre||Object.keys(e.k)).filter(v=>e.k[v]&&!nul(e.k[v]));if(!K.length)return nb(e.c);
+  const t=comb(K.map(v=>e.k[v]),K);if(nul(e.c))return t;return nb(e.c)+(t[0]==="−"?" − "+t.slice(1):" + "+t);}
+const f=s=>"$"+s+"$";
+const fx=s=>`<span class="en-nb">$${s}$</span>`;
+const sys=(A,b,noms)=>`<span class="sys">${A.map((r,i)=>`<span>$${comb(r,noms)} = ${nb(b[i])}$</span>`).join("")}</span>`;
+const mat=(R,aug)=>{const c=R[0].length;return `<span class="mat" style="--n:${c}">${R.map(r=>r.map((x,j)=>`<span${aug&&j===c-1?' class="au"':""}>${typeof x==="string"?x:nb(x)}</span>`).join("")).join("")}</span>`;};
+const ligne=(i,m,j)=>{m=q(m);const a=Q(Math.abs(m.n),m.d),co=egal(a,1)?"":nb(a);return `L_{${i}} ← L_{${i}} ${m.n<0?"+":"−"} ${co}L_{${j}}`;};
+const trou=(id,large)=>`<input class="en-in${large?" en-large":""}" data-c="${id}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Case à compléter">`;
+
+/* rang, et « cette ligne est-elle une conséquence du système ? » */
+function rang(M){M=M.map(r=>r.map(q));const n=M.length,c=M[0].length;let r=0;
+  for(let j=0;j<c&&r<n;j++){let p=-1;for(let i=r;i<n;i++)if(!nul(M[i][j])){p=i;break;}if(p<0)continue;[M[r],M[p]]=[M[p],M[r]];
+    for(let i=r+1;i<n;i++){if(nul(M[i][j]))continue;const k=div(M[i][j],M[r][j]);M[i]=M[i].map((x,t)=>sub(x,mul(k,M[r][t])));}r++;}
+  return r;}
+const dansLignes=(M,l)=>rang(M)===rang(M.concat([l]));
+
+/* lecture de ce que l'étudiant tape */
+const propre=s=>String(s==null?"":s).normalize("NFKC").replace(/[−–—]/g,"-").replace(/[×·]/g,"*").replace(/\s+/g," ").trim();
+function nombre(s){s=propre(s).replace(/ /g,"").replace(/^\+/,"");
+  let m=/^(-?\d+)(?:\/(\d+))?$/.exec(s);if(m)return m[2]!=null&&+m[2]===0?null:Q(+m[1],m[2]?+m[2]:1);
+  m=/^(-?)(\d*)[.,](\d+)$/.exec(s);if(m){const d=Math.pow(10,m[3].length);return Q((m[1]?-1:1)*(+(m[2]||0)*d+ +m[3]),d);}
+  return null;}
+function liste(s,n){s=propre(s).replace(/^[(\[{]|[)\]}]$/g,"").trim();if(!s)return null;let P;
+  if(s.includes(";"))P=s.split(";");else{const a=s.split(/\s*,\s+|\s+/).filter(Boolean);P=a.length===n||!s.includes(",")?a:s.split(",");}
+  P=P.map(x=>nombre(x.trim()));return P.length===n&&P.every(Boolean)?P:null;}
+/* « 2 - z », « (1+3t)/2 », « -z » : rend { c, k } ou null si ce n'est pas une expression du premier degré */
+function affine(src,permis){const s=propre(src).replace(/ /g,"");let p=0;if(!s)return null;
+  const LET=/^[a-zA-Zα-ω]/,cst=c=>({c,k:{}}),estC=a=>!Object.keys(a.k).length;
+  const fois=(a,m)=>{const k={};Object.keys(a.k).forEach(v=>{const x=mul(a.k[v],m);if(!nul(x))k[v]=x;});return {c:mul(a.c,m),k};};
+  const somme=(a,b,g)=>{const k={};new Set(Object.keys(a.k).concat(Object.keys(b.k))).forEach(v=>{const x=g(a.k[v]||Q(0),b.k[v]||Q(0));if(!nul(x))k[v]=x;});return {c:g(a.c,b.c),k};};
+  const prod=(a,b)=>estC(b)?fois(a,b.c):estC(a)?fois(b,a.c):null;
+  function fact(){const ch=s[p];
+    if(ch==="-"){p++;const a=fact();return a&&fois(a,Q(-1));}
+    if(ch==="+"){p++;return fact();}
+    if(ch==="("){p++;const a=expr();if(!a||s[p]!==")")return null;p++;return a;}
+    let m=/^\d+(?:[.,]\d+)?/.exec(s.slice(p));if(m){p+=m[0].length;return cst(nombre(m[0]));}
+    m=LET.exec(s.slice(p));if(m){p++;if(permis&&!permis.includes(m[0]))return null;return {c:Q(0),k:{[m[0]]:Q(1)}};}
+    return null;}
+  function terme(){let a=fact();
+    while(a){const ch=s[p];
+      if(ch==="*"){p++;const b=fact();a=b&&prod(a,b);}
+      else if(ch==="/"){p++;const b=fact();a=b&&estC(b)&&!nul(b.c)?fois(a,div(1,b.c)):null;}
+      else if(ch!==undefined&&(ch==="("||LET.test(ch))){const b=fact();a=b&&prod(a,b);}
+      else break;}
+    return a;}
+  function expr(){let a=terme();
+    while(a){const ch=s[p];if(ch!=="+"&&ch!=="-")break;p++;const b=terme();a=b&&somme(a,b,ch==="+"?add:sub);}
+    return a;}
+  const r=expr();return r&&p===s.length?r:null;}
+
+const GEN=window.GEN={defs:{},par:{},
+  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine},
+  /* un tirage : la graine suffit à retrouver l'exercice */
+  tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
+  add(sid,defs){const S=SUBJ[sid];GEN.defs[sid]=(GEN.defs[sid]||[]).concat(defs);
+    defs.forEach(d=>{d.sid=sid;GEN.par[d.id]=d;if(!S||!S.tasks)return;
+      const T=(S.themes||[]).find(x=>x.id===d.th),t={id:"en-"+d.id,t:"Entraînement : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)),min:15,p:1,train:d.id,links:[["#/entrainer/"+sid+"/"+d.id,"S'entraîner"]],why:"Des exercices tirés au hasard, du plus simple au niveau du CC, jusqu'à 3 justes de suite."};
+      if(d.ex)t.ex=d.ex;S.tasks.push(t);if(T)(T.tasks=T.tasks||[]).push(t.id);});}};
+})();
+
+</script>
+<script>
+/* Algèbre : générateurs d'exercices du CC1 (la liste annoncée par le prof le 11/11) */
+(function(){
+"use strict";
+const G=window.GEN,{Q,q,add,sub,mul,div,egal,nul,nb,brut,par,comb,aff,fx,sys,mat,ligne,trou,dansLignes,nombre,liste,affine}=G.outils;
+const NOMS=["x","y","z","t"];
+const prod=(L,U)=>L.map(l=>U[0].map((_,j)=>l.reduce((s,x,k)=>s+x*U[k][j],0)));
+const fois=(M,v)=>M.map(r=>r.reduce((s,x,k)=>s+x*v[k],0));
+const abs=x=>{x=q(x);return Q(Math.abs(x.n),x.d);};
+const nFois=m=>egal(abs(m),1)?"":nb(abs(m))+" fois ";
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+const suite=(s,moins,corps)=>s?`${s} ${moins?"−":"+"} ${corps}`:(moins?"−":"")+corps;
+
+/* ---------- AL1 : pivot de Gauss ---------- */
+/* échelonnement par le chemin du cours : premier nombre non nul de la colonne comme pivot, zéros en dessous */
+function echelonne(A,b){const M=A.map((r,i)=>r.concat([b[i]]).map(q)),n=M.length,c=A[0].length,pas=[],piv=[];let r=0;
+  for(let j=0;j<c&&r<n;j++){let p=-1;for(let i=r;i<n;i++)if(!nul(M[i][j])){p=i;break;}
+    if(p<0)continue;
+    if(p!==r){[M[r],M[p]]=[M[p],M[r]];pas.push({k:"ech",a:r,b:p,col:j,M:M.map(x=>x.slice())});}
+    const ops=[];for(let i=r+1;i<n;i++){if(nul(M[i][j]))continue;const m=div(M[i][j],M[r][j]),v=M[i][j];M[i]=M[i].map((x,t)=>sub(x,mul(m,M[r][t])));ops.push({i,m,v});}
+    if(ops.length)pas.push({k:"zer",lig:r,col:j,piv:M[r][j],ops,M:M.map(x=>x.slice())});
+    piv.push(j);r++;}
+  return {pas,E:M,piv,rang:r,c};}
+/* solutions lues sur la matrice échelonnée : chaque inconnue en fonction des inconnues libres */
+function solution(R){const {E,piv,rang,c}=R;
+  for(let i=rang;i<E.length;i++)if(!nul(E[i][c]))return {nature:"zero",lig:i};
+  const libres=[];for(let j=0;j<c;j++)if(!piv.includes(j))libres.push(j);
+  const S=[];libres.forEach(j=>{S[j]={c:Q(0),k:{[NOMS[j]]:Q(1)}};});
+  for(let r=rang-1;r>=0;r--){const j=piv[r],e={c:E[r][c],k:{}};
+    for(let t=j+1;t<c;t++){if(nul(E[r][t]))continue;const s=S[t];e.c=sub(e.c,mul(E[r][t],s.c));Object.keys(s.k).forEach(v=>{e.k[v]=sub(e.k[v]||Q(0),mul(E[r][t],s.k[v]));});}
+    e.c=div(e.c,E[r][j]);Object.keys(e.k).forEach(v=>{e.k[v]=div(e.k[v],E[r][j]);if(nul(e.k[v]))delete e.k[v];});S[j]=e;}
+  return {nature:libres.length?"inf":"une",S,libres};}
+const verifTxt=(l,v)=>{let s="";l.forEach((co,k)=>{co=q(co);if(!co.n)return;const a=abs(co);
+  if(!s&&egal(a,1)){s=nb(mul(co,v[k]));return;}
+  s+=(s?(co.n<0?" − ":" + "):(co.n<0?"−":""))+(egal(a,1)?par(v[k]):nb(a)+" × "+par(v[k]));});return s||"0";};
+
+function systeme(A,b,palier){
+  const n=A.length,c=A[0].length,N=NOMS.slice(0,c),R=echelonne(A,b),sol=solution(R),M0=A.map((r,i)=>r.concat([b[i]])),homog=b.every(x=>x===0);
+  const lib=sol.nature==="inf"?sol.libres.map(j=>N[j]):[],princ=R.piv.map(j=>N[j]);
+  const E=[{w:`Matrice augmentée du système : ${mat(M0,true)}`,why:`Une colonne par inconnue (${N.join(", ")}), puis les seconds membres après la barre.${A.some(r=>r.includes(0))?" Une inconnue absente d'une équation compte pour 0.":""}`,pts:0.5}];
+  const idx={};
+  R.pas.forEach(P=>{
+    if(P.k==="ech")E.push({w:`${fx(`L_{${P.a+1}} ↔ L_{${P.b+1}}`)} : ${mat(P.M,true)}`,why:`Dans la colonne de ${N[P.col]}, la ligne ${P.a+1} a un 0 : elle ne peut pas donner le pivot. On l'échange avec la ligne ${P.b+1}, qui a un nombre non nul dans cette colonne.`,pts:0.5});
+    else{idx[P.col]=E.length;E.push({w:`${et(P.ops.map(o=>fx(ligne(o.i+1,o.m,P.lig+1))))} : ${mat(P.M,true)}`,why:`Le pivot de la ligne ${P.lig+1} est ${nb(P.piv)}, dans la colonne de ${N[P.col]}. Il faut des zéros sous lui : ${P.ops.map(o=>`à la ligne ${o.i+1} il y a ${nb(o.v)}, donc on ${q(o.m).n>0?"retire":"ajoute"} ${nFois(o.m)}la ligne ${P.lig+1}`).join(" ; ")}. Chaque opération se fait sur toute la ligne, second membre compris.`,pts:1});}});
+  const iLect=E.length;
+  /* une ligne de la remontée : « Ligne 2 : y + 3z = −3, donc y = −3 − 3 × (−1) = 0 » */
+  const symb=(r,signe)=>{const j=R.piv[r],L=R.E[r],p=L[j];let s=nul(L[c])?"":nb(L[c]);for(let t=j+1;t<c;t++){if(nul(L[t]))continue;const a=abs(L[t]),neg=q(L[t]).n<0;s=suite(s,signe&&signe.t===t?neg:!neg,(egal(a,1)?"":nb(a))+N[t]);}
+    s=s||"0";return egal(p,1)?s:`(${s}) / ${par(p)}`;};
+  const remonte=r=>{const j=R.piv[r],L=R.E[r],p=L[j],eq=`${comb(L.slice(0,c),N)} = ${nb(L[c])}`,autres=[];for(let t=j+1;t<c;t++)if(!nul(L[t]))autres.push(t);
+    if(!autres.length)return egal(p,1)?`Ligne ${r+1} : ${fx(eq)}.`:`Ligne ${r+1} : ${fx(eq)}, donc ${fx(`${N[j]} = ${nb(L[c])} / ${par(p)} = ${aff(sol.S[j],N)}`)}.`;
+    if(sol.nature==="inf")return `Ligne ${r+1} : ${fx(eq)}, donc ${fx(`${N[j]} = ${symb(r)}`)}${autres.every(t=>lib.includes(N[t]))&&egal(p,1)?"":`, c'est-à-dire ${fx(`${N[j]} = ${aff(sol.S[j],N)}`)}`}.`;
+    let num=nul(L[c])?"":nb(L[c]);autres.forEach(t=>{const a=abs(L[t]);num=suite(num,q(L[t]).n>0,(egal(a,1)?"":nb(a)+" × ")+par(sol.S[t].c));});
+    return `Ligne ${r+1} : ${fx(eq)}, donc ${fx(`${N[j]} = ${egal(p,1)?num:`(${num}) / ${par(p)}`} = ${nb(sol.S[j].c)}`)}.`;};
+  let bonne,bonneTxt,repBonne;
+  if(sol.nature==="zero"){const L=R.E[sol.lig];
+    E.push({w:`La ligne ${sol.lig+1} dit ${fx(`0 = ${nb(L[c])}`)} : c'est impossible. <b>${fx("S = ∅")}</b>`,why:`Une ligne « 0 = un nombre non nul » n'est vraie pour aucune valeur des inconnues : le système n'a aucune solution. À ne pas confondre avec « 0 = 0 », qui est toujours vraie et n'empêche rien.`,pts:1});
+    bonne=`aucune solution, ${fx("S = ∅")}`;bonneTxt="aucune solution";repBonne={nature:"zero"};}
+  else if(sol.nature==="une"){const v=sol.S.map(e=>e.c),k=n>1?1:0;
+    E.push({w:R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>"),why:`La matrice est échelonnée et chaque inconnue a son pivot : il y a une seule solution. On remonte : la dernière ligne donne ${N[c-1]}, puis on remplace dans la ligne du dessus, et ainsi de suite.`,pts:1});
+    E.push({w:`<b>${fx(`S = {(${v.map(nb).join(", ")})}`)}</b>. Vérification dans l'équation ${k+1} : ${fx(`${verifTxt(A[k],v)} = ${nb(b[k])}`)}.`,why:`On finit toujours par l'ensemble des solutions. La vérification prend dix secondes et rattrape une erreur de calcul.`,pts:0.5});
+    bonne=`une seule solution, ${fx(`S = {(${v.map(nb).join(", ")})}`)}`;bonneTxt="une seule solution : ("+v.map(brut).join(", ")+")";
+    repBonne={nature:"une",sol:Object.fromEntries(N.map((x,i)=>[x,brut(v[i])]))};}
+  else{const ex=sol.S.map(e=>aff(e,N)),p0=sol.S.map(e=>e.c);
+    E.push({w:`${et(princ)} ${princ.length>1?"ont":"a"} un pivot. ${et(lib)} n'${lib.length>1?"en ont":"en a"} pas : ${lib.length>1?"ce sont des inconnues libres":"c'est une inconnue libre"}.<br>${R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>")}`,why:`Une inconnue libre peut prendre n'importe quelle valeur : il y a donc une infinité de solutions. On écrit les autres inconnues en fonction ${lib.length>1?"d'elles":"d'elle"}, en remontant de la dernière ligne à la première.`,pts:1.5});
+    E.push({w:`<b>${fx(`S = {(${ex.join(", ")}), ${lib.join(", ")} ∈ ℝ}`)}</b>. Vérification avec ${lib.map(x=>x+" = 0").join(" et ")} : ${fx(`(${p0.map(nb).join(", ")})`)} donne bien ${fx(`${verifTxt(A[0],p0)} = ${nb(b[0])}`)} dans l'équation 1.`,why:`Une solution pour chaque valeur ${lib.length>1?"des inconnues libres":"de "+lib[0]}. On vérifie sur un cas simple.`,pts:0.5});
+    bonne=`une infinité de solutions, ${fx(`S = {(${ex.join(", ")}), ${lib.join(", ")} ∈ ℝ}`)}`;bonneTxt="une infinité : ("+ex.join(", ").replace(/−/g,"-")+"), "+lib.join(", ")+" libre"+(lib.length>1?"s":"");
+    repBonne={nature:"inf",par:Object.fromEntries(N.map((x,i)=>[x,ex[i].replace(/−/g,"-")]))};}
+  const iFin=E.length-1;
+
+  /* « trouvons où ça part » : des lignes de sa matrice, jugées sur une seule chose, sont-elles des conséquences justes du système ? */
+  const consequence=(l,zeros)=>l.slice(0,zeros).every(nul)&&!l.every(nul)&&dansLignes(M0,l);
+  const demandeLigne=(txt,zeros,faux)=>({q:`${txt} Donne ses ${c+1} nombres, séparés par des espaces.`,juge(s){const l=liste(s,c+1);return l?consequence(l,zeros):null;},siFaux:faux});
+  const etape1={etape:idx[0]!=null?idx[0]:1,titre:"Où ça part : les zéros de la première colonne.",msg:`Cette ligne ne peut pas venir du système : il y a une erreur de calcul dans l'opération qui la donne. Refais-la nombre par nombre, sans oublier le second membre.`};
+  const col2=R.piv[1],etape2={etape:idx[col2]!=null?idx[col2]:iLect-1,titre:"Où ça part : les zéros de la deuxième colonne de pivot.",msg:`Tes lignes étaient justes après la première colonne, mais plus après la suivante : l'erreur est dans l'opération de cette étape.`};
+  function cherche(){if(n!==3||R.rang<2)return null;
+    const L=[demandeLigne(`Après avoir fait apparaître les zéros de la première colonne, ta matrice a deux lignes qui commencent par 0. Écris-en une.`,1,etape1),
+      demandeLigne(`Écris l'autre ligne qui commence par 0, au même moment.`,1,etape1)];
+    return {L,sinon:sol.nature==="une"?{etape:iLect,titre:"Où ça part : après la première colonne.",msg:`Tes deux lignes sont justes. L'erreur vient donc ensuite : soit l'opération qui met un zéro dans la colonne suivante, soit la remontée. Compare avec les étapes ci-dessous.`}:etape2};}
+
+  function juge(rep){
+    const nat=rep.nature;if(!nat)return {incomplet:"Choisis d'abord le nombre de solutions."};
+    const faux=[];let resume,diag=null,ch=null;
+    if(nat==="une"){const v=N.map(x=>nombre((rep.sol||{})[x]));
+      if(v.some(x=>!x))return {incomplet:"Remplis chaque case avec un nombre, par exemple 3, -2 ou 1/2."};
+      const sat=A.map((l,i)=>egal(l.reduce((s,co,k)=>add(s,mul(co,v[k])),Q(0)),b[i]));
+      if(sol.nature==="une"){N.forEach((x,i)=>{if(!egal(v[i],sol.S[i].c))faux.push(x);});
+        if(!faux.length)return {ok:true};
+        const justes=N.filter(x=>!faux.includes(x));
+        resume=`Pas tout à fait : ${justes.length?`${et(justes)} ${justes.length>1?"sont justes":"est juste"}, `:""}${et(faux)} ${faux.length>1?"sont faux":"est faux"}.`;
+        /* la première valeur fausse en remontant : erreur de signe sur un terme, ou pivot oublié ? */
+        for(let r=R.piv.length-1;r>=0&&!diag;r--){const j=R.piv[r];if(egal(v[j],sol.S[j].c))continue;
+          const L=R.E[r],p=L[j];let somme=q(L[c]);const T=[];for(let t=j+1;t<c;t++){if(nul(L[t]))continue;T.push(t);somme=sub(somme,mul(L[t],v[t]));}
+          if(T.some(t=>!egal(v[t],sol.S[t].c)))break;
+          const reste=()=>{let okS=true;const w=v.slice();for(let rr=r-1;rr>=0&&okS;rr--){const jj=R.piv[rr],LL=R.E[rr];let s=q(LL[c]);for(let t=jj+1;t<c;t++)s=sub(s,mul(LL[t],w[t]));okS=egal(div(s,LL[jj]),v[jj]);}return okS&&r>0?" Le reste de ta remontée est cohérent avec cette valeur : une fois corrigée, tout suit.":"";};
+          const eq=`${comb(L.slice(0,c),N)} = ${nb(L[c])}`;
+          if(!egal(p,1)&&egal(v[j],somme)){diag={etape:iLect,type:"pivot oublié",titre:`Où ça part : la remontée, ligne ${r+1}.`,msg:`${fx(eq)} donne ${fx(`${N[j]} = ${symb(r)} = ${nb(sol.S[j].c)}`)}. Tu as trouvé ${nb(v[j])} : c'est la valeur avant de diviser par le pivot ${nb(p)}.${reste()}`};break;}
+          for(const t of T){const alt=div(add(somme,mul(mul(2,L[t]),v[t])),p);
+            if(egal(v[j],alt)&&!egal(alt,sol.S[j].c)){const a=abs(L[t]),terme=(q(L[t]).n<0?"−":"+")+(egal(a,1)?"":nb(a))+N[t];
+              diag={etape:iLect,type:"signe dans la remontée",titre:`Où ça part : la remontée, ligne ${r+1}.`,msg:`${fx(eq)} donne ${fx(`${N[j]} = ${symb(r)} = ${nb(sol.S[j].c)}`)}. Tu as trouvé ${nb(v[j])} : c'est ce qu'on obtient en écrivant ${fx(`${N[j]} = ${symb(r,{t})}`)}. Quand ${fx(terme)} change de côté, il change de signe.${reste()}`};break;}}
+          if(!diag&&r<R.piv.length-1){diag={etape:iLect,type:"remontée",titre:`Où ça part : la ligne ${r+1}.`,msg:`Tes valeurs de ${et(T.map(t=>N[t]))} sont justes, mais pas celle de ${N[j]}. Soit ta ligne ${r+1} échelonnée est fausse, soit le calcul de ${N[j]} : la bonne ligne est ${fx(eq)}, qui donne ${fx(`${N[j]} = ${nb(sol.S[j].c)}`)}.`};}
+          break;}
+        if(!diag){const ok=sat.map((s,i)=>s?i+1:0).filter(Boolean);
+          if(ok.length&&ok.length<n)resume+=` Tes valeurs vérifient ${ok.length>1?"les équations":"l'équation"} ${et(ok.map(String))}, pas ${ok.length===n-1?"l'autre":"les autres"}.`;ch=cherche();}}
+      else if(sol.nature==="inf"){
+        if(sat.every(Boolean)){resume="Presque : tes valeurs donnent bien une solution, mais ce n'est pas la seule.";diag={etape:iLect,type:"inconnue libre oubliée",titre:"Où ça part : la lecture de la matrice échelonnée.",msg:`${et(lib)} n'${lib.length>1?"ont":"a"} pas de pivot : ${lib.length>1?"elles sont libres":"elle est libre"}, donc il y a une infinité de solutions. Tu as donné celle où ${lib.map((x,i)=>x+" = "+nb(v[sol.libres[i]])).join(" et ")}.`};}
+        else{resume="Ce n'est pas ça : ce système a une infinité de solutions, et tes valeurs ne vérifient pas toutes les équations.";ch=cherche();}}
+      else{resume="Ce n'est pas ça : ce système n'a aucune solution.";ch=cherche();}}
+    else if(nat==="inf"){
+      if(sol.nature!=="inf"){
+        if(sol.nature==="zero"){resume="Ce n'est pas ça : ce système n'a aucune solution.";diag={etape:iFin,type:"0 = 0 confondu avec 0 = nombre",titre:"Où ça part : la lecture de la dernière ligne.",msg:`La dernière ligne de la matrice échelonnée dit ${fx(`0 = ${nb(R.E[sol.lig][c])}`)}, ce qui est impossible : aucune solution. C'est une ligne « 0 = 0 » qui laisse une infinité de solutions. Si tu as trouvé « 0 = 0 », il y a une erreur de calcul dans le second membre.`};}
+        else{resume="Ce n'est pas ça : ce système a une seule solution.";ch=cherche();}
+        return {ok:false,faux:["nature"],resume,diag,cherche:ch};}
+      const e=N.map(x=>affine((rep.par||{})[x]));
+      if(e.some(x=>!x))return {incomplet:`Chaque case doit contenir un nombre ou une expression comme 2 - ${lib[0]} ou 3${lib[0]}. Pour une inconnue libre, écris son nom.`};
+      const P=[...new Set(e.flatMap(x=>Object.keys(x.k)))],pt=e.map(x=>x.c),dirs=P.map(v=>e.map(x=>x.k[v]||Q(0)));
+      const colle=(l,w,d)=>egal(l.reduce((s,co,k)=>add(s,mul(co,w[k])),Q(0)),d);
+      const mauvais=A.findIndex((l,i)=>!colle(l,pt,b[i])),mauvaisD=dirs.findIndex(d=>A.some(l=>!colle(l,d,0)));
+      if(mauvais<0&&mauvaisD<0&&P.length&&G.outils.rang(dirs)===lib.length)return {ok:true};
+      /* avec les mêmes inconnues libres que le corrigé : dire quelles cases sont fausses */
+      if(lib.every(x=>{const k=e[N.indexOf(x)];return nul(k.c)&&Object.keys(k.k).length===1&&k.k[x]&&egal(k.k[x],1);})){
+        N.forEach((x,i)=>{const s=sol.S[i],d=e[i];if(!egal(s.c,d.c)||!lib.every(v=>egal(s.k[v]||Q(0),d.k[v]||Q(0)))||Object.keys(d.k).some(v=>!lib.includes(v)))faux.push(x);});
+        const r=R.piv.findIndex(j=>N[j]===faux[faux.length-1]);
+        if(faux.length&&r>=0){resume=`Pas tout à fait : ${et(faux)} ${faux.length>1?"sont faux":"est faux"}.`;
+          diag={etape:iLect,type:"expression d'une inconnue",titre:`Où ça part : la ligne ${r+1} de la remontée.`,msg:remonte(r)};}}
+      if(!diag){
+        if(!P.length||G.outils.rang(dirs.length?dirs:[pt.map(()=>Q(0))])<lib.length)resume=`Pas tout à fait : il manque ${lib.length>1?"des inconnues libres":"l'inconnue libre"} dans ta réponse. ${et(lib)} ${lib.length>1?"doivent":"doit"} pouvoir prendre n'importe quelle valeur.`;
+        else if(mauvais>=0)resume=`Pas tout à fait : avec ${P.map(v=>v+" = 0").join(" et ")}, ta réponse donne (${pt.map(nb).join(", ")}), qui ne vérifie pas l'équation ${mauvais+1}.`;
+        else{const w=pt.map((x,k)=>add(x,dirs[mauvaisD][k])),k=A.findIndex((l,i)=>!colle(l,w,b[i]));resume=`Pas tout à fait : avec ${P[mauvaisD]} = 1${P.length>1?" et les autres à 0":""}, ta réponse donne (${w.map(nb).join(", ")}), qui ne vérifie pas l'équation ${k+1}.`;}
+        diag={etape:iLect,type:"expression d'une inconnue",titre:"Où ça part : l'écriture des inconnues avec l'inconnue libre.",msg:`Reprends la remontée ligne par ligne, ci-dessous.`};}}
+    else{
+      if(sol.nature==="zero")return {ok:true};
+      if(sol.nature==="inf"){resume="Ce n'est pas ça : ce système a une infinité de solutions.";diag={etape:iLect,type:"0 = 0 confondu avec 0 = nombre",titre:"Où ça part : la lecture de la dernière ligne.",msg:`${R.rang<n?"La dernière ligne de la matrice échelonnée est « 0 = 0 » : elle est toujours vraie, elle n'empêche rien. ":""}Aucune ligne ne dit « 0 = un nombre non nul », donc il y a des solutions. Et ${et(lib)} n'${lib.length>1?"ont":"a"} pas de pivot : une infinité.`};}
+      else{resume="Ce n'est pas ça : ce système a une seule solution.";ch=cherche();}}
+    if(nat!==sol.nature&&!faux.includes("nature"))faux.unshift("nature");
+    return {ok:false,faux,resume,diag,cherche:ch};}
+
+  const lignes=A.map((r,i)=>comb(r,N)+" = "+nb(b[i]));
+  return {sig:JSON.stringify([A,b]),
+    q:"Résous ce système par le pivot de Gauss, puis donne l'ensemble de ses solutions.",qNeutre:"Résous ce système, puis donne l'ensemble de ses solutions.",
+    corps:sys(A,b,N),texte:lignes.join(" ; "),
+    champs:[{k:"choix",id:"nature",o:[["une","Une seule solution"],["zero","Aucune"],["inf","Une infinité"]]},
+      {k:"cases",id:"sol",noms:N,si:{nature:"une"}},
+      {k:"cases",id:"par",noms:N,si:{nature:"inf"},large:true,aide:`Une inconnue libre est une inconnue sans pivot : elle peut prendre n'importe quelle valeur. Écris les autres inconnues en fonction d'elle (par exemple 2 - ${N[c-1]}), et pour elle-même écris son nom (${N[c-1]} = ${N[c-1]}).`}],
+    juge,etapes:E,bonne,bonneTxt,repBonne,nature:sol.nature,homog};
+}
+
+/* palier 1 : un exemple déjà rédigé, quatre cases à trouver */
+function exemple2(R){let a12,a21,a22,d,x0,y0,b1,b2;
+  do{a12=R.nz(-3,4);a21=R.nz(-3,4);d=R.choix([1,-1,2,-2,3]);a22=d+a21*a12;x0=R.ent(-4,5);y0=R.ent(-4,5);b1=x0+a12*y0;b2=a21*x0+a22*y0;}
+  while(a22===0||Math.abs(a22)>12||(x0===0&&y0===0)||Math.abs(a21)===1&&Math.abs(a12)===1||Math.abs(b1)>20||Math.abs(b2)>30);
+  const N=["x","y"],A=[[1,a12],[a21,a22]],b=[b1,b2],q2=d*y0,op=fx(ligne(2,a21,1)),eq1=`${comb(A[0],N)} = ${nb(b1)}`,k21=Math.abs(a21)===1?"":Math.abs(a21)+" × ",calcX=suite(b1?nb(b1):"",a12>0,(Math.abs(a12)===1?"":Math.abs(a12)+" × ")+par(y0));
+  const pas=(plein)=>[
+    {w:`Matrice augmentée du système : ${mat([[1,a12,b1],[a21,a22,b2]],true)}`,why:`Une colonne pour x, une pour y, puis les seconds membres après la barre.`},
+    {w:`${op} : ${mat([[1,a12,b1],[0,plein?d:trou("p"),plein?q2:trou("q")]],true)}`,why:`Le pivot de la ligne 1 est 1. Sous lui il y a ${nb(a21)} : on ${a21>0?"retire":"ajoute"} ${nFois(a21)}la ligne 1 à la ligne 2, nombre par nombre${plein?` : ${fx(`${nb(a22)} ${a21>0?"−":"+"} ${k21}${par(a12)} = ${nb(d)}`)} et ${fx(`${nb(b2)} ${a21>0?"−":"+"} ${k21}${par(b1)} = ${nb(q2)}`)}`:""}.`},
+    {w:plein?(d===1?`Ligne 2 : ${fx(`y = ${nb(y0)}`)}.`:`Ligne 2 : ${fx(`${comb([0,d],N)} = ${nb(q2)}`)}, donc ${fx(`y = ${nb(q2)} / ${par(d)} = ${nb(y0)}`)}.`):`La ligne 2 ne contient plus que y. Elle donne ${fx("y =")} ${trou("y")}`,why:`La dernière ligne n'a qu'une inconnue : on la trouve en divisant par son pivot.`},
+    {w:plein?`Ligne 1 : ${fx(eq1)}, donc ${fx(`x = ${calcX} = ${nb(x0)}`)}.`:`La ligne 1, ${fx(eq1)}, donne alors ${fx("x =")} ${trou("x")}`,why:`On remonte : on remplace y par sa valeur dans la ligne du dessus.`},
+    {w:plein?`<b>${fx(`S = {(${nb(x0)}, ${nb(y0)})}`)}</b>. Vérification dans l'équation 2 : ${fx(`${verifTxt(A[1],[x0,y0])} = ${nb(b2)}`)}.`:`On conclut par l'ensemble des solutions : ${fx("S = {(x, y)}")} avec tes deux valeurs.`,why:`On finit toujours par l'ensemble des solutions.`}];
+  const E=pas(true);[0.5,1,1,1,0.5].forEach((p,i)=>{E[i].pts=p;});
+  function juge(rep){const v={};for(const k of ["p","q","y","x"]){v[k]=nombre(rep[k]);if(!v[k])return {incomplet:"Remplis les quatre cases avec des nombres, par exemple 3, -2 ou 1/2."};}
+    const faux=[];if(!egal(v.p,d))faux.push("p");if(!egal(v.q,q2))faux.push("q");if(!egal(v.y,y0))faux.push("y");if(!egal(v.x,x0))faux.push("x");
+    if(!faux.length)return {ok:true};
+    let diag;const suitY=!nul(v.p)&&egal(v.y,div(v.q,v.p)),suitX=egal(v.x,sub(b1,mul(a12,v.y)));
+    if(faux.includes("p")||faux.includes("q"))diag={etape:1,type:"opération sur une ligne",titre:"Où ça part : l'opération sur la ligne 2.",msg:`Il fallait ${fx(`${nb(a22)} ${a21>0?"−":"+"} ${k21}${par(a12)} = ${nb(d)}`)} dans la colonne de y, et ${fx(`${nb(b2)} ${a21>0?"−":"+"} ${k21}${par(b1)} = ${nb(q2)}`)} au second membre.${suitY&&suitX?" La suite de ton calcul est cohérente avec ta ligne : une fois ces nombres corrigés, tout suit.":""}`};
+    else if(faux.includes("y"))diag={etape:2,type:egal(v.y,q2)&&d!==1?"pivot oublié":"division",titre:"Où ça part : la valeur de y.",msg:`La ligne 2 dit ${fx(`${comb([0,d],N)} = ${nb(q2)}`)}${d===1?"":`, donc ${fx(`y = ${nb(q2)} / ${par(d)} = ${nb(y0)}`)}`}.${egal(v.y,q2)&&d!==1?` Tu as gardé ${nb(q2)} sans diviser par le pivot ${nb(d)}.`:""}${suitX?" Ta valeur de x est cohérente avec ce y : elle se corrige toute seule.":""}`};
+    else diag={etape:3,type:egal(v.x,add(b1,mul(a12,y0)))?"signe dans la remontée":"remontée",titre:"Où ça part : la remontée, ligne 1.",msg:`${fx(eq1)} donne ${fx(`x = ${calcX} = ${nb(x0)}`)}.${egal(v.x,add(b1,mul(a12,y0)))?` Tu as trouvé ${nb(v.x)} : le terme en y a gardé son signe en changeant de côté.`:""}`};
+    return {ok:false,faux,resume:`Pas tout à fait : ${faux.length} case${faux.length>1?"s":""} sur 4 ${faux.length>1?"sont fausses":"est fausse"}.`,diag};}
+  return {sig:JSON.stringify([A,b]),q:"Voici un système résolu par le pivot de Gauss. Il manque quatre nombres : complète les cases.",
+    corps:`${sys(A,b,N)}<ol class="wex">${pas(false).map(x=>`<li><div>${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`,
+    texte:`${comb(A[0],N)} = ${b1} ; ${comb(A[1],N)} = ${b2} (exemple à compléter)`,
+    champs:[{k:"trous",ids:["p","q","y","x"]}],juge,etapes:E,bonne:fx(`S = {(${nb(x0)}, ${nb(y0)})}`),bonneTxt:`cases ${d}, ${q2} ; y = ${y0}, x = ${x0}`,repBonne:{p:String(d),q:String(q2),y:String(y0),x:String(x0)},nature:"une"};
+}
+
+const petit=(A,b,ma,mb)=>A.every(r=>r.every(x=>Math.abs(x)<=ma))&&b.every(x=>Math.abs(x)<=mb)&&A.every(r=>r.filter(x=>x!==0).length>=2);
+const bas=(R,n,m)=>{const L=[];for(let i=0;i<n;i++){L.push([]);for(let j=0;j<n;j++)L[i].push(j===i?1:j<i?R.nz(-m,m):0);}return L;};
+/* matrice échelonnée à pivots choisis : zéros avant le pivot de chaque ligne, petits entiers après */
+const haut=(R,n,c,cols,pv,m)=>{const U=[];for(let i=0;i<n;i++){U.push(new Array(c).fill(0));if(i>=cols.length)continue;U[i][cols[i]]=pv?pv[i]:1;for(let j=cols[i]+1;j<c;j++)U[i][j]=cols.includes(j)&&R()<0.3?0:R.ent(-m,m);}return U;};
+function carre3(R,avecEchange){for(;;){
+  const sol=[R.ent(-3,4),R.ent(-3,4),R.ent(-3,4)];if(sol.every(x=>x===0))continue;let A;
+  if(avecEchange===2){/* la première équation n'a pas de x : il faut échanger deux lignes */
+    const p=R.choix([1,1,-1,2]),r1=[0,p,R.nz(-3,3)],r2=[1,R.ent(-3,3),R.ent(-3,3)],l31=R.nz(-2,3),l32=R.nz(-2,2);
+    A=[r1,r2,r2.map((x,k)=>l31*x+l32*r1[k]+(k===2?R.choix([1,1,-1,2]):0))];}
+  else{const pv=avecEchange===1?[R.choix([2,3,-1,-2]),R.choix([1,-1,2]),R.choix([1,2,-1,3])]:[1,1,1];
+    A=prod(bas(R,3,3),haut(R,3,3,[0,1,2],pv,3));}
+  const b=fois(A,sol);if(petit(A,b,9,25))return [A,b];}}
+function rang2(R,nature){for(;;){
+  const cols=R()<0.25?[0,2]:[0,1],U=haut(R,3,3,cols,null,3),L=bas(R,3,2),A=prod(L,U),c=[R.ent(-3,4),R.ent(-3,4),nature==="zero"?R.nz(-4,5):0],b=fois(L,c);
+  if(petit(A,b,9,25)&&A[2].some(x=>x!==0))return [A,b];}}
+function commeAuCC(R){for(;;){const t=R.choix(["34","34","34","44","44"]);let A,b;
+  if(t==="34"){const k=R.choix(["r3","r3","r3","r2","r2z"]),cols=k==="r3"?R.choix([[0,1,2],[0,1,3],[0,2,3]]):R.choix([[0,1],[0,2]]);
+    const U=haut(R,3,4,cols,null,2),L=bas(R,3,2),c=[R.ent(-3,4),R.ent(-3,4),k==="r3"?R.ent(-3,4):k==="r2z"?R.nz(-4,5):0];A=prod(L,U);b=fois(L,c);}
+  else{const cols=R.choix([[0,1,2],[0,1,3],[0,2,3],[0,1],[0,1,2,3]]),U=haut(R,4,4,cols,null,2),L=bas(R,4,1);A=prod(L,U);b=[0,0,0,0];}
+  if(petit(A,b,9,25)&&A.every(r=>r.some(x=>x!==0))&&new Set(A.map(r=>r.join())).size===A.length)return [A,b];}}
+
+G.add("lin",[
+ {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
+  paliers:[
+   {t:"un exemple à compléter, 2 équations et 2 inconnues",cc:3,gen:exemple2},
+   {t:"3 équations, 3 inconnues, pivots égaux à 1",cc:4,gen:R=>systeme(...carre3(R,0),1)},
+   {t:"avec un échange de lignes ou un pivot différent de 1",cc:4,gen:R=>systeme(...carre3(R,R()<0.5?1:2),2)},
+   {t:"aucune solution, une seule ou une infinité",cc:5,gen:R=>{const k=R.choix(["zero","zero","zero","inf","inf","inf","une","une"]);return systeme(...(k==="une"?carre3(R,R.ent(0,2)):rang2(R,k)),3);}},
+   {t:"comme au CC : 3 équations et 4 inconnues, ou système homogène 4 × 4",cc:6,gen:R=>systeme(...commeAuCC(R),4)}]}
+]);
+})();
+
+</script>
+<script>
 /* Apprendre : les leçons pas à pas, la révision espacée, la synchronisation entre appareils,
    et les pages pensées pour le téléphone (Aujourd'hui, Apprendre, Réviser, S'entraîner, Plus).
    Principes (voir la page « Comment réviser ») : se tester plutôt que relire, espacer,
@@ -18524,10 +18838,12 @@ function home(){
   const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
   let go,after="";
   /* « Où j'en suis » : en gros bouton quand c'est nécessaire, en lien quand c'est conseillé */
-  const DGS=A.diagAFaire(),DGN=DGS.find(x=>x.need)||null,MD=A.miniDu(),qd=d=>d===addDays(t0,1)?"demain":dayName(d,false,true);
+  const DGS=A.diagAFaire(),DGN=DGS.find(x=>x.need)||null,MD=A.miniDu(),EJ=window.ENT?ENT.jour():null,qd=d=>d===addDays(t0,1)?"demain":dayName(d,false,true);
   if(nextT&&nextT.resume){const L=BYL[nextT.sid][nextT.t.lesson],PT=parts(L,nextT.sid),pk=PT.filter(x=>x<=nextT.resume.i).length;
     go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:"▶",kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:`Tu reprends à l'écran ${nextT.resume.i+1} sur ${nextT.resume.n}${PT.length>1?`, partie ${pk} sur ${PT.length}`:""}.`};}
   else if(DGN){const S=SUBJ[DGN.sid];go={href:`#/${DGN.sid}/niveau`,c:"s-"+DGN.sid,tile:"✓",kick:`D'abord · environ ${DGN.min} min`,name:`Où j'en suis en ${S.name}`,sub:`${exW(S)} ${jx(S)}. Coche ce que tu maîtrises et fais le mini-contrôle : le programme du jour se refait avec tes réponses.`};
+    if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
+  else if(EJ){go={href:"#/entrainer/jour",c:"c-bleu",tile:String(EJ.n),kick:`D'abord · environ ${EJ.min} min`,name:"Entretien du jour",sub:`${EJ.n} ${plural(EJ.n,"exercice")} ${EJ.n>1?"mélangés":""} pour ne pas oublier ce que tu as réussi : ${EJ.noms.join(", ")}.`};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
   else if(MD.need){go={href:"#/mix",c:"c-bleu",tile:"?",kick:"D'abord · environ 10 min",name:"Mini-contrôle mélangé",sub:`12 questions de toutes tes matières. À revérifier aujourd'hui : ${MD.noms.slice(0,4).join(", ")}. Tes réponses mettent tes priorités à jour : le programme du jour se refait.`};
     if(nextT)after=`Ensuite : ${esc(nextT.t.t)} (${nS.name}).`;}
@@ -18536,7 +18852,7 @@ function home(){
   else if(nextT&&nextT.today)go={href:hrefTask(nextT.sid,nextT.t),c:"s-"+nextT.sid,tile:nL?String(nL.i+1):ico("i-pen"),kick:`Continuer · ${nS.name}`,name:esc(nextT.t.t),sub:lessonInfo(nextT.t)+"."};
   else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
   h+=`<a class="gobig ${go.c}${go.done?" is-done":""}" href="${go.href}"><span class="gobig__tile" aria-hidden="true">${go.tile}</span><span class="gobig__bar"><span class="gobig__kick">${go.kick}</span><span class="gobig__name">${go.name}</span><span class="gobig__sub">${go.sub}</span></span>${ico("i-arrow","ico gobig__arrow")}</a>`;
-  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}${go.href==="#/mix"?"":`<a href="#/mix">Mini-contrôle mélangé${mixed?` : fait aujourd'hui (${A.hub.mixScore} sur ${A.hub.mixSur})${MD.proch?", à refaire "+qd(MD.proch):""}`:MD.du?" (conseillé aujourd'hui)":MD.proch?` (à refaire ${qd(MD.proch)})`:""}</a>`}<button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
+  h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${EJ&&go.href!=="#/entrainer/jour"?`<a href="#/entrainer/jour">Entretien du jour (${EJ.n} ${plural(EJ.n,"exercice")}, environ ${EJ.min} min)</a>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}${go.href==="#/mix"?"":`<a href="#/mix">Mini-contrôle mélangé${mixed?` : fait aujourd'hui (${A.hub.mixScore} sur ${A.hub.mixSur})${MD.proch?", à refaire "+qd(MD.proch):""}`:MD.du?" (conseillé aujourd'hui)":MD.proch?` (à refaire ${qd(MD.proch)})`:""}</a>`}<button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
   h+=journees(P);
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
@@ -18581,6 +18897,7 @@ function subject(sid){
   h+=`<ul class="swatches lead1">`
    +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(S.TB["L-"+nextL.id].min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
    +(A.themesOf(S).length?sw({href:`#/${sid}/niveau`,c,tile:"✓",kicker:"Choisir quoi réviser",name:"Où j'en suis",sub:"Coche ce que tu maîtrises, fais le mini-contrôle : le planning se refait"}):"")
+   +(window.ENT?ENT.tuile(sid,sw,c):"")
    +(A.lexDe(sid).length?sw({href:`#/${sid}/lexique`,c,tile:"Aa",kicker:"Comprendre les mots",name:"Lexique",sub:"Chaque mot technique du cours, expliqué simplement"}):"")
    +sw({href:`#/${sid}/cartes`,c,tile:ico("i-cards"),kicker:"Se tester",name:"Cartes des fiches",sub:`${known} sur ${inProg.length} sues${red?`, <span class="r">${red} en rouge</span>`:""}`})
    +(S.quiz.length?sw({href:`#/${sid}/quiz`,c,tile:"?",kicker:"Se tester",name:"Quiz de cours",sub:`Meilleur score : ${st.best} sur ${A.activeQuiz(S).length}`}):"")
@@ -18607,8 +18924,8 @@ function subject(sid){
 
 /* ================= S'entraîner : sur papier, comme au CC ================= */
 function entrainer(){
-  let h=`<div class="page wide">${ttl("S'entraîner","Tes épreuves sont sur papier, en temps limité : rien ne remplace un sujet fait en temps réel. Fais au moins une annale par matière avec le chrono, puis corrige-toi avec la grille « Avant de rendre ta copie » des pages Recettes.")}`;
-  ordered().forEach((id,k)=>{const S=SUBJ[id],T=S.tasks.filter(t=>!t.lesson),c="s-"+id;
+  let h=`<div class="page wide">${ttl("S'entraîner","Tes épreuves sont sur papier, en temps limité : rien ne remplace un sujet fait en temps réel. Fais au moins une annale par matière avec le chrono, puis corrige-toi avec la grille « Avant de rendre ta copie » des pages Recettes.")}${window.ENT?ENT.bloc():""}`;
+  ordered().forEach((id,k)=>{const S=SUBJ[id],T=S.tasks.filter(t=>!t.lesson&&!t.train),c="s-"+id;
     const L=[[`#/${id}/annales`,"Annales et chrono",ico("i-doc")],[`#/${id}/td`,S.tdTitle||"Exercices de TD",ico("i-pen")]];
     if(S.quiz.length)L.push([`#/${id}/quiz`,"Quiz de cours","?"]);
     S.pages.filter(p=>/recettes|feuille|types|formulaire/.test(p.id)).forEach(p=>L.push([`#/${id}/p/${p.id}`,p.t,ico("i-star")]));
@@ -18732,6 +19049,328 @@ return {
   onChange(){badges();clearTimeout(deb);deb=setTimeout(sync,4000);}
 };
 }};
+})();
+
+</script>
+<script>
+/* Entraînement : exercices tirés au hasard par méthode, paliers, entretien espacé, mode papier, rapport.
+   Les générateurs sont dans generateurs.js et gen-<matière>.js. Ici : l'état, recalculé à partir du journal
+   (événements « tr », donc synchronisé comme le reste), et les écrans. Choix de l'utilisateur du 17/11/2026. */
+(function(){
+"use strict";
+const GEN=window.GEN,EXT=window.EXT,SUBJ=window.SUBJ;if(!GEN||!EXT)return;
+let A=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tx=h=>window.W.tx(h);
+const ECARTS=[2,3,7,18,30],MAXJOUR=15,LENT=2;
+const virg=x=>String(Math.round(x*100)/100).replace(".",",");
+const plur=(n,s,p)=>n>1?(p||s+"s"):s;
+const duree=ms=>{const s=Math.max(1,Math.round(ms/1000)),m=Math.floor(s/60);return m?`${m} min ${String(s%60).padStart(2,"0")}`:`${s} s`;};
+const horloge=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+const theme=d=>(SUBJ[d.sid].themes||[]).find(T=>T.id===d.th)||null;
+const estCC=S=>/^CC/.test(A.exam(S).label||"CC"),auCC=S=>estCC(S)?"au CC":"à l'examen",duCC=S=>estCC(S)?"du CC":"de l'examen";
+const points=d=>{const T=theme(d),p=T?T.pts:d.pts;return p?`environ ${virg(p)} ${p>=2?"points":"point"} ${auCC(SUBJ[d.sid])}`:"";};
+const dernier=d=>d.paliers.length-1;
+const defs=sid=>(GEN.defs[sid]||[]).filter(d=>SUBJ[sid]&&A.inScope(SUBJ[sid],d));
+const matieres=()=>A.SIDS.filter(sid=>defs(sid).length).sort((a,b)=>A.examStart(SUBJ[a])-A.examStart(SUBJ[b]));
+
+/* ---------- l'état d'une méthode, rejoué depuis le journal ---------- */
+const neuf=()=>({n:0,nok:0,lv:0,ok:0,ko:0,val:null,np:0,du:null,eo:0,ek:0,pap:0,trav:false,vu:{},jour:{},passe:null,ms:0,rt:0});
+let CACHE={n:-1,der:"",E:{}};
+function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n===J.length&&CACHE.der===der)return CACHE.E;
+  const E={};
+  J.forEach(e=>{if(e.k!=="tr")return;const d=GEN.par[e.g];if(!d)return;
+    const g=E[e.g]||(E[e.g]=neuf()),day=A.ymd(new Date(e.t)),last=dernier(d),jr=g.jour[day]||(g.jour[day]={n:0,e:0});
+    g.n++;g.vu[e.sg]=1;jr.n++;if(e.r===1){g.nok++;g.ms+=e.ms||0;g.rt+=(e.ms||0)/(ccMin(d,Math.min(last,e.lv||0))*60e3);}
+    if(e.m==="pl"){g.ko=0;g.pap=0;if(e.r===1){g.lv=last;g.ok=1;}else{g.lv=Math.min(last,Math.max(0,e.to||0));g.ok=0;}}
+    else if(e.m==="p"){
+      if(e.r===2||(e.r===1&&e.lent&&g.lv===last))return;/* aidé, ou juste mais trop lent au dernier palier : ni juste ni faux */
+      if(e.r===1){g.ok++;g.ko=0;if(e.pap)g.pap=1;
+        if(g.lv<last){if(g.ok>=3){g.lv++;g.ok=0;g.pap=0;}}
+        else if(g.ok>=3&&g.pap){g.val=day;g.np=0;g.du=A.addDays(day,ECARTS[0]);g.passe=day;g.ok=0;g.pap=0;g.trav=false;g.eo=g.ek=0;}}
+      else{g.ko++;g.ok=0;g.pap=0;if(g.ko>=2){g.lv=Math.max(0,g.lv-1);g.ko=0;}}}
+    else if(e.m==="e"&&g.val){jr.e+=e.ms||0;
+      if(e.r===1)g.eo++;else if(e.r===0)g.ek++;
+      if(g.eo>=2){if(!g.ek)g.np++;g.du=A.addDays(day,ECARTS[Math.min(g.np,ECARTS.length-1)]);g.passe=day;g.eo=g.ek=0;}
+      else if(g.ek>=2){g.val=null;g.du=null;g.trav=true;g.lv=Math.max(0,last-1);g.ok=g.ko=g.pap=0;g.eo=g.ek=0;}}});
+  CACHE={n:J.length,der,E};return E;}
+const etat=id=>etats()[id]||neuf();
+/* le prochain passage : jamais après l'épreuve, et la veille s'il tombait le jour même ou plus tard */
+function echeance(d,g){if(!g.val||!g.du)return null;const S=SUBJ[d.sid],ex=A.exam(S);let du=g.du;
+  if(A.examStart(S)>A.NOW()&&du>=ex.day){const v=A.addDays(ex.day,-1);if(v>(g.passe||g.val))du=v;}
+  return du;}
+const quand=day=>{const t0=A.today();return day<=t0?"aujourd'hui":day===A.addDays(t0,1)?"demain":A.dayName(day,false,true);};
+/* est-ce le moment des exercices ? oui si les leçons du thème sont faites, si le thème est déjà à moitié su, ou si la méthode est commencée */
+function leconsAFaire(d){const S=SUBJ[d.sid],T=theme(d);if(!T)return [];return (T.les||[]).map(l=>S.TB["L-"+l]).filter(t=>t&&A.inScope(S,t)&&!A.isDone(d.sid,t));}
+function moment(d){if(etat(d.id).n)return true;const T=theme(d);if(!T)return true;const m=A.maitrise(d.sid,T);return !leconsAFaire(d).length||(m!=null&&m>=0.5);}
+const ccMin=(d,lv)=>d.paliers[lv].cc||4;
+/* son temps comparé au temps du CC, mesuré sur ses réponses justes (1,2 tant qu'on ne sait pas) */
+const rythme=g=>g.nok>=3?Math.min(2.5,Math.max(0.5,g.rt/g.nok)):1.2;
+function dureeTache(d){const g=etat(d.id);let m=0;for(let k=g.n?g.lv:Math.max(0,dernier(d)-1);k<=dernier(d);k++)m+=(3-(k===g.lv?g.ok:0))*ccMin(d,k)*rythme(g);return Math.min(20,Math.max(6,Math.round(m)));}
+
+/* ---------- l'entretien du jour : les passages dus, dans la limite de 15 minutes ---------- */
+function entretien(tout){const t0=A.today(),n=A.NOW(),L=[];let fait=0;
+  A.SIDS.forEach(sid=>defs(sid).forEach(d=>{const g=etat(d.id),j=g.jour[t0];if(j)fait+=j.e;const du=echeance(d,g);if(du&&du<=t0)L.push({d,g,du});}));
+  const sc=x=>{const S=SUBJ[x.d.sid],T=theme(x.d);return A.weight(S)/(1+Math.max(0,(A.examStart(S)-n)/864e5))*((T&&T.pts)||1);};
+  L.sort((a,b)=>sc(b)-sc(a));
+  let reste=MAXJOUR-fait/60000;const out=[];
+  L.forEach(x=>{x.min=Math.max(1,2-x.g.eo)*ccMin(x.d,dernier(x.d))*rythme(x.g);if(tout||x.g.eo+x.g.ek>0||reste>=x.min||(!out.length&&!fait)){out.push(x);reste-=x.min;}});
+  return out;}
+const reportes=()=>entretien(true).length-entretien().length;
+function jour(){const L=entretien();if(!L.length)return null;
+  return {n:L.reduce((s,x)=>s+Math.max(1,2-x.g.eo),0),min:Math.max(2,Math.round(L.reduce((s,x)=>s+x.min,0))),noms:[...new Set(L.map(x=>SUBJ[x.d.sid].name))]};}
+
+/* ---------- listes : onglet « S'entraîner », page d'une matière, tuile ---------- */
+function ordre(sid){const L=defs(sid).map(d=>({d,g:etat(d.id),gain:theme(d)?A.gainTheme(sid,theme(d)):0}));
+  L.sort((a,b)=>(!!a.g.val-!!b.g.val)||(b.gain-a.gain));
+  /* « dans un ordre un peu logique » : une méthode ne passe pas devant celle dont elle a besoin */
+  for(let k=0;k<L.length;k++){const besoin=(L[k].d.apres||[]).map(id=>L.findIndex(x=>x.d.id===id)).filter(j=>j>k&&!L[j].g.val);if(besoin.length){const j=Math.max(...besoin);L.splice(j+1,0,L.splice(k,1)[0]);k--;}}
+  return L;}
+function rangee(x){const d=x.d,g=x.g,N=d.paliers.length,pts=points(d),du=echeance(d,g),af=leconsAFaire(d);let meta,btn="S'entraîner",pri=true;
+  const auj=!!du&&du<=A.today(),inclus=auj&&entretien().some(y=>y.d.id===d.id);
+  if(g.val){meta=`<span class="pill ok">réussi</span> ${!du?"":inclus?"à refaire aujourd'hui":auj?`à refaire demain (${MAXJOUR} min d'entretien déjà faites aujourd'hui)`:"revient "+quand(du)}`;btn="Refaire";pri=inclus;}
+  else if(!g.n){meta="Pas commencé";btn="Commencer";if(!moment(d)){meta=`Pas commencé · d'abord la leçon « ${af[0].t} »`;pri=false;}}
+  else meta=`${g.trav?'<span class="pill rev">à retravailler</span> ':""}Palier ${g.lv+1} sur ${N}`;
+  return `<li class="task"><button class="tick" disabled title="Se coche toute seule quand la méthode est réussie" aria-label="Se coche toute seule"></button><div><div class="tt">${d.t}</div><div class="meta">${meta}${pts?" · "+pts:""}</div></div><a class="btn${pri?" pri":""} go" href="${inclus?"#/entrainer/jour":`#/entrainer/${d.sid}/${d.id}`}">${btn}</a></li>`;}
+const liens=()=>`<p class="gomore"><a href="#/entrainer/rapport">Mon rapport d'entraînement</a></p>`;
+function bloc(){const M=matieres();if(!M.length)return "";const J=jour();let h="";
+  if(J)h+=`<section class="tiroir"><h2 class="tiroir__title">Entretien du jour</h2><ol class="todo"><li class="task"><button class="tick" disabled aria-label="Se coche toute seule"></button><div><div class="tt">${J.n} ${plur(J.n,"exercice")} ${plur(J.n,"mélangé")}</div><div class="meta">Environ ${J.min} min · ${J.noms.join(", ")}</div></div><a class="btn pri go" href="#/entrainer/jour">Commencer</a></li></ol></section>`;
+  M.forEach(sid=>{h+=`<section class="tiroir s-${sid}"><h2 class="tiroir__title">Entraînement · ${SUBJ[sid].name}</h2><ol class="todo">${ordre(sid).map(rangee).join("")}</ol></section>`;});
+  return h+liens()+`<section class="tiroir"><h2 class="tiroir__title">Sujets, TD et quiz</h2></section>`;}
+function tuile(sid,sw,c){const L=defs(sid);if(!L.length)return "";const t0=A.today(),k=L.filter(d=>{const du=echeance(d,etat(d.id));return du&&du<=t0;}).length;
+  return sw({href:"#/entrainer/"+sid,c,tile:String(L.length),kicker:"Refaire vite, sans erreur",name:"Entraînement",sub:`${L.length} ${plur(L.length,"méthode")}${k?` · ${k} à refaire aujourd'hui`:""}`});}
+function pageMatiere(sid){const S=SUBJ[sid];$("#main").className="s-"+sid;
+  $("#main").innerHTML=`<div class="page"><a class="back" href="#/${sid}">‹ ${S.name}</a><div class="title-row"><h1>Entraînement</h1></div><p class="lead">Des exercices tirés au hasard, jamais deux fois le même. Chaque méthode monte par paliers, du cas simple au niveau ${duCC(S)} : 3 justes de suite pour monter, 2 fausses de suite pour redescendre. Une méthode réussie revient ensuite dans l'entretien du jour.</p><ol class="todo">${ordre(sid).map(rangee).join("")}</ol>${liens()}</div>`;}
+
+/* ---------- l'écran d'un exercice ---------- */
+let P=null,TIC=null;
+const stop=()=>{clearInterval(TIC);TIC=null;};
+function tirage(d,lv,g){for(let k=0;k<60;k++){const e=GEN.tire(d,lv,parseInt(GEN.outils.hache(d.id+"|"+lv+"|"+g.n+"|"+k),36));if(!g.vu[e.cle]||k===59)return e;}}
+function palierDepart(d){const T=theme(d),m=T?A.maitrise(d.sid,T):null,N=d.paliers.length;return m==null||m<0.4?0:m<0.75?Math.floor((N-1)/2):Math.max(0,N-2);}
+/* choisit l'exercice à montrer : placement, montée d'un palier, exercice en plus, ou passage d'entretien */
+function prochain(){const S=P.sess;
+  if(P.mode==="jour"){const L=entretien(S.tout);if(!L.length)return fin();
+    let x=S.refaire&&L.find(y=>y.d.id===S.refaire);
+    if(!x){const autres=L.filter(y=>y.d.id!==S.dernierG);x=(autres.length?autres:L).slice().sort((a,b)=>(a.g.eo+a.g.ek)-(b.g.eo+b.g.ek))[0];}
+    P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&x.g.eo===1;}
+  else{const d=P.d,g=etat(d.id);P.g=g;
+    if(g.val){P.lv=dernier(d);P.m="x";}
+    else if(!g.n){P.lv=dernier(d);P.m="pl";}
+    else{P.lv=g.lv;P.m="p";}
+    P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=2&&!g.pap;}
+  P.exo=tirage(P.d,P.lv,P.g);P.aide=false;P.res=null;P.papier=false;
+  if(P.exo.champs.some(c=>c.k==="trous"))P.papierExige=false;else if(P.papierExige)P.papier=true;
+  let t0=Date.now();try{const s=JSON.parse(sessionStorage.getItem("rev-s1-exo")||"null");if(s&&s.c===P.exo.cle&&t0-s.t<30*60e3)t0=s.t;else sessionStorage.setItem("rev-s1-exo",JSON.stringify({c:P.exo.cle,t:t0}));}catch(e){}
+  P.t0=t0;S.dernierG=P.d.id;dessine();}
+function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:0,run:A.nouvRun(),avant:{},refaire:null,dernierG:null,faits:[],tout:!!tout}};
+  if(d)P.sess.avant[d.id]=Object.assign({},etat(d.id));prochain();}
+
+function champsHTML(e){return e.champs.map(c=>{
+  if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
+  if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  return "";}).join("");}
+function lire(e){const rep={},b=$("#lpb");
+  e.champs.forEach(c=>{
+    if(c.k==="choix"){const on=b.querySelector(`[data-ch="${c.id}"] [aria-pressed="true"]`);if(on)rep[c.id]=on.dataset.v;}
+    else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
+    else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);rep[id]=i?i.value:"";});});
+  return rep;}
+function repTexte(e,rep){return e.champs.map(c=>{
+  if(c.k==="choix"){const o=c.o.find(x=>x[0]===rep[c.id]);return o?o[1]:"(pas de choix)";}
+  if(c.k==="cases"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return c.noms.map(x=>x+" = "+((rep[c.id]||{})[x]||"?")).join(", ");}
+  if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
+const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
+const etapesHTML=(e,marque)=>`<ol class="wex">${e.etapes.map((x,k)=>`<li><div>${k===marque?'<span class="pill rev">ton erreur</span> ':""}${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`;
+function lienMethode(d){const S=SUBJ[d.sid],p=(d.pages||[]).map(id=>S.pages.find(x=>x.id===id)).find(Boolean),T=theme(d),l=(d.lecons||(T&&T.les)||[]).map(id=>(A.LES[d.sid]||[]).find(x=>x.id===id)).find(Boolean);
+  return p?`<a href="#/${d.sid}/p/${p.id}">${p.t}</a>`:l?`la leçon <a href="#/lecon/${d.sid}/${l.id}">${l.t}</a>`:"";}
+
+function dessine(){
+  const d=P.d,e=P.exo,S=SUBJ[d.sid],g=P.g,N=d.paliers.length,jr=P.mode==="jour",retour=jr?"#/":"#/entrainer/"+d.sid;
+  const cible=P.m==="e"?2:3,acquis=P.m==="e"?g.eo:P.m==="p"?g.ok:0;
+  let avant="";
+  if(P.m==="pl")avant=`<p class="prekick">Pour commencer · un exercice du niveau ${duCC(S)}</p><p class="muted">S'il est juste, tu passes directement au dernier palier. Si tu ne sais pas le faire, clique sur « Je ne sais pas » : tu commenceras par plus simple.</p>`;
+  else if(P.m==="x")avant=`<p class="prekick">Exercice en plus · il ne change pas tes passages</p>`;
+  else if(P.papierExige)avant=`<p class="prekick">Sur papier · ${jr?"ce passage se fait comme "+auCC(S):"pour valider le dernier palier"}</p>`;
+  $("#main").className="s-"+d.sid;
+  $("#main").innerHTML=`<div class="lp s-${d.sid}">
+   <div class="lp-top"><a class="lp-x" href="${retour}" aria-label="Quitter l'entraînement">✕</a><div class="lp-bar" role="progressbar" aria-label="Réponses justes de suite" aria-valuemin="0" aria-valuemax="${cible}" aria-valuenow="${acquis}"><i style="width:${Math.min(100,acquis/cible*100)}%"></i></div><span class="lp-n" id="en-chrono">0:00</span></div>
+   <div class="lp-kicker">${jr?"Entretien du jour · "+S.name:S.name+" · "+d.t}<span class="lp-left">${P.m==="p"?` · ${g.ok} ${plur(g.ok,"juste")} de suite sur 3`:P.m==="e"?` · exercice ${P.sess.n+1}`:""}</span></div>
+   ${jr||P.m==="x"?"":pastilles(P.lv,N)}
+   <div class="lp-body" id="lpb"></div>
+   <div class="lp-foot" id="en-pied"></div>
+   <p class="kbdhint"><span class="kb">Clavier : Entrée pour valider, puis pour passer à la suite. </span>Si tu fermes, tu retrouveras le même exercice.</p></div>`;
+  const b=$("#lpb"),q=jr&&e.qNeutre?e.qNeutre:e.q;
+  const tic=()=>{const c=$("#en-chrono");if(c)c.textContent=horloge(Date.now()-P.t0);else stop();};
+  stop();tic();TIC=setInterval(tic,1000);
+  if(P.papier){
+    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion.</div>`);
+    $("#en-pied").innerHTML=`${P.papierExige?"":`<button class="btn" id="en-ecran">Répondre à l'écran</button>`}<button class="btn pri big" id="en-fini">J'ai fini : voir la correction</button>`;
+    const ec=$("#en-ecran");if(ec)ec.addEventListener("click",()=>{P.papier=false;dessine();});
+    $("#en-fini").addEventListener("click",corrigePapier);}
+  else{
+    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="acts" id="en-plus">${e.indice===false||e.champs.some(c=>c.k==="trous")?"":`<button type="button" class="btn" id="en-ind">Indice</button>`}${e.champs.some(c=>c.k==="trous")?"":`<button type="button" class="btn" id="en-pap">Sur papier</button>`}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
+    $("#en-pied").innerHTML=`<button class="btn" id="en-nsp">Je ne sais pas</button><button class="btn pri big" id="en-ok">Valider</button>`;
+    const si=()=>b.querySelectorAll("[data-si]").forEach(z=>{const[c,v]=z.dataset.si.split(":"),on=b.querySelector(`[data-ch="${c}"] [aria-pressed="true"]`);z.hidden=!(on&&on.dataset.v===v);});
+    b.querySelectorAll(".filters[data-ch] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;x.parentNode.querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));si();const i=b.querySelector("[data-si]:not([hidden]) input");if(i)i.focus();}));
+    b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
+    const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
+    const pap=$("#en-pap");if(pap)pap.addEventListener("click",()=>{P.papier=true;dessine();});
+    $("#en-ok").addEventListener("click",()=>valide(false));
+    $("#en-nsp").addEventListener("click",()=>valide(true));
+    const i0=b.querySelector("input:not([hidden])");if(i0&&!matchMedia("(pointer:coarse)").matches)i0.focus();}
+  A.motsClic(d.sid,b.querySelector(".lq"));
+  queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);}
+
+/* ---------- la réponse : jugement, enregistrement, correction ---------- */
+function enregistre(r,o){
+  const d=P.d,e=P.exo,ms=Date.now()-P.t0,cc=ccMin(d,P.lv),lent=ms>LENT*cc*60e3,N=d.paliers.length,av=Object.assign({},etat(d.id));
+  if(!P.sess.avant[d.id])P.sess.avant[d.id]=av;
+  const ev={k:"tr",s:d.sid,g:d.id,lv:P.lv,r,m:P.m,ms,sg:e.cle};if(lent)ev.lent=1;if(o.papier)ev.pap=1;if(P.m==="pl"&&r!==1)ev.to=palierDepart(d);if(o.type)ev.ty=o.type;
+  A.emit(ev);
+  if(r!==2&&d.th)A.emit({k:"diag",s:d.sid,th:d.th,ok:Math.round((r===1?(P.lv+1)/N:0.6*P.lv/N)*100)/100,n:1,run:P.sess.run});
+  A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle},o.carnet||{}));
+  const ap=etat(d.id);
+  if(ap.val&&!av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:true});else if(!ap.val&&av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:false});
+  P.sess.n++;if(r===1)P.sess.ok++;P.sess.faits.push(d.id);P.sess.refaire=r===0&&P.m==="e"&&ap.val?d.id:null;
+  try{sessionStorage.removeItem("rev-s1-exo");}catch(x){}
+  return {av,ap,ms,lent,cc};}
+function changement(d,av,ap){const N=d.paliers.length;
+  if(ap.val&&!av.val)return ` 3 justes de suite au dernier palier : méthode réussie. Elle revient ${quand(echeance(d,ap))} dans l'entretien du jour.`;
+  if(!ap.val&&av.val)return ` Deux erreurs sur ce passage : la méthode est à retravailler, à partir du palier ${ap.lv+1}.`;
+  if(av.val&&ap.val&&ap.passe!==av.passe)return ` Passage réussi : le prochain est ${quand(echeance(d,ap))}.`;
+  if(!av.n&&ap.lv===N-1&&ap.ok===1)return ` Tu passes directement au dernier palier.`;
+  if(!av.n)return ` Tu commences au palier ${ap.lv+1} : ${d.paliers[ap.lv].t}.`;
+  if(ap.lv>av.lv)return ` 3 justes de suite : palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
+  if(ap.lv<av.lv)return ` 2 fausses de suite : retour au palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
+  return "";}
+function pied(R){const fini=P.mode==="jour"?!entretien(P.sess.tout).length:(R.ap.val&&!R.av.val);
+  $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}<button class="btn pri big" id="en-suiv">${fini?"Terminer":"Exercice suivant"}</button>`;
+  const s=$("#en-suiv");s.addEventListener("click",()=>fini?fin():prochain());const st=$("#en-stop");if(st)st.addEventListener("click",fin);s.focus();
+  const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()&&!ap.eo?1:ap.eo/2):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/3):0;bar.style.width=Math.min(100,v*100)+"%";}}
+function valide(nsp){
+  const d=P.d,e=P.exo,b=$("#lpb"),fb=$("#en-fb");if(P.res)return;
+  const rep=nsp?{}:lire(e),j=nsp?{ok:false,resume:"Pas de réponse : voici la correction."}:e.juge(rep);
+  if(j.incomplet){fb.innerHTML=`<div class="verdict info">${j.incomplet}</div>`;return;}
+  stop();P.res=j;
+  const r=j.ok?(P.aide?2:1):0,cherche=!j.ok&&!j.diag&&j.cherche?j.cherche:null;
+  const R=enregistre(r,{type:j.diag&&j.diag.type,carnet:{reponse:nsp?"(je ne sais pas)":repTexte(e,rep),etape:j.diag?j.diag.titre:null,erreur:j.diag?j.diag.type:null,explication:j.diag?A.brut(j.diag.msg):null}});
+  b.querySelectorAll("input,.filters button,#en-plus button").forEach(x=>{x.disabled=true;});
+  (j.faux||[]).forEach(id=>{const i=b.querySelector(`input[data-n="${id}"]:not([hidden]),input[data-c="${id}"]`);if(i&&!i.closest("[hidden]"))i.setAttribute("aria-invalid","true");});
+  const S=SUBJ[d.sid],temps=`${duree(R.ms)} : ${auCC(S)}, tu aurais environ ${R.cc} min pour cet exercice.`,ch=changement(d,R.av,R.ap);
+  let h;
+  if(r===1&&R.lent&&P.m==="p"&&P.lv===dernier(d))h=`<div class="verdict info">Juste, mais en ${duree(R.ms)}. Au dernier palier il faut aussi tenir le temps : au plus ${LENT*R.cc} min ici (${auCC(S)}, environ ${R.cc} min). Cet exercice ne compte ni juste ni faux.</div>`;
+  else if(r===1)h=`<div class="verdict ok">Juste. ${temps}${ch}</div>`;
+  else if(r===2)h=`<div class="verdict info">Juste, avec l'indice : cet exercice ne compte ni juste ni faux. ${temps}</div>`;
+  else h=`<div class="verdict no">${j.resume||"Ce n'est pas ça."}${ch}</div>`;
+  if(j.diag)h+=`<div class="expl no"><b>${j.diag.titre}</b><br>${j.diag.msg}</div>`;
+  const lm=lienMethode(d),corr=marque=>`<p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,marque)}${lm?`<p class="muted">Pour revoir la méthode : ${lm}.</p>`:""}`;
+  if(cherche)h+=`<div class="en-cherche" id="en-ch"></div>`;
+  else if(r===0)h+=`<h3>La correction</h3>${corr(j.diag?j.diag.etape:-1)}`;
+  else h+=`<details class="ex"><summary><span><span class="h">Voir la correction</span></span></summary><div class="body">${corr(-1)}</div></details>`;
+  fb.innerHTML=tx(h);
+  if(cherche)chercheErreur(cherche,corr,R);else pied(R);
+  fb.scrollIntoView({behavior:"smooth",block:"nearest"});}
+/* l'erreur n'est pas reconnue : une ou deux questions sur ses résultats intermédiaires pour trouver où ça part */
+function chercheErreur(C,corr,R){const box=$("#en-ch"),vus=[];let k=0;
+  const conclut=(dg,passe)=>{A.logRep({o:"entraînement : recherche d'erreur",s:P.d.sid,g:P.d.id,cle:P.exo.cle,questions:vus,etape:dg?dg.titre:null,passe:passe?1:0});
+    box.insertAdjacentHTML("beforeend",tx(`${dg?`<div class="expl no"><b>${dg.titre}</b><br>${dg.msg}</div>`:""}<h3>La correction</h3>${corr(dg?dg.etape:-1)}`));pied(R);};
+  const pose=()=>{const q=C.L[k];
+    box.insertAdjacentHTML("beforeend",tx(`<div class="qbox"><p class="qtxt">${k?"":"Cherchons où ça part. "}${q.q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Ta ligne"><button type="button" class="btn pri">Vérifier</button><button type="button" class="btn" data-passe="1">Voir la correction</button></div><div class="verdict" hidden></div></div>`));
+    const bx=box.lastElementChild,inp=bx.querySelector("input"),ver=bx.querySelector(".verdict"),ok=bx.querySelector(".btn.pri");
+    const juge=()=>{const v=q.juge(inp.value);ver.hidden=false;
+      if(v===null){ver.className="verdict info";ver.textContent="Je n'arrive pas à lire cette ligne : écris seulement ses nombres, séparés par des espaces (par exemple 0 1 3 -3).";return;}
+      inp.disabled=true;bx.querySelectorAll("button").forEach(x=>{x.disabled=true;});vus.push({q:A.brut(q.q),rep:inp.value,ok:v?1:0});
+      if(!v){ver.className="verdict no";ver.textContent="C'est ici que ça part.";return conclut(q.siFaux);}
+      ver.className="verdict ok";ver.textContent="Cette ligne est juste : l'erreur est ailleurs.";k++;if(k<C.L.length)pose();else conclut(C.sinon);};
+    ok.addEventListener("click",juge);inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();juge();}});
+    bx.querySelector("[data-passe]").addEventListener("click",()=>{bx.querySelectorAll("button,input").forEach(x=>{x.disabled=true;});conclut(null,true);});
+    if(!matchMedia("(pointer:coarse)").matches)inp.focus();};
+  $("#en-pied").innerHTML="";pose();}
+/* sur papier : chaque ligne de la correction a sa case et ses points */
+function corrigePapier(){const d=P.d,e=P.exo,b=$("#lpb"),tot=e.etapes.reduce((s,x)=>s+x.pts,0);
+  b.insertAdjacentHTML("beforeend",tx(`<h3>La correction : coche ce que tu as écrit</h3><div class="pcheck">${e.etapes.map((x,k)=>`<label><input type="checkbox" data-k="${k}"><span>${x.w}</span><b>${virg(x.pts)}</b></label>`).join("")}</div><div class="verdict info" id="en-note"></div><div class="en-rep" id="en-fb"></div>`));
+  const note=()=>[...b.querySelectorAll(".pcheck input")].reduce((s,i)=>s+(i.checked?e.etapes[+i.dataset.k].pts:0),0);
+  const maj=()=>{$("#en-note").textContent=`Note estimée : ${virg(note())} sur ${virg(tot)}. Il faut ${virg(Math.ceil(tot*0.8*2)/2)} pour que l'exercice compte juste.`;};
+  b.querySelector(".pcheck").addEventListener("change",maj);maj();
+  $("#en-pied").innerHTML=`<button class="btn pri big" id="en-noter">Enregistrer ma note</button>`;
+  $("#en-noter").addEventListener("click",()=>{if(P.res)return;stop();const n=note(),ok=n>=tot*0.8-1e-9,manque=e.etapes.map((x,k)=>k).filter(k=>!b.querySelector(`.pcheck input[data-k="${k}"]`).checked);
+    P.res={ok};b.querySelectorAll(".pcheck input").forEach(i=>{i.disabled=true;});
+    const R=enregistre(ok?1:0,{papier:true,carnet:{papier:1,note:n,noteSur:tot,lignesManquantes:manque.map(k=>A.brut(e.etapes[k].w).slice(0,160))}}),ch=changement(d,R.av,R.ap);
+    $("#en-note").className="verdict "+(ok?"ok":"no");
+    $("#en-note").innerHTML=`Note estimée : ${virg(n)} sur ${virg(tot)}. ${ok?"L'exercice compte juste.":"L'exercice compte faux : il faut au moins 80 % des points."}${manque.length?` Il manque ${manque.length>1?"les lignes":"la ligne"} ${manque.map(k=>k+1).join(", ")}.`:""}${ch} ${duree(R.ms)} : ${auCC(SUBJ[d.sid])}, environ ${R.cc} min.`;
+    $("#en-fb").innerHTML=tx(`<details class="ex"><summary><span><span class="h">Voir l'explication de chaque étape</span></span></summary><div class="body">${etapesHTML(e,-1)}</div></details>`);pied(R);});}
+
+/* ---------- fin de séance ---------- */
+function fin(){stop();const S0=P.sess,ids=[...new Set(S0.faits)],jr=P.mode==="jour",sid=P.d?P.d.sid:null;
+  const lignes=ids.map(id=>{const d=GEN.par[id],av=S0.avant[id]||neuf(),ap=etat(id),N=d.paliers.length;let t;
+    if(ap.val&&!av.val)t=`méthode réussie. Prochain passage : ${quand(echeance(d,ap))}, dans l'entretien du jour.`;
+    else if(!ap.val&&av.val)t=`à retravailler, à partir du palier ${ap.lv+1} sur ${N}.`;
+    else if(ap.val)t=ap.passe!==av.passe?`passage réussi. Le prochain : ${quand(echeance(d,ap))}.`:ap.eo+ap.ek?`passage commencé (${ap.eo} juste sur 2).`:"toujours réussie.";
+    else if(ap.lv!==av.lv||!av.n)t=`palier ${av.n?av.lv+1+" → ":""}${ap.lv+1} sur ${N}.`;
+    else t=`palier ${ap.lv+1} sur ${N}, ${ap.ok} ${plur(ap.ok,"juste")} de suite sur 3.`;
+    return `<p><b>${d.t}</b> : ${t}</p>`;}).join("");
+  const reste=jr?[]:ordre(sid).filter(x=>!x.g.val&&x.d.id!==P.d.id&&moment(x.d)),suiv=reste[0],reussie=!jr&&!!etat(P.d.id).val,rp=jr?reportes():0;
+  $("#main").className=sid&&!jr?"s-"+sid:"";
+  $("#main").innerHTML=`<div class="page lp-end${sid&&!jr?" s-"+sid:""}"><p class="kick">${jr?"Entretien du jour":SUBJ[sid].name}</p><h1>Séance terminée</h1>${S0.n?`<p class="lead">${S0.n} ${plur(S0.n,"exercice")}, ${S0.ok} ${plur(S0.ok,"juste")}, en ${duree(Date.now()-S0.t0)}.</p>${lignes}`:`<p class="lead">Aucun exercice fait cette fois.</p>`}${rp?`<p class="muted">Tes ${MAXJOUR} minutes d'entretien sont faites pour aujourd'hui : ${rp} ${plur(rp,"méthode")} ${plur(rp,"attend","attendent")} demain.</p>`:""}
+   <div class="acts">${jr?`<a class="btn pri big" href="#/">Voir le programme du jour</a>${rp?`<button class="btn" id="en-tout">Les faire quand même</button>`:""}`:reussie&&suiv?`<a class="btn pri big" href="#/entrainer/${sid}/${suiv.d.id}">Méthode suivante : ${suiv.d.t}</a>`:""}${jr?"":`<a class="btn${reussie&&suiv?"":" pri"}" href="#/">Retour à aujourd'hui</a><button class="btn" id="en-encore">${reussie?"Encore un":"Continuer cette méthode"}</button>`}<a class="btn" href="#/entrainer/rapport">Mon rapport</a></div></div>`;
+  const en=$("#en-encore"),d0=P.d,et=$("#en-tout");if(en)en.addEventListener("click",()=>debut("g",d0));if(et)et.addEventListener("click",()=>debut("jour",null,true));
+  A.renderSide();window.scrollTo(0,0);}
+
+/* ---------- le rapport : tout ce qui a été raté, à copier pour le montrer à un Claude ---------- */
+function rapport(){$("#main").className="";
+  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>Mon rapport d'entraînement</h1></div><p class="lead">Chaque exercice fait à l'entraînement est noté ici : la méthode, le palier, ton temps, ta réponse, et l'étape où ça s'est trompé quand le site l'a trouvée. Le rapport suit la synchronisation entre ton téléphone et ton ordinateur. Le bouton copie tout en texte : colle-le dans une fenêtre Claude pour qu'il travaille tes points faibles.</p><div class="acts"><button class="btn pri" id="en-copie">Copier le rapport</button><span class="muted" id="en-copie-ok"></span></div><div id="en-rap"><p class="muted">Lecture du carnet des réponses…</p></div></div>`;
+  A.allReps().then(L=>{const box=$("#en-rap");if(!box)return;
+    const vus=new Set(),R=L.filter(r=>r&&r.o==="entraînement"&&r.g&&GEN.par[r.g]&&!vus.has(r.id)&&vus.add(r.id)).sort((a,b)=>a.t-b.t);
+    const C=L.filter(r=>r&&r.o==="entraînement : recherche d'erreur");
+    let txt=`RAPPORT D'ENTRAÎNEMENT, ${A.dayName(A.today())}\n(site de révision, partie « Entraînement » : exercices tirés au hasard, réponse tapée ou cochée sur papier)\n`,h="";
+    if(!R.length){box.innerHTML=`<p class="muted">Aucun exercice d'entraînement pour l'instant.</p>`;TXT=txt+"\nAucun exercice fait.";return;}
+    matieres().concat(A.SIDS.filter(s=>!matieres().includes(s))).forEach(sid=>{const Rs=R.filter(r=>r.s===sid);if(!Rs.length)return;const S=SUBJ[sid];
+      txt+=`\n=== ${S.name} (${A.exam(S).label} ${A.dayName(A.exam(S).day)}) ===\n`;h+=`<section class="sec"><h2><span>${S.name}</span></h2>`;
+      (GEN.defs[sid]||[]).forEach(d=>{const X=Rs.filter(r=>r.g===d.id);if(!X.length)return;const g=etat(d.id),N=d.paliers.length,ok=X.filter(r=>r.ok).length,fx=X.filter(r=>!r.ok&&!r.aide),just=X.filter(r=>r.ok),moy=just.length?just.reduce((s,r)=>s+r.ms,0)/just.length:0,lents=X.filter(r=>r.lent).length;
+        const types={};fx.forEach(r=>{const k=r.erreur||(r.reponse==="(je ne sais pas)"?"pas de réponse":r.papier?"copie incomplète":"erreur non reconnue");types[k]=(types[k]||0)+1;});
+        const tl=Object.entries(types).sort((a,b)=>b[1]-a[1]),ou=g.val?`réussie le ${A.dayName(g.val,false,true)}, prochain passage ${quand(echeance(d,g)||g.du)}`:`palier ${g.lv+1} sur ${N}${g.trav?" (à retravailler après un passage raté)":""}`;
+        txt+=`\n-- ${d.t} : ${ou}\n   ${X.length} exercices, ${ok} justes, ${fx.length} faux, ${X.filter(r=>r.aide).length} avec indice${moy?`, temps moyen quand c'est juste : ${duree(moy)}`:""}${lents?`, ${lents} trop lents`:""}\n`;
+        if(tl.length)txt+=`   Erreurs par type : ${tl.map(([k,n])=>`${k} × ${n}`).join(" ; ")}\n`;
+        fx.slice(-12).forEach(r=>{const cq=C.filter(c=>c.cle===r.cle).pop();
+          txt+=`   * ${r.jour}, palier ${r.palier}/${r.sur}${r.mode==="entretien"?" (entretien)":r.mode==="placement"?" (placement)":""}${r.papier?", sur papier":""}, ${duree(r.ms)} (CC : ${r.tempsCC} min)\n     Énoncé : ${r.enonce}\n     ${r.papier?`Note estimée : ${virg(r.note)} sur ${virg(r.noteSur)}. Lignes non écrites : ${(r.lignesManquantes||[]).join(" | ")||"aucune"}`:`Sa réponse : ${r.reponse}`}\n     Bonne réponse : ${r.bonne}\n${r.etape?`     ${r.etape} ${r.explication||""}\n`:""}${cq&&cq.questions&&cq.questions.length?`     Recherche de l'erreur : ${cq.questions.map(q=>`« ${q.rep} » ${q.ok?"(ligne juste)":"(ligne fausse)"}`).join(", ")}${cq.etape?" → "+cq.etape:""}\n`:""}`;});
+        h+=`<details class="ex"><summary><span><span class="sub">${ok} ${plur(ok,"juste")} sur ${X.length}</span><br><span class="h">${d.t}</span></span></summary><div class="body"><p>${ou.charAt(0).toUpperCase()+ou.slice(1)}.${moy?` Temps moyen quand c'est juste : ${duree(moy)}.`:""}${lents?` ${lents} ${plur(lents,"exercice")} trop ${plur(lents,"lent")}.`:""}</p>${tl.length?`<p><b>Tes erreurs :</b> ${tl.map(([k,n])=>`${esc(k)} (${n})`).join(", ")}.</p>`:`<p>Aucune erreur.</p>`}${fx.slice(-5).reverse().map(r=>`<div class="expl no"><b>${r.jour}, palier ${r.palier} sur ${r.sur}${r.papier?", sur papier":""}</b><br>${esc(r.enonce)}<br>${r.papier?`Note estimée : ${virg(r.note)} sur ${virg(r.noteSur)}.`:`Ta réponse : ${esc(r.reponse||"")}`}<br>Bonne réponse : ${esc(r.bonne)}${r.etape?`<br>${esc(r.etape)}`:""}</div>`).join("")}</div></details>`;});
+      h+=`</section>`;});
+    TXT=txt;box.innerHTML=h;});
+  $("#en-copie").addEventListener("click",async()=>{let ok=false;try{await navigator.clipboard.writeText(TXT);ok=true;}catch(e){}
+    if(!ok){const z=document.createElement("textarea");z.value=TXT;document.body.append(z);z.select();try{ok=document.execCommand("copy");}catch(e){}z.remove();}
+    $("#en-copie-ok").textContent=ok?"Copié : colle-le dans une fenêtre Claude.":"La copie n'a pas marché.";});}
+let TXT="";
+
+/* ---------- branchement sur le site ---------- */
+function route(parts){const a=parts[0],b=parts[1];
+  if(a==="jour"){if(entretien().length)return debut("jour");stop();
+    const pro=A.SIDS.flatMap(sid=>defs(sid)).map(d=>({d,du:echeance(d,etat(d.id))})).filter(x=>x.du).sort((x,y)=>x.du<y.du?-1:1)[0],rp=reportes();
+    $("#main").className="";$("#main").innerHTML=`<div class="page"><a class="back" href="#/">‹ Aujourd'hui</a><div class="title-row"><h1>Entretien du jour</h1></div><p class="lead">${rp?`Tes ${MAXJOUR} minutes d'entretien sont faites pour aujourd'hui. ${rp} ${plur(rp,"méthode")} ${plur(rp,"attend","attendent")} demain.`:pro?`Rien à refaire aujourd'hui. Le prochain passage : ${quand(pro.du)} (${pro.d.t}).`:"Rien à refaire pour l'instant : une méthode entre dans l'entretien quand elle est réussie (3 justes de suite au dernier palier)."}</p><div class="acts"><a class="btn pri" href="#/entrainer">Voir les méthodes</a>${rp?`<button class="btn" id="en-tout">Les faire quand même</button>`:""}</div></div>`;
+    const et=$("#en-tout");if(et)et.addEventListener("click",()=>debut("jour",null,true));return;}
+  if(a==="rapport")return rapport();
+  if(SUBJ[a]&&b&&GEN.par[b]&&GEN.par[b].sid===a&&A.inScope(SUBJ[a],GEN.par[b]))return debut("g",GEN.par[b]);
+  if(SUBJ[a]&&defs(a).length)return pageMatiere(a);
+  location.replace("#/entrainer");}
+/* « M'entraîner sur cette méthode » à la fin des pages méthode et des leçons du thème */
+function bouton(){const p=(location.hash||"").slice(2).split("/"),main=$("#main");if(!main||main.querySelector(".en-lien"))return;
+  if(SUBJ[p[0]]&&p[1]==="p"){const d=defs(p[0]).find(x=>(x.pages||[]).includes(p[2])),pg=main.querySelector(".page");if(d&&pg)pg.insertAdjacentHTML("beforeend",`<p class="en-lien"><a class="btn pri" href="#/entrainer/${d.sid}/${d.id}">M'entraîner sur cette méthode</a></p>`);}
+  else if(p[0]==="lecon"&&SUBJ[p[1]]){const acts=main.querySelector(".lp-end .acts");if(!acts)return;
+    const d=defs(p[1]).find(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2]);});
+    if(d)acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">M'entraîner sur cette méthode</a>`);}}
+function brancher(A0,ext){A=A0;
+  const liste=ext.routes.entrainer;ext.routes.entrainer=parts=>parts&&parts.length?route(parts):(stop(),liste());
+  /* l'étape « Entraînement » du planning : après les leçons de son thème, importante seulement quand c'est le moment des exercices */
+  Object.values(GEN.par).forEach(d=>{const S=SUBJ[d.sid],t=S&&S.TB&&S.TB["en-"+d.id];if(!t)return;const T=theme(d);
+    const p0=Object.getOwnPropertyDescriptor(t,"p"),base=()=>p0&&p0.get?p0.get.call(t):p0?p0.value:1;
+    Object.defineProperty(t,"p",{get(){return moment(d)?base():Math.max(3,base());},enumerable:true,configurable:true});
+    Object.defineProperty(t,"min",{get(){return dureeTache(d);},enumerable:true,configurable:true});
+    if(T&&T.les&&T.les.length){const k=Math.max(...T.les.map(l=>S.tasks.findIndex(x=>x.lesson===l))),moi=S.tasks.indexOf(t);if(k>=0&&moi>k+1){S.tasks.splice(moi,1);S.tasks.splice(k+1,0,t);}}});
+  A.SIDS.forEach(sid=>SUBJ[sid].tasks.forEach((t,k)=>{t.i=k;}));
+  new MutationObserver(bouton).observe($("#main"),{childList:true,subtree:true});}
+const init0=EXT.init;
+EXT.init=function(A0){const ext=init0.call(EXT,A0);try{brancher(A0,ext);}catch(e){console.error(e);}return ext;};
+window.ENT={bloc,tuile,jour,etat,etats,entretien,echeance,encours:()=>P};/* encours : pour les essais */
 })();
 
 </script>
