@@ -18868,6 +18868,239 @@ G.add("lin",[
 
 </script>
 <script>
+/* Générateurs d'Analyse (CC1 : les réels et les bornes, les suites, les limites de fonctions). */
+(function(){
+"use strict";
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nb,brut,comb,propre,nombre}=O;
+const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
+const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+const dec=v=>v.toFixed(3).replace(".",",").replace("-","−");
+
+/* ---------- AN1 : le tableau du CC (intervalle, inf, min, max, sup) ---------- */
+/* une valeur : un rationnel, ou ±√k */
+const val=x=>{x=q(x);return {q:x,v:x.n/x.d,t:nb(x)};};
+const rac=(k,s)=>({q:null,rac:k,s,v:s*Math.sqrt(k),t:(s<0?"−":"")+"√"+k});
+const tape=V=>V?(V.q?brut(V.q):(V.s<0?"-":"")+"√"+V.rac):"non";
+const F=V=>fx(V.t);
+/* un morceau : un intervalle de a à b (null = infini), oa et ob disent si le crochet est ouvert */
+const pc=(a,oa,b,ob)=>({a,oa:!a||oa,b,ob:!b||ob});
+const pt=p=>`${p.oa?"]":"["}${p.a?p.a.t:"−∞"} ; ${p.b?p.b.t:"+∞"}${p.ob?"[":"]"}`;
+const un=P=>P.map(pt).join(" ∪ ");
+const dansP=(P,x)=>P.some(p=>(!p.a||x>p.a.v||(x===p.a.v&&!p.oa))&&(!p.b||x<p.b.v||(x===p.b.v&&!p.ob)));
+function unir(P){P=P.slice().sort((x,y)=>(x.a?x.a.v:-Infinity)-(y.a?y.a.v:-Infinity)||(x.oa-y.oa));const S=[];
+  P.forEach(p=>{const c=S[S.length-1],pa=p.a?p.a.v:-Infinity,pb=p.b?p.b.v:Infinity;
+    if(c){const cb=c.b?c.b.v:Infinity;
+      if(pa<cb||(pa===cb&&!(p.oa&&c.ob))){if(pb>cb||(pb===cb&&!p.ob)){c.b=p.b;c.ob=p.ob;}return;}}
+    S.push({a:p.a,oa:p.oa,b:p.b,ob:p.ob});});return S;}
+function lisVal(s){s=propre(s).toLowerCase().replace(/ /g,"");if(!s)return null;
+  if(/^(non|no|pas|aucune?|n['’]?existepas|existepas|∅|-|\/)$/.test(s))return {non:true};
+  if(/∞|infini|inf$|oo$/.test(s))return {infini:true};
+  const m=/^([+-]?)(?:√|sqrt|rac(?:ine)?(?:de)?|v)\(?(\d+)\)?$/.exec(s);
+  if(m){const k=+m[2],r=Math.round(Math.sqrt(k));return r*r===k?{q:Q(m[1]==="-"?-r:r)}:{rac:k,s:m[1]==="-"?-1:1};}
+  const x=nombre(s);return x?{q:x}:null;}
+const meme=(lu,V)=>V?(V.q?!!lu.q&&egal(lu.q,V.q):lu.rac===V.rac&&lu.s===V.s):!!lu.non;
+
+const COTE=[{b:"inf",m:"min",borne:"borne inférieure",elt:"minimum",mino:"minoré",minorant:"minorant",grand:"plus grand des minorants",petit:"plus petit élément",sens:"plus grands",loin:"aussi petits qu'on veut (−10, −1 000, et ainsi de suite)"},
+            {b:"sup",m:"max",borne:"borne supérieure",elt:"maximum",mino:"majoré",minorant:"majorant",grand:"plus petit des majorants",petit:"plus grand élément",sens:"plus petits",loin:"aussi grands qu'on veut (10, 1 000, et ainsi de suite)"}];
+const att=(i,v,n)=>`${F(v)} est l'élément obtenu pour n = ${n}, et tous les autres sont ${COTE[i].sens} : c'est le ${COTE[i].petit} de A. Quand le ${COTE[i].elt} existe, la ${COTE[i].borne} lui est égale.`;
+const lim=(i,v,raison)=>`${raison} Donc ${F(v)} est le ${COTE[i].grand} de A. Mais aucun élément de A ne vaut ${F(v)} : A n'a pas de ${COTE[i].petit}.`;
+const sans=(i,raison)=>`${raison} Aucun nombre n'est un ${COTE[i].minorant} de A : il n'y a ni ${COTE[i].borne}, ni ${COTE[i].elt}.`;
+function bilan(E){if(E.B)return Object.assign({inter:false},E.B);const g=E.P[0],d=E.P[E.P.length-1],r=E.rat;
+  return {inter:E.P.length===1&&!r,inf:g.a,min:g.a&&!g.oa&&(!r||g.a.q)?g.a:null,sup:d.b,max:d.b&&!d.ob&&(!r||d.b.q)?d.b:null};}
+function trou(E){if(E.trou)return E.trou;
+  if(E.rat)return `Entre deux nombres rationnels, il y a toujours des nombres irrationnels, et ils ne sont pas dans A : A est plein de trous.`;
+  const D=k=>dansP(E.P,k/2),N=k=>F(val(Q(k,2)));
+  for(let k=-79;k<80;k++){if(D(k))continue;let a=k-1,b=k+1;while(a>=-80&&!D(a))a--;while(b<=80&&!D(b))b++;
+    if(a>=-80&&b<=80)return `Un intervalle n'a pas de trou. Ici ${N(a)} et ${N(b)} sont dans A, mais pas ${N(k)}, qui est entre les deux.`;}
+  return `A est fait de deux morceaux séparés : il y a un trou entre les deux.`;}
+function cote(E,B,i){const C=COTE[i],b=B[C.b],m=B[C.m],sur=E.why&&E.why[i];
+  if(!b)return {w:`A n'est pas ${C.mino} : <b>pas de ${C.borne}</b>, et <b>pas de ${C.elt}</b>.`,why:sur||`A contient des nombres ${C.loin} : aucun nombre n'est un ${C.minorant} de A. Sans ${C.minorant}, il n'y a ni ${C.borne}, ni ${C.elt}.`,pts:0.5};
+  if(m)return {w:`<b>${fx(`${C.m} A = ${b.t}`)}</b>, donc aussi <b>${fx(`${C.b} A = ${b.t}`)}</b>.`,why:sur||`${F(b)} est dans A, et tous les autres éléments de A sont ${C.sens} : c'est le ${C.petit} de A. Quand le ${C.elt} existe, la ${C.borne} lui est égale.`,pts:0.5};
+  return {w:`<b>${fx(`${C.b} A = ${b.t}`)}</b>, mais <b>pas de ${C.elt}</b>.`,why:sur||`Tous les éléments de A sont ${C.sens} que ${F(b)}, et A en contient d'aussi proches de ${F(b)} qu'on veut : ${F(b)} est le ${C.grand} de A. Mais ${E.rat&&!b.q?`${F(b)} n'est pas un nombre rationnel : il n'est pas dans A`:`${F(b)} n'est pas dans A`}, donc A n'a pas de ${C.petit}.`,pts:0.5};}
+
+const NB=["inf A","min A","max A","sup A"],CLE=["inf","min","max","sup"];
+const LIB={int:"la réponse « intervalle »",inf:"inf A",min:"min A",max:"max A",sup:"sup A",el:"le nombre de la dernière case"};
+const RAPPEL=`<p class="muted">Rappel : un minorant de A est un nombre plus petit que tous les éléments de A, ou égal. inf A est le plus grand des minorants ; min A est le plus petit élément de A, il doit être dans A. De l'autre côté : majorant, sup A (le plus petit des majorants) et max A (le plus grand élément).</p>`;
+function tableau(E,palier,eps){const B=bilan(E),VB=[B.inf,B.min,B.max,B.sup];
+  const dansA=(x,v)=>E.suiteF?!!x.q&&E.dansN(x.q):(!E.rat||!!x.q)&&dansP(E.P,v);
+  const etapes=[Object.assign({pts:0.5},E.forme),
+    B.inter?{w:`<b>A est un intervalle.</b>`,why:`Un intervalle est une partie de ℝ sans trou : dès qu'il contient deux nombres, il contient tous les nombres qui sont entre les deux. C'est le cas de ${fx(pt(E.P[0]))}.`,pts:0.25}:{w:`<b>A n'est pas un intervalle.</b>`,why:trou(E),pts:0.25},
+    cote(E,B,0),cote(E,B,1)];
+  let ex=null,seuil=0,seuilT="";
+  if(eps&&B.sup){const e=eps.n/eps.d;seuil=B.sup.v-e;seuilT=B.sup.q?nb(sub(B.sup.q,eps)):dec(seuil);
+    if(B.max)ex=B.max;
+    else if(E.suiteF){for(let n=E.n0;n<=E.n0+E.nmax;n++){const t=E.terme(n);if(t.n/t.d>seuil){ex=val(t);break;}}}
+    else{const C=B.sup.q?[div(eps,2),Q(1,10),Q(1,100),Q(1,1000)].map(t=>sub(B.sup.q,t)):[10,100,1000,10000].map(d=>Q(Math.floor(B.sup.v*d),d));
+      for(const c of C){const v=c.n/c.d;if(v>seuil&&dansP(E.P,v)){ex=val(c);break;}}}
+    etapes.push({w:`${fx(`sup A − ${nb(eps)} ${B.sup.q?"=":"≈"} ${seuilT}`)}. Un élément de A strictement plus grand : <b>${F(ex)}</b>, par exemple.`,
+      why:B.max?`Le plus simple est de prendre le plus grand élément de A, puisqu'il est dans A. Tout autre élément de A strictement plus grand que ${fx(seuilT)} convient aussi.`:`sup A est le plus petit des majorants : un nombre plus petit que sup A n'est pas un majorant de A, donc il y a un élément de A au-dessus de lui. C'est la caractérisation de la borne supérieure : pour tout ${fx("ε &gt; 0")}, il existe a dans A tel que ${fx("sup A − ε &lt; a")}.`,pts:0.5});}
+  else if(eps)etapes.push({w:`A n'a pas de borne supérieure : <b>la dernière case reste vide</b>.`,why:`Chercher un élément de A plus grand que ${fx("sup A − "+nb(eps))} n'a de sens que si sup A existe.`,pts:0.25});
+  function diagCote(i,L){const C=COTE[i],b=B[C.b],m=B[C.m],lb=L[i?3:0],lm=L[i?2:1];if(meme(lb,b)&&meme(lm,m))return null;const e=2+i;
+    if(!b)return {etape:e,type:`ensemble cru ${C.mino}`,titre:`Où ça part : ${C.b} A.`,msg:`A n'est pas ${C.mino} : il contient des nombres ${C.loin}. Il n'a donc ni ${C.borne}, ni ${C.elt}.`};
+    if(!m&&meme(lm,b))return {etape:e,type:`${C.elt} donné alors que la borne n'est pas dans l'ensemble`,titre:`Où ça part : ${C.m} A.`,msg:`${F(b)} n'est pas dans A : ce n'est pas un élément de A, donc pas son ${C.petit}. La ${C.borne}, elle, n'a pas besoin d'être dans A.`};
+    if(lb.non)return {etape:e,type:`${C.borne} dite inexistante pour un ensemble ${C.mino}`,titre:`Où ça part : ${C.b} A.`,msg:`A est ${C.mino}, par exemple par ${F(b)}. Un ensemble non vide et ${C.mino} a toujours une ${C.borne}, même quand il n'a pas de ${C.elt}.`};
+    if(m&&lm.non&&meme(lb,b))return {etape:e,type:`${C.elt} oublié alors que la borne est dans l'ensemble`,titre:`Où ça part : ${C.m} A.`,msg:`${F(b)} est dans A : c'est le ${C.petit} de A.`};
+    return {etape:E.suiteF?e:0,type:`valeur de la ${C.borne}`,titre:E.suiteF?`Où ça part : ${C.b} A.`:"Où ça part : la forme simple de A.",msg:`${fx(`${C.b} A = ${b.t}`)}${m?`, et c'est aussi le ${C.elt}`:`, et il n'y a pas de ${C.elt}`}.`};}
+  function juge(rep){
+    if(!rep.int)return {incomplet:"Dis d'abord si A est un intervalle : oui ou non."};
+    const L=NB.map(k=>lisVal((rep.b||{})[k]));
+    if(L.some(x=>!x))return {incomplet:"Remplis les quatre cases : un nombre quand il existe (3, -1/2, ou rac(2) pour √2), « non » quand il n'existe pas."};
+    if(L.some(x=>x.infini))return {incomplet:"Une borne est un nombre réel, jamais +∞ ou −∞. Si elle n'existe pas, réponds « non », comme dans le tableau du CC."};
+    const Fx=[];if((rep.int==="oui")!==B.inter)Fx.push("int");CLE.forEach((k,i)=>{if(!meme(L[i],VB[i]))Fx.push(k);});
+    let dEl=null;
+    if(eps&&B.sup&&!Fx.includes("sup")){const x=lisVal(rep.el);
+      if(!x||x.non||x.infini)return {incomplet:`Tu as donné une borne supérieure : écris aussi, dans la dernière case, un élément de A strictement plus grand que sup A − ${nb(eps)} (un nombre comme 1,95 ou 39/20).`};
+      const v=x.q?x.q.n/x.q.d:x.s*Math.sqrt(x.rac);
+      if(!dansA(x,v)){Fx.push("el");dEl={etape:4,type:"nombre proposé qui n'est pas dans A",titre:"Où ça part : la dernière case.",msg:v===B.sup.v?`${F(B.sup)} est la borne supérieure, mais il n'est pas dans A. Il faut un élément de A, un peu en dessous.`:`Le nombre que tu proposes n'est pas dans A. Il faut un élément de A, strictement plus grand que ${fx(seuilT)}.`};}
+      else if(!(v>seuil)){Fx.push("el");dEl={etape:4,type:"élément trop loin de la borne supérieure",titre:"Où ça part : la dernière case.",msg:`Ton nombre est bien dans A, mais il n'est pas strictement plus grand que ${fx(seuilT)}.`};}}
+    if(!Fx.length)return {ok:true};
+    const diag=diagCote(0,L)||diagCote(1,L)||(Fx.includes("int")?{etape:1,type:B.inter?"intervalle non reconnu":"ensemble pris pour un intervalle",titre:"Où ça part : intervalle ou pas.",msg:B.inter?`A est un intervalle : ${fx(pt(E.P[0]))}, sans trou.`:trou(E)}:dEl);
+    return {ok:false,faux:Fx,resume:`Pas tout à fait : ${et(Fx.map(k=>LIB[k]))} ${Fx.length>1?"sont à revoir":"est à revoir"}.`,diag};}
+  const b={};NB.forEach((k,i)=>{b[k]=tape(VB[i]);});
+  const bF=Object.assign({},b);
+  if(B.inf&&!B.min)bF["min A"]=tape(B.inf);else if(B.min)bF["min A"]="non";else{bF["inf A"]="0";bF["min A"]="0";}
+  const champs=[{k:"choix",id:"int",o:[["oui","A est un intervalle"],["non","A n'est pas un intervalle"]]},
+    {k:"cases",id:"b",noms:NB,aide:"Dans chaque case : un nombre quand il existe (3, -1/2, ou rac(2) pour √2), « non » quand il n'existe pas."}];
+  if(eps)champs.push({k:"champ",id:"el",nom:"élément de A",label:`Si sup A existe, un élément de A strictement plus grand que $sup A − ${nb(eps)}$ :`,ex:"vide si sup A n'existe pas"});
+  const el=eps&&B.sup?tape(ex):"";
+  return {sig:"T"+E.sig+(eps?","+brut(eps):""),
+    q:`On pose ${fx("A = "+h(E.ecrit))}. A est-il un intervalle ? Donne ensuite sa borne inférieure inf A, son plus petit élément min A, son plus grand élément max A et sa borne supérieure sup A : écris le nombre quand il existe, et « non » quand il n'existe pas.${eps?` Dernière case : si sup A existe, donne un élément de A strictement plus grand que ${fx("sup A − "+nb(eps))} ; sinon, laisse-la vide.`:""}`,
+    corps:(E.note?`<p>${E.note}</p>`:"")+(palier<3?RAPPEL:""),texte:`A = ${E.ecrit} : intervalle ? inf, min, max, sup${eps?` ; un élément de A plus grand que sup A − ${brut(eps)}`:""}`,
+    champs,juge,etapes,
+    bonne:`${B.inter?"intervalle : oui":"intervalle : non"} ; ${CLE.map((k,i)=>`${k} : ${VB[i]?F(VB[i]):"non"}`).join(" ; ")}${eps?` ; dernière case : ${ex?`${F(ex)}, par exemple`:"vide"}`:""}`,
+    bonneTxt:`intervalle : ${B.inter?"oui":"non"} ; ${CLE.map((k,i)=>`${k} A : ${VB[i]?VB[i].t:"non"}`).join(" ; ")}${eps?` ; dernière case : ${ex?ex.t+" (par exemple)":"vide"}`:""}`,
+    repBonne:Object.assign({int:B.inter?"oui":"non",b},eps?{el}:{}),repFausse:Object.assign({int:B.inter?"oui":"non",b:bF},eps?{el}:{}),
+    nature:E.sig.slice(0,2),ens:{m:E.m,terme:E.terme,n0:E.n0,nmax:E.nmax,rat:!!E.rat,eps:eps?eps.n/eps.d:0}};}
+
+/* les familles d'ensembles */
+const CRO=[[false,false],[true,true],[false,true],[true,false]];
+const NSTAR="ℕ* est l'ensemble des entiers 1, 2, 3, et ainsi de suite.",NNAT="ℕ est l'ensemble des entiers 0, 1, 2, 3, et ainsi de suite.",NRAT="ℚ est l'ensemble des nombres rationnels : les quotients de deux entiers.";
+const UNION="Le signe ∪ se lit « union » : A contient les nombres qui sont dans l'un des deux intervalles, ou dans les deux.";
+const TXT={"<":"strictement inférieure à","≤":"inférieure ou égale à",">":"strictement supérieure à","≥":"supérieure ou égale à"};
+const OPS=["<","≤",">","≥"];
+const demi=(R,lo,hi)=>R()<0.25?Q(2*R.ent(lo,hi-1)+1,2):Q(R.ent(lo,hi));
+function eInterv(R){const a=demi(R,-9,9),b=add(a,R()<0.25?Q(2*R.ent(0,5)+1,2):Q(R.ent(1,9))),[oa,ob]=R.choix(CRO),p=pc(val(a),oa,val(b),ob);
+  return {sig:"IN"+pt(p),ecrit:pt(p),P:[p],m:x=>dansP([p],x),
+    forme:{w:`On lit les crochets de ${fx("A = "+pt(p))} : ${F(p.a)} ${oa?"n'est pas":"est"} dans A, et ${F(p.b)} ${ob?"n'est pas":"est"} dans A.`,why:`Un crochet tourné vers le nombre, comme dans « [2 » ou « 5] », garde ce nombre dans l'ensemble. Un crochet qui lui tourne le dos, comme dans « ]2 » ou « 5[ », l'exclut.`}};}
+function eDemi(R){const a=demi(R,-9,9),o=R()<0.5,g=R()<0.5,V=val(a),p=g?pc(null,true,V,o):pc(V,o,null,true);
+  return {sig:"DD"+pt(p),ecrit:pt(p),P:[p],m:x=>dansP([p],x),
+    forme:{w:`${fx("A = "+pt(p))} est une demi-droite : tous les réels ${g?(o?"strictement plus petits que":"plus petits que"):(o?"strictement plus grands que":"plus grands que")} ${F(V)}${o?"":`, et ${F(V)} lui-même`}.`,why:`Du côté de ${g?"−∞":"+∞"}, l'ensemble ne s'arrête jamais. ${g?"−∞":"+∞"} n'est pas un nombre : c'est seulement une façon d'écrire « sans fin de ce côté ».`}};}
+function eDeux(R,mode){const a=R.ent(-9,5),b=a+R.ent(2,5);let c,d;
+  if(mode==="rec"||mode==="int"){c=R.ent(a+1,b-1);d=b+R.ent(1,4);}else if(mode==="dis"){c=b+R.ent(1,3);d=c+R.ent(1,4);}else{c=b;d=c+R.ent(1,4);}
+  const k1=R.choix(CRO),k2=R.choix(CRO),p1=pc(val(a),k1[0],val(b),k1[1]),p2=pc(val(c),k2[0],val(d),k2[1]),A=nb(a),Bt=nb(b),C=nb(c),D=nb(d);
+  if(mode==="int"){const p=pc(p2.a,p2.oa,p1.b,p1.ob);
+    return {sig:"NT"+pt(p1)+pt(p2),ecrit:`${pt(p1)} ∩ ${pt(p2)}`,note:"Le signe ∩ se lit « inter » : A contient les nombres qui sont dans les deux intervalles à la fois.",P:[p],m:x=>dansP([p1],x)&&dansP([p2],x),
+      forme:{w:`On écrit A plus simplement : ${fx("A = "+pt(p))}.`,why:`Un nombre est dans A quand il est dans les deux intervalles à la fois. Il doit être ${p2.oa?"strictement plus grand que":"au moins égal à"} ${fx(C)} (deuxième intervalle) et ${p1.ob?"strictement plus petit que":"au plus égal à"} ${fx(Bt)} (premier intervalle). Les deux autres conditions sont alors vraies toutes seules.`}};}
+  const P=unir([p1,p2]),o={sig:"UN"+pt(p1)+pt(p2),ecrit:`${pt(p1)} ∪ ${pt(p2)}`,note:UNION,P,m:x=>dansP([p1],x)||dansP([p2],x)};
+  if(mode==="rec")o.forme={w:`Les deux morceaux se recouvrent : ${fx("A = "+un(P))}.`,why:`${fx(C)} est plus petit que ${fx(Bt)} : le deuxième intervalle commence avant la fin du premier. Ensemble, ils couvrent tout de ${fx(A)} à ${fx(D)}, sans trou. Le crochet de gauche est celui de ${fx(A)}, le crochet de droite celui de ${fx(D)}.`};
+  else if(mode==="dis")o.forme={w:`Les deux morceaux sont séparés : entre ${fx(Bt)} et ${fx(C)}, aucun nombre n'est dans A.`,why:`A ne se simplifie pas. Pour les bornes, on regarde le bout tout à gauche, celui de ${fx(A)}, et le bout tout à droite, celui de ${fx(D)}.`};
+  else if(P.length===1)o.forme={w:`Les deux morceaux se touchent en ${fx(Bt)}, et ${fx(Bt)} est dans A : ${fx("A = "+un(P))}.`,why:`${fx(Bt)} est gardé par au moins un des deux intervalles : un seul crochet fermé suffit. Il n'y a donc pas de trou.`};
+  else o.forme={w:`Les deux morceaux se touchent en ${fx(Bt)}, mais ${fx(Bt)} n'est dans aucun des deux : il manque un seul point.`,why:`Les deux crochets en ${fx(Bt)} sont ouverts. A contient tous les nombres de ${fx(A)} à ${fx(D)}, sauf ${fx(Bt)}.`};
+  return o;}
+
+/* ensembles des termes d'une suite : o.terme(n), premier rang o.n0, bilan o.B écrit à la main, raisons o.why */
+function suite(o){const T=[0,1,2,3].map(k=>val(o.terme(o.n0+k)));o.suiteF=true;
+  o.dansN=x=>{for(let n=o.n0;n<=o.n0+o.nmax;n++)if(egal(o.terme(n),x))return true;return false;};
+  let z=T[0];for(const c of [Q(1,2),Q(1,3),Q(2,3),Q(1,5)]){const y=add(T[0].q,mul(sub(T[1].q,T[0].q),c));if(!o.dansN(y)){z=val(y);break;}}
+  o.trou=`A est fait de points séparés : ${F(T[0])} et ${F(T[1])} sont dans A, mais pas ${F(z)}, qui est entre les deux.`;
+  o.forme={w:`Les premiers éléments de A : ${T.map((x,k)=>`${F(x)} (pour n = ${o.n0+k})`).join(", ")}, et ainsi de suite.`,why:o.mono};return o;}
+function sInv(R){const a=R.ent(-9,9),b=R.nz(-9,9),Bn=Math.abs(b),ex=(a?nb(a)+(b>0?" + ":" − "):(b>0?"":"−"))+Bn+"/n",ext=val(a+b),li=val(a),i=b>0?1:0;
+  const o={sig:"S1,"+a+","+b,ecrit:`{${ex}, n ∈ ℕ*}`,note:NSTAR,terme:n=>add(a,Q(b,n)),n0:1,nmax:4000,B:b>0?{inf:li,min:null,max:ext,sup:ext}:{inf:ext,min:ext,max:null,sup:li},why:[],
+    mono:`Quand n grandit, ${fx(Bn+"/n")} diminue et se rapproche de 0 : les éléments de A ${b>0?"diminuent":"augmentent"} et se rapprochent de ${F(li)}.`};
+  o.why[i]=att(i,ext,1);o.why[1-i]=lim(1-i,li,`${fx(Bn+"/n")} est strictement positif, et aussi petit qu'on veut quand n est grand : tous les éléments de A sont strictement ${b>0?"plus grands":"plus petits"} que ${F(li)}, et il y en a d'aussi proches de ${F(li)} qu'on veut.`);return suite(o);}
+function sQuot(R){const a=R.nz(-9,9),c=R.ent(1,6),An=Math.abs(a),co=(a<0?"−":"")+(An===1?"":An),li=val(a),z=val(0),i=a>0?0:1;
+  const o={sig:"S2,"+a+","+c,ecrit:`{${co}n/(n + ${c}), n ∈ ℕ}`,note:NNAT,terme:n=>Q(a*n,n+c),n0:0,nmax:4000,B:a>0?{inf:z,min:z,max:null,sup:li}:{inf:li,min:null,max:z,sup:z},why:[],
+    mono:`Quand n grandit, les éléments de A ${a>0?"augmentent":"diminuent"} et se rapprochent de ${F(li)}.`};
+  o.why[i]=att(i,z,0);o.why[1-i]=lim(1-i,li,`On peut écrire ${fx(`${co}n/(n + ${c}) = ${nb(a)} ${a>0?"−":"+"} ${An*c}/(n + ${c})`)}. Comme ${fx(`${An*c}/(n + ${c})`)} est strictement positif, et aussi petit qu'on veut quand n est grand, les éléments de A sont strictement ${a>0?"plus petits":"plus grands"} que ${F(li)} et s'en approchent autant qu'on veut.`);return suite(o);}
+function sAlt(R){const a=R.ent(-9,9),b=R.nz(-9,9),Bn=Math.abs(b),fr=Bn===1?"(−1)ⁿ/n":`(−1)ⁿ × ${Bn}/n`,ex=(a?nb(a)+(b>0?" + ":" − "):(b>0?"":"−"))+fr,v1=val(a-b),v2=val(add(a,Q(b,2))),mn=b>0?v1:v2,mx=b>0?v2:v1,c=F(val(a));
+  return suite({sig:"S3,"+a+","+b,ecrit:`{${ex}, n ∈ ℕ*}`,note:NSTAR,terme:n=>add(a,Q(n%2?-b:b,n)),n0:1,nmax:4000,B:{inf:mn,min:mn,max:mx,sup:mx},
+    mono:`(−1)ⁿ vaut −1 quand n est impair et 1 quand n est pair : les éléments de A sautent d'un côté et de l'autre de ${c}, de moins en moins loin.`,
+    why:[`${F(mn)} est l'élément obtenu pour n = ${b>0?1:2}. Les autres éléments du même côté de ${c} en sont plus proches, et ceux de l'autre côté sont plus grands : ${F(mn)} est le plus petit élément de A. Quand le minimum existe, la borne inférieure lui est égale.`,
+         `${F(mx)} est l'élément obtenu pour n = ${b>0?2:1}. Les autres éléments du même côté de ${c} en sont plus proches, et ceux de l'autre côté sont plus petits : ${F(mx)} est le plus grand élément de A. Quand le maximum existe, la borne supérieure lui est égale.`]});}
+function sAltQ(R){const c=R.ent(1,9),k=R.ent(1,4),co=c===1?"":c,mc=val(-c),pcv=val(c);
+  return suite({sig:"S4,"+c+","+k,ecrit:`{(−1)ⁿ × ${co}n/(n + ${k}), n ∈ ℕ}`,note:NNAT,terme:n=>Q((n%2?-1:1)*c*n,n+k),n0:0,nmax:4000,B:{inf:mc,min:null,max:null,sup:pcv},
+    mono:`Pour n pair, l'élément est positif ou nul ; pour n impair, il est négatif. Dans les deux cas, il s'éloigne de 0 quand n grandit.`,
+    why:[lim(0,mc,`Pour n impair, l'élément vaut ${fx(`−${co}n/(n + ${k}) = −${c} + ${c*k}/(n + ${k})`)} : il est strictement plus grand que ${F(mc)}, et aussi proche de ${F(mc)} qu'on veut. Pour n pair, il est positif ou nul.`),
+         lim(1,pcv,`Pour n pair, l'élément vaut ${fx(`${co}n/(n + ${k}) = ${c} − ${c*k}/(n + ${k})`)} : il est strictement plus petit que ${F(pcv)}, et aussi proche de ${F(pcv)} qu'on veut. Pour n impair, il est négatif.`)]});}
+function sAltPlus(R){const a=R()<0.35?R.ent(1,3):-R.ent(1,9),Bn=Math.abs(a),u=val(1),mu=val(-1);let o;
+  if(a>0){const mx=val(add(1,Q(a,2)));o={B:{inf:mu,min:null,max:mx,sup:mx},why:[lim(0,mu,`Pour n impair, l'élément vaut ${fx(`−1 + ${a}/n`)} : il est strictement plus grand que ${F(mu)}, et aussi proche de ${F(mu)} qu'on veut. Pour n pair, il est plus grand que 1.`),
+    `Pour n pair, l'élément vaut ${fx(`1 + ${a}/n`)} : le plus grand est celui de n = 2, qui vaut ${F(mx)}. Pour n impair, il vaut ${fx(`−1 + ${a}/n`)}, qui ne dépasse pas ${F(val(a-1))}. Donc ${F(mx)} est le plus grand élément de A, et la borne supérieure lui est égale.`]};}
+  else{const mn=val(-1-Bn);o={B:{inf:mn,min:mn,max:null,sup:u},why:[`Pour n impair, l'élément vaut ${fx(`−1 − ${Bn}/n`)} : le plus petit est celui de n = 1, qui vaut ${F(mn)}. Pour n pair, il vaut ${fx(`1 − ${Bn}/n`)}, qui est plus grand. Donc ${F(mn)} est le plus petit élément de A, et la borne inférieure lui est égale.`,
+    lim(1,u,`Pour n pair, l'élément vaut ${fx(`1 − ${Bn}/n`)} : il est strictement plus petit que 1, et aussi proche de 1 qu'on veut. Pour n impair, il est plus petit que ${F(mu)}.`)]};}
+  return suite(Object.assign(o,{sig:"S5,"+a,ecrit:`{(−1)ⁿ ${a>0?"+":"−"} ${Bn}/n, n ∈ ℕ*}`,note:NSTAR,terme:n=>add(n%2?-1:1,Q(a,n)),n0:1,nmax:4000,
+    mono:`(−1)ⁿ vaut −1 quand n est impair et 1 quand n est pair : il y a deux familles d'éléments, l'une près de −1 et l'autre près de 1.`}));}
+function sArith(R){const a=R.nz(-6,6),b=R.ent(-9,9),ex=comb([a],["n"])+(b?(b>0?" + ":" − ")+Math.abs(b):""),p=val(b),i=a>0?0:1;
+  const o={sig:"S6,"+a+","+b,ecrit:`{${ex}, n ∈ ℕ}`,note:NNAT,terme:n=>Q(a*n+b),n0:0,nmax:4000,B:a>0?{inf:p,min:p,max:null,sup:null}:{inf:null,min:null,max:p,sup:p},why:[],
+    mono:`Quand n grandit, ${fx(ex)} ${a>0?"augmente":"diminue"} sans s'arrêter.`};
+  o.why[i]=att(i,p,0);o.why[1-i]=sans(1-i,`Les éléments de A deviennent ${a>0?"aussi grands":"aussi petits"} qu'on veut quand n grandit.`);return suite(o);}
+function sPuis(R){const k=R.choix([2,3,5,10]),neg=R()<0.4,ex=neg?`(−${k})ⁿ`:`${k}ⁿ`,u=val(1);
+  return suite({sig:"S8,"+k+","+neg,ecrit:`{${ex}, n ∈ ℕ}`,note:NNAT,terme:n=>Q(Math.pow(neg?-k:k,n)),n0:0,nmax:12,B:neg?{inf:null,min:null,max:null,sup:null}:{inf:u,min:u,max:null,sup:null},
+    mono:neg?`Le signe change à chaque fois, et les éléments s'éloignent de 0 de plus en plus vite.`:`Chaque élément vaut ${k} fois le précédent : ils augmentent sans s'arrêter.`,
+    why:neg?[sans(0,`Pour n impair, ${fx(ex)} est négatif et devient aussi petit qu'on veut.`),sans(1,`Pour n pair, ${fx(ex)} est positif et devient aussi grand qu'on veut.`)]:[att(0,u,0),sans(1,`${fx(ex)} devient aussi grand qu'on veut quand n grandit.`)]});}
+function sGeo(R){const a=R.nz(-9,9),k=R.choix([2,3,4,5,10]),An=Math.abs(a),ex=(a<0?"−":"")+An+"/"+k+"ⁿ",p=val(a),z=val(0),i=a>0?1:0;
+  const o={sig:"S7,"+a+","+k,ecrit:`{${ex}, n ∈ ℕ}`,note:NNAT,terme:n=>Q(a,Math.pow(k,n)),n0:0,nmax:14,B:a>0?{inf:z,min:null,max:p,sup:p}:{inf:p,min:p,max:null,sup:z},why:[],
+    mono:`Quand n grandit, ${fx(k+"ⁿ")} devient très grand : les éléments de A se rapprochent de 0.`};
+  o.why[i]=att(i,p,0);o.why[1-i]=lim(1-i,z,`${fx(An+"/"+k+"ⁿ")} est strictement positif, et aussi petit qu'on veut quand n est grand : tous les éléments de A sont strictement ${a>0?"plus grands":"plus petits"} que 0, et il y en a d'aussi proches de 0 qu'on veut.`);return suite(o);}
+function eSuite(R){const t=R();return t<0.25?sInv(R):t<0.45?sAlt(R):t<0.6?sArith(R):t<0.74?sQuot(R):t<0.85?sGeo(R):t<0.94?sAltQ(R):t<0.98?sAltPlus(R):sPuis(R);}
+
+/* ensembles donnés par une inéquation */
+const coupe=(op,g,d)=>{const st=op==="<"||op===">";return op==="<"||op==="≤"?[pc(g,st,d,st)]:[pc(null,true,g,st),pc(d,st,null,true)];};
+const ou=(op,g,d)=>`${op==="<"||op==="≤"?`entre ${F(g)} et ${F(d)}`:`à gauche de ${F(g)} ou à droite de ${F(d)}`}${op==="<"||op===">"?", sans les atteindre":", ces deux nombres compris"}`;
+const vrai=(op,y,c)=>op==="<"?y<c-1e-9:op==="≤"?y<=c+1e-9:op===">"?y>c+1e-9:y>=c-1e-9;
+function iAbs(R,op){const a=R.ent(-9,9),r=R.ent(1,9),g=val(a-r),d=val(a+r),ax=a?`|x ${a>0?"−":"+"} ${Math.abs(a)}|`:"|x|",P=coupe(op,g,d);
+  return {sig:"IA,"+a+","+r+","+op,ecrit:`{x ∈ ℝ, ${ax} ${op} ${r}}`,P,m:x=>vrai(op,Math.abs(x-a),r),
+    forme:{w:`On écrit A sans valeur absolue : ${fx("A = "+un(P))}.`,why:`${fx(ax)} est la distance entre x et ${F(val(a))}${a<0?`, car ${fx(`x + ${-a} = x − (${nb(a)})`)}`:""}. Elle est ${TXT[op]} ${r} quand x est ${ou(op,g,d)}.`}};}
+function iCarre(R){const c=R.choix([1,2,3,4,5,6,7,9,16,25]),op=R.choix(OPS),k=Math.round(Math.sqrt(c)),car=k*k===c,g=car?val(-k):rac(c,-1),d=car?val(k):rac(c,1),P=coupe(op,g,d);
+  return {sig:"IC,"+c+","+op,ecrit:`{x ∈ ℝ, x² ${op} ${c}}`,P,m:x=>vrai(op,x*x,c),
+    forme:{w:`On écrit A plus simplement : ${fx("A = "+un(P))}.`,why:`${fx(`x² ${h(op)} ${c}`)} veut dire que la distance entre x et 0 est ${TXT[op]} ${F(d)}${car?`, car ${fx(`${k}² = ${c}`)}`:""} : x est ${ou(op,g,d)}.`}};}
+function iAff(R){const m=R.nz(-4,4),s=R.ent(-9,9),p=R.ent(-9,9),op=R.choix(OPS),c=m*s+p,o2=m<0?{"<":">","≤":"≥",">":"<","≥":"≤"}[op]:op,st=o2==="<"||o2===">",V=val(s);
+  const p1=o2==="<"||o2==="≤"?pc(null,true,V,st):pc(V,st,null,true),mx=comb([m],["x"]),ex=mx+(p?(p>0?" + ":" − ")+Math.abs(p):""),W=[];
+  if(p)W.push(`On ${p>0?"retire":"ajoute"} ${Math.abs(p)} des deux côtés : ${fx(`${mx} ${h(op)} ${nb(c-p)}`)}.`);
+  if(m!==1)W.push(`On divise par ${fx(nb(m))}${m<0?" : c'est un nombre négatif, donc le sens de l'inégalité change":""}.`);
+  if(!W.length)W.push("L'inéquation est déjà résolue : il reste à l'écrire comme une demi-droite.");
+  return {sig:"IF,"+m+","+s+","+p+","+op,ecrit:`{x ∈ ℝ, ${ex} ${op} ${nb(c)}}`,P:[p1],m:x=>vrai(op,m*x+p,c),
+    forme:{w:`On résout l'inéquation : ${fx(`x ${h(o2)} ${nb(s)}`)}, donc ${fx("A = "+pt(p1))}.`,why:W.join(" ")}};}
+function iProd(R){const a=R.ent(-9,7),b=a+R.ent(1,8),op=R.choix(OPS),st=op==="<"||op===">",fa=t=>t?`(x ${t>0?"−":"+"} ${Math.abs(t)})`:"x",g=val(a),d=val(b),P=coupe(op,g,d);
+  return {sig:"IP,"+a+","+b+","+op,ecrit:`{x ∈ ℝ, ${fa(a)}${fa(b)} ${op} 0}`,P,m:x=>vrai(op,(x-a)*(x-b),0),
+    forme:{w:`On écrit A plus simplement : ${fx("A = "+un(P))}.`,why:`Le produit vaut 0 en ${F(g)} et en ${F(d)}. Entre les deux, les deux facteurs sont de signes contraires : le produit est négatif. À gauche de ${F(g)} ou à droite de ${F(d)}, ils ont le même signe : le produit est positif. ${st?"L'inégalité est stricte : les deux nombres où le produit vaut 0 sont exclus.":"L'inégalité est large : les deux nombres où le produit vaut 0 sont gardés."}`}};}
+function eIneq(R){const t=R();return t<0.25?iAbs(R,R.choix(["<","≤"])):t<0.4?iAbs(R,R.choix([">","≥"])):t<0.55?iCarre(R):t<0.8?iAff(R):iProd(R);}
+
+/* les ensembles des tableaux du CC */
+function cRat(R){const k=R.choix([2,3,5]),r=rac(k,R()<0.3?-1:1),[o1,o2]=R.choix(CRO),p=R()<0.5?pc(r,o1,val(Math.ceil(r.v)+R.ent(0,3)),o2):pc(val(Math.floor(r.v)-R.ent(0,3)),o1,r,o2);
+  return {sig:"CQ"+pt(p),ecrit:`ℚ ∩ ${pt(p)}`,note:NRAT,rat:true,P:[p],m:x=>dansP([p],x),
+    forme:{w:`A est l'ensemble des nombres rationnels de l'intervalle ${fx(pt(p))}.`,why:`Entre deux réels différents, il y a toujours un nombre rationnel : A a donc la même borne inférieure et la même borne supérieure que l'intervalle ${fx(pt(p))}. Mais ${F(r)} n'est pas rationnel : il ne peut pas être dans A, même avec un crochet fermé.`}};}
+function cRatCarre(R){const c=R.choix([2,3,5,6,7,4,9]),st=R()<0.4,k=Math.round(Math.sqrt(c)),car=k*k===c,g=car?val(-k):rac(c,-1),d=car?val(k):rac(c,1),p=pc(g,st,d,st),op=st?"<":"≤";
+  return {sig:"CC,"+c+","+st,ecrit:`{x ∈ ℚ, x² ${op} ${c}}`,note:NRAT,rat:true,P:[p],m:x=>vrai(op,x*x,c),
+    forme:{w:`${fx(`A = ℚ ∩ ${pt(p)}`)} : les nombres rationnels de cet intervalle.`,why:`${fx(`x² ${h(op)} ${c}`)} veut dire que x est ${ou(op,g,d)}. Et entre deux réels différents il y a toujours un rationnel : A a la même borne inférieure et la même borne supérieure que cet intervalle.${car?"":` Mais ${F(g)} et ${F(d)} ne sont pas rationnels : ils ne sont pas dans A.`}`}};}
+function cPrive(R){const a=R.ent(-8,6),[o1,o2]=R.choix(CRO),t=R();let I,P;
+  if(t<0.6){I=pc(val(a),o1,val(a+R.ent(1,5)),o2);P=[pc(null,true,I.a,!o1),pc(I.b,!o2,null,true)];}
+  else if(t<0.8){I=pc(val(a),o1,null,true);P=[pc(null,true,I.a,!o1)];}
+  else{I=pc(null,true,val(a),o2);P=[pc(I.b,!o2,null,true)];}
+  return {sig:"CP"+pt(I),ecrit:`ℝ ∖ ${pt(I)}`,note:`Le signe ∖ se lit « privé de » : A contient tous les réels qui ne sont pas dans ${fx(pt(I))}.`,P,m:x=>!dansP([I],x),
+    forme:{w:`On écrit A plus simplement : ${fx("A = "+un(P))}.`,why:`On enlève de ℝ tous les nombres de ${fx(pt(I))}. Il reste ce qui est ${P.length>1?"à gauche et à droite":I.b?"à droite":"à gauche"}. Attention aux crochets : un nombre gardé par ${fx(pt(I))} est enlevé de A, un nombre exclu de ${fx(pt(I))} reste dans A.`}};}
+function cImage(R){const a=R.nz(-6,6),b=R.ent(1,6),car=R()<0.4,An=Math.abs(a),bout=val(Q(a,b)),z=val(0),p=a>0?pc(z,true,bout,false):pc(bout,false,z,true),den=`${b} + ${car?"t²":"t"}`,ex=(a<0?"−":"")+An+"/("+den+")";
+  return {sig:"CI,"+a+","+b+","+car,ecrit:`{${ex}, t ∈ ${car?"ℝ":"ℝ⁺"}}`,note:car?"":"ℝ⁺ est l'ensemble des réels positifs ou nuls.",P:[p],m:x=>x!==0&&a/x-b>=-1e-9,
+    forme:{w:`On écrit A plus simplement : ${fx("A = "+pt(p))}.`,why:`Quand t parcourt ${car?"ℝ":"ℝ⁺"}, ${fx(den)} prend toutes les valeurs à partir de ${b}, c'est-à-dire tous les réels de ${fx(`[${b} ; +∞[`)}. Donc ${fx(ex)} prend toutes les valeurs entre 0 et ${F(bout)} : la valeur ${F(bout)} est atteinte pour t = 0, et la valeur 0 n'est jamais atteinte.`}};}
+const EPS=[Q(1,10),Q(1,10),Q(1,100),Q(1,5),Q(1,2)];
+function commeAuCC(R){const t=R();
+  if(t<0.15)return tableau(R()<0.5?sInv(R):sQuot(R),4,R.choix([Q(1,10),Q(1,5),Q(1,2)]));
+  const E=t<0.37?cRat(R):t<0.5?cRatCarre(R):t<0.65?cPrive(R):t<0.8?cImage(R):t<0.9?eDeux(R,R()<0.6?"rec":"dis"):R()<0.5?iAbs(R,R.choix(OPS)):iAff(R);
+  return tableau(E,4,R.choix(EPS));}
+
+G.add("ana",[
+ {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
+  paliers:[
+   {t:"un intervalle ou une demi-droite : lire les crochets",cc:1,gen:R=>tableau(R()<0.75?eInterv(R):eDemi(R),0)},
+   {t:"deux intervalles : union, intersection",cc:2,gen:R=>{const t=R();return tableau(eDeux(R,t<0.35?"rec":t<0.6?"dis":t<0.8?"col":"int"),1);}},
+   {t:"l'ensemble des termes d'une suite",cc:3,gen:R=>tableau(eSuite(R),2)},
+   {t:"un ensemble donné par une inéquation",cc:3,gen:R=>tableau(eIneq(R),3)},
+   {t:"comme au CC, avec un élément proche de la borne supérieure",cc:4,gen:commeAuCC}]}
+]);
+})();
+
+</script>
+<script>
 /* Apprendre : les leçons pas à pas, la révision espacée, la synchronisation entre appareils,
    et les pages pensées pour le téléphone (Aujourd'hui, Apprendre, Réviser, S'entraîner, Plus).
    Principes (voir la page « Comment réviser ») : se tester plutôt que relire, espacer,
