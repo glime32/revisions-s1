@@ -640,7 +640,9 @@ pre.console{margin:0;background:#020403;color:#B9F7CF;border:2px solid #10301F;b
 .rwl.on{opacity:1;background:var(--cobalt-voile)}
 .mathq{font-family:var(--f-math);font-size:1.35rem;margin:0}
 .mth{font-family:var(--f-math);font-size:1.08em}
-.mi{font-family:"KaTeX_Main",var(--f-math);font-size:1.17em;font-weight:inherit;line-height:1;text-transform:none;letter-spacing:normal}
+.mi{font-family:"KaTeX_Main",var(--f-math);font-size:1.17em;font-weight:inherit;line-height:1;text-transform:none;letter-spacing:normal;white-space:nowrap}
+.mx{white-space:nowrap}
+.mi.coupe,.mx.coupe{white-space:normal}
 .mi .mi{font-size:1em}
 .mi i{font-family:"KaTeX_Math","KaTeX_Main",var(--f-math);font-style:italic}
 .formula .mi,.redac .mi,.mth .mi,.mathq .mi,.mat .mi,.sys .mi{font-size:1.1em}
@@ -22145,6 +22147,14 @@ window.addEventListener("hashchange",route);
 /* formules en écriture mathématique dans les matières de maths (?maths=0 pour s'en passer).
    Seuls les morceaux de page qui viennent de changer sont repassés ; un corrigé replié l'est à son ouverture. */
 {const MATHS=["calc","ana","lin","geo","rai"],main=$("#main");
+ /* une formule ne se coupe plus en fin de ligne (choix du 18/11), sauf si elle est plus large que sa ligne : elle se coupe alors comme avant */
+ const coupe=()=>{const L=[...main.querySelectorAll(".mi,.mx")].filter(m=>!m.parentElement.closest(".mi,.mx"));L.forEach(m=>m.classList.remove("coupe"));
+   L.filter(m=>{const b=m.parentElement.closest("p,li,td,th,dd,dt,div,h1,h2,h3,summary,button,label");if(!b)return false;const r=m.getBoundingClientRect();return r.width>0&&r.right>b.getBoundingClientRect().right+1;}).forEach(m=>m.classList.add("coupe"));};
+ let rafC=0,lg=innerWidth;const planCoupe=()=>{cancelAnimationFrame(rafC);rafC=requestAnimationFrame(coupe);};
+ new MutationObserver(planCoupe).observe(main,{childList:true,subtree:true});
+ main.addEventListener("toggle",planCoupe,true);
+ addEventListener("resize",()=>{if(innerWidth!==lg){lg=innerWidth;planCoupe();}});
+ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(planCoupe);
  if(new URLSearchParams(location.search).get("maths")!=="0"){
   const matiere=()=>{const p=(location.hash||"#/").slice(2).split("/").filter(Boolean),sid=p[0]==="lecon"?p[1]:p[0];
     if(SIDS.includes(sid))return sid;const q=main.querySelector("[data-mots]");return q?q.dataset.mots:"";};
