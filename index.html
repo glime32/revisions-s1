@@ -971,6 +971,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .en-rep{display:grid;gap:12px;min-width:0}
 .en-rep>*,.en-rep .wex>li,.lp-body .pcheck label>span{min-width:0}
 .mx.en-coupe{white-space:normal}
+.tbl.tr .en-in.en-large{width:11em;text-align:left}
 .en-case{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .en-in{font:inherit;width:4.4em;min-width:0;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
 .en-in.en-large{width:8.5em}
@@ -19911,10 +19912,10 @@ const ent=x=>x<0?"−"+(-x):String(x);
 
 /* ---------- le mini-langage ---------- */
 /* expression : un entier, un nom de variable, ou [opérateur, gauche, droite] */
-const CALC={"+":(a,b)=>a+b,"-":(a,b)=>a-b,"*":(a,b)=>a*b,"div":(a,b)=>Math.floor(a/b),"mod":(a,b)=>((a%b)+b)%b,"<":(a,b)=>a<b,"≤":(a,b)=>a<=b,">":(a,b)=>a>b,"≥":(a,b)=>a>=b,"=":(a,b)=>a===b,"≠":(a,b)=>a!==b};
-const PRIO={"*":3,"div":3,"mod":3,"+":2,"-":2};
+const CALC={"+":(a,b)=>a+b,"-":(a,b)=>a-b,"*":(a,b)=>a*b,"div":(a,b)=>Math.floor(a/b),"mod":(a,b)=>((a%b)+b)%b,"<":(a,b)=>a<b,"≤":(a,b)=>a<=b,">":(a,b)=>a>b,"≥":(a,b)=>a>=b,"=":(a,b)=>a===b,"≠":(a,b)=>a!==b,"et":(a,b)=>a&&b,"ou":(a,b)=>a||b};
+const PRIO={"*":3,"div":3,"mod":3,"+":2,"-":2,"et":0.6,"ou":0.5};
 const vaut=(e,env)=>typeof e==="number"?e:typeof e==="string"?env[e]:CALC[e[0]](vaut(e[1],env),vaut(e[2],env));
-function ecrit(e,par,dr){if(typeof e!=="object")return String(e);if(e[0]==="appel")return `${e[1]}(${ecrit(e[2])})`;const q=PRIO[e[0]]||1,p=par?PRIO[par]||1:0,s=`${ecrit(e[1],e[0])} ${e[0]} ${ecrit(e[2],e[0],true)}`;
+function ecrit(e,par,dr){if(typeof e!=="object")return String(e);if(e[0]==="appel")return `${e[1]}(${e.slice(2).map(a=>ecrit(a)).join(", ")})`;const q=PRIO[e[0]]||1,p=par?PRIO[par]||1:0,s=`${ecrit(e[1],e[0])} ${e[0]} ${ecrit(e[2],e[0],true)}`;
   return q<p||(dr&&q===p&&(par==="-"||par==="div"||par==="mod"||e[0]==="div"||e[0]==="mod"))?`(${s})`:s;}
 /* instructions */
 const aff=(v,e)=>({k:"aff",v,e}),pour=(v,a,b,c)=>({k:"pour",v,a,b,c}),tq=(cond,c)=>({k:"tq",cond,c}),si=(cond,alors,sinon)=>({k:"si",cond,alors,sinon:sinon||null}),ret=e=>({k:"ret",e});
@@ -19923,8 +19924,11 @@ function lignes(C,niv){const L=[],I="    ".repeat(niv);C.forEach(s=>{
   else if(s.k==="pour")L.push(`${I}pour ${s.v} de ${ecrit(s.a)} à ${ecrit(s.b)} faire`,...lignes(s.c,niv+1),`${I}fin pour;`);
   else if(s.k==="tq")L.push(`${I}tant que ${ecrit(s.cond)} faire`,...lignes(s.c,niv+1),`${I}fin tq;`);
   else if(s.k==="si"){L.push(`${I}si ${ecrit(s.cond)} alors`,...lignes(s.alors,niv+1));if(s.sinon)L.push(`${I}sinon`,...lignes(s.sinon,niv+1));L.push(`${I}fin si;`);}
+  else if(s.k==="ecrire")L.push(`${I}affiche(${ecrit(s.e)})`);
+  else if(s.k==="ligne")L.push(`${I}aLaLigne()`);
+  else if(s.k==="appelS")L.push(`${I}${s.nom}(${s.args.map(a=>ecrit(a)).join(", ")})`);
   else L.push(`${I}Renvoyer ${ecrit(s.e)}`);});return L;}
-const texteProg=P=>[`FONCTION : ${P.nom} (${P.params.map(p=>`E ${p} : entier`).join(", ")}) : entier`].concat(P.vars.length?[`Variable : ${P.vars.join(", ")} : entier`]:[],["DÉBUT",...lignes(P.corps,1),"FIN"]).join("\n");
+const texteProg=P=>[P.proc?`PROCÉDURE : ${P.nom} (${P.params.map(p=>`E ${p} : entier`).join(", ")})`:`FONCTION : ${P.nom} (${P.params.map(p=>`E ${p} : entier`).join(", ")}) : entier`].concat(P.vars.length?[`Variable : ${P.vars.join(", ")} : entier`]:[],["DÉBUT",...lignes(P.corps,1),"FIN"]).join("\n");
 const code=t=>window.W&&window.W.code?window.W.code(t,"pseudo"):`<pre>${h(t)}</pre>`;
 /* la première boucle du programme, et les variables qu'elle modifie (sans les compteurs des boucles pour) */
 const boucleDe=P=>P.corps.find(s=>s.k==="pour"||s.k==="tq");
@@ -19949,7 +19953,7 @@ function entier(s){const x=nombre(s);return x&&x.d===1?x.n:null;}
 /* o : {P, args, formule:{t, tape, why}} */
 function traceExo(o){const P=o.P,cols=colonnes(P),B=boucleDe(P),X=execute(P,o.args,cols),T=X.T,N=T.length-1,appel=`${P.nom}(${o.args.map(ent).join(", ")})`,imb=B.c.some(s=>s.k==="pour"||s.k==="tq");
   const recit=k=>cols.map((v,j)=>T[k][j]===T[k-1][j]?`${v} reste à ${ent(T[k][j])}`:`${v} passe de ${ent(T[k-1][j])} à ${ent(T[k][j])}`).join(", ");
-  const arret=B.k==="pour"?`La boucle fait un tour pour chaque valeur de ${B.v}, de ${ecrit(B.a)} à ${ecrit(B.b)} : ici de ${ent(vaut(B.a,X.env))} à ${ent(vaut(B.b,X.env))}, soit ${N} ${N>1?"tours":"tour"}.`:`La condition « ${ecrit(B.cond)} » est testée avant chaque tour. Après le tour ${N}, elle est fausse (${cols.map((v,j)=>`${v} = ${ent(T[N][j])}`).join(", ")}) : la boucle s'arrête.`;
+  const arret=B.k==="pour"?`La boucle fait un tour pour chaque valeur de ${B.v}, de ${ecrit(B.a)} à ${ecrit(B.b)} : ici de ${ent(vaut(B.a,X.env))} à ${ent(vaut(B.b,X.env))}, soit ${N} ${N>1?"tours":"tour"}.`:`La condition « ${h(ecrit(B.cond))} » est testée avant chaque tour. Après le tour ${N}, elle est fausse (${cols.map((v,j)=>`${v} = ${ent(T[N][j])}`).join(", ")}) : la boucle s'arrête.`;
   const E=[{w:`Avant la boucle : ${cols.map((v,j)=>fx(`${v} = ${ent(T[0][j])}`)).join(", ")}.`,why:`Ce sont les valeurs données par les lignes écrites avant la boucle${imb?"":`, avec ${fx(`${P.params[0]} = ${ent(o.args[0])}`)}`}.`,pts:0.5},
     {w:`La trace : ${tableTrace(cols,T,-1)}`,why:[...Array(Math.min(N,3))].map((_,k)=>`Tour ${k+1}${B.k==="pour"?` (${B.v} = ${ent(vaut(B.a,X.env)+k)})`:""} : ${recit(k+1)}.`).join(" ")+(N>3?" Et ainsi de suite : à chaque tour, on repart des valeurs de la ligne du dessus.":""),pts:2},
     {w:`La boucle s'arrête après <b>${N} ${N>1?"tours":"tour"}</b>.`,why:arret,pts:0.5},
@@ -20308,6 +20312,144 @@ function coursMillion(R){const [o,k,kt]=R.choix([["n³","un million de fois","1 
     [`${fx("T_{n} = o(R_{n})")} : ${fx("T_{n}/R_{n}")} tend vers 0.`,"T est strictement dominée par R.",0.25],
     [`${fx("T_{n} = ω(R_{n})")} : ${fx("T_{n}/R_{n}")} tend vers +∞.`,"T domine strictement R.",0.25]],"θ");}
 
+/* ---------- exécution complète : appels récursifs, affichages ---------- */
+const ecrire=e=>({k:"ecrire",e}),aLaLigne=()=>({k:"ligne"}),appelS=(nom,...args)=>({k:"appelS",nom,args});
+function joue(P,args){const out=[""],aff=[];let appels=0;
+  const val=(e,env)=>typeof e==="number"?e:typeof e==="string"?env[e]:e[0]==="appel"?lance(e.slice(2).map(a=>val(a,env))):CALC[e[0]](val(e[1],env),val(e[2],env));
+  const run=(C,env)=>{for(const s of C){
+    if(s.k==="aff")env[s.v]=val(s.e,env);
+    else if(s.k==="ret")return {r:val(s.e,env)};
+    else if(s.k==="ecrire"){const v=val(s.e,env);out[out.length-1]+=String(v);aff.push(v);}
+    else if(s.k==="ligne")out.push("");
+    else if(s.k==="appelS")lance(s.args.map(a=>val(a,env)));
+    else if(s.k==="si"){const r=run(val(s.cond,env)?s.alors:(s.sinon||[]),env);if(r)return r;}
+    else if(s.k==="pour"){const a=val(s.a,env),b=val(s.b,env);for(let i=a;i<=b;i++){env[s.v]=i;const r=run(s.c,env);if(r)return r;}}
+    else{let g=0;while(val(s.cond,env)){const r=run(s.c,env);if(r)return r;if(++g>5000)throw new Error("boucle sans fin");}}}
+    return null;};
+  const lance=vals=>{if(++appels>4000)throw new Error("trop d'appels");const env={};P.params.forEach((p,i)=>{env[p]=vals[i];});const r=run(P.corps,env);return r?r.r:undefined;};
+  const ret=lance(args);if(out.length>1&&out[out.length-1]==="")out.pop();return {ret,lignes:out,aff,appels};}
+
+/* ---------- AG3 : l'arrêt d'une boucle tant que ---------- */
+/* o : {P, entrees (valeurs de n à essayer), q (quantité affichée), tape, depart, baisse, stop, max} */
+function boucleArret(R,sorte){const k=R.ent(1,4),t=R.ent(0,3);
+  if(sorte==="compte"){
+    if(t===0)return {P:prog(R,["c","s"],[aff("c","n"),aff("s",0),tq([">","c",0],[aff("s",["+","s","c"]),aff("c",["-","c",k])]),ret("s")]),q:"c",tape:"c",depart:"n",baisse:`la ligne « c ← c - ${k} » lui retire ${k}`,stop:"c ≤ 0",max:k===1?"n":"n",nature:"descend"};
+    if(t===1)return {P:prog(R,["i","s"],[aff("i",0),aff("s",0),tq(["<","i","n"],[aff("s",["+","s",["*",2,"i"]]),aff("i",["+","i",k])]),ret("s")]),q:"n − i",tape:"n-i",depart:"n",baisse:`la ligne « i ← i + ${k} » ajoute ${k} à i, donc retire ${k} à n − i`,stop:"i ≥ n, c'est-à-dire n − i ≤ 0",max:"n",nature:"monte"};
+    if(t===2){const b0=R.ent(0,3);return {P:prog(R,["a","b"],[aff("a","n"),aff("b",b0),tq([">","a","b"],[aff("a",["-","a",1]),aff("b",["+","b",1])]),ret(["+","a","b"])]),q:"a − b",tape:"a-b",depart:`n − ${b0}`.replace(" − 0",""),baisse:"a perd 1 et b gagne 1 : a − b perd 2",stop:"a ≤ b, c'est-à-dire a − b ≤ 0",max:"n",nature:"deux variables"};}
+    return {P:prog(R,["x","y"],[aff("x","n"),aff("y",0),tq(["≥","x",k],[aff("x",["-","x",k]),aff("y",["+","y",1])]),ret("y")]),q:"x",tape:"x",depart:"n",baisse:`la ligne « x ← x - ${k} » lui retire ${k}`,stop:`x < ${k}`,max:"n",nature:"descend"};}
+  if(t===0)return {P:prog(R,["m","c"],[aff("m","n"),aff("c",0),tq([">","m",1],[aff("m",["div","m",2]),aff("c",["+","c",1])]),ret("c")]),q:"m",tape:"m",depart:"n",baisse:"m est remplacé par m div 2, qui est strictement plus petit que m dès que m vaut au moins 1",stop:"m ≤ 1",max:"n",nature:"division"};
+  if(t===1)return {P:prog(R,["i","c"],[aff("i",1),aff("c",0),tq(["<","i","n"],[aff("i",["*","i",2]),aff("c",["+","c",1])]),ret("c")]),q:"n − i",tape:"n-i",depart:"n − 1",baisse:"i est remplacé par 2i, qui est strictement plus grand que i car i vaut au moins 1 : n − i diminue",stop:"i ≥ n, c'est-à-dire n − i ≤ 0",max:"n",nature:"double"};
+  if(t===2){const b=R.choix([3,10]);return {P:prog(R,["m","c"],[aff("m","n"),aff("c",1),tq(["≥","m",b],[aff("m",["div","m",b]),aff("c",["+","c",1])]),ret("c")]),q:"m",tape:"m",depart:"n",baisse:`m est remplacé par m div ${b}, qui est strictement plus petit que m`,stop:`m < ${b}`,max:"n",nature:"division"};}
+  return {P:prog(R,["a","b"],[aff("a","n"),aff("b",["+","n",k]),tq(["et",[">","a",0],[">","b",0]],[si([">","a","b"],[aff("a",["-","a",1])],[aff("b",["-","b",2])])]),ret(["+","a","b"])]),q:"a + b",tape:"a+b",depart:`2n + ${k}`,baisse:"à chaque tour, soit a perd 1, soit b perd 2 : dans les deux cas a + b diminue",stop:"a ≤ 0 ou b ≤ 0",max:`2n + ${k}`,nature:"deux variables, si"};}
+/* une quantité proposée, essayée sur de vraies exécutions : entière, positive tant que la boucle tourne, et qui diminue à chaque tour */
+function essaieQuantite(P,src){const B=boucleDe(P),prob=[];
+  for(const n of [0,1,2,3,7,12,25]){const env={n};let tours=0,avant=null;
+    for(const s of P.corps){if(s===B)break;if(s.k==="aff")env[s.v]=vaut(s.e,env);}
+    while(vaut(B.cond,env)){const v=O.calcule(src,env);if(v===null)return {illisible:true};
+      if(!Number.isFinite(v)||Math.abs(v-Math.round(v))>1e-9)return {pb:"entier",n,v};
+      if(v<0)return {pb:"négatif",n,v};if(avant!==null&&v>=avant)return {pb:"diminue",n,v,avant};
+      avant=v;unTour(B.c,env);if(++tours>3000)return {pb:"infini"};}
+    if(avant!==null){const v=O.calcule(src,env);if(v===null)return {illisible:true};if(v>=avant)return {pb:"diminue",n,v,avant};}}
+  return {ok:true};}
+function arret(R,sorte){const o=boucleArret(R,sorte),P=o.P,B=boucleDe(P),V=P.vars.concat(["n"]);
+  const E=[{w:`La quantité <b>${fx(o.q)}</b> est un entier, positif tant que la boucle tourne. Avant la boucle, elle vaut ${fx(o.depart)}.`,why:`On cherche une quantité qui ne peut pas diminuer indéfiniment : un entier naturel. La condition « ${h(ecrit(B.cond))} » dit justement qu'elle est positive pendant la boucle.`,pts:1},
+    {w:`Elle diminue strictement à chaque tour.`,why:`Dans la boucle, ${o.baisse}.`,pts:1},
+    {w:`La boucle s'arrête quand ${fx(h(o.stop))} : elle fait au plus ${fx(o.max)} tours.`,why:`Un entier naturel qui diminue strictement à chaque tour ne peut le faire qu'un nombre fini de fois. Il y a donc un nombre fini d'itérations, chaque itération se termine, donc l'algorithme s'arrête.`,pts:1}];
+  function juge(rep){if(!propre(rep.q))return {incomplet:`Écris une quantité avec les variables de la fonction (${et(V)}), par exemple n - i.`};
+    const r=essaieQuantite(P,rep.q);if(r.illisible)return {incomplet:`Je n'arrive pas à lire cette quantité. Écris-la avec les variables ${et(V)}, par exemple n - i.`};
+    if(r.ok)return {ok:true};
+    const d=r.pb==="diminue"?{etape:1,type:"quantité qui ne diminue pas à chaque tour",titre:"Où ça part : la quantité doit diminuer.",msg:`Pour n = ${r.n}, ta quantité passe de ${r.avant} à ${r.v} d'un tour au suivant : elle ne diminue pas strictement. Regarde quelle variable se rapproche de la valeur qui arrête la boucle.`}
+      :r.pb==="négatif"?{etape:0,type:"quantité négative pendant la boucle",titre:"Où ça part : la quantité doit rester positive.",msg:`Pour n = ${r.n}, ta quantité vaut ${r.v} alors que la boucle tourne encore. Une quantité négative pourrait diminuer indéfiniment : elle ne prouve rien.`}
+      :{etape:0,type:"quantité qui n'est pas un entier",titre:"Où ça part : la quantité doit être un entier.",msg:`Pour n = ${r.n}, ta quantité vaut ${String(r.v).replace(".",",")} : ce n'est pas un entier. Seul un entier naturel est obligé de s'arrêter de diminuer.`};
+    return {ok:false,faux:["q"],resume:"Pas tout à fait : cette quantité ne prouve pas l'arrêt.",diag:d};}
+  return {sig:"AR"+texteProg(P).replace(/\s+/g," "),q:`Pour prouver que la boucle « tant que » de cette fonction s'arrête, donne une quantité, écrite avec les variables, qui est un entier positif tant que la boucle tourne et qui diminue strictement à chaque tour. On suppose que n est un entier naturel.`,corps:code(texteProg(P)),
+    texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — quantité entière positive qui diminue à chaque tour`,
+    champs:[{k:"champ",id:"q",nom:"quantité",label:"Quantité qui diminue :",ex:"par exemple n - i",sym:V.map(v=>[v,v]).concat([["-","-"],["+","+"]]),aide:"Toute quantité qui convient est acceptée : le site l'essaie sur de vraies exécutions."}],juge,etapes:E,
+    bonne:fx(o.q),bonneTxt:o.q+" (par exemple)",repBonne:{q:o.tape},repFausse:{q:"n"+"+"+P.vars[1]},nature:o.nature,ens:{type:"arret",P}};}
+function redacArret(R){const o=boucleArret(R,R()<0.5?"compte":"moitie"),P=o.P,B=boucleDe(P);
+  const L=[[`L'expression entière ${fx(o.q)} vaut initialement ${fx(o.depart)}, et elle est positive tant que la boucle tourne.`,`On nomme la quantité, on dit qu'elle est entière et d'où elle part. La condition « ${h(ecrit(B.cond))} » garantit qu'elle est positive pendant la boucle.`,0.5],
+    [`Elle décroît strictement à chaque itération.`,`Dans la boucle, ${o.baisse}. Sur la copie, une phrase suffit, mais il faut le mot « strictement ».`,0.5],
+    [`Le tant que s'arrête lorsque ${fx(h(o.stop))} : il effectue au maximum ${fx(o.max)} itérations.`,`C'est la forme du corrigé officiel de janvier 2023 : on dit quand la boucle s'arrête, et combien d'itérations elle fait au plus.`,0.5],
+    [`Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme s'arrête.`,`Les trois phrases du cours (diapo 95), à écrire telles quelles.`,0.5]];
+  return {sig:"RAR"+texteProg(P).replace(/\s+/g," "),q:`Prouve que cette fonction s'arrête, pour tout entier naturel n.`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — preuve de l'arrêt`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+    etapes:L.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`quantité ${o.q}, qui décroît strictement`,repBonne:{},nature:"papier, "+o.nature,ens:{type:"arretp",P,tape:o.tape}};}
+
+/* ---------- AG4 : algorithmes récursifs ---------- */
+const NOMR=["F","G","H","R"];
+/* une fonction récursive à un appel : F(base) = c, F(n) = comb(n, F(n − 1)), avec sa formule quand elle est simple */
+function recSimple(R,avecFormule){const nom=R.choix(NOMR),ap=["appel",nom,["-","n",1]],k=R.ent(2,4),c=R.ent(0,3);
+  const T=[[["+",ap,"n"],0,"n(n + 1)/2","n(n+1)/2",`${nom}(n − 1) + n`,"(n − 1)n/2 + n = n(n − 1 + 2)/2"],[["*",2,ap],1,"2^{n}","2^n",`2 × ${nom}(n − 1)`,"2 × 2^{n−1}"],[["+",ap,["-",["*",2,"n"],1]],0,"n²","n^2",`${nom}(n − 1) + 2n − 1`,"(n − 1)² + 2n − 1 = n² − 2n + 1 + 2n − 1"],
+    [["+",ap,k],c,c?`${k}n + ${c}`:`${k}n`,`${k}n+${c}`,`${nom}(n − 1) + ${k}`,`${c?`${k}(n − 1) + ${c}`:`${k}(n − 1)`} + ${k}`],[["*",3,ap],1,"3^{n}","3^n",`3 × ${nom}(n − 1)`,"3 × 3^{n−1}"],[["+",ap,["*",2,"n"]],0,"n(n + 1)","n(n+1)",`${nom}(n − 1) + 2n`,"(n − 1)n + 2n = n(n − 1 + 2)"]];
+  const autres=[[["*","n",ap],1],[["+",["*",2,ap],1],R.ent(0,2)],[["-",ap,1],R.ent(5,9)],[["+",["*","n","n"],ap],0]];
+  const ch=avecFormule?R.choix(T):R()<0.6?R.choix(T):R.choix(autres);
+  return {P:{nom,params:["n"],vars:[],corps:[si(["=","n",0],[ret(ch[1])],[ret(ch[0])])]},nom,base:ch[1],ex:ch[0],ferme:ch[2],tape:ch[3],eq:ch[4],calc:ch[5]};}
+function valeurRec(R){const o=recSimple(R,false),k=R.ent(3,5),P=o.P,V=[];for(let n=0;n<=k;n++)V.push(joue(P,[n]).ret);const nomK=`${o.nom}(${k})`;
+  const E=[{w:`Les appels s'enchaînent jusqu'au cas de base : ${[...Array(k+1)].map((_,i)=>`${o.nom}(${k-i})`).join(" appelle ")}, et ${fx(`${o.nom}(0) = ${ent(o.base)}`)}.`,why:`Chaque appel attend le résultat du suivant. Seul ${o.nom}(0) répond tout de suite : c'est le cas de base.`,pts:1},
+    {w:`On remonte : ${V.slice(1).map((v,i)=>fx(`${o.nom}(${i+1}) = ${ent(v)}`)).join(", ")}.`,why:`À chaque niveau, on applique « ${ecrit(o.ex)} » avec le résultat du niveau d'en dessous. Par exemple ${fx(`${o.nom}(1)`)} se calcule avec ${fx(`${o.nom}(0) = ${ent(o.base)}`)} et n = 1.`,pts:1.5},
+    {w:`<b>${fx(`${nomK} = ${ent(V[k])}`)}</b>`,why:"C'est la dernière valeur de la remontée.",pts:0.5}];
+  function juge(rep){const v=nombre((rep.c||{})[nomK]);if(!v||v.d!==1)return {incomplet:"Écris la valeur renvoyée : un nombre entier."};if(v.n===V[k])return {ok:true};
+    const i=V.indexOf(v.n);return {ok:false,faux:[nomK],resume:"Pas tout à fait : ce n'est pas la valeur renvoyée.",diag:i>=0?{etape:1,type:"remontée arrêtée un niveau trop tôt ou trop tard",titre:"Où ça part : le nombre de niveaux.",msg:`${ent(v.n)} est la valeur de ${fx(`${o.nom}(${i})`)}. Il faut remonter jusqu'à ${fx(nomK)}.`}:{etape:1,type:"calcul d'un niveau de la remontée",titre:"Où ça part : la remontée.",msg:`Vérifie chaque niveau : ${V.slice(0,3).map((x,j)=>fx(`${o.nom}(${j}) = ${ent(x)}`)).join(", ")}, et ainsi de suite.`}};}
+  return {sig:"VR"+texteProg(P).replace(/\s+/g," ")+k,q:`Voici une fonction récursive. Que renvoie ${fx(nomK)} ?`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — valeur de ${nomK}`,
+    champs:[{k:"cases",id:"c",noms:[nomK]}],juge,etapes:E,bonne:fx(`${nomK} = ${ent(V[k])}`),bonneTxt:`${nomK} = ${ent(V[k])}`,repBonne:{c:{[nomK]:String(V[k])}},repFausse:{c:{[nomK]:String(V[k-1]===V[k]?V[k]+1:V[k-1])}},nature:"valeur",ens:{type:"rec",P,args:[k]}};}
+function ordreAff(R){const nom=R.choix(["P","Q","Aff"]),k=R.ent(3,5),t=R.ent(0,4),pas=t===4?["div","n",2]:["-","n",R()<0.8?1:2],quoi=R.choix(["n","n",["*",2,"n"],["+","n",1]]),A=ecrire(quoi),C=appelS(nom,pas),n0=t===4?R.choix([6,9,12,20]):k;
+  const corps=t===0?[A,C]:t===1?[C,A]:t===2?[A,C,A]:t===3?[C,A]:[C,A],P={nom,params:["n"],vars:[],proc:true,corps:[si([">","n",0],corps)]},X=joue(P,[n0]),att=X.aff;
+  const avant=corps[0]===A,apres=corps[corps.length-1]===A;
+  const E=[{w:`Les appels : ${fx(`${nom}(${n0})`)} appelle ${fx(`${nom}(${ecrit(pas).replace("n",n0)})`)}, et ainsi de suite, jusqu'à un appel où n n'est plus strictement positif : celui-là n'affiche rien.`,why:"On écrit d'abord la chaîne des appels, sans s'occuper des affichages.",pts:1},
+    {w:avant&&apres?"Chaque appel affiche une fois avant son appel récursif, et une fois après.":avant?"Chaque appel affiche avant son appel récursif : les affichages se font en descendant, du premier appel au dernier.":"Chaque appel affiche après son appel récursif : il attend que tous les appels suivants soient finis. Les affichages se font en remontant, du dernier appel au premier.",why:"C'est la place de la ligne « affiche » par rapport à l'appel récursif qui décide de l'ordre.",pts:1},
+    {w:`<b>Nombres affichés, dans l'ordre : ${att.map(ent).join(" ")}</b>`,why:`${att.length} ${att.length>1?"affichages":"affichage"} en tout.`,pts:1}];
+  function juge(rep){const L=propre(rep.s).split(/[\s,;]+/).filter(Boolean).map(x=>nombre(x));if(!L.length||L.some(x=>!x||x.d!==1))return {incomplet:"Écris les nombres affichés, dans l'ordre, séparés par des espaces : par exemple 3 2 1."};
+    const V=L.map(x=>x.n);if(V.length===att.length&&V.every((x,i)=>x===att[i]))return {ok:true};
+    const inv=V.length===att.length&&V.every((x,i)=>x===att[att.length-1-i]),tri=a=>a.slice().sort((x,y)=>x-y).join(),memes=tri(V)===tri(att);
+    return {ok:false,faux:["s"],resume:"Pas tout à fait : ce n'est pas ce qui est affiché.",diag:inv?{etape:1,type:"ordre des affichages inversé",titre:"Où ça part : avant ou après l'appel.",msg:avant?"La ligne « affiche » est écrite avant l'appel récursif : chaque appel affiche d'abord, puis appelle le suivant.":"La ligne « affiche » est écrite après l'appel récursif : le premier appel n'affiche qu'à la toute fin, quand tous les autres ont fini."}
+      :memes?{etape:1,type:"ordre des affichages",titre:"Où ça part : l'ordre.",msg:"Les nombres sont les bons, mais pas leur ordre. Suis chaque appel ligne par ligne : il ne passe à la ligne suivante que lorsque l'appel récursif est complètement terminé."}
+      :{etape:0,type:"chaîne des appels récursifs",titre:"Où ça part : les appels.",msg:`Il y a ${att.length} ${att.length>1?"affichages":"affichage"}. Écris la valeur de n à chaque appel, puis ce que chacun affiche.`}};}
+  return {sig:"OA"+texteProg(P).replace(/\s+/g," ")+n0,q:`Voici une procédure récursive. « affiche(x) » écrit le nombre x à l'écran. Quels nombres ${fx(`${nom}(${n0})`)} affiche-t-elle, dans l'ordre ?`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — affichages de ${nom}(${n0})`,
+    champs:[{k:"champ",id:"s",nom:"affichages",label:"Nombres affichés, dans l'ordre :",ex:"par exemple 3 2 1",apercu:false}],juge,etapes:E,bonne:att.map(ent).join(" "),bonneTxt:att.join(" "),repBonne:{s:att.join(" ")},repFausse:{s:att.slice().reverse().join(" ")+(att.length<2||att.every((x,i)=>x===att[att.length-1-i])?" 0":"")},nature:avant&&apres?"avant et après":avant?"avant":"après",ens:{type:"aff",P,args:[n0]}};}
+function deuxAppels(R){const nom=R.choix(NOMR),a1=["appel",nom,["-","n",1]],a2=["appel",nom,["-","n",2]],t=R.ent(0,3),k=R.ent(3,5);
+  const ex=t===0?["+",a1,a2]:t===1?["+",a1,a1]:t===2?["+",["+",a1,a2],1]:["+",a1,["*",2,a2]],P={nom,params:["n"],vars:[],corps:[si(["≤","n",1],[ret(R.choix([1,1,"n"]))],[ret(ex)])]};
+  const V=[],A=[];for(let n=0;n<=k;n++){const X=joue(P,[n]);V.push(X.ret);A.push(X.appels);}const nomK=`${nom}(${k})`,deux=t===1?"n − 1 deux fois":"n − 1 et n − 2";
+  const E=[{w:`Les valeurs, en partant du cas de base : ${V.map((v,i)=>fx(`${nom}(${i}) = ${ent(v)}`)).join(", ")}.`,why:`Pour n ≤ 1, la fonction répond tout de suite. Ensuite, chaque valeur se calcule avec ${t===1?"la précédente":"les deux précédentes"}.`,pts:1.5},
+    {w:`Le nombre d'appels : ${A.map((v,i)=>`${v} pour ${nom}(${i})`).join(", ")}.`,why:`Un appel avec n ≤ 1 compte pour 1. Sinon, l'appel lui-même compte pour 1, et il lance deux appels (${deux}) : on ajoute leurs nombres d'appels. On construit ce tableau de proche en proche, comme pour les valeurs.`,pts:1.5}];
+  function juge(rep){const v=nombre((rep.c||{})[nomK]),a=nombre(rep.a);if(!v||v.d!==1)return {incomplet:"Écris la valeur renvoyée : un nombre entier."};if(!a||a.d!==1)return {incomplet:"Écris aussi le nombre d'appels en tout, le premier compris."};
+    const okV=v.n===V[k],okA=a.n===A[k],F=[];if(okV&&okA)return {ok:true};if(!okV)F.push(nomK);if(!okA)F.push("a");
+    const d=!okV?{etape:0,type:"valeur d'une fonction à deux appels récursifs",titre:"Où ça part : la valeur.",msg:`Construis les valeurs dans l'ordre : ${V.slice(0,4).map((x,i)=>fx(`${nom}(${i}) = ${ent(x)}`)).join(", ")}.`}
+      :a.n===A[k]-1?{etape:1,type:"premier appel non compté",titre:"Où ça part : le premier appel.",msg:`Il faut compter aussi l'appel de départ, ${fx(nomK)} lui-même.`}:{etape:1,type:"nombre d'appels d'une fonction à deux appels récursifs",titre:"Où ça part : le nombre d'appels.",msg:`Chaque appel avec n > 1 en lance deux autres : appels(n) = 1 + appels de chacun. Ici : ${A.slice(0,4).map((x,i)=>`${x} pour n = ${i}`).join(", ")}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"la valeur et le nombre d'appels sont à revoir":F[0]==="a"?"le nombre d'appels est à revoir":"la valeur est à revoir"}.`,diag:d};}
+  return {sig:"DA"+texteProg(P).replace(/\s+/g," ")+k,q:`Voici une fonction récursive qui s'appelle deux fois. Que renvoie ${fx(nomK)} ? Combien d'appels de ${nom} sont faits en tout, en comptant le premier ?`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — valeur de ${nomK} et nombre d'appels`,
+    champs:[{k:"cases",id:"c",noms:[nomK]},{k:"champ",id:"a",nom:"nombre d'appels",label:"Nombre d'appels en tout :",ex:"un entier"}],juge,etapes:E,bonne:`${fx(`${nomK} = ${ent(V[k])}`)} ; ${A[k]} appels`,bonneTxt:`${nomK} = ${ent(V[k])} ; ${A[k]} appels`,
+    repBonne:{c:{[nomK]:String(V[k])},a:String(A[k])},repFausse:{c:{[nomK]:String(V[k])},a:String(A[k]-1)},nature:"deux appels",ens:{type:"rec2",P,args:[k]}};}
+/* comme les sujets de 2023 : G(n, d) affiche des lignes */
+function procedureG(R){const nom="G",t=R.ent(0,3),div=R.choix([2,2,3]),n0=div===3?R.choix([9,10,11,12]):R.choix([5,6,7,9,10,11,12]),quoi=t===3?R.choix(["d",["-","n","d"]]):"d",suiv=t===3?appelS(nom,["-","n",1],["+","d",1]):appelS(nom,["div","n",div],R()<0.8?["+","d",1]:"d");
+  const bloc=[pour("i",1,"n",[ecrire(quoi)]),aLaLigne()],n1=t===3?R.ent(3,5):n0,corps=t===1||t===3?[suiv].concat(bloc):bloc.concat([suiv]);
+  const P={nom,params:["n","d"],vars:["i"],proc:true,corps:[si(["≠","n",0],corps)]},X=joue(P,[n1,0]),att=X.lignes,apres=corps[0]===suiv;
+  const chaine=[];{let n=n1,d=0;while(n!==0&&chaine.length<12){chaine.push([n,d]);const s=suiv.args;n=vaut(s[0],{n,d});d=vaut(s[1],{n,d:chaine[chaine.length-1][1]});}}
+  const E=[{w:`Les appels : ${chaine.map(c=>`${nom}(${c[0]}, ${c[1]})`).join(", ")}, puis un appel avec n = 0 qui ne fait rien.`,why:"À chaque appel, on recalcule les deux paramètres avec la ligne de l'appel récursif.",pts:1},
+    {w:`Chaque appel affiche une ligne : n fois le nombre ${fx(ecrit(quoi))}, puis un retour à la ligne.`,why:`La boucle « pour i de 1 à n » répète l'affichage n fois, sans espace. Par exemple ${nom}(${chaine[0][0]}, ${chaine[0][1]}) écrit ${chaine[0][0]} fois le nombre ${ent(vaut(quoi,{n:chaine[0][0],d:chaine[0][1]}))}.`,pts:1},
+    {w:apres?"L'appel récursif est écrit avant la boucle : la ligne du premier appel sort en dernier.":"L'appel récursif est écrit après le retour à la ligne : les lignes sortent dans l'ordre des appels.",why:"Un appel ne passe à sa ligne suivante que lorsque l'appel récursif est complètement terminé.",pts:1},
+    {w:`<b>Ce qui est affiché :</b> ${code(att.join("\n"))}`,why:`${att.length} lignes, une par appel avec n différent de 0.`,pts:1}];
+  const net=x=>propre(x).replace(/\s+/g,"");
+  function juge(rep){let L=(rep.t||[]).map(r=>net(r[0]||""));while(L.length&&!L[L.length-1])L.pop();if(!L.length)return {incomplet:"Écris ce qui est affiché, une ligne d'écran par ligne du tableau."};if(L.some(x=>!x))return {incomplet:"Il reste une ligne vide au milieu. Enlève-la, ou écris ce qu'elle contient."};
+    if(L.length===att.length&&L.every((x,i)=>x===att[i]))return {ok:true};
+    const inv=L.length===att.length&&L.every((x,i)=>x===att[att.length-1-i]),i=L.findIndex((x,j)=>x!==att[j]);
+    return {ok:false,faux:i>=0&&i<att.length?[`t:${i}:0`]:[],resume:"Pas tout à fait : ce n'est pas ce qui est affiché.",diag:inv?{etape:2,type:"ordre des lignes inversé",titre:"Où ça part : l'ordre des lignes.",msg:apres?"L'appel récursif est écrit avant la boucle : chaque appel attend la fin de tous les suivants avant d'afficher sa ligne.":"L'appel récursif est écrit après l'affichage : chaque appel affiche d'abord sa ligne."}
+      :L.length!==att.length?{etape:0,type:"nombre de lignes affichées",titre:"Où ça part : le nombre d'appels.",msg:`Il y a ${att.length} lignes : une par appel avec n différent de 0. Écris la chaîne des appels avec leurs deux paramètres.`}
+      :{etape:1,type:"contenu d'une ligne affichée",titre:`Où ça part : la ligne ${i+1}.`,msg:`La ligne ${i+1} est « ${att[i]} » : le nombre affiché est répété n fois, avec les valeurs de n et de d de cet appel.`}};}
+  return {sig:"PG"+texteProg(P).replace(/\s+/g," ")+n1,q:`Voici une procédure récursive à deux paramètres. « affiche(x) » écrit le nombre x sans aller à la ligne, « aLaLigne() » passe à la ligne. Qu'affiche ${fx(`${nom}(${n1}, 0)`)} ? Écris une ligne d'écran par ligne du tableau.`,corps:code(texteProg(P)),
+    texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — affichage de ${nom}(${n1}, 0)`,champs:[{k:"trace",id:"t",vars:["ce qui est affiché"],lignes:2,rangs:true}],juge,etapes:E,
+    bonne:code(att.join("\n")),bonneTxt:att.join(" / "),repBonne:{t:att.map(x=>[x])},repFausse:{t:att.slice().reverse().map((x,i)=>[i?x:x+"0"])},nature:apres?"appel d'abord":"affichage d'abord",ens:{type:"proc",P,args:[n1,0]}};}
+/* la formule de ce que calcule F ; sur papier, la preuve par récurrence du cours */
+function formuleRec(R){const o=recSimple(R,true),P=o.P,nom=o.nom,KS=[0,1,2,3,4,5,6,7],V=KS.map(n=>joue(P,[n]).ret),hyp=o.ferme.replace(/n/g,"(n − 1)").replace("(n − 1)((n − 1) + 1)","(n − 1)n").replace("^{(n − 1)}","^{n−1}").replace("(n − 1)²","(n − 1)²");
+  const E=[{w:`Équations de récurrence : ${fx(`${nom}(0) = ${ent(o.base)}`)} et, pour ${fx("n &gt; 0")}, ${fx(`${nom}(n) = ${o.eq}`)}.`,why:"C'est la « vérité » : on la lit sur l'algorithme, une ligne pour le cas de base et une pour l'appel récursif.",pts:1},
+    {w:`Invariant de récursion : ${fx("Inv_{n}")} : « ${fx(`${nom}(n) = ${o.ferme}`)} ».`,why:`C'est l'« hypothèse à prouver ». On la devine sur les premières valeurs : ${V.slice(0,5).map(ent).join(", ")}.`,pts:1},
+    {w:`Initialisation : pour n = 0, ${fx(`${nom}(0) = ${ent(o.base)}`)} d'après les équations de récurrence, et la formule donne bien ${ent(o.base)} : ${fx("Inv_{0}")} est vrai.`,why:"On vérifie l'invariant pour le cas de base.",pts:0.5},
+    {w:`Récurrence : pour ${fx("n &gt; 0")}, si ${fx("Inv_{n−1}")} est vrai, alors ${fx(`${nom}(n) = ${o.eq}`)} donne ${fx(o.calc)}, c'est-à-dire ${fx(o.ferme)} : ${fx("Inv_{n}")} est vrai.`,why:`On remplace ${fx(`${nom}(n − 1)`)} par sa formule, celle de l'invariant au rang n − 1, dans l'équation de récurrence.`,pts:1.5},
+    {w:`Conclusion : pour tout entier naturel n, <b>${fx(`${nom}(n) = ${o.ferme}`)}</b>.`,why:"L'invariant est vrai à tous les rangs : l'algorithme renvoie bien cette valeur.",pts:1}];
+  function juge(rep){if(!propre(rep.f))return {incomplet:`Écris ce que renvoie ${nom}(n), avec la lettre n.`};const W=KS.map(n=>O.calcule(rep.f,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple n(n+1)/2 ou 2^n."};
+    if(KS.every((n,i)=>Math.abs(W[i]-V[i])<1e-9))return {ok:true};const n=KS.find((n,i)=>Math.abs(W[i]-V[i])>=1e-9);
+    return {ok:false,faux:["f"],resume:"Pas tout à fait : ce n'est pas la bonne formule.",diag:{etape:1,type:"formule de ce que calcule une fonction récursive",titre:"Où ça part : la formule.",msg:`Pour n = ${n}, ta formule donne ${String(Math.round(W[n]*1000)/1000).replace(".",",")}, alors que ${fx(`${nom}(${n}) = ${ent(V[n])}`)}. Calcule les premières valeurs : ${V.slice(0,5).map(ent).join(", ")}.`}};}
+  return {sig:"FR"+texteProg(P).replace(/\s+/g," "),q:`Voici une fonction récursive. Donne, en fonction de n, ce que renvoie ${fx(`${nom}(n)`)} pour tout entier naturel n. Sur papier, tu le démontres par récurrence avec la méthode du cours.`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — formule de ${nom}(n), puis preuve par récurrence`,
+    champs:[{k:"champ",id:"f",nom:"formule",label:`$${nom}(n) =$`,ex:"une formule avec n",sym:[["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]}],juge,etapes:E,bonne:fx(`${nom}(n) = ${o.ferme}`),bonneTxt:`${nom}(n) = ${o.ferme.replace(/[{}]/g,"")}`,repBonne:{f:o.tape},repFausse:{f:"("+o.tape+")+n"},nature:"formule",ens:{type:"formule",P}};}
+
 G.add("algo",[
  {id:"AG1",t:"Trace d'une boucle",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
   paliers:[
@@ -20322,6 +20464,18 @@ G.add("algo",[
    {t:"sommes et puissances",cc:4,gen:R=>iteration(Object.assign(famille(R,"som"),{demandeEI:true})),min:15},
    {t:"deux variables liées",cc:5,gen:R=>iteration(famille(R,"deux")),min:8},
    {t:"la preuve complète, sur papier, avec la méthode du cours",cc:10,gen:preuveBoucle,min:40}]},
+ {id:"AG3",t:"Arrêt d'une boucle tant que",tache:"arrêt d'une boucle",th:"preuves",ex:"cc2",pts:2,lecons:["a2-invariant"],apres:["AG1"],
+  paliers:[
+   {t:"une boucle qui compte",cc:3,gen:R=>arret(R,"compte"),min:15},
+   {t:"une division ou un doublement, deux conditions",cc:3,gen:R=>arret(R,"moitie"),min:12},
+   {t:"la preuve rédigée, sur papier, comme aux examens de 2023",cc:5,gen:redacArret,min:25}]},
+ {id:"AG4",t:"Algorithme récursif : valeur, affichages, appels",tache:"algorithmes récursifs",th:"preuves",ex:"cc2",pts:3,lecons:["a2-recursif"],
+  paliers:[
+   {t:"la valeur renvoyée",cc:3,gen:valeurRec,min:60},
+   {t:"l'ordre des affichages : avant ou après l'appel",cc:3,gen:ordreAff,min:60},
+   {t:"deux appels récursifs : valeur et nombre d'appels",cc:5,gen:deuxAppels,min:25},
+   {t:"une procédure G(n, d), comme aux sujets de 2023",cc:5,gen:procedureG,min:25},
+   {t:"ce que calcule la fonction, puis la preuve par récurrence",cc:8,gen:formuleRec,min:12}]},
  {id:"AG5",t:"Compter les opérations",th:"compter",ex:"cc2",pts:4.5,lecons:["a2-compter"],
   paliers:[
    {t:"une boucle",cc:3,gen:uneBoucle,min:100},
@@ -20344,7 +20498,7 @@ G.add("algo",[
  {id:"AGQ2",t:"Question de cours : mille fois plus lent, θ, o, ω",th:"notations",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursMillion}]},
  {id:"AGQ3",t:"Question de cours : le master theorem",th:"master",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursMaster}]}
 ]);
-G.algo={execute,compte,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
+G.algo={execute,compte,joue,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
 })();
 
 </script>
@@ -21155,9 +21309,10 @@ function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:
 const versFormule=t=>esc(String(t).replace(/\$/g,"")).replace(/\^\(([^()]*)\)/g,"^{$1}").replace(/\^(-?[A-Za-z0-9α-ω]+)/g,"^{$1}").replace(/sqrt|racine|rac/g,"√").replace(/\*/g," × ").replace(/-/g,"−").replace(/&lt;=/g,"≤").replace(/&gt;=/g,"≥").replace(/!=/g,"≠");
 const longues=r=>{if(r)r.querySelectorAll(".mx").forEach(m=>{if(m.textContent.length>40&&!m.parentElement.closest(".mx,.en-nb"))m.classList.add("en-coupe");});};
 const symHTML=c=>c.sym?`<div class="filters en-sym">${c.sym.map(x=>{const[l,v]=Array.isArray(x)?x:[x,x];return `<button type="button" class="btn" data-ins="${esc(v)}">${esc(l)}</button>`;}).join("")}</div>`:"";
-const ligneTrace=(c,r)=>`<tr><td>${r?"fin du tour "+r:"avant la boucle"}</td>${c.vars.map((v,k)=>`<td><input class="en-in" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${r?"fin du tour "+r:"avant la boucle"}"></td>`).join("")}</tr>`;
+const rangTrace=(c,r)=>c.rangs?"ligne "+(r+1):r?"fin du tour "+r:"avant la boucle";
+const ligneTrace=(c,r)=>`<tr><td>${rangTrace(c,r)}</td>${c.vars.map((v,k)=>`<td><input class="en-in${c.rangs?" en-large":""}" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${rangTrace(c,r)}"></td>`).join("")}</tr>`;
 function champsHTML(e){return e.champs.map(c=>{
-  if(c.k==="trace")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${c.vars.map(v=>`<th class="var">${esc(v)}</th>`).join("")}</tr></thead><tbody>${[...Array(c.lignes||2)].map((_,r)=>ligneTrace(c,r)).join("")}</tbody></table></div><div class="acts"><button type="button" class="btn" data-plus>Ajouter un tour</button><button type="button" class="btn" data-moins>Enlever le dernier tour</button></div></div>`;
+  if(c.k==="trace")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${c.vars.map(v=>`<th class="var">${esc(v)}</th>`).join("")}</tr></thead><tbody>${[...Array(c.lignes||2)].map((_,r)=>ligneTrace(c,r)).join("")}</tbody></table></div><div class="acts"><button type="button" class="btn" data-plus>${c.rangs?"Ajouter une ligne":"Ajouter un tour"}</button><button type="button" class="btn" data-moins>${c.rangs?"Enlever la dernière ligne":"Enlever le dernier tour"}</button></div></div>`;
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="sym")return `<div data-ch="${c.id}" class="en-rep">${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
@@ -21178,7 +21333,7 @@ function repTexte(e,rep){return e.champs.map(c=>{
   if(c.k==="cases"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return c.noms.map(x=>x+" = "+((rep[c.id]||{})[x]||"?")).join(", ");}
   if(c.k==="multi")return (rep[c.id]||[]).map(v=>(c.o.find(o=>o[0]===v)||[v,v])[1]).join(", ")||"(rien de coché)";
   if(c.k==="champ"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.id)+" : "+(rep[c.id]||"(vide)");}
-  if(c.k==="trace")return (rep[c.id]||[]).map((L,r)=>(r?"tour "+r:"avant")+" : "+c.vars.map((v,k)=>v+" = "+(L[k]||"?")).join(", ")).join(" | ");
+  if(c.k==="trace")return (rep[c.id]||[]).map((L,r)=>c.rangs?"ligne "+(r+1)+" : "+(L[0]||"(vide)"):(r?"tour "+r:"avant")+" : "+c.vars.map((v,k)=>v+" = "+(L[k]||"?")).join(", ")).join(" | ");
   if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
 const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
 const etapesHTML=(e,marque)=>`<ol class="wex">${e.etapes.map((x,k)=>`<li><div>${k===marque?'<span class="pill rev">ton erreur</span> ':""}${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`;
