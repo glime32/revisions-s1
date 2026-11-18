@@ -19201,6 +19201,111 @@ function redacEps(R){const t=R(),a=R.ent(1,9),co=a===1?"":a;let expr,maj,K=a,l=0
   return {sig:"RP"+expr,q,corps:"",texte:`avec la définition (ε), montrer que uₙ = ${expr} converge vers ${L}`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
     etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`rédaction avec N = E(${K}/ε) + 1`,repBonne:{},nature:t<0.4?"borné":t<0.7?"borné, n²":"quotient",ens:{type:"papier",u,l,K}};}
 
+/* ---------- AN4 : calculer une limite de suite ---------- */
+const LIMS=[["+∞","+∞"],["−∞","-∞"],["pas de limite","pas de limite"],["/","/"],["√","√("]];
+function lisLim(s){const t=propre(s).toLowerCase().replace(/ /g,"");if(!t)return null;
+  if(/^(pasdelimite|aucune(limite)?|pas|non|n['’]?existepas)$/.test(t))return {sans:true};
+  const m=/^([+-]?)(∞|inf|infini|oo)$/.exec(t);if(m)return {inf:m[1]==="-"?-1:1};
+  const v=O.calcule(s,{});return v===null||!Number.isFinite(v)?null:{v};}
+const memeLim=(lu,L)=>L.sans?!!lu.sans:L.inf?lu.inf===L.inf:lu.v!==undefined&&Math.abs(lu.v-L.v.n/L.v.d)<1e-9;
+const limT=L=>L.sans?"pas de limite":L.inf?(L.inf>0?"+∞":"−∞"):nb(L.v);
+function limite(o){const L=o.lim,dern=o.etapes.length-1;
+  function juge(rep){const lu=lisLim(rep.lim);if(!lu)return {incomplet:"Écris un nombre (3, -1/2, √2), +∞, −∞ ou « pas de limite »."};
+    if(memeLim(lu,L))return {ok:true};
+    const d=(o.diag&&o.diag(lu))||(L.inf&&lu.inf?{etape:dern,type:"signe de l'infini",titre:"Où ça part : le signe.",msg:`La suite tend bien vers l'infini, mais c'est vers ${limT(L)}.`}:{etape:dern,type:o.type||"calcul de la limite",titre:"Où ça part : la conclusion.",msg:L.sans?"Cette suite n'a pas de limite.":`La limite est ${fx(limT(L))}.`});
+    return {ok:false,faux:["lim"],resume:"Pas tout à fait : ce n'est pas la bonne réponse.",diag:d};}
+  return {sig:o.sig,q:`On pose, pour tout entier n assez grand, ${fx(`uₙ = ${o.expr}`)}. Quelle est la limite de la suite (uₙ) quand n tend vers +∞ ? Réponds par un nombre, +∞, −∞, ou « pas de limite ».`,corps:"",
+    texte:`limite de uₙ = ${o.expr}`,champs:[{k:"champ",id:"lim",nom:"limite",label:"$lim uₙ =$",ex:"un nombre, +∞, −∞, pas de limite",sym:LIMS}],juge,etapes:o.etapes,
+    bonne:L.sans?"pas de limite":fx(`lim uₙ = ${limT(L)}`),bonneTxt:limT(L),repBonne:{lim:L.sans?"pas de limite":L.inf?(L.inf>0?"+∞":"-∞"):brut(L.v)},repFausse:{lim:L.sans?"0":L.inf?(L.inf>0?"-∞":"+∞"):L.v.n===0?"1":"0"},
+    nature:o.nature,ens:Object.assign({lim:L.sans?"sans":L.inf?L.inf*Infinity:L.v.n/L.v.d,grand:[1e6,1e7]},o.ens)};}
+const PUI=["","n","n²","n³","n⁴"],sgn=(s,x)=>(s?(x<0?" − ":" + "):(x<0?"−":""));
+/* c[i] = coefficient de n^i ; le même polynôme divisé par n^k */
+function polyT(c){let s="";for(let i=c.length-1;i>=0;i--){const x=c[i];if(!x)continue;const a=Math.abs(x);s+=sgn(s,x)+(i&&a===1?"":a)+PUI[i];}return s||"0";}
+function divT(c,k){let s="";for(let i=c.length-1;i>=0;i--){const x=c[i];if(!x)continue;const a=Math.abs(x),e=i-k;s+=sgn(s,x)+(e>0?(a===1?"":a)+PUI[e]:e===0?String(a):a+"/"+PUI[-e]);}return s||"0";}
+const ev=(c,n)=>c.reduce((t,x,i)=>t+x*Math.pow(n,i),0);
+const inf=x=>x>0?"+∞":"−∞";
+function limPoly(R){for(;;){const p=R.ent(1,3),qd=R.ent(1,3),mk=g=>{const c=[];for(let i=0;i<=g;i++)c.push(i===g?R.nz(-6,6):R()<0.6?R.ent(-9,9):0);return c;},P=mk(p),D=mk(qd);
+  if(P.filter(Boolean).length+D.filter(Boolean).length<3)continue;
+  const a=P[p],c=D[qd],L=p===qd?{v:Q(a,c)}:p<qd?{v:Q(0)}:{inf:a*c>0?1:-1},mono=D.filter(Boolean).length===1;
+  const E=[{w:`On divise le numérateur et le dénominateur par ${fx(PUI[qd])}, la plus grande puissance de n au dénominateur. Le numérateur devient ${fx(divT(P,qd))}, le dénominateur ${fx(divT(D,qd))}.`,why:`Le numérateur et le dénominateur tendent tous les deux vers l'infini : c'est une forme indéterminée, on ne peut pas conclure tout de suite. Diviser en haut et en bas par le même nombre ne change pas le quotient.`,pts:1},
+    {w:`Le numérateur tend vers ${p===qd?fx(nb(a)):p<qd?"0":inf(a)}, et le dénominateur ${mono?"vaut":"tend vers"} ${fx(nb(c))}.`,why:`Un nombre divisé par n, par n² ou par n³ tend vers 0.${p>qd?` Et ${fx((Math.abs(a)===1?(a<0?"−":""):nb(a))+PUI[p-qd])} tend vers ${inf(a)}.`:""}`,pts:1},
+    {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:p===qd?`La limite d'un quotient est le quotient des limites, quand celle du dénominateur n'est pas 0 : ici ${fx(nb(a))} divisé par ${fx(nb(c))}.`:p<qd?`0 divisé par ${fx(nb(c))} donne 0.`:`Le numérateur tend vers ${inf(a)}, et on le divise par un nombre proche de ${fx(nb(c))}, qui est ${c>0?"positif : le signe est gardé":"négatif : le signe change"}.`,pts:1}];
+  return limite({sig:"LP"+P.join(",")+"|"+D.join(","),expr:`(${polyT(P)})/(${polyT(D)})`,lim:L,etapes:E,nature:p===qd?"même degré":p<qd?"vers 0":"infini",type:"limite d'un quotient de polynômes",ens:{u:n=>ev(P,n)/ev(D,n)},
+    diag:lu=>p===qd&&(lu.inf||lu.sans||lu.v===0)?{etape:1,type:"même degré : quotient des coefficients dominants",titre:"Où ça part : la comparaison des degrés.",msg:`Le numérateur et le dénominateur ont le même degré : la limite est le quotient des coefficients des plus grandes puissances, ${fx(nb(a))} et ${fx(nb(c))}.`}
+      :p<qd&&lu.v!==0?{etape:1,type:"degré du dénominateur plus grand",titre:"Où ça part : la comparaison des degrés.",msg:"Le dénominateur a le plus grand degré : il grandit plus vite que le numérateur, et le quotient tend vers 0."}
+      :p>qd&&!lu.inf?{etape:1,type:"degré du numérateur plus grand",titre:"Où ça part : la comparaison des degrés.",msg:"Le numérateur a le plus grand degré : il grandit plus vite que le dénominateur, et le quotient tend vers l'infini."}:null});}}
+function limRacine(R){const t=R(),ind0=lu=>lu.v===0?{etape:0,type:"« +∞ − ∞ » pris pour 0",titre:"Où ça part : la forme indéterminée.",msg:"Deux quantités qui tendent vers +∞ ne s'annulent pas forcément : « +∞ − ∞ » est une forme indéterminée. Il faut la quantité conjuguée."}:lu.inf?{etape:0,type:"forme indéterminée non levée",titre:"Où ça part : la forme indéterminée.",msg:"Les deux termes tendent vers +∞, mais leur différence reste bornée : il faut la quantité conjuguée pour le voir."}:null;
+  const CONJ=`C'est une forme indéterminée « +∞ − ∞ ». On utilise ${fx("(A − B)(A + B) = A² − B²")} : au numérateur, les racines disparaissent.`,DIVN=`Pour n positif, ${fx("n = √(n²)")} : diviser une racine par n, c'est diviser par n² ce qu'il y a dessous.`;
+  if(t<0.5){const k=R.choix([1,1,2,3]),a=R.nz(-9,9),b=R()<0.5?0:R.ent(1,9),ins=polyT([b,a,k*k]),kn=(k===1?"":k)+"n",num=polyT([b,a]),L={v:Q(a,2*k)};
+    return limite({sig:"LR1,"+k+","+a+","+b,expr:`√(${ins}) − ${kn}`,lim:L,nature:"√(…) − kn",type:"quantité conjuguée",ens:{u:n=>Math.sqrt(k*k*n*n+a*n+b)-k*n},diag:ind0,etapes:[
+      {w:`On multiplie et on divise par la quantité conjuguée ${fx(`√(${ins}) + ${kn}`)} : ${fx(`uₙ = (${num})/(√(${ins}) + ${kn})`)}.`,why:`${CONJ} Ici ${fx(`${ins} − ${polyT([0,0,k*k])} = ${num}`)}.`,pts:1},
+      {w:`On divise en haut et en bas par n : le numérateur devient ${fx(divT([b,a],1))}, le dénominateur ${fx(`√(${divT([b,a,k*k],2)}) + ${k}`)}.`,why:DIVN,pts:1},
+      {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:`Le numérateur tend vers ${fx(nb(a))}. Sous la racine, tout tend vers ${k*k} : le dénominateur tend vers ${fx(`√${k*k} + ${k} = ${2*k}`)}.`,pts:1}]});}
+  if(t<0.75){const a=R.ent(0,15);let b;do b=R.ent(0,15);while(b===a);const ra=a?`√(n + ${a})`:"√n",rb=b?`√(n + ${b})`:"√n";
+    return limite({sig:"LR2,"+a+","+b,expr:`${ra} − ${rb}`,lim:{v:Q(0)},nature:"√ − √",type:"quantité conjuguée",ens:{u:n=>Math.sqrt(n+a)-Math.sqrt(n+b),grand:[1e10,1e12]},diag:lu=>lu.inf?ind0(lu):null,etapes:[
+      {w:`On multiplie et on divise par la quantité conjuguée ${fx(`${ra} + ${rb}`)} : ${fx(`uₙ = ${nb(a-b)}/(${ra} + ${rb})`)}.`,why:`${CONJ} Ici ${fx(`${a?`(n + ${a})`:"n"} − ${b?`(n + ${b})`:"n"} = ${nb(a-b)}`)}.`,pts:1.5},
+      {w:`<b>${fx("lim uₙ = 0")}</b>`,why:`Le numérateur est le nombre ${fx(nb(a-b))}, et le dénominateur tend vers +∞ : le quotient tend vers 0.`,pts:1.5}]});}
+  const a=R.nz(-9,9);let b;do b=R.ent(-9,9);while(b===a);const ia=polyT([0,a,1]),ib=polyT([0,b,1]),L={v:Q(a-b,2)},dn=x=>x?`√(${divT([0,x,1],2)})`:"1";
+  return limite({sig:"LR3,"+a+","+b,expr:`√(${ia}) − √(${ib})`,lim:L,nature:"√(n² …) − √(n² …)",type:"quantité conjuguée",ens:{u:n=>Math.sqrt(n*n+a*n)-Math.sqrt(n*n+b*n)},diag:ind0,etapes:[
+    {w:`On multiplie et on divise par la quantité conjuguée ${fx(`√(${ia}) + √(${ib})`)} : le numérateur devient ${fx((Math.abs(a-b)===1?(a<b?"−":""):nb(a-b))+"n")}.`,why:`${CONJ} Ici ${fx(`(${ia}) − (${ib}) = ${(Math.abs(a-b)===1?(a<b?"−":""):nb(a-b))+"n"}`)}.`,pts:1},
+    {w:`On divise en haut et en bas par n : le numérateur devient ${fx(nb(a-b))}, le dénominateur ${fx(`${dn(a)} + ${dn(b)}`)}.`,why:DIVN,pts:1},
+    {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:`Sous chaque racine, tout tend vers 1 : le dénominateur tend vers ${fx("1 + 1 = 2")}.`,pts:1}]});}
+function limPuis(R){const [p,qb]=R.choix([[2,3],[2,5],[3,5],[3,4],[2,7],[4,5],[3,7],[5,7]]),a=R.nz(-5,5),c=R.nz(-5,5),t=R(),b=t<0.8&&t>=0.6?0:R.nz(-5,5),d=t>=0.8?0:R.nz(-5,5);
+  const T=(x,y,B1,B2)=>{let s="";[[x,B1],[y,B2]].forEach(([k,B])=>{if(!k)return;const m=Math.abs(k);s+=sgn(s,k)+(m===1?"":m+" × ")+B;});return s;},pn=p+"ⁿ",qn=qb+"ⁿ",r=`(${p}/${qb})ⁿ`,ri=`(${qb}/${p})ⁿ`;
+  const num=T(a,b,pn,qn),den=T(c,d,pn,qn),expr=`${b?`(${num})`:num}/${d?`(${den})`:den}`;
+  if(d){const L={v:Q(b,d)},cst=(x,y)=>{let s=T(x,0,r,"");if(y)s+=sgn(s,y)+Math.abs(y);return s;};
+    return limite({sig:"LG"+[p,qb,a,b,c,d],expr,lim:L,nature:b?"quotient des coefficients":"vers 0",type:"quotient de puissances",ens:{u:n=>(a*Math.pow(p/qb,n)+b)/(c*Math.pow(p/qb,n)+d),grand:[60,120]},
+      diag:lu=>lu.inf||lu.sans?{etape:1,type:"limite de qⁿ avec q entre 0 et 1",titre:"Où ça part : la limite de la puissance.",msg:`${fx(r)} tend vers 0, parce que ${fx(`${p}/${qb}`)} est entre 0 et 1.`}:null,etapes:[
+      {w:`On divise en haut et en bas par ${fx(qn)}, la plus grande puissance. Le numérateur devient ${fx(cst(a,b))}, le dénominateur ${fx(cst(c,d))}.`,why:`Sans cette division, c'est une forme indéterminée. On utilise ${fx(`${pn}/${qn} = ${r}`)}.`,pts:1},
+      {w:`${fx(r)} tend vers 0.`,why:`C'est une suite géométrique dont la raison ${fx(`${p}/${qb}`)} est entre 0 et 1 : ses termes se rapprochent de 0.`,pts:1},
+      {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:`Le numérateur tend vers ${fx(nb(b))} et le dénominateur vers ${fx(nb(d))} : la limite du quotient est le quotient des limites.`,pts:1}]});}
+  const L={inf:b*c>0?1:-1};
+  return limite({sig:"LG"+[p,qb,a,b,c,0],expr,lim:L,nature:"infini",type:"quotient de puissances",ens:{u:n=>(a+b*Math.pow(qb/p,n))/c,grand:[40,60]},
+    diag:lu=>!lu.inf?{etape:1,type:"limite de qⁿ avec q plus grand que 1",titre:"Où ça part : la limite de la puissance.",msg:`${fx(ri)} tend vers +∞, parce que ${fx(`${qb}/${p}`)} est plus grand que 1.`}:null,etapes:[
+    {w:`On divise en haut et en bas par ${fx(pn)} : le numérateur devient ${fx(`${nb(a)} ${b>0?"+":"−"} ${Math.abs(b)===1?"":Math.abs(b)+" × "}${ri}`)}, le dénominateur ${fx(nb(c))}.`,why:`Le dénominateur n'a qu'une puissance : on divise par elle. On utilise ${fx(`${qn}/${pn} = ${ri}`)}.`,pts:1},
+    {w:`${fx(ri)} tend vers +∞.`,why:`C'est une suite géométrique dont la raison ${fx(`${qb}/${p}`)} est plus grande que 1.`,pts:1},
+    {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:`Le numérateur tend vers ${inf(b)}, et on le divise par ${fx(nb(c))}, qui est ${c>0?"positif : le signe est gardé":"négatif : le signe change"}.`,pts:1}]});}
+const BORNES=[["sin(n)",Math.sin],["cos(n)",Math.cos],["(−1)ⁿ",n=>n%2?-1:1]];
+const GEND=`C'est le théorème des gendarmes : une suite encadrée par deux suites qui ont la même limite converge vers cette limite.`;
+const borne=(lu)=>lu.sans?{etape:0,type:"suite crue sans limite à cause d'un terme borné",titre:"Où ça part : le terme qui oscille.",msg:"Ce terme n'a pas de limite, c'est vrai, mais il reste entre −1 et 1 : on l'encadre, et on regarde la limite de ce qui l'encadre."}:null;
+function limGend(R){const t=R(),f=R.choix(BORNES),b=R.nz(-9,9),B=Math.abs(b),bf=(B===1?"":B+(f[0][0]==="("?" × ":" "))+f[0];
+  if(t<0.45){const a=R.nz(-6,6),c=R.ent(1,6),d=R.ent(0,9),an=(Math.abs(a)===1?(a<0?"−":""):nb(a))+"n",den=(c===1?"":c)+"n"+(d?" + "+d:""),L={v:Q(a,c)};
+    return limite({sig:"LE1,"+[a,b,c,d,f[0]],expr:`(${an} ${b>0?"+":"−"} ${bf})/${d||c>1?`(${den})`:den}`,lim:L,nature:"encadrement, limite a/c",type:"théorème des gendarmes",ens:{u:n=>(a*n+b*f[1](n))/(c*n+d)},diag:borne,etapes:[
+      {w:`${fx(`−1 ≤ ${f[0]} ≤ 1`)}, donc le numérateur est entre ${fx(`${an} − ${B}`)} et ${fx(`${an} + ${B}`)}.`,why:`${fx(f[0])} n'a pas de limite, mais il reste entre −1 et 1 : on l'encadre. Multiplié par ${fx(nb(b))}, il reste entre ${fx(nb(-B))} et ${fx(nb(B))}.`,pts:1},
+      {w:`On divise par ${fx(den)}, qui est positif : ${O.f(`(${an} − ${B})/(${den}) ≤ uₙ ≤ (${an} + ${B})/(${den})`)}.`,why:`Diviser par un nombre positif ne change pas le sens des inégalités.`,pts:1},
+      {w:`Les deux suites qui encadrent tendent vers ${fx(limT(L))}.`,why:`Ce sont deux quotients dont le numérateur et le dénominateur ont le même degré : la limite est le quotient des coefficients de n, ${fx(nb(a))} et ${fx(nb(c))}.`,pts:0.5},
+      {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:GEND,pts:0.5}]});}
+  if(t<0.8){const c=R.ent(1,6),d=R.ent(0,9),k=R.choix(["n","n","n²","√n"]),den=(c===1?"":c)+k+(d?" + "+d:""),dp=d||c>1?`(${den})`:den,g=k==="n"?n=>n:k==="n²"?n=>n*n:Math.sqrt;
+    return limite({sig:"LE2,"+[b,c,d,k,f[0]],expr:`${b<0?"−":""}${bf}/${dp}`,lim:{v:Q(0)},nature:"encadrement, limite 0",type:"théorème des gendarmes",ens:{u:n=>b*f[1](n)/(c*g(n)+d),grand:[1e10,1e12]},diag:borne,etapes:[
+      {w:`${fx(`−1 ≤ ${f[0]} ≤ 1`)}, donc ${O.f(`−${B}/${dp} ≤ uₙ ≤ ${B}/${dp}`)}.`,why:`${fx(f[0])} n'a pas de limite, mais il reste entre −1 et 1. ${B===1?"On":`On multiplie par ${B} et on`} divise par ${fx(den)}, qui est positif.`,pts:1.5},
+      {w:`Les deux suites qui encadrent tendent vers 0.`,why:`Leur numérateur ne change pas, et leur dénominateur tend vers +∞.`,pts:0.5},
+      {w:`<b>${fx("lim uₙ = 0")}</b>`,why:GEND,pts:1}]});}
+  const a=R.nz(-6,6),an=(Math.abs(a)===1?(a<0?"−":""):nb(a))+"n",L={inf:a>0?1:-1};
+  return limite({sig:"LE3,"+[a,b,f[0]],expr:`${an} ${b>0?"+":"−"} ${bf}`,lim:L,nature:"comparaison, infini",type:"théorème de comparaison",ens:{u:n=>a*n+b*f[1](n)},diag:borne,etapes:[
+    {w:`${fx(`−1 ≤ ${f[0]} ≤ 1`)}, donc ${fx(`uₙ ${a>0?"≥":"≤"} ${an} ${a>0?"−":"+"} ${B}`)}.`,why:`${fx(f[0])} n'a pas de limite, mais il reste entre −1 et 1 : le terme ${fx(bf)} reste entre ${fx(nb(-B))} et ${fx(nb(B))}.`,pts:1.5},
+    {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:`${fx(`${an} ${a>0?"−":"+"} ${B}`)} tend vers ${limT(L)}, et uₙ est ${a>0?"au-dessus":"en dessous"} : par comparaison, uₙ tend aussi vers ${limT(L)}.`,pts:1.5}]});}
+const DEUX=`Si la suite avait une limite, ses termes de rang pair et ses termes de rang impair tendraient tous vers cette limite.`;
+function limSans(R){const t=R();
+  if(t<0.4){const a=R.nz(-6,6),b=R.ent(-9,9),c=R.ent(1,6),d=R.ent(1,9),num=polyT([b,a]),den=polyT([d,c]),qt=`(${num})/(${den})`,l1=Q(a,c),l2=Q(-a,c);
+    return limite({sig:"LS1,"+[a,b,c,d],expr:`(−1)ⁿ × ${b?qt:`${num}/(${den})`}`,lim:{sans:true},nature:"sans limite",type:"deux sous-suites de limites différentes",ens:{u:n=>(n%2?-1:1)*(a*n+b)/(c*n+d)},etapes:[
+      {w:`Pour n pair, ${fx("(−1)ⁿ = 1")} : les termes tendent vers ${fx(nb(l1))}. Pour n impair, ${fx("(−1)ⁿ = −1")} : les termes tendent vers ${fx(nb(l2))}.`,why:`${fx(b?qt:`${num}/(${den})`)} tend vers ${fx(nb(l1))} : le numérateur et le dénominateur ont le même degré, on prend le quotient des coefficients de n.`,pts:1.5},
+      {w:`<b>La suite n'a pas de limite.</b>`,why:`${DEUX} Or ${fx(nb(l1))} et ${fx(nb(l2))} sont différents.`,pts:1.5}],
+      diag:lu=>lu.v!==undefined?{etape:0,type:"deux sous-suites de limites différentes non vues",titre:"Où ça part : le rôle de (−1)ⁿ.",msg:`(−1)ⁿ change de signe à chaque rang, et ce qu'il multiplie ne tend pas vers 0 : les termes sautent entre ${fx(nb(l1))} et ${fx(nb(l2))}.`}:null});}
+  if(t<0.75){const a=R.ent(-9,9),b=R.nz(-5,5),[qs,qv]=R.choix([["(−2)",-2],["(−3)",-3],["(−1)",-1],["(−1/2)",-0.5],["(1/2)",0.5],["(2/3)",2/3],["(3/2)",1.5],["(−2/3)",-2/3],["2",2],["3",3]]),B=Math.abs(b);
+    const expr=(a?nb(a)+(b>0?" + ":" − "):(b>0?"":"−"))+(B===1?"":B+" × ")+qs+"ⁿ",L=Math.abs(qv)<1?{v:Q(a)}:qv>1?{inf:b>0?1:-1}:{sans:true},pw=fx(qs+"ⁿ"),rs=fx(qs.replace(/[()]/g,""));
+    return limite({sig:"LS2,"+[a,b,qs],expr,lim:L,nature:L.sans?"sans limite":L.inf?"qⁿ infini":"qⁿ vers 0",type:"limite de qⁿ",ens:{u:n=>a+b*Math.pow(qv,n),grand:[40,60]},etapes:[
+      {w:`${pw} ${Math.abs(qv)<1?"tend vers 0":qv>1?"tend vers +∞":"n'a pas de limite"}.`,why:`C'est une suite géométrique de raison ${rs}. La règle : si la raison est strictement entre −1 et 1, la suite tend vers 0 ; si elle est plus grande que 1, la suite tend vers +∞ ; si elle est inférieure ou égale à −1, la suite n'a pas de limite, car elle change de signe sans se rapprocher de 0.`,pts:1.5},
+      {w:L.sans?`<b>La suite n'a pas de limite.</b>`:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:L.sans?`${DEUX} Ici, les termes de rang pair et ceux de rang impair ne se rapprochent pas du même nombre.`:L.inf?`On multiplie par ${fx(nb(b))}, qui est ${b>0?"positif":"négatif : le signe change"}${a?`, et ajouter ${fx(nb(a))} ne change pas une limite infinie`:""}.`:`${fx((B===1?"":B+" × ")+qs+"ⁿ")} tend vers 0 : il reste ${fx(nb(a))}.`,pts:1.5}],
+      diag:lu=>L.sans&&!lu.sans?{etape:0,type:"raison inférieure ou égale à −1 : pas de limite",titre:"Où ça part : la raison.",msg:`La raison ${rs} est inférieure ou égale à −1 : ${pw} change de signe à chaque rang sans se rapprocher de 0.`}:!L.sans&&lu.sans?{etape:0,type:"raison négative crue sans limite",titre:"Où ça part : la raison.",msg:`La raison ${rs} est strictement entre −1 et 1 : ${pw} tend vers 0, même si son signe change.`}:null});}
+  const a=R.nz(-9,9),A=Math.abs(a),mult=R()<0.5;
+  if(mult)return limite({sig:"LS3,"+a,expr:`${a<0?"−":""}${A===1?"":A+" × "}(−1)ⁿ/n`,lim:{v:Q(0)},nature:"(−1)ⁿ/n",type:"théorème des gendarmes",ens:{u:n=>a*(n%2?-1:1)/n},diag:borne,etapes:[
+    {w:`${O.f(`−${A}/n ≤ uₙ ≤ ${A}/n`)}`,why:`(−1)ⁿ vaut 1 ou −1 : il reste entre −1 et 1.`,pts:1.5},
+    {w:`<b>${fx("lim uₙ = 0")}</b>`,why:`Les deux suites qui encadrent tendent vers 0. ${GEND}`,pts:1.5}]});
+  return limite({sig:"LS4,"+a,expr:`(−1)ⁿ ${a>0?"+":"−"} ${A}/n`,lim:{sans:true},nature:"sans limite",type:"deux sous-suites de limites différentes",ens:{u:n=>(n%2?-1:1)+a/n},etapes:[
+    {w:`Pour n pair, ${fx(`uₙ = 1 ${a>0?"+":"−"} ${A}/n`)} tend vers 1. Pour n impair, ${fx(`uₙ = −1 ${a>0?"+":"−"} ${A}/n`)} tend vers −1.`,why:`${fx(A+"/n")} tend vers 0 : il ne reste que 1 ou −1, selon que n est pair ou impair.`,pts:1.5},
+    {w:`<b>La suite n'a pas de limite.</b>`,why:`${DEUX} Or 1 et −1 sont différents.`,pts:1.5}],
+    diag:lu=>lu.v!==undefined?{etape:0,type:"deux sous-suites de limites différentes non vues",titre:"Où ça part : le rôle de (−1)ⁿ.",msg:`Ici (−1)ⁿ n'est multiplié par rien qui tende vers 0 : les termes sautent entre des valeurs proches de 1 et des valeurs proches de −1.`}:null});}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19215,7 +19320,14 @@ G.add("ana",[
    {t:"un quotient : la limite, puis un rang pour ε donné",cc:4,gen:R=>tireNum(R,true)},
    {t:"ε quelconque : N en fonction de ε",cc:4,gen:R=>rangEps(R()<0.4?tireNul(R):tireQuot(R))},
    {t:"une suite qui tend vers +∞ : N en fonction de A",cc:4,gen:rangInfini},
-   {t:"la rédaction complète, sur papier, comme au CC",cc:10,gen:redacEps}]}
+   {t:"la rédaction complète, sur papier, comme au CC",cc:10,gen:redacEps}]},
+ {id:"AN4",t:"Calculer une limite de suite",th:"calcul",pts:3,lecons:["a-calcul","a-comparaison"],
+  paliers:[
+   {t:"un quotient de polynômes",cc:2,gen:limPoly},
+   {t:"des racines : la quantité conjuguée",cc:3,gen:limRacine},
+   {t:"des puissances comme 2ⁿ et 3ⁿ",cc:3,gen:limPuis},
+   {t:"un terme borné : gendarmes et comparaison",cc:3,gen:limGend},
+   {t:"tout mélangé, avec des suites sans limite",cc:3,gen:R=>{const t=R();return t<0.35?limSans(R):t<0.52?limPoly(R):t<0.68?limRacine(R):t<0.84?limPuis(R):limGend(R);}}]}
 ]);
 })();
 
