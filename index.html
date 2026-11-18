@@ -18179,7 +18179,7 @@ function affine(src,permis){const s=propre(src).replace(/ /g,"");let p=0;if(!s)r
 
 /* « E(3/ε) + 1 », « 2x^2 - sqrt(x) » : la valeur de la formule pour les valeurs données aux lettres (en minuscules),
    null si elle ne se lit pas. E(…) est la partie entière. */
-function calcule(src,vars){let s=propre(String(src==null?"":src).replace(/²/g,"^2").replace(/³/g,"^3")).toLowerCase().replace(/ /g,"").replace(/,/g,".").replace(/epsilon|eps/g,"ε").replace(/√/g,"sqrt").replace(/racine|rac/g,"sqrt").replace(/\*\*/g,"^").replace(/pi/g,"π"),p=0;
+function calcule(src,vars){let s=propre(String(src==null?"":src).replace(/²/g,"^2").replace(/³/g,"^3")).toLowerCase().replace(/ /g,"").replace(/,/g,".").replace(/epsilon|eps/g,"ε").replace(/alpha/g,"α").replace(/êta|eta/g,"η").replace(/√/g,"sqrt").replace(/racine|rac/g,"sqrt").replace(/\*\*/g,"^").replace(/pi/g,"π"),p=0;
   const FN={sqrt:Math.sqrt,floor:Math.floor,ent:Math.floor,abs:Math.abs,exp:Math.exp,ln:Math.log,sin:Math.sin,cos:Math.cos,e:Math.floor},NOMS=Object.keys(FN),NUM=/^\d+(\.\d+)?/;
   function prim(){const c=s[p];
     if(c==="("){p++;const v=expr();if(v===null||s[p]!==")")return null;p++;return v;}
@@ -18203,8 +18203,17 @@ function calcule(src,vars){let s=propre(String(src==null?"":src).replace(/²/g,"
   function expr(){let v=terme();while(v!==null){const c=s[p];if(c!=="+"&&c!=="-")break;p++;const w=terme();v=w===null?null:c==="+"?v+w:v-w;}return v;}
   if(!s)return null;const r=expr();return r!==null&&p===s.length?r:null;}
 
+/* « |x - 2| < η », « 2 < x < 2 + η », « x ∈ ]2 ; 2 + η[ » : vrai ou faux pour les valeurs données, null si ça ne se lit pas */
+function predicat(src,vars){let s=String(src==null?"":src).replace(/f\s*\(\s*x\s*\)/gi,"y").replace(/<=|≦|⩽/g,"≤").replace(/>=|≧|⩾/g,"≥");
+  const m=/^\s*x\s*(?:∈|dans|appartient à)\s*([\[\]])(.+?)(?:;|,(?=[^,]*$))(.+?)([\[\]])\s*$/i.exec(s);
+  if(m)s=m[2]+(m[1]==="]"?"<":"≤")+"x"+(m[4]==="["?"<":"≤")+m[3];
+  const P=s.split(/([<>≤≥])/);if(P.length<3)return null;
+  const V=[];for(let i=0;i<P.length;i+=2){const v=calcule(P[i],vars);if(v===null||Number.isNaN(v))return null;V.push(v);}
+  for(let i=1;i<P.length;i+=2){const a=V[(i-1)/2],b=V[(i+1)/2],o=P[i];if(!(o==="<"?a<b:o===">"?a>b:o==="≤"?a<=b:a>=b))return false;}
+  return true;}
+
 const GEN=window.GEN={defs:{},par:{},
-  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine,calcule},
+  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine,calcule,predicat},
   /* un tirage : la graine suffit à retrouver l'exercice */
   tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
   add(sid,defs){const S=SUBJ[sid];GEN.defs[sid]=(GEN.defs[sid]||[]).concat(defs);
@@ -19306,6 +19315,106 @@ function limSans(R){const t=R();
     {w:`<b>La suite n'a pas de limite.</b>`,why:`${DEUX} Or 1 et −1 sont différents.`,pts:1.5}],
     diag:lu=>lu.v!==undefined?{etape:0,type:"deux sous-suites de limites différentes non vues",titre:"Où ça part : le rôle de (−1)ⁿ.",msg:`Ici (−1)ⁿ n'est multiplié par rien qui tende vers 0 : les termes sautent entre des valeurs proches de 1 et des valeurs proches de −1.`}:null});}
 
+/* ---------- AN3 : limite d'une fonction, les définitions ---------- */
+const SYMD=[["ε","ε"],["η","η"],["α","α"],["A","A"],["|","|"],["<","<"],[">",">"],["f(x)","f(x)"]];
+const moins=(v,c)=>c===0?v:`${v} ${c>0?"−":"+"} ${Math.abs(c)}`;
+/* la définition demandée : le début est donné, il reste la condition sur x et la conclusion sur f(x) */
+function definition(R){const t=R(),infinie=(t>=0.44&&t<0.64)||t>=0.92,x0=t>=0.3&&t<0.44?0:infinie?R.ent(-30,30):R.ent(-9,9),l=infinie?0:t>=0.3&&t<0.44?R.ent(-30,30):R.ent(-9,9),X=nb(x0),Lt=nb(l);
+  const ecX=`|${moins("x",x0)}| < η`,ecY=`|${moins("f(x)",l)}| < ε`,dr=x0?`${X} < x < ${X} + η`:"0 < x < η",ga=x0?`${X} − η < x < ${X}`:"−η < x < 0";
+  const pr=(x,y,o)=>[Math.abs(x-x0)<o.eta,Math.abs(y-l)<o.eps,x>x0&&x<x0+o.eta,x<x0&&x>x0-o.eta,x>o.al,y>o.A,y<-o.A];
+  let o;
+  if(t<0.3)o={k:"T1",lim:`lim_{x→${X}} f(x) = ${Lt}`,dit:`la limite de f en ${X} est ${Lt}`,ch:"η",q1:"ε",hyp:ecX,ccl:ecY,ih:0,ic:1,wh:`x est proche de ${X} : à une distance plus petite que η.`};
+  else if(t<0.44)o={k:"T2",lim:`lim_{x→+∞} f(x) = ${Lt}`,dit:`la limite de f en +∞ est ${Lt}`,ch:"α",q1:"ε",hyp:"x > α",ccl:ecY,ih:4,ic:1,wh:"x est grand : plus grand que α. En +∞, il n'y a pas de distance à mesurer : on demande à x de dépasser un seuil."};
+  else if(t<0.55)o={k:"T3",lim:`lim_{x→${X}} f(x) = +∞`,dit:`f tend vers +∞ en ${X}`,ch:"η",q1:"A",hyp:ecX,ccl:"f(x) > A",ih:0,ic:5,wh:`x est proche de ${X} : à une distance plus petite que η.`};
+  else if(t<0.64)o={k:"T4",lim:`lim_{x→${X}} f(x) = −∞`,dit:`f tend vers −∞ en ${X}`,ch:"η",q1:"A",hyp:ecX,ccl:"f(x) < −A",ih:0,ic:6,wh:`x est proche de ${X} : à une distance plus petite que η.`};
+  else if(t<0.79)o={k:"T5",lim:`lim_{x→${X}, x&gt;${X}} f(x) = ${Lt}`,dit:`la limite à droite de f en ${X} est ${Lt}`,ch:"η",q1:"ε",hyp:dr,ccl:ecY,ih:2,ic:1,wh:`On ne regarde que les x juste à droite de ${X} : strictement plus grands que ${X}, à une distance plus petite que η.`};
+  else if(t<0.92)o={k:"T6",lim:`lim_{x→${X}, x&lt;${X}} f(x) = ${Lt}`,dit:`la limite à gauche de f en ${X} est ${Lt}`,ch:"η",q1:"ε",hyp:ga,ccl:ecY,ih:3,ic:1,wh:`On ne regarde que les x juste à gauche de ${X} : strictement plus petits que ${X}, à une distance plus petite que η.`};
+  else o={k:"T7",lim:`lim_{x→${X}, x&gt;${X}} f(x) = +∞`,dit:`f tend vers +∞ à droite en ${X}`,ch:"η",q1:"A",hyp:dr,ccl:"f(x) > A",ih:2,ic:5,wh:`On ne regarde que les x juste à droite de ${X} : strictement plus grands que ${X}, à une distance plus petite que η.`};
+  const fini=o.q1==="ε",cadre=`∀${o.q1} &gt; 0, ∃${o.ch} &gt; 0, ∀x ∈ I,`;
+  /* les valeurs d'essai : x autour de x₀ (ou grand), f(x) autour de ℓ (ou grand), et deux valeurs par lettre */
+  const XS=o.k==="T2"?[0.5,3,8,20,120]:[0,0.03,-0.03,0.2,-0.2,0.7,-0.7,1.6,-1.6,5.3,-5.3].map(d=>x0+d),YS=fini?[0,0.07,-0.07,0.6,-0.6,3.1,-3.1].map(d=>l+d):[-50,-3,0.4,3,50];
+  const L=[];for(const eta of [0.25,1.1])for(const eps of [0.15,2.2])for(const al of [2,15])for(const A of [1.5,20])L.push({eta,eps,al,A});
+  const essais=[];XS.forEach(x=>YS.forEach(y=>L.forEach(v=>essais.push({x,y,v}))));
+  const lis=src=>{const out=[];for(const e of essais){const r=O.predicat(src,{x:e.x,y:e.y,"η":e.v.eta,"ε":e.v.eps,"α":e.v.al,a:e.v.A});if(r===null)return null;out.push(r);}return out;};
+  const comme=(V,i,ech)=>essais.every((e,k)=>V[k]===pr(e.x,e.y,ech?{eta:fini?e.v.eps:e.v.A,eps:e.v.eta,al:fini?e.v.eps:e.v.A,A:e.v.eta}:e.v)[i]);
+  const E=[{w:`La condition sur x : ${fx(h(o.hyp))}`,why:o.wh,pts:1},
+    {w:`La conclusion sur f(x) : ${fx(h(o.ccl))}`,why:fini?`f(x) est proche de ${Lt} : à une distance plus petite que ε.`:`f(x) est ${o.ic===5?"grand : plus grand que A":"très négatif : plus petit que −A"}, et cela pour n'importe quel A positif.`,pts:1},
+    {w:`<b>${O.f(`${cadre} ${h(o.hyp)} ⇒ ${h(o.ccl)}`)}</b>`,why:`L'ordre des lettres compte. ${o.q1} est donné en premier, et il est quelconque : c'est la précision demandée sur f(x). ${o.ch} vient ensuite : on le choisit en fonction de ${o.q1}, et il porte sur x.`,pts:1}];
+  function juge(rep){if(!propre(rep.hyp)||!propre(rep.ccl))return {incomplet:"Remplis les deux cases : la condition sur x, puis la conclusion sur f(x)."};
+    const H=lis(rep.hyp),C=lis(rep.ccl);
+    if(!H||!C)return {incomplet:`Je n'arrive pas à lire ${!H?"la condition sur x":"la conclusion sur f(x)"}. Écris une inégalité, par exemple |x - 1| < η ou f(x) > A.`};
+    const okH=comme(H,o.ih),okC=comme(C,o.ic);if(okH&&okC)return {ok:true};
+    const F=[];if(!okH)F.push("hyp");if(!okC)F.push("ccl");let d=null;
+    if((!okH&&comme(H,o.ih,true))||(!okC&&comme(C,o.ic,true)))d={etape:2,type:`${o.q1} et ${o.ch} échangés`,titre:"Où ça part : le rôle des deux lettres.",msg:`${o.ch} mesure la condition sur x : c'est le nombre qu'on choisit. ${o.q1} mesure la conclusion sur f(x) : c'est le nombre qu'on nous donne.`};
+    else if(!okH&&[0,2,3].includes(o.ih)&&[0,2,3].some(i=>i!==o.ih&&comme(H,i)))d={etape:0,type:"côté de la limite",titre:"Où ça part : la condition sur x.",msg:o.ih===0?`Ici on regarde les x des deux côtés de ${X} : ${fx(h(o.hyp))}.`:`Ici on ne regarde qu'un côté de ${X} : ${fx(h(o.hyp))}.`};
+    else if(!okH&&o.ih===0&&essais.every((e,k)=>H[k]===(e.x!==x0&&pr(e.x,e.y,e.v)[0])))d={etape:0,type:"limite épointée écrite à la place de la limite",titre:"Où ça part : la condition sur x.",msg:`Avec « 0 &lt; » devant, tu enlèves le point ${X} lui-même : c'est la limite épointée. La définition demandée garde ${X}.`};
+    else if(!okH&&(comme(H,1)||comme(H,5)||comme(H,6)))d={etape:0,type:"condition et conclusion échangées",titre:"Où ça part : la condition sur x.",msg:"La première case porte sur x, pas sur f(x) : c'est ce qu'on suppose. La conclusion sur f(x) vient après la flèche."};
+    else d=!okH?{etape:0,type:"condition sur x",titre:"Où ça part : la condition sur x.",msg:`La condition attendue : ${fx(h(o.hyp))}.`}:{etape:1,type:"conclusion sur f(x)",titre:"Où ça part : la conclusion sur f(x).",msg:`La conclusion attendue : ${fx(h(o.ccl))}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux cases sont à revoir":F[0]==="hyp"?"la condition sur x est à revoir":"la conclusion sur f(x) est à revoir"}.`,diag:d};}
+  const tap=x=>x.replace(/−/g,"-"),ech=x=>x.replace(/[ηα]/g,"§").replace(new RegExp(o.q1,"g"),o.ch).replace(/§/g,o.q1);
+  return {sig:"DF"+o.k+","+x0+","+l,
+    q:`Soit f une fonction définie sur un intervalle I. Écris, avec des quantificateurs, ce que veut dire « ${o.dit} », c'est-à-dire ${fx(o.lim)}. Le début est donné : complète la condition sur x, puis la conclusion sur f(x).`,corps:"",
+    texte:`définition de « ${o.dit} » : ${cadre.replace(/&gt;/g,">")} … ⇒ …`,
+    champs:[{k:"champ",id:"hyp",nom:"condition sur x",label:`$${cadre}$`,ex:"la condition sur x"},{k:"champ",id:"ccl",nom:"conclusion",label:"$⇒$",ex:"la conclusion sur f(x)",sym:SYMD,aide:"Les boutons écrivent dans la case où tu es."}],juge,etapes:E,
+    bonne:O.f(`${cadre} ${h(o.hyp)} ⇒ ${h(o.ccl)}`),bonneTxt:`${cadre.replace(/&gt;/g,">")} ${o.hyp} ⇒ ${o.ccl}`,repBonne:{hyp:tap(o.hyp),ccl:tap(o.ccl)},repFausse:{hyp:tap(ech(o.hyp)),ccl:tap(ech(o.ccl))},nature:o.k,
+    ens:{type:"def",k:o.k,x0,l}};}
+/* une fonction qui a une limite finie en +∞ : f, ℓ, |f(x) − ℓ| (décroissant sur ]0 ; +∞[), et un seuil qui convient */
+function fonctionInf(R,formes){const k=R.choix(formes),a=R.nz(-6,6),A=Math.abs(a);
+  if(k==="q"){let d,b;do{d=R.ent(0,6);b=R.ent(-9,9);}while(b===a*d||(!d&&!b));const K=Math.abs(b-a*d),num=(A===1?(a<0?"−":""):nb(a))+"x"+(b?(b>0?" + ":" − ")+Math.abs(b):""),den=d?`(x + ${d})`:"x",sg=a>0?"−":"+";
+    return {sig:"q"+[a,b,d],expr:`(${num})/${den}`,l:a,f:x=>(a*x+b)/(x+d),ec:x=>K/(x+d),ecT:`${K}/${den}`,K,d,
+      diff:`${fx(`f(x) ${sg} ${A} = (${num} ${sg} ${A===1?"":A}${d?`(x + ${d})`:"x"})/${den}`)}, ce qui donne ${fx(`${nb(b-a*d)}/${den}`)}`,maj:d?`${fx(`${K}/${den} &lt; ${K}/x`)}`:"",seuil:e=>K/e,seuilT:`${K}/ε`,inv:`${fx(`x &gt; ${K}/ε`)} donne ${fx(`${K}/x &lt; ε`)}`,
+      pq:`Le numérateur se comporte comme ${fx((A===1?(a<0?"−":""):nb(a))+"x")} et le dénominateur comme x : le quotient se rapproche de ${fx(nb(a))}.`};}
+  if(k==="c"){const b=R.nz(-9,9),B=Math.abs(b);
+    return {sig:"c"+[a,b],expr:`${nb(a)} ${b>0?"+":"−"} ${B}/x²`,l:a,f:x=>a+b/(x*x),ec:x=>B/(x*x),ecT:`${B}/x²`,K:B,d:0,diff:`${fx(`f(x) ${a>0?"−":"+"} ${A} = ${nb(b)}/x²`)}`,maj:"",seuil:e=>Math.sqrt(B/e),seuilT:`√(${B}/ε)`,inv:`${fx(`x &gt; √(${B}/ε)`)} donne ${fx(`x² &gt; ${B}/ε`)}, donc ${fx(`${B}/x² &lt; ε`)}`,
+      pq:`${fx(`${B}/x²`)} tend vers 0 quand x tend vers +∞ : il reste ${fx(nb(a))}.`};}
+  const c=R.ent(1,9),K=A*c,co=(A===1?(a<0?"−":""):nb(a));
+  return {sig:"r"+[a,c],expr:`${co}x²/(x² + ${c})`,l:a,f:x=>a*x*x/(x*x+c),ec:x=>K/(x*x+c),ecT:`${K}/(x² + ${c})`,K,d:c,diff:`${fx(`f(x) ${a>0?"−":"+"} ${A} = (${co}x² ${a>0?"−":"+"} ${A===1?"":A}(x² + ${c}))/(x² + ${c})`)}, ce qui donne ${fx(`${nb(-a*c)}/(x² + ${c})`)}`,maj:`${fx(`${K}/(x² + ${c}) &lt; ${K}/x²`)}`,seuil:e=>Math.sqrt(K/e),seuilT:`√(${K}/ε)`,inv:`${fx(`x &gt; √(${K}/ε)`)} donne ${fx(`x² &gt; ${K}/ε`)}, donc ${fx(`${K}/x² &lt; ε`)}`,
+    pq:`Le numérateur et le dénominateur se comportent tous les deux comme un multiple de x² : le quotient se rapproche de ${fx(nb(a))}.`};}
+function seuilAlpha(R){for(;;){const F=fonctionInf(R,["q","q","q","c","c"]),eps=R.choix(EPSN),e=eps.n/eps.d,Lt=nb(F.l),sg=F.l>0?"−":"+",ab=`|f(x) ${sg} ${Math.abs(F.l)}|`,quot=F.K/e;
+  const exact=F.sig[0]==="q"?quot-F.d:Math.sqrt(quot),rond=Math.abs(exact-Math.round(exact))<1e-9;if(exact<2)continue;
+  const exT=F.sig[0]==="q"?String(Math.round(exact)):rond?String(Math.round(exact)):`√(${Math.round(quot)})`,ok=al=>al>0&&F.ec(al)<=e*(1+1e-12);
+  const E=[{w:`<b>${fx(`ℓ = ${Lt}`)}</b>`,why:F.pq,pts:1},
+    {w:`${fx(`${ab} = ${F.ecT}`)} pour ${fx("x &gt; 0")}.`,why:`${F.diff}. Il reste à prendre la valeur absolue.`,pts:1},
+    {w:F.sig[0]==="q"?`${fx(`${F.ecT} &lt; ${dq(eps)}`)} quand ${fx(`${F.d?`x + ${F.d}`:"x"} &gt; ${d3(quot)}`)}${F.d?`, c'est-à-dire quand ${fx(`x &gt; ${d3(exact)}`)}`:""}.`:`${fx(`${F.ecT} &lt; ${dq(eps)}`)} quand ${fx(`x² &gt; ${d3(quot)}`)}, c'est-à-dire quand ${fx(`x &gt; √${Math.round(quot)}`)}${rond?"":`, environ ${d3(exact)}`}.`,why:`Les deux côtés sont positifs : on peut échanger la place du dénominateur et celle de ${dq(eps)}. Et ${fx(`${F.K}/${dq(eps)} = ${d3(quot)}`)}.`,pts:1},
+    {w:`<b>${fx(`α = ${exT}`)}</b> convient, et tout nombre plus grand aussi.`,why:`Pour tout ${fx("x &gt; α")}, l'écart ${fx(ab)} est plus petit que ${dq(eps)}. On ne cherche pas le plus petit seuil : un seuil qui convient suffit${rond?"":`, par exemple ${Math.ceil(exact)}`}.`,pts:1}];
+  const juge=rep=>{const c=rep.c||{},lu=nombre(c["ℓ"]);if(!lu)return {incomplet:"Écris la limite ℓ : un nombre, par exemple 3 ou -2."};
+    const al=O.calcule(c["α"],{});if(al===null||!Number.isFinite(al))return {incomplet:"Écris un seuil α : un nombre, par exemple 40 ou √300."};
+    if(!egal(lu,Q(F.l)))return {ok:false,faux:["ℓ"],resume:"Pas tout à fait : la limite ℓ est à revoir.",diag:{etape:0,type:"limite d'une fonction en +∞",titre:"Où ça part : la limite.",msg:`${F.pq} Donc ${fx(`ℓ = ${Lt}`)}.`}};
+    if(ok(al))return {ok:true};
+    return {ok:false,faux:["α"],resume:`Pas tout à fait : α = ${d3(al)} ${al>0?"est trop petit":"doit être strictement positif"}.`,diag:{etape:2,type:"seuil trop petit",titre:"Où ça part : la résolution de l'inéquation.",msg:al>0?`Juste après α = ${d3(al)}, l'écart ${fx(ab)} vaut ${pres(F.ec(al),e)} : ce n'est pas plus petit que ${dq(eps)}.`:"La définition demande un seuil α strictement positif."}};};
+  const bon={"ℓ":String(F.l),"α":exT};
+  return {sig:"SA"+F.sig+","+brut(eps),q:`Soit f la fonction définie sur ${fx("]0 ; +∞[")} par ${fx(`f(x) = ${F.expr}`)}. Quelle est sa limite ℓ en +∞ ? Donne ensuite un nombre ${fx("α &gt; 0")} tel que, pour tout ${fx("x &gt; α")}, on ait ${fx(`|f(x) − ℓ| &lt; ${dq(eps)}`)}.`,corps:"",
+    texte:`f(x) = ${F.expr} sur ]0 ; +∞[ ; la limite ℓ en +∞, puis un α > 0 tel que x > α ⇒ |f(x) − ℓ| < ${dq(eps)}`,
+    champs:[{k:"cases",id:"c",noms:["ℓ","α"],sym:["√("],aide:"Tout seuil qui convient est accepté : il n'y a pas une seule bonne réponse."}],juge,etapes:E,
+    bonne:`${fx(`ℓ = ${Lt}`)} ; ${fx(`α = ${exT}`)}, ou tout nombre plus grand`,bonneTxt:`ℓ = ${Lt} ; α = ${exT}, ou tout nombre plus grand`,repBonne:{c:bon},repFausse:{c:Object.assign({},bon,{"α":"1"})},nature:"α, "+F.sig[0],ens:{type:"alpha",f:F.f,l:F.l,eps:e}};}}
+function seuilEta(R){const eps=R.choix(EPSN.slice(0,8)),e=eps.n/eps.d,carre=R()<0.3,x0=carre?R.ent(1,4):R.ent(-5,5),X=nb(x0),dx=`|${moins("x",x0)}|`;
+  let expr,l,pire,E,m,exQ;
+  if(carre){const c=R.ent(-9,9);l=x0*x0+c;expr="x²"+(c?(c>0?" + ":" − ")+Math.abs(c):"");pire=t=>2*x0*t+t*t;m=2*x0+1;exQ=div(eps,m);
+    E=[{w:`${fx(`f(x) − ${par(l)} = x² − ${x0*x0}`)}, donc ${fx(`|f(x) − ${par(l)}| = ${dx} × |x + ${x0}|`)}.`,why:`On reconnaît ${fx("a² − b² = (a − b)(a + b)")}.`,pts:1},
+      {w:`Si ${fx(`${dx} &lt; 1`)}, alors ${fx(`|x + ${x0}| &lt; ${m}`)}, donc ${fx(`|f(x) − ${par(l)}| &lt; ${m} × ${dx}`)}.`,why:`Si x est à moins de 1 de ${X}, il est entre ${x0-1} et ${x0+1} : alors ${fx(`x + ${x0}`)} est entre ${2*x0-1} et ${2*x0+1}. Il faut majorer ce facteur, parce qu'il dépend de x.`,pts:1},
+      {w:`<b>${fx(`η = ${dq(eps)}/${m}`)}</b> convient, et tout nombre positif plus petit aussi.`,why:`Ce η est plus petit que 1, et ${fx(`${dx} &lt; η`)} donne ${fx(`|f(x) − ${par(l)}| &lt; ${m} × η`)}, c'est-à-dire ${dq(eps)}.`,pts:1}];}
+  else{m=R.nz(-6,6);const p=R.ent(-9,9),M=Math.abs(m);l=m*x0+p;expr=(M===1?(m<0?"−":""):nb(m))+"x"+(p?(p>0?" + ":" − ")+Math.abs(p):"");pire=t=>M*t;exQ=div(eps,M);
+    E=[{w:`${fx(`f(x) − ${par(l)} = ${M===1?(m<0?"−":""):nb(m)}(${moins("x",x0)})`)}, donc ${fx(`|f(x) − ${par(l)}| = ${M===1?"":M+" × "}${dx}`)}.`,why:`On factorise : ${fx(`${expr} − ${par(l)}`)} s'annule pour x = ${X}, donc ${fx(moins("x",x0))} est en facteur.`,pts:1.5},
+      {w:`<b>${fx(`η = ${M===1?dq(eps):dq(eps)+"/"+M}`)}</b> convient, et tout nombre positif plus petit aussi.`,why:`${fx(`${dx} &lt; η`)} donne ${fx(`${M===1?"":M+" × "}${dx} &lt; ${dq(eps)}`)}.`,pts:1.5}];}
+  const ok=t=>t>0&&pire(t)<=e*(1+1e-12),ab=`|f(x) − ${par(l)}|`;
+  const juge=rep=>{const t=O.calcule((rep.c||{})["η"],{});if(t===null||!Number.isFinite(t))return {incomplet:"Écris un nombre η strictement positif, par exemple 0,02 ou 1/30."};
+    if(ok(t))return {ok:true};
+    return {ok:false,faux:["η"],resume:`Pas tout à fait : η = ${d3(t)} ${t>0?"est trop grand":"doit être strictement positif"}.`,diag:{etape:E.length-1,type:t>0?"η trop grand":"η négatif ou nul",titre:"Où ça part : le choix de η.",msg:t>0?`Avec η = ${d3(t)}, des x qui vérifient ${fx(`${dx} &lt; η`)} donnent un écart ${fx(ab)} qui va jusqu'à ${pres(pire(t),e)} : c'est plus que ${dq(eps)}.`:"La définition demande η strictement positif."}};};
+  return {sig:"SE"+expr+","+x0+","+brut(eps),q:`Soit f la fonction définie sur ℝ par ${fx(`f(x) = ${expr}`)}. Sa limite en ${X} est ${nb(l)}. Donne un nombre ${fx("η &gt; 0")} tel que, pour tout réel x, ${fx(`${dx} &lt; η`)} entraîne ${fx(`${ab} &lt; ${dq(eps)}`)}.`,corps:"",
+    texte:`f(x) = ${expr}, limite ${nb(l)} en ${X} ; un η > 0 tel que ${dx} < η ⇒ ${ab} < ${dq(eps)}`,
+    champs:[{k:"cases",id:"c",noms:["η"],large:true,aide:"Tout η qui convient est accepté. Tu peux écrire un nombre à virgule ou une fraction."}],juge,etapes:E,
+    bonne:`${fx(`η = ${nb(exQ)}`)}, ou tout nombre positif plus petit`,bonneTxt:`η = ${nb(exQ)}, ou tout nombre positif plus petit`,repBonne:{c:{"η":brut(exQ)}},repFausse:{c:{"η":brut(mul(exQ,3))}},nature:carre?"x²":"affine",
+    ens:{type:"eta",f:carre?x=>x*x+(l-x0*x0):x=>m*x+(l-m*x0),l,x0,eps:e}};}
+function redacFonction(R){const F=fonctionInf(R,["q","q","c","r"]),Lt=nb(F.l),sg=F.l>0?"−":"+",ab=`|f(x) ${sg} ${Math.abs(F.l)}|`;
+  const lignes=[[`${fx(`lim_{x→+∞} f(x) = ${Lt}`)}`,F.pq,0.5],
+    [`Pour tout ${fx("x &gt; 0")} : ${fx(`${ab} = ${F.ecT}`)}${F.maj?`, et ${F.maj}`:""}.`,`${F.diff}. Il reste à prendre la valeur absolue.${F.maj?" Puis on majore : un dénominateur plus petit donne une fraction plus grande.":""}`,1],
+    [`Soit ${fx("ε &gt; 0")}. On pose ${fx(`α = ${F.seuilT}`)}, qui est strictement positif.`,`On fixe un ε quelconque, puis on choisit α en fonction de lui : c'est l'ordre de la définition.`,1],
+    [`Pour tout ${fx("x &gt; α")} : ${F.inv}, donc ${fx(`${ab} &lt; ε`)}.`,`On part de ce qu'on suppose (x dépasse α) pour arriver à la conclusion.`,1],
+    [`Donc : ${O.f(`∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ ]0 ; +∞[, x &gt; α ⇒ ${ab} &lt; ε`)}.`,`On finit en écrivant la définition : c'est elle qu'on vient de vérifier.`,0.5]];
+  return {sig:"RF"+F.sig,q:`Soit f la fonction définie sur ${fx("]0 ; +∞[")} par ${fx(`f(x) = ${F.expr}`)}. Calcule la limite de f en +∞, puis démontre ce résultat en utilisant la définition de la limite d'une fonction.`,corps:"",
+    texte:`f(x) = ${F.expr} sur ]0 ; +∞[ : limite en +∞, démontrée avec la définition`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:"voir la rédaction",bonneTxt:`limite ${Lt}, rédaction avec α = ${F.seuilT}`,repBonne:{},nature:"papier, "+F.sig[0],ens:{type:"papier",f:F.f,l:F.l,seuil:F.seuil}};}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19321,6 +19430,12 @@ G.add("ana",[
    {t:"ε quelconque : N en fonction de ε",cc:4,gen:R=>rangEps(R()<0.4?tireNul(R):tireQuot(R))},
    {t:"une suite qui tend vers +∞ : N en fonction de A",cc:4,gen:rangInfini},
    {t:"la rédaction complète, sur papier, comme au CC",cc:10,gen:redacEps}]},
+ {id:"AN3",t:"Limite d'une fonction : les définitions",tache:"limite d'une fonction, les définitions",th:"limfonction",pts:3,lecons:["a-lim-fonction"],
+  paliers:[
+   {t:"écrire la définition demandée",cc:2,gen:definition},
+   {t:"limite en +∞ : la limite, puis un seuil α",cc:4,gen:seuilAlpha},
+   {t:"limite en un point : un η qui convient",cc:4,gen:seuilEta},
+   {t:"la démonstration complète, sur papier, comme au CC",cc:10,gen:redacFonction}]},
  {id:"AN4",t:"Calculer une limite de suite",th:"calcul",pts:3,lecons:["a-calcul","a-comparaison"],
   paliers:[
    {t:"un quotient de polynômes",cc:2,gen:limPoly},
@@ -20184,7 +20299,7 @@ function dessine(){
       if(on)g.querySelectorAll("button").forEach(y=>{if(y!==x&&(x.dataset.v===seul||y.dataset.v===seul))y.setAttribute("aria-pressed","false");});}));
     let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT")dernier=ev.target;});
     b.querySelectorAll(".en-sym button").forEach(x=>{x.addEventListener("pointerdown",ev=>ev.preventDefault());
-      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&g.contains(dernier)?dernier:g.querySelector("input");if(!i)return;
+      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:g.querySelector("input");if(!i)return;
         const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd,t=x.dataset.ins;i.value=i.value.slice(0,a)+t+i.value.slice(z);i.focus();i.setSelectionRange(a+t.length,a+t.length);});});
     b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
     const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
