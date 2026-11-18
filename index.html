@@ -19841,6 +19841,7 @@ function coursAdh(R){const a=R.ent(-9,6),b=a+R.ent(1,6),droite=R()<0.6,I=droite?
     [`Donc ${fx(nb(c))} est adhérent à ${fx(I)}.`,`La conclusion doit être écrite. Avec la définition du a), on écrirait : soit ${fx("ε &gt; 0")}, le nombre ${fx(droite?`max(${nb(Q(2*b-1,2))}, ${nb(b)} − ε/2)`:`min(${nb(Q(2*a+1,2))}, ${nb(a)} + ε/2)`)} est dans l'intervalle, à une distance de ${fx(nb(c))} plus petite que ε.`,0.5]],
     {type:"cours",u:n=>droite?b-1/n:a+1/n,dans:x=>droite?(x>=a&&x<b):(x>a&&x<=b),cible:c},"adhérent");}
 
+G.ana={val,rac,pc,unir,dansP,lisEns,memeEns,negation,phraseQ,phraseFr};/* repris par le Raisonnement */
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -20586,6 +20587,124 @@ G.add("algo",[
  {id:"AGQ3",t:"Question de cours : le master theorem",th:"master",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursMaster}]}
 ]);
 G.algo={execute,compte,joue,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
+})();
+
+</script>
+<script>
+/* Générateurs de Raisonnement (CC2 : ensembles, applications, quantificateurs, récurrence, logique). */
+(function(){
+"use strict";
+const G=window.GEN,O=G.outils,{Q,nb,brut,propre,nombre}=O,AN=G.ana;
+const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
+const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+const ent=x=>x<0?"−"+(-x):String(x);
+
+/* ---------- ensembles finis d'entiers ---------- */
+const tri=A=>[...new Set(A)].sort((x,y)=>x-y);
+const ensF=A=>A.length?"{"+A.map(ent).join(", ")+"}":"∅";
+const tapeF=A=>A.length?"{"+A.join(", ")+"}":"∅";
+function lisFini(src){let s=propre(src).trim();if(!s)return null;if(/^(∅|vide|ensemble vide|\{\s*\})$/i.test(s))return [];
+  s=s.replace(/^\{|\}$/g,"").trim();if(!s)return [];const P=s.split(/[\s,;]+/).filter(Boolean).map(x=>nombre(x));return P.every(x=>x&&x.d===1)?tri(P.map(x=>x.n)):null;}
+const memeF=(A,B)=>A.length===B.length&&A.every((x,i)=>x===B[i]);
+const OPF={"∪":(A,B)=>tri(A.concat(B)),"∩":(A,B)=>A.filter(x=>B.includes(x)),"∖":(A,B)=>A.filter(x=>!B.includes(x)),"Δ":(A,B)=>tri(A.filter(x=>!B.includes(x)).concat(B.filter(x=>!A.includes(x))))};
+const DITF={"∪":"les éléments qui sont dans l'un ou dans l'autre (ou dans les deux)","∩":"les éléments qui sont dans les deux à la fois","∖":"les éléments du premier qui ne sont pas dans le second","Δ":"les éléments qui sont dans un seul des deux"};
+const partie=(R,E,lo,hi)=>tri(R.mel(E).slice(0,R.ent(lo,hi)));
+/* o : {noms: [[étiquette, ensemble attendu, pourquoi]], enonce, rappel, sig, ens} : plusieurs ensembles finis à écrire */
+function ensemblesFinis(o){const ids=o.Q.map(x=>x[0]);
+  const E=o.Q.map(x=>({w:`<b>${fx(`${x[0]} = ${ensF(x[1])}`)}</b>`,why:x[2],pts:1}));
+  function juge(rep){const L=ids.map(k=>lisFini((rep.c||{})[k]));if(L.some(x=>!x))return {incomplet:"Écris chaque ensemble entre accolades, avec des virgules, par exemple {1, 4, 7}. Pour l'ensemble vide : ∅."};
+    const F=ids.filter((k,i)=>!memeF(L[i],o.Q[i][1]));if(!F.length)return {ok:true};
+    const i=ids.indexOf(F[0]),att=o.Q[i][1],lu=L[i],manque=att.filter(x=>!lu.includes(x)),trop=lu.filter(x=>!att.includes(x)),autre=lu.length?o.Q.find((x,j)=>j!==i&&memeF(lu,x[1])):null,conf=(o.pieges||[]).find(x=>x[0]===F[0]&&memeF(lu,x[1]));
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:i,type:conf?conf[2]:autre?"deux opérations sur les ensembles confondues":"élément oublié ou en trop dans un ensemble",titre:`Où ça part : ${F[0]}.`,
+      msg:conf?conf[3]:autre?`Tu as écrit ${fx(`${autre[0]}`)}. Ici on demande ${fx(F[0])} : ${o.Q[i][3]||o.Q[i][2]}`:`${manque.length?`Il manque ${et(manque.map(ent))}. `:""}${trop.length?`${et(trop.map(ent))} ${trop.length>1?"sont":"est"} en trop. `:""}${o.Q[i][2]}`}};}
+  const bon={},mauvais={};o.Q.forEach((x,i)=>{bon[x[0]]=tapeF(x[1]);mauvais[x[0]]=i?tapeF(x[1]):tapeF(x[1].length?x[1].slice(1):[99]);});
+  return {sig:o.sig,q:o.enonce,corps:o.rappel?`<p class="muted">${o.rappel}</p>`:"",texte:o.texte,champs:[{k:"cases",id:"c",noms:ids,large:true,aide:"Entre accolades, avec des virgules : {1, 4, 7}. L'ordre ne compte pas. Ensemble vide : ∅."}],juge,etapes:E,
+    bonne:o.Q.map(x=>fx(`${x[0]} = ${ensF(x[1])}`)).join(" ; "),bonneTxt:o.Q.map(x=>`${x[0]} = ${ensF(x[1])}`).join(" ; "),repBonne:{c:bon},repFausse:{c:mauvais},nature:o.nature,ens:Object.assign({type:"finis",rep:o.Q.map(x=>[x[0],x[1]])},o.ens)};}
+const revue=(A,B,dans)=>`On passe ${A.nom} en revue : ${A.v.map(x=>`${ent(x)} ${B.v.includes(x)?"est":"n'est pas"} dans ${B.nom}`).join(", ")}.`;
+function unionInter(R){const U=[0,1,2,3,4,5,6,7,8,9],A=partie(R,U,3,5),B=partie(R,U,3,5),un=OPF["∪"](A,B),it=OPF["∩"](A,B);
+  return ensemblesFinis({sig:"UI"+A+"|"+B,enonce:`On pose ${fx(`A = ${ensF(A)}`)} et ${fx(`B = ${ensF(B)}`)}. Écris la réunion ${fx("A ∪ B")} et l'intersection ${fx("A ∩ B")}.`,
+    rappel:`Rappel : ${fx("A ∪ B")} contient ${DITF["∪"]} ; ${fx("A ∩ B")} contient ${DITF["∩"]}.`,texte:`A = ${ensF(A)}, B = ${ensF(B)} ; A ∪ B et A ∩ B`,nature:it.length?"commun":"disjoints",ens:{A,B},
+    pieges:[["A ∪ B",it,"réunion et intersection échangées","Tu as écrit l'intersection. La réunion contient tous les éléments de A et tous ceux de B, écrits une seule fois."],["A ∩ B",un,"réunion et intersection échangées","Tu as écrit la réunion. L'intersection ne garde que les éléments qui sont à la fois dans A et dans B."]],
+    Q:[["A ∪ B",un,`On écrit tous les éléments de A, puis ceux de B qui n'y sont pas déjà : ${B.filter(x=>!A.includes(x)).map(ent).join(", ")||"aucun"}. Un élément ne s'écrit qu'une fois.`],["A ∩ B",it,`${revue({nom:"A",v:A},{nom:"B",v:B})} On garde ceux qui sont dans B${it.length?"":" : il n'y en a aucun, l'intersection est vide"}.`]]});}
+function differences(R){const U=[0,1,2,3,4,5,6,7,8,9],A=partie(R,U,3,5),B=partie(R,U,3,5),t=R.ent(0,2),ab=OPF["∖"](A,B),ba=OPF["∖"](B,A),de=OPF["Δ"](A,B),ca=OPF["∖"](U,A),cu=OPF["∖"](U,OPF["∪"](A,B));
+  const qAB=["A ∖ B",ab,`${revue({nom:"A",v:A},{nom:"B",v:B})} On garde ceux qui ne sont pas dans B.`],qBA=["B ∖ A",ba,`${revue({nom:"B",v:B},{nom:"A",v:A})} On garde ceux qui ne sont pas dans A.`];
+  const qD=["A Δ B",de,`C'est ${fx("(A ∖ B) ∪ (B ∖ A)")} : ${ensF(ab)} réuni avec ${ensF(ba)}. On enlève de la réunion les éléments communs.`],qC=["E ∖ A",ca,`On garde les éléments de E qui ne sont pas dans A.`],qU=["E ∖ (A ∪ B)",cu,`${fx(`A ∪ B = ${ensF(OPF["∪"](A,B))}`)}. On garde les éléments de E qui n'y sont pas : ceux qui ne sont ni dans A, ni dans B.`];
+  const QS=t===0?[qAB,qBA,qD]:t===1?[qAB,qD,qC]:[qD,qC,qU],avecE=t>0;
+  return ensemblesFinis({sig:"DF"+A+"|"+B+"|"+t,enonce:`On pose ${avecE?`${fx("E = {0, 1, 2, …, 9}")}, `:""}${fx(`A = ${ensF(A)}`)} et ${fx(`B = ${ensF(B)}`)}. Écris ${et(QS.map(x=>fx(x[0])))}.`,
+    rappel:`Rappel : ${fx("A ∖ B")} (« A privé de B ») contient les éléments de A qui ne sont pas dans B. ${fx("A Δ B")}, la différence symétrique, contient ${DITF["Δ"]} : ${fx("A Δ B = (A ∖ B) ∪ (B ∖ A)")}.${avecE?` ${fx("E ∖ A")} est le complémentaire de A dans E.`:""}`,
+    texte:`${avecE?"E = {0, …, 9}, ":""}A = ${ensF(A)}, B = ${ensF(B)} ; ${QS.map(x=>x[0]).join(", ")}`,nature:["différences","Δ et complémentaire","complémentaires"][t],ens:{A,B,U},
+    pieges:[["A ∖ B",ba,"sens de la différence","Tu as écrit B ∖ A. Dans A ∖ B, on part des éléments de A et on enlève ceux qui sont dans B."],["B ∖ A",ab,"sens de la différence","Tu as écrit A ∖ B. Dans B ∖ A, on part des éléments de B et on enlève ceux qui sont dans A."],["A Δ B",OPF["∪"](A,B),"différence symétrique prise pour la réunion","Tu as écrit la réunion. Dans la différence symétrique, on enlève les éléments qui sont dans A et dans B à la fois."]],Q:QS});}
+function cardinaux(R){const U=[1,2,3,4,5,6,7,8,9],A=partie(R,U,2,4),B=partie(R,U,2,5),un=OPF["∪"](A,B),it=OPF["∩"](A,B),cas=R.ent(0,1);
+  const N=cas?[["Card(A ∪ B)",un.length,`${fx(`A ∪ B = ${ensF(un)}`)} a ${un.length} éléments. On retrouve la formule ${fx("Card(A) + Card(B) − Card(A ∩ B)")} : ${A.length} + ${B.length} − ${it.length}.`],["Card(A × B)",A.length*B.length,`${fx("A × B")} est l'ensemble des couples (a, b) avec a dans A et b dans B : ${A.length} choix pour a, ${B.length} choix pour b, donc ${A.length} × ${B.length} couples.`],["Card(𝒫(A))",Math.pow(2,A.length),`${fx("𝒫(A)")} est l'ensemble des parties de A. Pour fabriquer une partie, on décide pour chaque élément si on le prend ou non : 2 choix, ${A.length} fois, donc ${fx(`2^{${A.length}} = ${Math.pow(2,A.length)}`)} parties, en comptant ∅ et A.`]]
+    :[["Card(A ∩ B)",it.length,`${fx(`A ∩ B = ${ensF(it)}`)} : ${it.length} ${it.length>1?"éléments communs":"élément commun"}.`],["Card(𝒫(B))",Math.pow(2,B.length),`Une partie de B se fabrique en décidant, pour chaque élément, si on le prend ou non : ${fx(`2^{${B.length}} = ${Math.pow(2,B.length)}`)} parties, en comptant ∅ et B.`],["Card(B × A)",A.length*B.length,`Un couple (b, a) : ${B.length} choix pour b, ${A.length} pour a, donc ${B.length} × ${A.length} couples. C'est le même nombre que pour ${fx("A × B")}, mais ce ne sont pas les mêmes couples.`]];
+  const ids=N.map(x=>x[0]);
+  function juge(rep){const L=ids.map(k=>nombre((rep.c||{})[k]));if(L.some(x=>!x||x.d!==1))return {incomplet:"Remplis les trois cases avec des entiers."};const F=ids.filter((k,i)=>L[i].n!==N[i][1]);if(!F.length)return {ok:true};const i=ids.indexOf(F[0]),v=L[i].n;
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:i,type:/𝒫/.test(F[0])&&(v===2*(cas?A:B).length||v===Math.pow((cas?A:B).length,2))?"nombre de parties : 2 puissance n":/×/.test(F[0])&&v===A.length+B.length?"cardinal d'un produit : on multiplie":"cardinal d'un ensemble",titre:`Où ça part : ${F[0]}.`,msg:N[i][2]}};}
+  const bon={},mauvais={};N.forEach((x,i)=>{bon[x[0]]=String(x[1]);mauvais[x[0]]=String(i===1?x[1]+1:x[1]);});
+  return {sig:"CA"+A+"|"+B+"|"+cas,q:`On pose ${fx(`A = ${ensF(A)}`)} et ${fx(`B = ${ensF(B)}`)}. Donne les trois nombres d'éléments demandés.`,corps:`<p class="muted">Rappel : Card(X) est le nombre d'éléments de X. ${fx("A × B")} est l'ensemble des couples (a, b) avec a dans A et b dans B. ${fx("𝒫(A)")} est l'ensemble de toutes les parties de A.</p>`,
+    texte:`A = ${ensF(A)}, B = ${ensF(B)} ; ${ids.join(", ")}`,champs:[{k:"cases",id:"c",noms:ids}],juge,etapes:N.map(x=>({w:`<b>${fx(`${x[0]} = ${x[1]}`)}</b>`,why:x[2],pts:1})),bonne:N.map(x=>fx(`${x[0]} = ${x[1]}`)).join(" ; "),bonneTxt:N.map(x=>`${x[0]} = ${x[1]}`).join(" ; "),
+    repBonne:{c:bon},repFausse:{c:mauvais},nature:"cardinaux",ens:{type:"card",A,B,cas}};}
+
+/* ---------- intervalles : réunion, intersection, différence ---------- */
+const {val,pc,unir,dansP,lisEns,memeEns}=AN;
+const ptR=p=>p.a&&p.b&&p.a.v===p.b.v?`{${p.a.t}}`:`${p.oa?"]":"["}${p.a?p.a.t:"−∞"}, ${p.b?p.b.t:"+∞"}${p.ob?"[":"]"}`;
+const ensR=P=>!P.length?"∅":P.length===1&&!P[0].a&&!P[0].b?"ℝ":P.map(ptR).join(" ∪ ");
+const tapeR=P=>!P.length?"∅":P.length===1&&!P[0].a&&!P[0].b?"ℝ":P.map(p=>`${p.oa?"]":"["}${p.a?brut(p.a.q):"-∞"} ; ${p.b?brut(p.b.q):"+∞"}${p.ob?"[":"]"}`).join(" ∪ ");
+const bas=p=>p.a?p.a.v:-Infinity,haut=p=>p.b?p.b.v:Infinity;
+function interP(P,Q2){const out=[];P.forEach(p=>Q2.forEach(q=>{let a,oa,b,ob;
+  if(bas(p)>bas(q)){a=p.a;oa=p.oa;}else if(bas(p)<bas(q)){a=q.a;oa=q.oa;}else{a=p.a;oa=p.oa||q.oa;}
+  if(haut(p)<haut(q)){b=p.b;ob=p.ob;}else if(haut(p)>haut(q)){b=q.b;ob=q.ob;}else{b=p.b;ob=p.ob||q.ob;}
+  const av=a?a.v:-Infinity,bv=b?b.v:Infinity;if(av<bv||(av===bv&&!oa&&!ob))out.push({a,oa:!a||oa,b,ob:!b||ob});}));return unir(out);}
+function complP(P){const S=unir(P),out=[];let a=null,oa=true,fini=false;
+  S.forEach(p=>{if(p.a){const av=a?a.v:-Infinity,ob=!p.oa;if(av<p.a.v||(a&&av===p.a.v&&!oa&&!ob))out.push({a,oa:!a||oa,b:p.a,ob});}
+    if(p.b){a=p.b;oa=!p.ob;}else fini=true;});
+  if(!fini)out.push({a,oa:!a||oa,b:null,ob:true});return out;}
+const diffP=(P,Q2)=>interP(P,complP(Q2));
+const CROC=[[false,false],[true,true],[false,true],[true,false]];
+function intervalleAlea(R,lo,hi){const t=R();if(t<0.15){const o=R()<0.5;return [pc(null,true,val(R.ent(lo,hi)),o)];}if(t<0.3){const o=R()<0.5;return [pc(val(R.ent(lo,hi)),o,null,true)];}
+  const a=R.ent(lo,hi-2),b=a+R.ent(1,5),[oa,ob]=R.choix(CROC);return [pc(val(a),oa,val(b),ob)];}
+/* o : {sig, enonce, rappel, texte, Q:[[étiquette, morceaux, pourquoi, appartient(x)]], nature} : plusieurs parties de ℝ à écrire */
+function partiesReelles(o){const ids=o.Q.map(x=>x[0]);
+  function juge(rep){const L=ids.map(k=>lisEns((rep.c||{})[k]));if(L.some(x=>x==="ordre"))return {incomplet:"Dans un intervalle, la borne de gauche est la plus petite. Vérifie l'ordre de tes bornes."};
+    if(L.some(x=>!x))return {incomplet:"Écris chaque ensemble avec des intervalles, par exemple ]-1 ; 3] ou ]-∞ ; 2[ ∪ [5 ; +∞[. Pour l'ensemble vide : ∅. Pour un seul nombre : {2}."};
+    const F=ids.filter((k,i)=>!memeEns(L[i],o.Q[i][1]));if(!F.length)return {ok:true};const i=ids.indexOf(F[0]),autre=L[i].length?o.Q.find((x,j)=>j!==i&&memeEns(L[i],x[1])):null,croc=memeEns(L[i],o.Q[i][1],true);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:i,type:croc?"crochets ouverts ou fermés":autre?"deux opérations sur les ensembles confondues":o.type||"opération sur des intervalles",titre:`Où ça part : ${F[0]}.`,
+      msg:croc?`Les bornes sont justes, mais pas les crochets. Pour chaque borne, demande-toi si ce nombre est dans l'ensemble : ${fx(`${F[0]} = ${ensR(o.Q[i][1])}`)}.`:autre?`Tu as écrit ${fx(autre[0])}. ${o.Q[i][2]}`:o.Q[i][2]}};}
+  const bon={},mauvais={};o.Q.forEach((x,i)=>{bon[x[0]]=tapeR(x[1]);mauvais[x[0]]=i?tapeR(x[1]):(x[1].length?"∅":"ℝ");});
+  return {sig:o.sig,q:o.enonce,corps:o.rappel?`<p class="muted">${o.rappel}</p>`:"",texte:o.texte,champs:[{k:"cases",id:"c",noms:ids,large:true,sym:["[","]"," ; "," ∪ ","+∞","-∞","∅"],aide:"Avec des intervalles : ]-1 ; 3], ou ]-∞ ; 2[ ∪ [5 ; +∞[. Ensemble vide : ∅. Un seul nombre : {2}."}],juge,
+    etapes:o.Q.map(x=>({w:`<b>${fx(`${x[0]} = ${ensR(x[1])}`)}</b>`,why:x[2],pts:1})),bonne:o.Q.map(x=>fx(`${x[0]} = ${ensR(x[1])}`)).join(" ; "),bonneTxt:o.Q.map(x=>`${x[0]} = ${ensR(x[1])}`).join(" ; "),
+    repBonne:{c:bon},repFausse:{c:mauvais},nature:o.nature,ens:{type:"reels",tests:o.Q.map(x=>({P:x[1],m:x[3]}))}};}
+function intervallesOps(R){for(;;){const A=intervalleAlea(R,-6,6),B=intervalleAlea(R,-6,6),un=unir(A.concat(B)),it=interP(A,B),ab=diffP(A,B),ba=diffP(B,A);if(!it.length&&R()<0.7)continue;if(memeEns(A,B))continue;
+  const dA=x=>dansP(A,x),dB=x=>dansP(B,x),t=R.ent(0,1),QS=[["A ∪ B",un,"Un réel est dans la réunion quand il est dans A ou dans B : on met les deux intervalles bout à bout, et on regarde s'ils se recouvrent ou s'il reste un trou.",x=>dA(x)||dB(x)],
+    ["A ∩ B",it,it.length?"Un réel est dans l'intersection quand il est dans A et dans B : c'est la partie commune. Elle commence au plus grand des deux débuts et finit au plus petit des deux bouts.":"A et B n'ont aucun réel en commun : l'intersection est vide.",x=>dA(x)&&dB(x)],
+    t?["A ∖ B",ab,"On garde les réels de A qui ne sont pas dans B. Attention aux crochets : une borne de B qui est dans B est enlevée, une borne de B qui n'est pas dans B reste.",x=>dA(x)&&!dB(x)]:["B ∖ A",ba,"On garde les réels de B qui ne sont pas dans A. Attention aux crochets : une borne de A qui est dans A est enlevée, une borne de A qui n'est pas dans A reste.",x=>dB(x)&&!dA(x)]];
+  return partiesReelles({sig:"IO"+ensR(A)+"|"+ensR(B)+t,enonce:`On pose ${fx(`A = ${ensR(A)}`)} et ${fx(`B = ${ensR(B)}`)}, deux parties de ℝ. Écris ${et(QS.map(x=>fx(x[0])))}.`,rappel:`Rappel : ${fx("A ∖ B")} contient les réels de A qui ne sont pas dans B. Dessine les deux intervalles sur une droite avant de répondre.`,
+    texte:`A = ${ensR(A)}, B = ${ensR(B)} ; ${QS.map(x=>x[0]).join(", ")}`,nature:it.length?"se recouvrent":"séparés",Q:QS});}}
+/* ∈ ou ⊂ : un ensemble dont certains éléments sont eux-mêmes des ensembles */
+function appartientInclus(R){const a=R.ent(1,4),b=a+R.ent(1,3),c=b+R.ent(1,3),elts=R.mel([a,[b],[a,b],[],[c],c,[a,c]]).slice(0,R.ent(3,4));
+  const cle=x=>JSON.stringify(x),dit=x=>Array.isArray(x)?(x.length?"{"+x.map(dit).join(", ")+"}":"∅"):String(x),dans=x=>elts.some(y=>cle(y)===cle(x)),inclus=X=>X.every(dans);
+  const CAND=R.mel([[`${a} ∈ A`,dans(a)],[`{${a}} ∈ A`,dans([a])],[`{${a}} ⊂ A`,inclus([a])],[`{${b}} ∈ A`,dans([b])],[`{${b}} ⊂ A`,inclus([b])],[`${b} ∈ A`,dans(b)],[`{${a}, ${b}} ∈ A`,dans([a,b])],[`{${a}, ${b}} ⊂ A`,inclus([a,b])],[`∅ ⊂ A`,true],[`∅ ∈ A`,dans([])],[`{{${b}}} ⊂ A`,inclus([[b]])],[`${c} ∈ A`,dans(c)],[`{${c}} ⊂ A`,inclus([c])]]).slice(0,5);
+  if(!CAND.some(x=>x[1])||CAND.every(x=>x[1]))return appartientInclus(R);
+  const vraies=CAND.map((x,i)=>x[1]?String(i):null).filter(Boolean),pq=x=>/∈/.test(x[0])?`${fx(x[0])} est ${x[1]?"vrai":"faux"} : ce qui est à gauche de ∈ ${x[1]?"est":"n'est pas"} l'un des éléments écrits dans A.`:`${fx(x[0])} est ${x[1]?"vrai":"faux"} : ${/^∅/.test(x[0])?"l'ensemble vide est inclus dans tout ensemble":`chaque élément de l'ensemble de gauche ${x[1]?"est":"devrait être"} un élément de A${x[1]?"":", et ce n'est pas le cas"}`}.`;
+  const E=[{w:`Les éléments de A sont : ${elts.map(x=>fx(dit(x))).join(" ; ")}. Il y en a ${elts.length}.`,why:"On les lit entre les accolades extérieures, séparés par les virgules extérieures. Un élément peut être lui-même un ensemble : {2} et 2 ne sont pas le même objet.",pts:1}].concat(CAND.map(x=>({w:`${fx(x[0])} : <b>${x[1]?"vrai":"faux"}</b>`,why:pq(x),pts:0.5})));
+  function juge(rep){const S=(rep.v||[]).slice().sort();if(!S.length)return {incomplet:"Coche toutes les affirmations vraies. Il y en a au moins une."};if(S.join()===vraies.join())return {ok:true};
+    const i=CAND.findIndex((x,k)=>S.includes(String(k))!==x[1]),x=CAND[i];
+    return {ok:false,faux:["v"],resume:"Pas tout à fait : au moins une affirmation est mal classée.",diag:{etape:i+1,type:/∈/.test(x[0])?"appartenir (∈) et être inclus (⊂) confondus":"inclusion : chaque élément doit appartenir",titre:`Où ça part : ${x[0]}.`,msg:pq(x)+" ∈ parle d'un élément de A ; ⊂ parle d'un ensemble dont tous les éléments sont dans A."}};}
+  return {sig:"AI"+cle(elts)+CAND.map(x=>x[0]).join("|"),q:`On pose ${fx(`A = {${elts.map(dit).join(", ")}}`)}. Parmi les affirmations suivantes, coche toutes celles qui sont vraies.`,corps:`<p class="muted">Rappel : ${fx("x ∈ A")} veut dire que x est un élément de A. ${fx("B ⊂ A")} veut dire que B est un ensemble dont tous les éléments sont dans A.</p>`,
+    texte:`A = {${elts.map(dit).join(", ")}} ; vraies parmi : ${CAND.map(x=>x[0]).join(" ; ")}`,champs:[{k:"multi",id:"v",o:CAND.map((x,i)=>[String(i),x[0]])}],juge,etapes:E,bonne:vraies.map(i=>fx(CAND[+i][0])).join(" ; "),bonneTxt:"vraies : "+vraies.map(i=>CAND[+i][0]).join(" ; "),
+    repBonne:{v:vraies},repFausse:{v:CAND.map((x,i)=>x[1]?null:String(i)).filter(Boolean)},nature:"∈ ou ⊂",ens:{type:"appart",elts,cand:CAND}};}
+
+G.rai={lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
+G.add("rai",[
+ {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
+  paliers:[
+   {t:"réunion et intersection",cc:2,gen:unionInter},
+   {t:"différence, différence symétrique, complémentaire",cc:3,gen:differences},
+   {t:"nombres d'éléments : produit, parties",cc:3,gen:cardinaux},
+   {t:"avec des intervalles de ℝ",cc:4,gen:intervallesOps},
+   {t:"appartenir ou être inclus",cc:3,gen:appartientInclus}]}
+]);
 })();
 
 </script>
