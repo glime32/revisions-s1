@@ -969,6 +969,8 @@ details.chapd:not([open])>summary{margin-bottom:0}
 /* entraînement : cases de réponse (mêmes valeurs que les champs des mini-quiz) */
 .en-nb{white-space:nowrap}
 .en-rep{display:grid;gap:12px;min-width:0}
+.en-rep>*,.en-rep .wex>li,.lp-body .pcheck label>span{min-width:0}
+.mx.en-coupe{white-space:normal}
 .en-case{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .en-in{font:inherit;width:4.4em;min-width:0;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
 .en-in.en-large{width:8.5em}
@@ -18491,7 +18493,7 @@ function exemple2(R){let a12,a21,a22,d,x0,y0,b1,b2;
   return {sig:JSON.stringify([A,b]),q:"Voici un système résolu par le pivot de Gauss. Il manque quatre nombres : complète les cases.",
     corps:`${sys(A,b,N)}<ol class="wex">${pas(false).map(x=>`<li><div>${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`,
     texte:`${comb(A[0],N)} = ${b1} ; ${comb(A[1],N)} = ${b2} (exemple à compléter)`,
-    champs:[{k:"trous",ids:["p","q","y","x"]}],juge,etapes:E,bonne:fx(`S = {(${nb(x0)}, ${nb(y0)})}`),bonneTxt:`cases ${d}, ${q2} ; y = ${y0}, x = ${x0}`,repBonne:{p:String(d),q:String(q2),y:String(y0),x:String(x0)},nature:"une"};
+    champs:[{k:"trous",ids:["p","q","y","x"]}],indice:false,juge,etapes:E,bonne:fx(`S = {(${nb(x0)}, ${nb(y0)})}`),bonneTxt:`cases ${d}, ${q2} ; y = ${y0}, x = ${x0}`,repBonne:{p:String(d),q:String(q2),y:String(y0),x:String(x0)},nature:"une"};
 }
 
 /* ---------- AL2 : seconds membres a, b, c, puis paramètre m ---------- */
@@ -19785,7 +19787,7 @@ function negation(o){ /* o : {sig, blocs:[["∀","ε > 0"],…], P (atome ou nul
   const bon={fin:finT.replace(/−/g,"-")},fausse={fin:(o.P?`${o.P.t} ⇒ ${o.Q.non}`:o.Q.t).replace(/−/g,"-")};ids.forEach((id,i)=>{bon[id]=inv(o.blocs[i][0]);fausse[id]=inv(o.blocs[i][0]);});
   return {sig:"NG"+o.sig,q:o.fr?`« ${o.fr} » s'écrit : ${O.f(h(phrase))}. Écris en symboles la phrase contraire, « ${o.frNon} ».`:`Écris la négation de la phrase : ${O.f(h(phrase))}.`,
     corps:`<p>Complète : dans chaque petite case, ∀ ou ∃ ; dans la grande case, la fin de la phrase.</p><p class="mq-row">${o.blocs.map((b,i)=>`<span class="en-case">${O.trou(ids[i])} $${h(b[1].trim())}$,</span>`).join(" ")}</p>`,
-    texte:`négation de : ${phrase}`,champs:[{k:"trous",ids},{k:"champ",id:"fin",nom:"fin de la phrase",label:"La fin de la phrase :",ex:"par exemple x > 2",sym:SYMQ,aide:"Les boutons écrivent dans la case où tu es."}],indice:false,juge,etapes:E,
+    corpsPapier:`<p>Sur ta feuille, écris la phrase contraire en entier, avec ses quantificateurs.</p>`,texte:`négation de : ${phrase}`,champs:[{k:"trous",ids},{k:"champ",id:"fin",nom:"fin de la phrase",label:"La fin de la phrase :",ex:"par exemple x > 2",sym:SYMQ,aide:"Les boutons écrivent dans la case où tu es."}],juge,etapes:E,
     bonne:O.f(h(neg)),bonneTxt:neg,repBonne:bon,repFausse:fausse,nature:o.nature,ens:{essais,vrai,blocs:o.blocs,P:!!o.P}};}
 function phraseQ(R,niveau){const c=R.ent(-9,9),C=nb(c),l=R.ent(-9,9),a=R.ent(-9,9),op=R.choix(["≤","≥","<",">"]),num=e=>c,U=[c-1,c-0.5,c,c+0.5,c+1],lu=moins("uₙ",l),lf=moins("f(x)",l),xa=moins("x",a),EPS=[0.5,1],UL=[l-1,l-0.5,l,l+0.5,l+1],XA=[a-1,a-0.5,a,a+0.5,a+1];
   if(niveau===1){const t=R.ent(0,4);
@@ -19822,6 +19824,22 @@ function phraseFr(R){const l=R.ent(-9,9),lu=moins("uₙ",l),UL=[l-1,l-0.5,l,l+0.
   {fr:`la fonction f s'annule sur ℝ`,non:"la fonction f ne s'annule pas sur ℝ",blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)","=","0",e=>e.p,()=>0),vars:{p:[-1,0,1]}}],i=R.ent(0,T.length-1),o=T[i];
   return Object.assign({sig:"FR"+i+(o.v===undefined?"":","+o.v),frNon:o.non,nature:"français"},o);}
 
+/* ---------- les questions « Connaissance du cours » des CC1 2024 et 2025 : sur papier, puis cochées ligne par ligne ---------- */
+const papierQ=(sig,q,corps,L,ens,nature)=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\$/g,"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+  etapes:L.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature,ens});
+function coursSup(R){const a=R.ent(-9,6),b=a+R.ent(1,6),ferme=R()<0.4,I=`${ferme?"[":"]"}${nb(a)} ; ${nb(b)}[`,un=`${nb(b)} − 1/n`;
+  return papierQ("QS"+I,"Connaissance du cours, comme au CC1 2025 (2 points).",`<ol type="a"><li>Soit A une partie non vide et majorée de ℝ. Donne une caractérisation de la borne supérieure de A.</li><li>Montre que ${fx(nb(b))} est la borne supérieure de ${fx(I)}.</li></ol>`,[
+    [`a) m est la borne supérieure de A si et seulement si m est un majorant de A et ${O.f("∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a")}.`,"C'est la réponse du corrigé officiel. Il précise : ne pas confondre cette caractérisation avec la définition (« le plus petit des majorants de A »), qui n'était pas ce qu'on demandait.",1],
+    [`b) Pour tout x de ${fx(I)}, ${fx(`x &lt; ${nb(b)}`)} : ${fx(nb(b))} est un majorant de ${fx(I)}.`,"La première moitié de la caractérisation : être un majorant.",0.5],
+    [`La suite ${fx(`uₙ = ${un}`)}, pour ${fx("n ≥ 2")}, est une suite d'éléments de ${fx(I)} qui converge vers ${fx(nb(b))}. Donc ${fx(nb(b))} est la borne supérieure de ${fx(I)}.`,`Le corrigé officiel utilise l'autre caractérisation du cours : m est un majorant de A et il existe une suite d'éléments de A qui converge vers m. Il faut ${fx("n ≥ 2")} : pour n = 1, le terme vaut ${fx(nb(b-1))}${b-1===a&&!ferme?", qui n'est pas dans l'intervalle":""}. Avec la caractérisation du a), on écrirait : soit ${fx("ε &gt; 0")}, le nombre ${fx(`max(${nb(Q(2*b-1,2))}, ${nb(b)} − ε/2)`)} est dans l'intervalle et il est strictement plus grand que ${fx(`${nb(b)} − ε`)}.`,0.5]],
+    {type:"cours",u:n=>b-1/n,dans:x=>(ferme?x>=a:x>a)&&x<b,cible:b},"borne sup");}
+function coursAdh(R){const a=R.ent(-9,6),b=a+R.ent(1,6),droite=R()<0.6,I=droite?`[${nb(a)} ; ${nb(b)}[`:`]${nb(a)} ; ${nb(b)}]`,c=droite?b:a,un=droite?`${nb(b)} − 1/n`:`${nb(a)} + 1/n`;
+  return papierQ("QA"+I,"Connaissance du cours, comme au CC1 2024 (2 points).",`<ol type="a"><li>Soit A une partie de ℝ. Donne la définition de « x est adhérent à A ».</li><li>Montre que ${fx(nb(c))} est adhérent à ${fx(I)}.</li></ol>`,[
+    [`a) x est adhérent à A si : ${O.f("∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε")}.`,"C'est la réponse du corrigé officiel : A contient des points aussi proches de x qu'on veut. x lui-même n'a pas besoin d'être dans A.",1],
+    [`b) La suite ${fx(`uₙ = ${un}`)}, pour ${fx("n ≥ 2")}, a pour limite ${fx(nb(c))}, et tous ses termes sont dans ${fx(I)}.`,`Le corrigé officiel utilise la propriété du cours : x est adhérent à A si et seulement s'il existe une suite d'éléments de A qui converge vers x.`,0.5],
+    [`Donc ${fx(nb(c))} est adhérent à ${fx(I)}.`,`La conclusion doit être écrite. Avec la définition du a), on écrirait : soit ${fx("ε &gt; 0")}, le nombre ${fx(droite?`max(${nb(Q(2*b-1,2))}, ${nb(b)} − ε/2)`:`min(${nb(Q(2*a+1,2))}, ${nb(a)} + ε/2)`)} est dans l'intervalle, à une distance de ${fx(nb(c))} plus petite que ε.`,0.5]],
+    {type:"cours",u:n=>droite?b-1/n:a+1/n,dans:x=>droite?(x>=a&&x<b):(x>a&&x<=b),cible:c},"adhérent");}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19837,7 +19855,7 @@ G.add("ana",[
    {t:"ε quelconque : N en fonction de ε",cc:4,gen:R=>rangEps(R()<0.4?tireNul(R):tireQuot(R))},
    {t:"une suite qui tend vers +∞ : N en fonction de A",cc:4,gen:rangInfini},
    {t:"la rédaction complète, sur papier, comme au CC",cc:10,gen:redacEps}]},
- {id:"AN3",t:"Limite d'une fonction : les définitions",tache:"limite d'une fonction, les définitions",th:"limfonction",pts:3,lecons:["a-lim-fonction"],
+ {id:"AN3",t:"Limite d'une fonction : les définitions",tache:"limite d'une fonction, les définitions",th:"limfonction",pts:3,lecons:["a-lim-fonction"],apres:["AN2"],
   paliers:[
    {t:"écrire la définition demandée",cc:2,gen:definition},
    {t:"limite en +∞ : la limite, puis un seuil α",cc:4,gen:seuilAlpha},
@@ -19868,12 +19886,14 @@ G.add("ana",[
    {t:"|ax + b| plus petit qu'un nombre",cc:3,gen:R=>absAffine(R,false)},
    {t:"valeur absolue plus grande qu'un nombre : deux morceaux",cc:3,gen:absDehors},
    {t:"deux distances, encadrement, partie entière, cas limites",cc:3,gen:deuxAbs}]},
- {id:"AN7",t:"Nier une phrase à quantificateurs",th:"quantif",pts:1,lecons:["a-quantif"],sansPapier:true,
+ {id:"AN7",t:"Nier une phrase à quantificateurs",th:"quantif",pts:1,lecons:["a-quantif"],
   paliers:[
    {t:"un quantificateur",cc:1,gen:R=>negation(phraseQ(R,1)),min:60},
    {t:"deux quantificateurs",cc:2,gen:R=>negation(phraseQ(R,2)),min:30},
    {t:"trois quantificateurs, avec ou sans implication",cc:3,gen:R=>negation(phraseQ(R,3)),min:60},
-   {t:"une phrase en français : écrire son contraire",cc:3,gen:R=>negation(phraseFr(R)),min:12}]}
+   {t:"une phrase en français : écrire son contraire",cc:3,gen:R=>negation(phraseFr(R)),min:12}]},
+ {id:"AQ1",t:"Connaissance du cours : caractériser la borne supérieure",th:"bornes",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:6,gen:coursSup}]},
+ {id:"AQ2",t:"Connaissance du cours : point adhérent",th:"bornes",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:6,gen:coursAdh}]}
 ]);
 })();
 
@@ -19954,7 +19974,7 @@ function traceExo(o){const P=o.P,cols=colonnes(P),B=boucleDe(P),X=execute(P,o.ar
   if(F)champs.push({k:"champ",id:"f",nom:"formule",label:`Pour un entier n quelconque, $${P.nom}(n) =$`,ex:"une formule avec n",sym:[["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]});
   return {sig:"TR"+texteProg(P).replace(/\s+/g," ")+"|"+o.args.join(","),
     q:`Voici une fonction écrite dans le pseudo-code du cours. On calcule ${fx(appel)}. Remplis la trace : la valeur de chaque variable avant la boucle, puis à la fin de chaque tour de la boucle${imb?" extérieure (celle de "+(B.v||"la première ligne « tant que »")+")":""}. Ajoute une ligne par tour, puis donne la valeur renvoyée.${F?` Enfin, donne ce que renvoie ${P.nom}(n) pour un entier n quelconque.`:""}`,
-    corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — trace de ${appel}${F?", puis formule en n":""}`,champs,juge,etapes:E,indice:false,
+    corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — trace de ${appel}${F?", puis formule en n":""}`,champs,juge,etapes:E,
     bonne:`${fx(`${appel} = ${ent(X.ret)}`)}, après ${N} ${N>1?"tours":"tour"}${F?` ; ${fx(`${P.nom}(n) = ${F.t}`)}`:""}`,bonneTxt:`${appel} = ${ent(X.ret)}, après ${N} ${N>1?"tours":"tour"}${F?` ; ${P.nom}(n) = ${F.t}`:""}`,
     repBonne:Object.assign({t:bonT,r:String(X.ret)},F?{f:F.tape}:{}),repFausse:Object.assign({t:fausse,r:String(X.ret)},F?{f:F.tape}:{}),nature:o.nature,ens:{P,args:o.args,cols,nmin:o.nmin||0}};}
 
@@ -20031,7 +20051,7 @@ function iteration(o){const P=o.P,B=boucleDe(P),cols=o.V.map(x=>x.v),NN=7,X=exec
   o.V.forEach((x,j)=>{champs.push({k:"champ",id:"f"+j,nom:`formule de ${x.v}`,label:`À la fin du tour i : $${ind(x.v,"i")} =$`,ex:"une formule avec i",sym:j===o.V.length-1?[["i","i"],["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]:null});bon["f"+j]=x.fermeTape;faux["f"+j]="("+x.fermeTape+")+i";});
   return {sig:"IT"+texteProg(P).replace(/\s+/g," ")+(o.demandeEI?"E":""),
     q:`Voici une fonction écrite dans le pseudo-code du cours. On note ${o.V.map(x=>fx(ind(x.v,"i"))).join(" et ")} ${o.V.length>1?"les valeurs":"la valeur"} de ${et(cols)} à la fin du tour numéro i de la boucle, et ${o.V.map(x=>fx(ind(x.v,0))).join(" et ")} ${o.V.length>1?"leurs valeurs":"sa valeur"} avant la boucle. ${o.demandeEI?"Écris l'équation d'itération, puis donne":"Donne"} ${o.V.length>1?"les formules":"la formule"} qui ${o.V.length>1?"donnent":"donne"} ${o.V.map(x=>fx(ind(x.v,"i"))).join(" et ")} en fonction de i.`,
-    corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — ${o.demandeEI?"équation d'itération et ":""}formule de ${cols.join(", ")} à la fin du tour i`,champs,juge,etapes:E,indice:false,
+    corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — ${o.demandeEI?"équation d'itération et ":""}formule de ${cols.join(", ")} à la fin du tour i`,champs,juge,etapes:E,
     bonne:o.V.map(x=>fx(`${ind(x.v,"i")} = ${x.ferme}`)).join(" et "),bonneTxt:o.V.map(x=>`${x.v}_i = ${x.ferme}`).join(" et "),repBonne:bon,repFausse:faux,nature:o.nature,ens:{P,cols,NN,type:"iter",ei:o.demandeEI}};}
 /* les familles : programme, équation d'itération, formule, et la preuve (pour le palier sur papier) */
 function famille(R,sorte){const k=R.ent(2,5),c0=R.ent(0,6),t=R.ent(0,9);
@@ -20094,7 +20114,7 @@ function comptage(o){const P=o.P,L=o.lettre,KS=[0,1,2,3,4,5,6].filter(k=>k>=(o.k
   return {sig:"CO"+texteProg(P).replace(/\s+/g," ")+L,
     q:`Voici une fonction écrite dans le pseudo-code du cours. Compte ses opérations élémentaires comme en cours : 1 pour chaque affectation, chaque calcul, chaque comparaison${o.appel?" et chaque appel":""}. ${L==="n"?`Donne le nombre d'opérations ${fx("T_{n}")} en fonction de n.`:`On suppose que n est une puissance de 2 : ${fx("n = 2^{p}")}. Donne le nombre d'opérations T en fonction de p.`}`,
     corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(P.vars.length?3:2,-1).map(x=>x.trim()).join(" ; ")} — nombre d'opérations en fonction de ${L}`,
-    champs:[{k:"champ",id:"T",nom:"nombre d'opérations",label:`$${nom} =$`,ex:`une formule avec ${L}`,sym:[[L,L],["^","^"],["/","/"],["(","("],[")",")"]],aide:"La gestion du « pour » et la ligne « Renvoyer » ne comptent pas."}],juge,etapes:o.etapes,indice:false,
+    champs:[{k:"champ",id:"T",nom:"nombre d'opérations",label:`$${nom} =$`,ex:`une formule avec ${L}`,sym:[[L,L],["^","^"],["/","/"],["(","("],[")",")"]],aide:"La gestion du « pour » et la ligne « Renvoyer » ne comptent pas."}],juge,etapes:o.etapes,
     bonne:fx(`${nom} = ${o.formule}`),bonneTxt:`${L==="n"?"T_n":"T"} = ${o.formule}`,repBonne:{T:o.tape},repFausse:{T:"("+o.tape+")+"+L},nature:o.nature,ens:{P,type:"compte",lettre:L,args:KS.map(o.arg),ks:KS}};}
 const CORPS=[()=>aff("s",["+","s","i"]),()=>aff("s",["+","s",["*",2,"i"]]),()=>aff("p",["*","p",2]),()=>aff("s",["+","s",["*","i","i"]]),()=>aff("c",["+","c",1]),()=>aff("s",["-",["*",3,"s"],"i"])];
 const INIT={s:0,p:1,c:0};
@@ -20140,7 +20160,7 @@ function recursif(R){const nom=R.choix(["F","G","H","Rec","Calc"]),ap=["appel",n
     return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F.map(x=>x==="T"?"la formule":x==="a"?"le nombre a":"le cas de base"))} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:d};}
   return {sig:"CR"+texteProg(P).replace(/\s+/g," "),q:`Voici une fonction récursive. Compte ses opérations élémentaires comme en cours : 1 pour chaque calcul, chaque comparaison et chaque appel. Donne ${fx(ind)}, puis le nombre a tel que ${fx("T_{n} = a + T_{n−1}")}, puis la formule de ${fx("T_{n}")} en fonction de n.`,
     corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — cas de base, équation de complexité, formule de Tₙ`,
-    champs:[{k:"cases",id:"c",noms:[ind,"a"]},{k:"champ",id:"T",nom:"Tₙ",label:"$T_{n} =$",ex:"une formule avec n",sym:[["n","n"],["(","("],[")",")"]]}],juge,etapes:E,indice:false,
+    champs:[{k:"cases",id:"c",noms:[ind,"a"]},{k:"champ",id:"T",nom:"Tₙ",label:"$T_{n} =$",ex:"une formule avec n",sym:[["n","n"],["(","("],[")",")"]]}],juge,etapes:E,
     bonne:`${fx(`${ind} = ${T0}`)} ; ${fx(`T_{n} = ${a} + T_{n−1}`)} ; ${fx(`T_{n} = ${formule}`)}`,bonneTxt:`T_${base} = ${T0} ; T_n = ${a} + T_(n−1) ; T_n = ${formule}`,repBonne:{c:{[ind]:String(T0),a:String(a)},T:tape},repFausse:{c:{[ind]:String(T0),a:String(a-1)},T:tape},nature:"récursif",
     ens:{P,type:"rec",args:KS,base,T0,a}};}
 
@@ -20168,7 +20188,7 @@ function ranger(R){const nb=R.choix([4,4,5]),FACT={t:"n!",cl:[99,0,0]},pool=R.me
     let d=null;for(let i=0;i+1<nb;i++){const x=F.find(z=>z.l===L[i]),y=F.find(z=>z.l===L[i+1]);if(cmpCl(x.r,y.r)>0){d={etape:1,type:"deux ordres de grandeur inversés",titre:`Où ça part : ${x.l} et ${y.l}.`,msg:`${fx(y.t)} grandit moins vite que ${fx(x.t)} : le quotient ${fx(`${y.r.t}/${x.r.t}`)} tend vers 0. Les constantes ne changent rien quand n est très grand.`};break;}}
     return {ok:false,faux:["o"],resume:"Pas tout à fait : ce n'est pas le bon ordre.",diag:d};}
   return {sig:"RG"+F.map(x=>x.t).join("|"),q:`Voici ${nb} suites : ${F.map(x=>`${x.l} : ${fx(x.t)}`).join(" ; ")}. Range-les de celle qui grandit le moins vite à celle qui grandit le plus vite, quand n devient très grand.`,corps:"",texte:`ranger par ordre de grandeur : ${F.map(x=>`${x.l} = ${x.t}`).join(" ; ")}`,
-    champs:[{k:"champ",id:"o",nom:"ordre",label:"De la plus lente à la plus rapide :",ex:"par exemple B A D C",sym:LET.map(l=>[l,l+" "])}],juge,etapes:E,bonne:bon.map(x=>x.l).join(" &lt; "),bonneTxt:bon.map(x=>x.l).join(" < "),repBonne:{o:att.split("").join(" ")},repFausse:{o:att.split("").reverse().join(" ")},nature:"ranger",
+    champs:[{k:"champ",id:"o",nom:"ordre",label:"De la plus lente à la plus rapide :",ex:"par exemple B A D C",apercu:false,sym:LET.map(l=>[l,l+" "])}],juge,etapes:E,bonne:bon.map(x=>x.l).join(" &lt; "),bonneTxt:bon.map(x=>x.l).join(" < "),repBonne:{o:att.split("").join(" ")},repFausse:{o:att.split("").reverse().join(" ")},nature:"ranger",
     ens:{type:"ranger",ordre:bon.map(x=>x.r.t)}};}
 function simplifier(R){const S=sommeRef(R,R.choix([2,3,3]),R()<0.8,true),ref=S.dom[1],PT=[7,20,50],G=GRANDS(S.exp||true);
   const E=[{w:`Les termes de ${fx("T_{n}")} sont de l'ordre de ${et(S.T.map(x=>fx(x[1].t)))}.`,why:"On regarde chaque terme sans sa constante.",pts:1},
@@ -20267,6 +20287,27 @@ function machine(R){const t=R.ent(0,3),d=R.ent(1,3),mm=R.choix([2,3,4,5,10]),N=R
     return {ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la bonne valeur.",diag:{etape:1,type:t<2?"taille traitée par une machine plus rapide":"temps d'exécution quand la taille change",titre:"Où ça part : le lien entre la taille et le temps.",msg:`${E[1].w} ${E[1].why}`}};}
   return {sig:"MA"+[t,d,mm,N,j],q,corps:"",texte:q.replace(/<[^>]+>|\$/g,""),champs:[{k:"champ",id:"v",nom:"réponse",label:t<2?"Taille que Y peut traiter :":"Temps, en secondes :",ex:"un nombre"}],juge,etapes:E,bonne:`<b>${rep}</b>`,bonneTxt:String(rep),repBonne:{v:String(rep)},repFausse:{v:String(t===0&&N*k!==rep?N*k:rep+1)},nature,ens:{type:"machine",t,d,mm,N,j,rep}};}
 
+/* ---------- les questions de cours des annales (CC de 2022 et de novembre 2024), sur papier ---------- */
+const papierQ=(sig,q,corps,L,nature)=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\$/g,"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+  etapes:L.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature,ens:{type:"cours"}});
+const coursMaster=()=>papierQ("QM","Question de cours, posée au CC de 2022.",`<ol type="a"><li>À quoi sert le master theorem ?</li><li>Énonce-le : l'hypothèse, puis les trois cas.</li></ol>`,[
+  ["a) Il permet d'avoir une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel.","C'est la phrase du corrigé officiel. Les deux idées à ne pas oublier : « récursif » et « taille divisée à chaque appel ».",1],
+  [`b) S'il existe des entiers a, b et d tels que ${O.f("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")} à partir d'un certain rang, alors :`,"a est le nombre d'appels récursifs, b l'entier par lequel la taille est divisée, d la puissance de n dans les opérations faites en plus des appels.",0.5],
+  [`${fx("T(n) = O(n^{d})")} si ${fx("b^{d} &gt; a")} ;`,"Les opérations faites en dehors des appels l'emportent.",0.5],
+  [`${fx("T(n) = O(n^{d} log n)")} si ${fx("b^{d} = a")} ;`,"Les deux pèsent autant : un facteur log n apparaît.",0.5],
+  [`${fx("T(n) = O(n^{log a / log b})")} si ${fx("b^{d} &lt; a")}.`,"Les appels récursifs l'emportent.",0.5]],"master");
+const coursIteration=()=>papierQ("QI","Questions de cours sur la preuve d'un algorithme itératif (la question c a été posée au CC de novembre 2024).",`<ol type="a"><li>Qu'est-ce qu'une équation d'itération ?</li><li>Qu'est-ce qu'un invariant de boucle ?</li><li>Dans une preuve de validité, à quoi servent les équations d'itération ?</li></ol>`,[
+  ["a) Une équation d'itération est une égalité qui relie les valeurs des variables d'une itération à la suivante.","Définition du cours (diapo 54). On la lit sur l'algorithme : c'est la « vérité ».",0.5],
+  ["b) Un invariant de boucle est une propriété censée être vraie au début des itérations et à la fin de chaque itération.","Définition du cours (diapo 54). C'est l'« hypothèse à prouver », par récurrence.",0.5],
+  ["c) Elles traduisent le fonctionnement de l'algorithme sous forme de relations entre les variables.","Première phrase du corrigé officiel. En 2024, le sujet les appelait « équations de récurrence ».",0.5],
+  ["Elles permettent de montrer qu'un invariant est héréditaire : s'il est vrai à une itération, alors il est vrai à la suivante.","Deuxième phrase du corrigé officiel : c'est dans l'étape de récurrence de la preuve qu'on s'en sert.",1]],"itération");
+function coursMillion(R){const [o,k,kt]=R.choix([["n³","un million de fois","1 000 000"],["n²","un million de fois","1 000 000"],["n.log(n)","mille fois","1000"],["log(n)","mille fois","1000"],["n","mille fois","1000"],["n²","mille fois","1000"]]);
+  return papierQ("QK"+o+kt,"Question de cours, posée au CC de novembre 2024 (avec d'autres nombres selon les sujets).",`<ol type="a"><li>Un algorithme de complexité ${fx(`θ(${o})`)} peut-il être ${k} plus lent qu'un autre algorithme de complexité ${fx(`θ(${o})`)} ? Justifie.</li><li>Rappelle ce que veulent dire ${fx("T_{n} = θ(R_{n})")}, ${fx("T_{n} = o(R_{n})")} et ${fx("T_{n} = ω(R_{n})")}.</li></ol>`,[
+    [`a) Oui : par exemple si le premier fait ${fx(`${kt} × ${o}`)} opérations et le deuxième ${fx(o)} opérations.`,`C'est la réponse du corrigé officiel. Le quotient des deux vaut ${kt}, un nombre strictement positif : les deux sont bien de l'ordre de ${fx(o)}. θ ne dit rien de la constante.`,1],
+    [`b) ${fx("T_{n} = θ(R_{n})")} : ${fx("T_{n}/R_{n}")} reste entre deux nombres strictement positifs, en particulier s'il tend vers un nombre strictement positif.`,"Même ordre de grandeur (diapo 77).",0.5],
+    [`${fx("T_{n} = o(R_{n})")} : ${fx("T_{n}/R_{n}")} tend vers 0.`,"T est strictement dominée par R.",0.25],
+    [`${fx("T_{n} = ω(R_{n})")} : ${fx("T_{n}/R_{n}")} tend vers +∞.`,"T domine strictement R.",0.25]],"θ");}
+
 G.add("algo",[
  {id:"AG1",t:"Trace d'une boucle",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
   paliers:[
@@ -20275,7 +20316,7 @@ G.add("algo",[
    {t:"un si dans la boucle",cc:4,gen:avecSi},
    {t:"deux boucles imbriquées",cc:5,gen:imbriquees,min:90},
    {t:"comme au CC : la trace, puis ce que calcule la fonction",cc:6,gen:avecFormule,min:50}]},
- {id:"AG2",t:"Équations d'itération et invariant de boucle",tache:"équations d'itération et invariant",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
+ {id:"AG2",t:"Équations d'itération et invariant de boucle",tache:"équations d'itération et invariant",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],apres:["AG1"],
   paliers:[
    {t:"l'équation d'itération, puis la formule : cas simples",cc:3,gen:R=>iteration(Object.assign(famille(R,"lin"),{demandeEI:true})),min:60},
    {t:"sommes et puissances",cc:4,gen:R=>iteration(Object.assign(famille(R,"som"),{demandeEI:true})),min:15},
@@ -20287,18 +20328,21 @@ G.add("algo",[
    {t:"deux boucles imbriquées",cc:4,gen:deuxBoucles,min:60},
    {t:"une boucle où i double, ou est divisé par 2",cc:5,gen:boucleDouble,min:40},
    {t:"récursif : cas de base, équation de complexité, formule",cc:5,gen:recursif,min:60}]},
- {id:"AG6",t:"Ordres de complexité : comparer deux suites",tache:"ordres de complexité",th:"notations",ex:"cc2",pts:4,lecons:["a2-notations"],sansPapier:true,
+ {id:"AG6",t:"Ordres de complexité : comparer deux suites",tache:"ordres de complexité",th:"notations",ex:"cc2",pts:4,lecons:["a2-notations"],apres:["AG5"],
   paliers:[
    {t:"ranger des suites par ordre de grandeur",cc:2,gen:ranger},
    {t:"l'ordre de complexité d'une somme : θ(…)",cc:2,gen:simplifier,min:150},
    {t:"o, θ ou ω, par la limite du quotient",cc:3,gen:R=>quotient(R,false)},
    {t:"vrai ou faux avec O, Ω, o, ω, θ",cc:3,gen:R=>quotient(R,true)}]},
- {id:"AG7",t:"Master theorem",th:"master",ex:"cc2",pts:3,lecons:["a2-boucles"],sansPapier:true,
+ {id:"AG7",t:"Master theorem",th:"master",ex:"cc2",pts:3,lecons:["a2-boucles"],apres:["AG6"],
   paliers:[
    {t:"lire a, b et d dans l'équation",cc:1,gen:masterLire,min:40},
    {t:"comparer b puissance d et a, puis conclure",cc:3,gen:R=>masterConclure(R,false),min:40},
    {t:"à partir d'une procédure récursive",cc:4,gen:R=>masterConclure(R,true),min:30},
-   {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100}]}
+   {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100}]},
+ {id:"AGQ1",t:"Question de cours : les équations d'itération et l'invariant",th:"preuves",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursIteration}]},
+ {id:"AGQ2",t:"Question de cours : mille fois plus lent, θ, o, ω",th:"notations",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursMillion}]},
+ {id:"AGQ3",t:"Question de cours : le master theorem",th:"master",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursMaster}]}
 ]);
 G.algo={execute,compte,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
 })();
@@ -21014,7 +21058,7 @@ function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n=
   const E={};
   J.forEach(e=>{if(e.k!=="tr")return;const d=GEN.par[e.g];if(!d)return;
     const g=E[e.g]||(E[e.g]=neuf()),day=A.ymd(new Date(e.t)),last=dernier(d),jr=g.jour[day]||(g.jour[day]={n:0,e:0});
-    g.n++;g.vu[e.sg]=1;jr.n++;if(e.r===1){g.nok++;g.ms+=e.ms||0;g.rt+=(e.ms||0)/(ccMin(d,Math.min(last,e.lv||0))*60e3);}
+    g.n++;g.vu[e.sg]=1;jr.n++;g.fx=e.r===0&&e.na?{lv:e.lv,m:e.m,na:e.na}:null;if(e.r===1){g.nok++;g.ms+=e.ms||0;g.rt+=(e.ms||0)/(ccMin(d,Math.min(last,e.lv||0))*60e3);}
     if(e.m==="pl"){g.ko=0;g.pap=0;if(e.r===1){g.lv=last;g.ok=1;}else{g.lv=Math.min(last,Math.max(0,e.to||0));g.ok=0;}}
     else if(e.m==="p"){
       if(e.r===2||(e.r===1&&e.lent&&g.lv===last))return;/* aidé, ou juste mais trop lent au dernier palier : ni juste ni faux */
@@ -21079,7 +21123,9 @@ function pageMatiere(sid){const S=SUBJ[sid];$("#main").className="s-"+sid;
 /* ---------- l'écran d'un exercice ---------- */
 let P=null,TIC=null;
 const stop=()=>{clearInterval(TIC);TIC=null;};
-function tirage(d,lv,g){for(let k=0;k<60;k++){const e=GEN.tire(d,lv,parseInt(GEN.outils.hache(d.id+"|"+lv+"|"+g.n+"|"+k),36));if(!g.vu[e.cle]||k===59)return e;}}
+function tirage(d,lv,g){const veut=g.fx&&g.fx.lv===lv?g.fx.na:null,graine=k=>parseInt(GEN.outils.hache(d.id+"|"+lv+"|"+g.n+"|"+k),36);let autre=null;
+  for(let k=0;k<60;k++){const e=GEN.tire(d,lv,graine(k));if(g.vu[e.cle])continue;if(!veut||e.nature===veut)return e;if(!autre)autre=e;}
+  return autre||GEN.tire(d,lv,graine(59));}
 function palierDepart(d){const T=theme(d),m=T?A.maitrise(d.sid,T):null,N=d.paliers.length;return m==null||m<0.4?0:m<0.75?Math.floor((N-1)/2):Math.max(0,N-2);}
 /* choisit l'exercice à montrer : placement, montée d'un palier, exercice en plus, ou passage d'entretien */
 function prochain(){const S=P.sess;
@@ -21093,12 +21139,14 @@ function prochain(){const S=P.sess;
     else{P.lv=g.lv;P.m="p";}
     P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=seuil(d)-1&&!g.pap&&!d.sansPapier;}
   P.exo=tirage(P.d,P.lv,P.g);P.aide=false;P.res=null;P.papier=false;
-  if(P.exo.papier)P.papierExige=P.papier=true;else if(P.exo.champs.some(c=>c.k==="trous"))P.papierExige=false;else if(P.papierExige)P.papier=true;
+  if(P.exo.papier)P.papierExige=P.papier=true;else if(P.exo.champs.some(c=>c.k==="trous")&&P.exo.corpsPapier==null)P.papierExige=false;else if(P.papierExige)P.papier=true;
   let t0=Date.now();try{const s=JSON.parse(sessionStorage.getItem("rev-s1-exo")||"null");if(s&&s.c===P.exo.cle&&t0-s.t<30*60e3)t0=s.t;else sessionStorage.setItem("rev-s1-exo",JSON.stringify({c:P.exo.cle,t:t0}));}catch(e){}
   P.t0=t0;S.dernierG=P.d.id;dessine();}
 function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:0,run:A.nouvRun(),avant:{},refaire:null,dernierG:null,faits:[],tout:!!tout}};
   if(d)P.sess.avant[d.id]=Object.assign({},etat(d.id));prochain();}
 
+const versFormule=t=>esc(String(t).replace(/\$/g,"")).replace(/\^\(([^()]*)\)/g,"^{$1}").replace(/\^(-?[A-Za-z0-9α-ω]+)/g,"^{$1}").replace(/sqrt|racine|rac/g,"√").replace(/\*/g," × ").replace(/-/g,"−").replace(/&lt;=/g,"≤").replace(/&gt;=/g,"≥").replace(/!=/g,"≠");
+const longues=r=>{if(r)r.querySelectorAll(".mx").forEach(m=>{if(m.textContent.length>40&&!m.parentElement.closest(".mx,.en-nb"))m.classList.add("en-coupe");});};
 const symHTML=c=>c.sym?`<div class="filters en-sym">${c.sym.map(x=>{const[l,v]=Array.isArray(x)?x:[x,x];return `<button type="button" class="btn" data-ins="${esc(v)}">${esc(l)}</button>`;}).join("")}</div>`:"";
 const ligneTrace=(c,r)=>`<tr><td>${r?"fin du tour "+r:"avant la boucle"}</td>${c.vars.map((v,k)=>`<td><input class="en-in" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${r?"fin du tour "+r:"avant la boucle"}"></td>`).join("")}</tr>`;
 function champsHTML(e){return e.champs.map(c=>{
@@ -21107,7 +21155,7 @@ function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="sym")return `<div data-ch="${c.id}" class="en-rep">${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
-  if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${c.sym&&c.apercu!==false?`<div class="mq-apercu" hidden></div>`:""}${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
 function lire(e){const rep={},b=$("#lpb");
   e.champs.forEach(c=>{
@@ -21150,13 +21198,13 @@ function dessine(){
   const tic=()=>{const c=$("#en-chrono");if(c)c.textContent=horloge(Date.now()-P.t0);else stop();};
   stop();tic();TIC=setInterval(tic,1000);
   if(P.papier){
-    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. ${e.papier?"Écris-la en entier, comme sur ta copie.":"Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion."}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
+    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corpsPapier!=null?e.corpsPapier:e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. ${e.papier?"Écris-la en entier, comme sur ta copie.":"Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion."}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
     $("#en-pied").innerHTML=`${P.papierExige||e.papier?`<button class="btn" id="en-nsp">Je ne sais pas</button>`:`<button class="btn" id="en-ecran">Répondre à l'écran</button>`}<button class="btn pri big" id="en-fini">J'ai fini : voir la correction</button>`;
     const ec=$("#en-ecran");if(ec)ec.addEventListener("click",()=>{P.papier=false;dessine();});
     const ns=$("#en-nsp");if(ns)ns.addEventListener("click",()=>valide(true));
-    $("#en-fini").addEventListener("click",corrigePapier);}
+    $("#en-fini").addEventListener("click",corrigePapier);longues(b);}
   else{
-    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="acts" id="en-plus">${e.indice===false||e.champs.some(c=>c.k==="trous")?"":`<button type="button" class="btn" id="en-ind">Indice</button>`}${e.champs.some(c=>c.k==="trous")?"":`<button type="button" class="btn" id="en-pap">Sur papier</button>`}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
+    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="acts" id="en-plus">${e.indice===false?"":`<button type="button" class="btn" id="en-ind">Indice</button>`}${e.champs.some(c=>c.k==="trous")&&e.corpsPapier==null?"":`<button type="button" class="btn" id="en-pap">Sur papier</button>`}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
     $("#en-pied").innerHTML=`<button class="btn" id="en-nsp">Je ne sais pas</button><button class="btn pri big" id="en-ok">Valider</button>`;
     const si=()=>b.querySelectorAll("[data-si]").forEach(z=>{const[c,v]=z.dataset.si.split(":"),on=b.querySelector(`[data-ch="${c}"] [aria-pressed="true"]`);z.hidden=!(on&&on.dataset.v===v);});
     b.querySelectorAll(".filters[data-ch] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;x.parentNode.querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));si();const i=b.querySelector("[data-si]:not([hidden]) input");if(i)i.focus();}));
@@ -21164,15 +21212,17 @@ function dessine(){
       if(on)g.querySelectorAll("button").forEach(y=>{if(y!==x&&(x.dataset.v===seul||y.dataset.v===seul))y.setAttribute("aria-pressed","false");});}));
     b.querySelectorAll("[data-plus]").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),c=e.champs.find(z=>z.id===g.dataset.ch),tb=g.querySelector("tbody");tb.insertAdjacentHTML("beforeend",ligneTrace(c,tb.children.length));const i=tb.lastElementChild.querySelector("input");if(i)i.focus();}));
     b.querySelectorAll("[data-moins]").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const tb=x.closest("[data-ch]").querySelector("tbody");if(tb.children.length>1)tb.lastElementChild.remove();}));
+    b.addEventListener("input",ev=>{const g=ev.target.closest&&ev.target.closest("[data-ch]"),ap=g&&g.querySelector(".mq-apercu");if(!ap)return;const v=ev.target.value.trim();ap.hidden=!v;if(v)ap.innerHTML=tx("Ce que tu as écrit : $"+versFormule(v)+"$");});
     let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT")dernier=ev.target;});
     b.querySelectorAll(".en-sym button").forEach(x=>{x.addEventListener("pointerdown",ev=>ev.preventDefault());
       x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:(g.querySelector("input")||b.querySelector("input"));if(!i)return;
-        const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd,t=x.dataset.ins;i.value=i.value.slice(0,a)+t+i.value.slice(z);i.focus();i.setSelectionRange(a+t.length,a+t.length);});});
+        const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd,t=x.dataset.ins;i.value=i.value.slice(0,a)+t+i.value.slice(z);i.focus();i.setSelectionRange(a+t.length,a+t.length);i.dispatchEvent(new Event("input",{bubbles:true}));});});
     b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
     const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
     const pap=$("#en-pap");if(pap)pap.addEventListener("click",()=>{P.papier=true;dessine();});
     $("#en-ok").addEventListener("click",()=>valide(false));
     $("#en-nsp").addEventListener("click",()=>valide(true));
+    longues(b);
     const i0=b.querySelector("input:not([hidden])");if(i0&&!matchMedia("(pointer:coarse)").matches)i0.focus();}
   A.motsClic(d.sid,b.querySelector(".lq"));
   queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);}
@@ -21181,7 +21231,7 @@ function dessine(){
 function enregistre(r,o){
   const d=P.d,e=P.exo,ms=Date.now()-P.t0,cc=ccMin(d,P.lv),lent=ms>LENT*cc*60e3,N=d.paliers.length,av=Object.assign({},etat(d.id));
   if(!P.sess.avant[d.id])P.sess.avant[d.id]=av;
-  const ev={k:"tr",s:d.sid,g:d.id,lv:P.lv,r,m:P.m,ms,sg:e.cle};if(lent)ev.lent=1;if(o.papier)ev.pap=1;if(P.m==="pl"&&r!==1)ev.to=palierDepart(d);if(o.type)ev.ty=o.type;
+  const ev={k:"tr",s:d.sid,g:d.id,lv:P.lv,r,m:P.m,ms,sg:e.cle};if(lent)ev.lent=1;if(o.papier)ev.pap=1;if(P.m==="pl"&&r!==1)ev.to=palierDepart(d);if(o.type)ev.ty=o.type;if(r===0&&e.nature&&P.m!=="pl")ev.na=e.nature;
   A.emit(ev);
   if(r!==2&&d.th)A.emit({k:"diag",s:d.sid,th:d.th,ok:Math.round((r===1?(P.lv+1)/N:0.6*P.lv/N)*100)/100,n:1,run:P.sess.run});
   A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle},o.carnet||{}));
@@ -21225,7 +21275,7 @@ function valide(nsp){
   if(cherche)h+=`<div class="en-cherche" id="en-ch"></div>`;
   else if(r===0)h+=`<h3>La correction</h3>${corr(j.diag?j.diag.etape:-1)}`;
   else h+=`<details class="ex"><summary><span><span class="h">Voir la correction</span></span></summary><div class="body">${corr(-1)}</div></details>`;
-  fb.innerHTML=tx(h);
+  fb.innerHTML=tx(h);longues(fb);
   if(cherche)chercheErreur(cherche,corr,R);else pied(R);
   fb.scrollIntoView({behavior:"smooth",block:"nearest"});}
 /* l'erreur n'est pas reconnue : une ou deux questions sur ses résultats intermédiaires pour trouver où ça part */
@@ -21251,6 +21301,7 @@ function corrigePapier(){const d=P.d,e=P.exo,b=$("#lpb"),tot=e.etapes.reduce((s,
   const maj=()=>{$("#en-note").textContent=`Note estimée : ${virg(note())} sur ${virg(tot)}. Il faut ${virg(Math.ceil(tot*0.8*2)/2)} pour que l'exercice compte juste.`;};
   b.querySelector(".pcheck").addEventListener("change",maj);maj();
   $("#en-pied").innerHTML=`<button class="btn pri big" id="en-noter">Enregistrer ma note</button>`;
+  longues(b);
   $("#en-noter").addEventListener("click",()=>{if(P.res)return;stop();const n=note(),ok=n>=tot*0.8-1e-9,manque=e.etapes.map((x,k)=>k).filter(k=>!b.querySelector(`.pcheck input[data-k="${k}"]`).checked);
     P.res={ok};b.querySelectorAll(".pcheck input").forEach(i=>{i.disabled=true;});
     const R=enregistre(ok?1:0,{papier:true,carnet:{papier:1,note:n,noteSur:tot,lignesManquantes:manque.map(k=>A.brut(e.etapes[k].w).slice(0,160))}}),ch=changement(d,R.av,R.ap);
@@ -21313,8 +21364,8 @@ function route(parts){const a=parts[0],b=parts[1];
 function bouton(){const p=(location.hash||"").slice(2).split("/"),main=$("#main");if(!main||main.querySelector(".en-lien"))return;
   if(SUBJ[p[0]]&&p[1]==="p"){const d=defs(p[0]).find(x=>(x.pages||[]).includes(p[2])),pg=main.querySelector(".page");if(d&&pg)pg.insertAdjacentHTML("beforeend",`<p class="en-lien"><a class="btn pri" href="#/entrainer/${d.sid}/${d.id}">M'entraîner sur cette méthode</a></p>`);}
   else if(p[0]==="lecon"&&SUBJ[p[1]]){const acts=main.querySelector(".lp-end .acts");if(!acts)return;
-    const d=defs(p[1]).find(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2]);});
-    if(d)acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">M'entraîner sur cette méthode</a>`);}}
+    const D=defs(p[1]).filter(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2])&&!x.fixe;});
+    D.forEach(d=>acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">${D.length>1?"M'entraîner : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)):"M'entraîner sur cette méthode"}</a>`));}}
 function brancher(A0,ext){A=A0;
   const liste=ext.routes.entrainer;ext.routes.entrainer=parts=>parts&&parts.length?route(parts):(stop(),liste());
   /* l'étape « Entraînement » du planning : après les leçons de son thème, importante seulement quand c'est le moment des exercices */
@@ -21327,7 +21378,8 @@ function brancher(A0,ext){A=A0;
   new MutationObserver(bouton).observe($("#main"),{childList:true,subtree:true});}
 const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);try{brancher(A0,ext);}catch(e){console.error(e);}return ext;};
-window.ENT={bloc,tuile,jour,etat,etats,entretien,echeance,encours:()=>P};/* encours : pour les essais */
+window.ENT={bloc,tuile,jour,etat,etats,entretien,echeance,longues,encours:()=>P,/* encours, rendu et longues : pour les essais */
+  rendu:e=>tx(`<p class="lq">${e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="en-rep" id="en-fb"><div class="verdict no">Pas tout à fait.</div><h3>La correction</h3><p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,0)}</div>`)};
 })();
 
 </script>
