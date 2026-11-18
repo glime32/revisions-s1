@@ -975,6 +975,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .en-case{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .en-in{font:inherit;width:4.4em;min-width:0;padding:8px 10px;border:2px solid var(--trait);border-radius:9px;background:#000;color:var(--encre)}
 .en-in.en-large{width:8.5em}
+.en-in.en-tl{width:13em;max-width:100%}
 .en-case.en-long{flex-wrap:wrap;white-space:normal}
 .en-in:focus{outline:none;border-color:var(--violet-hi)}
 .en-in[aria-invalid="true"]{border-color:var(--rouge)}
@@ -18226,7 +18227,7 @@ const fx=s=>`<span class="en-nb">$${s}$</span>`;
 const sys=(A,b,noms)=>`<span class="sys">${A.map((r,i)=>`<span>$${comb(r,noms)} = ${nb(b[i])}$</span>`).join("")}</span>`;
 const mat=(R,aug)=>{const c=R[0].length;return `<span class="mat" style="--n:${c}">${R.map(r=>r.map((x,j)=>`<span${aug&&j===c-1?' class="au"':""}>${typeof x==="string"?x:nb(x)}</span>`).join("")).join("")}</span>`;};
 const ligne=(i,m,j)=>{m=q(m);const a=Q(Math.abs(m.n),m.d),co=egal(a,1)?"":a.d===1?nb(a):"("+nb(a)+")";return `L_{${i}} ← L_{${i}} ${m.n<0?"+":"−"} ${co}L_{${j}}`;};
-const trou=(id,large)=>`<input class="en-in${large?" en-large":""}" data-c="${id}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Case à compléter">`;
+const trou=(id,large)=>`<input class="en-in${large===2?" en-large en-tl":large?" en-large":""}" data-c="${id}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Case à compléter">`;
 
 /* rang, et « cette ligne est-elle une conséquence du système ? » */
 function rang(M){M=M.map(r=>r.map(q));const n=M.length,c=M[0].length;let r=0;
@@ -20952,6 +20953,113 @@ function banqueQ(k){const eq=(a,b)=>Math.abs(a-b)<1e-9,K=k*k,car=e=>!eq(e.x*e.x,
 function vraiFauxInfini(R){const k=R.ent(1,5),B=banqueQ(k),G=R.mel([0,1,2,3,4,5,6,7,8,9,10,11,12]).slice(0,2),L=R.mel(B.filter(b=>G.includes(b.g)));
   return cocheVraies({sig:"VI"+L.map(l=>l.txt).sort().join("|"),q:"Parmi les quatre phrases suivantes, coche toutes celles qui sont vraies.",rappel:"Pour un ∀, cherche un contre-exemple. Pour un ∃, cherche un exemple. Et regarde dans quel ensemble on prend chaque lettre.",texte:"phrases sur ℕ, ℤ ou ℝ",L,nature:"sur ℕ, ℤ ou ℝ",ens:{type:"vfi",L}});}
 
+/* ---------- RA5 : récurrence ---------- */
+const {papierQ}=AN;
+const tape=x=>String(x).replace(/ⁿ/g,"^n").replace(/−/g,"-").replace(/×/g,"*").replace(/\[/g,"(").replace(/\]/g,")");
+const cf=(a,v)=>a===1?v:a===-1?"−"+v:nb(a)+v;
+const poly=(c2,c1,c0)=>{let t=c2?cf(c2,"n²"):"";if(c1)t+=t?` ${c1>0?"+":"−"} ${cf(Math.abs(c1),"n")}`:cf(c1,"n");if(c0)t+=t?` ${c0>0?"+":"−"} ${Math.abs(c0)}`:nb(c0);return t||"0";};
+const SYMREC=[["n","n"],["^","^"],["/","/"],["(","("],[")",")"],["²","²"]],proche=(a,b)=>a!==null&&Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b));
+const fact=n=>{let f=1;for(let i=2;i<=n;i++)f*=i;return f;};
+/* une somme et sa formule : g (rang n), dern (dernier terme), tS (terme ajouté au rang n + 1), tP (le même, entre parenthèses s'il le faut), F, F1, calc (lignes de l'hérédité) */
+function sommeRec(R){const t=R.ent(0,9),fac=`On développe et on regroupe, puis on factorise par ${fx("(n + 1)")} : c'est le facteur qu'on attend dans la formule au rang n + 1.`;
+  if(t<=4){let a,b;do{a=R.ent(1,5);b=R.ent(-3,3);}while(a+b<1);
+    const c1=a+2*b,pair=a%2===0,T=k=>a*k+b,lin=(x,y)=>plusC(cf(x,"n"),y),tS=lin(a,a+b),dern=lin(a,b),par=x=>/[+−]/.test(x)?`(${x})`:x;
+    const F=c1===0?cf(a/2,"n²"):pair?`n(${lin(a/2,c1/2)})`:`n(${lin(a,c1)})/2`,F1=c1===0?cf(a/2,"(n + 1)²"):pair?`(n + 1)(${lin(a/2,a+b)})`:`(n + 1)(${lin(a,2*a+2*b)})/2`,q=pair?poly(a/2,(3*a+2*b)/2,a+b):`(${poly(a,3*a+2*b,2*a+2*b)})/2`;
+    return {sig:"ar"+[a,b],g:`${T(1)} + ${T(2)} + ${T(3)} + … + ${par(dern)}`,n0:1,t:T,tS,tP:par(tS),dern,F,F1,calc:[`${F} + ${par(tS)} = ${q}`,`= ${F1}`],why:fac};}
+  if(t<=6){const q=R.ent(2,5),d=q-1;
+    return {sig:"ge"+q,g:`1 + ${q} + ${q}² + … + ${q}ⁿ`,n0:0,t:k=>Math.pow(q,k),tS:`${q}^(n + 1)`,tP:`${q}^(n + 1)`,dern:`${q}ⁿ`,F:d===1?"2^(n + 1) − 1":`(${q}^(n + 1) − 1)/${d}`,F1:d===1?"2^(n + 2) − 1":`(${q}^(n + 2) − 1)/${d}`,
+      calc:d===1?["2^(n + 1) − 1 + 2^(n + 1) = 2 × 2^(n + 1) − 1","= 2^(n + 2) − 1"]:[`(${q}^(n + 1) − 1)/${d} + ${q}^(n + 1) = (${q}^(n + 1) − 1 + ${d} × ${q}^(n + 1))/${d}`,`= (${q} × ${q}^(n + 1) − 1)/${d}`,`= (${q}^(n + 2) − 1)/${d}`],
+      why:`${d===1?"":`On met tout sur le dénominateur ${d}. `}On regroupe les deux puissances : il y en a ${d===1?"2":`1 + ${d} = ${q}`}, et ${fx(`${q} × ${q}^(n + 1) = ${q}^(n + 2)`)}.`};}
+  return R.choix([
+    {sig:"k2",g:"1² + 2² + 3² + … + n²",n0:1,t:k=>k*k,tS:"(n + 1)²",tP:"(n + 1)²",dern:"n²",F:"n(n + 1)(2n + 1)/6",F1:"(n + 1)(n + 2)(2n + 3)/6",calc:["n(n + 1)(2n + 1)/6 + (n + 1)² = (n + 1)[n(2n + 1) + 6(n + 1)]/6","= (n + 1)(2n² + 7n + 6)/6","= (n + 1)(n + 2)(2n + 3)/6"],why:`On met ${fx("(n + 1)/6")} en facteur, puis on factorise : ${fx("2n² + 7n + 6 = (n + 2)(2n + 3)")}.`},
+    {sig:"k3",g:"1³ + 2³ + 3³ + … + n³",n0:1,t:k=>k*k*k,tS:"(n + 1)³",tP:"(n + 1)³",dern:"n³",F:"n²(n + 1)²/4",F1:"(n + 1)²(n + 2)²/4",calc:["n²(n + 1)²/4 + (n + 1)³ = (n + 1)²[n² + 4(n + 1)]/4","= (n + 1)²(n² + 4n + 4)/4","= (n + 1)²(n + 2)²/4"],why:`On met ${fx("(n + 1)²/4")} en facteur, puis on reconnaît ${fx("n² + 4n + 4 = (n + 2)²")}.`},
+    {sig:"kk",g:"1×2 + 2×3 + 3×4 + … + n(n + 1)",n0:1,t:k=>k*(k+1),tS:"(n + 1)(n + 2)",tP:"(n + 1)(n + 2)",dern:"n(n + 1)",F:"n(n + 1)(n + 2)/3",F1:"(n + 1)(n + 2)(n + 3)/3",calc:["n(n + 1)(n + 2)/3 + (n + 1)(n + 2) = (n + 1)(n + 2)(n/3 + 1)","= (n + 1)(n + 2)(n + 3)/3"],why:`On met ${fx("(n + 1)(n + 2)")} en facteur.`},
+    {sig:"fr",g:"1/(1×2) + 1/(2×3) + … + 1/(n(n + 1))",n0:1,t:k=>1/(k*(k+1)),i0:"1/2",tS:"1/((n + 1)(n + 2))",tP:"1/((n + 1)(n + 2))",dern:"1/(n(n + 1))",F:"n/(n + 1)",F1:"(n + 1)/(n + 2)",calc:["n/(n + 1) + 1/((n + 1)(n + 2)) = (n(n + 2) + 1)/((n + 1)(n + 2))","= (n + 1)²/((n + 1)(n + 2))","= (n + 1)/(n + 2)"],why:`On met au même dénominateur, on reconnaît ${fx("n² + 2n + 1 = (n + 1)²")}, puis on simplifie par ${fx("(n + 1)")}.`}]);}
+function recCompleter(R){const S=sommeRec(R),n0=S.n0,val=x=>n=>O.calcule(tape(x),{n}),Ff=val(S.F),F1f=val(S.F1),v0=S.t(n0),vT=S.i0||nb(v0),NS=[1,2,3,4,5,6],P=`${S.g} = ${S.F}`;
+  const E=[{w:`Initialisation : pour n = ${n0}, la somme vaut ${fx(vT)} et la formule donne ${fx(vT)}.`,why:`Au rang ${n0}, la somme n'a qu'un seul terme. Dans la formule, on remplace n par ${n0}.`,pts:1},
+    {w:`Le terme ajouté au rang n + 1 : ${fx(S.tS)}.`,why:`Le dernier terme de la somme au rang n est ${fx(S.dern)}. On y remplace n par n + 1.`,pts:1},
+    {w:`Ce qu'il faut obtenir : ${fx(S.F1)}.`,why:"C'est la formule de l'énoncé, où chaque n est remplacé par (n + 1). L'écrire avant de calculer donne le but à atteindre.",pts:1},
+    {w:`Le calcul de l'hérédité : ${S.calc.map(fx).join(" ")}.`,why:`D'après l'hypothèse de récurrence, la somme jusqu'au rang n vaut ${fx(S.F)} : on lui ajoute le nouveau terme. ${S.why}`,pts:1},
+    {w:`Conclusion : par récurrence, la propriété est vraie pour tout entier n ≥ ${n0}.`,why:`Elle est vraie au rang ${n0}, et chaque fois qu'elle est vraie à un rang, elle l'est au rang suivant.`,pts:0.5}];
+  function juge(rep){if(["a","b","c","d"].some(k=>!propre(rep[k])))return {incomplet:"Remplis les quatre cases."};const a=O.calcule(tape(rep.a),{}),b=O.calcule(tape(rep.b),{});if(a===null||b===null)return {incomplet:"Dans les deux premières cases, écris un nombre."};
+    const C=NS.map(n=>O.calcule(tape(rep.c),{n})),D=NS.map(n=>O.calcule(tape(rep.d),{n}));if(C.some(v=>v===null)||D.some(v=>v===null))return {incomplet:"Je n'arrive pas à lire une des formules. Écris-les avec la lettre n, par exemple (n+1)(n+2)/2 ou 2^(n+1)."};
+    const okA=proche(a,v0),okB=proche(b,Ff(n0)),okC=NS.every((n,i)=>proche(C[i],S.t(n+1))),okD=NS.every((n,i)=>proche(D[i],F1f(n))),F=[];if(!okA)F.push("a");if(!okB)F.push("b");if(!okC)F.push("c");if(!okD)F.push("d");if(!F.length)return {ok:true};
+    const d=!okA||!okB?{etape:0,type:"initialisation d'une récurrence",titre:"Où ça part : l'initialisation.",msg:`Pour n = ${n0}, la somme n'a qu'un seul terme : elle vaut ${fx(vT)}. Dans la formule, on remplace n par ${n0} : on trouve aussi ${fx(vT)}.`}
+      :!okC?{etape:1,type:NS.every((n,i)=>proche(C[i],S.t(n)))?"terme du rang n à la place du terme du rang n + 1":"terme ajouté au rang n + 1",titre:"Où ça part : le terme ajouté.",msg:`Le dernier terme de la somme au rang n est ${fx(S.dern)}. Au rang n + 1, on y remplace n par n + 1 : le nouveau terme est ${fx(S.tS)}.`}
+      :{etape:2,type:NS.every((n,i)=>proche(D[i],Ff(n)))?"formule recopiée au rang n":"formule écrite au rang n + 1",titre:"Où ça part : la formule au rang n + 1.",msg:`Dans ${fx(S.F)}, on remplace chaque n par (n + 1) : ${fx(S.F1)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length} case${F.length>1?"s sont":" est"} à revoir.`,diag:d};}
+  return {sig:"RC"+S.sig,q:`Complète cette démonstration par récurrence : pour tout entier n ≥ ${n0}, ${fx(P)}.`,
+    corps:`<p><b>Initialisation.</b> Pour n = ${n0}, le membre de gauche vaut ${O.trou("a")} et la formule donne ${O.trou("b")}. Les deux sont égaux : la propriété est vraie au rang ${n0}.</p><p><b>Hérédité.</b> Soit n ≥ ${n0}. On suppose la propriété vraie au rang n. Au rang n + 1, la somme a un terme de plus, qui vaut ${O.trou("c",2)}</p><p>Il faut donc montrer que la nouvelle somme vaut ${O.trou("d",2)} C'est la formule de l'énoncé, où n est remplacé par n + 1.</p>`,
+    corpsPapier:`<p>Sur ta feuille, rédige la démonstration en entier : la propriété, l'initialisation, l'hérédité, la conclusion.</p>`,texte:`récurrence à compléter : ${P}`,champs:[{k:"trous",ids:["a","b","c","d"]},{k:"sym",id:"s",sym:SYMREC,aide:"Pour une puissance, écris 2^(n+1). Les boutons écrivent dans la case où tu es."}],indice:false,juge,etapes:E,
+    bonne:`${fx(vT)} et ${fx(vT)} ; terme ajouté ${fx(S.tS)} ; à obtenir ${fx(S.F1)}`,bonneTxt:`initialisation ${vT} = ${vT} ; terme ajouté ${S.tS} ; à obtenir ${S.F1}`,repBonne:{a:tape(vT),b:tape(vT),c:tape(S.tS),d:tape(S.F1)},repFausse:{a:tape(vT),b:tape(vT),c:tape(S.dern),d:tape(S.F1)},nature:S.sig.slice(0,2)==="ar"?"arithmétique":S.sig.slice(0,2)==="ge"?"géométrique":"autre somme",ens:{type:"somme",S}};}
+/* uₙ divisible par m : uₙ₊₁ = al × uₙ + m × be ; alt = une autre décomposition juste */
+function diviseur(R){const t=R.ent(0,7);
+  if(t<=3){const [a,b]=R.choix([[5,2],[7,3],[4,1],[7,1],[6,1],[9,2],[8,3],[10,1],[5,1],[3,1],[7,2],[9,4],[11,1],[8,1]]),m=a-b;
+    return b===1?{sig:"p"+a,uT:`${a}ⁿ − 1`,u:n=>Math.pow(a,n)-1,m,al:a,beT:"1",alt:[1,`${a}ⁿ`],calc:[`uₙ₊₁ = ${a} × ${a}ⁿ − 1`,`= ${a}(${a}ⁿ − 1) + ${a} − 1`,`= ${a}uₙ + ${m}`]}
+      :{sig:"p"+[a,b],uT:`${a}ⁿ − ${b}ⁿ`,u:n=>Math.pow(a,n)-Math.pow(b,n),m,al:a,beT:`${b}ⁿ`,alt:[b,`${a}ⁿ`],calc:[`uₙ₊₁ = ${a} × ${a}ⁿ − ${b} × ${b}ⁿ`,`= ${a}(${a}ⁿ − ${b}ⁿ) + ${a} × ${b}ⁿ − ${b} × ${b}ⁿ`,`= ${a}uₙ + ${m} × ${b}ⁿ`]};}
+  if(t===4)return {sig:"cc",src:"C'est l'exercice 3 du CC du 15 novembre 2024.",uT:"3^(2n + 2) − 2^(n + 1)",u:n=>Math.pow(3,2*n+2)-Math.pow(2,n+1),m:7,al:2,beT:"3^(2n + 2)",alt:[9,"2^(n + 1)"],calc:["uₙ₊₁ = 3^(2n + 4) − 2^(n + 2)","= 9 × 3^(2n + 2) − 2 × 2^(n + 1)","= 7 × 3^(2n + 2) + 2 × 3^(2n + 2) − 2 × 2^(n + 1)","= 2uₙ + 7 × 3^(2n + 2)"],astuce:"L'astuce du corrigé officiel : écrire 9 = 7 + 2."};
+  if(t<=6)return R.choix([
+    {sig:"q1",uT:"n³ − n",u:n=>n*n*n-n,m:3,al:1,beT:"n² + n",calc:["uₙ₊₁ = (n + 1)³ − (n + 1)","= n³ + 3n² + 3n + 1 − n − 1","= (n³ − n) + 3n² + 3n","= uₙ + 3(n² + n)"]},
+    {sig:"q2",uT:"n³ + 2n",u:n=>n*n*n+2*n,m:3,al:1,beT:"n² + n + 1",calc:["uₙ₊₁ = (n + 1)³ + 2(n + 1)","= n³ + 3n² + 3n + 1 + 2n + 2","= (n³ + 2n) + 3n² + 3n + 3","= uₙ + 3(n² + n + 1)"]},
+    {sig:"q3",uT:"n² + n",u:n=>n*n+n,m:2,al:1,beT:"n + 1",calc:["uₙ₊₁ = (n + 1)² + (n + 1)","= n² + 2n + 1 + n + 1","= (n² + n) + 2n + 2","= uₙ + 2(n + 1)"]},
+    {sig:"q4",uT:"n³ + 5n",u:n=>n*n*n+5*n,m:3,al:1,beT:"n² + n + 2",calc:["uₙ₊₁ = (n + 1)³ + 5(n + 1)","= n³ + 3n² + 3n + 1 + 5n + 5","= (n³ + 5n) + 3n² + 3n + 6","= uₙ + 3(n² + n + 2)"]},
+    {sig:"q5",uT:"n² − n",u:n=>n*n-n,m:2,al:1,beT:"n",calc:["uₙ₊₁ = (n + 1)² − (n + 1)","= n² + 2n + 1 − n − 1","= (n² − n) + 2n","= uₙ + 2n"]}]);
+  const [a,r]=R.choix([[4,2],[4,5],[5,3],[5,7],[6,4],[7,5],[3,1],[3,3]]),m=a-1;
+  return {sig:"r"+[a,r],uT:`${a}ⁿ + ${r}`,u:n=>Math.pow(a,n)+r,m,al:a,beT:`−${r}`,alt:[1,`${a}ⁿ`],calc:[`uₙ₊₁ = ${a} × ${a}ⁿ + ${r}`,`= ${a}(${a}ⁿ + ${r}) − ${a*r} + ${r}`,`= ${a}uₙ − ${m*r}`,`= ${a}uₙ + ${m} × (−${r})`]};}
+const beP=D=>/[+−]/.test(D.beT)&&!/^−\d+$/.test(D.beT)?`(${D.beT})`:/^−/.test(D.beT)?`(${D.beT})`:D.beT;
+const etapesDiv=D=>{const u0=D.u(0);return [
+  {w:`Initialisation : ${fx(`u₀ = ${nb(u0)}`)}, et ${u0===0?`0 est divisible par ${D.m} (0 = ${D.m} × 0)`:`${nb(u0)} = ${D.m} × ${nb(u0/D.m)}`}.`,why:"On remplace n par 0. Toute puissance d'exposant 0 vaut 1.",pts:1},
+  {w:`${D.calc.map(fx).join(" ")}.`,why:`On écrit ${fx("uₙ₊₁")}, puis on fait apparaître ${fx("uₙ")} : c'est le seul moyen d'utiliser l'hypothèse de récurrence.${D.astuce?" "+D.astuce:""}`,pts:2},
+  {w:`${fx(D.al===1?"uₙ":`${D.al}uₙ`)} est un multiple de ${D.m} par hypothèse de récurrence, et ${fx(`${D.m} × ${beP(D)}`)} aussi. Donc ${fx("uₙ₊₁")} est un multiple de ${D.m}.`,why:`La somme de deux multiples de ${D.m} est un multiple de ${D.m}.`,pts:1}];};
+function recDivisible(R){const D=diviseur(R),NS=[0,1,2,3,4,5],u0=D.u(0),E=etapesDiv(D);
+  function juge(rep){if(["i","al","be"].some(k=>!propre(rep[k])))return {incomplet:"Remplis les trois cases."};const i=O.calcule(tape(rep.i),{}),al=O.calcule(tape(rep.al),{});if(i===null||al===null)return {incomplet:"Dans les deux petites cases, écris un nombre."};
+    const B=NS.map(n=>O.calcule(tape(rep.be),{n}));if(B.some(v=>v===null))return {incomplet:"Je n'arrive pas à lire la formule de la grande case. Écris-la avec la lettre n, par exemple 2^n ou n^2 + n."};
+    const okI=proche(i,u0),ent=Number.isInteger(al)&&B.every(v=>Number.isFinite(v)&&Math.abs(v-Math.round(v))<1e-9),k=NS.findIndex((n,j)=>!proche(al*D.u(n)+D.m*B[j],D.u(n+1))),F=[];if(!okI)F.push("i");if(k>=0||!ent){F.push("al","be");}if(!F.length)return {ok:true};
+    const d=!okI?{etape:0,type:"initialisation d'une récurrence",titre:"Où ça part : l'initialisation.",msg:`Pour n = 0 : ${fx(`u₀ = ${nb(u0)}`)}. Toute puissance d'exposant 0 vaut 1.`}
+      :k>=0?{etape:1,type:"décomposition de uₙ₊₁ avec uₙ",titre:"Où ça part : le calcul de l'hérédité.",msg:`Vérifie avec n = ${NS[k]} : ${fx(`uₙ₊₁ = ${nb(D.u(NS[k]+1))}`)}, alors que ta formule donne ${fx(dec(al*D.u(NS[k])+D.m*B[k]))}. Une écriture juste : ${fx(D.calc[D.calc.length-1].replace(/^= /,"uₙ₊₁ = "))}.`}
+      :{etape:1,type:"second terme qui n'est pas un multiple visible",titre:"Où ça part : le multiple.",msg:`L'égalité est juste, mais ce que tu multiplies par ${D.m} doit être un entier pour tout n : sinon on ne voit pas que c'est un multiple de ${D.m}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${!okI&&F.length>1?"l'initialisation et le calcul sont à revoir":!okI?"l'initialisation est à revoir":"le calcul de l'hérédité est à revoir"}.`,diag:d};}
+  return {sig:"RD"+D.sig,q:`On pose ${fx(`uₙ = ${D.uT}`)} pour tout entier naturel n. On veut montrer par récurrence que ${fx("uₙ")} est divisible par ${D.m} pour tout n. Complète les deux étapes.`,
+    corps:`<p class="muted">Rappel : « divisible par ${D.m} » veut dire « égal à ${D.m} fois un entier ».${D.src?" "+D.src:""}</p><p><b>Initialisation.</b> ${fx("u₀ =")} ${O.trou("i")}</p><p><b>Hérédité.</b> On écrit ${fx("uₙ₊₁")} avec ${fx("uₙ")} et un multiple de ${D.m} :</p><p>${fx("uₙ₊₁ =")} ${O.trou("al")} ${fx(`× uₙ + ${D.m} ×`)} ${O.trou("be",2)}</p>`,
+    corpsPapier:`<p>Sur ta feuille, rédige la démonstration en entier : la propriété, l'initialisation, l'hérédité avec son calcul, la conclusion.</p>`,texte:`${D.uT} divisible par ${D.m} : initialisation, puis uₙ₊₁ = … × uₙ + ${D.m} × …`,champs:[{k:"trous",ids:["i","al","be"]},{k:"sym",id:"s",sym:SYMREC,aide:"Pour une puissance, écris 2^n. Plusieurs réponses sont possibles : le site vérifie la tienne."}],juge,etapes:E,
+    bonne:`${fx(`u₀ = ${nb(u0)}`)} ; ${fx(D.calc[D.calc.length-1].replace(/^= /,"uₙ₊₁ = "))}`,bonneTxt:`u₀ = ${nb(u0)} ; uₙ₊₁ = ${D.al}uₙ + ${D.m} × ${beP(D)}`,repBonne:{i:String(u0),al:String(D.al),be:tape(D.beT)},repFausse:{i:String(u0),al:String(D.al+1),be:tape(D.beT)},nature:D.sig[0]==="q"?"polynôme":"puissances",ens:{type:"div",D}};}
+function recRang(R){for(;;){const k=R.choix([3,5,10]),c=R.choix([2,5,10,20]),c2=R.choix([3,8,15,24]),c3=R.choix([1,5,10]),nf="n! (« factorielle n ») est le produit 1 × 2 × … × n, avec 0! = 1.",p2=n=>Math.pow(2,n),p3=n=>Math.pow(3,n);
+  const o=R.choix([{gT:"2ⁿ",dT:"n²",g:p2,d:n=>n*n,op:"≥"},{gT:"2ⁿ",dT:"n²",g:p2,d:n=>n*n,op:">"},{gT:"2ⁿ",dT:"2n + 1",g:p2,d:n=>2*n+1,op:"≥"},{gT:"n!",dT:"2ⁿ",g:fact,d:p2,op:"≥",note:nf},{gT:"n!",dT:"n²",g:fact,d:n=>n*n,op:"≥",note:nf},{gT:"n!",dT:"3ⁿ",g:fact,d:p3,op:"≥",note:nf},{gT:"3ⁿ",dT:"n³",g:p3,d:n=>n*n*n,op:">"},
+    {gT:"n²",dT:`2n + ${c2}`,g:n=>n*n,d:n=>2*n+c2,op:"≥"},{gT:"2ⁿ",dT:`n + ${c}`,g:p2,d:n=>n+c,op:"≥"},{gT:"2ⁿ",dT:`${k}n`,g:p2,d:n=>k*n,op:"≥"},{gT:"3ⁿ",dT:`2ⁿ + ${k}n`,g:p3,d:n=>p2(n)+k*n,op:"≥"},{gT:"2ⁿ",dT:`n² + ${c3}`,g:p2,d:n=>n*n+c3,op:"≥"},{gT:"n!",dT:`${k}n`,g:fact,d:n=>k*n,op:">",note:nf},{gT:"3ⁿ",dT:`${k}n + ${c}`,g:p3,d:n=>k*n+c,op:"≥"}]);
+  const vrai=n=>o.op==="≥"?o.g(n)>=o.d(n):o.g(n)>o.d(n);let n0=0;for(let n=0;n<=40;n++)if(!vrai(n))n0=n+1;if(n0<2||n0>8)continue;
+  const P=`${o.gT} ${o.op} ${o.dT}`,avant=[...Array(n0).keys()].filter(vrai),lig=n=>`n = ${n} : ${o.g(n)} et ${o.d(n)}, ${vrai(n)?"vrai":"faux"}`,lis=x=>{const v=nombre(x);return v&&v.d===1?v.n:null;};
+  const E=[{w:`On calcule les deux membres pour les premières valeurs de n. ${[...Array(n0+1).keys()].map(lig).join(" ; ")}.`,why:"On teste à la main avant de se lancer : c'est le seul moyen de trouver le rang de départ.",pts:1},
+    {w:`<b>${fx(`n₀ = ${n0}`)}</b>`,why:`La propriété est fausse pour n = ${n0-1} : on ne peut pas partir avant ${n0}.${avant.length?` Elle est vraie pour n = ${avant.join(", ")}, mais cela ne sert à rien : l'hérédité ne peut pas traverser n = ${n0-1}.`:""} À partir de ${n0}, elle ne redevient plus fausse : c'est ce que l'hérédité démontre.`,pts:1},
+    {w:`Initialisation : pour n = ${n0}, ${fx(h(`${o.g(n0)} ${o.op} ${o.d(n0)}`))}. La propriété est vraie au rang ${n0}.`,why:"L'initialisation se fait au rang de départ, qui n'est pas toujours 0.",pts:1}];
+  function juge(rep){const n=lis(rep.n),g=lis(rep.g),d=lis(rep.d);if(n===null||g===null||d===null)return {incomplet:"Remplis les trois cases avec des entiers."};const F=[];if(n!==n0)F.push("n");else{if(g!==o.g(n0))F.push("g");if(d!==o.d(n0))F.push("d");}if(!F.length)return {ok:true};
+    let dg;if(n<n0){let f=Math.max(n,0);while(vrai(f))f++;dg={etape:1,type:"rang de départ trop petit",titre:"Où ça part : le rang de départ.",msg:`Pour n = ${f}, les deux membres valent ${o.g(f)} et ${o.d(f)} : « ${o.g(f)} ${o.op} ${o.d(f)} » est faux. La propriété n'est donc pas vraie pour tous les entiers à partir de ${n}.`};}
+    else if(n>n0)dg={etape:1,type:"rang de départ qui n'est pas le plus petit",titre:"Où ça part : le plus petit rang.",msg:`La propriété est déjà vraie pour n = ${n0} (${o.g(n0)} ${o.op} ${o.d(n0)}), et elle le reste ensuite. ${n} convient, mais ce n'est pas le plus petit.`};
+    else dg={etape:2,type:"calcul de l'initialisation",titre:"Où ça part : l'initialisation.",msg:`Pour n = ${n0}, le membre de gauche vaut ${o.g(n0)} et le membre de droite vaut ${o.d(n0)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F[0]==="n"?"le rang de départ est à revoir":"l'initialisation est à revoir"}.`,diag:dg};}
+  return {sig:"RR"+P,q:`On veut démontrer par récurrence une propriété de la forme « pour tout entier n ≥ n₀, ${fx(h(P))} ». Trouve le plus petit entier n₀ qui convient, puis fais l'initialisation.`,
+    corps:`<p class="muted">Calcule les deux membres pour n = 0, 1, 2, 3… et regarde à partir d'où l'inégalité reste vraie.${o.note?" "+o.note:""}</p><p>Le plus petit rang de départ : ${fx("n₀ =")} ${O.trou("n")}</p><p>Initialisation, pour ${fx("n = n₀")} : le membre de gauche vaut ${O.trou("g")} et le membre de droite vaut ${O.trou("d")}</p>`,
+    corpsPapier:`<p>Sur ta feuille : calcule les deux membres pour les premières valeurs de n, donne n₀, puis écris l'initialisation.</p>`,texte:`rang de départ et initialisation pour : ${P}`,champs:[{k:"trous",ids:["n","g","d"]}],juge,etapes:E,bonne:`${fx(`n₀ = ${n0}`)} ; pour n = ${n0} : ${o.g(n0)} et ${o.d(n0)}`,bonneTxt:`n₀ = ${n0} ; ${o.g(n0)} ${o.op} ${o.d(n0)}`,
+    repBonne:{n:String(n0),g:String(o.g(n0)),d:String(o.d(n0))},repFausse:{n:String(n0-1),g:String(o.g(n0-1)),d:String(o.d(n0-1))},nature:/!/.test(P)?"factorielle":"puissance",ens:{type:"rang",g:o.g,d:o.d,op:o.op,gT:o.gT,dT:o.dT}};}}
+function recRedaction(R){const t=R.ent(0,6),consigne=`<p>Rédige sur ta feuille comme au contrôle : la propriété P(n), l'initialisation, l'hérédité, la conclusion.</p>`,fin=n0=>[`Conclusion : par récurrence, P(n) est vraie pour tout entier n ≥ ${n0}.`,"La phrase finale est attendue.",0.5];
+  if(t<=2){const S=sommeRec(R),n0=S.n0,vT=S.i0||nb(S.t(n0)),P=`${S.g} = ${S.F}`;
+    return papierQ("PS"+S.sig,`Démontre par récurrence que, pour tout entier n ≥ ${n0} : ${fx(P)}.`,consigne,[
+      [`On note P(n) la propriété : ${fx(P)}.`,"On commence toujours par dire clairement ce qu'on démontre.",0.5],
+      [`Initialisation : pour n = ${n0}, le membre de gauche vaut ${fx(vT)} et la formule donne ${fx(vT)}. P(${n0}) est vraie.`,`Au rang ${n0}, la somme n'a qu'un seul terme.`,1],
+      [`Hérédité : soit n un entier, n ≥ ${n0}. On suppose P(n), et on veut montrer P(n + 1) : ${fx(`${S.g} + ${S.tP} = ${S.F1}`)}.`,"On fixe un n et on suppose P(n) pour ce n seulement. Écrire P(n + 1) donne le but à atteindre.",1],
+      [`D'après P(n) : ${fx(`${S.g} + ${S.tP} = ${S.F} + ${S.tP}`)}.`,"C'est ici qu'on utilise l'hypothèse de récurrence : sans elle, ce n'est pas une récurrence.",1],
+      [`${S.calc.map(fx).join(" ")}. Donc P(n + 1) est vraie.`,S.why,1],fin(n0)],{type:"papier",S},"somme");}
+  if(t<=4){const D=diviseur(R),E=etapesDiv(D);
+    return papierQ("PD"+D.sig,`Démontre par récurrence que, pour tout entier naturel n, ${fx(D.uT)} est divisible par ${D.m}.`,consigne+(D.src?`<p class="muted">${D.src}</p>`:""),[
+      [`On pose ${fx(`uₙ = ${D.uT}`)} et on note P(n) : « ${fx("uₙ")} est divisible par ${D.m} ».`,"On commence toujours par dire clairement ce qu'on démontre.",0.5],[E[0].w+" P(0) est vraie.",E[0].why,1],
+      [`Hérédité : soit n ∈ ℕ. On suppose P(n) : ${fx("uₙ")} est un multiple de ${D.m}.`,"On fixe un n et on suppose P(n) pour ce n seulement.",0.5],[E[1].w,E[1].why,1.5],[E[2].w+" P(n + 1) est vraie.",E[2].why,1],fin(0)],{type:"papier",D},"divisibilité");}
+  const a=R.ent(2,6),x=a-1,X=x===1?"":x;
+  return papierQ("PB"+a,`Démontre par récurrence que, pour tout entier naturel n : ${fx(`${a}ⁿ ≥ 1 + ${X}n`)}.`,consigne,[
+    [`On note P(n) la propriété : ${fx(`${a}ⁿ ≥ 1 + ${X}n`)}.`,"On commence toujours par dire clairement ce qu'on démontre.",0.5],
+    [`Initialisation : ${fx(`${a}⁰ = 1`)} et ${fx(`1 + ${X||1} × 0 = 1`)}. P(0) est vraie.`,"Toute puissance d'exposant 0 vaut 1.",1],
+    [`Hérédité : soit n ∈ ℕ. On suppose P(n) : ${fx(`${a}ⁿ ≥ 1 + ${X}n`)}.`,"On fixe un n et on suppose P(n) pour ce n seulement.",0.5],
+    [`${fx(`${a}^(n + 1) = ${a} × ${a}ⁿ ≥ ${a}(1 + ${X}n) = ${a} + ${a*x}n`)}.`,`On multiplie les deux membres de l'hypothèse de récurrence par ${a}, qui est positif : l'inégalité garde son sens.`,1.5],
+    [`${fx(`${a} + ${a*x}n ≥ ${a} + ${X}n = 1 + ${X}(n + 1)`)}. Donc P(n + 1) est vraie.`,`${fx(`${a*x}n ≥ ${X}n`)} car n est positif ou nul. Et ${fx(`${a} + ${X}n = 1 + ${x} + ${X}n`)}, qui est bien ${fx(`1 + ${X}(n + 1)`)}.`,1],fin(0)],{type:"papier",B:a},"inégalité");}
+
 G.rai={appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
@@ -20980,7 +21088,13 @@ G.add("rai",[
    {t:"vrai ou faux, sur deux petits ensembles",cc:4,gen:vraiFauxFini},
    {t:"traduire une phrase en français",cc:3,gen:R=>traduction(aTraduire(R)),min:15},
    {t:"nier avec ⇒, « et », « ou », ou une double inégalité",cc:3,gen:R=>negation(phraseR(R,2)),min:20},
-   {t:"vrai ou faux sur ℕ, ℤ ou ℝ : l'ordre des quantificateurs",cc:4,gen:vraiFauxInfini,min:60}]}
+   {t:"vrai ou faux sur ℕ, ℤ ou ℝ : l'ordre des quantificateurs",cc:4,gen:vraiFauxInfini,min:60}]},
+ {id:"RA5",t:"La récurrence",th:"recurrence",pts:2.5,lecons:["r-recurrence"],
+  paliers:[
+   {t:"une démonstration à compléter (somme)",cc:4,gen:recCompleter,min:25},
+   {t:"divisibilité : faire apparaître le rang n",cc:5,gen:recDivisible,min:20},
+   {t:"inégalité : à partir de quel rang ?",cc:4,gen:recRang,min:15},
+   {t:"rédaction complète, sur papier",cc:10,gen:recRedaction,min:30}]}
 ]);
 })();
 
