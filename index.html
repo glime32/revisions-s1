@@ -973,7 +973,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .en-case.en-long{flex-wrap:wrap;white-space:normal}
 .en-in:focus{outline:none;border-color:var(--violet-hi)}
 .en-in[aria-invalid="true"]{border-color:var(--rouge)}
-.mat .en-in{width:3.4em;padding:3px 6px;text-align:center}
+.mat .en-in,.tbl.tr .en-in{width:3.4em;padding:3px 6px;text-align:center}
 .en-cherche{display:grid;gap:14px}
 .pcheck label>span{flex:1;min-width:0}
 
@@ -19877,6 +19877,142 @@ G.add("ana",[
 
 </script>
 <script>
+/* Générateurs d'Algo (CC2 : prouver une boucle, compter, complexité).
+   Un programme est un petit arbre : le même arbre est affiché dans le pseudo-code du cours et exécuté pour calculer la correction. */
+(function(){
+"use strict";
+const G=window.GEN,O=G.outils,{propre,nombre}=O;
+const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
+const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+const ent=x=>x<0?"−"+(-x):String(x);
+
+/* ---------- le mini-langage ---------- */
+/* expression : un entier, un nom de variable, ou [opérateur, gauche, droite] */
+const CALC={"+":(a,b)=>a+b,"-":(a,b)=>a-b,"*":(a,b)=>a*b,"div":(a,b)=>Math.floor(a/b),"mod":(a,b)=>((a%b)+b)%b,"<":(a,b)=>a<b,"≤":(a,b)=>a<=b,">":(a,b)=>a>b,"≥":(a,b)=>a>=b,"=":(a,b)=>a===b,"≠":(a,b)=>a!==b};
+const PRIO={"*":3,"div":3,"mod":3,"+":2,"-":2};
+const vaut=(e,env)=>typeof e==="number"?e:typeof e==="string"?env[e]:CALC[e[0]](vaut(e[1],env),vaut(e[2],env));
+function ecrit(e,par,dr){if(typeof e!=="object")return String(e);const q=PRIO[e[0]]||1,p=par?PRIO[par]||1:0,s=`${ecrit(e[1],e[0])} ${e[0]} ${ecrit(e[2],e[0],true)}`;
+  return q<p||(dr&&q===p&&!(par===e[0]&&(par==="+"||par==="*")))?`(${s})`:s;}
+/* instructions */
+const aff=(v,e)=>({k:"aff",v,e}),pour=(v,a,b,c)=>({k:"pour",v,a,b,c}),tq=(cond,c)=>({k:"tq",cond,c}),si=(cond,alors,sinon)=>({k:"si",cond,alors,sinon:sinon||null}),ret=e=>({k:"ret",e});
+function lignes(C,niv){const L=[],I="    ".repeat(niv);C.forEach(s=>{
+  if(s.k==="aff")L.push(`${I}${s.v} ← ${ecrit(s.e)}`);
+  else if(s.k==="pour")L.push(`${I}pour ${s.v} de ${ecrit(s.a)} à ${ecrit(s.b)} faire`,...lignes(s.c,niv+1),`${I}fin pour;`);
+  else if(s.k==="tq")L.push(`${I}tant que ${ecrit(s.cond)} faire`,...lignes(s.c,niv+1),`${I}fin tq;`);
+  else if(s.k==="si"){L.push(`${I}si ${ecrit(s.cond)} alors`,...lignes(s.alors,niv+1));if(s.sinon)L.push(`${I}sinon`,...lignes(s.sinon,niv+1));L.push(`${I}fin si;`);}
+  else L.push(`${I}Renvoyer ${ecrit(s.e)}`);});return L;}
+const texteProg=P=>[`FONCTION : ${P.nom} (${P.params.map(p=>`E ${p} : entier`).join(", ")}) : entier`,`Variable : ${P.vars.join(", ")} : entier`,"DÉBUT",...lignes(P.corps,1),"FIN"].join("\n");
+const code=t=>window.W&&window.W.code?window.W.code(t,"pseudo"):`<pre>${h(t)}</pre>`;
+/* la première boucle du programme, et les variables qu'elle modifie (sans les compteurs des boucles pour) */
+const boucleDe=P=>P.corps.find(s=>s.k==="pour"||s.k==="tq");
+function colonnes(P){const V=new Set(),vu=C=>C.forEach(s=>{if(s.k==="aff")V.add(s.v);else if(s.k==="si"){vu(s.alors);if(s.sinon)vu(s.sinon);}else if(s.c)vu(s.c);});vu(boucleDe(P).c);return P.vars.filter(v=>V.has(v));}
+/* exécution : valeur renvoyée, et trace de la première boucle (une ligne avant, puis une par tour) */
+function execute(P,args,suivi){const env={},T=[];P.params.forEach((p,i)=>{env[p]=args[i];});let tours=0,vue=false,test=null;
+  const photo=()=>T.push(suivi.map(v=>env[v]));
+  function run(C,niv){for(const s of C){
+    if(s.k==="aff")env[s.v]=vaut(s.e,env);
+    else if(s.k==="ret")return {r:vaut(s.e,env)};
+    else if(s.k==="si"){const r=run(vaut(s.cond,env)?s.alors:(s.sinon||[]),niv);if(r)return r;}
+    else{const suivie=niv===0&&!vue;if(suivie){vue=true;photo();}
+      const tour=()=>{const r=run(s.c,niv+1);if(suivie)photo();if(++tours>5000)throw new Error("boucle sans fin");return r;};
+      if(s.k==="pour"){const a=vaut(s.a,env),b=vaut(s.b,env);for(let i=a;i<=b;i++){env[s.v]=i;const r=tour();if(r)return r;}}
+      else{while(vaut(s.cond,env)){const r=tour();if(r)return r;}if(suivie)test=Object.assign({},env);}}}
+    return null;}
+  const r=run(P.corps,0);return {ret:r?r.r:undefined,T,env,sortie:test};}
+
+/* ---------- AG1 : la trace d'une boucle ---------- */
+const tableTrace=(cols,T,surligne)=>`<div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${cols.map(v=>`<th class="var">${v}</th>`).join("")}</tr></thead><tbody>${T.map((L,r)=>`<tr${r===surligne?' class="on"':""}><td>${r?"fin du tour "+r:"avant la boucle"}</td>${L.map(x=>`<td>${ent(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+function entier(s){const x=nombre(s);return x&&x.d===1?x.n:null;}
+/* o : {P, args, formule:{t, tape, why}} */
+function traceExo(o){const P=o.P,cols=colonnes(P),B=boucleDe(P),X=execute(P,o.args,cols),T=X.T,N=T.length-1,appel=`${P.nom}(${o.args.map(ent).join(", ")})`,imb=B.c.some(s=>s.k==="pour"||s.k==="tq");
+  const recit=k=>cols.map((v,j)=>T[k][j]===T[k-1][j]?`${v} reste à ${ent(T[k][j])}`:`${v} passe de ${ent(T[k-1][j])} à ${ent(T[k][j])}`).join(", ");
+  const arret=B.k==="pour"?`La boucle fait un tour pour chaque valeur de ${B.v}, de ${ecrit(B.a)} à ${ecrit(B.b)} : ici de ${ent(vaut(B.a,X.env))} à ${ent(vaut(B.b,X.env))}, soit ${N} ${N>1?"tours":"tour"}.`:`La condition « ${ecrit(B.cond)} » est testée avant chaque tour. Après le tour ${N}, elle est fausse (${cols.map((v,j)=>`${v} = ${ent(T[N][j])}`).join(", ")}) : la boucle s'arrête.`;
+  const E=[{w:`Avant la boucle : ${cols.map((v,j)=>fx(`${v} = ${ent(T[0][j])}`)).join(", ")}.`,why:`Ce sont les valeurs données par les lignes écrites avant la boucle${imb?"":`, avec ${fx(`${P.params[0]} = ${ent(o.args[0])}`)}`}.`,pts:0.5},
+    {w:`La trace : ${tableTrace(cols,T,-1)}`,why:[...Array(Math.min(N,3))].map((_,k)=>`Tour ${k+1}${B.k==="pour"?` (${B.v} = ${ent(vaut(B.a,X.env)+k)})`:""} : ${recit(k+1)}.`).join(" ")+(N>3?" Et ainsi de suite : à chaque tour, on repart des valeurs de la ligne du dessus.":""),pts:2},
+    {w:`La boucle s'arrête après <b>${N} ${N>1?"tours":"tour"}</b>.`,why:arret,pts:0.5},
+    {w:`<b>${fx(`${appel} = ${ent(X.ret)}`)}</b>`,why:`La dernière ligne renvoie la valeur de ${fx(ecrit(P.corps[P.corps.length-1].e))} à la fin de la boucle.`,pts:0.5}];
+  const F=o.formule,NS=[0,1,2,3,4,5,6,7,8].filter(n=>n>=(o.nmin||0)),valF=n=>execute(P,[n],cols).ret;
+  if(F){const j=Math.max(0,cols.indexOf(P.corps[P.corps.length-1].e));E.push({w:`Pour un entier n quelconque : <b>${fx(`${P.nom}(n) = ${F.t}`)}</b>.`,why:F.why.replace("§",T.slice(1).map(r=>ent(r[j])).join(", ")),pts:1});}
+  function juge(rep){let L=(rep.t||[]).map(r=>r.map(x=>propre(x)));while(L.length>1&&L[L.length-1].every(x=>!x))L.pop();
+    if(!L.length||L[0].some(x=>!x))return {incomplet:"Remplis d'abord la ligne « avant la boucle »."};
+    for(let r=0;r<L.length;r++)for(const x of L[r]){if(!x)return {incomplet:`Il reste une case vide à la ligne « ${r?"fin du tour "+r:"avant la boucle"} ». Si la boucle a fait moins de tours, enlève la dernière ligne.`};if(entier(x)===null)return {incomplet:"Dans le tableau, chaque case contient un nombre entier."};}
+    const rv=entier(rep.r);if(rv===null)return {incomplet:"Écris aussi la valeur renvoyée : un nombre entier."};
+    let fv=null;if(F){if(!propre(rep.f))return {incomplet:`Écris aussi la formule : ce que renvoie ${P.nom}(n), avec la lettre n.`};fv=NS.map(n=>O.calcule(rep.f,{n}));if(fv.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre n, par exemple n(n+1)/2 ou 2^n."};}
+    const V=L.map(r=>r.map(entier));
+    for(let r=0;r<Math.min(V.length,T.length);r++){const K=cols.map((_,j)=>j).filter(j=>V[r][j]!==T[r][j]);if(!K.length)continue;
+      return {ok:false,faux:K.map(j=>`t:${r}:${j}`),resume:`Pas tout à fait : la ligne « ${r?"fin du tour "+r:"avant la boucle"} » est à revoir.`,diag:r?{etape:1,type:"calcul d'un tour de boucle",titre:`Où ça part : le tour ${r}.`,msg:`Au tour ${r}, ${recit(r)}. On repart toujours des valeurs de la ligne du dessus, et les lignes de la boucle s'exécutent dans l'ordre.`}:{etape:0,type:"valeurs avant la boucle",titre:"Où ça part : avant la boucle.",msg:`Avant le premier tour : ${cols.map((v,j)=>fx(`${v} = ${ent(T[0][j])}`)).join(", ")}.`}};}
+    if(V.length!==T.length)return {ok:false,faux:[],resume:`Pas tout à fait : la boucle ne fait pas ${V.length-1} ${V.length>2?"tours":"tour"}.`,diag:{etape:2,type:V.length>T.length?"un tour de trop":"un tour manquant",titre:"Où ça part : le nombre de tours.",msg:arret}};
+    if(rv!==X.ret)return {ok:false,faux:["r"],resume:"Pas tout à fait : la trace est juste, mais pas la valeur renvoyée.",diag:{etape:3,type:"valeur renvoyée",titre:"Où ça part : la dernière ligne.",msg:`La fonction renvoie ${fx(ecrit(P.corps[P.corps.length-1].e))}, calculé avec les valeurs de la dernière ligne de la trace : ${ent(X.ret)}.`}};
+    if(F&&!NS.every((n,i)=>Math.abs(fv[i]-valF(n))<1e-9)){const n=NS.find((n,i)=>Math.abs(fv[i]-valF(n))>=1e-9);
+      return {ok:false,faux:["f"],resume:"Pas tout à fait : la trace est juste, mais pas la formule.",diag:{etape:4,type:"formule de ce que calcule la fonction",titre:"Où ça part : la formule.",msg:`Pour n = ${n}, ta formule donne ${String(Math.round(fv[NS.indexOf(n)]*1000)/1000).replace(".",",")}, alors que ${P.nom}(${n}) renvoie ${ent(valF(n))}.`}};}
+    return {ok:true};}
+  const bonT=T.map(r=>r.map(String)),fausse=T.map(r=>r.map(String));fausse[N][0]=String(T[N][0]+1);
+  const champs=[{k:"trace",id:"t",vars:cols,lignes:2},{k:"champ",id:"r",nom:"valeur renvoyée",label:"Valeur renvoyée :",ex:"un entier"}];
+  if(F)champs.push({k:"champ",id:"f",nom:"formule",label:`Pour un entier n quelconque, $${P.nom}(n) =$`,ex:"une formule avec n",sym:[["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]});
+  return {sig:"TR"+texteProg(P).replace(/\s+/g," ")+"|"+o.args.join(","),
+    q:`Voici une fonction écrite dans le pseudo-code du cours. On calcule ${fx(appel)}. Remplis la trace : la valeur de chaque variable avant la boucle, puis à la fin de chaque tour de la boucle${imb?" extérieure (celle de "+(B.v||"la première ligne « tant que »")+")":""}. Ajoute une ligne par tour, puis donne la valeur renvoyée.${F?` Enfin, donne ce que renvoie ${P.nom}(n) pour un entier n quelconque.`:""}`,
+    corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — trace de ${appel}${F?", puis formule en n":""}`,champs,juge,etapes:E,indice:false,
+    bonne:`${fx(`${appel} = ${ent(X.ret)}`)}, après ${N} ${N>1?"tours":"tour"}${F?` ; ${fx(`${P.nom}(n) = ${F.t}`)}`:""}`,bonneTxt:`${appel} = ${ent(X.ret)}, après ${N} ${N>1?"tours":"tour"}${F?` ; ${P.nom}(n) = ${F.t}`:""}`,
+    repBonne:Object.assign({t:bonT,r:String(X.ret)},F?{f:F.tape}:{}),repFausse:Object.assign({t:fausse,r:String(X.ret)},F?{f:F.tape}:{}),nature:o.nature,ens:{P,args:o.args,cols,nmin:o.nmin||0}};}
+
+const NOMS=["F","G","H","Calc","Somme","Mystere"];
+const prog=(R,vars,corps)=>({nom:R.choix(NOMS),params:["n"],vars,corps});
+/* palier 1 : une boucle pour, une variable */
+function pourSimple(R){for(;;){const k=R.ent(2,4),c0=R.ent(0,5),a=R.choix([1,1,1,0,2]),n=R.ent(3,5),t=R.ent(0,8);
+  const M=[["s",c0,["+","s","i"]],["s",c0,["+","s",["*",k,"i"]]],["s",c0,["+","s",k]],["s",c0,["+","s",["*","i","i"]]],["p",1,["*","p",k]],["p",1,["*","p","i"]],["s",c0+10,["-","s","i"]],["s",c0,["+",["*",2,"s"],1]],["s",c0,["+","s",["-",["*",2,"i"],1]]]][t];
+  if(M[0]==="p"&&M[2][2]==="i"&&a===0)continue;
+  return traceExo({P:prog(R,[M[0],"i"],[aff(M[0],M[1]),pour("i",a,"n",[aff(M[0],M[2])]),ret(M[0])]),args:[n],nature:"pour"});}}
+/* palier 2 : une boucle tant que, deux variables */
+function tantQue(R){for(;;){const t=R.ent(0,3),b=R.choix([2,3,10]),k=R.ent(2,4);let P,n;
+  if(t===0){n=b===10?R.ent(100,99999):b===3?R.ent(20,400):R.ent(9,90);P=prog(R,["c","m"],[aff("c",R.choix([0,1])),aff("m","n"),tq(["≥","m",b],[aff("m",["div","m",b]),aff("c",["+","c",1])]),ret("c")]);}
+  else if(t===1){n=R.ent(5,14);P=prog(R,["x","y"],[aff("x",0),aff("y","n"),tq([">","y",0],[aff("x",["+","x","y"]),aff("y",["-","y",k])]),ret("x")]);}
+  else if(t===2){n=R.ent(8,120);const bb=R.choix([2,3]);P=prog(R,["p","e"],[aff("p",1),aff("e",0),tq(["<","p","n"],[aff("p",["*","p",bb]),aff("e",["+","e",1])]),ret("e")]);}
+  else{n=R.ent(6,20);P=prog(R,["a","b"],[aff("a","n"),aff("b",R.ent(0,3)),tq([">","a","b"],[aff("a",["-","a",k]),aff("b",["+","b",1])]),ret(["+","a","b"])]);}
+  const N=execute(P,[n],colonnes(P)).T.length-1;if(N>=2&&N<=6)return traceExo({P,args:[n],nature:"tant que"});}}
+/* palier 3 : un si dans la boucle */
+function avecSi(R){for(;;){const t=R.ent(0,2),n=R.ent(4,6),m=R.choix([2,2,3]),r0=R.ent(0,m-1),U=[["+","s","i"],["-","s",1],["+","s",1],["*","s",2],["-","s","i"],["+","s",["*",2,"i"]]];let P,arg=n;
+  if(t===0){const u1=R.choix(U),u2=R.choix(U.filter(x=>x!==u1));P=prog(R,["s","i"],[aff("s",R.ent(0,3)),pour("i",1,"n",[si(["=",["mod","i",m],r0],[aff("s",u1)],[aff("s",u2)])]),ret("s")]);}
+  else if(t===1){arg=R.ent(5,40);P=prog(R,["x","c"],[aff("x","n"),aff("c",0),tq(["≠","x",1],[si(["=",["mod","x",2],0],[aff("x",["div","x",2])],[aff("x",["+","x",R.choix([1,3])])]),aff("c",["+","c",1])]),ret("c")]);}
+  else{const seuil=R.ent(3,9);P=prog(R,["s","c","i"],[aff("s",0),aff("c",0),pour("i",1,"n",[aff("s",["+","s","i"]),si([">","s",seuil],[aff("c",["+","c",1])])]),ret(R.choix(["c",["+","s","c"]]))]);}
+  let N;try{N=execute(P,[arg],colonnes(P)).T.length-1;}catch(e){continue;}if(N>=3&&N<=6)return traceExo({P,args:[arg],nature:"si"});}}
+/* palier 4 : deux boucles imbriquées, la trace suit la boucle extérieure */
+function imbriquees(R){const t=R.ent(0,4),n=R.ent(3,4),k=R.ent(1,3),plus=x=>aff("c",["+","c",x]);let P;
+  if(t===0)P=prog(R,["c","i","j"],[aff("c",0),pour("i",1,"n",[pour("j",1,"i",[plus(k)])]),ret("c")]);
+  else if(t===1)P=prog(R,["c","i","j"],[aff("c",R.ent(0,2)),pour("i",1,"n",[pour("j",1,"n",[plus(R.choix(["j","i",1,k]))])]),ret("c")]);
+  else if(t===2)P=prog(R,["c","i","j"],[aff("c",0),pour("i",1,"n",[pour("j","i","n",[plus(R.choix([1,"j"]))])]),ret("c")]);
+  else if(t===3)P=prog(R,["c","x","i"],[aff("c",0),aff("x",0),pour("i",1,R.choix(["n",["+","n",2]]),[aff("x","i"),tq([">","x",0],[aff("x",["div","x",2]),plus(1)])]),ret("c")]);
+  else P=prog(R,["c","d","i","j"],[aff("c",0),aff("d",R.ent(0,2)),pour("i",1,"n",[aff("d",["+","d",k]),pour("j",1,"d",[plus(1)])]),ret("c")]);
+  return traceExo({P,args:[n],nature:"imbriquées"});}
+/* palier 5 : comme au CC, la trace puis « que calcule-t-elle ? » */
+function avecFormule(R){const t=R.ent(0,9),n=R.ent(3,5),k=R.ent(2,5),c0=R.ent(1,6);let P,F;
+  const PAS=`À chaque tour, la valeur augmente de la même façon : on le voit dans la trace, puis on le démontrerait avec un invariant de boucle.`;
+  if(t===0){P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s","i"])]),ret("s")]);F={t:"n(n + 1)/2",tape:"n(n+1)/2",why:"La fonction additionne 1 + 2 + … + n. Cette somme vaut n(n + 1)/2. La trace donne § : à la fin du tour i, s vaut i(i + 1)/2."};}
+  else if(t===1){P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["-",["*",2,"i"],1]])]),ret("s")]);F={t:"n²",tape:"n^2",why:"La fonction additionne les n premiers nombres impairs : 1 + 3 + 5 + … La trace donne § : ce sont les carrés. À la fin du tour i, s vaut i²."};}
+  else if(t===2){P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",2,"i"]])]),ret("s")]);F={t:"n(n + 1)",tape:"n(n+1)",why:"La fonction additionne 2 + 4 + … + 2n, c'est-à-dire 2 fois 1 + 2 + … + n, donc 2 × n(n + 1)/2. La trace donne § : à la fin du tour i, s vaut i(i + 1)."};}
+  else if(t===3){const b=R.choix([2,3]);P=prog(R,["p","i"],[aff("p",1),pour("i",1,"n",[aff("p",["*","p",b])]),ret("p")]);F={t:`${b}ⁿ`,tape:`${b}^n`,why:`p est multiplié par ${b} à chaque tour, et il y a n tours : à la fin du tour i, p vaut ${b} puissance i.`};}
+  else if(t===4){P=prog(R,["c","i","j"],[aff("c",0),pour("i",1,"n",[pour("j",1,"i",[aff("c",["+","c",1])])]),ret("c")]);F={t:"n(n + 1)/2",tape:"n(n+1)/2",why:"Au tour i de la boucle extérieure, la boucle intérieure ajoute 1 à c exactement i fois. Au total : 1 + 2 + … + n, c'est-à-dire n(n + 1)/2."};}
+  else if(t===5){P=prog(R,["c","i","j"],[aff("c",0),pour("i",1,"n",[pour("j",1,"n",[aff("c",["+","c",k])])]),ret("c")]);F={t:`${k}n²`,tape:`${k}n^2`,why:`À chaque tour de la boucle extérieure, la boucle intérieure fait n tours et ajoute ${k} à chaque fois : c augmente de ${k}n. Il y a n tours extérieurs : ${k}n × n.`};}
+  else if(t===6){P=prog(R,["x","y"],[aff("x",0),aff("y","n"),tq([">","y",0],[aff("x",["+","x",k]),aff("y",["-","y",1])]),ret("x")]);F={t:`${k}n`,tape:`${k}n`,why:`y part de n et perd 1 à chaque tour : la boucle fait n tours. À chaque tour, x gagne ${k}. ${PAS}`};}
+  else if(t===7){P=prog(R,["s","i"],[aff("s",c0),pour("i",1,"n",[aff("s",["+","s",k])]),ret("s")]);F={t:`${k}n + ${c0}`,tape:`${k}n+${c0}`,why:`s part de ${c0} et gagne ${k} à chacun des n tours. ${PAS}`};}
+  else if(t===8){P=prog(R,["a","b","i"],[aff("a",1),aff("b",0),pour("i",1,"n",[aff("b",["+","b","a"]),aff("a",["+","a",2])]),ret("b")]);F={t:"n²",tape:"n^2",why:"a prend les valeurs 1, 3, 5, … : les nombres impairs. b les additionne, et la trace donne § : ce sont les carrés. À la fin du tour i, a vaut 2i + 1 et b vaut i²."};}
+  else{P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",k,"i"]])]),ret("s")]);F={t:`${k}n(n + 1)/2`,tape:`${k}n(n+1)/2`,why:`La fonction additionne ${k} × 1 + ${k} × 2 + … + ${k} × n, c'est-à-dire ${k} fois 1 + 2 + … + n.`};}
+  return traceExo({P,args:[n],formule:F,nature:"formule"});}
+
+G.add("algo",[
+ {id:"AG1",t:"Trace d'une boucle",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
+  paliers:[
+   {t:"une boucle pour, une variable",cc:3,gen:pourSimple},
+   {t:"une boucle tant que, deux variables",cc:4,gen:tantQue},
+   {t:"un si dans la boucle",cc:4,gen:avecSi},
+   {t:"deux boucles imbriquées",cc:5,gen:imbriquees,min:90},
+   {t:"comme au CC : la trace, puis ce que calcule la fonction",cc:6,gen:avecFormule,min:50}]}
+]);
+G.algo={execute,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
+})();
+
+</script>
+<script>
 /* Apprendre : les leçons pas à pas, la révision espacée, la synchronisation entre appareils,
    et les pages pensées pour le téléphone (Aujourd'hui, Apprendre, Réviser, S'entraîner, Plus).
    Principes (voir la page « Comment réviser ») : se tester plutôt que relire, espacer,
@@ -20672,7 +20808,9 @@ function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:
   if(d)P.sess.avant[d.id]=Object.assign({},etat(d.id));prochain();}
 
 const symHTML=c=>c.sym?`<div class="filters en-sym">${c.sym.map(x=>{const[l,v]=Array.isArray(x)?x:[x,x];return `<button type="button" class="btn" data-ins="${esc(v)}">${esc(l)}</button>`;}).join("")}</div>`:"";
+const ligneTrace=(c,r)=>`<tr><td>${r?"fin du tour "+r:"avant la boucle"}</td>${c.vars.map((v,k)=>`<td><input class="en-in" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${r?"fin du tour "+r:"avant la boucle"}"></td>`).join("")}</tr>`;
 function champsHTML(e){return e.champs.map(c=>{
+  if(c.k==="trace")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${c.vars.map(v=>`<th class="var">${esc(v)}</th>`).join("")}</tr></thead><tbody>${[...Array(c.lignes||2)].map((_,r)=>ligneTrace(c,r)).join("")}</tbody></table></div><div class="acts"><button type="button" class="btn" data-plus>Ajouter un tour</button><button type="button" class="btn" data-moins>Enlever le dernier tour</button></div></div>`;
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="sym")return `<div data-ch="${c.id}" class="en-rep">${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
@@ -20685,6 +20823,7 @@ function lire(e){const rep={},b=$("#lpb");
     else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
     else if(c.k==="multi")rep[c.id]=[...b.querySelectorAll(`[data-multi="${c.id}"] [aria-pressed="true"]`)].map(x=>x.dataset.v);
     else if(c.k==="champ"){const i=b.querySelector(`[data-ch="${c.id}"] input`);rep[c.id]=i?i.value:"";}
+    else if(c.k==="trace"){const T=[];b.querySelectorAll(`[data-ch="${c.id}"] tbody tr`).forEach(tr=>T.push([...tr.querySelectorAll("input")].map(i=>i.value)));rep[c.id]=T;}
     else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);rep[id]=i?i.value:"";});});
   return rep;}
 function repTexte(e,rep){return e.champs.map(c=>{
@@ -20692,6 +20831,7 @@ function repTexte(e,rep){return e.champs.map(c=>{
   if(c.k==="cases"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return c.noms.map(x=>x+" = "+((rep[c.id]||{})[x]||"?")).join(", ");}
   if(c.k==="multi")return (rep[c.id]||[]).map(v=>(c.o.find(o=>o[0]===v)||[v,v])[1]).join(", ")||"(rien de coché)";
   if(c.k==="champ"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.id)+" : "+(rep[c.id]||"(vide)");}
+  if(c.k==="trace")return (rep[c.id]||[]).map((L,r)=>(r?"tour "+r:"avant")+" : "+c.vars.map((v,k)=>v+" = "+(L[k]||"?")).join(", ")).join(" | ");
   if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
 const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
 const etapesHTML=(e,marque)=>`<ol class="wex">${e.etapes.map((x,k)=>`<li><div>${k===marque?'<span class="pill rev">ton erreur</span> ':""}${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`;
@@ -20730,6 +20870,8 @@ function dessine(){
     b.querySelectorAll(".filters[data-ch] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;x.parentNode.querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));si();const i=b.querySelector("[data-si]:not([hidden]) input");if(i)i.focus();}));
     b.querySelectorAll(".filters[data-multi] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const g=x.parentNode,seul=g.dataset.seul,on=x.getAttribute("aria-pressed")!=="true";x.setAttribute("aria-pressed",on);
       if(on)g.querySelectorAll("button").forEach(y=>{if(y!==x&&(x.dataset.v===seul||y.dataset.v===seul))y.setAttribute("aria-pressed","false");});}));
+    b.querySelectorAll("[data-plus]").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),c=e.champs.find(z=>z.id===g.dataset.ch),tb=g.querySelector("tbody");tb.insertAdjacentHTML("beforeend",ligneTrace(c,tb.children.length));const i=tb.lastElementChild.querySelector("input");if(i)i.focus();}));
+    b.querySelectorAll("[data-moins]").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const tb=x.closest("[data-ch]").querySelector("tbody");if(tb.children.length>1)tb.lastElementChild.remove();}));
     let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT")dernier=ev.target;});
     b.querySelectorAll(".en-sym button").forEach(x=>{x.addEventListener("pointerdown",ev=>ev.preventDefault());
       x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:(g.querySelector("input")||b.querySelector("input"));if(!i)return;
@@ -20778,8 +20920,8 @@ function valide(nsp){
   stop();P.res=j;
   const r=j.ok?(P.aide?2:1):0,cherche=!j.ok&&!j.diag&&j.cherche?j.cherche:null;
   const R=enregistre(r,{type:j.diag&&j.diag.type,carnet:{reponse:nsp?"(je ne sais pas)":repTexte(e,rep),etape:j.diag?j.diag.titre:null,erreur:j.diag?j.diag.type:null,explication:j.diag?A.brut(j.diag.msg):null}});
-  b.querySelectorAll("input,.filters button,#en-plus button").forEach(x=>{x.disabled=true;});
-  (j.faux||[]).forEach(id=>{const i=b.querySelector(`input[data-n="${id}"]:not([hidden]),input[data-c="${id}"]`);if(i&&!i.closest("[hidden]"))i.setAttribute("aria-invalid","true");});
+  b.querySelectorAll("input,.filters button,#en-plus button,[data-plus],[data-moins]").forEach(x=>{x.disabled=true;});
+  (j.faux||[]).forEach(id=>{const m=/^(.+):(\d+):(\d+)$/.exec(id),i=m?b.querySelector(`[data-ch="${m[1]}"] input[data-r="${m[2]}"][data-k="${m[3]}"]`):b.querySelector(`input[data-n="${id}"]:not([hidden]),input[data-c="${id}"]`);if(i&&!i.closest("[hidden]"))i.setAttribute("aria-invalid","true");});
   const S=SUBJ[d.sid],temps=`${duree(R.ms)} : ${auCC(S)}, tu aurais environ ${R.cc} min pour cet exercice.`,ch=changement(d,R.av,R.ap);
   let h;
   if(r===1&&R.lent&&P.m==="p"&&P.lv===dernier(d))h=`<div class="verdict info">Juste, mais en ${duree(R.ms)}. Au dernier palier il faut aussi tenir le temps : au plus ${LENT*R.cc} min ici (${auCC(S)}, environ ${R.cc} min). Cet exercice ne compte ni juste ni faux.</div>`;
