@@ -19770,7 +19770,7 @@ function negation(o){ /* o : {sig, blocs:[["∀","ε > 0"],…], P (atome ou nul
   const inv=q=>q==="∀"?"∃":"∀",phrase=o.blocs.map(b=>`${b[0]}${b[1]}`).join(", ")+", "+(o.P?`${o.P.t} ⇒ ${o.Q.t}`:o.Q.t),finT=o.P?`${o.P.t} et ${o.Q.non}`:o.Q.non,neg=o.blocs.map(b=>`${inv(b[0])}${b[1]}`).join(", ")+", "+finT;
   const vrai=e=>o.P?o.P.f(e)&&!o.Q.f(e):!o.Q.f(e),attendu=essais.map(vrai),ids=o.blocs.map((_,i)=>"q"+i);
   const E=[{w:`On échange chaque ∀ et chaque ∃ : ${O.f(h(o.blocs.map(b=>`${inv(b[0])}${b[1]}`).join(", ")))}.`,why:`Nier « pour tout…, on a… », c'est dire « il existe… pour lequel on n'a pas… », et inversement. La condition écrite juste après la lettre, comme ${fx(h(o.blocs[0][1].trim()))}, ne change pas : elle dit seulement où on prend la lettre.`,pts:1},
-    {w:o.P?`On nie la fin : ${fx(h(`${o.P.t} ⇒ ${o.Q.t}`))} devient ${fx(h(finT))}.`:`On nie la fin : ${fx(h(o.Q.t))} devient ${fx(h(o.Q.non))}.`,why:o.P?`Le contraire de « si A alors B », c'est « A est vrai et pourtant B est faux » : A et non B. La première partie reste telle quelle. Puis le contraire de ${fx(h(o.Q.t))} est ${fx(h(o.Q.non))}.`:`Le contraire d'une inégalité large est une inégalité stricte dans l'autre sens, et inversement. Le contraire de = est ≠.`,pts:1},
+    {w:o.P?`On nie la fin : ${fx(h(`${o.P.t} ⇒ ${o.Q.t}`))} devient ${fx(h(finT))}.`:`On nie la fin : ${fx(h(o.Q.t))} devient ${fx(h(o.Q.non))}.`,why:o.P?`Le contraire de « si A alors B », c'est « A est vrai et pourtant B est faux » : A et non B. La première partie reste telle quelle. Puis le contraire de ${fx(h(o.Q.t))} est ${fx(h(o.Q.non))}.`:o.whyFin||`Le contraire d'une inégalité large est une inégalité stricte dans l'autre sens, et inversement. Le contraire de = est ≠.`,pts:1},
     {w:`<b>${O.f(h(neg))}</b>`,why:`On ne touche ni aux lettres, ni à leur ordre : seuls les quantificateurs et la fin changent.`,pts:1}];
   function juge(rep){const Qs=ids.map(i=>quantQ(rep[i]));if(Qs.some(x=>!x))return {incomplet:"Dans chaque petite case, mets ∀ ou ∃ (les deux premiers boutons)."};
     if(!propre(rep.fin))return {incomplet:"Écris aussi la fin de la phrase dans la grande case."};
@@ -19783,12 +19783,12 @@ function negation(o){ /* o : {sig, blocs:[["∀","ε > 0"],…], P (atome ou nul
     else if(o.P&&comme(e=>!o.P.f(e)||!o.Q.f(e)))d={etape:1,type:"négation d'une implication écrite comme une implication",titre:"Où ça part : la négation de « ⇒ ».",msg:`Le contraire de « A ⇒ B » n'est pas « A ⇒ non B ». C'est « A et non B » : ${fx(h(finT))}.`};
     else if(o.P&&comme(e=>!o.Q.f(e)))d={etape:1,type:"première partie de l'implication oubliée",titre:"Où ça part : la négation de « ⇒ ».",msg:`Il faut garder la première partie : « A et non B ». Ici : ${fx(h(finT))}.`};
     else if(o.P&&comme(e=>!o.P.f(e)&&!o.Q.f(e)))d={etape:1,type:"les deux parties de l'implication niées",titre:"Où ça part : la négation de « ⇒ ».",msg:`Seule la conclusion est niée, la première partie reste telle quelle : ${fx(h(finT))}.`};
-    else d={etape:1,type:"contraire d'une inégalité",titre:"Où ça part : l'inégalité contraire.",msg:`Le contraire de ${fx(h(o.Q.t))} est ${fx(h(o.Q.non))} : une inégalité large devient stricte, et inversement.`};
+    else d={etape:1,type:o.typeFin||"contraire d'une inégalité",titre:"Où ça part : la fin de la phrase.",msg:`Le contraire de ${fx(h(o.Q.t))} est ${fx(h(o.Q.non))}${o.whyFin?". "+o.whyFin:" : une inégalité large devient stricte, et inversement."}`};
     return {ok:false,faux:FQ.concat(okF?[]:["fin"]),resume:`Pas tout à fait : ${FQ.length&&!okF?"les quantificateurs et la fin sont à revoir":FQ.length?(FQ.length>1?"des quantificateurs sont à revoir":"un quantificateur est à revoir"):"la fin de la phrase est à revoir"}.`,diag:d};}
   const bon={fin:finT.replace(/−/g,"-")},fausse={fin:(o.P?`${o.P.t} ⇒ ${o.Q.non}`:o.Q.t).replace(/−/g,"-")};ids.forEach((id,i)=>{bon[id]=inv(o.blocs[i][0]);fausse[id]=inv(o.blocs[i][0]);});
   return {sig:"NG"+o.sig,q:o.fr?`« ${o.fr} » s'écrit : ${O.f(h(phrase))}. Écris en symboles la phrase contraire, « ${o.frNon} ».`:`Écris la négation de la phrase : ${O.f(h(phrase))}.`,
     corps:`<p>Complète : dans chaque petite case, ∀ ou ∃ ; dans la grande case, la fin de la phrase.</p><p class="mq-row">${o.blocs.map((b,i)=>`<span class="en-case">${O.trou(ids[i])} $${h(b[1].trim())}$,</span>`).join(" ")}</p>`,
-    corpsPapier:`<p>Sur ta feuille, écris la phrase contraire en entier, avec ses quantificateurs.</p>`,texte:`négation de : ${phrase}`,champs:[{k:"trous",ids},{k:"champ",id:"fin",nom:"fin de la phrase",label:"La fin de la phrase :",ex:"par exemple x > 2",sym:SYMQ,aide:"Les boutons écrivent dans la case où tu es."}],juge,etapes:E,
+    corpsPapier:`<p>Sur ta feuille, écris la phrase contraire en entier, avec ses quantificateurs.</p>`,texte:`négation de : ${phrase}`,champs:[{k:"trous",ids},{k:"champ",id:"fin",nom:"fin de la phrase",label:"La fin de la phrase :",ex:"par exemple x > 2",sym:o.sym||SYMQ,aide:"Les boutons écrivent dans la case où tu es."}],juge,etapes:E,
     bonne:O.f(h(neg)),bonneTxt:neg,repBonne:bon,repFausse:fausse,nature:o.nature,ens:{essais,vrai,blocs:o.blocs,P:!!o.P}};}
 function phraseQ(R,niveau){const c=R.ent(-9,9),C=nb(c),l=R.ent(-9,9),a=R.ent(-9,9),op=R.choix(["≤","≥","<",">"]),num=e=>c,U=[c-1,c-0.5,c,c+0.5,c+1],lu=moins("uₙ",l),lf=moins("f(x)",l),xa=moins("x",a),EPS=[0.5,1],UL=[l-1,l-0.5,l,l+0.5,l+1],XA=[a-1,a-0.5,a,a+0.5,a+1];
   if(niveau===1){const t=R.ent(0,4);
@@ -19841,7 +19841,7 @@ function coursAdh(R){const a=R.ent(-9,6),b=a+R.ent(1,6),droite=R()<0.6,I=droite?
     [`Donc ${fx(nb(c))} est adhérent à ${fx(I)}.`,`La conclusion doit être écrite. Avec la définition du a), on écrirait : soit ${fx("ε &gt; 0")}, le nombre ${fx(droite?`max(${nb(Q(2*b-1,2))}, ${nb(b)} − ε/2)`:`min(${nb(Q(2*a+1,2))}, ${nb(a)} + ε/2)`)} est dans l'intervalle, à une distance de ${fx(nb(c))} plus petite que ε.`,0.5]],
     {type:"cours",u:n=>droite?b-1/n:a+1/n,dans:x=>droite?(x>=a&&x<b):(x>a&&x<=b),cible:c},"adhérent");}
 
-G.ana={val,rac,pc,unir,dansP,lisEns,memeEns,negation,phraseQ,phraseFr};/* repris par le Raisonnement */
+G.ana={val,rac,pc,unir,dansP,lisEns,memeEns,negation,phraseQ,phraseFr,atome,finPhrase,quantQ,SYMQ,papierQ};/* repris par le Raisonnement */
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -20826,6 +20826,132 @@ function reciproque(R){let o;do o=appliFormule(R,"reels");while(!o.inv);const ea
   return {sig:"RE"+ea,q:`Soit ${fx(ea)}. Cette application est bijective. Donne sa réciproque : l'expression de ${fx("f⁻¹(y)")} en fonction de y.`,corps:`<p class="muted">Rappel : la réciproque ${fx("f⁻¹")} associe à chaque y son unique antécédent par f.${notes(o)}</p>`,texte:`${ea}, bijective ; formule de f⁻¹(y)`,
     champs:[{k:"champ",id:"g",nom:"f⁻¹(y)",label:"$f⁻¹(y) =$",ex:"une formule avec y",sym:[["y","y"],["/","/"],["√","√("],["ln","ln("],["(","("],[")",")"]]}],juge,etapes:E,bonne:fx(`f⁻¹(y) = ${o.inv[0]}`),bonneTxt:`f⁻¹(y) = ${o.inv[0]}`,repBonne:{g:o.inv[1]},repFausse:{g:"y"},nature:o.fam,ens:{type:"recip",o,YS}};}
 
+/* ---------- RA4 : quantificateurs (nier, traduire, dire si c'est vrai) ---------- */
+const {atome,negation,finPhrase,quantQ,SYMQ}=AN;
+const OPS=["<","≤",">","≥"],SYMR=SYMQ.filter(x=>!/uₙ|η/.test(x[0])).concat([["=","="],["x²","x²"]]);
+const RAPPELQ=`Rappel : ∀ se lit « pour tout », ∃ se lit « il existe au moins un ».`;
+function phraseR(R,niveau){const c=R.ent(-6,6),C=nb(c),op=R.choix(OPS),o1=R.choix(["<","≤"]),o2=R.choix(OPS),num=()=>c,r=R.choix([1,2,3]),j=R.ent(1,4),V2={x:[0,1],y:[0,1],p:[0,1],q:[0,1]};let o;
+  const dm="Le contraire de « A et B » est « non A ou non B » ; le contraire de « A ou B » est « non A et non B ».",dbl="Une double inégalité est un « et » : il faut nier chacune des deux inégalités et les relier par « ou ».";
+  if(niveau===1){const t=R.ent(0,9);
+    o=t===0?{sig:"a"+c+op,blocs:[["∀","x ∈ ℝ"],["∃","y ∈ ℝ"]],Q:atome("x + y",op,C,e=>e.x+e.y,num),vars:{x:[0,1],y:[c-1,c,c+1]}}
+     :t===1?{sig:"b"+c,blocs:[["∃","y ∈ ℝ"],["∀","x ∈ ℝ"]],Q:atome("x + y","=",C,e=>e.x+e.y,num),vars:{x:[0,1],y:[c-1,c]}}
+     :t===2?{sig:"c"+op,blocs:[["∀","n ∈ ℕ"],["∃","m ∈ ℕ"]],Q:atome("m",op,"n",e=>e.m,e=>e.n),vars:{m:[0,1,2],n:[0,1,2]}}
+     :t===3?{sig:"d"+op,blocs:[["∃","m ∈ ℤ"],["∀","n ∈ ℤ"]],Q:atome("m",op,"n",e=>e.m,e=>e.n),vars:{m:[0,1,2],n:[0,1,2]}}
+     :t===4?{sig:"e"+r+op,blocs:[["∀","x ∈ ℝ"]],Q:atome("x²",op,String(r*r),e=>e.x*e.x,()=>r*r),vars:{x:[-r-1,-r,0,r,r+1]}}
+     :t===5?{sig:"f"+j,blocs:[["∃","n ∈ ℤ"]],Q:atome("2n","=",String(2*j+1),e=>2*e.n,()=>2*j+1),vars:{n:[j,j+0.5,j+1]}}
+     :t===6?{sig:"g",fr:"l'application f : E → F est surjective",frNon:"l'application f n'est pas surjective",blocs:[["∀","y ∈ F"],["∃","x ∈ E"]],Q:atome("f(x)","=","y",e=>e.p,e=>e.y),vars:{p:[0,1],y:[0,1]}}
+     :t===7?{sig:"h"+c+op,blocs:[[R.choix(["∀","∃"]),"x ∈ ℝ"]],Q:atome("f(x)",op,C,e=>e.p,num),vars:{p:[c-1,c,c+1]}}
+     :t===8?{sig:"i",blocs:[["∀","ε > 0"],["∃","n ∈ ℕ*"]],Q:atome("1/n","<","ε",e=>1/e.n,e=>e["ε"]),vars:{n:[1,2,4],"ε":[0.25,0.5,1]}}
+     :{sig:"j"+op,blocs:[["∃","M ∈ ℝ"],["∀","x ∈ ℝ"]],Q:atome("f(x)",op,"M",e=>e.p,e=>e.m),vars:{p:[0,1,2],m:[0,1,2]}};
+    if(t===7)o.sig+=o.blocs[0][0];o.nature=o.blocs.length>1?"deux":"un";}
+  else{const t=R.ent(0,7),a=R.ent(-5,2),b=a+2*R.ent(1,2),A=nb(a),B=nb(b);
+    o=t===0?{sig:"A"+o1+o2,blocs:[["∀","x ∈ ℝ"],["∀","y ∈ ℝ"]],P:atome("x",o1,"y",e=>e.x,e=>e.y),Q:atome("f(x)",o2,"f(y)",e=>e.p,e=>e.q),vars:V2}
+     :t===1?{sig:"B",fr:"l'application f : E → F est injective",frNon:"l'application f n'est pas injective",blocs:[["∀","x ∈ E"],["∀","y ∈ E"]],P:atome("f(x)","=","f(y)",e=>e.p,e=>e.q),Q:atome("x","=","y",e=>e.x,e=>e.y),vars:V2}
+     :t===2?{sig:"C",blocs:[["∀","x ∈ ℝ"],["∀","ε > 0"],["∃","y ∈ ℚ"]],Q:{t:"x < y < x + ε",non:"y ≤ x ou y ≥ x + ε",f:e=>e.x<e.y&&e.y<e.x+e["ε"]},vars:{x:[0,1],y:[0,0.5,1,1.5,2],"ε":[0.5,1]},whyFin:dbl,typeFin:"négation d'une double inégalité"}
+     :t===3?{sig:"D",blocs:[["∀","x ∈ ℝ"],["∃","n ∈ ℤ"]],Q:{t:"n ≤ x < n + 1",non:"x < n ou x ≥ n + 1",f:e=>e.n<=e.x&&e.x<e.n+1},vars:{x:[0,0.5,1,1.5,2],n:[0,1,2]},whyFin:dbl,typeFin:"négation d'une double inégalité"}
+     :t===4?{sig:"E"+[a,b],blocs:[["∀","x ∈ ℝ"]],Q:{t:`x < ${A} ou x > ${B}`,non:`x ≥ ${A} et x ≤ ${B}`,f:e=>e.x<a||e.x>b},vars:{x:[a-1,a,(a+b)/2,b,b+1]},whyFin:dm,typeFin:"négation d'un « ou »"}
+     :t===5?{sig:"F"+a,blocs:[["∃","x ∈ ℝ"]],Q:{t:`x > ${A} et f(x) = 0`,non:`x ≤ ${A} ou f(x) ≠ 0`,f:e=>e.x>a&&e.p===0},vars:{x:[a-1,a,a+1],p:[-1,0,1]},whyFin:dm,typeFin:"négation d'un « et »"}
+     :t===6?{sig:"G"+r,blocs:[["∀","x ∈ ℝ"]],P:atome("x²","=",String(r*r),e=>e.x*e.x,()=>r*r),Q:atome("x","=",String(r),e=>e.x,()=>r),vars:{x:[-r,0,r,r+1]}}
+     :{sig:"H",fr:"la fonction f est bornée sur ℝ",frNon:"la fonction f n'est pas bornée sur ℝ",blocs:[["∃","M ∈ ℝ"],["∀","x ∈ ℝ"]],Q:{t:"−M ≤ f(x) ≤ M",non:"f(x) < −M ou f(x) > M",f:e=>-e.m<=e.p&&e.p<=e.m},vars:{p:[-2,-1,0,1,2],m:[0,1,2]},whyFin:dbl,typeFin:"négation d'une double inégalité"};
+    o.nature=o.P?"⇒":"et, ou";}
+  o.sym=SYMR;return o;}
+/* traduire : les lettres et leur ensemble sont donnés, on choisit ∀ ou ∃ et on écrit la fin */
+function traduction(o){const noms=Object.keys(o.vars);let essais=[{}];noms.forEach(k=>{const N=[];essais.forEach(e=>o.vars[k].forEach(v=>N.push(Object.assign({},e,{[k]:v}))));essais=N;});
+  const finT=o.P?`${o.P.t} ⇒ ${o.Q.t}`:o.Q.t,vraiFin=e=>o.P?!o.P.f(e)||o.Q.f(e):o.Q.f(e),attendu=essais.map(vraiFin),ids=o.blocs.map((_,i)=>"q"+i),debut=o.blocs.map(b=>`${b[0]}${b[1]}`).join(", "),phrase=debut+", "+finT,inv=q=>q==="∀"?"∃":"∀";
+  const E=[{w:`Les quantificateurs : ${O.f(h(debut))}.`,why:o.whyQ,pts:1.5},{w:`La fin : ${fx(h(finT))}.`,why:o.whyF,pts:1},{w:`<b>${O.f(h(phrase))}</b>`,why:"L'ordre compte : une lettre introduite par ∃ a le droit de dépendre des lettres écrites avant elle, pas de celles écrites après.",pts:0.5}];
+  function juge(rep){const Qs=ids.map(i=>quantQ(rep[i]));if(Qs.some(x=>!x))return {incomplet:"Dans chaque petite case, mets ∀ ou ∃ (les deux premiers boutons)."};
+    if(!propre(rep.fin))return {incomplet:"Écris aussi la fin de la phrase dans la grande case."};
+    const V=finPhrase(rep.fin,essais);if(V==="non")return {incomplet:"N'écris pas « non » : écris directement la relation, par exemple ≠ ou >."};
+    if(!V)return {incomplet:"Je n'arrive pas à lire la fin de la phrase. Écris une égalité ou une inégalité, ou deux reliées par « et », « ou », « ⇒ », avec les lettres de l'énoncé."};
+    const FQ=ids.filter((_,i)=>Qs[i]!==o.blocs[i][0]),okF=V.every((v,i)=>v===attendu[i]);if(!FQ.length&&okF)return {ok:true};
+    const comme=g=>essais.every((e,i)=>V[i]===g(e));let d;
+    if(FQ.length)d={etape:0,type:FQ.length===ids.length&&ids.length>1?"tous les quantificateurs inversés dans une traduction":"∀ et ∃ confondus dans une traduction",titre:"Où ça part : les quantificateurs.",msg:`${o.whyQ} Ici : ${O.f(h(debut))}.`};
+    else if(o.P&&comme(e=>o.P.f(e)&&o.Q.f(e)))d={etape:1,type:"« et » à la place de « ⇒ » après un ∀",titre:"Où ça part : la fin de la phrase.",msg:`Après « pour tout », une condition s'écrit avec ⇒ (« si …, alors … »). Avec « et », la phrase dirait que tous les éléments vérifient aussi la condition. Ici : ${fx(h(finT))}.`};
+    else if(o.P&&comme(e=>!o.Q.f(e)||o.P.f(e)))d={etape:1,type:"implication écrite à l'envers",titre:"Où ça part : le sens de l'implication.",msg:`L'implication est à l'envers. ${o.whyF} Ici : ${fx(h(finT))}.`};
+    else d={etape:1,type:"fin de la phrase mal traduite",titre:"Où ça part : la fin de la phrase.",msg:`${o.whyF} Ici : ${fx(h(finT))}.`};
+    return {ok:false,faux:FQ.concat(okF?[]:["fin"]),resume:`Pas tout à fait : ${FQ.length&&!okF?"les quantificateurs et la fin sont à revoir":FQ.length?(FQ.length>1?"des quantificateurs sont à revoir":"un quantificateur est à revoir"):"la fin de la phrase est à revoir"}.`,diag:d};}
+  const bon={fin:finT.replace(/−/g,"-")},fausse={fin:finT.replace(/−/g,"-")};ids.forEach((id,i)=>{bon[id]=o.blocs[i][0];fausse[id]=inv(o.blocs[i][0]);});
+  return {sig:"TR"+o.sig,q:`Traduis avec des quantificateurs : « ${o.fr} ».`,corps:`<p class="muted">${RAPPELQ}</p><p>Complète : dans chaque petite case, ∀ ou ∃ ; dans la grande case, la fin de la phrase.</p><p class="mq-row">${o.blocs.map((b,i)=>`<span class="en-case">${O.trou(ids[i])} $${h(b[1].trim())}$,</span>`).join(" ")}</p>`,
+    corpsPapier:`<p>Sur ta feuille, écris la phrase en symboles, en entier, avec ses quantificateurs.</p>`,texte:`traduire : ${o.fr}`,champs:[{k:"trous",ids},{k:"champ",id:"fin",nom:"fin de la phrase",label:"La fin de la phrase :",ex:"par exemple f(x) = y",sym:SYMR,aide:"Les boutons écrivent dans la case où tu es."}],juge,etapes:E,
+    bonne:O.f(h(phrase)),bonneTxt:phrase,repBonne:bon,repFausse:fausse,nature:o.P?"avec ⇒":o.blocs.length>1?"deux quantificateurs":"un quantificateur",ens:{type:"trad",essais,vraiFin,blocs:o.blocs,P:!!o.P}};}
+function aTraduire(R){const c=R.ent(-5,5),C=nb(c),V2={x:[0,1],y:[0,1],p:[0,1],q:[0,1]},PM={p:[0,1,2],m:[0,1,2]},P3={p:[-1,0,1]},tous="La propriété doit être vraie pour tous les couples : deux fois ∀.",un="Un seul exemple suffit : ∃.",chaque="La propriété doit être vraie pour chaque élément : ∀.";
+  const T=[
+   {fr:"l'application f : E → F est injective",blocs:[["∀","x ∈ E"],["∀","y ∈ E"]],P:atome("f(x)","=","f(y)",e=>e.p,e=>e.q),Q:atome("x","=","y",e=>e.x,e=>e.y),vars:V2,whyQ:tous,whyF:"Injective : dès que deux éléments ont la même image, c'est qu'ils sont égaux."},
+   {fr:"l'application f : E → F est surjective",blocs:[["∀","y ∈ F"],["∃","x ∈ E"]],Q:atome("f(x)","=","y",e=>e.p,e=>e.y),vars:{p:[0,1],y:[0,1]},whyQ:"Chaque élément y de l'ensemble d'arrivée (∀) doit avoir au moins un antécédent x (∃). Le x dépend de y : il est écrit après.",whyF:"x est un antécédent de y : son image est y."},
+   {fr:"l'application f : E → F n'est pas injective",blocs:[["∃","x ∈ E"],["∃","y ∈ E"]],Q:{t:"f(x) = f(y) et x ≠ y",f:e=>e.p===e.q&&e.x!==e.y},vars:V2,whyQ:"Il suffit de trouver un couple : deux fois ∃.",whyF:"On cherche deux éléments différents qui ont la même image."},
+   {fr:"l'application f : E → F n'est pas surjective",blocs:[["∃","y ∈ F"],["∀","x ∈ E"]],Q:atome("f(x)","≠","y",e=>e.p,e=>e.y),vars:{p:[0,1],y:[0,1]},whyQ:"Il existe un élément y de l'ensemble d'arrivée (∃) qu'aucun x n'atteint (∀).",whyF:"Aucun x n'a pour image y."},
+   {fr:"la fonction f : ℝ → ℝ est majorée",blocs:[["∃","M ∈ ℝ"],["∀","x ∈ ℝ"]],Q:atome("f(x)","≤","M",e=>e.p,e=>e.m),vars:PM,whyQ:"Un même nombre M (∃) doit dépasser toutes les valeurs de f (∀). M est écrit en premier : il ne dépend pas de x.",whyF:"Toutes les valeurs de f sont inférieures ou égales à M."},
+   {fr:"la fonction f : ℝ → ℝ est minorée",blocs:[["∃","m ∈ ℝ"],["∀","x ∈ ℝ"]],Q:atome("f(x)","≥","m",e=>e.p,e=>e.m),vars:PM,whyQ:"Un même nombre m (∃) doit être sous toutes les valeurs de f (∀). m est écrit en premier : il ne dépend pas de x.",whyF:"Toutes les valeurs de f sont supérieures ou égales à m."},
+   {fr:"la fonction f : ℝ → ℝ est croissante",blocs:[["∀","x ∈ ℝ"],["∀","y ∈ ℝ"]],P:atome("x","≤","y",e=>e.x,e=>e.y),Q:atome("f(x)","≤","f(y)",e=>e.p,e=>e.q),vars:V2,whyQ:tous,whyF:"Croissante : f garde l'ordre. Si x est avant y, alors f(x) est avant f(y)."},
+   {fr:"la fonction f : ℝ → ℝ est strictement décroissante",blocs:[["∀","x ∈ ℝ"],["∀","y ∈ ℝ"]],P:atome("x","<","y",e=>e.x,e=>e.y),Q:atome("f(x)",">","f(y)",e=>e.p,e=>e.q),vars:V2,whyQ:tous,whyF:"Strictement décroissante : f retourne l'ordre, avec des inégalités strictes."},
+   {fr:"la fonction f : ℝ → ℝ s'annule au moins une fois",blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)","=","0",e=>e.p,()=>0),vars:P3,whyQ:un,whyF:"S'annuler en x : prendre la valeur 0 en x."},
+   {fr:"la fonction f : ℝ → ℝ ne s'annule jamais",blocs:[["∀","x ∈ ℝ"]],Q:atome("f(x)","≠","0",e=>e.p,()=>0),vars:P3,whyQ:"« Jamais » : pour chaque x, sans exception. C'est un ∀.",whyF:"En chaque x, la valeur de f est différente de 0."},
+   {fr:"la fonction f : ℝ → ℝ est la fonction nulle",blocs:[["∀","x ∈ ℝ"]],Q:atome("f(x)","=","0",e=>e.p,()=>0),vars:P3,whyQ:chaque,whyF:"La fonction nulle vaut 0 partout."},
+   {fr:"la fonction f : ℝ → ℝ n'est pas la fonction nulle",blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)","≠","0",e=>e.p,()=>0),vars:P3,whyQ:"Pour ne pas être nulle partout, il suffit d'un x où f ne vaut pas 0 : ∃.",whyF:"En ce x, la valeur de f est différente de 0. (La fonction peut très bien s'annuler ailleurs.)"},
+   {fr:"la fonction f : ℝ → ℝ est constante",blocs:[["∀","x ∈ ℝ"],["∀","y ∈ ℝ"]],Q:atome("f(x)","=","f(y)",e=>e.p,e=>e.q),vars:{p:[0,1],q:[0,1]},whyQ:tous,whyF:"Constante : deux réels quelconques ont toujours la même image."},
+   {fr:`la fonction f : ℝ → ℝ prend la valeur ${C}`,k:c,blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)","=",C,e=>e.p,()=>c),vars:{p:[c-1,c,c+1]},whyQ:un,whyF:`Prendre la valeur ${C} : il y a un x dont l'image est ${C}.`},
+   {fr:`la fonction f : ℝ → ℝ ne dépasse jamais ${C}`,k:c,blocs:[["∀","x ∈ ℝ"]],Q:atome("f(x)","≤",C,e=>e.p,()=>c),vars:{p:[c-1,c,c+1]},whyQ:"« Jamais » : pour chaque x, sans exception. C'est un ∀.",whyF:`Ne pas dépasser ${C} : être inférieur ou égal à ${C}.`},
+   {fr:"tout réel positif ou nul est le carré d'un réel",blocs:[["∀","y ∈ [0, +∞["],["∃","x ∈ ℝ"]],Q:atome("x²","=","y",e=>e.x*e.x,e=>e.y),vars:{x:[0,1,2],y:[0,1,4]},whyQ:"« Tout réel positif » : ∀. « Est le carré d'un réel » : il existe un réel x, qui dépend de y. Il est écrit après.",whyF:"y est le carré de x."},
+   {fr:"tout entier naturel est dépassé par un autre entier naturel",blocs:[["∀","n ∈ ℕ"],["∃","m ∈ ℕ"]],Q:atome("m",">","n",e=>e.m,e=>e.n),vars:{m:[0,1,2],n:[0,1,2]},whyQ:"« Tout entier » : ∀. « Par un autre » : il existe un m, qui dépend de n. Il est écrit après.",whyF:"m dépasse n : m est strictement plus grand."},
+   {fr:"l'ensemble ℕ a un plus petit élément",blocs:[["∃","m ∈ ℕ"],["∀","n ∈ ℕ"]],Q:atome("m","≤","n",e=>e.m,e=>e.n),vars:{m:[0,1,2],n:[0,1,2]},whyQ:"Un même élément m (∃) doit être plus petit que tous les autres (∀). Il est écrit en premier : il ne dépend pas de n.",whyF:"m est inférieur ou égal à chaque n."},
+   {fr:"la partie A de ℝ est majorée",blocs:[["∃","M ∈ ℝ"],["∀","x ∈ A"]],Q:atome("x","≤","M",e=>e.x,e=>e.m),vars:{x:[0,1,2],m:[0,1,2]},whyQ:"Un même nombre M (∃) doit dépasser tous les éléments de A (∀). M est écrit en premier : il ne dépend pas de x.",whyF:"Chaque élément de A est inférieur ou égal à M."},
+   {fr:"tous les éléments de la partie A de ℝ sont strictement positifs",blocs:[["∀","x ∈ A"]],Q:atome("x",">","0",e=>e.x,()=>0),vars:{x:[-1,0,1]},whyQ:chaque,whyF:"Strictement positif : strictement plus grand que 0."}],i=R.ent(0,T.length-1),o=T[i];
+  o.sig=i+(o.k===undefined?"":","+o.k);return o;}
+/* vrai ou faux : la même propriété, avec quatre débuts différents, sur deux petits ensembles */
+const PREFS=[[["∀","x"],["∃","y"]],[["∃","y"],["∀","x"]],[["∀","x"],["∀","y"]],[["∃","x"],["∃","y"]],[["∃","x"],["∀","y"]],[["∀","y"],["∃","x"]]];
+const vautQ=(pref,S,p,env)=>{if(!pref.length)return p(env.x,env.y);const [q,v]=pref[0],f=a=>vautQ(pref.slice(1),S,p,Object.assign({},env,{[v]:a}));return q==="∀"?S[v].every(f):S[v].some(f);};
+function cocheVraies(o){const vraies=o.L.map((l,i)=>l.v?String(i):null).filter(Boolean);
+  function juge(rep){const S=(rep.v||[]).slice().sort();if(!S.length)return {incomplet:"Coche toutes les phrases vraies. Il y en a au moins une."};if(S.join()===vraies.join())return {ok:true};
+    const i=o.L.findIndex((l,k)=>S.includes(String(k))!==l.v),l=o.L[i];
+    return {ok:false,faux:["v"],resume:"Pas tout à fait : au moins une phrase est mal classée.",diag:{etape:i,type:l.type,titre:`Où ça part : la phrase ${i+1}.`,msg:`« ${l.txt} » est ${l.v?"vraie":"fausse"}. ${l.why}`}};}
+  return {sig:o.sig,q:o.q,corps:`<p class="muted">${RAPPELQ} ${o.rappel||""}</p><ol>${o.L.map(l=>`<li>${O.f(h(l.txt))}</li>`).join("")}</ol>`,texte:o.texte+" ; vraies parmi : "+o.L.map(l=>l.txt).join(" | "),champs:[{k:"multi",id:"v",o:o.L.map((l,i)=>[String(i),`Phrase ${i+1}`])}],juge,
+    etapes:o.L.map((l,i)=>({w:`Phrase ${i+1} : <b>${l.v?"vraie":"fausse"}</b>.`,why:l.why,pts:1})),bonne:"vraies : "+vraies.map(i=>`phrase ${+i+1}`).join(", "),bonneTxt:"vraies : "+vraies.map(i=>o.L[+i].txt).join(" | "),
+    repBonne:{v:vraies},repFausse:{v:o.L.map((l,i)=>l.v?null:String(i)).filter(Boolean)},nature:o.nature,ens:o.ens};}
+function vraiFauxFini(R){for(;;){const A=partie(R,[0,1,2,3,4,5,6,7],3,4),B=partie(R,[-3,-2,-1,1,2,3,4],3,3),S={x:A,y:B},k=R.ent(2,7),par=v=>v<0?`(${ent(v)})`:String(v),nomS={x:"A",y:"B"};
+  const p=R.choix([{t:"x + y ∈ A",f:(x,y)=>A.includes(x+y),m:(x,y)=>`${x} + ${par(y)} = ${ent(x+y)}, qui ${A.includes(x+y)?"est":"n'est pas"} dans A`},
+    {t:`x + y ≥ ${k}`,f:(x,y)=>x+y>=k,m:(x,y)=>`${x} + ${par(y)} = ${ent(x+y)}${x+y>=k?" ≥ ":" < "}${k}`},
+    {t:"x ≤ y",f:(x,y)=>x<=y,m:(x,y)=>x<=y?`${x} ≤ ${ent(y)}`:`${x} > ${ent(y)}`},
+    {t:"x + y est pair",f:(x,y)=>(x+y)%2===0,m:(x,y)=>`${x} + ${par(y)} = ${ent(x+y)}, ${(x+y)%2===0?"pair":"impair"}`},
+    {t:`xy ≤ ${k}`,f:(x,y)=>x*y<=k,m:(x,y)=>`${x} × ${par(y)} = ${ent(x*y)}${x*y<=k?" ≤ ":" > "}${k}`}]),P4=R.mel(PREFS).slice(0,4);
+  const L=P4.map(pf=>{const [[q1,v1],[q2,v2]]=pf,v=vautQ(pf,S,p.f,{}),txt=`${q1}${v1} ∈ ${nomS[v1]}, ${q2}${v2} ∈ ${nomS[v2]}, ${p.t}`,ok=(a,b)=>v1==="x"?p.f(a,b):p.f(b,a),mo=(a,b)=>v1==="x"?p.m(a,b):p.m(b,a);let why,type;
+    if(q1==="∀"&&q2==="∃"){const bad=S[v1].find(a=>!S[v2].some(b=>ok(a,b)));type="phrase « pour tout …, il existe … »";why=v?`Pour chaque ${v1}, on trouve un ${v2} qui convient (il peut changer avec ${v1}) : ${S[v1].map(a=>mo(a,S[v2].find(b=>ok(a,b)))).join(" ; ")}.`:`Pour ${v1} = ${ent(bad)}, aucun ${v2} de ${nomS[v2]} ne convient : ${S[v2].map(b=>mo(bad,b)).join(" ; ")}.`;}
+    else if(q1==="∃"&&q2==="∀"){const bon=S[v1].find(a=>S[v2].every(b=>ok(a,b)));type="phrase « il existe … tel que pour tout … »";why=v?`${v1} = ${ent(bon)} convient avec tous les ${v2} : ${S[v2].map(b=>mo(bon,b)).join(" ; ")}.`:`Il faudrait un même ${v1} qui marche avec tous les ${v2}. Or chaque ${v1} échoue avec au moins un ${v2} : ${S[v1].map(a=>mo(a,S[v2].find(b=>!ok(a,b)))).join(" ; ")}.`;}
+    else{let ce=null,te=null;S[v1].forEach(a=>S[v2].forEach(b=>{if(!ce&&!ok(a,b))ce=[a,b];if(!te&&ok(a,b))te=[a,b];}));type=q1==="∀"?"phrase « pour tout …, pour tout … »":"phrase « il existe …, il existe … »";
+      why=q1==="∀"?(v?"Tous les couples conviennent : on les vérifie un par un.":`Un contre-exemple suffit : ${mo(ce[0],ce[1])}.`):(v?`Un exemple suffit : ${mo(te[0],te[1])}.`:"Aucun couple ne convient : on les vérifie un par un.");}
+    return {txt,v,why,type,pf};});
+  if(L.every(l=>l.v)||!L.some(l=>l.v))continue;
+  return cocheVraies({sig:"VF"+A+"|"+B+"|"+p.t+L.map(l=>l.txt[0]+l.txt[7]).join(""),q:`On pose ${fx(`A = ${ensF(A)}`)} et ${fx(`B = ${ensF(B)}`)}. Parmi les quatre phrases suivantes, coche toutes celles qui sont vraies.`,rappel:"Lis chaque phrase de gauche à droite, en suivant l'ordre des quantificateurs.",texte:`A = ${ensF(A)}, B = ${ensF(B)}`,L,nature:p.t.replace(/\d+/,"k"),ens:{type:"vff",A,B,p:p.f,prefs:P4,vals:L.map(l=>l.v)}});}}
+function banqueQ(k){const eq=(a,b)=>Math.abs(a-b)<1e-9,K=k*k,car=e=>!eq(e.x*e.x,e.y*e.y)||eq(e.x,e.y),ordre="ordre des quantificateurs : ∀…∃ n'est pas ∃…∀",ex="un exemple suffit pour un ∃, un contre-exemple pour un ∀";return [
+ [0,`∀x ∈ ℝ, ∃y ∈ ℝ, x + y = ${k}`,true,`Pour chaque x, on prend y = ${k} − x. Comme y est écrit après x, il a le droit de dépendre de x.`,[["∀","x","R"],["∃","y","R"]],e=>eq(e.x+e.y,k),ordre],
+ [0,`∃y ∈ ℝ, ∀x ∈ ℝ, x + y = ${k}`,false,`Il faudrait un même y pour tous les x. Or, une fois y fixé, x = ${k+1} − y donne x + y = ${k+1}.`,[["∃","y","R"],["∀","x","R"]],e=>eq(e.x+e.y,k),ordre],
+ [1,"∀n ∈ ℕ, ∃m ∈ ℕ, m > n",true,"Pour chaque n, m = n + 1 convient.",[["∀","n","N"],["∃","m","N"]],e=>e.m>e.n,ordre],
+ [1,"∃m ∈ ℕ, ∀n ∈ ℕ, m > n",false,"Un entier m fixé n'est pas plus grand que tous les entiers : pour n = m, « m > n » est faux.",[["∃","m","N"],["∀","n","N"]],e=>e.m>e.n,ordre],
+ [2,"∃m ∈ ℕ, ∀n ∈ ℕ, m ≤ n",true,"m = 0 convient : 0 est inférieur ou égal à tous les entiers naturels.",[["∃","m","N"],["∀","n","N"]],e=>e.m<=e.n,ex],
+ [2,"∃m ∈ ℤ, ∀n ∈ ℤ, m ≤ n",false,"ℤ n'a pas de plus petit élément : une fois m fixé, n = m − 1 est plus petit que m.",[["∃","m","Z"],["∀","n","Z"]],e=>e.m<=e.n,"l'ensemble où on prend les lettres compte"],
+ [3,"∀x ∈ ℝ, x² ≥ x",false,"Contre-exemple : x = 1/2. Son carré, 1/4, est plus petit que 1/2.",[["∀","x","R"]],e=>e.x*e.x>=e.x,"l'ensemble où on prend les lettres compte"],
+ [3,"∀n ∈ ℤ, n² ≥ n",true,"Si n ≤ 0, alors n² ≥ 0 ≥ n. Si n ≥ 1, alors n² = n × n ≥ n.",[["∀","n","Z"]],e=>e.n*e.n>=e.n,"l'ensemble où on prend les lettres compte"],
+ [4,"∀x ∈ ℝ, ∃y ∈ ℝ, y² = x",false,"Contre-exemple : x = −1 n'est le carré d'aucun réel.",[["∀","x","R"],["∃","y","R"]],e=>eq(e.y*e.y,e.x),ex],
+ [4,"∀x ∈ [0, +∞[, ∃y ∈ ℝ, y² = x",true,"Pour chaque x positif ou nul, y = √x convient.",[["∀","x","P"],["∃","y","R"]],e=>eq(e.y*e.y,e.x),"l'ensemble où on prend les lettres compte"],
+ [5,"∃x ∈ ℝ, ∀y ∈ ℝ, xy = 0",true,"x = 0 convient : 0 × y = 0 pour tout y.",[["∃","x","R"],["∀","y","R"]],e=>eq(e.x*e.y,0),ex],
+ [5,"∀x ∈ ℝ, ∃y ∈ ℝ, xy = 1",false,"Contre-exemple : x = 0. Le produit 0 × y vaut toujours 0, jamais 1.",[["∀","x","R"],["∃","y","R"]],e=>eq(e.x*e.y,1),ex],
+ [6,"∀x ∈ ℝ*, ∃y ∈ ℝ, xy = 1",true,"Pour chaque x différent de 0, y = 1/x convient. (ℝ* est l'ensemble des réels différents de 0.)",[["∀","x","E"],["∃","y","R"]],e=>eq(e.x*e.y,1),ordre],
+ [6,"∃y ∈ ℝ, ∀x ∈ ℝ*, xy = 1",false,"Il faudrait un même y pour tous les x. Or, si xy = 1 pour x = 1, alors y = 1, et pour x = 2 le produit vaut 2. (ℝ* est l'ensemble des réels différents de 0.)",[["∃","y","R"],["∀","x","E"]],e=>eq(e.x*e.y,1),ordre],
+ [7,"∀n ∈ ℕ, ∃m ∈ ℕ, n = 2m",false,"Contre-exemple : n = 1 n'est le double d'aucun entier.",[["∀","n","N"],["∃","m","N"]],e=>e.n===2*e.m,ex],
+ [7,"∀n ∈ ℕ, ∃m ∈ ℕ, m = 2n",true,"Pour chaque n, m = 2n convient.",[["∀","n","N"],["∃","m","N"]],e=>e.m===2*e.n,ex],
+ [8,"∀x ∈ ℝ, ∀y ∈ ℝ, x² = y² ⇒ x = y",false,"Contre-exemple : x = 1 et y = −1 ont le même carré, et ils sont différents.",[["∀","x","R"],["∀","y","R"]],car,ex],
+ [8,"∀x ∈ [0, +∞[, ∀y ∈ [0, +∞[, x² = y² ⇒ x = y",true,"Deux réels positifs ou nuls qui ont le même carré sont égaux.",[["∀","x","P"],["∀","y","P"]],car,"l'ensemble où on prend les lettres compte"],
+ [9,`∀x ∈ ℝ, x > ${k} ⇒ x² > ${K}`,true,`Si x > ${k}, alors x est positif et x² > ${k}² = ${K} : la fonction carré est strictement croissante sur [0, +∞[.`,[["∀","x","R"]],e=>!(e.x>k)||e.x*e.x>K,"une implication et sa réciproque"],
+ [9,`∀x ∈ ℝ, x² > ${K} ⇒ x > ${k}`,false,`Contre-exemple : x = −${k+1}. Son carré, ${(k+1)*(k+1)}, est plus grand que ${K}, mais x n'est pas plus grand que ${k}.`,[["∀","x","R"]],e=>!(e.x*e.x>K)||e.x>k,"une implication et sa réciproque"],
+ [10,`∃x ∈ ℝ, x² = −${k}`,false,"Un carré de réel n'est jamais strictement négatif.",[["∃","x","R"]],e=>eq(e.x*e.x,-k),ex],
+ [10,`∃x ∈ ℤ, x² = ${K}`,true,`x = ${k} convient (x = −${k} aussi).`,[["∃","x","Z"]],e=>e.x*e.x===K,ex],
+ [11,"∀x ∈ ℝ, ∃n ∈ ℕ, n > x",true,"Pour chaque réel x, on trouve un entier naturel plus grand que lui : il suffit d'aller assez loin.",[["∀","x","R"],["∃","n","N"]],e=>e.n>e.x,ordre],
+ [11,"∃n ∈ ℕ, ∀x ∈ ℝ, n > x",false,"Un entier n fixé n'est pas plus grand que tous les réels : pour x = n, « n > x » est faux.",[["∃","n","N"],["∀","x","R"]],e=>e.n>e.x,ordre],
+ [12,"∀n ∈ ℕ, ∃m ∈ ℕ, m < n",false,"Contre-exemple : n = 0. Aucun entier naturel n'est strictement plus petit que 0.",[["∀","n","N"],["∃","m","N"]],e=>e.m<e.n,"l'ensemble où on prend les lettres compte"],
+ [12,"∀n ∈ ℤ, ∃m ∈ ℤ, m < n",true,"Pour chaque n, m = n − 1 convient, et il est encore dans ℤ.",[["∀","n","Z"],["∃","m","Z"]],e=>e.m<e.n,"l'ensemble où on prend les lettres compte"]
+ ].map(a=>({g:a[0],txt:a[1],v:a[2],why:a[3],pref:a[4],p:a[5],type:a[6]}));}
+function vraiFauxInfini(R){const k=R.ent(1,5),B=banqueQ(k),G=R.mel([0,1,2,3,4,5,6,7,8,9,10,11,12]).slice(0,2),L=R.mel(B.filter(b=>G.includes(b.g)));
+  return cocheVraies({sig:"VI"+L.map(l=>l.txt).sort().join("|"),q:"Parmi les quatre phrases suivantes, coche toutes celles qui sont vraies.",rappel:"Pour un ∀, cherche un contre-exemple. Pour un ∃, cherche un exemple. Et regarde dans quel ensemble on prend chaque lettre.",texte:"phrases sur ℕ, ℤ ou ℝ",L,nature:"sur ℕ, ℤ ou ℝ",ens:{type:"vfi",L}});}
+
 G.rai={appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
@@ -20847,7 +20973,14 @@ G.add("rai",[
    {t:"une formule sur ℝ : l'ensemble de départ et l'ensemble d'arrivée comptent",cc:3,gen:R=>formule(R,"reels"),min:60},
    {t:"sur ℕ ou sur ℤ",cc:3,gen:R=>formule(R,"entiers"),min:20},
    {t:"donner un contre-exemple",cc:3,gen:contreExemple,min:60},
-   {t:"la bijection réciproque",cc:4,gen:reciproque,min:30}]}
+   {t:"la bijection réciproque",cc:4,gen:reciproque,min:30}]},
+ {id:"RA4",t:"Quantificateurs : nier, traduire, dire si c'est vrai",tache:"quantificateurs",th:"quantif",pts:2.5,lecons:["r-quantif","r-preuves"],
+  paliers:[
+   {t:"nier une phrase à un ou deux quantificateurs",cc:2,gen:R=>negation(phraseR(R,1)),min:40},
+   {t:"vrai ou faux, sur deux petits ensembles",cc:4,gen:vraiFauxFini},
+   {t:"traduire une phrase en français",cc:3,gen:R=>traduction(aTraduire(R)),min:15},
+   {t:"nier avec ⇒, « et », « ou », ou une double inégalité",cc:3,gen:R=>negation(phraseR(R,2)),min:20},
+   {t:"vrai ou faux sur ℕ, ℤ ou ℝ : l'ordre des quantificateurs",cc:4,gen:vraiFauxInfini,min:60}]}
 ]);
 })();
 
