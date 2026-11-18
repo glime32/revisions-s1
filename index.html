@@ -18177,8 +18177,34 @@ function affine(src,permis){const s=propre(src).replace(/ /g,"");let p=0;if(!s)r
     return a;}
   const r=expr();return r&&p===s.length?r:null;}
 
+/* « E(3/ε) + 1 », « 2x^2 - sqrt(x) » : la valeur de la formule pour les valeurs données aux lettres (en minuscules),
+   null si elle ne se lit pas. E(…) est la partie entière. */
+function calcule(src,vars){let s=propre(String(src==null?"":src).replace(/²/g,"^2").replace(/³/g,"^3")).toLowerCase().replace(/ /g,"").replace(/,/g,".").replace(/epsilon|eps/g,"ε").replace(/√/g,"sqrt").replace(/racine|rac/g,"sqrt").replace(/\*\*/g,"^").replace(/pi/g,"π"),p=0;
+  const FN={sqrt:Math.sqrt,floor:Math.floor,ent:Math.floor,abs:Math.abs,exp:Math.exp,ln:Math.log,sin:Math.sin,cos:Math.cos,e:Math.floor},NOMS=Object.keys(FN),NUM=/^\d+(\.\d+)?/;
+  function prim(){const c=s[p];
+    if(c==="("){p++;const v=expr();if(v===null||s[p]!==")")return null;p++;return v;}
+    if(c==="|"){p++;const v=expr();if(v===null||s[p]!=="|")return null;p++;return Math.abs(v);}
+    let m=NUM.exec(s.slice(p));if(m){p+=m[0].length;return +m[0];}
+    for(const f of NOMS)if(s.startsWith(f,p)){const d=s[p+f.length];
+      if(d==="("){p+=f.length;const v=prim();return v===null?null:FN[f](v);}
+      if(f==="sqrt"&&d!==undefined){p+=f.length;const v=prim();return v===null?null:Math.sqrt(v);}}
+    if(c==="π"){p++;return Math.PI;}
+    if(c&&vars&&Object.prototype.hasOwnProperty.call(vars,c)){p++;return vars[c];}
+    return null;}
+  function puis(){let v=prim();if(v===null)return null;if(s[p]==="^"){p++;const e=unaire();if(e===null)return null;v=Math.pow(v,e);}return v;}
+  function unaire(){if(s[p]==="-"){p++;const v=unaire();return v===null?null:-v;}if(s[p]==="+"){p++;return unaire();}return puis();}
+  function terme(){let v=unaire();
+    while(v!==null){const c=s[p];
+      if(c==="*"){p++;const w=unaire();v=w===null?null:v*w;}
+      else if(c==="/"){p++;const w=unaire();v=w===null?null:v/w;}
+      else if(c!==undefined&&(c==="("||/[a-zα-ωπ\d]/.test(c))){const w=puis();v=w===null?null:v*w;}
+      else break;}
+    return v;}
+  function expr(){let v=terme();while(v!==null){const c=s[p];if(c!=="+"&&c!=="-")break;p++;const w=terme();v=w===null?null:c==="+"?v+w:v-w;}return v;}
+  if(!s)return null;const r=expr();return r!==null&&p===s.length?r:null;}
+
 const GEN=window.GEN={defs:{},par:{},
-  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine},
+  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine,calcule},
   /* un tirage : la graine suffit à retrouver l'exercice */
   tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
   add(sid,defs){const S=SUBJ[sid];GEN.defs[sid]=(GEN.defs[sid]||[]).concat(defs);
@@ -18871,7 +18897,7 @@ G.add("lin",[
 /* Générateurs d'Analyse (CC1 : les réels et les bornes, les suites, les limites de fonctions). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nb,brut,comb,propre,nombre}=O;
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nb,brut,par,comb,propre,nombre}=O;
 const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
 const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
@@ -18961,7 +18987,7 @@ function tableau(E,palier,eps){const B=bilan(E),VB=[B.inf,B.min,B.max,B.sup];
   const bF=Object.assign({},b);
   if(B.inf&&!B.min)bF["min A"]=tape(B.inf);else if(B.min)bF["min A"]="non";else{bF["inf A"]="0";bF["min A"]="0";}
   const champs=[{k:"choix",id:"int",o:[["oui","A est un intervalle"],["non","A n'est pas un intervalle"]]},
-    {k:"cases",id:"b",noms:NB,aide:"Dans chaque case : un nombre quand il existe (3, -1/2, ou rac(2) pour √2), « non » quand il n'existe pas."}];
+    {k:"cases",id:"b",noms:NB,sym:["non","√"],aide:"Dans chaque case : un nombre quand il existe (3, -1/2, ou rac(2) pour √2), « non » quand il n'existe pas."}];
   if(eps)champs.push({k:"champ",id:"el",nom:"élément de A",label:`Si sup A existe, un élément de A strictement plus grand que $sup A − ${nb(eps)}$ :`,ex:"vide si sup A n'existe pas"});
   const el=eps&&B.sup?tape(ex):"";
   return {sig:"T"+E.sig+(eps?","+brut(eps):""),
@@ -19088,6 +19114,93 @@ function commeAuCC(R){const t=R();
   const E=t<0.37?cRat(R):t<0.5?cRatCarre(R):t<0.65?cPrive(R):t<0.8?cImage(R):t<0.9?eDeux(R,R()<0.6?"rec":"dis"):R()<0.5?iAbs(R,R.choix(OPS)):iAff(R);
   return tableau(E,4,R.choix(EPS));}
 
+/* ---------- AN2 : la limite d'une suite avec ε, trouver un rang ---------- */
+const IND="₀₁₂₃₄₅₆₇₈₉",ind=n=>String(n).split("").map(c=>IND[+c]).join("");
+const dq=x=>{x=q(x);return String(x.n/x.d).replace(".",",").replace("-","−");};
+const d3=v=>String(+(Math.abs(v)>=1000?v.toFixed(0):v.toPrecision(3))).replace(".",",").replace("-","−");
+/* un écart comparé à ε : assez de chiffres pour voir de quel côté il est */
+function pres(v,ref){if(Math.abs(v-ref)<1e-12)return "exactement "+d3(ref);for(let p=3;p<10;p++){const t=+v.toPrecision(p);if(t!==ref&&(t<ref)===(v<ref))return "environ "+String(t).replace(".",",");}return "environ "+d3(v);}
+const PARTIE=`E(x) est la partie entière de x : le plus grand entier inférieur ou égal à x. Donc E(x) + 1 est un entier strictement plus grand que x.`;
+/* uₙ = (an + b)/(cn + d), avec a = 0 ou c = 1 : limite a, écart |uₙ − a| = K/(cn + d) */
+function homog(a,b,c,d){const n0=d>0?0:1,num=a?comb([a],["n"])+(b?(b>0?" + ":" − ")+Math.abs(b):""):nb(b),den=comb([c],["n"])+(d?" + "+d:""),denT=d||c>1?`(${den})`:den,K=Math.abs(a?b-a*d:b),sg=a>0?"−":"+",A=Math.abs(a);
+  return {a,b,c,d,n0,K,l:Q(a),den,denT,expr:`${a&&b?`(${num})`:num}/${denT}`,ecartT:`${K}/${denT}`,abs:a?`|uₙ ${sg} ${A}|`:"|uₙ|",u:n=>Q(a*n+b,c*n+d),ecart:n=>K/(c*n+d),sig:[a,b,c,d].join(","),
+    ou:`pour tout entier ${n0?"n ≥ 1":"naturel n"}`,
+    pourquoi:a?`On met au même dénominateur : ${fx(`uₙ ${sg} ${A} = (${num} ${sg} ${A===1?"":A}(n + ${d}))/(n + ${d})`)}, ce qui donne ${fx(`${nb(b-a*d)}/(n + ${d})`)} : les termes en n ont disparu. Il reste à prendre la valeur absolue.`:b<0?"Le numérateur est négatif et le dénominateur positif : la valeur absolue enlève le signe.":"Tout est positif : la valeur absolue ne change rien."};}
+const tireNul=R=>homog(0,R.nz(-9,9),R()<0.7?1:R.ent(2,3),R.ent(0,9));
+function tireQuot(R){for(;;){const a=R.nz(-6,6),d=R.ent(1,6),b=R.ent(-9,9);if(b!==a*d)return homog(a,b,1,d);}}
+const EPSN=[Q(1,10),Q(1,100),Q(1,20),Q(1,5),Q(1,50),Q(1,1000),Q(1,4),Q(1,2),Q(1,200),Q(1,25)];
+function rangNum(S,eps,avecL){const Ke=div(S.K,eps),T=div(sub(Ke,S.d),S.c),N0=Math.max(S.n0,Math.ceil(T.n/T.d)),e=eps.n/eps.d,ok=N=>N>=S.n0&&S.ecart(N)<=e*(1+1e-12),L=nb(S.l),E=[];
+  if(avecL)E.push({w:`<b>${fx(`ℓ = ${L}`)}</b>`,why:`Pour n grand, le numérateur se comporte comme ${fx(comb([S.a],["n"]))} et le dénominateur comme n : le quotient se rapproche de ${fx(L)}. Pour le démontrer, on divise le numérateur et le dénominateur par n.`,pts:1});
+  E.push({w:`${fx(`${S.abs} = ${S.ecartT}`)}`,why:S.pourquoi,pts:1});
+  E.push({w:`${fx(`${S.ecartT} ≤ ${dq(eps)}`)} quand ${fx(`${S.den} ≥ ${nb(Ke)}`)}, c'est-à-dire quand ${fx(`n ≥ ${nb(T)}`)}.`,why:`Les deux côtés sont positifs : on peut échanger la place du dénominateur et celle de ${dq(eps)}. Et ${fx(`${S.K}/${dq(eps)} = ${nb(Ke)}`)}.`,pts:1});
+  E.push({w:`<b>${fx(`N = ${N0}`)}</b> convient, et tout entier plus grand aussi.`,why:`Vérification : ${fx(`|u${ind(N0)} − ${par(S.l)}| = ${S.K}/${S.c*N0+S.d}`)}, ${pres(S.ecart(N0),e)} : c'est bien inférieur ou égal à ${dq(eps)}. Et plus n est grand, plus cet écart est petit.`,pts:1});
+  const pas=E.length-2;
+  function juge(rep){const c=rep.c||{};let lu=null;
+    if(avecL){lu=nombre(c["ℓ"]);if(!lu)return {incomplet:"Écris la limite ℓ : un nombre, par exemple 3 ou -1/2."};}
+    const N=nombre(c.N);if(!N)return {incomplet:"Écris un rang N : un entier, par exemple 250."};
+    if(N.d!==1||N.n<0)return {incomplet:"Un rang est un entier naturel : 0, 1, 2, et ainsi de suite."};
+    if(avecL&&!egal(lu,S.l))return {ok:false,faux:["ℓ"],resume:"Pas tout à fait : la limite ℓ est à revoir.",diag:{etape:0,type:"limite d'un quotient de deux expressions en n",titre:"Où ça part : la limite.",msg:`Le numérateur se comporte comme ${fx(comb([S.a],["n"]))} et le dénominateur comme n : ${fx(`ℓ = ${L}`)}.`}};
+    if(ok(N.n))return {ok:true};
+    return {ok:false,faux:["N"],resume:`Pas tout à fait : N = ${N.n} est trop petit.`,diag:{etape:pas,type:"rang trop petit",titre:"Où ça part : la résolution de l'inéquation.",msg:N.n<S.n0?`La suite commence à n = ${S.n0}.`:`Avec N = ${N.n} : ${fx(`|u${ind(N.n)} − ${par(S.l)}| = ${S.K}/${S.c*N.n+S.d}`)}, ${pres(S.ecart(N.n),e)}. C'est plus grand que ${dq(eps)}.`}};}
+  const bon=Object.assign(avecL?{"ℓ":brut(S.l)}:{},{N:String(N0)});
+  return {sig:"RN"+S.sig+","+brut(eps)+(avecL?"L":""),
+    q:`On pose ${fx(`uₙ = ${S.expr}`)} ${S.ou}. ${avecL?"La suite (uₙ) converge vers un nombre ℓ : lequel ? Donne ensuite":`La suite (uₙ) converge vers ${L}. Donne`} un entier N tel que, pour tout ${fx("n ≥ N")}, on ait ${fx(`${avecL?"|uₙ − ℓ|":S.abs} ≤ ${dq(eps)}`)}.`,corps:"",
+    texte:`uₙ = ${S.expr} (${S.n0?"n ≥ 1":"n ∈ ℕ"}) ; ${avecL?"la limite ℓ, puis ":""}un rang N tel que |uₙ − ℓ| ≤ ${dq(eps)} pour tout n ≥ N`,
+    champs:[{k:"cases",id:"c",noms:avecL?["ℓ","N"]:["N"],aide:"Tout rang qui convient est accepté : il n'y a pas une seule bonne réponse."}],juge,etapes:E,
+    bonne:`${avecL?`${fx(`ℓ = ${L}`)} ; `:""}${fx(`N = ${N0}`)}, ou tout entier plus grand`,bonneTxt:`${avecL?`ℓ = ${L} ; `:""}N = ${N0}, ou tout entier plus grand`,
+    repBonne:{c:bon},repFausse:{c:Object.assign({},bon,{N:String(N0-1)})},nature:avecL?"avec ℓ":"rang",ens:{type:"num",u:n=>(S.a*n+S.b)/(S.c*n+S.d),l:S.a,eps:e,n0:S.n0}};}
+function tireNum(R,avecL){for(;;){const S=avecL?tireQuot(R):tireNul(R),eps=R.choix(EPSN),T=div(sub(div(S.K,eps),S.d),S.c);if(T.n/T.d>=2)return rangNum(S,eps,avecL);}}
+/* un rang donné par une formule : elle est essayée sur plusieurs valeurs de la lettre */
+function jugeFormule(o){return rep=>{const src=rep.N;
+  const faux=(type,msg)=>({ok:false,faux:["N"],resume:"Pas tout à fait : cette formule ne donne pas toujours un rang qui convient.",diag:{etape:o.etape,type,titre:"Où ça part : le choix de N.",msg}});
+  if(!propre(src))return {incomplet:`Écris N avec ${o.lettre}, par exemple ${o.modele}.`};
+  const V=o.tests.map(p=>O.calcule(src,{[o.cle]:p}));
+  if(V.some(v=>v===null))return {incomplet:`Je n'arrive pas à lire cette formule. Écris N avec ${o.lettre}, par exemple ${o.modele}.`};
+  for(let i=0;i<V.length;i++){const v=V[i],p=o.tests[i],pt=String(p).replace(".",",");
+    if(!Number.isFinite(v))return faux(`formule sans valeur pour certains ${o.lettre}`,`Pour ${o.lettre} = ${pt}, ta formule n'a pas de valeur.`);
+    if(Math.abs(v-Math.round(v))>1e-9)return faux("rang qui n'est pas un entier",`Pour ${o.lettre} = ${pt}, ta formule donne ${d3(v)} : ce n'est pas un entier. Prends la partie entière avec E( ), puis ajoute 1.`);
+    const N=Math.round(v);if(N<o.n0||!o.bon(N,p))return faux("rang trop petit",`Pour ${o.lettre} = ${pt}, ta formule donne N = ${N}. ${o.dit(N,p)}`);}
+  return {ok:true};};}
+const TESTS_E=[1,0.5,0.3,0.1,0.07,0.013,0.001],TESTS_A=[0,2.5,10,77.3,1000,12345.6];
+function rangEps(S){const L=nb(S.l),ex=`E(${S.K}/ε) + 1`;
+  const E=[{w:`${fx(`${S.abs} = ${S.ecartT}`)}`,why:S.pourquoi,pts:1},
+    {w:`${fx(`${S.ecartT} ≤ ε`)} quand ${fx(`${S.den} ≥ ${S.K}/ε`)}.${S.den==="n"?"":` Il suffit donc que ${fx(`n ≥ ${S.K}/ε`)}.`}`,why:`Les deux côtés sont positifs : on peut échanger la place du dénominateur et celle de ε.${S.den==="n"?"":` Et ${fx(`${S.den} ≥ n`)} : si n dépasse ${fx(`${S.K}/ε`)}, alors ${fx(S.den)} aussi. On ne cherche pas le plus petit rang : un rang qui convient suffit.`}`,pts:1},
+    {w:`<b>${fx(`N = ${ex}`)}</b> convient.`,why:`N doit être un entier, et ${fx(`${S.K}/ε`)} n'en est pas toujours un. ${PARTIE} Pour tout ${fx("n ≥ N")}, on a ${fx(`n ≥ ${S.K}/ε`)}, donc ${fx(`${S.abs} ≤ ε`)}.`,pts:1}];
+  return {sig:"RE"+S.sig,
+    q:`On pose ${fx(`uₙ = ${S.expr}`)} ${S.ou}. La suite (uₙ) converge vers ${L}. Soit ε un réel strictement positif. Donne, en fonction de ε, un entier N tel que, pour tout ${fx("n ≥ N")}, on ait ${fx(`${S.abs} ≤ ε`)}.`,corps:"",
+    texte:`uₙ = ${S.expr} (${S.n0?"n ≥ 1":"n ∈ ℕ"}) ; un rang N en fonction de ε tel que |uₙ − ℓ| ≤ ε pour tout n ≥ N (ℓ = ${L})`,
+    champs:[{k:"champ",id:"N",nom:"N",label:"$N =$",ex:"une formule avec ε",sym:[["ε","ε"],["E( )","E("],[")",")"],["/","/"]],aide:"E(x) désigne la partie entière de x. Toute formule qui donne un rang qui convient est acceptée."}],
+    juge:jugeFormule({lettre:"ε",cle:"ε",modele:"E(2/ε) + 5",tests:TESTS_E,n0:S.n0,etape:2,bon:(N,e)=>S.ecart(N)<=e*(1+1e-12),dit:(N,e)=>`Or ${fx(`${S.abs.replace("uₙ","u"+ind(N))}`)} vaut ${pres(S.ecart(N),e)}, ce qui est plus grand que ${String(e).replace(".",",")}.`}),etapes:E,
+    bonne:`${fx(`N = ${ex}`)}, par exemple`,bonneTxt:`N = ${ex}, par exemple`,repBonne:{N:ex},repFausse:{N:`${S.K}/ε`},nature:"ε",ens:{type:"eps",u:n=>(S.a*n+S.b)/(S.c*n+S.d),l:S.a,n0:S.n0}};}
+function rangInfini(R){const t=R(),a=t<0.55?R.ent(1,15):t<0.7?1:R.ent(2,6),b=R.ent(0,t<0.55?50:20),forme=t<0.55?"n":t<0.85?"n²":"√n",ab=b?`A + ${b}`:"A";
+  const expr=(a===1?"":a)+forme+(b?" − "+b:""),u=forme==="n"?n=>a*n-b:forme==="n²"?n=>a*n*n-b:n=>a*Math.sqrt(n)-b,quot=a===1?ab:b?`(${ab})/${a}`:`A/${a}`;
+  const seuil=forme==="n"?quot:forme==="n²"?`√(${quot})`:a===1?`(${ab})²`:`(${quot})²`,ex=`E(${seuil}) + 1`;
+  const E=[{w:`${fx(`${expr} ≥ A`)} quand ${fx(`n ≥ ${seuil}`)}.`,why:`${b?`On ajoute ${b} des deux côtés. `:""}${a>1?`On divise par ${a}, qui est positif : le sens de l'inégalité ne change pas. `:""}${forme==="n²"?"Puis on prend la racine carrée des deux côtés, qui sont positifs : la racine carrée garde l'ordre.":forme==="√n"?"Puis on élève au carré les deux côtés, qui sont positifs : le carré garde alors l'ordre.":""}`.trim()||"L'inéquation est déjà résolue.",pts:1.5},
+    {w:`<b>${fx(`N = ${ex}`)}</b> convient.`,why:`N doit être un entier, et ${fx(seuil)} n'en est pas toujours un. ${PARTIE} Pour tout ${fx("n ≥ N")}, on a donc ${fx("uₙ ≥ A")}. Pour un réel A négatif, le rang trouvé pour A = 0 convient encore.`,pts:1.5}];
+  return {sig:"RI"+a+","+b+","+forme,
+    q:`On pose ${fx(`uₙ = ${expr}`)} pour tout entier naturel n. La suite (uₙ) tend vers +∞ : pour tout réel A, il existe un rang N tel que, pour tout ${fx("n ≥ N")}, on ait ${fx("uₙ ≥ A")}. Soit A un réel positif ou nul. Donne un tel rang N, en fonction de A.`,corps:"",
+    texte:`uₙ = ${expr} (n ∈ ℕ) ; un rang N en fonction de A tel que uₙ ≥ A pour tout n ≥ N`,
+    champs:[{k:"champ",id:"N",nom:"N",label:"$N =$",ex:"une formule avec A",sym:[["A","A"],["E( )","E("],["√( )","√("],[")",")"],["/","/"]],aide:"E(x) désigne la partie entière de x. Toute formule qui donne un rang qui convient est acceptée."}],
+    juge:jugeFormule({lettre:"A",cle:"a",modele:"E(A/2) + 3",tests:TESTS_A,n0:0,etape:1,bon:(N,A)=>u(N)>=A-1e-9,dit:(N,A)=>`Or ${fx(`u${ind(N)}`)} vaut environ ${d3(u(N))}, ce qui est plus petit que ${String(A).replace(".",",")}.`}),etapes:E,
+    bonne:`${fx(`N = ${ex}`)}, par exemple`,bonneTxt:`N = ${ex}, par exemple`,repBonne:{N:ex},repFausse:{N:seuil},nature:forme,ens:{type:"inf",u}};}
+/* la rédaction complète, comme l'exercice 1 du CC1 2024 : sur papier, cochée ligne par ligne */
+function redacEps(R){const t=R(),a=R.ent(1,9),co=a===1?"":a;let expr,maj,K=a,l=0,u,debut,why2;
+  const BORNE=[["sin(n)","|sin(n)| ≤ 1",Math.sin],["cos(n)","|cos(n)| ≤ 1",Math.cos],["(−1)ⁿ","|(−1)ⁿ| = 1",n=>n%2?-1:1],["sin(n²)","|sin(n²)| ≤ 1",n=>Math.sin(n*n)],["cos(2n)","|cos(2n)| ≤ 1",n=>Math.cos(2*n)]];
+  if(t<0.4){const b=R.ent(0,9),f=R.choix(BORNE),den=b?`(n + ${b})`:"n";expr=`${co}${f[0]}/${den}`;u=n=>a*f[2](n)/(n+b);
+    maj=`${fx(`|uₙ − 0| ≤ ${a}/${den}`)}${b?`, et ${fx(`${a}/${den} ≤ ${a}/n`)}`:""}`;why2=`${fx(f[1])}${b?` ; puis ${fx(`n + ${b} ≥ n`)}, et diviser par un nombre plus grand donne un résultat plus petit`:""}.`;}
+  else if(t<0.7){const c=R.ent(1,9),f=R.choix(BORNE.slice(0,4));expr=`${co}n ${f[0]}/(n² + ${c})`;u=n=>a*n*f[2](n)/(n*n+c);
+    maj=`${fx(`|uₙ − 0| ≤ ${co}n/(n² + ${c})`)}, et ${fx(`${co}n/(n² + ${c}) ≤ ${co}n/n² = ${a}/n`)}`;why2=`${fx(f[1])} ; puis ${fx(`n² + ${c} ≥ n²`)}, et diviser par un nombre plus grand donne un résultat plus petit.`;}
+  else{const S=tireQuot(R);expr=S.expr;K=S.K;l=S.a;u=n=>(S.a*n+S.b)/(n+S.d);maj=`${fx(`${S.abs} = ${S.ecartT}`)}, et ${fx(`${S.ecartT} ≤ ${K}/n`)}`;why2=`${S.pourquoi} Puis ${fx(`n + ${S.d} ≥ n`)}, et diviser par un nombre plus grand donne un résultat plus petit.`;}
+  const L=nb(l),ec=l?`|uₙ ${l>0?"−":"+"} ${Math.abs(l)}|`:"|uₙ − 0|";
+  const lignes=[[`Soit ${fx("ε &gt; 0")}.`,`La définition commence par « pour tout ε strictement positif » : on en fixe un, quelconque, et on ne lui donne pas de valeur.`,0.5],
+    [`Pour tout ${fx("n ≥ 1")} : ${maj}.`,why2,1.5],
+    [`On pose ${fx(`N = E(${K}/ε) + 1`)} : N est un entier et ${fx(`N &gt; ${K}/ε`)}, donc ${fx(`${K}/N &lt; ε`)}.`,PARTIE,1],
+    [`Pour tout ${fx("n ≥ N")} : ${fx(`${ec} ≤ ${K}/n`)}, et ${fx(`${K}/n ≤ ${K}/N &lt; ε`)}.`,`n est plus grand que N, donc ${fx(`${K}/n`)} est plus petit que ${fx(`${K}/N`)}.`,0.5],
+    [`Donc : ${O.f(`∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, ${ec} ≤ ε`)}. La suite (uₙ) converge vers ${L}.`,`On finit en écrivant la définition : c'est elle qu'on vient de vérifier, pour un ε quelconque.`,0.5]];
+  const q=`En utilisant la définition de la limite d'une suite, montre que la suite (uₙ) définie pour tout entier ${fx("n ≥ 1")} par ${fx(`uₙ = ${expr}`)} converge vers ${L}.`;
+  return {sig:"RP"+expr,q,corps:"",texte:`avec la définition (ε), montrer que uₙ = ${expr} converge vers ${L}`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+    etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`rédaction avec N = E(${K}/ε) + 1`,repBonne:{},nature:t<0.4?"borné":t<0.7?"borné, n²":"quotient",ens:{type:"papier",u,l,K}};}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19095,7 +19208,14 @@ G.add("ana",[
    {t:"deux intervalles : union, intersection",cc:2,gen:R=>{const t=R();return tableau(eDeux(R,t<0.35?"rec":t<0.6?"dis":t<0.8?"col":"int"),1);}},
    {t:"l'ensemble des termes d'une suite",cc:3,gen:R=>tableau(eSuite(R),2)},
    {t:"un ensemble donné par une inéquation",cc:3,gen:R=>tableau(eIneq(R),3)},
-   {t:"comme au CC, avec un élément proche de la borne supérieure",cc:4,gen:commeAuCC}]}
+   {t:"comme au CC, avec un élément proche de la borne supérieure",cc:4,gen:commeAuCC}]},
+ {id:"AN2",t:"Limite d'une suite : trouver un rang N",tache:"limite d'une suite, trouver un rang N",th:"limite",pts:3,lecons:["a-limite"],
+  paliers:[
+   {t:"une suite qui tend vers 0, ε donné",cc:2,gen:R=>tireNum(R,false)},
+   {t:"un quotient : la limite, puis un rang pour ε donné",cc:4,gen:R=>tireNum(R,true)},
+   {t:"ε quelconque : N en fonction de ε",cc:4,gen:R=>rangEps(R()<0.4?tireNul(R):tireQuot(R))},
+   {t:"une suite qui tend vers +∞ : N en fonction de A",cc:4,gen:rangInfini},
+   {t:"la rédaction complète, sur papier, comme au CC",cc:10,gen:redacEps}]}
 ]);
 })();
 
@@ -19892,11 +20012,12 @@ function prochain(){const S=P.sess;
 function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:0,run:A.nouvRun(),avant:{},refaire:null,dernierG:null,faits:[],tout:!!tout}};
   if(d)P.sess.avant[d.id]=Object.assign({},etat(d.id));prochain();}
 
+const symHTML=c=>c.sym?`<div class="filters en-sym">${c.sym.map(x=>{const[l,v]=Array.isArray(x)?x:[x,x];return `<button type="button" class="btn" data-ins="${esc(v)}">${esc(l)}</button>`;}).join("")}</div>`:"";
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
-  if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
-  if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
 function lire(e){const rep={},b=$("#lpb");
   e.champs.forEach(c=>{
@@ -19937,9 +20058,10 @@ function dessine(){
   const tic=()=>{const c=$("#en-chrono");if(c)c.textContent=horloge(Date.now()-P.t0);else stop();};
   stop();tic();TIC=setInterval(tic,1000);
   if(P.papier){
-    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. ${e.papier?"Écris-la en entier, comme sur ta copie.":"Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion."}</div>`);
-    $("#en-pied").innerHTML=`${P.papierExige||e.papier?"":`<button class="btn" id="en-ecran">Répondre à l'écran</button>`}<button class="btn pri big" id="en-fini">J'ai fini : voir la correction</button>`;
+    b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="paper"><b>Sur une feuille, sans regarder, comme ${auCC(S)}.</b> Compte environ ${ccMin(d,P.lv)} minutes. ${e.papier?"Écris-la en entier, comme sur ta copie.":"Écris tout ce que tu écrirais sur ta copie : chaque étape, puis la conclusion."}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
+    $("#en-pied").innerHTML=`${P.papierExige||e.papier?`<button class="btn" id="en-nsp">Je ne sais pas</button>`:`<button class="btn" id="en-ecran">Répondre à l'écran</button>`}<button class="btn pri big" id="en-fini">J'ai fini : voir la correction</button>`;
     const ec=$("#en-ecran");if(ec)ec.addEventListener("click",()=>{P.papier=false;dessine();});
+    const ns=$("#en-nsp");if(ns)ns.addEventListener("click",()=>valide(true));
     $("#en-fini").addEventListener("click",corrigePapier);}
   else{
     b.innerHTML=tx(`${avant}<p class="lq" data-mots="${d.sid}">${q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="acts" id="en-plus">${e.indice===false||e.champs.some(c=>c.k==="trous")?"":`<button type="button" class="btn" id="en-ind">Indice</button>`}${e.champs.some(c=>c.k==="trous")?"":`<button type="button" class="btn" id="en-pap">Sur papier</button>`}</div><div class="en-rep" id="en-fb" aria-live="polite"></div>`);
@@ -19948,6 +20070,10 @@ function dessine(){
     b.querySelectorAll(".filters[data-ch] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;x.parentNode.querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===x));si();const i=b.querySelector("[data-si]:not([hidden]) input");if(i)i.focus();}));
     b.querySelectorAll(".filters[data-multi] button").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const g=x.parentNode,seul=g.dataset.seul,on=x.getAttribute("aria-pressed")!=="true";x.setAttribute("aria-pressed",on);
       if(on)g.querySelectorAll("button").forEach(y=>{if(y!==x&&(x.dataset.v===seul||y.dataset.v===seul))y.setAttribute("aria-pressed","false");});}));
+    let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT")dernier=ev.target;});
+    b.querySelectorAll(".en-sym button").forEach(x=>{x.addEventListener("pointerdown",ev=>ev.preventDefault());
+      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&g.contains(dernier)?dernier:g.querySelector("input");if(!i)return;
+        const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd,t=x.dataset.ins;i.value=i.value.slice(0,a)+t+i.value.slice(z);i.focus();i.setSelectionRange(a+t.length,a+t.length);});});
     b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
     const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
     const pap=$("#en-pap");if(pap)pap.addEventListener("click",()=>{P.papier=true;dessine();});
@@ -20001,7 +20127,7 @@ function valide(nsp){
   else if(r===2)h=`<div class="verdict info">Juste, avec l'indice : cet exercice ne compte ni juste ni faux. ${temps}</div>`;
   else h=`<div class="verdict no">${j.resume||"Ce n'est pas ça."}${ch}</div>`;
   if(j.diag)h+=`<div class="expl no"><b>${j.diag.titre}</b><br>${j.diag.msg}</div>`;
-  const lm=lienMethode(d),corr=marque=>`<p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,marque)}${lm?`<p class="muted">Pour revoir la méthode : ${lm}.</p>`:""}`;
+  const lm=lienMethode(d),corr=marque=>`${e.papier?"":`<p><b>La bonne réponse :</b> ${e.bonne}</p>`}${etapesHTML(e,marque)}${lm?`<p class="muted">Pour revoir la méthode : ${lm}.</p>`:""}`;
   if(cherche)h+=`<div class="en-cherche" id="en-ch"></div>`;
   else if(r===0)h+=`<h3>La correction</h3>${corr(j.diag?j.diag.etape:-1)}`;
   else h+=`<details class="ex"><summary><span><span class="h">Voir la correction</span></span></summary><div class="body">${corr(-1)}</div></details>`;
@@ -20025,7 +20151,7 @@ function chercheErreur(C,corr,R){const box=$("#en-ch"),vus=[];let k=0;
     if(!matchMedia("(pointer:coarse)").matches)inp.focus();};
   $("#en-pied").innerHTML="";pose();}
 /* sur papier : chaque ligne de la correction a sa case et ses points */
-function corrigePapier(){const d=P.d,e=P.exo,b=$("#lpb"),tot=e.etapes.reduce((s,x)=>s+x.pts,0);
+function corrigePapier(){const d=P.d,e=P.exo,b=$("#lpb"),tot=e.etapes.reduce((s,x)=>s+x.pts,0),vieux=$("#en-fb");if(vieux)vieux.remove();
   b.insertAdjacentHTML("beforeend",tx(`<h3>La correction : coche ce que tu as écrit</h3><div class="pcheck">${e.etapes.map((x,k)=>`<label><input type="checkbox" data-k="${k}"><span>${x.w}</span><b>${virg(x.pts)}</b></label>`).join("")}</div><div class="verdict info" id="en-note"></div><div class="en-rep" id="en-fb"></div>`));
   const note=()=>[...b.querySelectorAll(".pcheck input")].reduce((s,i)=>s+(i.checked?e.etapes[+i.dataset.k].pts:0),0);
   const maj=()=>{$("#en-note").textContent=`Note estimée : ${virg(note())} sur ${virg(tot)}. Il faut ${virg(Math.ceil(tot*0.8*2)/2)} pour que l'exercice compte juste.`;};
