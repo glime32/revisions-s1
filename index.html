@@ -21090,8 +21090,13 @@ function entretien(tout){const t0=A.today(),n=A.NOW(),L=[];let fait=0;
   A.SIDS.forEach(sid=>defs(sid).forEach(d=>{const g=etat(d.id),j=g.jour[t0];if(j)fait+=j.e;const du=echeance(d,g);if(du&&du<=t0)L.push({d,g,du});}));
   const sc=x=>{const S=SUBJ[x.d.sid],T=theme(x.d);return A.weight(S)/(1+Math.max(0,(A.examStart(S)-n)/864e5))*((T&&T.pts)||1);};
   L.sort((a,b)=>sc(b)-sc(a));
+  /* un seul rendez-vous (choix M11a) : après les passages dus, un exercice par thème dont la méthode est commencée sans être
+     réussie, pour les épreuves à moins de 3 semaines. Ces thèmes n'ont plus de QCM au mini-contrôle mélangé. */
+  const M=[];A.SIDS.forEach(sid=>{const j=(A.examStart(SUBJ[sid])-n)/864e5,vus={};if(j<=0||j>21)return;
+    defs(sid).forEach(d=>{if(d.fixe||vus[d.th])return;const g=etat(d.id),jr=g.jour[t0];if(g.val||!g.n)return;vus[d.th]=1;if(jr&&jr.n&&!(g.fx&&jr.n<2))return;M.push({d,g,du:t0,suite:true});});});
+  M.sort((a,b)=>sc(b)-sc(a));M.forEach(x=>L.push(x));
   let reste=MAXJOUR-fait/60000;const out=[];
-  L.forEach(x=>{x.min=ccMin(x.d,dernier(x.d))*rythme(x.g);if(tout||x.g.ek>0||reste>=x.min||(!out.length&&!fait)){out.push(x);reste-=x.min;}});
+  L.forEach(x=>{x.min=ccMin(x.d,x.suite?x.g.lv:dernier(x.d))*rythme(x.g);if(tout||(!x.suite&&x.g.ek>0)||reste>=x.min||(!out.length&&!fait)){out.push(x);reste-=x.min;}});
   return out;}
 const reportes=()=>entretien(true).length-entretien().length;
 function jour(){const L=entretien();if(!L.length)return null;
@@ -21132,7 +21137,9 @@ function prochain(){const S=P.sess;
   if(P.mode==="jour"){const L=entretien(S.tout);if(!L.length)return fin();
     let x=S.refaire&&L.find(y=>y.d.id===S.refaire);
     if(!x){const autres=L.filter(y=>y.d.id!==S.dernierG);x=(autres.length?autres:L)[0];}
-    P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek&&!x.d.sansPapier;}
+    P.d=x.d;P.g=x.g;
+    if(x.suite){P.lv=x.g.lv;P.m="p";P.papierExige=P.lv===dernier(x.d)&&x.g.ok>=seuil(x.d)-1&&!x.g.pap&&!x.d.sansPapier;}
+    else{P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek&&!x.d.sansPapier;}}
   else{const d=P.d,g=etat(d.id);P.g=g;
     if(g.val){P.lv=dernier(d);P.m="x";}
     else if(!g.n&&!d.fixe){P.lv=dernier(d);P.m="pl";}
@@ -21321,7 +21328,7 @@ function fin(){stop();const S0=P.sess,ids=[...new Set(S0.faits)],jr=P.mode==="jo
   const reste=jr?[]:ordre(sid).filter(x=>!x.g.val&&x.d.id!==P.d.id&&moment(x.d)),suiv=reste[0],reussie=!jr&&!!etat(P.d.id).val,rp=jr?reportes():0;
   $("#main").className=sid&&!jr?"s-"+sid:"";
   $("#main").innerHTML=`<div class="page lp-end${sid&&!jr?" s-"+sid:""}"><p class="kick">${jr?"Entretien du jour":SUBJ[sid].name}</p><h1>Séance terminée</h1>${S0.n?`<p class="lead">${S0.n} ${plur(S0.n,"exercice")}, ${S0.ok} ${plur(S0.ok,"juste")}, en ${duree(Date.now()-S0.t0)}.</p>${lignes}`:`<p class="lead">Aucun exercice fait cette fois.</p>`}${rp?`<p class="muted">Tes ${MAXJOUR} minutes d'entretien sont faites pour aujourd'hui : ${rp} ${plur(rp,"méthode")} ${plur(rp,"attend","attendent")} demain.</p>`:""}
-   <div class="acts">${jr?`<a class="btn pri big" href="#/">Voir le programme du jour</a>${rp?`<button class="btn" id="en-tout">Les faire quand même</button>`:""}`:reussie&&suiv?`<a class="btn pri big" href="#/entrainer/${sid}/${suiv.d.id}">Méthode suivante : ${suiv.d.t}</a>`:""}${jr?"":`<a class="btn${reussie&&suiv?"":" pri"}" href="#/">Retour à aujourd'hui</a><button class="btn" id="en-encore">${reussie?"Encore un":"Continuer cette méthode"}</button>`}<a class="btn" href="#/entrainer/rapport">Mon rapport</a></div></div>`;
+   <div class="acts">${jr?`${A.miniDu&&A.miniDu().du?`<a class="btn pri big" href="#/mix">Continuer : les questions rapides des autres thèmes</a><a class="btn" href="#/">Voir le programme du jour</a>`:`<a class="btn pri big" href="#/">Voir le programme du jour</a>`}${rp?`<button class="btn" id="en-tout">Les faire quand même</button>`:""}`:reussie&&suiv?`<a class="btn pri big" href="#/entrainer/${sid}/${suiv.d.id}">Méthode suivante : ${suiv.d.t}</a>`:""}${jr?"":`<a class="btn${reussie&&suiv?"":" pri"}" href="#/">Retour à aujourd'hui</a><button class="btn" id="en-encore">${reussie?"Encore un":"Continuer cette méthode"}</button>`}<a class="btn" href="#/entrainer/rapport">Mon rapport</a></div></div>`;
   const en=$("#en-encore"),d0=P.d,et=$("#en-tout");if(en)en.addEventListener("click",()=>debut("g",d0));if(et)et.addEventListener("click",()=>debut("jour",null,true));
   A.renderSide();window.scrollTo(0,0);}
 
@@ -21378,7 +21385,8 @@ function brancher(A0,ext){A=A0;
   new MutationObserver(bouton).observe($("#main"),{childList:true,subtree:true});}
 const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);try{brancher(A0,ext);}catch(e){console.error(e);}return ext;};
-window.ENT={bloc,tuile,jour,etat,etats,entretien,echeance,longues,encours:()=>P,/* encours, rendu et longues : pour les essais */
+const couvre=(sid,th)=>defs(sid).some(d=>!d.fixe&&d.th===th&&etat(d.id).n>0);
+window.ENT={bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,/* encours, rendu et longues : pour les essais */
   rendu:e=>tx(`<p class="lq">${e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="en-rep" id="en-fb"><div class="verdict no">Pas tout à fait.</div><h3>La correction</h3><p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,0)}</div>`)};
 })();
 
@@ -22177,6 +22185,7 @@ function mix(neuf){
   /* poids d'un thème : poids du CC, proximité, points du thème, ce qui n'est pas maîtrisé, ancienneté du dernier test */
   const pool=[];act.forEach(id=>{const S=SUBJ[id],st=ST[id],j=jr(id),u=weight(S)*4/(1+j)*(j<=21?1:0.3),TH=themesOf(S);
     if(TH.length)TH.forEach(T=>{const d=st.diag[T.id]||{},m=maitrise(id,T),age=d.ton?(toD(t0,0)-toD(d.ton,0))/864e5:9,P=diagPool(id,T);if(!P.length||T.pts<1)return;/* pas de question sur un thème qui ne tombe presque jamais */
+      if(window.ENT&&ENT.couvre&&ENT.couvre(id,T.id))return;/* thème déjà travaillé à l'entraînement : son exercice à taper est dans l'entretien du jour */
       const w=u*Math.max(T.pts,0.5)*(1.5-(m==null?0.5:m))*(1+Math.min(1,age/3))/P.length;P.forEach(q=>pool.push({sid:id,th:T.id,q,w}));});
     else{const Q=activeQuiz(S),w0=q=>!q.link?1:st.review[q.link]?4:st.known[q.link]?1:2,tot=Q.reduce((s,q)=>s+w0(q),0);Q.forEach(q=>pool.push({sid:id,q,w:u*20*w0(q)/tot}));}});
   const pick=[],vu={};
@@ -22189,7 +22198,7 @@ function mix(neuf){
   const Q=perm(pick.length).map(i=>pick[i]);Q.forEach(it=>{it.ord=perm(it.q.o.length);});
   mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:nouvRun()};mixPage();}
 function mixPage(){const Q=mx.q;
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div><p class="lead">${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat.</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div><p class="lead">${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat. Les thèmes que tu travailles déjà à l'entraînement n'ont pas de question ici : leur exercice à taper est dans l'entretien du jour.</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
   drawMix();
   $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]"),ns=e.target.closest("#mxs");
     if((o||ns)&&mx.ans===null){const it=mx.q[mx.i],ok=o&&+o.dataset.o===it.q.a,p=mx.par[it.sid]||(mx.par[it.sid]={ok:0,n:0});mx.ans=o?+o.dataset.o:-1;p.n++;
