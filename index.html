@@ -20695,6 +20695,52 @@ function appartientInclus(R){const a=R.ent(1,4),b=a+R.ent(1,3),c=b+R.ent(1,3),el
     texte:`A = {${elts.map(dit).join(", ")}} ; vraies parmi : ${CAND.map(x=>x[0]).join(" ; ")}`,champs:[{k:"multi",id:"v",o:CAND.map((x,i)=>[String(i),x[0]])}],juge,etapes:E,bonne:vraies.map(i=>fx(CAND[+i][0])).join(" ; "),bonneTxt:"vraies : "+vraies.map(i=>CAND[+i][0]).join(" ; "),
     repBonne:{v:vraies},repFausse:{v:CAND.map((x,i)=>x[1]?null:String(i)).filter(Boolean)},nature:"∈ ou ⊂",ens:{type:"appart",elts,cand:CAND}};}
 
+/* ---------- RA2 : image directe, image réciproque ---------- */
+const defIm=reel=>`Rappel : ${fx("f(A)")} est l'ensemble des images des éléments de A. ${fx("f⁻¹(B)")} est l'ensemble des ${reel?"réels":"éléments de E"} dont l'image est dans B : il existe même si f n'est pas bijective.`,DEFIM=defIm(true);
+/* une application entre deux ensembles finis, donnée par ses valeurs */
+function appliFinie(R,ne,nf){const E=[...Array(ne)].map((_,i)=>i+1),F=[...Array(nf)].map((_,i)=>i+1),f={};E.forEach(x=>{f[x]=R.choix(F);});return {E,F,f,dit:E.map(x=>`f(${x}) = ${f[x]}`).join(", ")};}
+const imageF=(a,A)=>tri(A.map(x=>a.f[x])),recipF=(a,B)=>a.E.filter(x=>B.includes(a.f[x]));
+function imagesFinies(R){for(;;){const a=appliFinie(R,R.ent(5,6),R.ent(4,5)),A=partie(R,a.E,2,3),B=partie(R,a.F,2,3),fa=imageF(a,A),fb=recipF(a,B);if(new Set(Object.values(a.f)).size<3)continue;
+  return ensemblesFinis({sig:"IF"+a.dit+"|"+A+"|"+B,enonce:`Soit f l'application de ${fx(`E = ${ensF(a.E)}`)} dans ${fx(`F = ${ensF(a.F)}`)} définie par : ${fx(a.dit)}. On pose ${fx(`A = ${ensF(A)}`)} et ${fx(`B = ${ensF(B)}`)}. Écris l'image directe ${fx("f(A)")} et l'image réciproque ${fx("f⁻¹(B)")}.`,rappel:defIm(false),
+    texte:`${a.dit} ; A = ${ensF(A)}, B = ${ensF(B)} ; f(A) et f⁻¹(B)`,nature:fb.length?"finie":"finie, réciproque vide",ens:{type:"finisf",f:a.f,E:a.E,A,B},
+    pieges:[["f⁻¹(B)",imageF(a,B.filter(x=>a.E.includes(x))),"image réciproque calculée comme une image directe","Tu as calculé les images des éléments de B. Pour l'image réciproque, on cherche au contraire les éléments de E dont l'image tombe dans B."]],
+    Q:[["f(A)",fa,`On calcule l'image de chaque élément de A : ${A.map(x=>`f(${x}) = ${a.f[x]}`).join(", ")}. On écrit chaque résultat une seule fois.`],["f⁻¹(B)",fb,`On passe tous les éléments de E en revue, et on garde ceux dont l'image est dans B : ${a.E.map(x=>`f(${x}) = ${a.f[x]} ${B.includes(a.f[x])?"est":"n'est pas"} dans B`).join(", ")}.${fb.length?"":" Aucun ne convient : l'image réciproque est vide."}`]]});}}
+/* image et image réciproque d'un intervalle par x ↦ ax + b */
+const vq=x=>val(x),Qd=(n,d)=>Q(n,d);
+function affineIm(a,b,p,inverse){const f=inverse?x=>O.div(O.sub(x,b),a):x=>O.add(O.mul(a,x),b),ga=p.a?vq(f(p.a.q)):null,gb=p.b?vq(f(p.b.q)):null;return a>0?pc(ga,p.oa,gb,p.ob):pc(gb,p.ob,ga,p.oa);}
+function imagesAffines(R){for(;;){const a=R.nz(-4,4),b=R.ent(-6,6);if(a===1&&b===0)continue;const A=intervalleAlea(R,-5,5),B=intervalleAlea(R,-8,8),fA=[affineIm(a,b,A[0],false)],fB=[affineIm(a,b,B[0],true)];if(fB[0].a&&fB[0].a.q.d>4||fB[0].b&&fB[0].b.q.d>4)continue;
+  const ax=O.comb([a],["x"])+(b?(b>0?" + ":" − ")+Math.abs(b):""),f=x=>a*x+b,sens=a>0?"f est croissante : elle garde l'ordre, et les crochets restent du même côté.":"f est décroissante (le coefficient de x est négatif) : elle retourne l'ordre. La plus grande borne de départ donne la plus petite à l'arrivée, et chaque crochet suit sa borne.";
+  return partiesReelles({sig:"IA"+[a,b]+ensR(A)+ensR(B),enonce:`Soit f l'application de ℝ dans ℝ définie par ${fx(`f(x) = ${ax}`)}. On pose ${fx(`A = ${ensR(A)}`)} et ${fx(`B = ${ensR(B)}`)}. Écris l'image directe ${fx("f(A)")} et l'image réciproque ${fx("f⁻¹(B)")}.`,rappel:DEFIM,texte:`f(x) = ${ax} ; A = ${ensR(A)}, B = ${ensR(B)} ; f(A) et f⁻¹(B)`,nature:a>0?"croissante":"décroissante",type:"image d'un intervalle par une fonction affine",
+    Q:[["f(A)",fA,`On calcule les images des bornes de A. ${sens}`,y=>dansP(A,(y-b)/a)],["f⁻¹(B)",fB,`${fx("x ∈ f⁻¹(B)")} veut dire ${fx(`${ax} ∈ B`)}. On résout l'encadrement : on ${b>0?"retire":"ajoute"} ${Math.abs(b)||0}, puis on divise par ${fx(nb(a))}${a<0?", ce qui retourne les inégalités":""}.`,x=>dansP(B,f(x))]]});}}
+/* x ↦ x² + c ou |x| + c : l'image d'un intervalle, et l'image réciproque (un ou deux morceaux) */
+function imCarre(p,c,abs){const g=abs?x=>Math.abs(x):x=>x*x,G=v=>vq(g(v)+c),pa=p.a?p.a.v:-Infinity,pb=p.b?p.b.v:Infinity;
+  if(pa>=0)return [pc(G(pa),p.oa,p.b?G(pb):null,p.ob)];if(pb<=0)return [pc(G(pb),p.ob,p.a?G(pa):null,p.oa)];
+  const ma=p.a?g(pa):Infinity,mb=p.b?g(pb):Infinity,haut_=Math.max(ma,mb);if(haut_===Infinity)return [pc(vq(c),false,null,true)];
+  const ouvert=ma===mb?p.oa&&p.ob:ma>mb?p.oa:p.ob;return [pc(vq(c),false,vq(haut_+c),ouvert)];}
+function recCarre(p,c,abs){const r=abs?v=>v:v=>Math.sqrt(v),lo=p.a?p.a.v-c:-Infinity,hi=p.b?p.b.v-c:Infinity;   /* g(x) ∈ ]lo, hi[ avec g = x² ou |x| */
+  if(hi<0||(hi===0&&p.ob))return [];const H=hi===Infinity?null:vq(r(hi)),mH=H?vq(-r(hi)):null;
+  if(lo<0||(lo===0&&!p.oa))return [pc(mH,p.ob,H,p.ob)];
+  const L=vq(r(lo)),mL=vq(-r(lo));return unir([pc(mH,p.ob,mL,p.oa),pc(L,p.oa,H,p.ob)]);}
+const CARRES=[0,1,4,9,16];
+function imagesCarre(R){for(;;){const abs=R()<0.25,c=R()<0.6?0:R.ent(-3,3),a=R.ent(-4,3),A=[pc(val(a),R()<0.5,val(a+R.ent(1,5)),R()<0.5)],t=R();let B;
+  const bd=k=>val((abs?k:R.choix(CARRES.filter(x=>x>=k&&x<=k+12)))+c);
+  if(t<0.3){const lo=R.choix(abs?[1,2,3]:[1,4]),hi=abs?lo+R.ent(1,3):R.choix(CARRES.filter(x=>x>lo));B=[pc(val(lo+c),R()<0.5,val(hi+c),R()<0.5)];}
+  else if(t<0.6){const hi=abs?R.ent(1,4):R.choix([1,4,9,16]);B=[pc(val(c-R.ent(1,5)),R()<0.5,val(hi+c),R()<0.5)];}
+  else if(t<0.8){const hi=abs?R.ent(1,4):R.choix([1,4,9]);B=[pc(val(c),R()<0.5,val(hi+c),R()<0.5)];}
+  else B=[pc(val(c-R.ent(3,6)),R()<0.5,val(c-R.ent(0,2)),R()<0.5)];
+  if(B[0].a.v>=B[0].b.v)continue;const g=abs?x=>Math.abs(x):x=>x*x,f=x=>g(x)+c,fA=imCarre(A[0],c,abs),fB=recCarre(B[0],c,abs),fx_=(abs?"|x|":"x²")+(c?(c>0?" + ":" − ")+Math.abs(c):"");
+  const rA=abs?v=>v:v=>Math.sqrt(v);
+  return partiesReelles({sig:"IC"+[abs,c]+ensR(A)+ensR(B),enonce:`Soit f l'application de ℝ dans ℝ définie par ${fx(`f(x) = ${fx_}`)}. On pose ${fx(`A = ${ensR(A)}`)} et ${fx(`B = ${ensR(B)}`)}. Écris l'image directe ${fx("f(A)")} et l'image réciproque ${fx("f⁻¹(B)")}.`,rappel:DEFIM,texte:`f(x) = ${fx_} ; A = ${ensR(A)}, B = ${ensR(B)} ; f(A) et f⁻¹(B)`,nature:fB.length>1?"deux morceaux":fB.length?"un morceau":"vide",type:"image ou image réciproque par une fonction qui n'est pas monotone",
+    Q:[["f(A)",fA,A[0].a.v<0&&A[0].b.v>0?`A contient 0 : la plus petite valeur de f sur A est ${fx(`f(0) = ${nb(c)}`)}, et elle est atteinte. La plus grande vient de la borne la plus éloignée de 0, avec son crochet.`:`Sur A, f est ${A[0].a.v>=0?"croissante : les bornes gardent leur ordre":"décroissante : les bornes échangent leur place, chacune avec son crochet"}.`,y=>{if(y-c<0)return false;const r=rA(y-c);return dansP(A,r)||dansP(A,-r);}],
+      ["f⁻¹(B)",fB,!fB.length?`${fx(fx_)} vaut au moins ${nb(c)} : il ne tombe jamais dans B. L'image réciproque est vide.`:fB.length>1?`${fx(`${fx_} ∈ B`)} donne un encadrement de ${abs?"|x|":"x²"} entre deux nombres positifs : x est alors soit du côté positif, soit du côté négatif. Il y a deux morceaux, symétriques par rapport à 0.`:`La partie de B située sous ${nb(c)} ne sert à rien, car ${fx(fx_)} vaut au moins ${nb(c)}. Il reste une condition du type ${fx(abs?"|x| ≤ r":"x² ≤ r²")}, qui donne un seul intervalle centré en 0.`,x=>dansP(B,f(x))]]});}}
+/* f⁻¹(f(A)) et f(f⁻¹(B)) : on compare à A et à B */
+function allerRetour(R){for(;;){const c=0,a=R.ent(-3,2),A=[pc(val(a),R()<0.5,val(a+R.ent(1,4)),R()<0.5)],lo=R.ent(-4,1),hi=R.choix([1,4,9]),B=[pc(val(lo),R()<0.5,val(hi),R()<0.5)];if(lo>=hi)continue;
+  const fA=imCarre(A[0],c,false),retA=unir(fA.map(p=>recCarre(p,c,false)).flat()),fB=recCarre(B[0],c,false),allB=unir(fB.map(p=>imCarre(p,c,false)).flat());if(!fB.length)continue;
+  const egA=memeEns(retA,A),egB=memeEns(allB,B),f=x=>x*x;
+  return partiesReelles({sig:"AR"+ensR(A)+ensR(B),enonce:`Soit f l'application de ℝ dans ℝ définie par ${fx("f(x) = x²")}. On pose ${fx(`A = ${ensR(A)}`)} et ${fx(`B = ${ensR(B)}`)}. Écris ${fx("f⁻¹(f(A))")} et ${fx("f(f⁻¹(B))")}.`,rappel:DEFIM,texte:`f(x) = x² ; A = ${ensR(A)}, B = ${ensR(B)} ; f⁻¹(f(A)) et f(f⁻¹(B))`,nature:(egA?"=":"⊋")+" "+(egB?"=":"⊊"),type:"aller-retour entre image directe et image réciproque",
+    Q:[["f⁻¹(f(A))",retA,`D'abord ${fx(`f(A) = ${ensR(fA)}`)}, puis on cherche tous les réels dont le carré est dans cet ensemble. ${egA?"Ici on retombe sur A.":"On trouve plus que A : les opposés des éléments de A ont les mêmes carrés. On a toujours A ⊂ f⁻¹(f(A)), avec égalité pour toute partie A seulement quand f est injective."}`,x=>{const y=f(x),r=Math.sqrt(y);return dansP(A,r)||dansP(A,-r);}],
+      ["f(f⁻¹(B))",allB,`D'abord ${fx(`f⁻¹(B) = ${ensR(fB)}`)}, puis on prend les carrés de ces réels. ${egB?"Ici on retombe sur B.":"On trouve moins que B : les nombres négatifs de B ne sont le carré de personne. On a toujours f(f⁻¹(B)) ⊂ B (c'est la question b du CC2 2025), avec égalité pour toute partie B seulement quand f est surjective."}`,y=>y>=0&&dansP(B,y)]]});}}
+
 G.rai={lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
@@ -20703,7 +20749,13 @@ G.add("rai",[
    {t:"différence, différence symétrique, complémentaire",cc:3,gen:differences},
    {t:"nombres d'éléments : produit, parties",cc:3,gen:cardinaux},
    {t:"avec des intervalles de ℝ",cc:4,gen:intervallesOps},
-   {t:"appartenir ou être inclus",cc:3,gen:appartientInclus}]}
+   {t:"appartenir ou être inclus",cc:3,gen:appartientInclus}]},
+ {id:"RA2",t:"Image directe, image réciproque",th:"image",pts:3.5,lecons:["r-image"],
+  paliers:[
+   {t:"une application entre deux ensembles finis",cc:3,gen:imagesFinies},
+   {t:"une fonction affine et des intervalles",cc:4,gen:imagesAffines},
+   {t:"x ↦ x² ou |x| : parfois deux morceaux",cc:5,gen:imagesCarre},
+   {t:"aller et retour : f⁻¹(f(A)) et f(f⁻¹(B))",cc:6,gen:allerRetour,min:150}]}
 ]);
 })();
 
