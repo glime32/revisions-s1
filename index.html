@@ -20741,7 +20741,92 @@ function allerRetour(R){for(;;){const c=0,a=R.ent(-3,2),A=[pc(val(a),R()<0.5,val
     Q:[["f⁻¹(f(A))",retA,`D'abord ${fx(`f(A) = ${ensR(fA)}`)}, puis on cherche tous les réels dont le carré est dans cet ensemble. ${egA?"Ici on retombe sur A.":"On trouve plus que A : les opposés des éléments de A ont les mêmes carrés. On a toujours A ⊂ f⁻¹(f(A)), avec égalité pour toute partie A seulement quand f est injective."}`,x=>{const y=f(x),r=Math.sqrt(y);return dansP(A,r)||dansP(A,-r);}],
       ["f(f⁻¹(B))",allB,`D'abord ${fx(`f⁻¹(B) = ${ensR(fB)}`)}, puis on prend les carrés de ces réels. ${egB?"Ici on retombe sur B.":"On trouve moins que B : les nombres négatifs de B ne sont le carré de personne. On a toujours f(f⁻¹(B)) ⊂ B (c'est la question b du CC2 2025), avec égalité pour toute partie B seulement quand f est surjective."}`,y=>y>=0&&dansP(B,y)]]});}}
 
-G.rai={lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
+/* ---------- RA1 : injective, surjective, bijective ---------- */
+const DEFINJ=`Rappel : f est injective quand deux éléments différents ont toujours deux images différentes. f est surjective quand chaque élément de l'ensemble d'arrivée a au moins un antécédent. Bijective : les deux à la fois.`;
+const OUINON=k=>[["oui",`${k} : oui`],["non",`${k} : non`]];
+const plusC=(t,c)=>c?`${t} ${c>0?"+":"−"} ${Math.abs(c)}`:t;
+const dec=x=>String(Math.round(x*1000)/1000).replace(".",",").replace("-","−");
+/* une application avec sa formule : départ D, arrivée A (texte + test), injective ?, surjective ?, ant(y) = un antécédent ou null,
+   meme = deux éléments de même image, sans = un élément sans antécédent, inv = [réciproque affichée, réciproque tapée] */
+function appliFormule(R,sorte){const c=R.ent(-4,4),k=R.ent(1,4),C=nb(c);
+  const R_={t:"ℝ",in:()=>true},Rp={t:"[0, +∞[",in:x=>x>=0},Rc={t:`[${C}, +∞[`,in:y=>y>=c},Rcc={t:`]${C}, +∞[`,in:y=>y>c},Rs={t:"ℝ*",in:x=>x!==0,note:"ℝ* est l'ensemble des réels différents de 0."};
+  const N_={t:"ℕ",in:x=>Number.isInteger(x)&&x>=0,ent:true},Z_={t:"ℤ",in:x=>Number.isInteger(x),ent:true};
+  if(sorte==="reels"){let a=R.nz(-4,4),b,d;if(a===1&&c===0)a=2;do{d=R.ent(1,4);b=R.ent(-5,5);}while(b===a*d);
+    const ax=plusC(O.comb([a],["x"]),c),ymc=plusC("y",-c),X2=plusC("x²",c),AB=plusC("|x|",c),X3=plusC("x³",c),EX=plusC("e^x",c),carre=y=>y>=c?Math.sqrt(y-c):null;
+    const invA=a===1?ymc:a===-1?(c?`${C} − y`:"−y"):`${c?`(${ymc})`:"y"}/${a<0?`(${nb(a)})`:a}`,rac=c?`√(${ymc})`:"√y",ln=c?`ln(${ymc})`:"ln(y)";
+    const hom=`(${plusC(O.comb([a],["x"]),b)})/(x + ${d})`,invH=`(${b?`${nb(b)} − `:"−"}${d===1?"":d}y)/(${plusC("y",-a)})`,Rd={t:`ℝ ∖ {${nb(-d)}}`,in:x=>x!==-d,note:`ℝ ∖ {${nb(-d)}} est l'ensemble des réels différents de ${nb(-d)}.`},Ra={t:`ℝ ∖ {${nb(a)}}`,in:y=>y!==a,note:`ℝ ∖ {${nb(a)}} est l'ensemble des réels différents de ${nb(a)}.`};
+    const croix=`Si ${fx("f(x₁) = f(x₂)")}, le produit en croix donne ${fx(`${nb(a*d-b)}(x₁ − x₂) = 0`)}, donc ${fx("x₁ = x₂")}.`,crois="La fonction est strictement croissante sur ℝ : deux réels différents ont des images différentes.",pos=`Sur ${fx("[0, +∞[")}, la fonction est strictement croissante : deux réels positifs différents ont des images différentes.`;
+    const aff={fam:"affine",e:ax,D:R_,A:R_,f:x=>a*x+c,inj:true,surj:true,ant:y=>(y-c)/a,inv:[invA,`(y-(${c}))/(${a})`],pi:`Si ${fx("f(x₁) = f(x₂)")}, alors ${fx(`${plusC(O.comb([a],["x₁"]),c)} = ${plusC(O.comb([a],["x₂"]),c)}`)}, donc ${fx("x₁ = x₂")}.`,ps:`Pour tout réel y, l'équation ${fx(`${ax} = y`)} a une solution : ${fx(`x = ${invA}`)}.`};
+    const homB={fam:"quotient",e:hom,D:Rd,A:Ra,f:x=>(a*x+b)/(x+d),inj:true,surj:true,ant:y=>y!==a?(b-d*y)/(y-a):null,inv:[invH,`(${b}-${d}*y)/(y-(${a}))`],pi:croix,ps:`Pour tout y différent de ${nb(a)}, l'équation ${fx("f(x) = y")} a une solution : ${fx(`x = ${invH}`)}, qu'on trouve en isolant x.`};
+    return R.choix([aff,aff,homB,homB,
+     {fam:"carré",e:X2,D:R_,A:R_,f:x=>x*x+c,inj:false,surj:false,ant:carre,meme:[1,-1],sans:c-1,pi:`${fx(`f(1) = f(−1) = ${nb(1+c)}`)} : deux réels différents ont la même image.`,ps:`${fx(X2)} vaut au moins ${C} : le nombre ${nb(c-1)} n'a pas d'antécédent.`},
+     {fam:"carré",e:X2,D:R_,A:Rc,f:x=>x*x+c,inj:false,surj:true,ant:carre,meme:[2,-2],pi:`${fx(`f(2) = f(−2) = ${nb(4+c)}`)} : deux réels différents ont la même image.`,ps:`Tout y de ${fx(Rc.t)} a un antécédent : ${fx(`x = ${rac}`)}, car ${fx(`${ymc} ≥ 0`)}.`},
+     {fam:"carré",e:X2,D:Rp,A:R_,f:x=>x*x+c,inj:true,surj:false,ant:carre,sans:c-2,pi:pos,ps:`${fx(X2)} vaut au moins ${C} : le nombre ${nb(c-2)} n'a pas d'antécédent.`},
+     {fam:"carré",e:X2,D:Rp,A:Rc,f:x=>x*x+c,inj:true,surj:true,ant:carre,inv:[rac,`√(y-(${c}))`],pi:pos,ps:`Tout y de ${fx(Rc.t)} a un antécédent positif : ${fx(`x = ${rac}`)}.`},
+     {fam:"valeur absolue",e:AB,D:R_,A:R_,f:x=>Math.abs(x)+c,inj:false,surj:false,ant:y=>y>=c?y-c:null,meme:[3,-3],sans:c-1,pi:`${fx(`f(3) = f(−3) = ${nb(3+c)}`)} : deux réels différents ont la même image.`,ps:`${fx(AB)} vaut au moins ${C} : le nombre ${nb(c-1)} n'a pas d'antécédent.`},
+     {fam:"valeur absolue",e:AB,D:R_,A:Rc,f:x=>Math.abs(x)+c,inj:false,surj:true,ant:y=>y>=c?y-c:null,meme:[1,-1],pi:`${fx(`f(1) = f(−1) = ${nb(1+c)}`)} : deux réels différents ont la même image.`,ps:`Tout y de ${fx(Rc.t)} a un antécédent : ${fx(`x = ${ymc}`)}, qui est positif ou nul.`},
+     {fam:"cube",e:X3,D:R_,A:R_,f:x=>x*x*x+c,inj:true,surj:true,ant:y=>Math.cbrt(y-c),pi:crois,ps:`Tout réel y a un antécédent : la racine cubique de ${fx(ymc)}.`},
+     {fam:"exponentielle",e:EX,D:R_,A:R_,f:x=>Math.exp(x)+c,inj:true,surj:false,ant:y=>y>c?Math.log(y-c):null,sans:c-k,pi:"L'exponentielle est strictement croissante sur ℝ : deux réels différents ont des images différentes.",ps:`Une exponentielle est strictement positive, donc ${fx(EX)} est strictement plus grand que ${C} : le nombre ${nb(c-k)} n'a pas d'antécédent (${C} non plus).`},
+     {fam:"exponentielle",e:EX,D:R_,A:Rcc,f:x=>Math.exp(x)+c,inj:true,surj:true,ant:y=>y>c?Math.log(y-c):null,inv:[ln,`ln(y-(${c}))`],pi:"L'exponentielle est strictement croissante sur ℝ : deux réels différents ont des images différentes.",ps:`Tout y de ${fx(Rcc.t)} a un antécédent : ${fx(`x = ${ln}`)}, car ${fx(`${ymc} &gt; 0`)}.`},
+     {fam:"inverse",e:"1/x",D:Rs,A:R_,f:x=>1/x,inj:true,surj:false,ant:y=>y!==0?1/y:null,sans:0,pi:`Si ${fx("1/x₁ = 1/x₂")}, alors ${fx("x₁ = x₂")}.`,ps:"Un inverse n'est jamais nul : 0 n'a pas d'antécédent."},
+     {fam:"inverse",e:"1/x",D:Rs,A:Rs,f:x=>1/x,inj:true,surj:true,ant:y=>y!==0?1/y:null,inv:["1/y","1/y"],pi:`Si ${fx("1/x₁ = 1/x₂")}, alors ${fx("x₁ = x₂")}.`,ps:`Tout y différent de 0 a un antécédent : ${fx("x = 1/y")}, qui est bien différent de 0.`},
+     {fam:"quotient",e:hom,D:Rd,A:R_,f:x=>(a*x+b)/(x+d),inj:true,surj:false,ant:y=>y!==a?(b-d*y)/(y-a):null,sans:a,pi:croix,ps:`L'équation ${fx(`f(x) = ${nb(a)}`)} n'a pas de solution : en multipliant par ${fx(`x + ${d}`)}, elle donnerait ${fx(`${nb(b)} = ${nb(a*d)}`)}. Le nombre ${nb(a)} n'a pas d'antécédent.`}]);}
+  const ent=sq=>y=>y>=0&&Number.isInteger(Math.sqrt(y))?Math.sqrt(y):null,m=k+1;
+  return R.choix([
+   {fam:"n + k",e:`n + ${k}`,D:N_,A:N_,f:n=>n+k,inj:true,surj:false,ant:y=>y>=k?y-k:null,sans:0,pi:`Si ${fx(`n₁ + ${k} = n₂ + ${k}`)}, alors ${fx("n₁ = n₂")}.`,ps:`Pour atteindre 0, il faudrait ${fx(`n = −${k}`)}, qui n'est pas dans ℕ : 0 n'a pas d'antécédent.`},
+   {fam:"n + k",e:`n + ${k}`,D:Z_,A:Z_,f:n=>n+k,inj:true,surj:true,ant:y=>y-k,pi:`Si ${fx(`n₁ + ${k} = n₂ + ${k}`)}, alors ${fx("n₁ = n₂")}.`,ps:`Tout entier relatif y a un antécédent : ${fx(`y − ${k}`)}, qui est encore dans ℤ.`},
+   {fam:"multiple",e:`${m}n`,D:N_,A:N_,f:n=>m*n,inj:true,surj:false,ant:y=>y%m===0?y/m:null,sans:1,pi:`Si ${fx(`${m}n₁ = ${m}n₂`)}, alors ${fx("n₁ = n₂")}.`,ps:`Les images sont les multiples de ${m} : 1 n'a pas d'antécédent.`},
+   {fam:"multiple",e:`${m}n`,D:Z_,A:Z_,f:n=>m*n,inj:true,surj:false,ant:y=>y%m===0?y/m:null,sans:1,pi:`Si ${fx(`${m}n₁ = ${m}n₂`)}, alors ${fx("n₁ = n₂")}.`,ps:`Les images sont les multiples de ${m} : 1 n'a pas d'antécédent.`},
+   {fam:"carré",e:"n²",D:N_,A:N_,f:n=>n*n,inj:true,surj:false,ant:ent(),sans:2,pi:"Deux entiers naturels différents ont des carrés différents.",ps:"2 n'est le carré d'aucun entier : il n'a pas d'antécédent."},
+   {fam:"carré",e:"n²",D:Z_,A:Z_,f:n=>n*n,inj:false,surj:false,ant:ent(),meme:[2,-2],sans:-1,pi:`${fx("f(2) = f(−2) = 4")} : deux entiers différents ont la même image.`,ps:"Un carré n'est jamais négatif : −1 n'a pas d'antécédent."},
+   {fam:"carré",e:"n²",D:Z_,A:N_,f:n=>n*n,inj:false,surj:false,ant:ent(),meme:[1,-1],sans:3,pi:`${fx("f(1) = f(−1) = 1")} : deux entiers différents ont la même image.`,ps:"3 n'est le carré d'aucun entier : il n'a pas d'antécédent."},
+   {fam:"valeur absolue",e:"|n|",D:Z_,A:N_,f:n=>Math.abs(n),inj:false,surj:true,ant:y=>y,meme:[3,-3],pi:`${fx("f(3) = f(−3) = 3")} : deux entiers différents ont la même image.`,ps:"Tout entier naturel y est sa propre valeur absolue : y est un antécédent de y."},
+   {fam:"valeur absolue",e:`|n| + ${k}`,D:Z_,A:N_,f:n=>Math.abs(n)+k,inj:false,surj:false,ant:y=>y>=k?y-k:null,meme:[2,-2],sans:0,pi:`${fx(`f(2) = f(−2) = ${2+k}`)} : deux entiers différents ont la même image.`,ps:`${fx(`|n| + ${k}`)} vaut au moins ${k} : 0 n'a pas d'antécédent.`},
+   {fam:"quotient entier",e:`n div ${m}`,D:N_,A:N_,f:n=>Math.floor(n/m),inj:false,surj:true,ant:y=>m*y,meme:[m,m+1],note:`« n div ${m} » est le quotient de la division de n par ${m} : par exemple ${3*m+1} div ${m} = 3.`,pi:`${fx(`f(${m}) = f(${m+1}) = 1`)} : deux entiers différents ont la même image.`,ps:`Tout entier naturel y a un antécédent : ${fx(`${m}y`)}.`},
+   {fam:"k − n",e:`${k} − n`,D:Z_,A:Z_,f:n=>k-n,inj:true,surj:true,ant:y=>k-y,pi:`Si ${fx(`${k} − n₁ = ${k} − n₂`)}, alors ${fx("n₁ = n₂")}.`,ps:`Tout entier relatif y a un antécédent : ${fx(`${k} − y`)}.`},
+   {fam:"n − k",e:`n − ${k}`,D:N_,A:Z_,f:n=>n-k,inj:true,surj:false,ant:y=>y>=-k?y+k:null,sans:-k-1,pi:`Si ${fx(`n₁ − ${k} = n₂ − ${k}`)}, alors ${fx("n₁ = n₂")}.`,ps:`Pour atteindre ${nb(-k-1)}, il faudrait ${fx("n = −1")}, qui n'est pas dans ℕ : ${nb(-k-1)} n'a pas d'antécédent.`}]);}
+const ecritAppli=o=>`f : ${o.D.t} → ${o.A.t}, ${o.D.ent?"n":"x"} ↦ ${o.e}`;
+const notes=o=>[o.D.note,o.A.note!==o.D.note?o.A.note:null,o.note].filter(Boolean).map(x=>" "+x).join("");
+function classe(o,sig,q,corps,texte,ens,nature){
+  const E=[{w:`<b>${o.inj?"f est injective.":"f n'est pas injective."}</b>`,why:o.pi,pts:1.5},{w:`<b>${o.surj?"f est surjective.":"f n'est pas surjective."}</b>`,why:o.ps,pts:1.5}].concat(o.inj&&o.surj?[{w:"<b>f est bijective.</b>",why:"Injective et surjective à la fois : chaque élément de l'ensemble d'arrivée a exactement un antécédent.",pts:0.5}]:[]);
+  function juge(rep){if(!rep.i||!rep.s)return {incomplet:"Réponds aux deux questions : injective, puis surjective."};const okI=(rep.i==="oui")===o.inj,okS=(rep.s==="oui")===o.surj,F=[];if(okI&&okS)return {ok:true};if(!okI)F.push("i");if(!okS)F.push("s");
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux réponses sont à revoir":F[0]==="i"?"l'injectivité est à revoir":"la surjectivité est à revoir"}.`,diag:!okI?{etape:0,type:o.inj?"application injective non reconnue":"application crue injective",titre:"Où ça part : injective ou pas.",msg:o.pi}:{etape:1,type:o.surj?"application surjective non reconnue":"application crue surjective : l'ensemble d'arrivée compte",titre:"Où ça part : surjective ou pas.",msg:o.ps+" Regarde bien l'ensemble d'arrivée : c'est lui qui décide."}};}
+  const dit=`${o.inj?"injective":"pas injective"}, ${o.surj?"surjective":"pas surjective"}`;
+  return {sig,q,corps,texte,champs:[{k:"choix",id:"i",o:OUINON("Injective")},{k:"choix",id:"s",o:OUINON("Surjective")}],juge,etapes:E,bonne:dit+(o.inj&&o.surj?" : bijective":""),bonneTxt:dit,repBonne:{i:o.inj?"oui":"non",s:o.surj?"oui":"non"},repFausse:{i:o.inj?"oui":"non",s:o.surj?"non":"oui"},nature,ens};}
+function fleches(R){const sorte=R.ent(0,3),n=sorte===2?R.ent(4,5):R.ent(3,4),m=sorte===1?n+1:sorte===2?n-1:n,E=[...Array(n)].map((_,i)=>i+1),F=[...Array(m)].map((_,i)=>i+1),f={};
+  if(sorte<2)R.mel(F).slice(0,n).forEach((y,i)=>{f[E[i]]=y;});else if(sorte===2){R.mel(F).forEach((y,i)=>{f[E[i]]=y;});E.slice(m).forEach(x=>{f[x]=R.choix(F);});}else E.forEach(x=>{f[x]=R.choix(F.slice(0,m-1));});
+  const V=E.map(x=>f[x]),inj=new Set(V).size===n,surj=F.every(y=>V.includes(y)),dbl=F.find(y=>V.filter(v=>v===y).length>1),seul=F.find(y=>!V.includes(y)),dit=E.map(x=>`f(${x}) = ${f[x]}`).join(", ");
+  const o={inj,surj,pi:inj?`Les images ${V.join(", ")} sont toutes différentes : aucun élément de F n'est atteint deux fois.`:`${E.filter(x=>f[x]===dbl).map(x=>`f(${x})`).join(" = ")} = ${dbl} : deux éléments différents ont la même image.`,ps:surj?`Chaque élément de F est l'image de quelqu'un : ${F.map(y=>`${y} = f(${E.find(x=>f[x]===y)})`).join(", ")}.`:`${seul} n'est l'image de personne : il n'a pas d'antécédent.`};
+  return classe(o,"FL"+dit+"|"+m,`Soit f l'application de ${fx(`E = ${ensF(E)}`)} dans ${fx(`F = ${ensF(F)}`)} définie par : ${fx(dit)}. f est-elle injective ? Est-elle surjective ?`,`<p class="muted">${DEFINJ}</p>`,`${dit} ; de {1..${n}} dans {1..${m}} ; injective ? surjective ?`,{type:"fini",f,E,F},"valeurs");}
+function formule(R,sorte){const o=appliFormule(R,sorte),ea=ecritAppli(o);
+  return classe(o,"FO"+ea,`Soit ${fx(ea)}. f est-elle injective ? Est-elle surjective ?`,`<p class="muted">${DEFINJ}${notes(o)}</p>`,`${ea} ; injective ? surjective ?`,{type:"formule",o},o.fam);}
+function contreExemple(R){let o;do o=appliFormule(R,R()<0.5?"reels":"entiers");while(o.inj&&o.surj);const veutInj=!o.inj&&(o.surj||R()<0.5),ea=ecritAppli(o),v=o.D.ent?"n":"x",lis=t=>{const x=O.calcule(t,{});return x===null||!Number.isFinite(x)?null:x;},proche=(a,b)=>Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b));
+  const E=[veutInj?{w:`Par exemple ${fx(`${v}₁ = ${nb(o.meme[0])}`)} et ${fx(`${v}₂ = ${nb(o.meme[1])}`)} : ils sont différents, et ${fx(`f(${nb(o.meme[0])}) = f(${nb(o.meme[1])}) = ${nb(o.f(o.meme[0]))}`)}.`,why:"Un seul contre-exemple suffit pour montrer qu'une application n'est pas injective. N'importe quel autre couple d'éléments différents qui ont la même image convient aussi.",pts:3}
+    :{w:`Par exemple ${fx(`y = ${nb(o.sans)}`)} : il est dans l'ensemble d'arrivée ${fx(o.A.t)}, et il n'a pas d'antécédent.`,why:`${o.ps} Un seul élément sans antécédent suffit pour montrer qu'une application n'est pas surjective.`,pts:3}];
+  function juge(rep){const c=rep.c||{};
+    if(veutInj){const a=lis(c[v+"₁"]),b=lis(c[v+"₂"]);if(a===null||b===null)return {incomplet:"Écris deux nombres dans les deux cases."};
+      if(!o.D.in(a)||!o.D.in(b))return {ok:false,faux:[v+"₁",v+"₂"].filter((k,i)=>!o.D.in(i?b:a)),resume:"Pas tout à fait : un des deux nombres n'est pas dans l'ensemble de départ.",diag:{etape:0,type:"contre-exemple pris hors de l'ensemble de départ",titre:"Où ça part : l'ensemble de départ.",msg:`Les deux nombres doivent être dans ${fx(o.D.t)}.`}};
+      if(a===b)return {ok:false,faux:[v+"₂"],resume:"Pas tout à fait : il faut deux nombres différents.",diag:{etape:0,type:"contre-exemple avec deux fois le même nombre",titre:"Où ça part : deux éléments différents.",msg:"Deux fois le même nombre ont forcément la même image : cela ne montre rien. Il faut deux nombres différents qui ont la même image."}};
+      if(proche(o.f(a),o.f(b)))return {ok:true};
+      return {ok:false,faux:[v+"₁",v+"₂"],resume:"Pas tout à fait : ces deux nombres n'ont pas la même image.",diag:{etape:0,type:"contre-exemple à l'injectivité qui ne marche pas",titre:"Où ça part : les deux images.",msg:`${fx(`f(${dec(a)})`)} vaut ${dec(o.f(a))}, et ${fx(`f(${dec(b)})`)} vaut ${dec(o.f(b))} : elles sont différentes.`}};}
+    const y=lis(c.y);if(y===null)return {incomplet:"Écris un nombre dans la case."};
+    if(!o.A.in(y))return {ok:false,faux:["y"],resume:"Pas tout à fait : ce nombre n'est pas dans l'ensemble d'arrivée.",diag:{etape:0,type:"élément pris hors de l'ensemble d'arrivée",titre:"Où ça part : l'ensemble d'arrivée.",msg:`Il faut un élément de ${fx(o.A.t)} : c'est dans l'ensemble d'arrivée qu'on cherche quelqu'un sans antécédent.`}};
+    const x=o.ant(y);if(x===null||!o.D.in(x)||!proche(o.f(x),y))return {ok:true};
+    return {ok:false,faux:["y"],resume:"Pas tout à fait : ce nombre a un antécédent.",diag:{etape:0,type:"élément proposé qui a un antécédent",titre:"Où ça part : l'antécédent.",msg:`${dec(y)} a un antécédent : ${fx(`f(${dec(x)}) = ${dec(y)}`)}. Cherche un élément de ${fx(o.A.t)} que f n'atteint jamais.`}};}
+  const bon=veutInj?{[v+"₁"]:String(o.meme[0]),[v+"₂"]:String(o.meme[1])}:{y:String(o.sans)},mauvais=veutInj?{[v+"₁"]:String(o.meme[0]),[v+"₂"]:String(o.meme[0])}:{y:String(o.f(o.D.ent?5:2))};
+  return {sig:"CE"+ea+veutInj,q:veutInj?`Soit ${fx(ea)}. Montre que f n'est pas injective : donne deux éléments différents de l'ensemble de départ qui ont la même image.`:`Soit ${fx(ea)}. Montre que f n'est pas surjective : donne un élément de l'ensemble d'arrivée qui n'a aucun antécédent.`,
+    corps:`<p class="muted">${DEFINJ}${notes(o)}</p>`,texte:`${ea} ; contre-exemple pour ${veutInj?"l'injectivité":"la surjectivité"}`,champs:[{k:"cases",id:"c",noms:veutInj?[v+"₁",v+"₂"]:["y"],aide:"Tout contre-exemple qui marche est accepté : le site le vérifie."}],juge,etapes:E,
+    bonne:veutInj?`${fx(nb(o.meme[0]))} et ${fx(nb(o.meme[1]))}, par exemple`:`${fx(nb(o.sans))}, par exemple`,bonneTxt:veutInj?`${nb(o.meme[0])} et ${nb(o.meme[1])} (par exemple)`:`${nb(o.sans)} (par exemple)`,repBonne:{c:bon},repFausse:{c:mauvais},nature:veutInj?"pas injective":"pas surjective",ens:{type:"contre",o,veutInj}};}
+function reciproque(R){let o;do o=appliFormule(R,"reels");while(!o.inv);const ea=ecritAppli(o),YS=[-7.5,-3,-1.5,-0.5,0.25,0.5,1,2,3.5,4.25,5.5,7.5,9,11,13,20].filter(y=>o.A.in(y));
+  const E=[{w:`On part de ${fx(`y = ${o.e}`)} et on cherche x en fonction de y.`,why:"f est bijective : chaque y de l'ensemble d'arrivée a un seul antécédent x. La réciproque est l'application qui, à y, associe cet antécédent.",pts:1},
+    {w:`<b>${fx(`f⁻¹(y) = ${o.inv[0]}`)}</b>`,why:`On isole x, étape par étape, en vérifiant que le résultat est bien dans ${fx(o.D.t)}. ${fx("f⁻¹")} va de ${fx(o.A.t)} dans ${fx(o.D.t)}.`,pts:2}];
+  function juge(rep){if(!propre(rep.g))return {incomplet:"Écris f⁻¹(y) avec la lettre y, par exemple (y - 1)/2."};const V=YS.map(y=>O.calcule(rep.g,{y}));if(V.some(v=>v===null))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre y, par exemple (y - 1)/2, √(y + 3) ou ln(y)."};
+    const i=YS.findIndex((y,k)=>!Number.isFinite(V[k])||!o.D.in(V[k])||Math.abs(o.f(V[k])-y)>1e-9*Math.max(1,Math.abs(y)));if(i<0)return {ok:true};const y=YS[i],v=V[i];
+    return {ok:false,faux:["g"],resume:"Pas tout à fait : ce n'est pas la réciproque.",diag:{etape:1,type:"formule de la bijection réciproque",titre:"Où ça part : l'isolement de x.",msg:Number.isFinite(v)?`Pour y = ${dec(y)}, ta formule donne ${dec(v)}${o.D.in(v)?`, et l'image de ce nombre par f vaut ${dec(o.f(v))}, pas ${dec(y)}`:`, qui n'est pas dans ${o.D.t}`}.`:`Pour y = ${dec(y)}, ta formule n'a pas de valeur.`}};}
+  return {sig:"RE"+ea,q:`Soit ${fx(ea)}. Cette application est bijective. Donne sa réciproque : l'expression de ${fx("f⁻¹(y)")} en fonction de y.`,corps:`<p class="muted">Rappel : la réciproque ${fx("f⁻¹")} associe à chaque y son unique antécédent par f.${notes(o)}</p>`,texte:`${ea}, bijective ; formule de f⁻¹(y)`,
+    champs:[{k:"champ",id:"g",nom:"f⁻¹(y)",label:"$f⁻¹(y) =$",ex:"une formule avec y",sym:[["y","y"],["/","/"],["√","√("],["ln","ln("],["(","("],[")",")"]]}],juge,etapes:E,bonne:fx(`f⁻¹(y) = ${o.inv[0]}`),bonneTxt:`f⁻¹(y) = ${o.inv[0]}`,repBonne:{g:o.inv[1]},repFausse:{g:"y"},nature:o.fam,ens:{type:"recip",o,YS}};}
+
+G.rai={appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
   paliers:[
@@ -20755,7 +20840,14 @@ G.add("rai",[
    {t:"une application entre deux ensembles finis",cc:3,gen:imagesFinies},
    {t:"une fonction affine et des intervalles",cc:4,gen:imagesAffines},
    {t:"x ↦ x² ou |x| : parfois deux morceaux",cc:5,gen:imagesCarre},
-   {t:"aller et retour : f⁻¹(f(A)) et f(f⁻¹(B))",cc:6,gen:allerRetour,min:150}]}
+   {t:"aller et retour : f⁻¹(f(A)) et f(f⁻¹(B))",cc:6,gen:allerRetour,min:150}]},
+ {id:"RA1",t:"Injective, surjective, bijective",th:"injective",pts:4,lecons:["r-injective"],apres:["RA2"],
+  paliers:[
+   {t:"une application entre deux ensembles finis",cc:2,gen:fleches,min:120},
+   {t:"une formule sur ℝ : l'ensemble de départ et l'ensemble d'arrivée comptent",cc:3,gen:R=>formule(R,"reels"),min:60},
+   {t:"sur ℕ ou sur ℤ",cc:3,gen:R=>formule(R,"entiers"),min:20},
+   {t:"donner un contre-exemple",cc:3,gen:contreExemple,min:60},
+   {t:"la bijection réciproque",cc:4,gen:reciproque,min:30}]}
 ]);
 })();
 
