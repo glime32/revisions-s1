@@ -20450,6 +20450,87 @@ function formuleRec(R){const o=recSimple(R,true),P=o.P,nom=o.nom,KS=[0,1,2,3,4,5
   return {sig:"FR"+texteProg(P).replace(/\s+/g," "),q:`Voici une fonction récursive. Donne, en fonction de n, ce que renvoie ${fx(`${nom}(n)`)} pour tout entier naturel n. Sur papier, tu le démontres par récurrence avec la méthode du cours.`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — formule de ${nom}(n), puis preuve par récurrence`,
     champs:[{k:"champ",id:"f",nom:"formule",label:`$${nom}(n) =$`,ex:"une formule avec n",sym:[["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]}],juge,etapes:E,bonne:fx(`${nom}(n) = ${o.ferme}`),bonneTxt:`${nom}(n) = ${o.ferme.replace(/[{}]/g,"")}`,repBonne:{f:o.tape},repFausse:{f:"("+o.tape+")+n"},nature:"formule",ens:{type:"formule",P}};}
 
+/* ---------- AG8 : trouver la ligne fausse, écrire la ligne manquante ---------- */
+/* les lignes du corps d'un programme, chacune avec l'instruction qu'elle écrit (null pour « sinon » et les « fin ») */
+function lignesNum(P){const L=[];const va=(C,niv)=>{const I="    ".repeat(niv);C.forEach(s=>{
+  if(s.k==="aff")L.push({t:`${I}${s.v} ← ${ecrit(s.e)}`,n:s});
+  else if(s.k==="pour"){L.push({t:`${I}pour ${s.v} de ${ecrit(s.a)} à ${ecrit(s.b)} faire`,n:s});va(s.c,niv+1);L.push({t:`${I}fin pour;`,n:null});}
+  else if(s.k==="tq"){L.push({t:`${I}tant que ${ecrit(s.cond)} faire`,n:s});va(s.c,niv+1);L.push({t:`${I}fin tq;`,n:null});}
+  else if(s.k==="si"){L.push({t:`${I}si ${ecrit(s.cond)} alors`,n:s});va(s.alors,niv+1);if(s.sinon){L.push({t:`${I}sinon`,n:null});va(s.sinon,niv+1);}L.push({t:`${I}fin si;`,n:null});}
+  else L.push({t:`${I}Renvoyer ${ecrit(s.e)}`,n:s});});};va(P.corps,1);return L;}
+/* une expression tapée → le même arbre que le mini-langage ; null si elle ne se lit pas */
+function lisExpr(src){const T=[];let m;const re=/\s*(\d+|[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_]*|≤|≥|≠|[-+*()<>=,])/y;re.lastIndex=0;
+  const t=src.replace(/<=|=</g,"≤").replace(/>=|=>/g,"≥").replace(/!=|<>/g,"≠").replace(/[×·]/g,"*").replace(/[−–]/g,"-").trim();
+  while(re.lastIndex<t.length){m=re.exec(t);if(!m)return null;T.push(m[1]);}
+  let p=0;const nx=()=>T[p],low=x=>x===undefined?x:x.toLowerCase();
+  const prim=()=>{const x=nx();if(x===undefined)return null;
+    if(x==="("){p++;const e=ou();if(e===null||nx()!==")")return null;p++;return e;}
+    if(x==="-"){p++;const e=prim();return e===null?null:typeof e==="number"?-e:["-",0,e];}
+    if(/^\d+$/.test(x)){p++;return +x;}
+    if(/^[A-Za-zÀ-ÿ_]/.test(x)&&!["div","mod","et","ou"].includes(low(x))){p++;if(nx()==="("){p++;const A=[];if(nx()!==")"){for(;;){const e=ou();if(e===null)return null;A.push(e);if(nx()===","){p++;continue;}break;}}if(nx()!==")")return null;p++;return ["appel",x].concat(A);}return x;}
+    return null;};
+  const niveau=(suiv,ops)=>()=>{let a=suiv();while(a!==null&&ops.includes(low(nx()))){const o=low(T[p++]),b=suiv();a=b===null?null:[o,a,b];}return a;};
+  const mul=niveau(prim,["*","div","mod"]),add=niveau(mul,["+","-"]),cmp=niveau(add,["<","≤",">","≥","=","≠"]),et_=niveau(cmp,["et"]),ou=niveau(et_,["ou"]);
+  const e=ou();return e!==null&&p===T.length?e:null;}
+/* une ligne tapée → {k, …} comme une instruction, ou null */
+function lisLigne(src){const t=propre(src).replace(/<-|:=/g,"←").replace(/;$/,"").trim();let m;
+  if((m=/^pour\s+([A-Za-z])\s+de\s+(.+?)\s+(?:à|a)\s+(.+?)(?:\s+faire)?$/i.exec(t))){const a=lisExpr(m[2]),b=lisExpr(m[3]);return a===null||b===null?null:{k:"pour",v:m[1],a,b};}
+  if((m=/^tant\s*que\s+(.+?)(?:\s+faire)?$/i.exec(t))){const c=lisExpr(m[1]);return c===null?null:{k:"tq",cond:c};}
+  if((m=/^si\s+(.+?)(?:\s+alors)?$/i.exec(t))){const c=lisExpr(m[1]);return c===null?null:{k:"si",cond:c};}
+  if((m=/^renvoyer\s+(.+)$/i.exec(t))){const e=lisExpr(m[1]);return e===null?null:{k:"ret",e};}
+  if((m=/^([A-Za-z])\s*←\s*(.+)$/.exec(t))){const e=lisExpr(m[2]);return e===null?null:{k:"aff",v:m[1],e};}
+  return null;}
+const SORTE={aff:"une affectation, comme « s ← s + i »",pour:"un début de boucle « pour … de … à … faire »",tq:"un début de boucle « tant que … faire »",si:"un test « si … alors »",ret:"une ligne « Renvoyer … »"};
+const clone=x=>JSON.parse(JSON.stringify(x));
+/* les programmes du cours, ce qu'ils doivent calculer, et les fautes possibles */
+function programmeJuste(R,rec){const nom=R.choix(["F","G","H","Calc"]),ap=["appel",nom,["-","n",1]];
+  const IT=[{dit:"la somme 1 + 2 + … + n",P:{nom,params:["n"],vars:["s","i"],corps:[aff("s",0),pour("i",1,"n",[aff("s",["+","s","i"])]),ret("s")]}},
+    {dit:"le produit 1 × 2 × … × n, c'est-à-dire n! (et 1 pour n = 0)",P:{nom,params:["n"],vars:["p","i"],corps:[aff("p",1),pour("i",1,"n",[aff("p",["*","p","i"])]),ret("p")]}},
+    {dit:"2 puissance n",P:{nom,params:["n"],vars:["p","i"],corps:[aff("p",1),pour("i",1,"n",[aff("p",["*","p",2])]),ret("p")]}},
+    {dit:"la somme des carrés 1² + 2² + … + n²",P:{nom,params:["n"],vars:["s","i"],corps:[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*","i","i"]])]),ret("s")]}},
+    {dit:"la somme 2 + 4 + … + 2n",P:{nom,params:["n"],vars:["s","i"],corps:[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",2,"i"]])]),ret("s")]}},
+    {dit:"la somme 1 + 2 + … + n",P:{nom,params:["n"],vars:["s","c"],corps:[aff("s",0),aff("c","n"),tq([">","c",0],[aff("s",["+","s","c"]),aff("c",["-","c",1])]),ret("s")]}}];
+  const RC=[{dit:"n!, c'est-à-dire 1 × 2 × … × n (et 1 pour n = 0)",P:{nom,params:["n"],vars:[],corps:[si(["=","n",0],[ret(1)],[ret(["*","n",ap])])]}},
+    {dit:"la somme 1 + 2 + … + n (et 0 pour n = 0)",P:{nom,params:["n"],vars:[],corps:[si(["=","n",0],[ret(0)],[ret(["+","n",ap])])]}},
+    {dit:"2 puissance n",P:{nom,params:["n"],vars:[],corps:[si(["=","n",0],[ret(1)],[ret(["*",2,ap])])]}},
+    {dit:"n², en additionnant les n premiers nombres impairs",P:{nom,params:["n"],vars:[],corps:[si(["=","n",0],[ret(0)],[ret(["-",["+",ap,["*",2,"n"]],1])])]}}];
+  return R.choix(rec?RC:IT);}
+function fautes(P,sorte){const L=lignesNum(P),F=[];L.forEach((l,i)=>{const s=l.n;if(!s)return;const add=f=>{const Q=clone(P),q=lignesNum(Q)[i].n;f(q);F.push({i,Q});};
+  if(sorte==="borne"&&s.k==="pour"){add(q=>{q.b=["-","n",1];});add(q=>{q.b=["+","n",1];});add(q=>{q.a=0;});add(q=>{q.a=2;});}
+  if(sorte==="borne"&&s.k==="tq"){add(q=>{q.cond=[">","c",1];});add(q=>{q.cond=["≥","c",0];});}
+  if(sorte==="init"&&s.k==="aff"&&typeof s.e==="number"){add(q=>{q.e=s.e===0?1:0;});add(q=>{q.e=s.e+2;});}
+  if(sorte==="base"&&s.k==="ret"&&typeof s.e==="number"){add(q=>{q.e=s.e===0?1:0;});add(q=>{q.e=s.e+2;});}
+  if(sorte==="base"&&s.k==="si"){add(q=>{q.cond=["=","n",1];});}
+  if(sorte==="appel"&&s.k==="ret"&&typeof s.e!=="number"){const remplace=(e,f)=>Array.isArray(e)?(e[0]==="appel"?f(e):e.map((x,j)=>j?remplace(x,f):x)):e;
+    add(q=>{q.e=remplace(q.e,a=>["appel",a[1],"n"]);});add(q=>{q.e=remplace(q.e,a=>["appel",a[1],["-","n",2]]);});add(q=>{q.e=[q.e[0]==="*"?"+":"*",q.e[1],q.e[2]];});add(q=>{q.e=remplace(q.e,a=>["appel",a[1],["+","n",1]]);});}});
+  return F;}
+const ESSAIS=[0,1,2,3,4,5,6];
+const resultats=P=>ESSAIS.map(n=>{try{const r=joue(P,[n]).ret;return Number.isFinite(r)?r:"rien";}catch(e){return "ne s'arrête pas";}});
+function ligneFausse(R,sorte){for(;;){const o=programmeJuste(R,sorte==="base"||sorte==="appel"),P0=o.P,bon=resultats(P0),F=fautes(P0,sorte).filter(f=>resultats(f.Q).some((x,j)=>x!==bon[j]));if(!F.length)continue;
+  const f=R.choix(F),efface=R()<0.4,L0=lignesNum(P0),L1=lignesNum(f.Q),num=f.i+1,mauvais=resultats(f.Q),j=ESSAIS.findIndex((n,k)=>mauvais[k]!==bon[k]),nom=P0.nom;
+  const entete=texteProg(P0).split("\n"),debut=entete.indexOf("DÉBUT"),montre=L1.map((l,i)=>String(i+1).padStart(2," ")+"  "+(efface&&i===f.i?l.t.replace(/\S.*$/,"…"):l.t));
+  const texte=entete.slice(0,debut+1).concat(montre,["FIN"]).join("\n"),sorteL=L0[f.i].n.k;
+  const E=[{w:efface?`La ligne ${num} doit être ${SORTE[sorteL].replace(/, comme.*/,"")}.`:`On essaie sur un petit cas : ${fx(`${nom}(${ESSAIS[j]})`)} devrait valoir ${ent(bon[j])}, et la fonction ${mauvais[j]==="ne s'arrête pas"?"ne s'arrête jamais":`renvoie ${typeof mauvais[j]==="number"?ent(mauvais[j]):"autre chose"}`}.`,why:efface?`On regarde ce qui manque pour calculer ${o.dit} : ${sorteL==="aff"?"une variable n'est pas mise à jour, ou pas initialisée":sorteL==="pour"?"les lignes d'en dessous doivent être répétées":sorteL==="ret"?"il manque la valeur renvoyée":"il manque le test"}.`:`Pour trouver une faute, on exécute la fonction à la main sur une petite valeur, et on compare avec ce qu'elle doit calculer : ${o.dit}.`,pts:1},
+    {w:efface?`Elle sert à ${sorteL==="pour"?"faire prendre à i toutes les valeurs utiles":sorteL==="ret"?"donner le résultat de ce cas":sorteL==="si"?"reconnaître le cas de base":"donner la bonne valeur à la variable"}.`:`<b>La ligne fausse est la ligne ${num}</b> : « ${h(L1[f.i].t.trim())} ».`,why:{borne:"Les bornes d'une boucle disent combien de tours elle fait, et avec quelles valeurs. Un tour de trop, un tour de moins, ou un départ décalé changent le résultat.",init:"La valeur de départ doit être celle qui ne change rien : 0 pour une somme, 1 pour un produit.",base:"Le cas de base donne la réponse pour la plus petite valeur. S'il est faux, toutes les autres valeurs le sont, car elles se calculent à partir de lui.",appel:"L'appel récursif doit se faire sur une valeur plus petite, qui se rapproche du cas de base, et le résultat doit être combiné comme le demande la définition."}[sorte],pts:1},
+    {w:`La ligne ${efface?"à écrire":"corrigée"} : <b>« ${h(L0[f.i].t.trim())} »</b>.`,why:`Avec elle, la fonction calcule bien ${o.dit} : par exemple ${fx(`${nom}(${ESSAIS[Math.max(j,2)]}) = ${ent(bon[Math.max(j,2)])}`)}.`,pts:1}];
+  function juge(rep){let k=f.i;
+    if(!efface){const x=nombre((rep.c||{})["ligne"]);if(!x||x.d!==1||x.n<1||x.n>L1.length)return {incomplet:`Donne d'abord le numéro de la ligne fausse : un entier entre 1 et ${L1.length}.`};k=x.n-1;
+      if(!L1[k].n)return {ok:false,faux:["ligne"],resume:`Pas tout à fait : la ligne ${k+1} ne peut pas être fausse.`,diag:{etape:1,type:"ligne fausse mal repérée",titre:"Où ça part : le numéro de la ligne.",msg:`La ligne ${k+1} ferme seulement un bloc. Cherche parmi les lignes qui calculent quelque chose.`}};}
+    if(!propre(rep.l))return {incomplet:`Écris aussi la ligne ${efface?"manquante":"corrigée"}, dans le pseudo-code du cours.`};
+    const lu=lisLigne(rep.l),cible=L1[k].n;if(!lu)return {incomplet:`Je n'arrive pas à lire cette ligne. Écris-la comme dans le cours, par exemple « s ← s + i », « pour i de 1 à n faire » ou « Renvoyer n * ${nom}(n - 1) ».`};
+    if(lu.k!==cible.k)return {incomplet:`La ligne ${k+1} est ${SORTE[cible.k].replace(/, comme.*/,"")} : écris une ligne de la même sorte.`};
+    const Q=clone(f.Q),q=lignesNum(Q)[k].n;Object.assign(q,lu);const res=resultats(Q);
+    if(res.every((x,i)=>x===bon[i]))return {ok:true};
+    const i=res.findIndex((x,z)=>x!==bon[z]);
+    return {ok:false,faux:efface||k===f.i?["l"]:["ligne"],resume:"Pas tout à fait : avec cette ligne, la fonction ne calcule pas ce qu'il faut.",diag:!efface&&k!==f.i?{etape:1,type:"ligne fausse mal repérée",titre:"Où ça part : le numéro de la ligne.",msg:`La ligne ${k+1} était juste. La faute est à la ligne ${num}.`}
+      :{etape:2,type:{borne:"bornes d'une boucle",init:"valeur de départ d'une variable",base:"cas de base d'un algorithme récursif",appel:"appel récursif"}[sorte],titre:"Où ça part : la ligne corrigée.",msg:`Avec ta ligne, ${fx(`${nom}(${ESSAIS[i]})`)} ${res[i]==="ne s'arrête pas"?"ne s'arrête jamais":`renvoie ${typeof res[i]==="number"?ent(res[i]):"autre chose qu'un nombre"}`}, alors qu'on attend ${ent(bon[i])}.`}};}
+  const champs=(efface?[]:[{k:"cases",id:"c",noms:["ligne"]}]).concat([{k:"champ",id:"l",nom:"ligne",label:efface?`La ligne ${num} :`:"La ligne corrigée :",ex:"dans le pseudo-code du cours",apercu:false,sym:[["←"," ← "],["div"," div "],["≠","≠"],["≤","≤"],["pour … faire","pour i de 1 à n faire"],["Renvoyer","Renvoyer "]]}]);
+  const bonL=L0[f.i].t.trim().replace(/−/g,"-"),fausseL=L1[f.i].t.trim();
+  return {sig:"LF"+texte.replace(/\s+/g," ")+efface,q:efface?`Cette fonction doit renvoyer ${o.dit}, pour tout entier naturel n. La ligne ${num} a été effacée : écris-la.`:`Cette fonction doit renvoyer ${o.dit}, pour tout entier naturel n. Une de ses lignes est fausse. Donne son numéro, puis écris la ligne corrigée.`,
+    corps:code(texte),texte:`${L1.map((l,i)=>(i+1)+" "+(efface&&i===f.i?"…":l.t.trim())).join(" ; ")} — doit renvoyer ${o.dit} ; ${efface?"ligne effacée à écrire":"ligne fausse à trouver et à corriger"}`,champs,juge,etapes:E,
+    bonne:`${efface?"":`ligne ${num} : `}« ${h(bonL)} »`,bonneTxt:`${efface?"":`ligne ${num} : `}${bonL}`,repBonne:Object.assign(efface?{}:{c:{ligne:String(num)}},{l:bonL}),repFausse:Object.assign(efface?{}:{c:{ligne:String(num)}},{l:efface?(sorteL==="aff"?L0[f.i].n.v+" ← 7":sorteL==="ret"?"Renvoyer 7":sorteL==="pour"?"pour i de 3 à n faire":sorteL==="tq"?"tant que c > 5 faire":"si n = 5 alors"):fausseL}),
+    nature:(efface?"effacée, ":"fausse, ")+sorte,ens:{type:"ligne",P0,P1:f.Q,num,efface}};}}
+
 G.add("algo",[
  {id:"AG1",t:"Trace d'une boucle",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
   paliers:[
@@ -20494,6 +20575,12 @@ G.add("algo",[
    {t:"comparer b puissance d et a, puis conclure",cc:3,gen:R=>masterConclure(R,false),min:40},
    {t:"à partir d'une procédure récursive",cc:4,gen:R=>masterConclure(R,true),min:30},
    {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100}]},
+ {id:"AG8",t:"Trouver la ligne fausse, écrire la ligne manquante",tache:"trouver la ligne fausse",th:"preuves",ex:"cc2",pts:1,lecons:["a2-invariant"],apres:["AG1"],
+  paliers:[
+   {t:"les bornes d'une boucle",cc:3,gen:R=>ligneFausse(R,"borne"),min:25},
+   {t:"la valeur de départ",cc:3,gen:R=>ligneFausse(R,"init"),min:20},
+   {t:"le cas de base d'un récursif",cc:3,gen:R=>ligneFausse(R,"base"),min:14},
+   {t:"l'appel récursif",cc:4,gen:R=>ligneFausse(R,"appel"),min:14}]},
  {id:"AGQ1",t:"Question de cours : les équations d'itération et l'invariant",th:"preuves",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursIteration}]},
  {id:"AGQ2",t:"Question de cours : mille fois plus lent, θ, o, ω",th:"notations",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursMillion}]},
  {id:"AGQ3",t:"Question de cours : le master theorem",th:"master",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursMaster}]}
