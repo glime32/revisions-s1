@@ -18291,12 +18291,12 @@ function calcule(src,vars){let s=propre(String(src==null?"":src).replace(/²/g,"
   if(!s)return null;const r=expr();return r!==null&&p===s.length?r:null;}
 
 /* « |x - 2| < η », « 2 < x < 2 + η », « x ∈ ]2 ; 2 + η[ » : vrai ou faux pour les valeurs données, null si ça ne se lit pas */
-function predicat(src,vars){let s=String(src==null?"":src).replace(/f\s*\(\s*x\s*\)/gi,"y").replace(/<=|≦|⩽/g,"≤").replace(/>=|≧|⩾/g,"≥");
+function predicat(src,vars){let s=String(src==null?"":src).replace(/f\s*\(\s*x\s*\)/gi,"y").replace(/<=|≦|⩽/g,"≤").replace(/>=|≧|⩾/g,"≥").replace(/!=|<>|=\/=/g,"≠");
   const m=/^\s*x\s*(?:∈|dans|appartient à)\s*([\[\]])(.+?)(?:;|,(?=[^,]*$))(.+?)([\[\]])\s*$/i.exec(s);
   if(m)s=m[2]+(m[1]==="]"?"<":"≤")+"x"+(m[4]==="["?"<":"≤")+m[3];
-  const P=s.split(/([<>≤≥])/);if(P.length<3)return null;
+  const P=s.split(/([<>≤≥≠=])/);if(P.length<3)return null;
   const V=[];for(let i=0;i<P.length;i+=2){const v=calcule(P[i],vars);if(v===null||Number.isNaN(v))return null;V.push(v);}
-  for(let i=1;i<P.length;i+=2){const a=V[(i-1)/2],b=V[(i+1)/2],o=P[i];if(!(o==="<"?a<b:o===">"?a>b:o==="≤"?a<=b:a>=b))return false;}
+  for(let i=1;i<P.length;i+=2){const a=V[(i-1)/2],b=V[(i+1)/2],o=P[i];if(!(o==="<"?a<b:o===">"?a>b:o==="≤"?a<=b:o==="≥"?a>=b:o==="="?Math.abs(a-b)<1e-9:Math.abs(a-b)>=1e-9))return false;}
   return true;}
 
 const GEN=window.GEN={defs:{},par:{},
@@ -19667,6 +19667,159 @@ function redacRecurrente(R){const r=R.ent(2,7),sv=R.ent(1,r-1),a=r-sv,c=r*sv,bas
     texte:`u₀ = ${u0}, uₙ₊₁ = ${rac} : encadrement par récurrence, sens de variation, convergence et limite`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),
     bonne:"voir la rédaction",bonneTxt:`suite ${bas?"croissante et majorée":"décroissante et minorée"} par ${r}, limite ${r}`,repBonne:{},nature:bas?"croissante":"décroissante",ens:{type:"recp",f:x=>Math.sqrt(a*x+c),u0,r,bas}};}
 
+/* ---------- AN8 : valeur absolue, inéquations, partie entière ---------- */
+const SYMI=[["[","["],["]","]"],[";"," ; "],["∪"," ∪ "],["+∞","+∞"],["−∞","-∞"],["∅","∅"],["ℝ","ℝ"]];
+const tout=P=>P.length===1&&!P[0].a&&!P[0].b,point=p=>p.a&&p.b&&p.a.v===p.b.v;
+const ensT=P=>!P.length?"∅":tout(P)?"ℝ":P.map(p=>point(p)?`{${p.a.t}}`:pt(p)).join(" ∪ ");
+const ensTape=P=>!P.length?"∅":tout(P)?"ℝ":P.map(p=>`${p.oa?"]":"["}${p.a?brut(p.a.q):"-∞"} ; ${p.b?brut(p.b.q):"+∞"}${p.ob?"[":"]"}`).join(" ∪ ");
+/* ce que l'étudiant tape : une liste de morceaux, [] pour l'ensemble vide, null si ça ne se lit pas, "ordre" si une borne gauche dépasse la droite */
+function lisEns(src){let s=propre(src).replace(/\s+/g,"");if(!s)return null;
+  if(/^(∅|vide|ensemblevide|aucune(solution)?|pasdesolution|\{\})$/i.test(s))return [];
+  if(/^(ℝ|r)$/i.test(s))return [pc(null,true,null,true)];
+  const borne=t=>{if(/^[+-]?(∞|inf|infini|oo)$/i.test(t))return {inf:t[0]==="-"?-1:1};const v=O.calcule(t,{});return v===null||!Number.isFinite(v)?null:{v};},out=[];
+  for(const part of s.replace(/union|ou/gi,"∪").replace(/u/gi,"∪").split("∪")){
+    let m=/^\{(.+)\}$/.exec(part);if(m){const b=borne(m[1]);if(!b||b.inf)return null;out.push({a:{v:b.v},oa:false,b:{v:b.v},ob:false});continue;}
+    m=/^([\[\]])(.+)([\[\]])$/.exec(part);if(!m)return null;
+    const mid=m[2],k=mid.includes(";")?mid.indexOf(";"):mid.indexOf(",")===mid.lastIndexOf(",")?mid.indexOf(","):-1;if(k<0)return null;
+    const A=borne(mid.slice(0,k)),B=borne(mid.slice(k+1));if(!A||!B||(A.inf===1)||(B.inf===-1))return null;
+    const a=A.inf?null:{v:A.v},b=B.inf?null:{v:B.v},oa=m[1]==="]",ob=m[3]==="[";
+    if(a&&b&&(a.v>b.v||(a.v===b.v&&(oa||ob))))return "ordre";
+    out.push({a,oa:!a||oa,b,ob:!b||ob});}
+  return unir(out);}
+const memeEns=(A,B,sansCrochets)=>A.length===B.length&&A.every((p,i)=>{const z=B[i],e=(x,y)=>(!x&&!y)||(x&&y&&Math.abs(x.v-y.v)<1e-9);return e(p.a,z.a)&&e(p.b,z.b)&&(sansCrochets||(p.oa===z.oa&&p.ob===z.ob));});
+/* o : {sig, ineq, P (morceaux attendus), m (l'inéquation elle-même, pour le contrôle), etapes, nature, pieges:[[P, type, msg]], note} */
+function inequation(o){const P=unir(o.P),bon=ensT(P),dern=o.etapes.length-1;
+  function juge(rep){const L=lisEns(rep.S);
+    if(L==="ordre")return {incomplet:"Dans un intervalle, la borne de gauche est la plus petite. Vérifie l'ordre de tes deux bornes."};
+    if(!L)return {incomplet:"Écris un intervalle ou une réunion d'intervalles, par exemple ]-1 ; 3[ ou ]-∞ ; 2] ∪ [5 ; +∞[. Pour l'ensemble vide : ∅."};
+    if(memeEns(L,P))return {ok:true};
+    let d=null;for(const g of o.pieges||[])if(memeEns(L,unir(g[0]))){d={etape:g[3]==null?0:g[3],type:g[1],titre:"Où ça part : "+g[1]+".",msg:g[2]};break;}
+    if(!d&&memeEns(L,P,true))d={etape:dern,type:"crochets ouverts ou fermés",titre:"Où ça part : les crochets.",msg:`Les bornes sont justes, mais pas les crochets. Une inégalité large (≤ ou ≥) garde la borne : crochet fermé. Une inégalité stricte l'exclut : crochet ouvert. Ici ${fx(`S = ${bon}`)}.`};
+    if(!d)d={etape:dern,type:o.type||"résolution d'une inéquation avec valeur absolue",titre:"Où ça part : la résolution.",msg:`${fx(`S = ${bon}`)}.`};
+    return {ok:false,faux:["S"],resume:"Pas tout à fait : ce n'est pas le bon ensemble.",diag:d};}
+  const fausse=o.pieges&&o.pieges.length?ensTape(unir(o.pieges[0][0])):P.length?"∅":"ℝ";
+  return {sig:o.sig,q:`Résous dans ℝ : ${fx(h(o.ineq))}. Écris l'ensemble S des solutions comme un intervalle ou une réunion d'intervalles.`,corps:o.note?`<p class="muted">${o.note}</p>`:"",
+    texte:`résoudre dans ℝ : ${o.ineq}`,champs:[{k:"champ",id:"S",nom:"S",label:"$S =$",ex:"par exemple ]-1 ; 3[",sym:SYMI,aide:"Pour l'ensemble vide, écris ∅. Pour tous les réels, écris ℝ."}],juge,etapes:o.etapes,
+    bonne:fx(`S = ${bon}`),bonneTxt:`S = ${bon}`,repBonne:{S:ensTape(P)},repFausse:{S:fausse},nature:o.nature,ens:{m:o.m,P}};}
+const absT=(c)=>c?`|x ${c>0?"−":"+"} ${Math.abs(c)}|`:"|x|";
+function absDedans(R){const a=R.ent(-20,20),r=R.ent(1,15),st=R()<0.5,op=st?"<":"≤",g=val(a-r),d=val(a+r),A=absT(a);
+  return inequation({sig:"VD"+[a,r,op],ineq:`${A} ${op} ${r}`,P:[pc(g,st,d,st)],m:x=>vrai(op,Math.abs(x-a),r),nature:"dedans",
+    pieges:[[[pc(val(-r),st,val(r),st)],"centre de la valeur absolue oublié",`Tu as résolu ${fx(`|x| ${h(op)} ${r}`)}. Ici la distance se mesure à partir de ${fx(nb(a))}, pas de 0.`],[[pc(null,true,g,st),pc(d,st,null,true)],"intérieur et extérieur confondus",`« Plus petit que ${r} » : x est près de ${fx(nb(a))}, donc entre les deux bornes, pas à l'extérieur.`]].filter(()=>a!==0),
+    etapes:[{w:`${fx(`${A} ${h(op)} ${r}`)} veut dire ${fx(`−${r} ${h(op)} ${moins("x",a)} ${h(op)} ${r}`)}.`,why:`${fx(A)} est la distance entre x et ${fx(nb(a))}. Elle est ${TXT[op]} ${r} quand ${fx(moins("x",a))} est entre ${fx(nb(-r))} et ${fx(nb(r))}.`,pts:1},
+      {w:`${fx(`${nb(a-r)} ${h(op)} x ${h(op)} ${nb(a+r)}`)}`,why:a?`On ${a>0?"ajoute":"retire"} ${Math.abs(a)} aux trois membres.`:"Il n'y a rien à ajouter : l'encadrement de x est déjà là.",pts:1},
+      {w:`<b>${fx(`S = ${pt(pc(g,st,d,st))}`)}</b>`,why:st?"L'inégalité est stricte : les deux bornes ne sont pas solutions, les crochets sont ouverts.":"L'inégalité est large : les deux bornes sont solutions, les crochets sont fermés.",pts:1}]});}
+function absAffine(R,dehors){for(;;){const a=R.choix([2,3,4,5,-1,-2,-3,-4]),b=R.nz(-9,9),c=R.ent(1,12),st=R()<0.5,op=dehors?(st?">":"≥"):(st?"<":"≤"),x1=Q(-c-b,a),x2=Q(c-b,a),lo=val(a>0?x1:x2),hi=val(a>0?x2:x1);if(lo.q.d>6)continue;
+  const ax=comb([a],["x"]),X=`${ax} ${b>0?"+":"−"} ${Math.abs(b)}`,A=`|${X}|`,o1=dehors?(st?"<":"≤"):op,flip={"<":">","≤":"≥",">":"<","≥":"≤"},dedansP=[pc(lo,st,hi,st)],dehorsP=[pc(null,true,lo,st),pc(hi,st,null,true)];
+  const div=`On divise par ${fx(nb(a))}${a<0?" : c'est un nombre négatif, donc le sens des inégalités change":", qui est positif : le sens ne change pas"}.`;
+  if(!dehors)return inequation({sig:"VA"+[a,b,c,op],ineq:`${A} ${op} ${c}`,P:dedansP,m:x=>vrai(op,Math.abs(a*x+b),c),nature:"affine, dedans",pieges:[[dehorsP,"intérieur et extérieur confondus",`« Plus petit que ${c} » : ${fx(X)} est entre ${fx(nb(-c))} et ${fx(nb(c))}. Les solutions forment un seul intervalle.`]],
+    etapes:[{w:`${fx(`−${c} ${h(op)} ${X} ${h(op)} ${c}`)}`,why:`La valeur absolue d'un nombre est ${TXT[op]} ${c} quand ce nombre est entre ${fx(nb(-c))} et ${fx(nb(c))}.`,pts:1},
+      {w:`${fx(`${nb(-c-b)} ${h(op)} ${ax} ${h(op)} ${nb(c-b)}`)}`,why:`On ${b>0?"retire":"ajoute"} ${Math.abs(b)} aux trois membres.`,pts:1},
+      {w:`${fx(`${lo.t} ${h(op)} x ${h(op)} ${hi.t}`)}, donc <b>${fx(`S = ${pt(dedansP[0])}`)}</b>.`,why:div,pts:1}]});
+  return inequation({sig:"VE"+[a,b,c,op],ineq:`${A} ${op} ${c}`,P:dehorsP,m:x=>vrai(op,Math.abs(a*x+b),c),nature:"affine, dehors",pieges:[[dedansP,"« ou » pris pour « et »",`« Plus grand que ${c} » : ${fx(X)} est soit en dessous de ${fx(nb(-c))}, soit au-dessus de ${fx(nb(c))}. Les solutions sont à l'extérieur, en deux morceaux.`]],
+    etapes:[{w:`${fx(`${X} ${h(o1)} −${c}`)} ou ${fx(`${X} ${h(op)} ${c}`)}`,why:`La valeur absolue d'un nombre est ${TXT[op]} ${c} quand ce nombre est en dessous de ${fx(nb(-c))} ou au-dessus de ${fx(nb(c))}. C'est un « ou » : deux cas séparés.`,pts:1},
+      {w:`${fx(`${ax} ${h(o1)} ${nb(-c-b)}`)} ou ${fx(`${ax} ${h(op)} ${nb(c-b)}`)}`,why:`On ${b>0?"retire":"ajoute"} ${Math.abs(b)} des deux côtés, dans chaque cas.`,pts:1},
+      {w:`${fx(`x ${h(a>0?o1:flip[o1])} ${nb(x1)}`)} ou ${fx(`x ${h(a>0?op:flip[op])} ${nb(x2)}`)}, donc <b>${fx(`S = ${un(dehorsP)}`)}</b>.`,why:div,pts:1}]});}}
+function absDehors(R){if(R()<0.5)return absAffine(R,true);const a=R.ent(-9,9),r=R.ent(1,9),st=R()<0.5,op=st?">":"≥",o1=st?"<":"≤",g=val(a-r),d=val(a+r),A=absT(a),P=[pc(null,true,g,st),pc(d,st,null,true)];
+  return inequation({sig:"VX"+[a,r,op],ineq:`${A} ${op} ${r}`,P,m:x=>vrai(op,Math.abs(x-a),r),nature:"dehors",pieges:[[[pc(g,st,d,st)],"« ou » pris pour « et »",`« Plus grand que ${r} » : x est loin de ${fx(nb(a))}, à gauche de ${fx(g.t)} ou à droite de ${fx(d.t)}. Les solutions sont à l'extérieur, en deux morceaux.`]],
+    etapes:[{w:`${fx(`${moins("x",a)} ${h(o1)} −${r}`)} ou ${fx(`${moins("x",a)} ${h(op)} ${r}`)}`,why:`${fx(A)} est la distance entre x et ${fx(nb(a))}. Elle est ${TXT[op]} ${r} quand x est assez loin de ${fx(nb(a))}, d'un côté ou de l'autre. C'est un « ou » : deux cas séparés.`,pts:1},
+      {w:`${fx(`x ${h(o1)} ${g.t}`)} ou ${fx(`x ${h(op)} ${d.t}`)}`,why:a?`On ${a>0?"ajoute":"retire"} ${Math.abs(a)} des deux côtés, dans chaque cas.`:"Il n'y a rien à ajouter.",pts:1},
+      {w:`<b>${fx(`S = ${un(P)}`)}</b>`,why:`Le « ou » se traduit par une réunion ∪. ${st?"L'inégalité est stricte : crochets ouverts.":"L'inégalité est large : les deux bornes sont solutions, crochets fermés de leur côté."}`,pts:1}]});}
+const ENT=`E(x) désigne la partie entière de x : le plus grand entier inférieur ou égal à x. Par exemple E(2,7) = 2 et E(−1,5) = −2.`;
+function deuxAbs(R){const t=R();
+  if(t<0.3){let a,b;do{a=R.ent(-9,9);b=R.ent(-9,9);}while(a===b);const op=R.choix(OPS),st=op==="<"||op===">",mi=val(Q(a+b,2)),gauche=(op==="<"||op==="≤")===(a<b),P=[gauche?pc(null,true,mi,st):pc(mi,st,null,true)];
+    return inequation({sig:"V2"+[a,b,op],ineq:`${absT(a)} ${op} ${absT(b)}`,P,m:x=>vrai(op,Math.abs(x-a),Math.abs(x-b)),nature:"deux distances",type:"comparaison de deux distances",pieges:[[[gauche?pc(mi,st,null,true):pc(null,true,mi,st)],"côté du milieu inversé",`Le milieu est juste, mais pas le côté : on veut les x ${op==="<"||op==="≤"?"plus proches":"plus loin"} de ${fx(nb(a))} que de ${fx(nb(b))}.`,2]],
+      etapes:[{w:`${fx(absT(a))} est la distance entre x et ${fx(nb(a))} ; ${fx(absT(b))} est la distance entre x et ${fx(nb(b))}.`,why:`L'inéquation demande les x qui sont ${op==="<"||op==="≤"?"plus proches":"plus loin"} de ${fx(nb(a))} que de ${fx(nb(b))}.`,pts:1},
+        {w:`Le point à égale distance des deux est leur milieu : ${fx(mi.t)}.`,why:`Le milieu de ${fx(nb(a))} et ${fx(nb(b))} est leur demi-somme : ${fx(`(${nb(a)} + ${par(b)})/2`)}.`,pts:1},
+        {w:`<b>${fx(`S = ${pt(P[0])}`)}</b>`,why:`${fx(nb(a))} est ${a<b?"à gauche":"à droite"} du milieu : les x plus proches de ${fx(nb(a))} sont du même côté que lui. ${st?"L'inégalité est stricte : le milieu lui-même n'est pas solution.":"L'inégalité est large : le milieu est solution."}`,pts:1}]});}
+  if(t<0.55){const c=R.ent(-9,9),a=R.ent(1,5),b=a+R.ent(1,6),s1=R()<0.5,s2=R()<0.5,o1=s1?"<":"≤",o2=s2?"<":"≤",P=[pc(val(c-b),s2,val(c-a),s1),pc(val(c+a),s1,val(c+b),s2)],A=absT(c);
+    return inequation({sig:"VC"+[c,a,b,o1,o2],ineq:`${a} ${o1} ${A} ${o2} ${b}`,P,m:x=>vrai(o1==="<"?">":"≥",Math.abs(x-c),a)&&vrai(o2,Math.abs(x-c),b),nature:"couronne",type:"encadrement d'une distance",pieges:[[[pc(val(c-b),s2,val(c+b),s2)],"condition « au moins » oubliée",`Tu as gardé seulement « distance ${h(o2)} ${b} ». Il faut aussi que la distance dépasse ${a} : on enlève le milieu.`,1]],
+      etapes:[{w:`La distance entre x et ${fx(nb(c))} doit être entre ${a} et ${b}.`,why:`${fx(A)} est la distance entre x et ${fx(nb(c))} : x n'est ni trop près, ni trop loin.`,pts:1},
+        {w:`À droite de ${fx(nb(c))} : ${fx(`${nb(c+a)} ${h(o1)} x ${h(o2)} ${nb(c+b)}`)}. À gauche : ${fx(`${nb(c-b)} ${h(o2)} x ${h(o1)} ${nb(c-a)}`)}.`,why:`À droite, x vaut ${fx(nb(c))} plus la distance. À gauche, x vaut ${fx(nb(c))} moins la distance : l'ordre des bornes s'inverse.`,pts:1},
+        {w:`<b>${fx(`S = ${un(P)}`)}</b>`,why:"Les solutions sont d'un côté ou de l'autre : une réunion de deux intervalles. Chaque crochet suit son inégalité, stricte ou large.",pts:1}]});}
+  if(t<0.8){const k=R.ent(-9,9),d=R.ent(-5,5),f=R.choix(["=","=","≥","≤","<",">"]),arg=moins("x",d),lo=val(k+d),hi=val(k+d+1);
+    const P=f==="="?[pc(lo,false,hi,true)]:f==="≥"?[pc(lo,false,null,true)]:f==="≤"?[pc(null,true,hi,true)]:f==="<"?[pc(null,true,lo,true)]:[pc(hi,false,null,true)];
+    return inequation({sig:"VP"+[k,d,f],ineq:`E(${arg}) ${f} ${nb(k)}`,P,m:x=>{const e=Math.floor(x-d+1e-9);return f==="="?e===k:f==="≥"?e>=k:f==="≤"?e<=k:f==="<"?e<k:e>k;},nature:"partie entière",type:"partie entière",note:ENT,
+      pieges:f==="="?[[[pc(lo,false,hi,false)],"borne droite gardée à tort",`${fx(hi.t)} n'est pas solution : pour lui, la partie entière vaut déjà ${fx(nb(k+1))}. Le crochet de droite est ouvert.`,1]]:[],
+      etapes:[{w:f==="="?`${fx(`E(${arg}) = ${nb(k)}`)} veut dire ${fx(`${nb(k)} ≤ ${arg} &lt; ${nb(k+1)}`)}.`:f==="≥"?`${fx(`E(${arg}) ≥ ${nb(k)}`)} veut dire ${fx(`${arg} ≥ ${nb(k)}`)}.`:f==="≤"?`${fx(`E(${arg}) ≤ ${nb(k)}`)} veut dire ${fx(`${arg} &lt; ${nb(k+1)}`)}.`:f==="<"?`${fx(`E(${arg}) &lt; ${nb(k)}`)} veut dire ${fx(`${arg} &lt; ${nb(k)}`)}.`:`${fx(`E(${arg}) &gt; ${nb(k)}`)} veut dire ${fx(`${arg} ≥ ${nb(k+1)}`)}.`,
+        why:`La partie entière d'un nombre est l'entier juste en dessous de lui, ou lui-même s'il est entier. Elle vaut ${fx(nb(k))} pour tous les nombres de ${fx(`[${nb(k)} ; ${nb(k+1)}[`)}.`,pts:1.5},
+        {w:`<b>${fx(`S = ${ensT(P)}`)}</b>`,why:d?`On ${d>0?"ajoute":"retire"} ${Math.abs(d)} pour revenir à x.`:"L'ensemble se lit directement.",pts:1.5}]});}
+  const a=R.ent(-9,9),r=R.ent(0,6),cas=R.ent(0,3),A=absT(a),V=val(a),ineq=[`${A} < −${r+1}`,`${A} ≥ −${r+1}`,`${A} ≤ 0`,`${A} > 0`][cas],P=[[],[pc(null,true,null,true)],[pc(V,false,V,false)],[pc(null,true,V,true),pc(V,true,null,true)]][cas];
+  return inequation({sig:"VZ"+[a,r,cas],ineq,P,m:x=>[false,true,Math.abs(x-a)<1e-9,Math.abs(x-a)>1e-9][cas],nature:"cas limite",type:"valeur absolue comparée à un nombre négatif ou nul",
+    etapes:[{w:`Une valeur absolue est toujours positive ou nulle.`,why:`${fx(A)} est une distance : elle vaut 0 seulement quand x vaut ${fx(V.t)}, et elle est strictement positive sinon.`,pts:1.5},
+      {w:`<b>${fx(`S = ${ensT(P)}`)}</b>`,why:["Une distance n'est jamais strictement plus petite qu'un nombre négatif : aucune solution.","Une distance est toujours plus grande qu'un nombre négatif : tous les réels sont solutions.",`Une distance est inférieure ou égale à 0 seulement quand elle vaut 0 : la seule solution est ${fx(V.t)}. On peut aussi écrire ${fx(`[${V.t} ; ${V.t}]`)}.`,`Une distance est strictement positive sauf quand elle vaut 0 : tous les réels sont solutions, sauf ${fx(V.t)}.`][cas],pts:1.5}]});}
+
+/* ---------- AN7 : nier une phrase à quantificateurs ---------- */
+const SYMQ=[["∀","∀"],["∃","∃"],["et"," et "],["ou"," ou "],["⇒"," ⇒ "],["<","<"],[">",">"],["≤","≤"],["≥","≥"],["≠","≠"],["|","|"],["ε","ε"],["η","η"],["uₙ","uₙ"],["uₙ₊₁","uₙ₊₁"],["f(x)","f(x)"],["f(y)","f(y)"]];
+const CONTRAIRE={"<":"≥","≤":">",">":"≤","≥":"<","=":"≠","≠":"="},CMP={"<":(a,b)=>a<b,"≤":(a,b)=>a<=b,">":(a,b)=>a>b,"≥":(a,b)=>a>=b,"=":(a,b)=>a===b,"≠":(a,b)=>a!==b};
+/* une inégalité « g op d » : ce qu'on affiche, et sa valeur pour des valeurs données aux lettres */
+const atome=(g,op,d,G,D)=>({t:`${g} ${op} ${d}`,non:`${g} ${CONTRAIRE[op]} ${d}`,f:e=>CMP[op](G(e),D(e))});
+const quantQ=x=>{const t=propre(x).toLowerCase().replace(/ /g,"");return /^(∀|pourtout|quelquesoit|qqs)$/.test(t)?"∀":/^(∃|ilexiste)$/.test(t)?"∃":null;};
+/* la fin tapée : une inégalité, ou deux reliées par et, ou, ⇒ ; rend sa valeur pour chaque essai, ou null */
+function finPhrase(src,essais){let s=String(src||"").replace(/\bet\b|∧|&&?/gi,"∧").replace(/\bou\b|∨/gi,"∨").replace(/=>|⟹|→|->|\bimplique\b|\bdonc\b|\balors\b/gi,"⇒").replace(/uₙ₊₁|u_?\{?\(?n\s*\+\s*1\)?\}?/g,"w").replace(/uₙ|u_n|\bun\b/g,"u").replace(/f\s*\(\s*x\s*\)/g,"p").replace(/f\s*\(\s*y\s*\)/g,"q").replace(/N/g,"k");
+  if(/\bnon\b|¬/i.test(s))return "non";
+  const lien=s.includes("⇒")?"⇒":s.includes("∨")?"∨":s.includes("∧")?"∧":"",A=lien?s.split(lien):[s];if(lien==="⇒"&&A.length!==2)return null;
+  const out=[];for(const e of essais){const V=A.map(a=>O.predicat(a,e));if(V.some(v=>v===null))return null;out.push(lien==="⇒"?!V[0]||V[1]:lien==="∨"?V.some(Boolean):V.every(Boolean));}
+  return out;}
+function negation(o){ /* o : {sig, blocs:[["∀","ε > 0"],…], P (atome ou null), Q (atome), vars:{lettre:[valeurs]}, fr (phrase en français, ou rien), nature} */
+  const noms=Object.keys(o.vars);let essais=[{}];noms.forEach(k=>{const N=[];essais.forEach(e=>o.vars[k].forEach(v=>N.push(Object.assign({},e,{[k]:v}))));essais=N;});
+  const inv=q=>q==="∀"?"∃":"∀",phrase=o.blocs.map(b=>`${b[0]}${b[1]}`).join(", ")+", "+(o.P?`${o.P.t} ⇒ ${o.Q.t}`:o.Q.t),finT=o.P?`${o.P.t} et ${o.Q.non}`:o.Q.non,neg=o.blocs.map(b=>`${inv(b[0])}${b[1]}`).join(", ")+", "+finT;
+  const vrai=e=>o.P?o.P.f(e)&&!o.Q.f(e):!o.Q.f(e),attendu=essais.map(vrai),ids=o.blocs.map((_,i)=>"q"+i);
+  const E=[{w:`On échange chaque ∀ et chaque ∃ : ${O.f(h(o.blocs.map(b=>`${inv(b[0])}${b[1]}`).join(", ")))}.`,why:`Nier « pour tout…, on a… », c'est dire « il existe… pour lequel on n'a pas… », et inversement. La condition écrite juste après la lettre, comme ${fx(h(o.blocs[0][1].trim()))}, ne change pas : elle dit seulement où on prend la lettre.`,pts:1},
+    {w:o.P?`On nie la fin : ${fx(h(`${o.P.t} ⇒ ${o.Q.t}`))} devient ${fx(h(finT))}.`:`On nie la fin : ${fx(h(o.Q.t))} devient ${fx(h(o.Q.non))}.`,why:o.P?`Le contraire de « si A alors B », c'est « A est vrai et pourtant B est faux » : A et non B. La première partie reste telle quelle. Puis le contraire de ${fx(h(o.Q.t))} est ${fx(h(o.Q.non))}.`:`Le contraire d'une inégalité large est une inégalité stricte dans l'autre sens, et inversement. Le contraire de = est ≠.`,pts:1},
+    {w:`<b>${O.f(h(neg))}</b>`,why:`On ne touche ni aux lettres, ni à leur ordre : seuls les quantificateurs et la fin changent.`,pts:1}];
+  function juge(rep){const Qs=ids.map(i=>quantQ(rep[i]));if(Qs.some(x=>!x))return {incomplet:"Dans chaque petite case, mets ∀ ou ∃ (les deux premiers boutons)."};
+    if(!propre(rep.fin))return {incomplet:"Écris aussi la fin de la phrase dans la grande case."};
+    const V=finPhrase(rep.fin,essais);if(V==="non")return {incomplet:"N'écris pas « non » : écris directement l'inégalité contraire, par exemple > à la place de ≤."};
+    if(!V)return {incomplet:"Je n'arrive pas à lire la fin de la phrase. Écris une inégalité, ou deux inégalités reliées par « et », avec les mêmes lettres que dans l'énoncé."};
+    const FQ=ids.filter((_,i)=>Qs[i]!==inv(o.blocs[i][0])),okF=V.every((v,i)=>v===attendu[i]);if(!FQ.length&&okF)return {ok:true};
+    const comme=g=>essais.every((e,i)=>V[i]===g(e));let d;
+    if(FQ.length)d={etape:0,type:"quantificateur non échangé",titre:"Où ça part : les quantificateurs.",msg:`Dans une négation, chaque ∀ devient ∃ et chaque ∃ devient ∀, sans exception. Ici : ${O.f(h(o.blocs.map(b=>`${inv(b[0])}${b[1]}`).join(", ")))}.`};
+    else if(comme(e=>o.P?!o.P.f(e)||o.Q.f(e):o.Q.f(e)))d={etape:1,type:"fin de la phrase recopiée sans être niée",titre:"Où ça part : la fin de la phrase.",msg:`Tu as changé les quantificateurs, mais la fin est restée la même. Il faut la nier aussi : ${fx(h(finT))}.`};
+    else if(o.P&&comme(e=>!o.P.f(e)||!o.Q.f(e)))d={etape:1,type:"négation d'une implication écrite comme une implication",titre:"Où ça part : la négation de « ⇒ ».",msg:`Le contraire de « A ⇒ B » n'est pas « A ⇒ non B ». C'est « A et non B » : ${fx(h(finT))}.`};
+    else if(o.P&&comme(e=>!o.Q.f(e)))d={etape:1,type:"première partie de l'implication oubliée",titre:"Où ça part : la négation de « ⇒ ».",msg:`Il faut garder la première partie : « A et non B ». Ici : ${fx(h(finT))}.`};
+    else if(o.P&&comme(e=>!o.P.f(e)&&!o.Q.f(e)))d={etape:1,type:"les deux parties de l'implication niées",titre:"Où ça part : la négation de « ⇒ ».",msg:`Seule la conclusion est niée, la première partie reste telle quelle : ${fx(h(finT))}.`};
+    else d={etape:1,type:"contraire d'une inégalité",titre:"Où ça part : l'inégalité contraire.",msg:`Le contraire de ${fx(h(o.Q.t))} est ${fx(h(o.Q.non))} : une inégalité large devient stricte, et inversement.`};
+    return {ok:false,faux:FQ.concat(okF?[]:["fin"]),resume:`Pas tout à fait : ${FQ.length&&!okF?"les quantificateurs et la fin sont à revoir":FQ.length?(FQ.length>1?"des quantificateurs sont à revoir":"un quantificateur est à revoir"):"la fin de la phrase est à revoir"}.`,diag:d};}
+  const bon={fin:finT.replace(/−/g,"-")},fausse={fin:(o.P?`${o.P.t} ⇒ ${o.Q.non}`:o.Q.t).replace(/−/g,"-")};ids.forEach((id,i)=>{bon[id]=inv(o.blocs[i][0]);fausse[id]=inv(o.blocs[i][0]);});
+  return {sig:"NG"+o.sig,q:o.fr?`« ${o.fr} » s'écrit : ${O.f(h(phrase))}. Écris en symboles la phrase contraire, « ${o.frNon} ».`:`Écris la négation de la phrase : ${O.f(h(phrase))}.`,
+    corps:`<p>Complète : dans chaque petite case, ∀ ou ∃ ; dans la grande case, la fin de la phrase.</p><p class="mq-row">${o.blocs.map((b,i)=>`<span class="en-case">${O.trou(ids[i])} $${h(b[1].trim())}$,</span>`).join(" ")}</p>`,
+    texte:`négation de : ${phrase}`,champs:[{k:"trous",ids},{k:"champ",id:"fin",nom:"fin de la phrase",label:"La fin de la phrase :",ex:"par exemple x > 2",sym:SYMQ,aide:"Les boutons écrivent dans la case où tu es."}],indice:false,juge,etapes:E,
+    bonne:O.f(h(neg)),bonneTxt:neg,repBonne:bon,repFausse:fausse,nature:o.nature,ens:{essais,vrai,blocs:o.blocs,P:!!o.P}};}
+function phraseQ(R,niveau){const c=R.ent(-9,9),C=nb(c),l=R.ent(-9,9),a=R.ent(-9,9),op=R.choix(["≤","≥","<",">"]),num=e=>c,U=[c-1,c-0.5,c,c+0.5,c+1],lu=moins("uₙ",l),lf=moins("f(x)",l),xa=moins("x",a),EPS=[0.5,1],UL=[l-1,l-0.5,l,l+0.5,l+1],XA=[a-1,a-0.5,a,a+0.5,a+1];
+  if(niveau===1){const t=R.ent(0,4);
+    if(t===0)return {sig:"1a"+c+op,blocs:[["∀","x ∈ ℝ"]],Q:atome("f(x)",op,C,e=>e.p,num),vars:{p:U},nature:"un"};
+    if(t===1)return {sig:"1b"+c,blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)","=",C,e=>e.p,num),vars:{p:U},nature:"un"};
+    if(t===2)return {sig:"1c"+c+op,blocs:[["∀","n ∈ ℕ"]],Q:atome("uₙ",op,C,e=>e.u,num),vars:{u:U},nature:"un"};
+    if(t===3){const o2=R.choix(["≥","≤",">","<"]);return {sig:"1d"+o2,blocs:[["∀","n ∈ ℕ"]],Q:atome("uₙ₊₁",o2,"uₙ",e=>e.w,e=>e.u),vars:{u:[0,1,2],w:[0,1,2]},nature:"un"};}
+    return {sig:"1e"+c+op,blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)",op,C,e=>e.p,num),vars:{p:U},nature:"un"};}
+  if(niveau===2){const t=R.ent(0,5);
+    if(t===0)return {sig:"2a"+op,blocs:[["∃","M ∈ ℝ"],["∀","n ∈ ℕ"]],Q:atome("uₙ",op,"M",e=>e.u,e=>e.m),vars:{u:[0,1,2],m:[0,1,2]},nature:"deux"};
+    if(t===1)return {sig:"2b"+op,blocs:[["∀","A ∈ ℝ"],["∃","n ∈ ℕ"]],Q:atome("uₙ",op,"A",e=>e.u,e=>e.a),vars:{u:[0,1,2],a:[0,1,2]},nature:"deux"};
+    if(t===2)return {sig:"2c"+op,blocs:[["∀","x ∈ ℝ"],["∃","y ∈ ℝ"]],Q:atome("y",op,"x",e=>e.y,e=>e.x),vars:{x:[0,1,2],y:[0,1,2]},nature:"deux"};
+    if(t===3)return {sig:"2d"+c,blocs:[["∀","x ∈ ℝ"],["∃","y ∈ ℝ"]],Q:atome("x + y","=",C,e=>e.x+e.y,num),vars:{x:[0,1,c],y:[0,c-1,c]},nature:"deux"};
+    if(t===4)return {sig:"2e"+op,blocs:[["∃","m ∈ ℝ"],["∀","x ∈ ℝ"]],Q:atome("f(x)",op,"m",e=>e.p,e=>e.m),vars:{p:[0,1,2],m:[0,1,2]},nature:"deux"};
+    const o1=R.choix(["<","≤"]),o2=R.choix(["<","≤",">","≥"]);return {sig:"2f"+o1+o2,blocs:[["∀","x ∈ ℝ"],["∀","y ∈ ℝ"]],P:atome("x",o1,"y",e=>e.x,e=>e.y),Q:atome("f(x)",o2,"f(y)",e=>e.p,e=>e.q),vars:{x:[0,1],y:[0,1],p:[0,1],q:[0,1]},nature:"deux, ⇒"};}
+  const t=R.ent(0,5),oe=R.choix(["≤","<"]);
+  if(t===0)return {sig:"3a"+l+oe,blocs:[["∀","ε > 0"],["∃","N ∈ ℕ"],["∀","n ≥ N"]],Q:atome(`|${lu}|`,oe,"ε",e=>Math.abs(e.u-l),e=>e["ε"]),vars:{u:UL,"ε":EPS},nature:"trois"};
+  if(t===1)return {sig:"3b"+l+oe,blocs:[["∀","ε > 0"],["∃","N ∈ ℕ"],["∀","n ∈ ℕ"]],P:atome("n","≥","N",e=>e.n,e=>e.k),Q:atome(`|${lu}|`,oe,"ε",e=>Math.abs(e.u-l),e=>e["ε"]),vars:{u:UL,"ε":EPS,n:[1,2,3],k:[1,2,3]},nature:"trois, ⇒"};
+  if(t===2)return {sig:"3c"+[a,l],blocs:[["∀","ε > 0"],["∃","η > 0"],["∀","x ∈ I"]],P:atome(`|${xa}|`,"<","η",e=>Math.abs(e.x-a),e=>e["η"]),Q:atome(`|${lf}|`,"<","ε",e=>Math.abs(e.p-l),e=>e["ε"]),vars:{x:XA,p:UL,"ε":EPS,"η":EPS},nature:"trois, ⇒"};
+  if(t===3)return {sig:"3d"+a,blocs:[["∀","A > 0"],["∃","η > 0"],["∀","x ∈ I"]],P:atome(`|${xa}|`,"<","η",e=>Math.abs(e.x-a),e=>e["η"]),Q:atome("f(x)",">","A",e=>e.p,e=>e.a),vars:{x:XA,p:[0,1,2],a:[1,2],"η":EPS},nature:"trois, ⇒"};
+  if(t===4)return {sig:"3e"+op,blocs:[["∀","A ∈ ℝ"],["∃","N ∈ ℕ"],["∀","n ≥ N"]],Q:atome("uₙ",op,"A",e=>e.u,e=>e.a),vars:{u:[0,1,2],a:[0,1,2]},nature:"trois"};
+  return {sig:"3f"+l,blocs:[["∀","ε > 0"],["∃","α > 0"],["∀","x ∈ I"]],P:atome("x",">","α",e=>e.x,e=>e["α"]),Q:atome(`|${lf}|`,"<","ε",e=>Math.abs(e.p-l),e=>e["ε"]),vars:{x:[1,2,3],"α":[1,2,3],p:UL,"ε":EPS},nature:"trois, ⇒"};}
+/* une phrase en français, sa traduction, puis la phrase contraire */
+function phraseFr(R){const l=R.ent(-9,9),lu=moins("uₙ",l),UL=[l-1,l-0.5,l,l+0.5,l+1],EPS=[0.5,1],T=[
+  {fr:"la suite (uₙ) est majorée",non:"la suite (uₙ) n'est pas majorée",blocs:[["∃","M ∈ ℝ"],["∀","n ∈ ℕ"]],Q:atome("uₙ","≤","M",e=>e.u,e=>e.m),vars:{u:[0,1,2],m:[0,1,2]}},
+  {fr:"la suite (uₙ) est minorée",non:"la suite (uₙ) n'est pas minorée",blocs:[["∃","m ∈ ℝ"],["∀","n ∈ ℕ"]],Q:atome("uₙ","≥","m",e=>e.u,e=>e.m),vars:{u:[0,1,2],m:[0,1,2]}},
+  {fr:"la suite (uₙ) est croissante",non:"la suite (uₙ) n'est pas croissante",blocs:[["∀","n ∈ ℕ"]],Q:atome("uₙ₊₁","≥","uₙ",e=>e.w,e=>e.u),vars:{u:[0,1,2],w:[0,1,2]}},
+  {fr:"la suite (uₙ) est décroissante",non:"la suite (uₙ) n'est pas décroissante",blocs:[["∀","n ∈ ℕ"]],Q:atome("uₙ₊₁","≤","uₙ",e=>e.w,e=>e.u),vars:{u:[0,1,2],w:[0,1,2]}},
+  {fr:"la suite (uₙ) est bornée",non:"la suite (uₙ) n'est pas bornée",blocs:[["∃","M ∈ ℝ"],["∀","n ∈ ℕ"]],Q:atome("|uₙ|","≤","M",e=>Math.abs(e.u),e=>e.m),vars:{u:[-2,-1,0,1,2],m:[0,1,2]}},
+  {fr:"la suite (uₙ) tend vers +∞",non:"la suite (uₙ) ne tend pas vers +∞",blocs:[["∀","A ∈ ℝ"],["∃","N ∈ ℕ"],["∀","n ≥ N"]],Q:atome("uₙ","≥","A",e=>e.u,e=>e.a),vars:{u:[0,1,2],a:[0,1,2]}},
+  {fr:`la suite (uₙ) converge vers ${nb(l)}`,non:`la suite (uₙ) ne converge pas vers ${nb(l)}`,blocs:[["∀","ε > 0"],["∃","N ∈ ℕ"],["∀","n ≥ N"]],Q:atome(`|${lu}|`,"≤","ε",e=>Math.abs(e.u-l),e=>e["ε"]),vars:{u:UL,"ε":EPS},v:l},
+  {fr:"la fonction f est majorée sur ℝ",non:"la fonction f n'est pas majorée sur ℝ",blocs:[["∃","M ∈ ℝ"],["∀","x ∈ ℝ"]],Q:atome("f(x)","≤","M",e=>e.p,e=>e.m),vars:{p:[0,1,2],m:[0,1,2]}},
+  {fr:"la fonction f est croissante sur ℝ",non:"la fonction f n'est pas croissante sur ℝ",blocs:[["∀","x ∈ ℝ"],["∀","y ∈ ℝ"]],P:atome("x","≤","y",e=>e.x,e=>e.y),Q:atome("f(x)","≤","f(y)",e=>e.p,e=>e.q),vars:{x:[0,1],y:[0,1],p:[0,1],q:[0,1]}},
+  {fr:`la fonction f s'annule sur ℝ`,non:"la fonction f ne s'annule pas sur ℝ",blocs:[["∃","x ∈ ℝ"]],Q:atome("f(x)","=","0",e=>e.p,()=>0),vars:{p:[-1,0,1]}}],i=R.ent(0,T.length-1),o=T[i];
+  return Object.assign({sig:"FR"+i+(o.v===undefined?"":","+o.v),frNon:o.non,nature:"français"},o);}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19706,7 +19859,19 @@ G.add("ana",[
    {t:"calculer les premiers termes",cc:3,gen:premiers},
    {t:"les limites possibles : passer à la limite dans la relation",cc:3,gen:limitePossible,min:60},
    {t:"sens de variation et limite, relation du premier degré",cc:4,gen:affineSens},
-   {t:"l'étude complète, sur papier, comme au CC",cc:12,gen:redacRecurrente,min:110}]}
+   {t:"l'étude complète, sur papier, comme au CC",cc:12,gen:redacRecurrente,min:110}]},
+ {id:"AN8",t:"Valeur absolue : inéquations, partie entière",tache:"inéquations avec valeur absolue",th:"outils",pts:1,lecons:["a-abs"],
+  paliers:[
+   {t:"|x − a| plus petit qu'un nombre",cc:2,gen:absDedans},
+   {t:"|ax + b| plus petit qu'un nombre",cc:3,gen:R=>absAffine(R,false)},
+   {t:"valeur absolue plus grande qu'un nombre : deux morceaux",cc:3,gen:absDehors},
+   {t:"deux distances, encadrement, partie entière, cas limites",cc:3,gen:deuxAbs}]},
+ {id:"AN7",t:"Nier une phrase à quantificateurs",th:"quantif",pts:1,lecons:["a-quantif"],sansPapier:true,
+  paliers:[
+   {t:"un quantificateur",cc:1,gen:R=>negation(phraseQ(R,1)),min:60},
+   {t:"deux quantificateurs",cc:2,gen:R=>negation(phraseQ(R,2)),min:30},
+   {t:"trois quantificateurs, avec ou sans implication",cc:3,gen:R=>negation(phraseQ(R,3)),min:60},
+   {t:"une phrase en français : écrire son contraire",cc:3,gen:R=>negation(phraseFr(R)),min:12}]}
 ]);
 })();
 
@@ -20427,7 +20592,7 @@ function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n=
       if(e.r===2||(e.r===1&&e.lent&&g.lv===last))return;/* aidé, ou juste mais trop lent au dernier palier : ni juste ni faux */
       if(e.r===1){g.ok++;g.ko=0;if(e.pap)g.pap=1;
         if(g.lv<last){if(g.ok>=seuil(d)){g.lv++;g.ok=0;g.pap=0;}}
-        else if(g.ok>=seuil(d)&&g.pap){g.val=day;g.np=0;g.du=A.addDays(day,ECARTS[0]);g.passe=day;g.ok=0;g.pap=0;g.trav=false;g.eo=g.ek=0;}}
+        else if(g.ok>=seuil(d)&&(g.pap||d.sansPapier)){g.val=day;g.np=0;g.du=A.addDays(day,ECARTS[0]);g.passe=day;g.ok=0;g.pap=0;g.trav=false;g.eo=g.ek=0;}}
       else{g.ko++;g.ok=0;g.pap=0;if(g.ko>=2){g.lv=Math.max(0,g.lv-1);g.ko=0;}}}
     else if(e.m==="e"&&g.val){jr.e+=e.ms||0;
       if(e.r===1)g.eo++;else if(e.r===0)g.ek++;
@@ -20493,12 +20658,12 @@ function prochain(){const S=P.sess;
   if(P.mode==="jour"){const L=entretien(S.tout);if(!L.length)return fin();
     let x=S.refaire&&L.find(y=>y.d.id===S.refaire);
     if(!x){const autres=L.filter(y=>y.d.id!==S.dernierG);x=(autres.length?autres:L)[0];}
-    P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek;}
+    P.d=x.d;P.g=x.g;P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek&&!x.d.sansPapier;}
   else{const d=P.d,g=etat(d.id);P.g=g;
     if(g.val){P.lv=dernier(d);P.m="x";}
     else if(!g.n&&!d.fixe){P.lv=dernier(d);P.m="pl";}
     else{P.lv=g.lv;P.m="p";}
-    P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=seuil(d)-1&&!g.pap;}
+    P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=seuil(d)-1&&!g.pap&&!d.sansPapier;}
   P.exo=tirage(P.d,P.lv,P.g);P.aide=false;P.res=null;P.papier=false;
   if(P.exo.papier)P.papierExige=P.papier=true;else if(P.exo.champs.some(c=>c.k==="trous"))P.papierExige=false;else if(P.papierExige)P.papier=true;
   let t0=Date.now();try{const s=JSON.parse(sessionStorage.getItem("rev-s1-exo")||"null");if(s&&s.c===P.exo.cle&&t0-s.t<30*60e3)t0=s.t;else sessionStorage.setItem("rev-s1-exo",JSON.stringify({c:P.exo.cle,t:t0}));}catch(e){}
@@ -20510,6 +20675,7 @@ const symHTML=c=>c.sym?`<div class="filters en-sym">${c.sym.map(x=>{const[l,v]=A
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="sym")return `<div data-ch="${c.id}" class="en-rep">${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
@@ -20566,7 +20732,7 @@ function dessine(){
       if(on)g.querySelectorAll("button").forEach(y=>{if(y!==x&&(x.dataset.v===seul||y.dataset.v===seul))y.setAttribute("aria-pressed","false");});}));
     let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT")dernier=ev.target;});
     b.querySelectorAll(".en-sym button").forEach(x=>{x.addEventListener("pointerdown",ev=>ev.preventDefault());
-      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:g.querySelector("input");if(!i)return;
+      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:(g.querySelector("input")||b.querySelector("input"));if(!i)return;
         const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd,t=x.dataset.ins;i.value=i.value.slice(0,a)+t+i.value.slice(z);i.focus();i.setSelectionRange(a+t.length,a+t.length);});});
     b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
     const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
