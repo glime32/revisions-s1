@@ -18269,7 +18269,7 @@ function affine(src,permis){const s=propre(src).replace(/ /g,"");let p=0;if(!s)r
 /* « E(3/ε) + 1 », « 2x^2 - sqrt(x) » : la valeur de la formule pour les valeurs données aux lettres (en minuscules),
    null si elle ne se lit pas. E(…) est la partie entière. */
 function calcule(src,vars){let s=propre(String(src==null?"":src).replace(/²/g,"^2").replace(/³/g,"^3")).toLowerCase().replace(/ /g,"").replace(/,/g,".").replace(/epsilon|eps/g,"ε").replace(/alpha/g,"α").replace(/êta|eta/g,"η").replace(/√/g,"sqrt").replace(/racine|rac/g,"sqrt").replace(/\*\*/g,"^").replace(/pi/g,"π"),p=0;
-  const FN={sqrt:Math.sqrt,floor:Math.floor,ent:Math.floor,abs:Math.abs,exp:Math.exp,ln:Math.log,sin:Math.sin,cos:Math.cos,e:Math.floor},NOMS=Object.keys(FN),NUM=/^\d+(\.\d+)?/;
+  const FN={sqrt:Math.sqrt,floor:Math.floor,ent:Math.floor,abs:Math.abs,exp:Math.exp,log:Math.log,ln:Math.log,sin:Math.sin,cos:Math.cos,e:Math.floor},NOMS=Object.keys(FN),NUM=/^\d+(\.\d+)?/;
   function prim(){const c=s[p];
     if(c==="("){p++;const v=expr();if(v===null||s[p]!==")")return null;p++;return v;}
     if(c==="|"){p++;const v=expr();if(v===null||s[p]!=="|")return null;p++;return Math.abs(v);}
@@ -20144,6 +20144,129 @@ function recursif(R){const nom=R.choix(["F","G","H","Rec","Calc"]),ap=["appel",n
     bonne:`${fx(`${ind} = ${T0}`)} ; ${fx(`T_{n} = ${a} + T_{n−1}`)} ; ${fx(`T_{n} = ${formule}`)}`,bonneTxt:`T_${base} = ${T0} ; T_n = ${a} + T_(n−1) ; T_n = ${formule}`,repBonne:{c:{[ind]:String(T0),a:String(a)},T:tape},repFausse:{c:{[ind]:String(T0),a:String(a-1)},T:tape},nature:"récursif",
     ens:{P,type:"rec",args:KS,base,T0,a}};}
 
+/* ---------- AG6 : ordres de complexité θ, o, ω, O, Ω ---------- */
+/* les suites de référence du cours, dans l'ordre : cl = [base de l'exponentielle, puissance de n, puissance du log] */
+const REF=[{t:"1",cl:[1,0,0],f:()=>1,tape:"1"},{t:"log(n)",cl:[1,0,1],f:n=>Math.log(n),tape:"log(n)"},{t:"√n",cl:[1,0.5,0],f:n=>Math.sqrt(n),tape:"√(n)"},{t:"n",cl:[1,1,0],f:n=>n,tape:"n"},{t:"n.log(n)",cl:[1,1,1],f:n=>n*Math.log(n),tape:"n*log(n)"},
+  {t:"n²",cl:[1,2,0],f:n=>n*n,tape:"n^2"},{t:"n².log(n)",cl:[1,2,1],f:n=>n*n*Math.log(n),tape:"n^2*log(n)"},{t:"n³",cl:[1,3,0],f:n=>n*n*n,tape:"n^3"},{t:"2ⁿ",cl:[2,0,0],f:n=>Math.pow(2,n),tape:"2^n"},{t:"3ⁿ",cl:[3,0,0],f:n=>Math.pow(3,n),tape:"3^n"}];
+const cmpCl=(x,y)=>x.cl[0]-y.cl[0]||x.cl[1]-y.cl[1]||x.cl[2]-y.cl[2];
+const termeT=(k,r)=>r.t==="1"?String(k):k===1?r.t:r.cl[0]>1?`${k} × ${r.t}`:/^[l√]/.test(r.t)?`${k} ${r.t}`:k+r.t;
+/* une somme de termes [coefficient, suite de référence], écrite du plus grand au plus petit ou mélangée */
+function sommeRef(R,nb,sansExp,melange){const pool=R.mel(REF.filter(r=>!sansExp||r.cl[0]===1)).slice(0,nb).sort((x,y)=>cmpCl(y,x)),T=pool.map(r=>[R.ent(1,9),r]),ordre=melange?R.mel(T):T;
+  return {T,dom:T[0],t:ordre.map(x=>termeT(x[0],x[1])).join(" + "),f:n=>T.reduce((s,x)=>s+x[0]*x[1].f(n),0),exp:T.some(x=>x[1].cl[0]>1)};}
+const versN=src=>String(src||"").replace(/ⁿ/g,"^n").replace(/[.·](?=\s*[a-zA-Z(√])/g,"*").replace(/log\s*n\b/gi,"log(n)");
+const GRANDS=e=>e?[30,60,90]:[1e4,1e8,1e12];
+const pourquoiDom=(S)=>S.T.length<2?"Il n'y a qu'un terme.":`Quand on divise par ${fx(S.dom[1].t)}, ${S.T.length>2?"les autres termes tendent":"l'autre terme tend"} vers 0 : par exemple ${fx(`${S.T[1][1].t}/${S.dom[1].t}`)} tend vers 0, car ${fx(S.T[1][1].t)} vient avant ${fx(S.dom[1].t)} dans la liste des suites de référence.`;
+const LISTE="L'ordre du cours, de la plus lente à la plus rapide : 1, log(n), n, n.log(n), n², n³, puis les exponentielles 2ⁿ, 3ⁿ, et enfin n!. La racine √n se place entre log(n) et n.";
+function ranger(R){const nb=R.choix([4,4,5]),FACT={t:"n!",cl:[99,0,0]},pool=R.mel(REF.concat([FACT])).slice(0,nb),LET=["A","B","C","D","E"].slice(0,nb);
+  const deco=r=>{const k=R.choix([1,1,2,5,10,100,1000]),d=R()<0.25&&r.t!=="1"&&r.t!=="n!";return r.t==="1"?String(R.choix([1,7,100,1000])):d?`${r.t}/${R.choix([10,50,100])}`:r.t==="n!"?"n!":termeT(k,r);};
+  const F=pool.map((r,i)=>({l:LET[i],r,t:deco(r)})),bon=F.slice().sort((x,y)=>cmpCl(x.r,y.r)),att=bon.map(x=>x.l).join("");
+  const E=[{w:`Sans les constantes : ${F.map(x=>`${x.l} est de l'ordre de ${fx(x.r.t)}`).join(", ")}.`,why:"Multiplier ou diviser par un nombre fixe ne change pas l'ordre de grandeur : 1000n et n/50 grandissent tous les deux comme n.",pts:1},
+    {w:`On range ces suites de référence : ${bon.map(x=>fx(x.r.t)).join(", ")}.`,why:LISTE,pts:1},
+    {w:`<b>${bon.map(x=>x.l).join(" &lt; ")}</b>`,why:`C'est-à-dire : ${bon.map(x=>fx(x.t)).join(", ")}.`,pts:1}];
+  function juge(rep){const L=(propre(rep.o).toUpperCase().match(/[A-E]/g)||[]);if(L.length!==nb||new Set(L).size!==nb||L.some(x=>!LET.includes(x)))return {incomplet:`Écris les ${nb} lettres ${LET.join(", ")}, une fois chacune, de la suite qui grandit le moins vite à celle qui grandit le plus vite.`};
+    if(L.join("")===att)return {ok:true};
+    let d=null;for(let i=0;i+1<nb;i++){const x=F.find(z=>z.l===L[i]),y=F.find(z=>z.l===L[i+1]);if(cmpCl(x.r,y.r)>0){d={etape:1,type:"deux ordres de grandeur inversés",titre:`Où ça part : ${x.l} et ${y.l}.`,msg:`${fx(y.t)} grandit moins vite que ${fx(x.t)} : le quotient ${fx(`${y.r.t}/${x.r.t}`)} tend vers 0. Les constantes ne changent rien quand n est très grand.`};break;}}
+    return {ok:false,faux:["o"],resume:"Pas tout à fait : ce n'est pas le bon ordre.",diag:d};}
+  return {sig:"RG"+F.map(x=>x.t).join("|"),q:`Voici ${nb} suites : ${F.map(x=>`${x.l} : ${fx(x.t)}`).join(" ; ")}. Range-les de celle qui grandit le moins vite à celle qui grandit le plus vite, quand n devient très grand.`,corps:"",texte:`ranger par ordre de grandeur : ${F.map(x=>`${x.l} = ${x.t}`).join(" ; ")}`,
+    champs:[{k:"champ",id:"o",nom:"ordre",label:"De la plus lente à la plus rapide :",ex:"par exemple B A D C",sym:LET.map(l=>[l,l+" "])}],juge,etapes:E,bonne:bon.map(x=>x.l).join(" &lt; "),bonneTxt:bon.map(x=>x.l).join(" < "),repBonne:{o:att.split("").join(" ")},repFausse:{o:att.split("").reverse().join(" ")},nature:"ranger",
+    ens:{type:"ranger",ordre:bon.map(x=>x.r.t)}};}
+function simplifier(R){const S=sommeRef(R,R.choix([2,3,3]),R()<0.8,true),ref=S.dom[1],PT=[7,20,50],G=GRANDS(S.exp||true);
+  const E=[{w:`Les termes de ${fx("T_{n}")} sont de l'ordre de ${et(S.T.map(x=>fx(x[1].t)))}.`,why:"On regarde chaque terme sans sa constante.",pts:1},
+    {w:`Le terme qui l'emporte est ${fx(termeT(S.dom[0],ref))}.`,why:`${pourquoiDom(S)} ${LISTE}`,pts:1},
+    {w:`<b>${fx(`T_{n} = θ(${ref.t})`)}</b>`,why:`${fx(`T_{n}/${ref.t}`)} tend vers ${S.dom[0]}, un nombre strictement positif : ${fx("T_{n}")} est de l'ordre de ${fx(ref.t)}. Dans θ, on écrit la suite de référence seule, sans constante.`,pts:1}];
+  function juge(rep){if(!propre(rep.r))return {incomplet:"Écris la suite de référence, par exemple n^2, n.log(n) ou 2^n."};
+    const src=versN(rep.r),W=PT.map(n=>O.calcule(src,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette suite. Écris-la avec la lettre n, par exemple n^2, n.log(n) (avec les parenthèses) ou 2^n."};
+    if(PT.every((n,i)=>Math.abs(W[i]-ref.f(n))<=1e-9*ref.f(n)))return {ok:true};
+    const Q=G.map(n=>O.calcule(src,{n})/ref.f(n));
+    if(Q.every(x=>Number.isFinite(x)&&x>0)&&Math.abs(Q[2]/Q[1]-1)<0.03&&Math.abs(Q[1]/Q[0]-1)<0.2)return {incomplet:"C'est le bon ordre de grandeur. Mais dans θ, on écrit la suite de référence toute seule : sans constante devant, et sans terme plus petit."};
+    const autre=S.T.slice(1).find(x=>PT.every((n,i)=>Math.abs(W[i]-x[1].f(n))<=1e-9*x[1].f(n)));
+    return {ok:false,faux:["r"],resume:"Pas tout à fait : ce n'est pas l'ordre de grandeur de cette suite.",diag:autre?{etape:1,type:"terme dominant mal choisi",titre:"Où ça part : le terme qui l'emporte.",msg:`${fx(autre[1].t)} est bien dans la somme, mais ${fx(ref.t)} grandit plus vite : ${fx(`${autre[1].t}/${ref.t}`)} tend vers 0.`}:{etape:2,type:"ordre de grandeur d'une somme",titre:"Où ça part : l'ordre de grandeur.",msg:`Le terme qui l'emporte est ${fx(termeT(S.dom[0],ref))} : ${fx(`T_{n} = θ(${ref.t})`)}.`}};}
+  return {sig:"SI"+S.t,q:`Le nombre d'opérations d'un algorithme est ${fx(`T_{n} = ${S.t}`)}. Donne son ordre de complexité : la suite de référence ${fx("R_{n}")} telle que ${fx("T_{n} = θ(R_{n})")}.`,corps:"",texte:`T_n = ${S.t} ; ordre de complexité θ(…)`,
+    champs:[{k:"champ",id:"r",nom:"ordre de complexité",label:"$T_{n} = θ($ … $)$ avec :",ex:"par exemple n^2",sym:[["n","n"],["^","^"],["log(n)","log(n)"],[".","."],["√","√("],[")",")"]]}],juge,etapes:E,bonne:fx(`T_{n} = θ(${ref.t})`),bonneTxt:`T_n = θ(${ref.t})`,
+    repBonne:{r:ref.tape},repFausse:{r:(S.T[1]||[0,REF[ref===REF[0]?1:0]])[1].tape},nature:"simplifier",ens:{type:"quotient",f:S.f,g:ref.f,lim:S.dom[0],grand:GRANDS(S.exp)}};}
+const NOTA={o:["o","strictement dominée par"],"θ":["θ","du même ordre que"],"ω":["ω","strictement dominante devant"],O:["O","dominée au sens large par"],"Ω":["Ω","dominante au sens large devant"]};
+const limTxt=L=>L===Infinity?"+∞":L===0?"0":O.nb(L);
+function lisLimite(s){const t=propre(s).toLowerCase().replace(/ /g,"");if(!t)return null;if(/^\+?(∞|inf|infini|oo)$/.test(t))return Infinity;const v=O.calcule(s,{});return v===null||!Number.isFinite(v)?null:v;}
+/* T_n et R_n : la limite du quotient, puis o, θ ou ω (ou vrai / faux pour une notation donnée) */
+function quotient(R,vraiFaux){const exp=R()<0.2,S=sommeRef(R,R.choix([1,2,2]),!exp,false),gR=R()<0.4?S.dom[1]:R.choix(REF.filter(r=>exp||r.cl[0]===1)),kg=R.choix([1,1,2,3,5]),gt=termeT(kg,gR),c=cmpCl(S.dom[1],gR);
+  const LQ=c===0?O.Q(S.dom[0],kg):null,L=c<0?0:c>0?Infinity:LQ.n/LQ.d,rel=c<0?"o":c>0?"ω":"θ",nota=vraiFaux?R.choix(["O","Ω","o","ω","θ","O","Ω"]):null;
+  const vrai=nota?{o:rel==="o","ω":rel==="ω","θ":rel==="θ",O:rel!=="ω","Ω":rel!=="o"}[nota]:null,LT=c===0?O.nb(LQ):limTxt(L);
+  const E=[{w:`<b>${fx(`lim T_{n}/R_{n} = ${LT}`)}</b>`,why:`${S.T.length>1?`Dans ${fx("T_{n}")}, le terme qui l'emporte est ${fx(termeT(S.dom[0],S.dom[1]))}. `:""}${c===0?`${fx("T_{n}")} et ${fx("R_{n}")} sont tous les deux de l'ordre de ${fx(gR.t)} : le quotient tend vers le quotient des constantes, ${fx(`${S.dom[0]}/${kg}`)}.`:c<0?`${fx(S.dom[1].t)} vient avant ${fx(gR.t)} dans la liste des suites de référence : le quotient tend vers 0.`:`${fx(S.dom[1].t)} vient après ${fx(gR.t)} dans la liste des suites de référence : le quotient tend vers +∞.`}`,pts:1.5},
+    {w:`<b>${fx(`T_{n} = ${rel}(R_{n})`)}</b>`,why:`Quotient qui tend vers 0 : o (${fx("T_{n}")} est strictement dominée). Vers un nombre strictement positif : θ (même ordre). Vers +∞ : ω (${fx("T_{n}")} domine strictement).`,pts:1}];
+  if(nota)E.push({w:`« ${fx(`T_{n} = ${nota}(R_{n})`)} » est <b>${vrai?"vrai":"faux"}</b>.`,why:nota==="O"?"O veut dire « o ou θ » : dominée au sens large. C'est vrai sauf quand le quotient tend vers +∞.":nota==="Ω"?"Ω veut dire « ω ou θ » : dominante au sens large. C'est vrai sauf quand le quotient tend vers 0.":`${nota} correspond à un quotient qui tend vers ${nota==="o"?"0":nota==="ω"?"+∞":"un nombre strictement positif"}.`,pts:1});
+  function juge(rep){const lu=lisLimite(rep.l);if(lu===null)return {incomplet:"Écris la limite du quotient : 0, un nombre comme 3/2, ou +∞."};if(!rep.c)return {incomplet:nota?"Choisis aussi : vrai ou faux.":"Choisis aussi : o, θ ou ω."};
+    const okL=L===Infinity?lu===Infinity:Math.abs(lu-L)<1e-9,okC=nota?(rep.c==="vrai")===vrai:rep.c===rel,F=[];if(okL&&okC)return {ok:true};if(!okL)F.push("l");if(!okC)F.push("c");
+    const d=!okL?{etape:0,type:"limite d'un quotient de deux suites",titre:"Où ça part : la limite du quotient.",msg:`${c===0?`Les deux sont de l'ordre de ${fx(gR.t)} : il reste le quotient des constantes, ${fx(LT)}.`:`${fx(S.dom[1].t)} et ${fx(gR.t)} ne grandissent pas à la même vitesse : la limite est ${LT}.`}`}
+      :{etape:nota?2:1,type:nota?`sens de la notation ${nota}`:"choix entre o, θ et ω",titre:"Où ça part : la notation.",msg:nota?`La limite vaut ${LT}, donc ${fx(`T_{n} = ${rel}(R_{n})`)}. Et ${nota==="O"?"O veut dire « o ou θ »":nota==="Ω"?"Ω veut dire « ω ou θ »":`${nota} demande une limite ${nota==="o"?"nulle":nota==="ω"?"infinie":"strictement positive et finie"}`}.`:`Limite ${LT} : c'est ${rel}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"la limite et la conclusion sont à revoir":F[0]==="l"?"la limite est à revoir":"la conclusion est à revoir"}.`,diag:d};}
+  const bonL=L===Infinity?"+∞":c===0?O.brut(LQ):"0";
+  return {sig:(nota?"VF"+nota:"QO")+S.t+"|"+gt,q:`On pose ${fx(`T_{n} = ${S.t}`)} et ${fx(`R_{n} = ${gt}`)}. Calcule la limite de ${fx("T_{n}/R_{n}")} quand n tend vers +∞. ${nota?`Est-il vrai que ${fx(`T_{n} = ${nota}(R_{n})`)} ?`:`Puis choisis : ${fx("T_{n}")} est-elle o, θ ou ω de ${fx("R_{n}")} ?`}`,corps:"",texte:`T_n = ${S.t}, R_n = ${gt} ; limite de T_n/R_n, puis ${nota?`vrai ou faux : T_n = ${nota}(R_n)`:"o, θ ou ω"}`,
+    champs:[{k:"champ",id:"l",nom:"limite",label:"$lim T_{n}/R_{n} =$",ex:"0, un nombre ou +∞",sym:[["+∞","+∞"],["/","/"]]},{k:"choix",id:"c",o:nota?[["vrai","Vrai"],["faux","Faux"]]:[["o","Tₙ = o(Rₙ)"],["θ","Tₙ = θ(Rₙ)"],["ω","Tₙ = ω(Rₙ)"]]}],juge,etapes:E,
+    bonne:`${fx(`lim T_{n}/R_{n} = ${LT}`)} ; ${nota?(vrai?"vrai":"faux"):fx(`T_{n} = ${rel}(R_{n})`)}`,bonneTxt:`limite ${LT} ; ${nota?(vrai?"vrai":"faux"):`T_n = ${rel}(R_n)`}`,repBonne:{l:bonL,c:nota?(vrai?"vrai":"faux"):rel},repFausse:{l:bonL,c:nota?(vrai?"faux":"vrai"):rel==="θ"?"o":"θ"},nature:nota?"vrai ou faux":rel,
+    ens:{type:"quotient",f:S.f,g:n=>kg*gR.f(n),lim:L,grand:GRANDS(S.exp||gR.cl[0]>1),nota,vrai}};}
+
+/* ---------- AG7 : master theorem ---------- */
+const PUISS=["1","n","n²","n³"],puissTape=["1","n","n^2","n^3"];
+const tireMaster=(R,amax)=>{for(;;){const b=R.choix([2,2,2,3,4]),d=R.ent(0,b===2?3:2),bd=Math.pow(b,d),t=R();let C;
+  if(t<0.35)C=[bd];else if(t<0.65)C=[1,2,3,4,8].filter(x=>x<bd);else C=[b*bd,b*bd,b*b*bd,bd+1,2*bd].filter(x=>x>bd&&x<=32);
+  C=C.filter(x=>x<=(amax||32));if(!C.length)continue;return {a:R.choix(C),b,d,bd};}};
+const equaT=m=>`T(n) = ${m.a===1?"":m.a}T(⌊n/${m.b}⌋) + O(${PUISS[m.d]})`;
+function ordreMaster(m){const cas=m.bd>m.a?">":m.bd===m.a?"=":"<",k=Math.log(m.a)/Math.log(m.b),ke=Math.abs(k-Math.round(k))<1e-9?Math.round(k):null;
+  const t=cas===">"?PUISS[m.d]:cas==="="?(m.d?`${PUISS[m.d]}.log(n)`:"log(n)"):ke!==null?PUISS[ke]||`n^{${ke}}`:`n^{log ${m.a} / log ${m.b}}`;
+  const tape=cas===">"?puissTape[m.d]:cas==="="?(m.d?`${puissTape[m.d]}*log(n)`:"log(n)"):ke!==null?`n^${ke}`:`n^(log(${m.a})/log(${m.b}))`;
+  const g=cas===">"?n=>Math.pow(n,m.d):cas==="="?n=>Math.pow(n,m.d)*Math.log(n):n=>Math.pow(n,k);return {cas,t,tape,g,k,ke};}
+const CASM={">":"Si b^{d} &gt; a, alors T(n) = O(n^{d}).","=":"Si b^{d} = a, alors T(n) = O(n^{d} log n).","<":"Si b^{d} &lt; a, alors T(n) = O(n^{log a / log b})."};
+const etapesMaster=(m,o,debut)=>(debut||[]).concat([{w:`${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}`,why:`a est le nombre d'appels récursifs${m.a===1?" (quand rien n'est écrit devant T, c'est 1)":""}, b le nombre par lequel la taille n est divisée, d la puissance de n dans les opérations faites en plus des appels${m.d===0?" : O(1), c'est O(n⁰), donc d = 0":""}.`,pts:1},
+  {w:`${fx(`b^{d} = ${m.b}^{${m.d}} = ${m.bd}`)}, à comparer avec ${fx(`a = ${m.a}`)} : <b>${fx(`b^{d} ${o.cas==="<"?"&lt;":o.cas===">"?"&gt;":"="} a`)}</b>.`,why:`C'est la comparaison qui décide du cas du master theorem.`,pts:1},
+  {w:`<b>${fx(`T(n) = O(${o.t})`)}</b>`,why:`${fx(CASM[o.cas])}${o.cas==="<"&&o.ke!==null?` Ici ${fx(`log ${m.a} / log ${m.b} = ${o.ke}`)}, car ${fx(`${m.b}^{${o.ke}} = ${m.a}`)}.`:""}`,pts:1}]);
+function jugeOrdre(src,o){if(!propre(src))return {inc:"Écris aussi l'ordre de complexité, par exemple n^2 ou n.log(n)."};const t=versN(src),PT=[8,50,300],W=PT.map(n=>O.calcule(t,{n}));
+  if(W.some(v=>v===null||!Number.isFinite(v)))return {inc:"Je n'arrive pas à lire l'ordre de complexité. Écris-le avec la lettre n, par exemple n^2, n.log(n) ou n^(log(3)/log(2))."};
+  if(PT.every((n,i)=>Math.abs(W[i]-o.g(n))<=1e-9*o.g(n)))return {ok:true};
+  const Q=[1e4,1e8,1e12].map(n=>O.calcule(t,{n})/o.g(n));if(Q.every(x=>x>0&&Number.isFinite(x))&&Math.abs(Q[2]/Q[1]-1)<0.02&&Math.abs(Q[1]/Q[0]-1)<0.02)return {inc:"C'est le bon ordre de grandeur, mais on l'écrit sans constante devant."};
+  return {ok:false};}
+function masterLire(R){const m=tireMaster(R);
+  function juge(rep){const V=["a","b","d"].map(k=>nombre((rep.c||{})[k]));if(V.some(x=>!x||x.d!==1))return {incomplet:"Remplis les trois cases avec des entiers."};
+    const F=["a","b","d"].filter((k,i)=>V[i].n!==m[k]);if(!F.length)return {ok:true};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:0,type:F.includes("d")&&m.d===0?"O(1) lu comme d = 1":F.includes("a")&&m.a===1?"a oublié quand il vaut 1":"lecture de a, b et d",titre:"Où ça part : le rôle des trois nombres.",msg:`a est devant T (le nombre d'appels), b est sous n (la taille est divisée par b), d est la puissance de n dans le O : ici ${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}.`}};}
+  return {sig:"ML"+[m.a,m.b,m.d],q:`Le nombre d'opérations d'un algorithme récursif vérifie ${fx(equaT(m))}. Pour appliquer le master theorem, donne les trois nombres a, b et d.`,corps:`<p class="muted">Rappel : le master theorem s'applique quand ${fx("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")}.</p>`,texte:`${equaT(m)} ; lire a, b, d`,
+    champs:[{k:"cases",id:"c",noms:["a","b","d"]}],juge,etapes:[etapesMaster(m,ordreMaster(m))[0]],bonne:`${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}`,bonneTxt:`a = ${m.a}, b = ${m.b}, d = ${m.d}`,
+    repBonne:{c:{a:String(m.a),b:String(m.b),d:String(m.d)}},repFausse:{c:{a:String(m.b),b:String(m.a===m.b?m.a+1:m.a),d:String(m.d)}},nature:"lire",ens:{type:"master",m}};}
+const CASO=[[">","b^d > a"],["=","b^d = a"],["<","b^d < a"]];
+function masterConclure(R,code_){const m=tireMaster(R,code_?4:0),o=ordreMaster(m);let corps=`<p class="muted">Rappel du master theorem, quand ${fx("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")} : ${fx(CASM[">"])} ${fx(CASM["="])} ${fx(CASM["<"])}</p>`,debut=[],q,texte;
+  if(code_){const nom=R.choix(["F","G","H"]),I="    ",L=[`PROCÉDURE : ${nom} (E n : entier)`,"SPÉCIFICATIONS : n ∈ ℕ","DÉBUT",`${I}si n > 1 alors`];
+    ["i","j","k"].slice(0,m.d).forEach((v,x)=>L.push(`${I.repeat(2+x)}pour ${v} de 1 à n faire`));L.push(`${I.repeat(2+m.d)}op élém`);for(let x=m.d-1;x>=0;x--)L.push(`${I.repeat(2+x)}fin pour;`);
+    for(let x=0;x<m.a;x++)L.push(`${I.repeat(2)}${nom}(n div ${m.b})`);L.push(`${I}fin si;`,"FIN");corps=code(L.join("\n"))+`<p class="muted">« op élém » désigne une opération élémentaire.</p>`+corps;
+    q=`Voici une procédure récursive. On note T(n) son nombre d'opérations. Donne les nombres a, b et d du master theorem, puis l'ordre de complexité : ${fx("T(n) = O(…)")}.`;texte=`procédure : ${m.d} boucle(s) pour de 1 à n autour d'une opération, puis ${m.a} appel(s) ${nom}(n div ${m.b}) ; a, b, d et ordre de complexité`;
+    debut=[{w:`Équation de complexité : ${fx(equaT(m))}.`,why:`${m.d?`Les ${m.d>1?m.d+" boucles « pour » imbriquées font":"La boucle « pour » fait"} ${fx(PUISS[m.d])} fois l'opération élémentaire`:"Il n'y a pas de boucle : une seule opération élémentaire, O(1)"}. Puis la procédure s'appelle ${m.a} fois, avec une taille divisée par ${m.b}.`,pts:1}];}
+  else{q=`Le nombre d'opérations d'un algorithme récursif vérifie ${fx(equaT(m))}. Calcule ${fx("b^{d}")}, compare-le à a, puis donne l'ordre de complexité : ${fx("T(n) = O(…)")}.`;texte=`${equaT(m)} ; b^d, comparaison avec a, ordre de complexité`;}
+  const E=etapesMaster(m,o,debut),e0=debut.length;
+  function juge(rep){const F=[];let d=null;
+    if(code_){const V=["a","b","d"].map(k=>nombre((rep.c||{})[k]));if(V.some(x=>!x||x.d!==1))return {incomplet:"Remplis les trois cases a, b et d avec des entiers."};["a","b","d"].forEach((k,i)=>{if(V[i].n!==m[k])F.push(k);});
+      if(F.length)d={etape:e0,type:"lecture de a, b et d dans un algorithme récursif",titre:"Où ça part : a, b et d.",msg:`a est le nombre d'appels récursifs écrits dans la procédure (${m.a}), b le nombre par lequel n est divisé dans ces appels (${m.b}), d le nombre de boucles « pour » imbriquées qui vont jusqu'à n (${m.d}).`};}
+    else{const bd=nombre((rep.c||{})["b^{d}"]);if(!bd||bd.d!==1)return {incomplet:"Calcule d'abord b puissance d : un entier."};if(!rep.cas)return {incomplet:"Choisis aussi le cas : plus grand, égal ou plus petit que a."};
+      if(bd.n!==m.bd){F.push("b^{d}");d={etape:e0+1,type:"calcul de b puissance d",titre:"Où ça part : b puissance d.",msg:`${fx(`b^{d} = ${m.b}^{${m.d}} = ${m.bd}`)}${m.d===0?" : un nombre à la puissance 0 vaut 1":""}.`};}
+      if(rep.cas!==o.cas){F.push("cas");if(!d)d={etape:e0+1,type:"comparaison de b puissance d avec a",titre:"Où ça part : la comparaison.",msg:`${m.bd} et ${m.a} : ${fx(`b^{d} ${o.cas==="<"?"&lt;":o.cas===">"?"&gt;":"="} a`)}.`};}}
+    const jo=jugeOrdre(rep.o,o);if(jo.inc)return {incomplet:jo.inc};
+    if(!jo.ok){F.push("o");if(!d)d={etape:e0+2,type:"cas du master theorem",titre:"Où ça part : la conclusion.",msg:`${fx(CASM[o.cas])} Ici : ${fx(`T(n) = O(${o.t})`)}.`};}
+    if(!F.length)return {ok:true};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F.map(x=>x==="o"?"l'ordre de complexité":x==="cas"?"la comparaison":x==="b^{d}"?"b puissance d":x))} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:d};}
+  const bon=code_?{c:{a:String(m.a),b:String(m.b),d:String(m.d)},o:o.tape}:{c:{"b^{d}":String(m.bd)},cas:o.cas,o:o.tape},fausse=JSON.parse(JSON.stringify(bon));fausse.o=o.cas===">"?puissTape[m.d]+"*log(n)":"n^"+(m.d+4);
+  return {sig:(code_?"MC":"MO")+[m.a,m.b,m.d],q,corps,texte,champs:(code_?[{k:"cases",id:"c",noms:["a","b","d"]}]:[{k:"cases",id:"c",noms:["b^{d}"]},{k:"choix",id:"cas",o:CASO.map(x=>[x[0],x[1]])}]).concat([{k:"champ",id:"o",nom:"ordre de complexité",label:"$T(n) = O($ … $)$ avec :",ex:"par exemple n^2",sym:[["n","n"],["^","^"],["log(n)","log(n)"],[".","."],["(","("],[")",")"],["/","/"]]}]),
+    juge,etapes:E,bonne:fx(`T(n) = O(${o.t})`),bonneTxt:`a = ${m.a}, b = ${m.b}, d = ${m.d} ; T(n) = O(${o.t.replace(/[{}]/g,"")})`,repBonne:bon,repFausse:fausse,nature:"cas "+o.cas,ens:{type:"master",m,g:o.g}};}
+/* machine plus rapide, entrée plus grande : ce que change l'ordre de complexité */
+function machine(R){const t=R.ent(0,3),d=R.ent(1,3),mm=R.choix([2,3,4,5,10]),N=R.choix([100,200,500,1000,2000]),k=Math.pow(mm,d),j=R.ent(3,10);let q,rep,E,nature;
+  if(t===0){rep=N*mm;nature="machine, polynôme";q=`Un algorithme a un temps d'exécution proportionnel à ${fx(PUISS[d])}. Sur un ordinateur X, il traite une entrée de taille ${N} en une minute. Un ordinateur Y est ${k} fois plus rapide. Quelle taille d'entrée Y peut-il traiter en une minute ?`;
+    E=[{w:`En une minute, Y fait ${k} fois plus d'opérations que X.`,why:"« k fois plus rapide » : k fois plus d'opérations dans le même temps.",pts:1},{w:`On cherche n tel que ${fx(`${PUISS[d].replace("n","n")} = ${k} × ${N}${d>1?["","","²","³"][d]:""}`)}.`,why:`Le nombre d'opérations est proportionnel à ${fx(PUISS[d])}.`,pts:1},{w:`<b>${fx(`n = ${mm} × ${N} = ${rep}`)}</b>`,why:d>1?`${fx(`${k} = ${mm}${["","","²","³"][d]}`)}, donc ${fx(`n${["","","²","³"][d]} = (${mm} × ${N})${["","","²","³"][d]}`)}. La taille n'est multipliée que par ${mm}, pas par ${k}.`:`Pour un algorithme linéaire, la taille traitée est multipliée par ${k}, comme la vitesse.`,pts:1}];}
+  else if(t===1){const kk=Math.pow(2,j);rep=N/10+j;nature="machine, exponentielle";q=`Un algorithme a un temps d'exécution proportionnel à ${fx("2^{n}")}. Sur un ordinateur X, il traite une entrée de taille ${N/10} en une minute. Un ordinateur Y est ${kk} fois plus rapide. Quelle taille d'entrée Y peut-il traiter en une minute ?`;
+    E=[{w:`En une minute, Y fait ${kk} fois plus d'opérations que X.`,why:"« k fois plus rapide » : k fois plus d'opérations dans le même temps.",pts:1},{w:`On cherche n tel que ${fx(`2^{n} = ${kk} × 2^{${N/10}}`)}, et ${fx(`${kk} = 2^{${j}}`)}.`,why:"On écrit le gain de vitesse comme une puissance de 2.",pts:1},{w:`<b>${fx(`n = ${N/10} + ${j} = ${rep}`)}</b>`,why:`Multiplier deux puissances de 2, c'est additionner les exposants. Avec un algorithme exponentiel, une machine ${kk} fois plus rapide ne gagne que ${j} sur la taille.`,pts:1}];}
+  else if(t===2){const s=R.choix([1,2,5,10]);rep=s*k;nature="temps, polynôme";q=`Un algorithme a un temps d'exécution proportionnel à ${fx(PUISS[d])}. Il met ${s} ${s>1?"secondes":"seconde"} pour une entrée de taille ${N}. Combien de secondes met-il pour une entrée de taille ${N*mm} ?`;
+    E=[{w:`La taille est multipliée par ${mm}.`,why:`${N*mm} divisé par ${N}.`,pts:1},{w:`Le temps est multiplié par ${fx(`${mm}${["","","²","³"][d]}${d>1?` = ${k}`:""}`)}.`,why:`Le temps est proportionnel à ${fx(PUISS[d])} : si n est multiplié par ${mm}, ${fx(PUISS[d])} est multiplié par ${mm} à la puissance ${d}.`,pts:1},{w:`<b>${rep} secondes</b>`,why:`${s} × ${k}.`,pts:1}];}
+  else{const s=R.choix([1,2,3]),kk=Math.pow(2,j);rep=s*kk;nature="temps, exponentielle";q=`Un algorithme a un temps d'exécution proportionnel à ${fx("2^{n}")}. Il met ${s} ${s>1?"secondes":"seconde"} pour une entrée de taille ${N/10}. Combien de secondes met-il pour une entrée de taille ${N/10+j} ?`;
+    E=[{w:`La taille augmente de ${j}.`,why:`${N/10+j} − ${N/10}.`,pts:1},{w:`Le temps est multiplié par ${fx(`2^{${j}} = ${kk}`)}.`,why:`${fx(`2^{n + ${j}} = 2^{n} × 2^{${j}}`)} : chaque unité de plus sur la taille double le temps.`,pts:1},{w:`<b>${rep} secondes</b>`,why:`${s} × ${kk}.`,pts:1}];}
+  function juge(r){const v=nombre(r.v);if(!v)return {incomplet:"Écris un nombre."};if(v.d===1&&v.n===rep)return {ok:true};
+    return {ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la bonne valeur.",diag:{etape:1,type:t<2?"taille traitée par une machine plus rapide":"temps d'exécution quand la taille change",titre:"Où ça part : le lien entre la taille et le temps.",msg:`${E[1].w} ${E[1].why}`}};}
+  return {sig:"MA"+[t,d,mm,N,j],q,corps:"",texte:q.replace(/<[^>]+>|\$/g,""),champs:[{k:"champ",id:"v",nom:"réponse",label:t<2?"Taille que Y peut traiter :":"Temps, en secondes :",ex:"un nombre"}],juge,etapes:E,bonne:`<b>${rep}</b>`,bonneTxt:String(rep),repBonne:{v:String(rep)},repFausse:{v:String(t===0&&N*k!==rep?N*k:rep+1)},nature,ens:{type:"machine",t,d,mm,N,j,rep}};}
+
 G.add("algo",[
  {id:"AG1",t:"Trace d'une boucle",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
   paliers:[
@@ -20163,7 +20286,19 @@ G.add("algo",[
    {t:"une boucle",cc:3,gen:uneBoucle,min:100},
    {t:"deux boucles imbriquées",cc:4,gen:deuxBoucles,min:60},
    {t:"une boucle où i double, ou est divisé par 2",cc:5,gen:boucleDouble,min:40},
-   {t:"récursif : cas de base, équation de complexité, formule",cc:5,gen:recursif,min:60}]}
+   {t:"récursif : cas de base, équation de complexité, formule",cc:5,gen:recursif,min:60}]},
+ {id:"AG6",t:"Ordres de complexité : comparer deux suites",tache:"ordres de complexité",th:"notations",ex:"cc2",pts:4,lecons:["a2-notations"],sansPapier:true,
+  paliers:[
+   {t:"ranger des suites par ordre de grandeur",cc:2,gen:ranger},
+   {t:"l'ordre de complexité d'une somme : θ(…)",cc:2,gen:simplifier,min:150},
+   {t:"o, θ ou ω, par la limite du quotient",cc:3,gen:R=>quotient(R,false)},
+   {t:"vrai ou faux avec O, Ω, o, ω, θ",cc:3,gen:R=>quotient(R,true)}]},
+ {id:"AG7",t:"Master theorem",th:"master",ex:"cc2",pts:3,lecons:["a2-boucles"],sansPapier:true,
+  paliers:[
+   {t:"lire a, b et d dans l'équation",cc:1,gen:masterLire,min:40},
+   {t:"comparer b puissance d et a, puis conclure",cc:3,gen:R=>masterConclure(R,false),min:40},
+   {t:"à partir d'une procédure récursive",cc:4,gen:R=>masterConclure(R,true),min:30},
+   {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100}]}
 ]);
 G.algo={execute,compte,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
 })();
