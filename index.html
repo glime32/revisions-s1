@@ -19415,6 +19415,94 @@ function redacFonction(R){const F=fonctionInf(R,["q","q","c","r"]),Lt=nb(F.l),sg
     texte:`f(x) = ${F.expr} sur ]0 ; +∞[ : limite en +∞, démontrée avec la définition`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),
     bonne:"voir la rédaction",bonneTxt:`limite ${Lt}, rédaction avec α = ${F.seuilT}`,repBonne:{},nature:"papier, "+F.sig[0],ens:{type:"papier",f:F.f,l:F.l,seuil:F.seuil}};}
 
+/* ---------- AN5 : suites adjacentes ---------- */
+const SYMN=[["n","n"],["/","/"],["^","^"],["(","("],[")",")"]];
+const SENS=[["cd","(uₙ) croissante, (vₙ) décroissante"],["dc","(uₙ) décroissante, (vₙ) croissante"],["cc","les deux croissantes"],["dd","les deux décroissantes"]];
+const ADJ=`<p class="muted">Rappel : deux suites sont adjacentes quand l'une est croissante, l'autre décroissante, et que leur différence tend vers 0. Elles convergent alors vers la même limite.</p>`;
+const cstPlus=(a,sg,t)=>(a?nb(a)+(sg>0?" + ":" − "):(sg>0?"":"−"))+t;
+/* une suite donnée par une formule, avec uₙ₊₁ − uₙ et son signe (s = 1 : croissante) */
+function suiteMono(R,nom){const t=R(),a=R.ent(-9,9),b=R.ent(1,9),sg=R()<0.5?1:-1,D=x=>x?`(n + ${x})`:"n",N=nom+"ₙ₊₁ − "+nom+"ₙ";
+  if(t<0.45){const c=R.ent(0,3),k=-sg*b;return {sig:"h"+[a,sg*b,c],expr:cstPlus(a,sg,`${b}/${D(c)}`),u:n=>a+sg*b/(n+c),diff:n=>k/((n+c)*(n+c+1)),s:-sg,diffT:`${nb(k)}/(${D(c)}${D(c+1)})`,tape:`${k}/(${D(c)}${D(c+1)})`,
+    pq:`On remplace n par n + 1, puis on réduit au même dénominateur : ${fx(`1/${D(c+1)} − 1/${D(c)} = −1/(${D(c)}${D(c+1)})`)}.`,signe:`Le dénominateur est positif, et le numérateur ${fx(nb(k))} est ${k>0?"positif":"négatif"}.`};}
+  if(t<0.75){const k=R.choix([2,3]),m=-sg*b*(k-1);return {sig:"g"+[a,sg*b,k],expr:cstPlus(a,sg,`${b}/${k}ⁿ`),u:n=>a+sg*b/Math.pow(k,n),diff:n=>m/Math.pow(k,n+1),s:-sg,diffT:`${nb(m)}/${k}ⁿ⁺¹`,tape:`${m}/${k}^(n+1)`,
+    pq:`On écrit les deux fractions avec le même dénominateur : ${fx(`${b}/${k}ⁿ = ${b*k}/${k}ⁿ⁺¹`)}.`,signe:`${fx(k+"ⁿ⁺¹")} est positif, et le numérateur ${fx(nb(m))} est ${m>0?"positif":"négatif"}.`};}
+  for(;;){const pp=R.nz(-6,6),c=R.ent(1,5),qq=R.ent(-9,9),k=pp*c-qq;if(!k||Math.abs(k)>30)continue;const num=polyT([qq,pp]);
+    return {sig:"q"+[pp,qq,c],expr:`(${num})/(n + ${c})`,u:n=>(pp*n+qq)/(n+c),diff:n=>k/((n+c)*(n+c+1)),s:k>0?1:-1,diffT:`${nb(k)}/(${D(c)}${D(c+1)})`,tape:`${k}/(${D(c)}${D(c+1)})`,
+      pq:`${fx(`${nom}ₙ₊₁ = (${polyT([pp+qq,pp])})/(n + ${c+1})`)}. On réduit au même dénominateur : au numérateur, ${fx(`(${polyT([pp+qq,pp])})(n + ${c}) − (${num})(n + ${c+1})`)} se simplifie en ${fx(nb(k))}.`,signe:`Le dénominateur est positif, et le numérateur ${fx(nb(k))} est ${k>0?"positif":"négatif"}.`};}}
+const mot=s=>s>0?"croissante":"décroissante";
+function sensDeux(R){let U,V;do{U=suiteMono(R,"u");V=suiteMono(R,"v");}while(U.sig===V.sig);const bon=(U.s>0?"c":"d")+(V.s>0?"c":"d"),NS=[1,2,3,5,8,13];
+  const E=[{w:`${fx(`uₙ₊₁ − uₙ = ${U.diffT}`)}`,why:U.pq,pts:1.5},
+    {w:`${fx("uₙ₊₁ − uₙ")} est ${U.s>0?"positif":"négatif"} pour tout n : <b>(uₙ) est ${mot(U.s)}</b>.`,why:`${U.signe} Une suite est croissante quand chaque terme est plus grand que le précédent, c'est-à-dire quand ${fx("uₙ₊₁ − uₙ ≥ 0")} pour tout n.`,pts:0.5},
+    {w:`${fx(`vₙ₊₁ − vₙ = ${V.diffT}`)}, qui est ${V.s>0?"positif":"négatif"} pour tout n : <b>(vₙ) est ${mot(V.s)}</b>.`,why:`${V.pq} ${V.signe}`,pts:1}];
+  function juge(rep){if(!propre(rep.du))return {incomplet:"Écris uₙ₊₁ − uₙ avec la lettre n, par exemple 2/(n(n+1)) ou -3/2^(n+1)."};
+    const W=NS.map(n=>O.calcule(rep.du,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple 2/(n(n+1)) ou -3/2^(n+1)."};
+    if(!rep.sens)return {incomplet:"Choisis aussi le sens de variation des deux suites."};
+    const pres=(f)=>NS.every((n,i)=>Math.abs(W[i]-f(n))<=1e-9*Math.max(1,Math.abs(f(n)))),okD=pres(U.diff),okS=rep.sens===bon,F=[];if(okD&&okS)return {ok:true};
+    if(!okD)F.push("du");if(!okS)F.push("sens");
+    const d=!okD?(pres(n=>-U.diff(n))?{etape:0,type:"signe de la différence",titre:"Où ça part : le sens de la soustraction.",msg:`Tu as calculé ${fx("uₙ − uₙ₊₁")}. On demande ${fx("uₙ₊₁ − uₙ")} : le terme suivant moins le terme d'avant.`}:pres(n=>U.u(n+1))?{etape:0,type:"terme suivant donné à la place de la différence",titre:"Où ça part : la différence.",msg:`Tu as écrit ${fx("uₙ₊₁")}. Il reste à lui retirer ${fx("uₙ")}.`}:{etape:0,type:"calcul de la différence de deux termes",titre:"Où ça part : le calcul de la différence.",msg:`${fx(`uₙ₊₁ − uₙ = ${U.diffT}`)}.`})
+      :rep.sens[0]!==bon[0]?{etape:1,type:"signe de la différence et sens de variation",titre:"Où ça part : le sens de (uₙ).",msg:`${fx("uₙ₊₁ − uₙ")} est ${U.s>0?"positif":"négatif"} : chaque terme est ${U.s>0?"plus grand":"plus petit"} que le précédent, donc (uₙ) est ${mot(U.s)}.`}:{etape:2,type:"sens de variation de la deuxième suite",titre:"Où ça part : le sens de (vₙ).",msg:`${fx(`vₙ₊₁ − vₙ = ${V.diffT}`)} est ${V.s>0?"positif":"négatif"} : (vₙ) est ${mot(V.s)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"la différence et le sens de variation sont à revoir":F[0]==="du"?"la différence est à revoir":"le sens de variation est à revoir"}.`,diag:d};}
+  return {sig:"SD"+U.sig+"|"+V.sig,q:`On pose, pour tout entier ${fx("n ≥ 1")}, ${fx(`uₙ = ${U.expr}`)} et ${fx(`vₙ = ${V.expr}`)}. Calcule ${fx("uₙ₊₁ − uₙ")} en fonction de n, puis donne le sens de variation des deux suites.`,corps:"",
+    texte:`uₙ = ${U.expr}, vₙ = ${V.expr} (n ≥ 1) ; uₙ₊₁ − uₙ, puis le sens de variation des deux suites`,
+    champs:[{k:"champ",id:"du",nom:"uₙ₊₁ − uₙ",label:"$uₙ₊₁ − uₙ =$",ex:"une formule avec n",sym:SYMN},{k:"choix",id:"sens",o:SENS}],juge,etapes:E,
+    bonne:`${fx(`uₙ₊₁ − uₙ = ${U.diffT}`)} ; (uₙ) ${mot(U.s)}, (vₙ) ${mot(V.s)}`,bonneTxt:`uₙ₊₁ − uₙ = ${U.diffT} ; (uₙ) ${mot(U.s)}, (vₙ) ${mot(V.s)}`,repBonne:{du:U.tape,sens:bon},repFausse:{du:"-("+U.tape+")",sens:bon},nature:U.sig[0]+V.sig[0],
+    ens:{type:"sens",u:U.u,v:V.u}};}
+/* vₙ − uₙ et sa limite : adjacentes ou pas */
+function ecartDeux(R){const DEN=[["n",n=>n],["n²",n=>n*n],["2ⁿ",n=>Math.pow(2,n)],["3ⁿ",n=>Math.pow(3,n)]],a=R.ent(-9,9),b=R.ent(1,9),c=R.ent(1,9),d1=R.choix(DEN),d2=R()<0.6?d1:R.choix(DEN),a2=R()<0.65?a:a+R.nz(-4,4),e=a2-a,meme=d1===d2;
+  const ue=cstPlus(a,-1,`${b}/${d1[0]}`),ve=cstPlus(a2,1,`${c}/${d2[0]}`),u=n=>a-b/d1[1](n),v=n=>a2+c/d2[1](n),tp=x=>x.replace("ⁿ","^n").replace("²","^2");
+  const dT=meme?cstPlus(e,1,`${b+c}/${d1[0]}`):cstPlus(e,1,`${c}/${d2[0]}`)+` + ${b}/${d1[0]}`,dTape=meme?`${e}+${b+c}/${tp(d1[0])}`:`${e}+${c}/${tp(d2[0])}+${b}/${tp(d1[0])}`,NS=[1,2,3,5,8],LIM="lim (vₙ − uₙ)";
+  const E=[{w:`${fx(`vₙ − uₙ = ${dT}`)}`,why:`On retire ${fx("uₙ")} : ${fx(`−(${ue})`)} change les deux signes${meme?", puis on regroupe les deux fractions, qui ont le même dénominateur":""}.`,pts:1},
+    {w:`<b>${fx(`${LIM} = ${nb(e)}`)}</b>`,why:`Quand n tend vers +∞, ${meme?"la fraction tend vers 0 : son dénominateur":"les deux fractions tendent vers 0 : leur dénominateur"} tend vers +∞${e?`. Il reste ${fx(nb(e))}`:""}.`,pts:1},
+    {w:e?`<b>Les suites ne sont pas adjacentes.</b>`:`<b>Les suites sont adjacentes.</b>`,why:e?`Leur différence tend vers ${fx(nb(e))}, pas vers 0 : il manque la troisième condition. Les deux suites convergent, mais vers deux limites différentes, ${fx(nb(a))} et ${fx(nb(a2))}.`:`L'une est croissante, l'autre décroissante, et leur différence tend vers 0 : les trois conditions sont réunies. Elles convergent donc vers la même limite, qui est ${fx(nb(a))}.`,pts:1}];
+  function juge(rep){if(!propre(rep.dv))return {incomplet:"Écris vₙ − uₙ avec la lettre n, par exemple 5/n ou 2 + 3/2^n."};
+    const W=NS.map(n=>O.calcule(rep.dv,{n}));if(W.some(x=>x===null||!Number.isFinite(x)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple 5/n ou 2 + 3/2^n."};
+    const lu=nombre((rep.c||{})[LIM]);if(!lu)return {incomplet:"Écris la limite de vₙ − uₙ : un nombre."};if(!rep.adj)return {incomplet:"Dis aussi si les deux suites sont adjacentes."};
+    const pr=f=>NS.every((n,i)=>Math.abs(W[i]-f(n))<1e-9),okD=pr(n=>v(n)-u(n)),okL=egal(lu,Q(e)),okA=(rep.adj==="oui")===!e,F=[];if(okD&&okL&&okA)return {ok:true};
+    if(!okD)F.push("dv");if(!okL)F.push(LIM);if(!okA)F.push("adj");
+    const d=!okD?(pr(n=>u(n)-v(n))?{etape:0,type:"signe de la différence",titre:"Où ça part : le sens de la soustraction.",msg:`Tu as calculé ${fx("uₙ − vₙ")}. On demande ${fx("vₙ − uₙ")}.`}:{etape:0,type:"calcul de la différence de deux suites",titre:"Où ça part : le calcul de vₙ − uₙ.",msg:`${fx(`vₙ − uₙ = ${dT}`)}. Attention au signe moins devant ${fx("uₙ")} : il change tous ses signes.`})
+      :!okL?{etape:1,type:"limite de la différence",titre:"Où ça part : la limite.",msg:`Les fractions tendent vers 0 : il reste ${fx(nb(e))}.`}:{etape:2,type:"troisième condition des suites adjacentes",titre:"Où ça part : la conclusion.",msg:e?`La différence tend vers ${fx(nb(e))}, pas vers 0 : les suites ne sont pas adjacentes.`:"La différence tend vers 0, et l'une est croissante, l'autre décroissante : elles sont adjacentes."};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F.map(k=>k==="dv"?"vₙ − uₙ":k==="adj"?"la réponse « adjacentes »":"la limite"))} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:d};}
+  return {sig:"EC"+[a,b,c,d1[0],d2[0],a2],q:`On pose, pour tout entier ${fx("n ≥ 1")}, ${fx(`uₙ = ${ue}`)} et ${fx(`vₙ = ${ve}`)}. On admet que (uₙ) est croissante et que (vₙ) est décroissante. Calcule ${fx("vₙ − uₙ")} en fonction de n, puis sa limite. Les deux suites sont-elles adjacentes ?`,corps:ADJ,
+    texte:`uₙ = ${ue}, vₙ = ${ve} (n ≥ 1) ; vₙ − uₙ, sa limite, adjacentes ou pas`,
+    champs:[{k:"champ",id:"dv",nom:"vₙ − uₙ",label:"$vₙ − uₙ =$",ex:"une formule avec n",sym:SYMN},{k:"cases",id:"c",noms:[LIM]},{k:"choix",id:"adj",o:[["oui","Elles sont adjacentes"],["non","Elles ne le sont pas"]]}],juge,etapes:E,
+    bonne:`${fx(`vₙ − uₙ = ${dT}`)} ; limite ${fx(nb(e))} ; ${e?"pas adjacentes":"adjacentes"}`,bonneTxt:`vₙ − uₙ = ${dT} ; limite ${nb(e)} ; ${e?"pas adjacentes":"adjacentes"}`,
+    repBonne:{dv:dTape,c:{[LIM]:String(e)},adj:e?"non":"oui"},repFausse:{dv:dTape,c:{[LIM]:String(e)},adj:e?"oui":"non"},nature:e?"pas adjacentes":"adjacentes",ens:{type:"ecart",u,v}};}
+/* comme l'exercice 2 du CC1 2025 : deux suites qui se partagent leurs termes */
+const POIDS=[[2,1],[3,1],[3,2],[4,1],[5,1],[4,3],[5,2],[5,3],[7,1],[5,4],[7,3],[9,1]];
+function croisees(R){let a,b;do{a=R.ent(-9,9);b=R.ent(-9,9);}while(a===b);const [p,qq]=R.choix(POIDS),D=p+qq,k=Q(p-qq,D),l=Q(a+b,2),co=x=>x===1?"":x;
+  return {a,b,p,qq,D,k,l,u1:Q(p*a+qq*b,D),v1:Q(qq*a+p*b,D),haut:a<b,ru:`uₙ₊₁ = (${co(p)}uₙ + ${co(qq)}vₙ)/${D}`,rv:`vₙ₊₁ = (${co(qq)}uₙ + ${co(p)}vₙ)/${D}`,sig:[a,b,p,qq].join(","),
+    pas:n=>{let u=a,v=b;for(let i=0;i<n;i++)[u,v]=[(p*u+qq*v)/D,(qq*u+p*v)/D];return [u,v];}};}
+function adjacentes(R){const S=croisees(R),bon=S.haut?"cd":"dc",kT=nb(S.k),co=x=>x===1?"":x;
+  const E=[{w:`${fx(`u₁ = ${nb(S.u1)}`)} et ${fx(`v₁ = ${nb(S.v1)}`)}`,why:`On remplace ${fx("u₀")} par ${fx(nb(S.a))} et ${fx("v₀")} par ${fx(nb(S.b))} dans les deux formules.`,pts:1},
+    {w:`${fx(`vₙ₊₁ − uₙ₊₁ = ${kT} × (vₙ − uₙ)`)}, donc <b>${fx(`k = ${kT}`)}</b>.`,why:`On soustrait les deux formules : ${fx(`((${co(S.qq)}uₙ + ${co(S.p)}vₙ) − (${co(S.p)}uₙ + ${co(S.qq)}vₙ))/${S.D}`)}, c'est-à-dire ${fx(`${co(S.p-S.qq)}(vₙ − uₙ)/${S.D}`)}.`,pts:1.5},
+    {w:`${fx("vₙ − uₙ")} garde le signe de ${fx(`v₀ − u₀ = ${nb(S.b-S.a)}`)} : il est toujours ${S.haut?"positif":"négatif"}. Donc <b>(uₙ) est ${mot(S.haut?1:-1)} et (vₙ) est ${mot(S.haut?-1:1)}</b>.`,why:`À chaque rang, la différence est multipliée par ${fx(kT)}, qui est positif : son signe ne change pas. Et ${fx(`uₙ₊₁ − uₙ = ${co(S.qq)}(vₙ − uₙ)/${S.D}`)}, alors que ${fx(`vₙ₊₁ − vₙ = −${co(S.qq)}(vₙ − uₙ)/${S.D}`)}.`,pts:1.5},
+    {w:`<b>${fx(`ℓ = ${nb(S.l)}`)}</b>`,why:`${fx("vₙ − uₙ")} est multiplié par ${fx(kT)} à chaque rang : il tend vers 0, les suites sont adjacentes et ont la même limite ℓ. Pour la trouver, on cherche ce qui ne bouge pas : ${fx("uₙ₊₁ + vₙ₊₁ = uₙ + vₙ")}, donc ${fx(`uₙ + vₙ = ${nb(S.a+S.b)}`)} pour tout n. À la limite, ${fx(`2ℓ = ${nb(S.a+S.b)}`)}.`,pts:2}];
+  function juge(rep){const V=[(rep.c||{})["u₁"],(rep.c||{})["v₁"],(rep.d||{}).k,(rep.e||{})["ℓ"]].map(nombre);
+    if(V.some(x=>!x))return {incomplet:"Remplis les quatre cases avec des nombres, par exemple 3/2 ou -1."};if(!rep.sens)return {incomplet:"Choisis aussi le sens de variation des deux suites."};
+    const ok=[egal(V[0],S.u1),egal(V[1],S.v1),egal(V[2],S.k),rep.sens===bon,egal(V[3],S.l)],NOM=["u₁","v₁","k","le sens de variation","ℓ"],F=NOM.filter((_,i)=>!ok[i]);if(!F.length)return {ok:true};
+    const dg=!ok[0]||!ok[1]?{etape:0,type:"calcul des premiers termes",titre:"Où ça part : les premiers termes.",msg:`${fx(`u₁ = (${co(S.p)===""?"":S.p+" × "}${par(S.a)} + ${co(S.qq)===""?"":S.qq+" × "}${par(S.b)})/${S.D}`)}, ce qui donne ${fx(nb(S.u1))}.`}
+      :!ok[2]?{etape:1,type:"raison de la suite des différences",titre:"Où ça part : la différence des deux formules.",msg:`En soustrayant, les termes en ${fx("uₙ")} donnent ${fx(`${S.qq-S.p}uₙ`)} et ceux en ${fx("vₙ")} donnent ${fx(`${S.p-S.qq}vₙ`)} : ${fx(`k = ${S.p-S.qq}/${S.D}`)}.`}
+      :!ok[3]?{etape:2,type:"sens de variation lu sans regarder l'ordre de départ",titre:"Où ça part : le signe de vₙ − uₙ.",msg:`Ici ${fx(`v₀ − u₀ = ${nb(S.b-S.a)}`)} est ${S.haut?"positif":"négatif"} : ${S.haut?"(uₙ) part d'en bas et monte, (vₙ) part d'en haut et descend":"(uₙ) part d'en haut et descend, (vₙ) part d'en bas et monte"}.`}
+      :{etape:3,type:"limite commune par la quantité constante",titre:"Où ça part : la limite commune.",msg:`${fx("uₙ + vₙ")} ne change pas : il vaut toujours ${fx(`u₀ + v₀ = ${nb(S.a+S.b)}`)}. À la limite, ${fx(`2ℓ = ${nb(S.a+S.b)}`)}.`};
+    return {ok:false,faux:F.filter(x=>x.length<3),resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:dg};}
+  return {sig:"AD"+S.sig,q:`Deux suites sont définies par ${fx(`u₀ = ${nb(S.a)}`)}, ${fx(`v₀ = ${nb(S.b)}`)} et, pour tout entier naturel n, ${fx(S.ru)} et ${fx(S.rv)}. Calcule u₁ et v₁. Donne le nombre k tel que ${fx("vₙ₊₁ − uₙ₊₁ = k(vₙ − uₙ)")} pour tout n. Donne le sens de variation des deux suites, puis leur limite commune ℓ.`,corps:ADJ,
+    texte:`u₀ = ${nb(S.a)}, v₀ = ${nb(S.b)}, ${S.ru}, ${S.rv} ; u₁, v₁, k tel que vₙ₊₁ − uₙ₊₁ = k(vₙ − uₙ), sens de variation, limite commune`,
+    champs:[{k:"cases",id:"c",noms:["u₁","v₁"]},{k:"cases",id:"d",noms:["k"]},{k:"choix",id:"sens",o:SENS},{k:"cases",id:"e",noms:["ℓ"]}],juge,etapes:E,
+    bonne:`${fx(`u₁ = ${nb(S.u1)}`)}, ${fx(`v₁ = ${nb(S.v1)}`)}, ${fx(`k = ${kT}`)}, (uₙ) ${mot(S.haut?1:-1)}, (vₙ) ${mot(S.haut?-1:1)}, ${fx(`ℓ = ${nb(S.l)}`)}`,bonneTxt:`u₁ = ${nb(S.u1)}, v₁ = ${nb(S.v1)}, k = ${kT}, (uₙ) ${mot(S.haut?1:-1)}, (vₙ) ${mot(S.haut?-1:1)}, ℓ = ${nb(S.l)}`,
+    repBonne:{c:{"u₁":brut(S.u1),"v₁":brut(S.v1)},d:{k:brut(S.k)},sens:bon,e:{"ℓ":brut(S.l)}},repFausse:{c:{"u₁":brut(S.u1),"v₁":brut(S.v1)},d:{k:brut(S.k)},sens:S.haut?"dc":"cd",e:{"ℓ":brut(S.l)}},nature:S.haut?"u en bas":"u en haut",ens:{type:"adj",pas:S.pas}};}
+function redacAdj(R){let S;do S=croisees(R);while(!S.haut);const kT=nb(S.k),[u2,v2]=[Q(S.p*S.u1.n*S.v1.d+S.qq*S.v1.n*S.u1.d,S.D*S.u1.d*S.v1.d),Q(S.qq*S.u1.n*S.v1.d+S.p*S.v1.n*S.u1.d,S.D*S.u1.d*S.v1.d)],co=x=>x===1?"":x,som=nb(S.a+S.b),dif=nb(S.b-S.a);
+  const lignes=[[`a) ${fx(`u₁ = ${nb(S.u1)}`)}, ${fx(`v₁ = ${nb(S.v1)}`)}, ${fx(`u₂ = ${nb(u2)}`)}, ${fx(`v₂ = ${nb(v2)}`)}.`,`On applique les deux formules avec n = 0, puis avec n = 1.`,1],
+    [`b) ${fx(`uₙ₊₁ + vₙ₊₁ = (${S.D}uₙ + ${S.D}vₙ)/${S.D}`)}, c'est-à-dire ${fx("uₙ + vₙ")} : la suite ${fx("(uₙ + vₙ)")} est constante, égale à ${fx(`u₀ + v₀ = ${som}`)}.`,`On additionne les deux formules : les coefficients de ${fx("uₙ")} font ${S.D}, ceux de ${fx("vₙ")} aussi.`,1],
+    [`c) ${fx(`vₙ₊₁ − uₙ₊₁ = ${kT} × (vₙ − uₙ)`)} : la suite ${fx("(vₙ − uₙ)")} est géométrique de raison ${fx(kT)}, donc ${fx(`vₙ − uₙ = ${dif} × (${kT})ⁿ`)}.`,`On soustrait les deux formules. Une suite multipliée par le même nombre à chaque rang est géométrique : son terme de rang n est le premier terme fois la raison puissance n.`,1.5],
+    [`d) D'après c), ${fx("vₙ − uₙ ≥ 0")} pour tout n. Donc ${fx(`uₙ₊₁ − uₙ = ${co(S.qq)}(vₙ − uₙ)/${S.D} ≥ 0`)} et ${fx(`vₙ₊₁ − vₙ = −${co(S.qq)}(vₙ − uₙ)/${S.D} ≤ 0`)}.`,`On calcule chaque différence avec la formule de récurrence : ${fx(`uₙ₊₁ − uₙ = (${co(S.p)}uₙ + ${co(S.qq)}vₙ)/${S.D} − uₙ`)}.`,1],
+    [`Donc, pour tout n : ${fx("uₙ ≤ uₙ₊₁ ≤ vₙ₊₁ ≤ vₙ")}.`,`L'inégalité du milieu vient encore de c) : ${fx("vₙ₊₁ − uₙ₊₁ ≥ 0")}.`,0.5],
+    [`e) (uₙ) est croissante, (vₙ) est décroissante, et ${fx("lim (vₙ − uₙ) = 0")} car la raison ${fx(kT)} est entre 0 et 1 : les suites sont adjacentes, elles convergent vers la même limite ℓ.`,`Ce sont les trois conditions du théorème des suites adjacentes : il faut les citer toutes les trois.`,0.5],
+    [`${fx(`uₙ + vₙ = ${som}`)} pour tout n, donc à la limite ${fx(`2ℓ = ${som}`)} : <b>${fx(`ℓ = ${nb(S.l)}`)}</b>.`,`La limite de la somme est la somme des limites : ℓ + ℓ.`,0.5]];
+  return {sig:"RA"+S.sig,q:`Deux suites sont définies par ${fx(`u₀ = ${nb(S.a)}`)}, ${fx(`v₀ = ${nb(S.b)}`)} et, pour tout entier naturel n, ${fx(S.ru)} et ${fx(S.rv)}.`,
+    corps:`<ol type="a"><li>Calcule u₁, v₁, u₂ et v₂.</li><li>Démontre que la suite ${fx("(uₙ + vₙ)")} est constante.</li><li>Exprime ${fx("vₙ₊₁ − uₙ₊₁")} avec ${fx("vₙ − uₙ")}, puis donne ${fx("vₙ − uₙ")} en fonction de n.</li><li>Démontre que, pour tout n, ${fx("uₙ ≤ uₙ₊₁ ≤ vₙ₊₁ ≤ vₙ")}.</li><li>Démontre que les deux suites convergent, et donne leur limite.</li></ol>`,
+    texte:`u₀ = ${nb(S.a)}, v₀ = ${nb(S.b)}, ${S.ru}, ${S.rv} : l'exercice complet (premiers termes, somme constante, différence géométrique, encadrement, limite commune)`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+    etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`limite commune ${nb(S.l)}`,repBonne:{},nature:"papier",ens:{type:"adjp",pas:S.pas,l:S.l.n/S.l.d,u2:u2.n/u2.d,v2:v2.n/v2.d,k:S.k.n/S.k.d}};}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19442,7 +19530,13 @@ G.add("ana",[
    {t:"des racines : la quantité conjuguée",cc:3,gen:limRacine},
    {t:"des puissances comme 2ⁿ et 3ⁿ",cc:3,gen:limPuis},
    {t:"un terme borné : gendarmes et comparaison",cc:3,gen:limGend},
-   {t:"tout mélangé, avec des suites sans limite",cc:3,gen:R=>{const t=R();return t<0.35?limSans(R):t<0.52?limPoly(R):t<0.68?limRacine(R):t<0.84?limPuis(R):limGend(R);}}]}
+   {t:"tout mélangé, avec des suites sans limite",cc:3,gen:R=>{const t=R();return t<0.35?limSans(R):t<0.52?limPoly(R):t<0.68?limRacine(R):t<0.84?limPuis(R):limGend(R);}}]},
+ {id:"AN5",t:"Suites adjacentes",th:"adjacentes",pts:3,lecons:["a-adjacentes"],
+  paliers:[
+   {t:"le sens de variation avec uₙ₊₁ − uₙ",cc:4,gen:sensDeux},
+   {t:"la différence vₙ − uₙ et sa limite",cc:3,gen:ecartDeux},
+   {t:"deux suites liées : premiers termes, sens, limite commune",cc:8,gen:adjacentes},
+   {t:"l'exercice complet, sur papier, comme au CC",cc:18,gen:redacAdj}]}
 ]);
 })();
 
