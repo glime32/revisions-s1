@@ -19893,7 +19893,7 @@ const CALC={"+":(a,b)=>a+b,"-":(a,b)=>a-b,"*":(a,b)=>a*b,"div":(a,b)=>Math.floor
 const PRIO={"*":3,"div":3,"mod":3,"+":2,"-":2};
 const vaut=(e,env)=>typeof e==="number"?e:typeof e==="string"?env[e]:CALC[e[0]](vaut(e[1],env),vaut(e[2],env));
 function ecrit(e,par,dr){if(typeof e!=="object")return String(e);const q=PRIO[e[0]]||1,p=par?PRIO[par]||1:0,s=`${ecrit(e[1],e[0])} ${e[0]} ${ecrit(e[2],e[0],true)}`;
-  return q<p||(dr&&q===p&&!(par===e[0]&&(par==="+"||par==="*")))?`(${s})`:s;}
+  return q<p||(dr&&q===p&&(par==="-"||par==="div"||par==="mod"||e[0]==="div"||e[0]==="mod"))?`(${s})`:s;}
 /* instructions */
 const aff=(v,e)=>({k:"aff",v,e}),pour=(v,a,b,c)=>({k:"pour",v,a,b,c}),tq=(cond,c)=>({k:"tq",cond,c}),si=(cond,alors,sinon)=>({k:"si",cond,alors,sinon:sinon||null}),ret=e=>({k:"ret",e});
 function lignes(C,niv){const L=[],I="    ".repeat(niv);C.forEach(s=>{
@@ -19999,6 +19999,63 @@ function avecFormule(R){const t=R.ent(0,9),n=R.ent(3,5),k=R.ent(2,5),c0=R.ent(1,
   else{P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",k,"i"]])]),ret("s")]);F={t:`${k}n(n + 1)/2`,tape:`${k}n(n+1)/2`,why:`La fonction additionne ${k} × 1 + ${k} × 2 + … + ${k} × n, c'est-à-dire ${k} fois 1 + 2 + … + n.`};}
   return traceExo({P,args:[n],formule:F,nature:"formule"});}
 
+/* ---------- AG2 : équations d'itération et invariant ---------- */
+/* un tour de boucle exécuté sur des valeurs données (sans Renvoyer) */
+function unTour(C,env){C.forEach(s=>{if(s.k==="aff")env[s.v]=vaut(s.e,env);else if(s.k==="si"){unTour(vaut(s.cond,env)?s.alors:(s.sinon||[]),env);}});return env;}
+const PREC="ᵢ₋₁",LETTRES=["q","r"];
+/* o : {P, V:[{v, ei, eiTape, ferme, fermeTape}], demandeEI, pq (pourquoi la formule), nature} ; i est le numéro du tour */
+function iteration(o){const P=o.P,B=boucleDe(P),cols=o.V.map(x=>x.v),NN=7,X=execute(P,[NN],cols),T=X.T,KS=[...Array(T.length).keys()];
+  const versCalc=src=>{let t=String(src||"").replace(/\s+/g,"");o.V.forEach((x,j)=>{t=t.replace(new RegExp(x.v+"(?:ᵢ₋₁|_?\\{?\\(?i[-−]1\\)?\\}?)","g"),"("+LETTRES[j]+")");});return t;};
+  const ESS=[];for(const i of [1,2,5])for(const a of [0,3,-2])for(const b of [1,4])ESS.push({i,a,b});
+  const apres=(e,j)=>{const env={n:NN};env[B.v||"i"]=e.i;cols.forEach((v,k)=>{env[v]=k?e.b:e.a;});if(B.k==="pour")env[B.v]=e.i;return unTour(B.c,env)[cols[j]];};
+  const ind=(v,t)=>`${v}_{${t}}`,dep=cols.map((v,j)=>`${ind(v,0)} = ${ent(T[0][j])}`).join(", ");
+  const E=[{w:`Équations d'itération : ${fx(dep)}, puis ${o.V.map(x=>fx(`${ind(x.v,"i")} = ${x.ei}`)).join(" et ")} pour ${fx("i ≥ 1")}.`,why:`On note ${fx(ind(cols[0],"i"))} la valeur de ${cols[0]} à la fin du tour numéro i, et ${fx(ind(cols[0],0))} sa valeur avant la boucle. On lit la ligne de la boucle : à gauche de la flèche, la nouvelle valeur ; à droite, les valeurs du tour d'avant.`,pts:1},
+    {w:`Les premières valeurs : ${tableTrace(cols.map(v=>v),T.slice(0,5),-1)}`,why:`On applique les équations d'itération, un tour après l'autre : c'est la trace. Elle sert à deviner la formule.`,pts:0.5},
+    {w:`<b>${o.V.map(x=>fx(`${ind(x.v,"i")} = ${x.ferme}`)).join(" et ")}</b>`,why:`${o.pq} C'est l'invariant de boucle : on le démontre par récurrence sur i, avec les équations d'itération.`,pts:1.5}];
+  function juge(rep){const F=[];let d=null;
+    if(o.demandeEI)for(let j=0;j<o.V.length;j++){const src=rep["e"+j];if(!propre(src))return {incomplet:`Écris l'équation d'itération de ${cols[j]} : ce que vaut ${cols[j]} à la fin du tour i, avec sa valeur du tour d'avant.`};
+      const W=ESS.map(e=>O.calcule(versCalc(src),{i:e.i,n:NN,q:e.a,r:e.b}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:`Je n'arrive pas à lire l'équation d'itération. Utilise le bouton ${cols[j]}${PREC} pour la valeur du tour d'avant, et la lettre i.`};
+      if(!ESS.every((e,k)=>Math.abs(W[k]-apres(e,j))<1e-9)){F.push("e"+j);if(!d)d={etape:0,type:"équation d'itération",titre:"Où ça part : l'équation d'itération.",msg:`La ligne de la boucle donne ${fx(`${ind(cols[j],"i")} = ${o.V[j].ei}`)} : la valeur d'avant est ${fx(ind(cols[j],"i − 1"))}, la nouvelle est ${fx(ind(cols[j],"i"))}.`};}}
+    for(let j=0;j<o.V.length;j++){const src=rep["f"+j];if(!propre(src))return {incomplet:`Écris la formule de ${cols[j]} à la fin du tour i, avec la lettre i.`};
+      const W=KS.map(k=>O.calcule(src,{i:k,n:NN}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre i, par exemple 3i + 2, i(i+1)/2 ou 2^i."};
+      if(KS.every(k=>Math.abs(W[k]-T[k][j])<1e-9))continue;F.push("f"+j);if(d)continue;
+      const dec=KS.slice(0,-1).every(k=>Math.abs(W[k]-T[k+1][j])<1e-9)||KS.slice(1).every(k=>Math.abs(W[k]-T[k-1][j])<1e-9),k=KS.find(k=>Math.abs(W[k]-T[k][j])>=1e-9);
+      d=dec?{etape:2,type:"formule décalée d'un tour",titre:"Où ça part : le numéro du tour.",msg:`Ta formule est décalée d'un tour. ${fx(ind(cols[j],"i"))} est la valeur à la fin du tour i, et ${fx(ind(cols[j],0))} la valeur avant la boucle : ici ${fx(`${ind(cols[j],0)} = ${ent(T[0][j])}`)}.`}
+        :{etape:2,type:"formule du terme de rang i",titre:"Où ça part : la formule.",msg:`Pour i = ${k}, ta formule donne ${String(Math.round(W[k]*1000)/1000).replace(".",",")}, alors que la trace donne ${fx(`${ind(cols[j],k)} = ${ent(T[k][j])}`)}.`};}
+    if(!F.length)return {ok:true};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.some(x=>x[0]==="e")&&F.some(x=>x[0]==="f")?"l'équation d'itération et la formule sont à revoir":F[0][0]==="e"?"l'équation d'itération est à revoir":"la formule est à revoir"}.`,diag:d};}
+  const champs=[],bon={},faux={};
+  o.V.forEach((x,j)=>{if(o.demandeEI){champs.push({k:"champ",id:"e"+j,nom:`équation d'itération de ${x.v}`,label:`Équation d'itération : $${ind(x.v,"i")} =$`,ex:`avec ${x.v}${PREC} et i`,sym:[[x.v+PREC,x.v+PREC],["i","i"]]});bon["e"+j]=x.eiTape;faux["e"+j]=x.eiTape;}});
+  o.V.forEach((x,j)=>{champs.push({k:"champ",id:"f"+j,nom:`formule de ${x.v}`,label:`À la fin du tour i : $${ind(x.v,"i")} =$`,ex:"une formule avec i",sym:j===o.V.length-1?[["i","i"],["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]:null});bon["f"+j]=x.fermeTape;faux["f"+j]="("+x.fermeTape+")+i";});
+  return {sig:"IT"+texteProg(P).replace(/\s+/g," ")+(o.demandeEI?"E":""),
+    q:`Voici une fonction écrite dans le pseudo-code du cours. On note ${o.V.map(x=>fx(ind(x.v,"i"))).join(" et ")} ${o.V.length>1?"les valeurs":"la valeur"} de ${et(cols)} à la fin du tour numéro i de la boucle, et ${o.V.map(x=>fx(ind(x.v,0))).join(" et ")} ${o.V.length>1?"leurs valeurs":"sa valeur"} avant la boucle. ${o.demandeEI?"Écris l'équation d'itération, puis donne":"Donne"} ${o.V.length>1?"les formules":"la formule"} qui ${o.V.length>1?"donnent":"donne"} ${o.V.map(x=>fx(ind(x.v,"i"))).join(" et ")} en fonction de i.`,
+    corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — ${o.demandeEI?"équation d'itération et ":""}formule de ${cols.join(", ")} à la fin du tour i`,champs,juge,etapes:E,indice:false,
+    bonne:o.V.map(x=>fx(`${ind(x.v,"i")} = ${x.ferme}`)).join(" et "),bonneTxt:o.V.map(x=>`${x.v}_i = ${x.ferme}`).join(" et "),repBonne:bon,repFausse:faux,nature:o.nature,ens:{P,cols,NN,type:"iter",ei:o.demandeEI}};}
+/* les familles : programme, équation d'itération, formule, et la preuve (pour le palier sur papier) */
+function famille(R,sorte){const k=R.ent(2,5),c0=R.ent(0,6),t=R.ent(0,9);
+  if(sorte==="lin"){if(R()<0.5)return {P:prog(R,["s","i"],[aff("s",c0),pour("i",1,"n",[aff("s",["+","s",k])]),ret("s")]),V:[{v:"s",ei:`s_{i−1} + ${k}`,eiTape:`s${PREC}+${k}`,ferme:c0?`${k}i + ${c0}`:`${k}i`,fermeTape:`${k}i+${c0}`,f0:String(c0),hyp:c0?`${k}(i − 1) + ${c0}`:`${k}(i − 1)`,calc:`${c0?`${k}(i − 1) + ${c0}`:`${k}(i − 1)`} + ${k}`}],pq:`s part de ${c0} et gagne ${k} à chaque tour : après i tours, il a gagné ${k}i.`,rend:c0?`${k}n + ${c0}`:`${k}n`,nature:"plus k"};
+    const d0=c0+20;return {P:prog(R,["s","i"],[aff("s",d0),pour("i",1,"n",[aff("s",["-","s",k])]),ret("s")]),V:[{v:"s",ei:`s_{i−1} − ${k}`,eiTape:`s${PREC}-${k}`,ferme:`${d0} − ${k}i`,fermeTape:`${d0}-${k}i`,f0:String(d0),hyp:`${d0} − ${k}(i − 1)`,calc:`${d0} − ${k}(i − 1) − ${k}`}],pq:`s part de ${d0} et perd ${k} à chaque tour : après i tours, il a perdu ${k}i.`,rend:`${d0} − ${k}n`,nature:"moins k"};}
+  if(sorte==="som"){const u=t%4;
+    if(u===0)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s","i"])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + i",eiTape:`s${PREC}+i`,ferme:"i(i + 1)/2",fermeTape:"i(i+1)/2",f0:"0",hyp:"(i − 1)i/2",calc:"(i − 1)i/2 + i = i(i − 1 + 2)/2"}],pq:"s additionne 1 + 2 + … + i : la somme des i premiers entiers vaut i(i + 1)/2.",rend:"n(n + 1)/2",nature:"somme"};
+    if(u===1)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["-",["*",2,"i"],1]])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + 2i − 1",eiTape:`s${PREC}+2i-1`,ferme:"i²",fermeTape:"i^2",f0:"0",hyp:"(i − 1)²",calc:"(i − 1)² + 2i − 1 = i² − 2i + 1 + 2i − 1"}],pq:"s additionne les nombres impairs 1 + 3 + 5 + … : la trace donne les carrés 1, 4, 9, 16.",rend:"n²",nature:"impairs"};
+    if(u===2)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",2,"i"]])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + 2i",eiTape:`s${PREC}+2i`,ferme:"i(i + 1)",fermeTape:"i(i+1)",f0:"0",hyp:"(i − 1)i",calc:"(i − 1)i + 2i = i(i − 1 + 2)"}],pq:"s additionne 2 + 4 + … + 2i, c'est-à-dire 2 fois la somme 1 + 2 + … + i.",rend:"n(n + 1)",nature:"pairs"};
+    const b=R.choix([2,3]),c=R.ent(1,4);return {P:prog(R,["p","i"],[aff("p",c),pour("i",1,"n",[aff("p",["*","p",b])]),ret("p")]),V:[{v:"p",ei:`${b} × p_{i−1}`,eiTape:`${b}*p${PREC}`,ferme:c===1?`${b}^{i}`:`${c} × ${b}^{i}`,fermeTape:`${c}*${b}^i`,f0:String(c),hyp:c===1?`${b}^{i−1}`:`${c} × ${b}^{i−1}`,calc:`${c===1?"":c+" × "}${b}^{i−1} × ${b}`}],pq:`p part de ${c} et il est multiplié par ${b} à chaque tour : après i tours, il a été multiplié par ${b} puissance i.`,rend:c===1?`${b}^{n}`:`${c} × ${b}^{n}`,nature:"puissance"};}
+  const u=t%4;
+  if(u===0)return {P:prog(R,["a","b","i"],[aff("a",1),aff("b",0),pour("i",1,"n",[aff("b",["+","b","a"]),aff("a",["+","a",2])]),ret("b")]),V:[{v:"a",ferme:"2i + 1",fermeTape:"2i+1",ei:"a_{i−1} + 2"},{v:"b",ferme:"i²",fermeTape:"i^2",ei:"b_{i−1} + a_{i−1}"}],pq:"a gagne 2 à chaque tour : il prend les valeurs impaires 1, 3, 5, … b les additionne, mais avec la valeur de a du tour d'avant, car la ligne de b est écrite en premier : 1, 4, 9, 16.",nature:"impairs et carrés"};
+  if(u===1)return {P:prog(R,["a","b","i"],[aff("a",0),aff("b",0),pour("i",1,"n",[aff("a",["+","a",1]),aff("b",["+","b","a"])]),ret("b")]),V:[{v:"a",ferme:"i",fermeTape:"i",ei:"a_{i−1} + 1"},{v:"b",ferme:"i(i + 1)/2",fermeTape:"i(i+1)/2",ei:"b_{i−1} + a_{i−1} + 1"}],pq:"a compte les tours. b additionne la nouvelle valeur de a, car la ligne de a est écrite en premier : 1 + 2 + … + i.",nature:"compteur et somme"};
+  if(u===2)return {P:prog(R,["x","y"],[aff("x",0),aff("y","n"),tq([">","y",0],[aff("x",["+","x",k]),aff("y",["-","y",1])]),ret("x")]),V:[{v:"x",ferme:`${k}i`,fermeTape:`${k}i`,ei:`x_{i−1} + ${k}`},{v:"y",ferme:"n − i",fermeTape:"n-i",ei:"y_{i−1} − 1"}],pq:`x gagne ${k} à chaque tour. y part de n et perd 1 à chaque tour : la formule de y contient n.`,nature:"monte et descend"};
+  return {P:prog(R,["a","b","i"],[aff("a",1),aff("b",1),pour("i",1,"n",[aff("a",["*","a",2]),aff("b",["+","b","a"])]),ret("b")]),V:[{v:"a",ferme:"2^{i}",fermeTape:"2^i",ei:"2 × a_{i−1}"},{v:"b",ferme:"2^{i+1} − 1",fermeTape:"2^(i+1)-1",ei:"b_{i−1} + 2 × a_{i−1}"}],pq:"a double à chaque tour : 2, 4, 8, … b additionne 1 + 2 + 4 + … + 2 puissance i, ce qui fait 2 puissance (i + 1), moins 1 : la trace donne 3, 7, 15, 31.",nature:"puissances de 2"};}
+/* la preuve complète, avec la méthode en quatre étapes du cours */
+function preuveBoucle(R){const o=famille(R,R()<0.35?"lin":"som"),x=o.V[0],v=x.v,ind=t=>`${v}_{${t}}`,P=o.P;
+  const lignes=[[`Équations d'itération : ${fx(`${ind(0)} = ${x.f0}`)} et, pour ${fx("i ≥ 1")}, ${fx(`${ind("i")} = ${x.ei}`)}.`,`C'est la « vérité » : on la lit sur l'algorithme. ${fx(ind("i"))} est la valeur de ${v} à la fin de l'itération numéro i, ${fx(ind(0))} sa valeur au début des itérations.`,1],
+    [`Invariant proposé : ${fx(`Inv_{i}`)} : « ${fx(`${ind("i")} = ${x.ferme}`)} ».`,`C'est l'« hypothèse à prouver ». On la trouve en faisant une trace.`,1],
+    [`Initialisation : ${fx(`${ind(0)} = ${x.f0}`)} d'après les équations d'itération, et la formule donne bien ${x.f0} pour i = 0 : ${fx("Inv_{0}")} est vrai.`,`On vérifie l'invariant au début des itérations.`,0.5],
+    [`Récurrence : si ${fx("Inv_{i−1}")} est vrai, avec ${fx("1 ≤ i ≤ n")}, alors ${fx(`${ind("i−1")} = ${x.hyp}`)}. Comme ${fx(`${ind("i")} = ${x.ei}`)}, on trouve ${fx(`${ind("i")} = ${x.calc}`)}, c'est-à-dire ${fx(x.ferme)} : ${fx("Inv_{i}")} est vrai.`,`On remplace ${fx(ind("i−1"))} par sa formule dans l'équation d'itération : c'est là que la « vérité » sert.`,1.5],
+    [`Conclusion : l'invariant est vrai pour toutes les itérations. À la fin des n itérations, ${fx(`${ind("n")} = ${o.rend}`)} : la fonction renvoie bien ${fx(o.rend)}.`,`On écrit l'invariant pour i = n, la dernière itération : c'est la valeur renvoyée.`,1]];
+  return {sig:"PB"+texteProg(P).replace(/\s+/g," "),q:`Démontre que, pour tout entier naturel n, ${fx(`${P.nom}(n)`)} renvoie ${fx(o.rend)}. Utilise la méthode du cours : équations d'itération, invariant de boucle, preuve par récurrence, conclusion.`,corps:code(texteProg(P)),
+    texte:`${texteProg(P).split("\n").slice(3,-1).map(z=>z.trim()).join(" ; ")} — preuve que la fonction renvoie ${o.rend}`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),etapes:lignes.map(z=>({w:z[0],why:z[1],pts:z[2]})),
+    bonne:"voir la rédaction",bonneTxt:`invariant ${v}_i = ${x.ferme}`,repBonne:{},nature:"preuve, "+o.nature,ens:{P,cols:[v],type:"preuve",ferme:x.fermeTape,NN:7}};}
+
 G.add("algo",[
  {id:"AG1",t:"Trace d'une boucle",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
   paliers:[
@@ -20006,7 +20063,13 @@ G.add("algo",[
    {t:"une boucle tant que, deux variables",cc:4,gen:tantQue},
    {t:"un si dans la boucle",cc:4,gen:avecSi},
    {t:"deux boucles imbriquées",cc:5,gen:imbriquees,min:90},
-   {t:"comme au CC : la trace, puis ce que calcule la fonction",cc:6,gen:avecFormule,min:50}]}
+   {t:"comme au CC : la trace, puis ce que calcule la fonction",cc:6,gen:avecFormule,min:50}]},
+ {id:"AG2",t:"Équations d'itération et invariant de boucle",tache:"équations d'itération et invariant",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],
+  paliers:[
+   {t:"l'équation d'itération, puis la formule : cas simples",cc:3,gen:R=>iteration(Object.assign(famille(R,"lin"),{demandeEI:true})),min:60},
+   {t:"sommes et puissances",cc:4,gen:R=>iteration(Object.assign(famille(R,"som"),{demandeEI:true})),min:15},
+   {t:"deux variables liées",cc:5,gen:R=>iteration(famille(R,"deux")),min:8},
+   {t:"la preuve complète, sur papier, avec la méthode du cours",cc:10,gen:preuveBoucle,min:40}]}
 ]);
 G.algo={execute,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
 })();
