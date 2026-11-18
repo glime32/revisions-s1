@@ -675,6 +675,19 @@ svg .grid{stroke:var(--trait);stroke-width:1}
 .paper ul{margin:0;padding-left:1.2em}
 .recipe{display:grid;gap:10px}
 .recipe ol{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.vcpas{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.vcpas>li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:12px 14px;border:2px solid transparent;border-radius:14px;cursor:pointer;transition:background .2s,border-color .2s,opacity .2s}
+.vcpas>li>div{display:grid;gap:8px;min-width:0}
+.vcpas h3{margin:0;font-size:1.05rem}
+.vcpas .nb{width:36px;height:30px;border-radius:8px;border:2px solid var(--graphite);display:grid;place-items:center;font-size:.85rem;font-weight:800;color:var(--graphite)}
+.vcpas .vcd{display:grid;gap:8px}
+.vcpas>li.on{background:var(--feuille);border-color:var(--sc)}
+.vcpas>li.on .nb{background:var(--sc);border-color:var(--sc);color:#000}
+.vcpas>li.fait .nb{border-color:var(--vert);color:var(--vert)}
+.vcpas>li.apres{opacity:.5}
+.vcpas>li.apres .vcd{display:none}
+.vcpas>li:focus-visible{outline:3px solid var(--violet-hi);outline-offset:3px}
+.vcq{display:grid;gap:12px}
 .life{display:grid;gap:2px;justify-content:start}
 .life button{width:26px;height:26px;border:1px solid var(--trait);border-radius:5px;background:#000;padding:0;font-size:.7rem;color:var(--graphite)}
 .life button.on{background:var(--vert);border-color:var(--vert);color:#000}
@@ -7981,7 +7994,7 @@ CQ("Que vaut $cos(π)$ ?","$−1$",["-1"],"Un demi-tour sur le cercle : $cos(π)
 CQ("Que vaut $sin(π/6)$ ?","$1/2$",["1/2","0.5"],"$sin(π/6) = 1/2$."))))
 ].join("\n");
 /* une page par méthode : quand s'en servir, l'idée, les étapes, des exemples rédigés en entier, les pièges */
-const mVarcst=({sec})=>`<div class="title-row"><h1>Méthode : la variation de la constante</h1></div><p class="lead">Elle sert à résoudre une équation différentielle d'ordre 1 avec un second membre, y′ + a(x) y = b(x). C'est la méthode de ton chargé de TD : elle marche à tous les coups, même quand a(x) n'est pas une constante.</p>
+const mVarcst=({S,sec})=>`<div class="title-row"><h1>Méthode : la variation de la constante</h1></div><div class="examcard" style="--sc:${S.color}"><p>Tu ne vois pas ce que veut dire « on intègre et on remet dans y » ? Commence par <a href="#/calc/p/m-varcst-trad">Variation de la constante : la traduction du cours</a> : le TD 2, exercice 2 (b) étape par étape, avec ce qu'il faut écrire sur ta copie, puis 6 QCM.</p></div><p class="lead">Elle sert à résoudre une équation différentielle d'ordre 1 avec un second membre, y′ + a(x) y = b(x). C'est la méthode de ton chargé de TD : elle marche à tous les coups, même quand a(x) n'est pas une constante.</p>
  ${sec(1,"Quand s'en servir, et ce qu'il faut savoir avant",`<ul><li><b>Quand</b> : l'équation s'écrit y′ + a(x) y = b(x), avec b(x) qui n'est pas 0. La lettre y désigne une fonction inconnue, y′ sa dérivée.</li><li><b>Ce qu'on cherche</b> : toutes les fonctions y qui vérifient l'équation, puis celle qui vérifie en plus une condition comme y(0) = 1.</li><li><b>Avant</b>, il faut savoir trouver une primitive (une fonction dont la dérivée est la fonction donnée) et savoir que e<sup>u</sup> × e<sup>−u</sup> = 1.</li></ul><p>Deux lettres vont revenir sans arrêt :</p><ul><li><b>A(x)</b> : une primitive de a(x). Exemple : si a(x) = 2, alors A(x) = 2x.</li><li><b>(E₀)</b> : la même équation avec 0 à droite, y′ + a(x) y = 0. On l'appelle l'équation homogène. Ses solutions sont toujours C e<sup>−A(x)</sup>, où C est un nombre quelconque.</li></ul>`)}
  ${sec(2,"L'idée",`<p>Les solutions de (E₀) sont C e<sup>−A(x)</sup> avec C constant. Pour l'équation complète, on garde la même forme mais on laisse C <b>varier</b> : on cherche y = c(x) e<sup>−A(x)</sup>, où c(x) est une fonction. C'est de là que vient le nom.</p><p>Quand on dérive ce produit et qu'on remplace dans l'équation, presque tout se simplifie : il reste c′(x) e<sup>−A(x)</sup> = b(x), c'est-à-dire</p>${F("c′(x) = b(x) e<sup>A(x)</sup>")}<p>Il suffit donc de trouver <b>une primitive</b> de b(x) e<sup>A(x)</sup>. C'est tout le travail.</p>`)}
  ${sec(3,"Les étapes, toujours les mêmes",`<div class="recipe"><ol>
@@ -8000,6 +8013,79 @@ const mVarcst=({sec})=>`<div class="title-row"><h1>Méthode : la variation de la
  ${sec(7,"Les erreurs qui coûtent des points",`<ul><li><b>Le signe de l'exposant.</b> +A pour calculer c (étape 4), −A pour revenir à y (étape 6). Les mélanger est l'erreur la plus fréquente.</li><li><b>Le signe de a.</b> Dans y′ − 3y = …, a vaut −3, donc A(x) = −3x et e<sup>−A(x)</sup> = e<sup>3x</sup>.</li><li><b>Ne pas simplifier</b> b(x) e<sup>A(x)</sup> avant de chercher la primitive : très souvent les exponentielles se regroupent ou disparaissent.</li><li><b>Poser la condition initiale trop tôt.</b> Elle se pose sur la solution complète (étape 7), jamais sur C e<sup>−A(x)</sup> seul.</li><li><b>Oublier l'intervalle</b> quand a(x) contient 1/x : on le dit au début.</li></ul>`)}
  ${sec(8,"Sur ta copie",`<div class="paper"><p>La rédaction du corrigé de ton chargé de TD, à reprendre :</p><ul><li>« On considère (E) : … et son équation homogène associée (E₀) : … »</li><li>« x ↦ … est une primitive de a, donc les solutions de (E₀) sont les fonctions x ↦ C e<sup>…</sup>, C ∈ ℝ. »</li><li>« Par variation de la constante : une primitive de t ↦ b(t) e<sup>A(t)</sup> = … est x ↦ … . Une solution particulière de (E) est donc x ↦ … »</li><li>« Les solutions de (E) sont les fonctions x ↦ … + C e<sup>…</sup>, C ∈ ℝ. »</li><li>« y(0) = … ⇔ C = … : l'unique solution est x ↦ … »</li></ul></div>`)}
  ${sec(9,"À toi",`<p>Sur papier, sans regarder les exemples : résous y′ + 3y = e<sup>−3x</sup> avec y(0) = 2. (Entraînement écrit par moi.)</p><details class="ex"><summary><span>Voir la réponse</span></summary><div class="redac"><p>a = 3, A(x) = 3x. Solutions de (E₀) : C e<sup>−3x</sup>.</p><p>b(x) e<sup>A(x)</sup> = e<sup>−3x</sup> × e<sup>3x</sup> = 1, de primitive c(x) = x. Donc y<sub>p</sub>(x) = x e<sup>−3x</sup>.</p><p>Toutes les solutions : y(x) = (x + C) e<sup>−3x</sup>. y(0) = C = 2 : <b>y(x) = (x + 2) e<sup>−3x</sup></b>.</p></div></details><p>Ensuite : la leçon <a href="#/lecon/calc/c-ed1">Équations différentielles d'ordre 1 avec second membre</a>, puis le TD 2, exercice 2, dans les <a href="#/calc/td">exercices de TD</a>.</p>`)}`;
+/* la page du 13/11 (« on intègre et on remet dans y ») : la traduction vers la Proposition 4.2, le TD 2 ex. 2 (b) pas à pas, l'ex. 2 (a) en 6 QCM gardés dans le journal */
+const VC_ETAPES=[
+ {n:"0",t:"Repérer $a$ et $b$",r:"On lit l'équation sous la forme $y′ + a y = b$.",ex:"Devant $y$ il y a 1, donc $a = 1$. À droite : $b(x) = e^{−x}$.",copie:"On considère (E) : $y′ + y = e^{−x}$ et son équation homogène associée $(E_{0})$ : $y′ + y = 0$."},
+ {n:"1",t:"Résoudre $(E_{0})$",r:"On trouve $A$, une primitive de $a$. Les solutions de $(E_{0})$ sont $Ce^{−A(x)}$.",ex:"Une primitive de 1 est $x$ (la dérivée de $x$ est 1). Donc $A(x) = x$, et les solutions de $(E_{0})$ sont $Ce^{−x}$.",copie:"$x ↦ x$ est une primitive de la fonction constante 1, donc les solutions de $(E_{0})$ sont les fonctions $x ↦ Ce^{−x}$, $C ∈ ℝ$."},
+ {n:"2a",t:"Multiplier $b$ par $e^{A}$",r:"On calcule $b(x) × e^{A(x)}$. Attention, ici c'est <b>+</b>$A$.",ex:"$e^{−x} × e^{x} = e^{−x+x} = e^{0} = 1$",copie:"On cherche une primitive de $t ↦ e^{−t} × e^{t}$, c'est-à-dire de $t ↦ 1$,"},
+ {n:"2b",t:"Chercher une primitive",tag:"« on intègre »",r:"On cherche une fonction $c(x)$ dont la dérivée est le résultat de l'étape 2a.",ex:"Une primitive de 1 est $x$. Donc $c(x) = x$.",copie:"dont une primitive est $x ↦ x$."},
+ {n:"2c",t:"Multiplier par $e^{−A}$",tag:"« on remet dans $y$ »",r:"On calcule $c(x) × e^{−A(x)}$. Ici c'est <b>−</b>$A$. Le résultat est la solution particulière $y_{p}$.",ex:"$x × e^{−x} = xe^{−x}$, donc $y_{p}(x) = xe^{−x}$.",copie:"Par la variation de la constante (proposition 4.2), une solution particulière est $x ↦ xe^{−x}$."},
+ {n:"3",t:"Toutes les solutions",r:"On ajoute la solution particulière et les solutions de $(E_{0})$ : $y_{p}(x) + Ce^{−A(x)}$.",ex:"$xe^{−x} + Ce^{−x} = (C + x)e^{−x}$",copie:"Les solutions de (E) sont les fonctions $x ↦ (C + x)e^{−x}$, $C ∈ ℝ$."},
+ {n:"4",t:"La condition initiale",r:"On remplace $x$ par la valeur donnée <b>dans toutes les solutions</b>, et on trouve $C$.",ex:"$y(0) = (C + 0) × e^{0} = C$. On veut 0, donc $C = 0$.",copie:"$y(0) = 0 ⇔ (C + 0) × 1 = 0 ⇔ C = 0$. L'unique solution de (E) telle que $y(0) = 0$ est $x ↦ xe^{−x}$."}];
+/* seul : la question réécrite pour se comprendre hors de la page (carte de Réviser) */
+const VC_Q=[
+ {q:"Étape 1. $A$ est une primitive de $a = −3$. Laquelle ?",o:["$A(x) = 3x$","$A(x) = −3x$","$A(x) = −3$"],a:1,h:"Cherche une fonction dont la dérivée vaut $−3$.",w:"La dérivée de $−3x$ est $−3$. Le nombre $−3$, c'est $a$ lui-même, pas sa primitive.",
+  seul:"On résout $y′ − 3y = e^{2x}$ (TD 2, ex. 2 a) par la variation de la constante, avec $a = −3$. Quelle fonction $A$ est une primitive de $a$ ?"},
+ {q:"Étape 1, suite. Les solutions de $(E_{0})$ sont $Ce^{−A(x)}$. Ça donne quoi ?",o:["$Ce^{−3x}$","$−3Cx$","$Ce^{3x}$"],a:2,h:"Remplace $A(x)$ par $−3x$ dans $−A(x)$.",w:"$−A(x) = −(−3x) = 3x$. Moins par moins donne plus.",
+  seul:"On résout $y′ − 3y = e^{2x}$ par la variation de la constante. Avec $A(x) = −3x$, les solutions de l'équation homogène $y′ − 3y = 0$ sont $Ce^{−A(x)}$. Ça donne quoi ?"},
+ {q:"Étape 2a. On calcule $b(x) × e^{A(x)} = e^{2x} × e^{−3x}$. Ça fait ?",o:["$e^{−x}$","$e^{5x}$","$e^{−6x}$"],a:0,h:"On ajoute les exposants.",w:"On ajoute les exposants : $2x + (−3x) = −x$.",
+  seul:"Variation de la constante pour $y′ − 3y = e^{2x}$, avec $A(x) = −3x$ : combien vaut $b(x) × e^{A(x)} = e^{2x} × e^{−3x}$ ?"},
+ {q:"Étape 2b, « on intègre ». Une primitive $c(x)$ de $e^{−x}$ ?",o:["$c(x) = e^{−x}$","$c(x) = −e^{−x}$","$c(x) = −xe^{−x}$"],a:1,h:"Dérive chaque proposition : laquelle redonne $e^{−x}$ ?",w:"Dérive $−e^{−x}$ : tu trouves $−(−e^{−x}) = e^{−x}$. Règle du formulaire : une primitive de $e^{kx}$ est $e^{kx}$ divisé par $k$. Ici $k = −1$.",
+  seul:"Dans la variation de la constante, l'étape « on intègre » demande une primitive. Quelle fonction $c$ est une primitive de $e^{−x}$ ?"},
+ {q:"Étape 2c, « on remet dans $y$ ». $y_{p}(x) = c(x) × e^{−A(x)} = −e^{−x} × e^{3x}$. Ça fait ?",o:["$−e^{2x}$","$e^{2x}$","$−e^{−4x}$"],a:0,h:"On ajoute les exposants, et on garde le signe moins devant.",w:"$−x + 3x = 2x$, et le signe moins devant reste.",
+  seul:"Variation de la constante pour $y′ − 3y = e^{2x}$ : avec $c(x) = −e^{−x}$ et $A(x) = −3x$, que vaut la solution particulière $y_{p}(x) = c(x) × e^{−A(x)}$ ?"},
+ {q:"Étape 3. Toutes les solutions de (E) ?",o:["$x ↦ −e^{2x}$","$x ↦ Ce^{−3x} − e^{2x}$, $C ∈ ℝ$","$x ↦ Ce^{3x} − e^{2x}$, $C ∈ ℝ$"],a:2,h:"Solution particulière plus les solutions de $(E_{0})$, avec $C$.",w:"La solution particulière $−e^{2x}$ plus les solutions de $(E_{0})$, $Ce^{3x}$. La particulière seule n'est qu'une solution.",
+  seul:"Une solution particulière de $y′ − 3y = e^{2x}$ est $−e^{2x}$, et les solutions de $y′ − 3y = 0$ sont $Ce^{3x}$. Quelles sont toutes les solutions de $y′ − 3y = e^{2x}$ ?"}];
+const mVarcstTrad=(root,{sid,S,sec})=>{
+ const A=window.APP,PID="m-varcst-trad",Q=VC_Q;
+ root.style.setProperty("--sc",S.color);
+ root.innerHTML=W.tx(`<div class="title-row"><h1>Variation de la constante : la traduction du cours</h1></div>
+<p class="lead">Ton chargé de TD dit « on intègre et on remet dans $y$ ». Ton cours ne le dit jamais : il dit la même chose avec d'autres mots. Voici la traduction, puis le TD 2, exercice 2 (b) fait étape par étape, puis l'exercice 2 (a) à faire toi-même. La méthode complète, avec d'autres exemples, est dans <a href="#/calc/p/m-varcst">Méthode : la variation de la constante</a>.</p>
+${CT(["Ton chargé de TD dit","Ça veut dire"],[["« on intègre »","on cherche une <b>primitive</b>"],["« on remet dans $y$ »","on <b>multiplie</b> cette primitive par $e^{−A(x)}$"]])}
+${sec(1,"Les mots dont on a besoin",CT(["Le mot","Ce que ça veut dire"],[
+ ["Primitive","Une primitive d'une fonction $f$, c'est une fonction dont la <b>dérivée</b> est $f$. Exemple : une primitive de $2x$ est $x²$, parce que la dérivée de $x²$ est $2x$. « Intégrer », c'est chercher une primitive."],
+ ["L'équation (E)","$y′ + a y = b$. On cherche une fonction $y$. $y′$ est sa dérivée, $a$ est ce qui multiplie $y$ (avec son signe), $b$ est ce qui est à droite du signe =."],
+ ["L'équation homogène $(E_{0})$","La même équation avec 0 à droite : $y′ + a y = 0$."],
+ ["$A$","Une primitive de $a$. Exemple : si $a = 1$, alors $A(x) = x$."],
+ ["$C$ et $c$","$C$ majuscule est un <b>nombre</b> (n'importe lequel). $c$ minuscule est une <b>fonction</b>, la primitive de la Proposition 4.2."],
+ ["Solution particulière","Une seule solution de (E), trouvée par la Proposition 4.2. On la note $y_{p}$."],
+ ["Règle des exponentielles","$e^{u} × e^{v} = e^{u+v}$ : on ajoute les exposants. Et $e^{0} = 1$."]]))}
+${sec(2,"Ce que dit ton cours",`<p>Dans le formulaire du cours, toute la méthode tient en trois propositions. Chacune est une étape. $I$ est l'intervalle où on travaille (souvent tout $ℝ$), et $t$ est la variable : c'est la même chose que $x$, avec une autre lettre.</p>
+<div class="redac"><p><b>Proposition 4.1.</b> Les solutions de l'équation homogène $(E_{0})$ sont les fonctions de la forme $t ∈ I ↦ Ce^{−A(t)}$ où $C ∈ ℝ$.</p></div><p class="muted"><b>Étape 1</b> : les solutions de $(E_{0})$.</p>
+<div class="redac"><p><b>Proposition 4.2 (Variation de la constante).</b> Soit $c : I → ℝ$ une primitive de $t ↦ b(t)e^{A(t)}$. La fonction $t ∈ I ↦ c(t)e^{−A(t)}$ est solution de (E).</p></div><p class="muted"><b>Étape 2</b> : une solution particulière. « Soit $c$ une primitive de… », c'est le « on intègre ». « $c(t)e^{−A(t)}$ est solution », c'est le « on remet dans $y$ ».</p>
+<div class="redac"><p><b>Proposition 4.3.</b> Soit $y$ une solution de (E). Les solutions de (E) sont les fonctions de la forme $y + y_{0}$ où $y_{0}$ est une solution de $(E_{0})$.</p></div><p class="muted"><b>Étape 3</b> : toutes les solutions = la solution particulière + les solutions de $(E_{0})$.</p>`)}
+${sec(3,"L'exercice du TD, étape par étape",`<div class="paper"><p class="muted">TD 2, exercice 2 (b), comme dans le corrigé de ton chargé de TD</p><p>Résoudre $y′ + y = e^{−x}$, puis trouver la solution telle que $y(0) = 0$.</p></div>
+<ol class="vcpas">${VC_ETAPES.map(e=>`<li tabindex="0"><span class="nb">${e.n}</span><div><h3>${e.t}${e.tag?` <span class="badge">${e.tag}</span>`:""}</h3><div class="vcd"><p>${e.r}</p><div class="redac"><p>${e.ex}</p></div><p class="muted"><b>Sur ta copie :</b> ${e.copie}</p></div></div></li>`).join("")}</ol>
+<div class="filters"><button class="btn" id="vcprec">Étape précédente</button><button class="btn pri" id="vcsuiv">Étape suivante</button><button class="btn" id="vctout">Tout afficher</button></div>`)}
+${sec(4,"À toi",`<div class="paper"><p class="muted">TD 2, exercice 2 (a)</p><p>Résoudre $y′ − 3y = e^{2x}$. Ici $a = −3$ (le nombre devant $y$, avec son signe) et $b(x) = e^{2x}$.</p></div><p class="muted">Tes réponses sont gardées, sur l'ordi comme sur le téléphone. Une question ratée du premier coup revient dans « Réviser ».</p><div id="vcq" class="vcq" aria-live="polite"></div>`)}
+${sec(5,"Les pièges",`<ul><li><b>Les deux signes de $A$.</b> À l'étape 2a, c'est $e^{+A}$. À l'étape 2c et dans $(E_{0})$, c'est $e^{−A}$.</li><li><b>Le signe de $a$.</b> Dans $y′ − 3y$, $a = −3$, pas 3.</li><li><b>Oublier $Ce^{−A(x)}$ à la fin.</b> La solution particulière toute seule n'est qu'<b>une</b> solution. L'exercice demande <b>toutes</b> les solutions (étape 3).</li><li><b>La condition initiale trop tôt.</b> On la met sur toutes les solutions, celles avec $C$. Jamais sur la solution particulière seule.</li><li><b>Pour vérifier.</b> Dérive ta solution particulière et remplace dans (E). Avec $y_{p} = xe^{−x}$ : $y_{p}′ = e^{−x} − xe^{−x}$, donc $y_{p}′ + y_{p} = e^{−x}$. C'est bien $b$.</li></ul>`)}
+${sec(6,"D'où vient le nom",`<details class="ex"><summary><span>Pourquoi ça s'appelle « variation de la constante »</span></summary><div class="redac"><p class="muted">Pour comprendre seulement. Dans le corrigé, ton chargé de TD ne refait pas ce calcul : il applique directement la proposition 4.2. Tu peux faire pareil.</p><p>Les solutions de $(E_{0})$ sont $Ce^{−A(x)}$, avec un nombre $C$. L'idée : on remplace ce nombre par une fonction $c(x)$. La « constante » $C$ devient quelque chose qui varie. On essaie donc $y = c(x)e^{−A(x)}$.</p><p>On dérive ce produit. La dérivée de $e^{−A(x)}$ est $−a(x)e^{−A(x)}$, car $A′ = a$. Donc $y′ = c′(x)e^{−A(x)} − a(x)c(x)e^{−A(x)}$.</p><p>On ajoute $a(x)y$ : les deux termes avec $c(x)$ s'en vont, et il reste $y′ + a y = c′(x)e^{−A(x)}$.</p><p>On veut que ce soit égal à $b(x)$. Il faut donc $c′(x) = b(x)e^{A(x)}$, c'est-à-dire : $c$ est une primitive de $be^{A}$. C'est exactement la proposition 4.2.</p></div></details>`)}
+${sec(7,"En résumé",`<div class="recipe"><ol><li>$A$ = une primitive de $a$. Solutions de $(E_{0})$ : $Ce^{−A(x)}$.</li><li>$b(x) × e^{A(x)}$, puis une primitive $c(x)$, puis $y_{p}(x) = c(x) × e^{−A(x)}$.</li><li>Toutes les solutions : $y_{p}(x) + Ce^{−A(x)}$, $C ∈ ℝ$.</li><li>La condition initiale donne $C$.</li></ol></div>`)}`);
+ const L=[...root.querySelectorAll(".vcpas>li")],prec=root.querySelector("#vcprec"),suiv=root.querySelector("#vcsuiv");let k=0;
+ const montre=n=>{k=Math.max(0,Math.min(L.length-1,n));L.forEach((li,j)=>{li.classList.toggle("on",j===k);li.classList.toggle("fait",j<k);li.classList.toggle("apres",j>k);});
+   prec.disabled=k===0;suiv.disabled=k===L.length-1;suiv.textContent=k===L.length-1?"C'est fini":"Étape suivante";};
+ L.forEach((li,j)=>{li.addEventListener("click",()=>montre(j));li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();montre(j);}});});
+ prec.addEventListener("click",()=>montre(k-1));
+ suiv.addEventListener("click",()=>{montre(k+1);L[k].scrollIntoView({block:"nearest",behavior:"smooth"});});
+ root.querySelector("#vctout").addEventListener("click",()=>montre(L.length-1));
+ montre(0);
+ const box=root.querySelector("#vcq");let cur=null,t0=Date.now();
+ const etat=()=>(A.ST[sid].pq||{})[PID]||{};
+ const draw=()=>{const E=etat();let i=cur!=null?cur:Q.findIndex((_,j)=>!(E[j]&&E[j].ok));
+   if(i<0){const prem=Q.filter((_,j)=>E[j]&&E[j].ok&&!E[j].bad.length).length;
+     box.innerHTML=W.tx(`<p class="muted">Terminé</p><p><b>${prem} sur ${Q.length}</b> du premier coup.</p><p>Tu viens de faire l'exercice 2 (a) en entier : les solutions sont $x ↦ Ce^{3x} − e^{2x}$, $C ∈ ℝ$. Avec $y(0) = 0$ : $C − 1 = 0$, donc $C = 1$.</p><div class="filters"><button class="btn" id="vcre">Recommencer</button></div>`);
+     box.querySelector("#vcre").addEventListener("click",()=>{A.emit({k:"pq",s:sid,p:PID,reset:1});cur=null;draw();});return;}
+   const q=Q[i],R=E[i]||{bad:[],ok:false};
+   const cls=j=>R.ok&&j===q.a?"good":R.bad.includes(j)?"bad":"";
+   const fb=R.ok?`<div class="expl"><b>${R.bad.length?"Oui.":"Exact."}</b> ${q.w}</div>`:R.bad.length?`<div class="expl no"><b>Pas celle-là.</b> Réessaie. Indice : ${q.h}</div>`:"";
+   box.innerHTML=W.tx(`<p class="muted">Question ${i+1} sur ${Q.length}</p><p class="lq">${q.q}</p><div class="opts">${q.o.map((o,j)=>`<button data-o="${j}" class="${cls(j)}"${R.ok||R.bad.includes(j)?" disabled":""}>${o}</button>`).join("")}</div><div class="lfb">${fb}</div>${R.ok?`<div class="filters" style="margin-top:12px"><button class="btn pri" id="vcnext">${Q.findIndex((_,j)=>j!==i&&!(E[j]&&E[j].ok))<0?"Voir le résultat":"Question suivante"}</button></div>`:""}`);
+   box.querySelector(".opts").addEventListener("click",e=>{const b=e.target.closest("[data-o]");if(!b||b.disabled)return;const o=+b.dataset.o,ok=o===q.a;
+     A.emit({k:"pq",s:sid,p:PID,q:i,o,ok:ok?1:0});
+     A.logRep({o:"page",s:sid,page:PID,question:i,choix:o,ok:ok?1:0,premiere:R.bad.length?0:1,texte:q.seul,ms:Date.now()-t0});
+     cur=i;draw();});
+   const nx=box.querySelector("#vcnext");if(nx)nx.addEventListener("click",()=>{cur=null;t0=Date.now();draw();box.scrollIntoView({block:"nearest",behavior:"smooth"});});};
+ draw();
+};
 const mIpp=({sec})=>`<div class="title-row"><h1>Méthode : l'intégration par parties</h1></div><p class="lead">Elle sert à intégrer un produit de deux fonctions quand aucune forme « u′ avec u » ne se reconnaît. On l'abrège souvent « IPP ». Elle est tombée aux CC1 de 2023 et de 2025.</p>
  ${sec(1,"Quand s'en servir, et ce qu'il faut savoir avant",`<ul><li><b>Quand</b> : il faut intégrer un produit de deux fonctions de familles différentes. Les cas du cours : polynôme × exponentielle, polynôme × sin ou cos, polynôme × ln, ln tout seul, eˣ × cos x.</li><li><b>Avant</b>, il faut savoir dériver et connaître les primitives de base : celle de eˣ est eˣ, celle de cos x est sin x, celle de sin x est −cos x, celle de xⁿ est xⁿ⁺¹/(n + 1).</li><li><b>Essaie d'abord plus simple</b> : si tu vois une fonction u et sa dérivée u′ à côté (comme dans 2x e<sup>x²</sup>), c'est une primitive directe, pas une intégration par parties.</li></ul>`)}
  ${sec(2,"L'idée",`<p>On coupe le produit en deux morceaux. On <b>dérive</b> l'un, pour le rendre plus simple, et on prend une <b>primitive</b> de l'autre. On échange ainsi l'intégrale de départ contre une autre, plus facile.</p>${F("∫ₐᵇ u(x) v′(x) dx = [u(x) v(x)]ₐᵇ − ∫ₐᵇ u′(x) v(x) dx")}<p>Le crochet [u v]ₐᵇ veut dire : la valeur de u × v en b, moins sa valeur en a.</p>`)}
@@ -8103,7 +8189,8 @@ SUBJ.calc={name:"Calculus",code:"HAX106X",color:"#FFB547",coef:3,share:0.25,key:
  chapters:{1:"1. Fonctions : domaine, limites, dérivées",2:"2. Primitives et intégrales",3:"3. Équations différentielles d'ordre 1",4:"4. Équations différentielles d'ordre 2",6:"5. Nombres complexes"},
  concepts,quiz,td,ann,tdTitle:"Exercices de TD corrigés",tdPrefix:"TD",
  tdIntro:"Toute la feuille 1 (les 30 questions, énoncés recopiés sur la feuille du prof) et les exercices 1 et 2 de la feuille 2, corrigés par moi étape par étape. Les ★★★ ressemblent le plus aux CC. Fais-les sur papier, sans calculatrice, comme au CC.",annIntro:"Corrigés officiels des CC1 2025 et 2023, réécrits avec le barème et la rédaction attendue. J'ai ajouté le problème de la feuille 3 bis (inspiré d'un CC de 2021-2022), corrigé par moi.",
- pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"m-varcst",t:"Méthode : variation de la constante",html:mVarcst},{id:"m-ipp",t:"Méthode : intégration par parties",html:mIpp},{id:"m-chgt",t:"Méthode : changement de variable",html:mChgt},{id:"m-etude",t:"Méthode : étudier une fonction",html:mEtude},{id:"formulaire",t:"Formulaire",html:formulaire},{id:"quiz-formules",t:"S'entraîner : formules et équations différentielles",html:quizCalc}],
+ pageQ:{"m-varcst-trad":VC_Q},
+ pages:[{id:"infos2",t:"Le CC2 en bref",html:infos2},{id:"infos",t:"Le CC1 en bref",html:infos},{id:"recettes",t:"Recettes pas à pas",html:recettes},{id:"m-varcst",t:"Méthode : variation de la constante",html:mVarcst},{id:"m-varcst-trad",t:"Variation de la constante : la traduction du cours",render:mVarcstTrad},{id:"m-ipp",t:"Méthode : intégration par parties",html:mIpp},{id:"m-chgt",t:"Méthode : changement de variable",html:mChgt},{id:"m-etude",t:"Méthode : étudier une fonction",html:mEtude},{id:"formulaire",t:"Formulaire",html:formulaire},{id:"quiz-formules",t:"S'entraîner : formules et équations différentielles",html:quizCalc}],
  /* thèmes du CC1 et leur poids moyen dans les CC de 2023 et 2025 (sur 20). self0 : ce qu'il a dit le 11/11
     (« juste me rappeler les formules », « mieux comprendre les équa diff ») ; le mini-contrôle peut le contredire. */
  themes:[
@@ -19503,6 +19590,83 @@ function redacAdj(R){let S;do S=croisees(R);while(!S.haut);const kT=nb(S.k),[u2,
     texte:`u₀ = ${nb(S.a)}, v₀ = ${nb(S.b)}, ${S.ru}, ${S.rv} : l'exercice complet (premiers termes, somme constante, différence géométrique, encadrement, limite commune)`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
     etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`limite commune ${nb(S.l)}`,repBonne:{},nature:"papier",ens:{type:"adjp",pas:S.pas,l:S.l.n/S.l.d,u2:u2.n/u2.d,v2:v2.n/v2.d,k:S.k.n/S.k.d}};}
 
+/* ---------- AN6 : suite récurrente uₙ₊₁ = f(uₙ) ---------- */
+const INDT=["₀","₁","₂","₃"],qv=x=>x.n/x.d;
+/* f donnée par : expr (avec uₙ), F (calcul exact), calc(x) (le calcul écrit avec la valeur x) */
+function relation(R,sortes){const k=R.choix(sortes);
+  if(k==="aff"){const [p,qq]=R.choix([[1,2],[1,3],[2,3],[3,2],[2,1],[3,1],[-1,2],[-1,3]]),m=R.nz(-9,9),pu=(Math.abs(p)===1?(p<0?"−":""):p)+"uₙ",ms=(m>0?" + ":" − ")+Math.abs(m);
+    return {sig:"aff"+[p,qq,m],expr:qq===1?pu+ms:`(${pu}${ms})/${qq}`,F:x=>div(add(mul(p,x),m),qq),calc:x=>qq===1?`${Math.abs(p)===1?(p<0?"−":""):p+" × "}${par(x)}${ms}`:`(${Math.abs(p)===1?(p<0?"−":""):p+" × "}${par(x)}${ms})/${qq}`};}
+  if(k==="hom"){const a=R.nz(-6,6),b=R.ent(1,6);return {sig:"hom"+[a,b],expr:`${nb(a)}/(uₙ + ${b})`,F:x=>div(a,add(x,b)),calc:x=>`${nb(a)}/(${nb(x)} + ${b})`};}
+  const c=R.ent(1,6);return {sig:"car"+c,expr:`uₙ² − ${c}`,F:x=>sub(mul(x,x),c),calc:x=>`${par(x)}² − ${c}`};}
+function premiers(R){for(;;){const f=relation(R,["aff","aff","hom","car"]),u0=R.ent(-4,6),T=[Q(u0)];let ok=true;
+  for(let i=0;i<3;i++){const x=T[i];if(f.sig.startsWith("hom")&&qv(add(x,+f.sig.split(",")[1]))===0){ok=false;break;}T.push(f.F(x));}
+  if(!ok||T.some(x=>Math.abs(x.n)>300||x.d>300)||egal(T[1],T[0]))continue;
+  const E=[1,2,3].map(i=>({w:`<b>${fx(`u${INDT[i]} = ${nb(T[i])}`)}</b>`,why:`On remplace ${fx("uₙ")} par ${fx(`u${INDT[i-1]} = ${nb(T[i-1])}`)} dans la relation : ${fx(`u${INDT[i]} = ${f.calc(T[i-1])}`)}.`,pts:1}));
+  function juge(rep){const V=[1,2,3].map(i=>nombre((rep.c||{})["u"+INDT[i]]));if(V.some(x=>!x))return {incomplet:"Remplis les trois cases avec des nombres, par exemple 5/2 ou -3."};
+    const F=[1,2,3].filter(i=>!egal(V[i-1],T[i]));if(!F.length)return {ok:true};const i=F[0],suite=i<3&&egal(V[i],f.F(V[i-1]));
+    return {ok:false,faux:F.map(j=>"u"+INDT[j]),resume:`Pas tout à fait : ${et(F.map(j=>"u"+INDT[j]))} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:i-1,type:"calcul d'un terme avec la relation de récurrence",titre:`Où ça part : le calcul de u${INDT[i]}.`,msg:`${fx(`u${INDT[i]} = ${f.calc(T[i-1])}`)}, ce qui donne ${fx(nb(T[i]))}.${suite?" Le terme suivant est calculé à partir de celui-ci : ton calcul d'après est juste, mais il part d'une valeur fausse.":""}`}};}
+  const bon={};[1,2,3].forEach(i=>{bon["u"+INDT[i]]=brut(T[i]);});
+  return {sig:"PT"+f.sig+","+u0,q:`La suite (uₙ) est définie par ${fx(`u₀ = ${nb(u0)}`)} et, pour tout entier naturel n, ${fx(`uₙ₊₁ = ${f.expr}`)}. Calcule u₁, u₂ et u₃.`,corps:"",texte:`u₀ = ${nb(u0)}, uₙ₊₁ = ${f.expr} ; calculer u₁, u₂, u₃`,
+    champs:[{k:"cases",id:"c",noms:["u₁","u₂","u₃"]}],juge,etapes:E,bonne:[1,2,3].map(i=>fx(`u${INDT[i]} = ${nb(T[i])}`)).join(", "),bonneTxt:[1,2,3].map(i=>`u${INDT[i]} = ${nb(T[i])}`).join(", "),
+    repBonne:{c:bon},repFausse:{c:Object.assign({},bon,{"u₂":brut(add(T[2],1))})},nature:f.sig.slice(0,3),ens:{type:"termes",f:x=>qv(f.F(Q(Math.round(x*1e6),1e6))),u0,F:f.F}};}}
+/* les limites possibles : on passe à la limite dans la relation */
+function limitePossible(R){const t=R(),positif=R()<0.6;let expr,eq,sol,garde,f,resol,dom="";
+  if(t<0.3){const [p,qq]=R.choix([[1,2],[1,3],[2,3],[3,4],[1,4],[3,2],[2,1],[3,1]]),l=R.ent(-6,6),m=l*(qq-p),pu=(p===1?"":p)+"uₙ",pl=(p===1?"":p)+"ℓ",ms=m?(m>0?" + ":" − ")+Math.abs(m):"";
+    expr=qq===1?pu+ms:`(${pu}${ms})/${qq}`;eq=qq===1?`ℓ = ${pl}${ms}`:`${qq}ℓ = ${pl}${ms}`;sol=[l];garde=[l];f=x=>(p*x+m)/qq;resol=`${fx(`${comb([qq-p],["ℓ"])} = ${nb(m)}`)}, donc ${fx(`ℓ = ${nb(l)}`)}`;}
+  else if(t<0.55){const r=R.ent(1,6),sv=R.ent(1,6),a=r*sv,b=sv-r;expr=`${a}/(uₙ${b?(b>0?" + ":" − ")+Math.abs(b):""})`;eq=`ℓ(ℓ${b?(b>0?" + ":" − ")+Math.abs(b):""}) = ${a}`;sol=[r,-sv];garde=positif?[r]:[r,-sv];f=x=>a/(x+b);
+    resol=`${fx(`ℓ²${b?(b>0?" + ":" − ")+(Math.abs(b)===1?"":Math.abs(b))+"ℓ":""} − ${a} = 0`)}, c'est-à-dire ${fx(`(ℓ − ${r})(ℓ + ${sv}) = 0`)}`;dom=positif?"pos":"";}
+  else if(t<0.8){const r=R.ent(2,7),sv=R.ent(1,r-1),a=r-sv,c=r*sv;expr=`√(${a===1?"":a}uₙ + ${c})`;eq=`ℓ² = ${a===1?"":a}ℓ + ${c}`;sol=[r,-sv];garde=[r];f=x=>Math.sqrt(a*x+c);
+    resol=`${fx(`ℓ² − ${a===1?"":a}ℓ − ${c} = 0`)}, c'est-à-dire ${fx(`(ℓ − ${r})(ℓ + ${sv}) = 0`)}`;dom="rac";}
+  else{const k=R.ent(1,5);expr=`uₙ/2 + ${k*k}/uₙ`;eq=`ℓ/2 = ${k*k}/ℓ`;sol=[k*Math.SQRT2,-k*Math.SQRT2];garde=positif?[sol[0]]:sol;f=x=>x/2+k*k/x;resol=`${fx(`ℓ² = ${2*k*k}`)}`;dom=positif?"pos":"";
+    sol.T=[`${k===1?"":k}√2`,`−${k===1?"":k}√2`];}
+  const T=x=>sol.T?sol.T[sol.indexOf(x)]:nb(x),tapeV=x=>sol.T?(x<0?"-":"")+String(Math.abs(Math.round(x/Math.SQRT2)))+"*√2":String(x),ecarte=sol.filter(x=>!garde.includes(x));
+  const E=[{w:`On passe à la limite dans la relation : ${fx(eq)}.`,why:`Si ${fx("uₙ")} tend vers ℓ, alors ${fx("uₙ₊₁")} aussi : les deux côtés de la relation ont la même limite.${dom==="rac"?" On élève ensuite au carré pour enlever la racine.":sol.length>1&&!sol.T?" On multiplie ensuite par le dénominateur.":""}`,pts:1},
+    {w:`${resol}${sol.length>1?` : ${sol.map(x=>fx(`ℓ = ${T(x)}`)).join(" ou ")}`:""}.`,why:sol.length>1?"Un produit est nul quand l'un de ses facteurs est nul : l'équation a deux solutions.":"C'est une équation du premier degré : une seule solution.",pts:1},
+    {w:`<b>${garde.length>1?"Les deux valeurs sont possibles":`La seule valeur possible est ${fx(`ℓ = ${T(garde[0])}`)}`}.</b>`,why:ecarte.length?(dom==="rac"?`Une racine carrée est positive ou nulle : tous les termes à partir de u₁ le sont, donc ℓ aussi. On écarte ${fx(T(ecarte[0]))}.`:`Tous les termes sont strictement positifs, donc leur limite est positive ou nulle. On écarte ${fx(T(ecarte[0]))}.`):sol.length>1?"Rien dans l'énoncé ne permet d'écarter l'une des deux : cela dépend du premier terme.":"Ce calcul donne la valeur de la limite, pas son existence : ici on a admis que la suite converge.",pts:1}];
+  function juge(rep){const P=propre(rep.l).split(/;|\bet\b|\bou\b/).map(x=>x.trim()).filter(Boolean);if(!P.length)return {incomplet:"Écris la ou les valeurs possibles de ℓ, séparées par un point-virgule, par exemple 3 ; -2."};
+    const V=P.map(x=>O.calcule(x,{}));if(V.some(x=>x===null||!Number.isFinite(x)))return {incomplet:"Je n'arrive pas à lire ces nombres. Sépare-les par un point-virgule, par exemple 3 ; -2 ou 2√2."};
+    const a=(A,B)=>A.every(x=>B.some(y=>Math.abs(x-y)<1e-9));if(a(V,garde)&&a(garde,V))return {ok:true};
+    const d=a(V,sol)&&a(sol,V)&&ecarte.length?{etape:2,type:"solution à écarter grâce aux bornes de la suite",titre:"Où ça part : le choix de la solution.",msg:`L'équation a bien deux solutions, mais ${fx(T(ecarte[0]))} est impossible ici : ${dom==="rac"?"une racine carrée n'est jamais négative":"tous les termes sont strictement positifs"}.`}
+      :a(V,garde)&&V.length<garde.length?{etape:1,type:"deuxième solution oubliée",titre:"Où ça part : la résolution.",msg:`L'équation a deux solutions, et rien ne permet d'en écarter une : ${garde.map(x=>fx(T(x))).join(" et ")}.`}
+      :a(V,sol)&&garde.length===1?{etape:2,type:"mauvaise solution gardée",titre:"Où ça part : le choix de la solution.",msg:`La valeur à garder est ${fx(T(garde[0]))} : la limite doit être positive ou nulle.`}
+      :{etape:1,type:"résolution de l'équation obtenue en passant à la limite",titre:"Où ça part : la résolution.",msg:`${resol} : ${sol.map(x=>fx(T(x))).join(" ou ")}.`};
+    return {ok:false,faux:["l"],resume:"Pas tout à fait : ce ne sont pas les bonnes valeurs.",diag:d};}
+  const faux=ecarte.length?sol.map(tapeV).join(" ; "):sol.length>1?tapeV(sol[0]):String(sol[0]+1);
+  return {sig:"LP"+expr+dom,q:`Une suite (uₙ) vérifie ${fx(`uₙ₊₁ = ${expr}`)} pour tout entier naturel n${dom==="pos"?", et tous ses termes sont strictement positifs":""}. On admet qu'elle converge vers un réel ℓ. Quelles sont les valeurs possibles de ℓ ? S'il y en a plusieurs, sépare-les par un point-virgule.`,corps:"",
+    texte:`uₙ₊₁ = ${expr}${dom==="pos"?" (termes strictement positifs)":""} ; valeurs possibles de la limite ℓ`,champs:[{k:"champ",id:"l",nom:"ℓ",label:"$ℓ =$",ex:"par exemple 3 ; -2",sym:[["√","√"],[";"," ; "],["/","/"]]}],juge,etapes:E,
+    bonne:garde.map(x=>fx(`ℓ = ${T(x)}`)).join(" ou "),bonneTxt:garde.map(x=>`ℓ = ${T(x)}`).join(" ou "),repBonne:{l:garde.map(tapeV).join(" ; ")},repFausse:{l:faux},nature:sol.length>1?(ecarte.length?"une des deux":"les deux"):"une seule",
+    ens:{type:"fixe",f,garde,sol,dom}};}
+/* f affine : sens de variation et limite */
+const SENS1=[["c","croissante"],["d","décroissante"],["n","ni l'un ni l'autre"]];
+function affineSens(R){const [p,qq]=R.choix([[1,2],[1,3],[2,3],[3,4],[1,4],[2,1],[3,1],[3,2],[-1,2],[-1,3],[-2,3]]),l=R.ent(-6,6),m=l*(qq-p),a=p/qq,u0=l+R.nz(-6,6),pu=(Math.abs(p)===1?(p<0?"−":""):p)+"uₙ",ms=m?(m>0?" + ":" − ")+Math.abs(m):"";
+  const expr=qq===1?pu+ms:`(${pu}${ms})/${qq}`,aT=nb(Q(p,qq)),haut=u0>l,sens=a<0?"n":a<1?(haut?"d":"c"):(haut?"c":"d"),L=Math.abs(a)<1?{v:Q(l)}:{inf:haut?1:-1},ec=moins("uₙ",l),e0=u0-l;
+  const E=[{w:`La seule limite finie possible est ${fx(nb(l))}.`,why:`On passe à la limite dans la relation : ${fx(qq===1?`ℓ = ${(p===1?"":p)+"ℓ"}${ms}`:`${qq}ℓ = ${(Math.abs(p)===1?(p<0?"−":""):p)+"ℓ"}${ms}`)}, ce qui donne ${fx(`ℓ = ${nb(l)}`)}.`,pts:1},
+    {w:`${fx(`${moins("uₙ₊₁",l)} = ${aT} × (${ec})`)}, donc ${fx(`${ec} = ${nb(e0)} × (${aT})ⁿ`)}.`,why:l?`${l<0?`On ajoute ${fx(nb(-l))} aux`:`On retire ${fx(nb(l))} des`} deux côtés de la relation et on factorise. L'écart à ${fx(nb(l))} est multiplié par ${fx(aT)} à chaque rang : c'est une suite géométrique, de premier terme ${fx(`u₀ − ${par(l)} = ${nb(e0)}`)}.`:`La relation dit que chaque terme vaut le précédent multiplié par ${fx(aT)} : c'est une suite géométrique, de premier terme ${fx(`u₀ = ${nb(e0)}`)}.`,pts:1},
+    {w:`<b>La suite ${sens==="n"?"n'est ni croissante ni décroissante":"est "+mot(sens==="c"?1:-1)}.</b>`,why:a<0?`La raison ${fx(aT)} est négative : l'écart change de signe à chaque rang, les termes passent d'un côté à l'autre de ${fx(nb(l))}.`:`L'écart ${fx(ec)} reste ${haut?"positif":"négatif"}, et il est multiplié par ${fx(aT)}, qui est ${a<1?"entre 0 et 1 : il se rapproche de 0":"plus grand que 1 : il s'éloigne de 0"}. Les termes ${sens==="c"?"augmentent":"diminuent"}.`,pts:1},
+    {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:Math.abs(a)<1?`${fx(`(${aT})ⁿ`)} tend vers 0, car la raison est strictement entre −1 et 1 : l'écart à ${fx(nb(l))} tend vers 0.`:`${fx(`(${aT})ⁿ`)} tend vers +∞, et on le multiplie par ${fx(nb(e0))}, qui est ${haut?"positif":"négatif"}.`,pts:1}];
+  function juge(rep){if(!rep.sens)return {incomplet:"Choisis d'abord le sens de variation."};const lu=lisLim(rep.lim);if(!lu)return {incomplet:"Écris la limite : un nombre, +∞, −∞ ou « pas de limite »."};
+    const okS=rep.sens===sens,okL=memeLim(lu,L),F=[];if(okS&&okL)return {ok:true};if(!okS)F.push("sens");if(!okL)F.push("lim");
+    const d=!okS?{etape:2,type:a<0?"suite qui oscille crue monotone":"sens de variation d'une suite arithmético-géométrique",titre:"Où ça part : le sens de variation.",msg:a<0?`La raison ${fx(aT)} est négative : les termes passent d'un côté à l'autre de ${fx(nb(l))}, la suite ne monte ni ne descend.`:`Le premier terme ${fx(nb(u0))} est ${haut?"au-dessus":"en dessous"} de ${fx(nb(l))}, et l'écart ${a<1?"se réduit":"grandit"} : les termes ${sens==="c"?"augmentent":"diminuent"}.`}
+      :{etape:3,type:Math.abs(a)<1?"limite d'une suite dont l'écart tend vers 0":"raison plus grande que 1 : limite infinie",titre:"Où ça part : la limite.",msg:Math.abs(a)<1?`L'écart à ${fx(nb(l))} est multiplié par ${fx(aT)} à chaque rang : il tend vers 0, donc la suite tend vers ${fx(nb(l))}.`:`L'écart à ${fx(nb(l))} est multiplié par ${fx(aT)} à chaque rang : il grandit sans s'arrêter, et la suite tend vers ${limT(L)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"le sens de variation et la limite sont à revoir":F[0]==="sens"?"le sens de variation est à revoir":"la limite est à revoir"}.`,diag:d};}
+  const lt=L.inf?(L.inf>0?"+∞":"-∞"):String(l);
+  return {sig:"AS"+[p,qq,l,u0],q:`La suite (uₙ) est définie par ${fx(`u₀ = ${nb(u0)}`)} et, pour tout entier naturel n, ${fx(`uₙ₊₁ = ${expr}`)}. Quel est son sens de variation ? Quelle est sa limite ?`,corps:"",texte:`u₀ = ${nb(u0)}, uₙ₊₁ = ${expr} ; sens de variation et limite`,
+    champs:[{k:"choix",id:"sens",o:SENS1},{k:"champ",id:"lim",nom:"limite",label:"$lim uₙ =$",ex:"un nombre, +∞, −∞, pas de limite",sym:LIMS}],juge,etapes:E,
+    bonne:`${sens==="n"?"ni croissante ni décroissante":mot(sens==="c"?1:-1)} ; ${fx(`lim uₙ = ${limT(L)}`)}`,bonneTxt:`${sens==="n"?"ni croissante ni décroissante":mot(sens==="c"?1:-1)} ; limite ${limT(L)}`,repBonne:{sens,lim:lt},repFausse:{sens:sens==="c"?"d":"c",lim:lt},nature:a<0?"oscille":a<1?"converge":"diverge",
+    ens:{type:"affine",f:x=>(p*x+m)/qq,u0,sens,lim:L.inf?L.inf*Infinity:l}};}
+/* l'étude complète sur papier, comme l'exercice 2 du CC1 2024 */
+function redacRecurrente(R){const r=R.ent(2,7),sv=R.ent(1,r-1),a=r-sv,c=r*sv,bas=R()<0.6,u0=bas?R.ent(0,r-1):r+R.ent(1,6),au=(a===1?"":a)+"uₙ",rac=`√(${au} + ${c})`,P=bas?`0 ≤ uₙ ≤ ${r}`:`uₙ ≥ ${r}`;
+  const lignes=[[`a) Par récurrence. Initialisation : ${fx(`u₀ = ${u0}`)} vérifie bien ${fx(P.replace("uₙ","u₀"))}.`,`On annonce la récurrence, puis on vérifie la propriété au premier rang.`,0.5],
+    [`Hérédité : si ${fx(P)}, alors ${fx(bas?`${c} ≤ ${au} + ${c} ≤ ${r*r}`:`${au} + ${c} ≥ ${r*r}`)}, donc ${fx(P.replace("uₙ","uₙ₊₁"))}.`,`On multiplie par ${a} et on ajoute ${c} : ${fx(`${a} × ${r} + ${c} = ${r*r}`)}. Puis la racine carrée garde l'ordre, et ${fx(`√${r*r} = ${r}`)}.`,1],
+    [`b) ${fx(`uₙ₊₁ − uₙ = (${au} + ${c} − uₙ²)/(${rac} + uₙ)`)}.`,`On multiplie et on divise par la quantité conjuguée ${fx(`${rac} + uₙ`)}, qui est strictement positive.`,0.5],
+    [`${fx(`${au} + ${c} − uₙ² = (${r} − uₙ)(uₙ + ${sv})`)}, qui est ${bas?"positif":"négatif"} d'après a) : la suite est ${bas?"croissante":"décroissante"}.`,`On factorise le numérateur. ${bas?`Comme uₙ est entre 0 et ${r}, les deux facteurs sont positifs.`:`Comme uₙ est au moins égal à ${r}, le premier facteur est négatif et le second positif.`}`,1],
+    [`c) La suite est ${bas?`croissante et majorée par ${r}`:`décroissante et minorée par ${r}`} : elle converge, vers un réel ℓ${bas?" positif ou nul":` au moins égal à ${r}`}.`,`C'est le théorème de la limite monotone. Les inégalités larges passent à la limite.`,0.5],
+    [`On passe à la limite dans la relation : ${fx(`ℓ = √(${a===1?"":a}ℓ + ${c})`)}, donc ${fx(`(ℓ − ${r})(ℓ + ${sv}) = 0`)}. Comme ℓ est positif : <b>${fx(`ℓ = ${r}`)}</b>.`,`On élève au carré, on passe tout du même côté et on factorise. La solution ${fx(nb(-sv))} est écartée grâce à l'encadrement du a).`,1]];
+  return {sig:"RR"+[r,sv,u0],q:`La suite (uₙ) est définie par ${fx(`u₀ = ${u0}`)} et, pour tout entier naturel n, ${fx(`uₙ₊₁ = ${rac}`)}.`,
+    corps:`<ol type="a"><li>Montre que, pour tout n, ${fx(P)}.</li><li>Montre que la suite (uₙ) est ${bas?"croissante":"décroissante"}.</li><li>Montre que la suite (uₙ) converge, et calcule sa limite.</li></ol>`,
+    texte:`u₀ = ${u0}, uₙ₊₁ = ${rac} : encadrement par récurrence, sens de variation, convergence et limite`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),etapes:lignes.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:"voir la rédaction",bonneTxt:`suite ${bas?"croissante et majorée":"décroissante et minorée"} par ${r}, limite ${r}`,repBonne:{},nature:bas?"croissante":"décroissante",ens:{type:"recp",f:x=>Math.sqrt(a*x+c),u0,r,bas}};}
+
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
   paliers:[
@@ -19536,7 +19700,13 @@ G.add("ana",[
    {t:"le sens de variation avec uₙ₊₁ − uₙ",cc:4,gen:sensDeux},
    {t:"la différence vₙ − uₙ et sa limite",cc:3,gen:ecartDeux},
    {t:"deux suites liées : premiers termes, sens, limite commune",cc:8,gen:adjacentes},
-   {t:"l'exercice complet, sur papier, comme au CC",cc:18,gen:redacAdj}]}
+   {t:"l'exercice complet, sur papier, comme au CC",cc:18,gen:redacAdj}]},
+ {id:"AN6",t:"Suite récurrente : termes, sens de variation, limite",tache:"suite récurrente",th:"monotone",pts:1.5,lecons:["a-monotone"],
+  paliers:[
+   {t:"calculer les premiers termes",cc:3,gen:premiers},
+   {t:"les limites possibles : passer à la limite dans la relation",cc:3,gen:limitePossible,min:60},
+   {t:"sens de variation et limite, relation du premier degré",cc:4,gen:affineSens},
+   {t:"l'étude complète, sur papier, comme au CC",cc:12,gen:redacRecurrente,min:110}]}
 ]);
 })();
 
@@ -19591,6 +19761,9 @@ function cardOf(sid,cid){
       return {f:`${s.q}${s.show?W.code(s.show,s.showLang||"txt"):""}${show(fill(()=>"____"))}`,b:`${show(fill((m,n)=>s.b[+n].o[s.b[+n].a]))}${ex}`,src,link};}
     if(s.k==="order")return {f:`${s.q}${s.show?W.code(s.show,s.showLang||"txt"):""}<p class="muted">Écris-le sur une feuille, sans regarder.</p>`,b:`${s.lang==="txt"?`<ol class="par-sol">${s.lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ol>`:W.code(s.lines.join("\n"),lang)}${ex}`,src,link};
     return null;}
+  if(cid.indexOf("p:")===0){/* une question ratée sur une page (QCM de la page) : la question écrite pour se comprendre seule */
+    const [pid,i]=cid.slice(2).split("#"),S=SUBJ[sid],P=S.pages.find(x=>x.id===pid),q=((S.pageQ||{})[pid]||[])[+i];if(!P||!q)return null;
+    return {f:W.tx(q.seul||q.q),b:W.tx(`<p><b>${q.o[q.a]}</b></p><p>${q.w}</p>`),src:`Question ratée · page : ${P.t}`,link:`#/${sid}/p/${pid}`};}
   if(cid.indexOf("q:")===0){/* une question ratée au quiz ou au mini-contrôle : la question, puis la bonne réponse et la fiche au dos */
     const r=quizQ(sid,cid.slice(2));if(!r)return null;const q=r.q,S=SUBJ[sid],F=q.link&&S.BY[q.link],o=(ST[sid].cards[cid]||{}).o,lang=q.lang||S.lang||"txt";
     return {f:`${q.q}${q.code?W.code(q.code,lang):""}`,b:`<p><b>${q.o[q.a]}</b></p>${q.e?`<p>${q.e}</p>`:""}${F?`<p><b>La fiche « ${F.short||F.t} » :</b> ${F.plain||""}</p>`:""}`,
@@ -20617,7 +20790,7 @@ let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArr
 const persistJ=()=>{try{localStorage.setItem(JKEY,JSON.stringify(J));}catch(e){}};
 const ST={};
 function cardIds(sid,lid){const L=(LES[sid]||[]).find(x=>x.id===lid);if(!L)return [];const out=[];let n=0;L.steps.forEach(st=>{if(st.k==="card")out.push(lid+"#"+(n++));});return out;}
-function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{},prio:{},jv:{}};}
+function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{},prio:{},jv:{},pq:{}};}
 /* ce qu'on sait d'un thème : chaque réponse (mini-contrôle, quiz, carte, erreur en leçon) ajoute une preuve.
    Une preuve perd la moitié de son poids en 3 jours ; un nouveau mini-contrôle divise encore les anciennes par 2. */
 const jnum=d=>{const[y,m,j]=d.split("-").map(Number);return Math.round(Date.UTC(y,m-1,j)/864e5);};
@@ -20649,6 +20822,11 @@ function applyEv(e){
     if(e.dur&&L.n===1){const B=(LES[e.s]||[]).find(x=>x.id===e.l);if(B&&B.min){const r=Math.min(8,Math.max(1,e.dur/B.min));(SPEED.by[e.s]=SPEED.by[e.s]||[]).push(r);SPEED.all.push(r);}}cardIds(e.s,e.l).forEach(c=>{if(!st.cards[c]){st.cards[c]={box:0,n:0,due:addDays(day,1)};neuve(day);}});}
   else if(e.k==="miss"){/* question ratée dans une leçon : une carte « m:leçon#écran », à revoir le jour même */const id="m:"+e.l+"#"+e.q;if(!st.cards[id])neuve(day);const c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;delete st.jv[id];const th=themeDe(SUBJ[e.s],e.l);if(th)preuve(st,th,0,1,day);}
   else if(e.k==="qm"){/* question ratée au quiz ou au mini-contrôle mélangé : une carte « q:question », à revoir le jour même */const id="q:"+e.q;if(!st.cards[id])neuve(day);const c=st.cards[id]||{n:0};c.box=0;c.due=day;c.o=e.o;if(e.c)c.f=e.c;st.cards[id]=c;delete st.jv[id];}
+  else if(e.k==="pq"){/* QCM d'une page (variation de la constante…) : réponses gardées ; ratée au premier essai = carte « p:page#question » */
+    if(e.reset)st.pq[e.p]={};
+    else{const P=st.pq[e.p]||(st.pq[e.p]={}),R=P[e.q]||(P[e.q]={bad:[],ok:false});
+      if(e.ok)R.ok=true;else if(!R.bad.includes(e.o)){R.bad.push(e.o);
+        if(R.bad.length===1&&!R.ok){const id="p:"+e.p+"#"+e.q;if(!st.cards[id])neuve(day);const c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;delete st.jv[id];}}}}
   else if(e.k==="jv"){/* « Jamais vu » dans Réviser : la carte attend la leçon qui l'explique, placée en tête du planning */st.jv[e.c]=e.l||true;if(e.l)st.prio[e.l]=e.t;}
   else if(e.k==="niv"){st.niv=e.v||0;}
   else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n)preuve(st,e.th,e.ok,e.n,day,e.run,true);}
