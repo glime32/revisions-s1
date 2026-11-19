@@ -22654,6 +22654,97 @@ function angleVec(R){const t=R.choix(["1/4","3/4","1/2","quel","quel"]);let a,b,
   return {sig:"AV"+JSON.stringify([a,b,x2,y2]),q:`Dans une base orthonormée, on considère les vecteurs ${vv("u")} de coordonnées ${fx(`(${a}, ${b})`)} et ${vv("v")} de coordonnées ${fx(`(${x2}, ${y2})`)}. Calcule le cosinus de l'angle entre ${vv("u")} et ${vv("v")}${rem?", puis cet angle (entre 0 et π)":""}.`,corps:`<p>Rappel : ${RAP_RAD}</p>`,
     texte:`u (${a}, ${b}), v (${x2}, ${y2}) ; cosinus de l'angle${rem?" puis l'angle":""}`,champs:[champL("cos","cosinus","cos(angle) =","par exemple -√2/2")].concat(rem?[champA("ang","angle","angle =")]:[]),juge,etapes:E,
     bonne:`cos(angle) ${fx("= "+ecrit(co))}${rem?` et angle ${fx("= "+angT(th))}`:""}`,bonneTxt:`cos = ${ecrit(co)}${rem?` ; angle = ${angT(th)}`:""}`,repBonne:repB,repFausse:Object.assign({},repB,{cos:String(n===0?1:n)}),nature:rem?"angle entre deux vecteurs":"cosinus de l'angle",ens:{k:"ang",u:[a,b],v:[x2,y2],rem}};}
+
+/* ---------- GE4 : angle au centre, angle inscrit (théorème 5.2.1, corollaires 5.2.3 et 5.2.5, remarque 5.2.4) ---------- */
+const surC=t=>[Math.cos(t),Math.sin(t)],RAP_C="Rappel : un angle inscrit a son sommet sur le cercle ; l'angle au centre a son sommet au centre O.";
+const tireAl=(R,max)=>{for(;;){const N=R.choix(DENS4);const a=Q(R.ent(1,N-1),N);if(ok12(a)&&a.n*12<=max*a.d)return a;}};
+const centreAB=(al,t)=>{const th=2*angV(al),f0=-Math.PI/2-th/2;return {O:[0,0],A:surC(f0),B:surC(f0+th),M:surC(f0+th+t*(2*Math.PI-th))};};
+const E5_2_1={w:`A, B et M sont sur le cercle C de centre O, et M est distinct de A et B : d'après le théorème 5.2.1 de l'angle au centre, ${an("AOB")} = 2${an("AMB")} [2π].`,why:"C'est le théorème de l'angle au centre, écrit avec des angles orientés.",pts:1};
+const moitie=`M et O sont du même côté de (AB) : les deux angles tournent dans le même sens, donc en mesure ${absAn("AOB")} ${fx("= 2 ×")} ${absAn("AMB")}`,whyM="Quand M est sur l'arc du même côté que le centre, l'angle inscrit mesure la moitié de l'angle au centre. Sur l'autre arc, il vaudrait π moins cette moitié (remarque 5.2.4).";
+const ensC=(P,don,ch,plus)=>({P,don,c:[["cerc","O"].concat(Object.keys(P).filter(n=>n!=="O"))].concat(plus||[]),ch});
+
+function centreInscrit(R){const k=R.choix(["ci","ci","ic","dia"]);
+  if(k==="dia"){const x=tireAl(R,5),P={O:[0,0],A:[-1,0],B:[1,0],M:surC(2*angV(x))},V=sub(DEMI,x);
+    const E=[{w:`M est sur le cercle de diamètre [AB] : d'après le corollaire 5.2.5, le triangle AMB est rectangle en M, ${absAn("AMB")} ${fx("= π/2")}.`,why:"C'est le cercle de diamètre fixé : un point du cercle, autre que A et B, voit le diamètre sous un angle droit.",pts:1},
+      {w:`<b>Somme des angles du triangle AMB : ${absAn("MBA")} ${fx("= "+chaine([[1,PI],[-1,DEMI],[-1,x]]).t)}.</b>`,why:"Proposition 2.4.2 : on retire de π l'angle droit et l'angle connu.",pts:1}];
+    return unAngle({nom:"MBA",x:V,autre:sub(PI,x),etapes:E,sig:"CD"+brut(x),q:`Soit C le cercle de diamètre [AB], et M un point de C distinct de A et de B, tel que ${egA("MAB",x)}. Calcule ${absAn("MBA")}.`,
+      corps:figure(P,{cercles:[["O",1]],seg:[["A","B"],["A","M"],["M","B"]],points:["O","A","B","M"],angles:[["M","A","B",angT(x),16],["A","B","M","?",16]],alt:"Le cercle de diamètre [AB] et le point M"})+`<p>Rappel : le cercle de diamètre [AB] a pour centre le milieu O de [AB]. ${RAP_RAD}</p>`,
+      texte:`cercle de diamètre [AB], M sur le cercle, angle MAB = ${angT(x)} ; calculer l'angle MBA`,nature:"cercle de diamètre",
+      pieges:[[sub(PI,x),0,"angle droit oublié","Où ça part : l'angle en M.","Le triangle AMB est rectangle en M (corollaire 5.2.5) : il faut retirer π/2 aussi."],[x,0,"triangle cru isocèle","Où ça part : les angles du triangle.","Rien ne dit que MA = MB : les deux angles en A et en B ne sont pas égaux en général, ils font ensemble π/2."]],
+      ens:ensC(P,[["M","A","B",angV(x)]],{x:["A","B","M"]},[["entre","O","A","B"],["eg","O","A","O","B"]])});}
+  const al=tireAl(R,5),th=mul(al,2),P=centreAB(al,R.choix([0.35,0.5,0.65])),ci=k==="ci";
+  const fig=figure(P,{cercles:[["O",1]],seg:[["O","A"],["O","B"],["M","A"],["M","B"]],tirets:[["A","B"]],points:["O","A","B","M"],angles:[["A","O","B",ci?angT(th):"?",14],["A","M","B",ci?"?":angT(al),16]],alt:"Le cercle de centre O, l'angle au centre AOB et l'angle inscrit AMB"});
+  const E=[E5_2_1,{w:`<b>${moitie} : ${ci?`${absAn("AMB")} ${fx(`= 1/2 × ${angT(th)} = ${angT(al)}`)}`:`${absAn("AOB")} ${fx(`= 2 × ${angT(al)} = ${angT(th)}`)}`}.</b>`,why:whyM,pts:1}];
+  return unAngle({nom:ci?"AMB":"AOB",x:ci?al:th,autre:ci?th:al,etapes:E,sig:"CI"+JSON.stringify([k,brut(al)]),
+    q:`Soit C un cercle de centre O, et A, B deux points de C tels que ${ci?egA("AOB",th):`la droite (AB) ne passe pas par O`}. Soit M un point de C, du même côté de la droite (AB) que O${ci?"":`, tel que ${egA("AMB",al)}`}. Calcule ${absAn(ci?"AMB":"AOB")}.`,corps:fig+`<p>${RAP_C} ${RAP_RAD}</p>`,
+    texte:`cercle de centre O, ${ci?`angle AOB = ${angT(th)}`:`angle AMB = ${angT(al)}`}, M du même côté de (AB) que O ; calculer l'angle ${ci?"AMB":"AOB"}`,nature:ci?"angle inscrit":"angle au centre",
+    pieges:ci?[[th,1,"angle au centre recopié","Où ça part : la moitié.","L'angle inscrit est la moitié de l'angle au centre, pas le même angle."],[sub(PI,al),1,"mauvais arc","Où ça part : l'arc.","M est du même côté de (AB) que O : l'angle inscrit vaut la moitié de l'angle au centre. π moins cette moitié, c'est pour un point de l'autre arc."]]
+      :[[mul(al,DEMI),1,"divisé au lieu de multiplié","Où ça part : le facteur 2.","C'est l'angle au centre qui est le double de l'angle inscrit."],[al,1,"angle inscrit recopié","Où ça part : le facteur 2.","L'angle au centre est le double de l'angle inscrit."]],
+    ens:ensC(P,[ci?["A","O","B",angV(th)]:["A","M","B",angV(al)]],{x:ci?["A","M","B"]:["A","O","B"]},[["meme","M","O","A","B"]])});}
+
+function isoCentre(R){const k=R.choix(["inscrit","inscrit","centre","retour"]),al=tireAl(R,5),th=mul(al,2),be=sub(DEMI,al),P=centreAB(al,R.choix([0.35,0.5,0.65]));
+  const fig=figure(P,{cercles:[["O",1]],seg:[["O","A"],["O","B"],["A","B"]].concat(k==="centre"?[]:[["M","A"],["M","B"]]),points:k==="centre"?["O","A","B"]:["O","A","B","M"],noms:k==="centre"?["O","A","B"]:undefined,marques:[["O","A",1],["O","B",1]],
+    angles:k==="inscrit"?[["A","M","B",angT(al),16],["O","A","B","?",16]]:k==="centre"?[["A","O","B",angT(th),14],["O","A","B","?",16]]:[["O","A","B",angT(be),16],["A","M","B","?",16]],alt:"Le cercle de centre O et le triangle OAB"});
+  const iso={w:`OA = OB, ce sont deux rayons : le triangle OAB est isocèle en O, donc ${absAn("OAB")} = ${absAn("OBA")}.`,why:"Dans un triangle isocèle, les angles à la base sont égaux (feuille 1, exercice 7). Ici les deux côtés égaux partent de O.",pts:1};
+  let E,V,nom,autre,pieges,q,don;
+  if(k==="retour"){nom="AMB";V=al;autre=be;q=`Soit C un cercle de centre O, et A, B deux points de C tels que ${egA("OAB",be)}. Soit M un point de C, du même côté de la droite (AB) que O. Calcule ${absAn("AMB")}.`;don=[["O","A","B",angV(be)]];
+    E=[iso,{w:`Somme des angles du triangle OAB : ${absAn("AOB")} ${fx(`= π − 2 × ${angT(be)} = `+chaine([[1,PI],[-1,mul(be,2)]]).t)}.`,why:"Proposition 2.4.2, avec deux angles égaux à la base.",pts:1},E5_2_1,{w:`<b>${moitie} : ${absAn("AMB")} ${fx(`= 1/2 × ${angT(th)} = ${angT(al)}`)}.</b>`,why:whyM,pts:1}];
+    pieges=[[th,3,"angle au centre donné","Où ça part : la moitié.",`${fx(angT(th))}, c'est ${absAn("AOB")}. L'angle inscrit en est la moitié.`],[be,0,"angle à la base recopié","Où ça part : l'angle demandé.","L'angle demandé est au sommet M, sur le cercle."]];}
+  else{nom="OAB";V=be;autre=k==="inscrit"?al:th;
+    q=k==="inscrit"?`Soit C un cercle de centre O, et A, B, M trois points de C, avec M du même côté de la droite (AB) que O, tels que ${egA("AMB",al)}. Calcule ${absAn("OAB")}.`:`Soit C un cercle de centre O, et A, B deux points de C tels que ${egA("AOB",th)}. Calcule ${absAn("OAB")}.`;
+    don=[k==="inscrit"?["A","M","B",angV(al)]:["A","O","B",angV(th)]];
+    E=(k==="inscrit"?[E5_2_1,{w:`${moitie} : ${absAn("AOB")} ${fx(`= 2 × ${angT(al)} = ${angT(th)}`)}.`,why:whyM,pts:1}]:[]).concat([iso,{w:`<b>Somme des angles du triangle OAB : ${absAn("OAB")} ${fx(`= 1/2 × (π − ${angT(th)}) = 1/2 × ${angT(sub(PI,th))} = ${angT(be)}`)}.</b>`,why:"On retire l'angle au centre de π, puis on partage le reste entre les deux angles égaux.",pts:1}]);
+    pieges=[[sub(PI,th),E.length-1,"moitié oubliée","Où ça part : le partage en deux.",`${fx(angT(sub(PI,th)))} est la somme des deux angles à la base. Chacun en vaut la moitié.`],[al,E.length-1,"angle inscrit recopié","Où ça part : l'angle demandé.",`${fx(angT(al))}, c'est ${absAn("AMB")}. L'angle demandé est dans le triangle OAB.`],[sub(PI,al),E.length-1,"angle au centre oublié","Où ça part : l'angle en O.",`Dans le triangle OAB, l'angle en O vaut ${angT(th)}, le double de l'angle inscrit.`]];}
+  const PP=k==="centre"?{O:P.O,A:P.A,B:P.B}:P;
+  return unAngle({nom,x:V,autre,etapes:E,pieges,sig:"IC"+JSON.stringify([k,brut(al)]),q,corps:fig+`<p>${RAP_C} ${RAP_RAD}</p>`,texte:{inscrit:`angle AMB = ${angT(al)}, M du même côté de (AB) que O ; calculer OAB`,centre:`angle AOB = ${angT(th)} ; calculer OAB`,retour:`angle OAB = ${angT(be)}, M du même côté que O ; calculer AMB`}[k],nature:{inscrit:"angle inscrit puis triangle isocèle",centre:"triangle isocèle au centre",retour:"triangle isocèle puis angle inscrit"}[k],
+    ens:ensC(PP,don,{x:nom==="OAB"?["O","A","B"]:["A","M","B"]},k==="centre"?[]:[["meme","M","O","A","B"]])});}
+
+/* quatre points dans l'ordre sur le cercle : arcs AB, BC, CD, DA (en fractions de π, somme 2π) */
+function quatre(R){for(;;){const N=R.choix([6,8,9,10,12,18]),m=Math.ceil(N/5),k=[R.ent(m,N),R.ent(m,N),R.ent(m,N)];k.push(2*N-k[0]-k[1]-k[2]);if(k[3]<m)continue;
+  const a=k.map(x=>Q(x,N)),f0=R()*2*Math.PI,t=[0,1,2,3].map(i=>f0+Math.PI*k.slice(0,i).reduce((s,x)=>s+x,0)/N),P={O:[0,0]};["A","B","C","D"].forEach((n,i)=>P[n]=surC(t[i]));return {a,P};}}
+function quadInscrit(R){const k=R.choix(["opp","opp","meme","meme"]),{a,P}=quatre(R),ins=(i,j)=>mul(add(a[i],a[j]),DEMI);
+  const fig=x=>figure(P,{cercles:[["O",1]],seg:[["A","B"],["B","C"],["C","D"],["D","A"]],tirets:k==="meme"?[["A","C"],["B","D"]]:[],points:["A","B","C","D"],noms:["A","B","C","D"],angles:x,alt:"Le quadrilatère ABCD inscrit dans le cercle"});
+  const def="ABCD est un quadrilatère inscrit dans un cercle C : ses quatre sommets sont sur C, dans cet ordre quand on fait le tour du cercle.";
+  if(k==="opp"){const x=ins(2,3),V=ins(0,1);
+    const E=[{w:"B et D sont de part et d'autre de la diagonale (AC) : ils sont sur les deux arcs différents du cercle délimités par A et C.",why:"Les sommets sont dans l'ordre A, B, C, D sur le cercle : en allant de A à C, on passe par B d'un côté et par D de l'autre.",pts:1},
+      {w:`<b>D'après le théorème de l'angle inscrit (corollaire 5.2.3 et remarque 5.2.4), deux points sur des arcs différents donnent des angles supplémentaires : ${absAn("ABC")} ${fx("+")} ${absAn("ADC")} ${fx("= π")}, donc ${absAn("ADC")} ${fx("= "+chaine([[1,PI],[-1,x]]).t)}.</b>`,why:"Sur le même arc, les angles inscrits sont égaux ; sur l'autre arc, ils sont supplémentaires. C'est la propriété des quadrilatères inscrits : les angles opposés font π.",pts:1.5}];
+    return unAngle({nom:"ADC",x:V,autre:x,etapes:E,sig:"QO"+JSON.stringify(a.map(brut)),q:`${def} On sait que ${egA("ABC",x)}. Calcule ${absAn("ADC")}.`,corps:fig([["A","B","C",angT(x),16],["A","D","C","?",16]])+`<p>${RAP_RAD}</p>`,texte:`ABCD inscrit, angle ABC = ${angT(x)} ; calculer l'angle ADC`,nature:"angles opposés d'un quadrilatère inscrit",
+      pieges:[[x,1,"angles opposés pris égaux","Où ça part : les deux arcs.","B et D sont sur des arcs différents : leurs angles sont supplémentaires (somme π), pas égaux."]],ens:ensC(P,[["A","B","C",angV(x)]],{x:["A","D","C"]},[["opp","B","D","A","C"]])});}
+  const x=mul(a[1],DEMI);
+  const E=[{w:"A et D sont du même côté de la droite (BC) : ils sont sur le même arc du cercle délimité par B et C.",why:"Les sommets sont dans l'ordre A, B, C, D : l'arc de B à C qui ne contient ni A ni D est l'arc BC « court » ; A et D sont tous les deux sur l'autre.",pts:1},
+    {w:`<b>D'après le théorème de l'angle inscrit (corollaire 5.2.3 et remarque 5.2.4), deux points du même arc voient [BC] sous le même angle : ${absAn("BDC")} = ${egA("BAC",x)}.</b>`,why:"Les angles inscrits qui interceptent le même arc sont égaux.",pts:1.5}];
+  return unAngle({nom:"BDC",x,autre:sub(PI,x),etapes:E,sig:"QM"+JSON.stringify(a.map(brut)),q:`${def} On sait que ${egA("BAC",x)}. Calcule ${absAn("BDC")}.`,corps:fig([["B","A","C",angT(x),18],["B","D","C","?",18]])+`<p>${RAP_RAD}</p>`,texte:`ABCD inscrit, angle BAC = ${angT(x)} ; calculer l'angle BDC`,nature:"angles inscrits sur le même arc",
+    pieges:[[sub(PI,x),1,"angles supplémentaires au lieu d'égaux","Où ça part : l'arc.","A et D sont sur le même arc : les angles sont égaux. Ils seraient supplémentaires si les points étaient sur des arcs différents."],[mul(x,2),1,"angle au centre","Où ça part : le sommet.","Le double, c'est l'angle au centre BOC. Ici le sommet D est sur le cercle."]],ens:ensC(P,[["B","A","C",angV(x)]],{x:["B","D","C"]},[["meme","A","D","B","C"]])});}
+
+/* comme au CC : plusieurs propriétés à la suite */
+function chasseCercle(R){const r=R();
+  if(r<0.35){const {a,P}=quatre(R),x=mul(a[1],DEMI),y=mul(a[2],DEMI),V=sub(PI,add(x,y));
+    const E=[{w:`D est sur [AC) ou non, peu importe : [AC) est entre [AB) et [AD), donc ${absAn("BAD")} = ${absAn("BAC")} ${fx("+")} ${absAn("CAD")} ${fx(`= ${angT(x)} + ${angT(y)} = ${angT(add(x,y))}`)}.`,why:"La diagonale [AC) partage l'angle du quadrilatère en A en deux morceaux qui s'ajoutent.",pts:1},
+      {w:"A et C sont de part et d'autre de la diagonale (BD) : ils sont sur des arcs différents délimités par B et D.",why:"Les sommets sont dans l'ordre A, B, C, D sur le cercle.",pts:0.5},
+      {w:`<b>Angles opposés d'un quadrilatère inscrit (corollaire 5.2.3, remarque 5.2.4) : ${absAn("BCD")} ${fx("= π −")} ${absAn("BAD")} ${fx("= "+chaine([[1,PI],[-1,add(x,y)]]).t)}.</b>`,why:"Deux points sur des arcs différents voient la corde sous des angles supplémentaires.",pts:1}];
+    E[0].w=`[AC) est entre [AB) et [AD) : ${absAn("BAD")} = ${absAn("BAC")} ${fx("+")} ${absAn("CAD")} ${fx(`= ${angT(x)} + ${angT(y)} = ${angT(add(x,y))}`)}.`;
+    return unAngle({nom:"BCD",x:V,autre:add(x,y),etapes:E,sig:"CQ"+JSON.stringify(a.map(brut)),q:`ABCD est un quadrilatère inscrit dans un cercle C : ses quatre sommets sont sur C, dans cet ordre quand on fait le tour du cercle. On sait que ${egA("BAC",x)} et ${egA("CAD",y)}. Calcule ${absAn("BCD")}.`,
+      corps:figure(P,{cercles:[["O",1]],seg:[["A","B"],["B","C"],["C","D"],["D","A"]],tirets:[["A","C"]],points:["A","B","C","D"],noms:["A","B","C","D"],angles:[["B","A","C",angT(x),18],["C","A","D",angT(y),24],["B","C","D","?",16]],alt:"Le quadrilatère ABCD inscrit et sa diagonale [AC]"})+`<p>${RAP_RAD}</p>`,
+      texte:`ABCD inscrit, angle BAC = ${angT(x)}, angle CAD = ${angT(y)} ; calculer l'angle BCD`,nature:"quadrilatère inscrit et diagonale",
+      pieges:[[add(x,y),2,"angles opposés pris égaux","Où ça part : les deux arcs.","A et C sont sur des arcs différents : les angles en A et en C sont supplémentaires."],[sub(PI,x),0,"angle CAD oublié","Où ça part : l'angle en A.",`L'angle du quadrilatère en A est ${absAn("BAD")}, la somme des deux morceaux.`]],ens:ensC(P,[["B","A","C",angV(x)],["C","A","D",angV(y)]],{x:["B","C","D"]},[["opp","A","C","B","D"]])});}
+  if(r<0.7){const al=tireAl(R,5),th=mul(al,2),be=sub(DEMI,al),t=R.choix([0.35,0.5,0.65]),P0=centreAB(al,t),P={O:P0.O,B:P0.A,C:P0.B,A:P0.M};
+    const E=[{w:`A, B et C sont sur le cercle de centre O, et A et O sont du même côté de (BC) : d'après le théorème 5.2.1, ${absAn("BOC")} ${fx("= 2 ×")} ${absAn("BAC")} ${fx(`= ${angT(th)}`)}.`,why:"L'angle au centre est le double de l'angle inscrit quand le sommet de l'angle inscrit est sur l'arc du même côté que le centre.",pts:1},
+      {w:`OB = OC (deux rayons) : le triangle OBC est isocèle en O, donc ${absAn("OBC")} = ${absAn("OCB")}.`,why:"Les angles à la base d'un triangle isocèle sont égaux (feuille 1, exercice 7).",pts:1},
+      {w:`<b>Somme des angles du triangle OBC : ${absAn("OBC")} ${fx(`= 1/2 × (π − ${angT(th)}) = ${angT(be)}`)}.</b>`,why:"On retire l'angle au centre, puis on partage en deux. On retrouve π/2 moins l'angle en A.",pts:1}];
+    return unAngle({nom:"OBC",x:be,autre:al,etapes:E,sig:"CT"+JSON.stringify([brut(al),t]),q:`Le triangle ABC est inscrit dans un cercle de centre O, avec A et O du même côté de la droite (BC), et ${egA("BAC",al)}. Calcule ${absAn("OBC")}.`,
+      corps:figure(P,{cercles:[["O",1]],seg:[["A","B"],["B","C"],["A","C"],["O","B"],["O","C"]],points:["O","A","B","C"],angles:[["B","A","C",angT(al),16],["O","B","C","?",16]],alt:"Le triangle ABC inscrit dans le cercle de centre O"})+`<p>Rappel : « inscrit » veut dire que les trois sommets sont sur le cercle. ${RAP_RAD}</p>`,
+      texte:`ABC inscrit dans le cercle de centre O, A et O du même côté de (BC), angle BAC = ${angT(al)} ; calculer l'angle OBC`,nature:"triangle inscrit et centre",
+      pieges:[[al,0,"angle inscrit recopié","Où ça part : l'angle au centre.","L'angle en O est le double de l'angle en A."],[sub(PI,th),2,"moitié oubliée","Où ça part : le partage en deux.","π moins l'angle au centre, c'est la somme des deux angles égaux du triangle OBC."]],
+      ens:ensC(P,[["B","A","C",angV(al)]],{x:["O","B","C"]},[["meme","A","O","B","C"]])});}
+  const x=tireAl(R,5),de=R.choix([0.3,0.5,0.7]),P={O:[0,0],A:[-1,0],C:[1,0],B:surC(2*angV(x)),D:surC(-Math.PI*de)},V=sub(DEMI,x);
+  const E=[{w:`B est sur le cercle de diamètre [AC] : d'après le corollaire 5.2.5, ${absAn("ABC")} ${fx("= π/2")}.`,why:"Un point du cercle, autre que A et C, voit le diamètre sous un angle droit.",pts:1},
+    {w:`Somme des angles du triangle ABC : ${absAn("BCA")} ${fx("= "+chaine([[1,PI],[-1,DEMI],[-1,x]]).t)}.`,why:"Somme des angles d'un triangle (proposition 2.4.2), avec l'angle droit en B.",pts:1},
+    {w:`<b>C et D sont du même côté de (AB), sur le même arc : d'après le théorème de l'angle inscrit, ${absAn("BDA")} = ${egA("BCA",V)}.</b>`,why:"Deux points du même arc voient la corde [AB] sous le même angle (corollaire 5.2.3 et remarque 5.2.4).",pts:1}];
+  return unAngle({nom:"BDA",x:V,autre:x,etapes:E,sig:"CDI"+JSON.stringify([brut(x),de]),q:`Soit C le cercle de diamètre [AC]. Les points B et D sont sur ce cercle, de part et d'autre de (AC), et ${egA("BAC",x)}. Calcule ${absAn("BDA")}.`,
+    corps:figure(P,{cercles:[["O",1]],seg:[["A","C"],["A","B"],["B","C"],["A","D"],["B","D"]],points:["O","A","B","C","D"],angles:[["B","A","C",angT(x),16],["B","D","A","?",16]],alt:"Le cercle de diamètre [AC] et les points B et D"})+`<p>${RAP_RAD}</p>`,
+    texte:`cercle de diamètre [AC], B et D de part et d'autre de (AC), angle BAC = ${angT(x)} ; calculer l'angle BDA`,nature:"diamètre puis même arc",
+    pieges:[[x,2,"mauvais angle reporté","Où ça part : l'arc.",`L'angle en D intercepte la corde [AB] : il est égal à l'angle en C, ${absAn("BCA")}, pas à l'angle en A.`],[sub(PI,x),1,"angle droit oublié","Où ça part : l'angle en B.","Le triangle ABC est rectangle en B (corollaire 5.2.5)."]],
+    ens:ensC(P,[["B","A","C",angV(x)]],{x:["B","D","A"]},[["meme","C","D","A","B"],["opp","B","D","A","C"],["entre","O","A","C"]])});}
 /* comme au CC : deux droites sécantes en K, des parallèles, et les homothéties de centre K qu'elles fabriquent */
 function droitesPar(R){const pap=R()<0.45,phi=R.choix([40,50,55,60,65,70])*Math.PI/180,m=R()<0.5?-1:1,u=[1,0],v=[m*Math.cos(phi),Math.sin(phi)],pt=(w,t)=>[w[0]*t,w[1]*t],sg=()=>R()<0.5?-1:1;
   let al,be,ga,gp,ap,bp;
@@ -22760,6 +22851,12 @@ G.add("geo",[
    {t:"passer du cosinus au sinus",cc:2,min:150,gen:passer},
    {t:"formules d'addition et angle double",cc:4,min:120,gen:addition},
    {t:"produit scalaire et angle entre deux vecteurs",cc:5,gen:produit}]},
+ {id:"GE4",t:"Angle au centre, angle inscrit",tache:"angle au centre et angle inscrit",th:"centre",ex:"cc2",lecons:["g2-angle-centre"],
+  paliers:[
+   {t:"angle au centre et angle inscrit",cc:2,min:45,gen:centreInscrit},
+   {t:"le triangle isocèle au centre",cc:3,min:45,gen:isoCentre},
+   {t:"quadrilatère inscrit",cc:3,gen:quadInscrit},
+   {t:"comme au CC : plusieurs propriétés à la suite",cc:5,min:150,gen:chasseCercle}]},
  {id:"GE3",t:"Triangles : chasse aux angles",tache:"angles dans les triangles",th:"triangles",ex:"cc2",lecons:["g-aires","g-paralleles","g-angles"],
   paliers:[
    {t:"la somme des angles d'un triangle",cc:2,gen:somme},
