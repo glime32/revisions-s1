@@ -23787,6 +23787,111 @@ function racAlg(R){const cas=R.choix([[3,Q(0)],[3,Q(1)],[3,Q(1,2)],[3,Q(-1,2)],[
   return exoListe({sig:"Z"+wT+"|"+n,att:Zs.map(z=>[rF(z.a),rF(z.b)]),txt,tape:Zs.map(z=>zRtape(z.a,z.b)),faux:Zs.slice(0,n-1).map(z=>zRtape(z.a,z.b)).concat(["0"]).join(" ; "),label:`Les ${n} solutions :`,etapes:E,
     q:`Résous dans ℂ l'équation ${fx(`z^{${n}} = ${wT}`)}. Donne les ${n} solutions sous forme algébrique.`,corps:"",nature:`n = ${n}`,texte:`solutions algébriques de z^${n} = ${wT}`,
     pieges:[[fx0,{etape:0,type:"argument de w",titre:"Où ça part : l'argument de w.",msg:`Tu as les conjuguées des solutions : l'argument de w est ${fx(angT(phi))}.`}]],ens:{type:"zn",n,w:[rF(a),rF(b)]}});}
+/* ---------- CC final : programme du CC1 (cachés tant que le CC final n'est pas dans les épreuves) ---------- */
+const XP=[0.35,0.8,1.3,1.9,2.6,3.2];
+const affT=(a,b)=>S([[a,"x"],[b,""]]),affTp=(a,b)=>`(${brut(a)}*x+(${brut(b)}))`,affP=(a,b)=>nul(q(b))?affT(a,b):`(${affT(a,b)})`;
+const quaT=(p0,q0)=>S([[1,"x²"],[p0,"x"],[q0,""]]),quaTp=(p0,q0)=>`(x^2+(${brut(p0)})*x+(${brut(q0)}))`;
+/* juge une formule en x : o.ref(x) la valeur attendue aux points XP ; avecC : une constante additive est permise */
+function jugeX(o){return rep=>{const t=String(rep.f==null?"":rep.f),k=t.lastIndexOf("="),src=k>=0?t.slice(k+1):t;if(!propre(src))return {incomplet:"Écris ta réponse."};
+  const A=lis(src,["x"]);if(!A)return {incomplet:"Je n'arrive pas à lire ta formule. Écris par exemple 2x*e^(3x) + ln(x), avec des parenthèses."};
+  const L=[...lettres(A)];if(L.length&&!o.avecC)return {incomplet:`Je ne connais pas la lettre ${L[0]} : écris ta réponse avec x seulement.`};
+  const env=Object.fromEntries(L.map(c=>[c,0])),F=x=>{try{const v=val(A,Object.assign({x},env));return Math.abs(v[1])<1e-9?v[0]:NaN;}catch(e){return NaN;}};
+  const V=o.prim?XP.map(x=>(F(x+1e-5)-F(x-1e-5))/2e-5):XP.map(F);
+  if(V.some(v=>!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à calculer ta formule pour certaines valeurs de x : vérifie les parenthèses."};
+  const tol=o.prim?1e-5:1e-8;if(V.every((v,i)=>Math.abs(v-o.ref(XP[i]))<=tol*Math.max(1,Math.abs(o.ref(XP[i])))))return {ok:true};
+  const pg=(o.pieges||[]).find(p=>V.every((v,i)=>Math.abs(v-p[0](XP[i]))<=tol*Math.max(1,Math.abs(p[0](XP[i])))));
+  return {ok:false,faux:["f"],resume:o.prim?"Pas tout à fait : en dérivant ta réponse, on ne retrouve pas f.":"Pas tout à fait : ce n'est pas la bonne dérivée.",diag:pg?pg[1]:{etape:o.fin,type:o.type,titre:"Où ça part : le calcul.",msg:o.prim?`Dérive ta réponse : elle doit redonner ${fx(`f(x) = ${o.fT}`)}. Une primitive est ${fx(`F(x) = ${o.ans}`)}.`:`On trouve ${fx(`f′(x) = ${o.ans}`)}.`}};};}
+function exoX(o){const E=o.etapes;o.fin=o.fin==null?E.length-1:o.fin;o.type=o.type||(o.prim?"primitive":"dérivée");
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[{k:"champ",id:"f",nom:o.prim?"primitive":"dérivée",label:o.prim?"$F(x) =$":"$f′(x) =$",ex:o.prim?"une primitive, sans + C":"une formule en x",sym:["e^(","ln(","√","x","^","/","(",")"],aide:"Écris e^(3x) avec des parenthèses, et x^2 pour x²."}],juge:jugeX(o),etapes:E,
+    bonne:fx(`${o.prim?"F(x)":"f′(x)"} = ${o.ans}`),bonneTxt:`${o.prim?"F(x)":"f′(x)"} = ${o.ans}`,repBonne:{f:o.tape},repFausse:{f:o.faux||`(${o.tape})+x`},nature:o.nature,ens:Object.assign({type:o.prim?"prim":"der"},o.ens)};}
+const ex1=k=>k===1?"x":k===-1?"−x":k<0?"−"+(-k)+"x":k+"x",coefK=k=>k===1?"":k===-1?"−":nb(k),coef=k=>{k=q(k);return egal(k,1)?"":egal(k,-1)?"−":k.d===1?nb(k):"("+nb(k)+")";};
+/* les fonctions de base g, avec leur dérivée */
+const BASE=[
+ {id:"e",T:k=>`e^{${ex1(k)}}`,tp:k=>`e^(${k}*x)`,f:k=>x=>Math.exp(k*x),d:k=>x=>k*Math.exp(k*x),dT:k=>`${coefK(k)}e^{${ex1(k)}}`,regle:k=>`${fx(`(e^{kx})′ = ke^{kx}`)}`},
+ {id:"ln",T:()=>"ln x",tp:()=>"ln(x)",f:()=>Math.log,d:()=>x=>1/x,dT:()=>"1/x",regle:()=>fx("(ln x)′ = 1/x")},
+ {id:"sin",T:k=>`sin(${ex1(k)})`,tp:k=>`sin(${k}*x)`,f:k=>x=>Math.sin(k*x),d:k=>x=>k*Math.cos(k*x),dT:k=>`${coefK(k)}cos(${ex1(k)})`,regle:()=>fx("(sin(kx))′ = k cos(kx)")},
+ {id:"cos",T:k=>`cos(${ex1(k)})`,tp:k=>`cos(${k}*x)`,f:k=>x=>Math.cos(k*x),d:k=>x=>-k*Math.sin(k*x),dT:k=>`${coefK(-k)}sin(${ex1(k)})`,regle:()=>fx("(cos(kx))′ = −k sin(kx)")},
+ {id:"rac",T:()=>"√x",tp:()=>"sqrt(x)",f:()=>Math.sqrt,d:()=>x=>1/(2*Math.sqrt(x)),dT:()=>"1/(2√x)",regle:()=>fx("(√x)′ = 1/(2√x)")}];
+function deriveProduit(R){const g=R.choix(BASE),k=g.id==="ln"||g.id==="rac"?1:R.choix([1,2,3,-1,-2]),a=R.nz(-4,4),b=R.ent(-5,5),A=affT(a,b),gT=g.T(k),G=g.f(k),dG=g.d(k);
+  const f=x=>(a*x+b)*G(x),df=x=>a*G(x)+(a*x+b)*dG(x),fT=`${affP(a,b)}${g.id==="ln"||g.id==="rac"?" ":""}${gT}`;
+  const ans=`${S([[a,g.id==="ln"?"ln x":gT]])}${(()=>{const t=`${affP(a,b)} × ${g.dT(k)}`;return t[0]==="−"?" − "+t.slice(1):" + "+t;})()}`;
+  const E=[{w:`${fx(`f = u × v`)} avec ${fx(`u(x) = ${A}`)} et ${fx(`v(x) = ${gT}`)} : ${fx(`u′(x) = ${nb(a)}`)} et ${fx(`v′(x) = ${g.dT(k)}`)}.`,why:`On reconnaît un produit. ${g.regle(k)}.`,pts:1},
+    {w:`${fx("(uv)′ = u′v + uv′")} : ${fx(`f′(x) = ${ans}`)}.`,why:"La dérivée d'un produit a deux termes : on dérive l'un des facteurs en gardant l'autre, puis l'inverse.",pts:1}];
+  return exoX({sig:"DP"+g.id+k+"|"+a+"|"+b,q:`Calcule la dérivée de ${fx(`f(x) = ${fT}`)}.`,texte:`dérivée de ${fT}`,ref:df,ans,tape:`${a}*${g.tp(k)}+${affTp(a,b)}*(${g.id==="e"?`${k}*${g.tp(k)}`:g.id==="ln"?"1/x":g.id==="sin"?`${k}*cos(${k}*x)`:g.id==="cos"?`-${k}*sin(${k}*x)`:"1/(2*sqrt(x))"})`,etapes:E,nature:"produit",
+    pieges:[[x=>a*dG(x),{etape:1,type:"u′v′ au lieu de u′v + uv′",titre:"Où ça part : la dérivée d'un produit.",msg:"La dérivée d'un produit n'est pas le produit des dérivées : (uv)′ = u′v + uv′."}],[x=>a*G(x),{etape:1,type:"un terme oublié",titre:"Où ça part : la dérivée d'un produit.",msg:"Il manque le terme uv′ : on dérive aussi le second facteur."}],[x=>(a*x+b)*dG(x),{etape:1,type:"un terme oublié",titre:"Où ça part : la dérivée d'un produit.",msg:"Il manque le terme u′v : on dérive aussi le premier facteur."}]],ens:{f:fT,g:g.id,k,a,b}});}
+function deriveQuotient(R){const t=R();let f,df,fT,ans,E,tape,pg,nat;
+  if(t<0.45){let a,b,c,d;do{a=R.nz(-5,5);b=R.ent(-6,6);c=R.ent(1,4);d=R.ent(1,6);}while(a*d===b*c);
+    f=x=>(a*x+b)/(c*x+d);df=x=>(a*d-b*c)/(c*x+d)**2;fT=`(${affT(a,b)})/(${affT(c,d)})`;ans=`${a*d-b*c}/(${affT(c,d)})²`.replace(/^-/,"−");tape=`(${a*d-b*c})/(${c}*x+${d})^2`;nat="quotient de deux affines";
+    E=[{w:`${fx(`u(x) = ${affT(a,b)}`)}, ${fx(`v(x) = ${affT(c,d)}`)}, donc ${fx(`u′ = ${nb(a)}`)} et ${fx(`v′ = ${c}`)}.`,why:"On reconnaît un quotient u/v.",pts:1},
+      {w:`${fx("(u/v)′ = (u′v − uv′)/v²")} : ${fx(`f′(x) = (${nb(a)}(${affT(c,d)}) − ${c}(${affT(a,b)}))/(${affT(c,d)})²`)}.`,why:"L'ordre compte : d'abord u′v, puis moins uv′.",pts:1},
+      {w:`Au numérateur, les termes en x s'annulent : ${fx(`f′(x) = ${ans}`)}.`,why:`Il reste ${fx(`${par(a)} × ${d} − ${c} × ${par(b)} = ${nb(a*d-b*c)}`)}.`,pts:1}];
+    pg=[[x=>-(a*d-b*c)/(c*x+d)**2,"ordre de u′v et uv′"],[x=>a/c,"u′/v′"]];}
+  else if(t<0.75){const k=R.choix([1,2,-1,3]),c=R.ent(1,3),d=R.ent(1,4);f=x=>Math.exp(k*x)/(c*x+d);df=x=>Math.exp(k*x)*(k*(c*x+d)-c)/(c*x+d)**2;
+    fT=`e^{${ex1(k)}}/(${affT(c,d)})`;ans=`(${affT(k*c,k*d-c)})e^{${ex1(k)}}/(${affT(c,d)})²`;tape=`(${k*c}*x+(${k*d-c}))*e^(${k}*x)/(${c}*x+${d})^2`;nat="exponentielle sur affine";
+    E=[{w:`${fx(`u(x) = e^{${ex1(k)}}`)}, ${fx(`v(x) = ${affT(c,d)}`)}, donc ${fx(`u′ = ${coefK(k)}e^{${ex1(k)}}`)} et ${fx(`v′ = ${c}`)}.`,why:fx("(e^{kx})′ = ke^{kx}"),pts:1},
+      {w:`${fx(`f′(x) = (${coefK(k)}e^{${ex1(k)}}(${affT(c,d)}) − ${c}e^{${ex1(k)}})/(${affT(c,d)})²`)}.`,why:fx("(u/v)′ = (u′v − uv′)/v²"),pts:1},
+      {w:`On met ${fx(`e^{${ex1(k)}}`)} en facteur : ${fx(`f′(x) = ${ans}`)}.`,why:`${fx(`${par(k)}(${affT(c,d)}) − ${c} = ${affT(k*c,k*d-c)}`)}.`,pts:1}];
+    pg=[[x=>Math.exp(k*x)*(c-k*(c*x+d))/(c*x+d)**2,"ordre de u′v et uv′"]];}
+  else{const a=R.nz(-3,3),b=R.ent(-4,4),c=R.ent(1,5);f=x=>(a*x+b)/(x*x+c);df=x=>(-a*x*x-2*b*x+a*c)/(x*x+c)**2;fT=`(${affT(a,b)})/(x² + ${c})`;
+    ans=`(${S([[-a,"x²"],[-2*b,"x"],[a*c,""]])})/(x² + ${c})²`;tape=`(${-a}*x^2+(${-2*b})*x+(${a*c}))/(x^2+${c})^2`;nat="affine sur x² + c";
+    E=[{w:`${fx(`u(x) = ${affT(a,b)}`)}, ${fx(`v(x) = x² + ${c}`)}, donc ${fx(`u′ = ${nb(a)}`)} et ${fx("v′ = 2x")}.`,why:"On reconnaît un quotient u/v.",pts:1},
+      {w:`${fx(`f′(x) = (${nb(a)}(x² + ${c}) − 2x(${affT(a,b)}))/(x² + ${c})²`)}.`,why:fx("(u/v)′ = (u′v − uv′)/v²"),pts:1},
+      {w:`On développe le numérateur : ${fx(`f′(x) = ${ans}`)}.`,why:`On développe ${fx(`${nb(a)}(x² + ${c})`)} et ${fx(`2x(${affT(a,b)})`)}, puis on regroupe les termes de même degré.`,pts:1}];
+    pg=[[x=>-(-a*x*x-2*b*x+a*c)/(x*x+c)**2,"ordre de u′v et uv′"]];}
+  return exoX({sig:"DQ"+fT,q:`Calcule la dérivée de ${fx(`f(x) = ${fT}`)}.`,texte:`dérivée de ${fT}`,ref:df,ans,tape,etapes:E,nature:nat,pieges:pg.map(([g,ty])=>[g,{etape:1,type:ty,titre:"Où ça part : la dérivée d'un quotient.",msg:"(u/v)′ = (u′v − uv′)/v² : d'abord u′v, puis moins uv′, le tout sur v²."}]),ens:{f:fT}});}
+/* u : x² + px + q (positif sur XP) ou ax + b avec a, b > 0 */
+function tireU(R){if(R()<0.5){const p0=R.ent(0,3),q0=R.ent(1,5);return {T:quaT(p0,q0),tp:quaTp(p0,q0),f:x=>x*x+p0*x+q0,d:x=>2*x+p0,dT:p0?`2x + ${p0}`:"2x",sig:"q"+p0+","+q0};}
+  const a=R.ent(1,4),b=R.ent(1,5);return {T:affT(a,b),tp:affTp(a,b),f:x=>a*x+b,d:()=>a,dT:String(a),sig:"a"+a+","+b};}
+const COMPO=[
+ {id:"e",T:u=>`e^{${u}}`,tp:u=>`e^(${u})`,g:Math.exp,dg:Math.exp,dT:(u,du)=>`${du.length>1?"("+du+")":du}e^{${u}}`,regle:"(e^{u})′ = u′e^{u}"},
+ {id:"ln",T:u=>`ln(${u})`,tp:u=>`ln(${u})`,g:Math.log,dg:x=>1/x,dT:(u,du)=>`(${du})/(${u})`,regle:"(ln u)′ = u′/u"},
+ {id:"rac",T:u=>`√(${u})`,tp:u=>`sqrt(${u})`,g:Math.sqrt,dg:x=>1/(2*Math.sqrt(x)),dT:(u,du)=>`(${du})/(2√(${u}))`,regle:"(√u)′ = u′/(2√u)"},
+ {id:"pow",T:(u,n)=>`(${u})^{${n}}`,tp:(u,n)=>`(${u})^${n}`,g:null,dg:null,dT:(u,du,n)=>`${n}(${du})(${u})${n-1>1?"^{"+(n-1)+"}":""}`,regle:"(uⁿ)′ = nu′uⁿ⁻¹"},
+ {id:"sin",T:u=>`sin(${u})`,tp:u=>`sin(${u})`,g:Math.sin,dg:Math.cos,dT:(u,du)=>`${du.length>1?"("+du+")":du}cos(${u})`,regle:"(sin u)′ = u′cos u"}];
+function deriveCompo(R,avecProduit){const c=R.choix(COMPO),u=tireU(R),n=R.ent(2,5),g=c.id==="pow"?x=>Math.pow(x,n):c.g,dg=c.id==="pow"?x=>n*Math.pow(x,n-1):c.dg;
+  const h=x=>g(u.f(x)),dh=x=>u.d(x)*dg(u.f(x)),hT=c.T(u.T,n),dhT=c.dT(u.T,u.dT,n),htp=c.tp(u.tp,n);
+  const V=avecProduit?"v":"f",E=[{w:`${fx(`${V} = g(u)`)} avec ${fx(`u(x) = ${u.T}`)}, donc ${fx(`u′(x) = ${u.dT}`)}.`,why:"On reconnaît une composée : une fonction de base appliquée à u(x).",pts:1},
+    {w:`${fx(c.regle)} : ${fx(`${V}′(x) = ${dhT}`)}.`,why:"On n'oublie pas de multiplier par u′, la dérivée de ce qu'il y a dedans.",pts:1}];
+  if(!avecProduit)return exoX({sig:"DC"+c.id+u.sig+(c.id==="pow"?n:""),q:`Calcule la dérivée de ${fx(`f(x) = ${hT}`)}.`,texte:`dérivée de ${hT}`,ref:dh,ans:dhT,tape:dhtpGen(c,u,n),etapes:E,nature:"composée "+c.id,
+    pieges:[[x=>dg(u.f(x)),{etape:1,type:"u′ oublié",titre:"Où ça part : la dérivée d'une composée.",msg:`Il faut multiplier par ${fx(`u′(x) = ${u.dT}`)}.`}]],ens:{f:hT}});
+  const a=R.nz(-3,3),b=R.ent(-3,3),f=x=>(a*x+b)*h(x),df=x=>a*h(x)+(a*x+b)*dh(x),fT=`${affP(a,b)}${hT}`,ans=`${S([[a,hT]])}${(()=>{const t=`${affP(a,b)} × ${dhT}`;return t[0]==="−"?" − "+t.slice(1):" + "+t;})()}`;
+  E.unshift({w:`${fx(`f(x) = ${affP(a,b)} × v(x)`)} : un produit, dont le second facteur ${fx(`v(x) = ${hT}`)} est une composée.`,why:`La dérivée du premier facteur est ${fx(nb(a))}, et ${fx("(fg)′ = f′g + fg′")}.`,pts:1});
+  E.push({w:`${fx(`f′(x) = ${ans}`)}.`,why:`On dérive le premier facteur (${fx(nb(a))}) en gardant v, puis on garde le premier facteur et on dérive v.`,pts:1});
+  return exoX({sig:"DM"+c.id+u.sig+(c.id==="pow"?n:"")+"|"+a+"|"+b,q:`Calcule la dérivée de ${fx(`f(x) = ${fT}`)}.`,texte:`dérivée de ${fT}`,ref:df,ans,tape:`(${a})*${htp}+${affTp(a,b)}*(${dhtpGen(c,u,n)})`,etapes:E,nature:"mélange",
+    pieges:[[x=>a*h(x)+(a*x+b)*dg(u.f(x)),{etape:2,type:"u′ oublié",titre:"Où ça part : la dérivée de la composée.",msg:`Dans la dérivée de ${fx(hT)}, il faut multiplier par ${fx(`u′(x) = ${u.dT}`)}.`}],[x=>a*dh(x),{etape:3,type:"u′v′ au lieu de u′v + uv′",titre:"Où ça part : la dérivée d'un produit.",msg:"(uv)′ = u′v + uv′, pas u′v′."}]],ens:{f:fT}});}
+const dhtpGen=(c,u,n)=>`(${dUtp(u)})*${c.id==="pow"?`${n}*(${u.tp})^${n-1}`:c.id==="e"?c.tp(u.tp):c.id==="ln"?`1/(${u.tp})`:c.id==="rac"?`1/(2*sqrt(${u.tp}))`:`cos(${u.tp})`}`;
+const dUtp=u=>u.sig[0]==="q"?`2*x+(${u.sig.slice(1).split(",")[0]})`:u.sig.slice(1).split(",")[0];
+
+/* CA10 : primitives, en reconnaissant u′uⁿ, u′/u, u′eᵘ */
+function primitive(R,sorte){const s=sorte||R.choix(["pow","log","exp","trig"]);let fT,f,ans,tape,E,pg=[];
+  if(s==="pow"){const n=R.ent(1,4);if(R()<0.5){const q0=R.ent(1,5),c=2*R.nz(-3,3),k=Q(c,2*(n+1));fT=`${coefK(c)}x(x² + ${q0})${n>1?"^{"+n+"}":""}`;f=x=>c*x*Math.pow(x*x+q0,n);ans=`${coef(k)}(x² + ${q0})^{${n+1}}`;tape=`(${brut(k)})*(x^2+${q0})^${n+1}`;
+      E=[{w:`Avec ${fx(`u(x) = x² + ${q0}`)}, ${fx("u′(x) = 2x")} : ${fx(`f(x) = ${nb(Q(c,2))} × u′(x)u(x)${n>1?"^{"+n+"}":""}`)}.`,why:`On reconnaît la forme ${fx("u′uⁿ")}, à une constante près : ${fx(`${c}x = ${nb(Q(c,2))} × 2x`)}.`,pts:1},
+        {w:`Une primitive de ${fx("u′uⁿ")} est ${fx("u^{n+1}/(n + 1)")} : ${fx(`F(x) = ${nb(Q(c,2))} × (x² + ${q0})^{${n+1}}/${n+1} = ${ans}`)}.`,why:`On vérifie en dérivant : ${fx(`F′(x) = ${nb(Q(c,2))} × 2x(x² + ${q0})${n>1?"^{"+n+"}":""}`)}, c'est bien f.`,pts:1}];
+      pg=[[x=>c*(n+1)*x*Math.pow(x*x+q0,n),"facteur 1/(n + 1) oublié"]];}
+    else{const a=R.ent(2,5),b=R.ent(1,6),k=Q(1,a*(n+1));fT=`(${affT(a,b)})${n>1?"^{"+n+"}":""}`;f=x=>Math.pow(a*x+b,n);ans=`(${affT(a,b)})^{${n+1}}/${a*(n+1)}`;tape=`(${a}*x+${b})^${n+1}/${a*(n+1)}`;
+      E=[{w:`Avec ${fx(`u(x) = ${affT(a,b)}`)}, ${fx(`u′(x) = ${a}`)} : ${fx(`f(x) = (1/${a}) × u′(x)u(x)${n>1?"^{"+n+"}":""}`)}.`,why:`On fait apparaître u′ : on multiplie et on divise par ${a}.`,pts:1},
+        {w:`${fx(`F(x) = (1/${a}) × (${affT(a,b)})^{${n+1}}/${n+1} = ${ans}`)}.`,why:`Une primitive de ${fx("u′uⁿ")} est ${fx("u^{n+1}/(n + 1)")}. On vérifie en dérivant.`,pts:1}];
+      pg=[[x=>a*Math.pow(a*x+b,n),"division par a oubliée"]];}}
+  else if(s==="log"){if(R()<0.5){const q0=R.ent(1,6),c=R.nz(-6,6),k=Q(c,2);fT=`${c}x/(x² + ${q0})`.replace(/^1x/,"x").replace(/^-1x/,"−x").replace(/^-/,"−");f=x=>c*x/(x*x+q0);ans=`${coef(k)}ln(x² + ${q0})`;tape=`(${brut(k)})*ln(x^2+${q0})`;
+      E=[{w:`Avec ${fx(`u(x) = x² + ${q0}`)}, ${fx("u′(x) = 2x")} : ${fx(`f(x) = ${nb(k)} × u′(x)/u(x)`)}.`,why:`On reconnaît ${fx("u′/u")}, à la constante ${fx(nb(k))} près.`,pts:1},
+        {w:`Une primitive de ${fx("u′/u")} est ${fx("ln|u|")}, et ici ${fx(`x² + ${q0} &gt; 0`)} : ${fx(`F(x) = ${ans}`)}.`,why:"On vérifie en dérivant.",pts:1}];
+      pg=[[x=>2*c*x/(x*x+q0),"facteur 1/2 oublié"]];}
+    else{const a=R.ent(1,5),b=R.ent(1,6),c=R.nz(-6,6),k=Q(c,a);fT=`${c}/(${affT(a,b)})`.replace(/^-/,"−");f=x=>c/(a*x+b);ans=`${coef(k)}ln(${affT(a,b)})`;tape=`(${brut(k)})*ln(${a}*x+${b})`;
+      E=[{w:`Avec ${fx(`u(x) = ${affT(a,b)}`)}, ${fx(`u′(x) = ${a}`)} : ${fx(`f(x) = ${nb(k)} × u′(x)/u(x)`)}.`,why:`On fait apparaître u′ au numérateur : ${fx(`${c} = ${nb(k)} × ${a}`)}.`,pts:1},
+        {w:`${fx(`F(x) = ${ans}`)} sur ${fx(`]${nb(Q(-b,a))} ; +∞[`)}, où ${fx(`${affT(a,b)} &gt; 0`)}.`,why:`Une primitive de ${fx("u′/u")} est ${fx("ln|u|")}.`,pts:1}];
+      pg=[[x=>c*a/(a*x+b),"division par a oubliée"]];}}
+  else if(s==="exp"){if(R()<0.5){const c=R.nz(-4,4)*2,k=Q(c,2);fT=`${c}xe^{x²}`.replace(/^2x/,"2x").replace(/^-/,"−");f=x=>c*x*Math.exp(x*x);ans=`${coef(k)}e^{x²}`;tape=`(${brut(k)})*e^(x^2)`;
+      E=[{w:`Avec ${fx("u(x) = x²")}, ${fx("u′(x) = 2x")} : ${fx(`f(x) = ${nb(k)} × u′(x)e^{u(x)}`)}.`,why:`On reconnaît ${fx("u′e^{u}")}.`,pts:1},{w:`Une primitive de ${fx("u′e^{u}")} est ${fx("e^{u}")} : ${fx(`F(x) = ${ans}`)}.`,why:"On vérifie en dérivant.",pts:1}];
+      pg=[[x=>2*c*x*Math.exp(x*x),"facteur 1/2 oublié"]];}
+    else{const k=R.choix([2,3,4,-2,-3]),c=R.nz(-6,6),K=Q(c,k);fT=`${coefK(c)}e^{${ex1(k)}}`;f=x=>c*Math.exp(k*x);ans=`${coef(K)}e^{${ex1(k)}}`;tape=`(${brut(K)})*e^(${k}*x)`;
+      E=[{w:`Avec ${fx(`u(x) = ${ex1(k)}`)}, ${fx(`u′ = ${k}`)} : ${fx(`f(x) = ${nb(K)} × u′e^{u}`)}.`,why:`On fait apparaître u′ : ${fx(`${c} = ${nb(K)} × ${k}`)}.`,pts:1},{w:`${fx(`F(x) = ${ans}`)}.`,why:`Une primitive de ${fx("u′e^{u}")} est ${fx("e^{u}")}. On vérifie en dérivant.`,pts:1}];
+      pg=[[x=>c*k*Math.exp(k*x),"division par k oubliée"]];}}
+  else{const k=R.choix([2,3,4]),c=R.nz(-6,6),cosi=R()<0.5,K=Q(cosi?c:-c,k);fT=`${coefK(c)}${cosi?"cos":"sin"}(${k}x)`;f=x=>c*(cosi?Math.cos(k*x):Math.sin(k*x));
+    ans=`${coef(K)}${cosi?"sin":"cos"}(${k}x)`;tape=`(${brut(K)})*${cosi?"sin":"cos"}(${k}*x)`;
+    E=[{w:`${fx(cosi?"(sin(kx))′ = k cos(kx)":"(cos(kx))′ = −k sin(kx)")}.`,why:"On part de la dérivée connue, et on ajuste la constante.",pts:1},{w:`${fx(`F(x) = ${ans}`)}.`,why:`On divise par ${k}${cosi?"":" et on change le signe"}. On vérifie en dérivant.`,pts:1}];
+    pg=[[x=>-c*(cosi?Math.cos(k*x):Math.sin(k*x)),"signe"]];}
+  return exoX({prim:true,avecC:true,sig:"P"+fT,q:`Donne une primitive de ${fx(`f(x) = ${fT}`)}${s==="log"?" (là où elle est définie)":""}.`,corps:`<p class="muted">Une primitive F de f est une fonction dont la dérivée est f. Le site dérive ta réponse : n'importe quelle primitive est acceptée.</p>`,texte:`primitive de ${fT}`,ref:f,fT,ans,tape,etapes:E,nature:{pow:"u′uⁿ",log:"u′/u",exp:"u′eᵘ",trig:"cos et sin"}[s],
+    pieges:pg.map(([g,ty])=>[g,{etape:1,type:ty,titre:"Où ça part : la constante.",msg:`En dérivant ta réponse, on trouve un multiple de f : la constante est fausse. Une primitive est ${fx(`F(x) = ${ans}`)}.`}]),ens:{f:fT}});}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -23834,7 +23939,19 @@ G.add("calc",[
    {t:"zⁿ = 1, −1, i ou −i",cc:3,min:25,gen:R=>racN(R,1)},
    {t:"zⁿ = un réel ou un imaginaire pur",cc:3,min:40,gen:R=>racN(R,2)},
    {t:"zⁿ = w en forme algébrique, comme au TD 3 (exercice 12)",cc:4,min:100,gen:R=>racN(R,3)},
-   {t:"les n solutions en forme algébrique",cc:7,min:35,gen:racAlg}]}
+   {t:"les n solutions en forme algébrique",cc:7,min:35,gen:racAlg}]},
+ {id:"CA8",t:"Dériver",tache:"dériver",th:"derivees",pts:2.5,lecons:["c-derivees"],
+  paliers:[
+   {t:"un produit",cc:2,gen:deriveProduit},
+   {t:"un quotient",cc:3,min:200,gen:deriveQuotient},
+   {t:"une composée : eᵘ, ln u, √u, uⁿ",cc:2,min:160,gen:R=>deriveCompo(R,false)},
+   {t:"tout mélangé",cc:3,gen:R=>deriveCompo(R,true)}]},
+ {id:"CA10",t:"Primitives : reconnaître la forme",tache:"primitives",th:"primitives",pts:2.5,lecons:["c-primitives"],
+  paliers:[
+   {t:"u′uⁿ",cc:2,min:150,gen:R=>primitive(R,"pow")},
+   {t:"u′/u",cc:2,min:150,gen:R=>primitive(R,"log")},
+   {t:"u′eᵘ, cos et sin",cc:2,min:100,gen:R=>primitive(R,R()<0.6?"exp":"trig")},
+   {t:"tout mélangé",cc:2,min:190,gen:R=>primitive(R)}]}
 ]);
 })();
 
