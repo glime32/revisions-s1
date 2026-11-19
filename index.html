@@ -21738,6 +21738,235 @@ function mediane(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),
     texte:`ABC : ${N.map(x=>`${x[0]} = ${x[1]}`).join(", ")} ; M milieu de [${UV}] ; calculer ${SM}`,champs:[champL("x",SM,`$${SM} =$`)],juge,etapes:E,bonne:fx(`${SM} = ${ecrit(sol)}`),bonneTxt:`${SM} = ${ecrit(sol)}`,
     repBonne:{x:tape(sol)},repFausse:{x:tape(S(dm))},nature:"médiane",ens:{type:"med",a,b,c}};}
 
+/* ---------- GE3 : triangles, la chasse aux angles (en radians, comme le poly) ---------- */
+const PI=Q(1),DENS=[4,5,6,6,8,9,10,12,12,18],DENS4=[5,6,8,9,10,12,12,15,18,18,20],ok12=x=>x.n>0&&x.n*12>=x.d;
+const ppcm=L=>L.reduce((m,x)=>{let a=m,b=x;while(b)[a,b]=[b,a%b];return m*x/a;},1);
+const kpi=(k,d)=>(k===1?"":k)+"π"+(d===1?"":"/"+d);
+/* « π − π/4 − π/3 = 12π/12 − 3π/12 − 4π/12 = 5π/12 » : T = [[+1 ou −1, angle], …] */
+function chaine(T){const D=ppcm(T.map(t=>t[1].d)),sg=(t,i)=>i?(t[0]<0?" − ":" + "):(t[0]<0?"−":"");
+  const a=T.map((t,i)=>sg(t,i)+angT(t[1])).join(""),b=T.map((t,i)=>sg(t,i)+kpi(t[1].n*D/t[1].d,D)).join(""),r=T.reduce((s,t)=>t[0]<0?sub(s,t[1]):add(s,t[1]),Q(0));
+  return {r,t:a+(b===a?"":" = "+b)+" = "+angT(r),pq:b===a?"":` On met les fractions au même dénominateur, ${D}, puis on calcule les numérateurs.`};}
+const vaut=(n,x)=>`${absAn(n)} ${fx("= "+angT(x))}`;
+const egA=(n,x)=>`<span class="en-nb">${vaut(n,x)}</span>`;
+/* triangle de base [UV] horizontale, d'angles a en U et b en V, le sommet W au-dessus */
+function triAng(U,V,W,a,b,mir){const A=angV(a),B=angV(b),d=Math.sin(B)/Math.sin(A+B),m=mir?-1:1;return {[U]:[0,0],[V]:[m,0],[W]:[m*d*Math.cos(A),d*Math.sin(A)]};}
+const pied=(M,A,B)=>{const ux=B[0]-A[0],uy=B[1]-A[1],t=((M[0]-A[0])*ux+(M[1]-A[1])*uy)/(ux*ux+uy*uy);return [A[0]+t*ux,A[1]+t*uy];};
+const coupe=(A,B,C,D)=>{const r=[B[0]-A[0],B[1]-A[1]],s=[D[0]-C[0],D[1]-C[1]],t=((C[0]-A[0])*s[1]-(C[1]-A[1])*s[0])/(r[0]*s[1]-r[1]*s[0]);return [A[0]+t*r[0],A[1]+t*r[1]];};
+const bary=(A,B,t)=>[A[0]+t*(B[0]-A[0]),A[1]+t*(B[1]-A[1])],lgr=(A,B)=>Math.hypot(B[0]-A[0],B[1]-A[1]);
+/* une seule réponse, un angle : juste, ou l'une des erreurs prévues [angle, étape, sorte, titre, message] */
+function jugeAng(x,E,pieges){const V=angV(x);return rep=>{const r=lisAngle(rep.x,V);if(r.inc)return {incomplet:r.inc};if(pres(r.v,V))return {ok:true};
+  for(const p of pieges){const w=angV(p[0]);if(w>0&&!pres(w,V)&&pres(r.v,w))return faux({etape:p[1],type:p[2],titre:p[3],msg:p[4]});}
+  return faux({etape:E.length-1,type:"calcul de l'angle",titre:"Où ça part : le calcul.",msg:E[E.length-1].w});};}
+const unAngle=({nom,x,autre,pieges,...o})=>{autre=[autre].concat(pieges.map(p=>p[0])).find(y=>y&&y.n>0&&!egal(y,x))||add(x,Q(1,12));return Object.assign({champs:[champA("x","angle",`${absAn(nom)} =`)],juge:jugeAng(x,o.etapes,pieges),bonne:egA(nom,x),bonneTxt:`${nom} = ${angT(x)}`,repBonne:{x:angT(x)},repFausse:{x:angT(autre)}},o)};
+const RAP_RAD="Les angles se mesurent en radians, comme dans le cours : un angle plat mesure π, un angle droit π/2.";
+
+function somme(R){const L=R.choix(TRI).split(""),T=L.join(""),k=R.choix(["deux","deux","deux","droit","droit","double"]),s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,X=angle(L,s),U=angle(L,u),W=angle(L,v),mir=R()<0.5;let a,b,x;
+  for(;;){const N=R.choix(DENS);
+    if(k==="deux"){a=Q(R.ent(1,N-2),N);b=Q(R.ent(1,N-2),N);x=sub(sub(PI,a),b);}
+    else if(k==="droit"){a=Q(1,2);b=Q(R.ent(1,N-1),N);x=sub(a,b);}
+    else{x=Q(R.ent(1,N-1),N);a=mul(x,2);b=sub(PI,mul(x,3));}
+    if([a,b,x].every(ok12)&&!(egal(a,b)&&egal(b,x)))break;}
+  const P=triAng(L[u],L[v],L[s],a,b,mir),tous=[0,1,2].map(i=>absAn(angle(L,i))).join(` ${fx("+")} `)+` ${fx("= π")}`;
+  const fig=figure(P,{seg:[[L[0],L[1]],[L[1],L[2]],[L[0],L[2]]],droits:k==="droit"?[[L[v],L[u],L[s]]]:[],angles:(k==="droit"?[]:[[L[v],L[u],L[s],k==="double"?"2 × ?":angT(a),15]]).concat([[L[u],L[v],L[s],angT(b),15],[L[u],L[s],L[v],"?",15]]),alt:`Le triangle ${T}`});
+  let E,pieges,q;
+  if(k==="deux"){const C=chaine([[1,PI],[-1,a],[-1,b]]);q=`Soit ${T} un triangle tel que ${egA(U,a)} et ${egA(W,b)}. Calcule ${absAn(X)}.`;
+    E=[{w:`D'après la proposition 2.4.2, la somme des angles du triangle ${T} vaut π : ${tous}.`,why:"C'est vrai dans tout triangle. Deux angles sont connus : le troisième est ce qui manque pour arriver à π.",pts:1},
+      {w:`Donc ${absAn(X)} ${fx("= π −")} ${absAn(U)} ${fx("−")} ${absAn(W)}.`,why:"On isole l'angle cherché : on retire de π les deux angles connus.",pts:0.5},
+      {w:`<b>${absAn(X)} ${fx("= "+C.t)}</b>`,why:`On remplace par les valeurs de l'énoncé.${C.pq} On simplifie la fraction à la fin.`,pts:1}];
+    pieges=[[sub(PI,a),1,"un seul angle retiré","Où ça part : les angles à retirer.",`Il faut retirer de π les deux angles connus, ${absAn(U)} et ${absAn(W)}, pas un seul.`],[sub(PI,b),1,"un seul angle retiré","Où ça part : les angles à retirer.",`Il faut retirer de π les deux angles connus, ${absAn(U)} et ${absAn(W)}, pas un seul.`],
+      [add(a,b),1,"somme des angles connus donnée","Où ça part : l'égalité.",`${fx(angT(add(a,b)))} est la somme des deux angles connus. L'angle cherché est ce qui manque pour arriver à π : on retire cette somme de π.`],
+      [sub(Q(2),add(a,b)),0,"somme des angles : 2π au lieu de π","Où ça part : la somme des angles.","La somme des trois angles d'un triangle vaut π, pas 2π (proposition 2.4.2)."]];}
+  else if(k==="droit"){const C=chaine([[1,PI],[-1,a],[-1,b]]);q=`Soit ${T} un triangle rectangle en ${L[u]}, tel que ${egA(W,b)}. Calcule ${absAn(X)}.`;
+    E=[{w:`${T} est rectangle en ${L[u]} : ${egA(U,a)}. D'après la proposition 2.4.2, ${tous}.`,why:`« Rectangle en ${L[u]} » donne un des trois angles : l'angle droit, π/2. La somme des trois angles d'un triangle vaut toujours π.`,pts:1},
+      {w:`<b>${absAn(X)} ${fx("= "+C.t)}</b>`,why:`On retire de π l'angle droit et l'angle connu.${C.pq} Dans un triangle rectangle, les deux angles qui ne sont pas droits font ensemble π/2.`,pts:1}];
+    pieges=[[sub(PI,b),0,"angle droit oublié","Où ça part : les angles du triangle.",`L'angle droit en ${L[u]} compte aussi : il vaut π/2, et il faut le retirer de π.`],[add(a,b),1,"angle connu ajouté au lieu d'être retiré","Où ça part : le signe.",`L'angle connu se retire : ${fx(`${angT(a)} − ${angT(b)}`)}, pas ${fx(`${angT(a)} + ${angT(b)}`)}.`]];}
+  else{const C=chaine([[1,PI],[-1,b]]);q=`Soit ${T} un triangle tel que ${egA(W,b)} et ${absAn(U)} ${fx("= 2 ×")} ${absAn(X)}. Calcule ${absAn(X)}.`;
+    E=[{w:`D'après la proposition 2.4.2, ${tous}. Comme ${absAn(U)} ${fx("= 2 ×")} ${absAn(X)}, cela donne ${fx("3 ×")} ${absAn(X)} ${fx("+")} ${absAn(W)} ${fx("= π")}.`,why:`On remplace ${absAn(U)} par 2 × ${absAn(X)} : l'angle cherché apparaît alors trois fois en tout.`,pts:1},
+      {w:`${fx("3 ×")} ${absAn(X)} ${fx("= "+C.t)}`,why:`On retire de π l'angle connu.${C.pq}`,pts:1},
+      {w:`<b>${absAn(X)} ${fx(`= 1/3 × ${angT(C.r)} = ${angT(x)}`)}</b>`,why:"On divise par 3, puis on simplifie la fraction.",pts:1}];
+    pieges=[[mul(sub(PI,b),DEMI),0,"angle double compté une seule fois","Où ça part : l'équation.",`${absAn(U)} vaut deux fois ${absAn(X)} : en tout, ${absAn(X)} est compté trois fois, il faut diviser par 3.`],[a,2,"angle double donné","Où ça part : l'angle demandé.",`${fx(angT(a))}, c'est ${absAn(U)}, le double de l'angle demandé ${absAn(X)}.`],[C.r,2,"division par 3 oubliée","Où ça part : la dernière ligne.",`${fx(angT(C.r))}, c'est 3 × ${absAn(X)}. Il reste à diviser par 3.`]];}
+  return unAngle({nom:X,x,autre:sub(PI,a),etapes:E,pieges,sig:"SO"+JSON.stringify([T,s,k,brut(a),brut(b)]),q,corps:fig+`<p>Rappel : ${absAn(X)} est l'angle du triangle au sommet ${L[s]}. ${RAP_RAD}</p>`,
+    texte:`${T}${k==="droit"?` rectangle en ${L[u]}`:""} : ${k==="deux"?`angle ${U} = ${angT(a)}, `:k==="double"?`angle ${U} = 2 × angle ${X}, `:""}angle ${W} = ${angT(b)} ; calculer l'angle ${X}`,
+    nature:{deux:"deux angles connus",droit:"triangle rectangle",double:"un angle double d'un autre"}[k],
+    ens:{P,don:(k==="double"?[]:[[L[v],L[u],L[s],angV(a)]]).concat([[L[u],L[v],L[s],angV(b)]]),c:k==="double"?[["rap",[L[v],L[u],L[s]],[L[u],L[s],L[v]],2]]:[],ch:{x:[L[u],L[s],L[v]]}}});}
+
+function isocele(R){const L=R.choix(TRI).split(""),T=L.join(""),s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,S0=angle(L,s),U=angle(L,u),W=angle(L,v),C1=cote(L,s,u),C2=cote(L,s,v),k=R.choix(["sommet","sommet","base","base","rect"]),motIso=R()<0.5,mir=R()<0.5,auU=R()<0.5;let a,b;
+  for(;;){const N=R.choix(DENS);
+    if(k==="sommet"){const kk=R.ent(1,N-1);if(R()<0.7&&(N-kk)%2)continue;a=Q(kk,N);b=mul(sub(PI,a),DEMI);}
+    else if(k==="base"){b=Q(R.ent(1,N-1),N);a=sub(PI,mul(b,2));}
+    else{a=Q(1,2);b=Q(1,4);}
+    if(ok12(a)&&ok12(b)&&!egal(a,Q(1,3)))break;}
+  const X=k==="base"?W:auU?U:W,P=triAng(L[u],L[v],L[s],b,b,mir),en=n=>n===U?[L[v],L[u],L[s]]:n===W?[L[u],L[v],L[s]]:[L[u],L[s],L[v]];
+  const hyp=k==="rect"?`un triangle isocèle et rectangle en ${L[s]}`:motIso?`un triangle isocèle en ${L[s]}`:`un triangle tel que ${fx(`${C1} = ${C2}`)}`;
+  const angs=k==="sommet"?[en(S0).concat([angT(a),15]),en(X).concat(["?",15])]:k==="rect"?[en(X).concat(["?",15])]:[en(U).concat([angT(b),15]),en(W).concat(["?",15]),en(S0).concat(["?",15])];
+  const fig=figure(P,{seg:[[L[0],L[1]],[L[1],L[2]],[L[0],L[2]]],marques:[[L[s],L[u],1],[L[s],L[v],1]],droits:k==="rect"?[en(S0)]:[],angles:angs,alt:`Le triangle ${T}, isocèle en ${L[s]}`});
+  const corps=fig+`<p>Rappel : un triangle ${T} est isocèle en ${L[s]} quand ${fx(`${C1} = ${C2}`)} : ses deux côtés égaux partent du sommet ${L[s]}.${k==="rect"?` « Rectangle en ${L[s]} » veut dire que l'angle au sommet ${L[s]} est droit.`:""} ${RAP_RAD}</p>`;
+  const E0={w:`${motIso||k==="rect"?`${T} est isocèle en ${L[s]}`:`${fx(`${C1} = ${C2}`)} : le triangle ${T} est isocèle en ${L[s]}`}, donc ses angles à la base sont égaux : ${absAn(U)} = ${absAn(W)}${k==="base"?` ${fx("= "+angT(b))}`:""}.`,why:`Les deux côtés égaux, [${C1}] et [${C2}], partent de ${L[s]}. Les angles « à la base » sont ceux des deux autres sommets, ${L[u]} et ${L[v]} : ils sont égaux (feuille 1, exercice 7).`,pts:1};
+  const sig="IS"+JSON.stringify([T,s,k,motIso,auU,brut(a)]),texte=`${T} ${k==="rect"?"isocèle rectangle":"isocèle"} en ${L[s]}${k==="sommet"?`, angle ${S0} = ${angT(a)}`:k==="base"?`, angle ${U} = ${angT(b)}`:""} ; calculer ${k==="base"?`les angles ${W} et ${S0}`:"l'angle "+X}`;
+  const don=k==="sommet"?[en(S0).concat([angV(a)])]:k==="base"?[en(U).concat([angV(b)])]:[en(S0).concat([Math.PI/2])],ens=c=>({P,don,c:[["eg",L[s],L[u],L[s],L[v]]],ch:c});
+  if(k!=="base"){const d=sub(PI,a);
+    const E=[E0,{w:`D'après la proposition 2.4.2, ${absAn(S0)} ${fx("+")} ${absAn(U)} ${fx("+")} ${absAn(W)} ${fx("= π")}, donc ${absAn(S0)} ${fx("+ 2 ×")} ${absAn(X)} ${fx("= π")}.`,why:"La somme des angles d'un triangle vaut π, et les deux angles à la base ont la même mesure.",pts:1},
+      {w:`<b>${absAn(X)} ${fx(`= 1/2 × (π − ${angT(a)}) = 1/2 × ${angT(d)} = ${angT(b)}`)}</b>`,why:`On retire l'angle au sommet ${L[s]}, puis on partage ce qui reste en deux angles égaux.`,pts:1}];
+    return unAngle({nom:X,x:b,autre:d,etapes:E,sig,q:`Soit ${T} ${hyp}${k==="sommet"?`, avec ${egA(S0,a)}`:""}. Calcule ${absAn(X)}.`,corps,texte,nature:k==="rect"?"isocèle rectangle":motIso?"isocèle, angle au sommet":"AB = AC, angle au sommet",
+      pieges:[[d,2,"moitié oubliée","Où ça part : le partage en deux.",`${fx(`π − ${angT(a)} = ${angT(d)}`)} est la somme des deux angles à la base. Chacun en vaut la moitié.`],
+        [a,0,"angle à la base pris égal à l'angle au sommet","Où ça part : quels angles sont égaux.",`Ce sont les deux angles à la base, en ${L[u]} et en ${L[v]}, qui sont égaux. L'angle au sommet ${L[s]} n'a pas la même mesure, sauf si le triangle est équilatéral.`],
+        [sub(PI,mul(a,2)),0,"sommet principal mal repéré","Où ça part : le sommet principal.",`L'angle donné est celui du sommet ${L[s]}, d'où partent les deux côtés égaux : ce n'est pas un angle à la base.`]],ens:ens({x:en(X)})});}
+  const C=chaine([[1,PI],[-1,mul(b,2)]]),VB=angV(b),VA=angV(a);
+  const E=[Object.assign({},E0,{w:"<b>"+E0.w+"</b>"}),{w:`D'après la proposition 2.4.2, ${absAn(S0)} ${fx("+")} ${absAn(U)} ${fx("+")} ${absAn(W)} ${fx("= π")}, donc ${absAn(S0)} ${fx("= π − 2 ×")} ${absAn(U)}.`,why:`La somme des angles d'un triangle vaut π, et les deux angles à la base valent tous les deux ${angT(b)}.`,pts:1},
+    {w:`<b>${absAn(S0)} ${fx(`= π − 2 × ${angT(b)} = `+C.t)}</b>`,why:`On retire de π les deux angles à la base.${C.pq}`,pts:1}];
+  function juge(rep){const rx=lisAngle(rep.x,VB);if(rx.inc)return {incomplet:rx.inc};const ry=lisAngle(rep.y,VA);if(ry.inc)return {incomplet:ry.inc};
+    const okX=pres(rx.v,VB),okY=pres(ry.v,VA),F=[];if(!okX)F.push("x");if(!okY)F.push("y");if(!F.length)return {ok:true};
+    const res=`Pas tout à fait : ${!okX&&!okY?"les deux angles sont faux":!okX?`l'angle ${W} est faux`:`l'angle ${W} est juste, mais pas l'angle ${S0}`}.`;
+    if(!okX)return faux({f:F,etape:0,type:pres(rx.v,VA)?"angle à la base et angle au sommet échangés":"angles à la base",titre:"Où ça part : quels angles sont égaux.",msg:`${T} est isocèle en ${L[s]} : les angles à la base, en ${L[u]} et en ${L[v]}, sont égaux. Donc ${absAn(W)} = ${absAn(U)} ${fx("= "+angT(b))}.`},res);
+    if(pres(ry.v,angV(sub(PI,b))))return faux({f:F,etape:1,type:"un seul angle à la base retiré",titre:"Où ça part : la somme des angles.",msg:`Les deux angles à la base valent ${fx(angT(b))} : il faut retirer deux fois ${fx(angT(b))} de π.`},res);
+    if(pres(ry.v,angV(mul(sub(PI,b),DEMI))))return faux({f:F,etape:0,type:"angle donné pris pour l'angle au sommet",titre:"Où ça part : le sommet principal.",msg:`${fx(angT(b))} est un angle à la base, au sommet ${L[u]}. L'angle au sommet principal ${L[s]} est celui d'où partent les deux côtés égaux.`},res);
+    return faux({f:F,etape:2,type:"calcul de l'angle au sommet",titre:"Où ça part : le calcul.",msg:E[2].w},res);}
+  return {sig,q:`Soit ${T} ${hyp}, avec ${egA(U,b)}. Calcule ${absAn(W)} et ${absAn(S0)}.`,corps,texte,champs:[champA("x","angle "+W,`${absAn(W)} =`),champA("y","angle "+S0,`${absAn(S0)} =`)],juge,etapes:E,
+    bonne:`${egA(W,b)} et ${egA(S0,a)}`,bonneTxt:`${W} = ${angT(b)} ; ${S0} = ${angT(a)}`,repBonne:{x:angT(b),y:angT(a)},repFausse:{x:angT(b),y:angT(sub(PI,b))},nature:motIso?"isocèle, angle à la base":"AB = AC, angle à la base",ens:ens({x:en(W),y:en(S0)})};}
+
+/* deux parallèles et une sécante */
+function zigzag(R){let g;for(;;){const N=R.choix([4,5,6,6,8,9,10,12,12,15,18]);g=Q(R.ent(1,N-1),N);if(g.n*6>=g.d&&g.n*6<=5*g.d&&!egal(g,DEMI))break;}
+  const [a,M,e,f,N,b]=R.choix([["A","M","E","F","N","B"],["R","I","S","U","J","T"]]),G=R()<0.5?a:e,alt=G===a?b:f,H=R()<0.45?alt:(alt===b?f:b),egaux=H===alt;
+  const th=G===a?g:sub(PI,g),m=R()<0.5?1:-1,c=1/Math.tan(angV(th)),t=1.3,GM=G+M+N,HN=H+N+M,AL=alt+N+M,V=egaux?g:sub(PI,g);
+  const P={[a]:[m*(c-t),1],[M]:[m*c,1],[e]:[m*(c+t),1],[f]:[-m*t,0],[N]:[0,0],[b]:[m*t,0]};P["Δ"]=[m*(c+t+0.3),1];P["Δ′"]=[m*(t+0.3),0];
+  const fig=figure(P,{droites:[[a,e],[f,b],[M,N,22]],points:[a,M,e,f,N,b],pos:{"Δ":[0,-9],"Δ′":[0,-9],[a]:[0,-10],[M]:[0,-10],[e]:[0,-10],[f]:[0,12],[N]:[0,12],[b]:[0,12]},angles:[[G,M,N,angT(g),16],[H,N,M,"?",16]],alt:`Deux droites parallèles Δ et Δ′ coupées par la droite (${M}${N})`});
+  const E=[{w:`Les droites Δ et Δ′ sont parallèles, ${M} ∈ Δ, ${N} ∈ Δ′, et les points ${G} ∈ Δ et ${alt} ∈ Δ′ sont de part et d'autre de la sécante (${M}${N}) : les angles ${an(GM)} et ${an(AL)} sont alternes-internes.`,why:"Ce sont exactement les hypothèses du théorème 2.3.1 : deux droites, un point sur chacune, et deux points de part et d'autre de la droite qui relie ces deux points.",pts:1},
+    {w:`${egaux?"<b>":""}D'après le théorème 2.3.1 des angles alternes-internes, comme Δ et Δ′ sont parallèles : ${absAn(AL)} = ${egA(GM,g)}.${egaux?"</b>":""}`,why:"Le théorème dit : les droites sont parallèles si et seulement si les angles alternes-internes sont égaux. Ici on s'en sert dans le sens « parallèles, donc angles égaux ».",pts:1}];
+  if(!egaux)E.push({w:`<b>${f}, ${N} et ${b} sont alignés, avec ${N} entre ${f} et ${b} : ${absAn(HN)} ${fx("+")} ${absAn(AL)} ${fx("= π")}. Donc ${absAn(HN)} ${fx("= "+chaine([[1,PI],[-1,g]]).t)}.</b>`,why:`Les angles ${HN} et ${AL} forment ensemble un angle plat : ils sont supplémentaires, leur somme vaut π.`,pts:1});
+  return unAngle({nom:HN,x:V,autre:egaux?sub(PI,g):g,etapes:E,sig:"ZZ"+JSON.stringify([brut(g),a,G===a,H===b]),
+    q:`Les droites Δ et Δ′ sont parallèles. Une troisième droite les coupe en ${M} ∈ Δ et en ${N} ∈ Δ′. Les points ${a} et ${e} sont sur Δ, de part et d'autre de ${M} ; les points ${f} et ${b} sont sur Δ′, de part et d'autre de ${N} ; ${a} et ${b} sont de part et d'autre de la droite (${M}${N}). On sait que ${egA(GM,g)}. Calcule ${absAn(HN)}.`,
+    corps:fig+`<p>Rappel : ${absAn(GM)} est l'angle au sommet ${M}, entre les demi-droites [${M}${G}) et [${M}${N}). ${RAP_RAD}</p>`,texte:`Δ // Δ′, sécante (${M}${N}), ${a} et ${e} sur Δ, ${f} et ${b} sur Δ′, ${a} et ${b} de part et d'autre de (${M}${N}) ; angle ${GM} = ${angT(g)} ; calculer l'angle ${HN}`,
+    nature:egaux?"alternes-internes":"alternes-internes puis angle plat",
+    pieges:egaux?[[sub(PI,g),1,"angles alternes-internes pris supplémentaires","Où ça part : le théorème 2.3.1.",`Les angles alternes-internes ${an(GM)} et ${an(AL)} sont égaux, pas supplémentaires.`]]
+      :[[g,2,"angle plat oublié","Où ça part : le dernier angle.",`${fx(angT(g))}, c'est ${absAn(AL)}. L'angle demandé, ${absAn(HN)}, est de l'autre côté de ${N} : il complète ${absAn(AL)} jusqu'à π.`]],
+    ens:{P,don:[[G,M,N,angV(g)]],c:[["par",a,e,f,b],["al",a,M,e],["al",f,N,b],["entre",M,a,e],["entre",N,f,b],["opp",a,b,M,N],["opp",a,e,M,N],["opp",G,alt,M,N]],ch:{x:[H,N,M]}}});}
+
+/* la parallèle à (BC) passant par A : la figure de la démonstration de la somme des angles */
+function parSommet(R){let b,c,a;for(;;){const N=R.choix(DENS);b=Q(R.ent(1,N-2),N);c=Q(R.ent(1,N-2),N);a=sub(sub(PI,b),c);if([a,b,c].every(ok12)&&b.n*12<=b.d*7&&c.n*12<=c.d*7)break;}
+  const v1=R()<0.5,mir=R()<0.5,P=triAng("B","C","A",b,c,mir),w=0.6,dx=P.B[0]-P.C[0];P.E=[P.A[0]+w*dx,P.A[1]];P.F=[P.A[0]-w*dx,P.A[1]];P["Δ"]=[P.A[0]-(w+0.3)*dx,P.A[1]];
+  const Y=v1?"CAF":"ACB";
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["A","C"]],droites:[["E","F"]],points:["E","F"],pos:{"Δ":[0,-9],E:[0,-10],F:[0,-10],A:[0,-10]},angles:v1?[["C","B","A",angT(b),15],["B","A","C",angT(a),14],["C","A","F","?",19]]:[["E","A","B",angT(b),19],["B","A","C",angT(a),14],["A","C","B","?",15]],alt:"Le triangle ABC et la parallèle Δ à (BC) passant par A"});
+  const plat=`E, A et F sont alignés, avec A entre E et F, et les demi-droites [AB) et [AC) sont entre [AE) et [AF) : ${absAn("EAB")} ${fx("+")} ${absAn("BAC")} ${fx("+")} ${absAn("CAF")} ${fx("= π")}`,pq="Les trois angles mis bout à bout forment l'angle plat EAF. C'est la figure de la démonstration de la proposition 2.4.2 (la somme des angles d'un triangle).";
+  const C=chaine([[1,PI],[-1,b],[-1,a]]);let E,pieges;
+  if(v1){E=[{w:`Δ et (BC) sont parallèles, A ∈ Δ, B ∈ (BC), et E, C sont de part et d'autre de la sécante (AB) : les angles ${an("EAB")} et ${an("ABC")} sont alternes-internes. D'après le théorème 2.3.1, ${absAn("EAB")} = ${egA("ABC",b)}.`,why:"On applique le théorème 2.3.1 aux droites Δ et (BC), avec la sécante (AB) : les droites sont parallèles, donc les angles alternes-internes sont égaux.",pts:1},
+      {w:plat+".",why:pq,pts:1},{w:`<b>${absAn("CAF")} ${fx("= "+C.t)}</b>`,why:`On retire de π les deux autres angles.${C.pq}`,pts:1}];
+    pieges=[[b,2,"angle EAB donné","Où ça part : l'angle demandé.",`${fx(angT(b))}, c'est ${absAn("EAB")}. L'angle demandé est ${absAn("CAF")}, de l'autre côté de [AC).`],[sub(PI,a),1,"angle EAB oublié dans l'angle plat","Où ça part : l'angle plat.",`Il faut retirer de π les deux angles ${absAn("EAB")} et ${absAn("BAC")}.`],[sub(PI,b),1,"angle BAC oublié dans l'angle plat","Où ça part : l'angle plat.",`Il faut retirer de π les deux angles ${absAn("EAB")} et ${absAn("BAC")}.`]];}
+  else{E=[{w:`Δ et (BC) sont parallèles, A ∈ Δ, C ∈ (BC), et F, B sont de part et d'autre de la sécante (AC) : les angles ${an("CAF")} et ${an("ACB")} sont alternes-internes. D'après le théorème 2.3.1, ${absAn("ACB")} = ${absAn("CAF")}.`,why:"On applique le théorème 2.3.1 aux droites Δ et (BC), avec la sécante (AC). F est du côté de C, donc de l'autre côté de (AC) par rapport à B.",pts:1},
+      {w:`${plat}, donc ${absAn("CAF")} ${fx("= "+C.t)}.`,why:`${pq}${C.pq}`,pts:1},{w:`<b>${absAn("ACB")} = ${egA("CAF",c)}</b>`,why:"On reporte l'égalité des angles alternes-internes de la première ligne.",pts:0.5}];
+    pieges=[[b,1,"angle EAB recopié","Où ça part : l'angle demandé.",`${fx(angT(b))}, c'est ${absAn("EAB")} : il est égal à ${absAn("ABC")}, en B. L'angle demandé est en C : il est égal à ${absAn("CAF")}.`],[sub(PI,a),1,"angle EAB oublié dans l'angle plat","Où ça part : l'angle plat.",`Il faut retirer de π les deux angles ${absAn("EAB")} et ${absAn("BAC")}.`],[sub(PI,b),1,"angle BAC oublié dans l'angle plat","Où ça part : l'angle plat.",`Il faut retirer de π les deux angles ${absAn("EAB")} et ${absAn("BAC")}.`]];}
+  return unAngle({nom:Y,x:c,autre:b,etapes:E,pieges,sig:"PS"+JSON.stringify([v1,brut(b),brut(c)]),
+    q:`Soit ABC un triangle, et Δ la droite parallèle à (BC) passant par A. Sur Δ, on place deux points E et F de part et d'autre de A, avec E et C de part et d'autre de la droite (AB). On sait que ${v1?egA("ABC",b):egA("EAB",b)} et ${egA("BAC",a)}. Calcule ${absAn(Y)}.`,
+    corps:fig+`<p>${RAP_RAD}</p>`,texte:`ABC, Δ parallèle à (BC) passant par A, E et F sur Δ de part et d'autre de A, E du côté de B ; angle ${v1?"ABC":"EAB"} = ${angT(b)}, angle BAC = ${angT(a)} ; calculer l'angle ${Y}`,nature:v1?"parallèle au côté : angle en A":"parallèle au côté : angle en C",
+    ens:{P,don:[v1?["C","B","A",angV(b)]:["E","A","B",angV(b)],["B","A","C",angV(a)]],c:[["par","E","F","B","C"],["entre","A","E","F"],["opp","E","C","A","B"],["opp","F","B","A","C"]],ch:{x:v1?["C","A","F"]:["A","C","B"]}}});}
+
+/* un trapèze et sa diagonale */
+function trapeze(R){let x,y,z;for(;;){const N=R.choix(DENS);x=Q(R.ent(1,N-2),N);y=Q(R.ent(1,N-2),N);z=sub(sub(PI,x),y);if(ok12(z)&&x.n*6>=x.d&&y.n*6>=y.d&&y.n*3<=2*y.d&&x.n*2<x.d)break;}
+  const k=R.choix(["DAC","DAC","ADC","BAC"]),mir=R()<0.5,P=triAng("D","C","A",y,x,mir),t=R.choix([0.45,0.6,0.75]);P.B=[P.A[0]+t*(P.C[0]-P.D[0]),P.A[1]];
+  const val={BAC:x,ADC:y,DAC:z},don=["BAC","ADC","DAC"].filter(n=>n!==k),lab={BAC:["C","A","B",17],ADC:["A","D","C",15],DAC:["D","A","C",21]};
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["C","D"],["D","A"]],tirets:[["A","C"]],angles:["BAC","ADC","DAC"].map(n=>[lab[n][0],lab[n][1],lab[n][2],n===k?"?":angT(val[n]),lab[n][3]]),alt:"Le trapèze ABCD et sa diagonale [AC]"});
+  const alt=`(AB) et (DC) sont parallèles, et B, D sont de part et d'autre de la diagonale (AC) : les angles ${an("BAC")} et ${an("ACD")} sont alternes-internes. D'après le théorème 2.3.1, ${absAn("ACD")} = `,whyAlt="On applique le théorème 2.3.1 aux droites (AB) et (DC), avec la sécante (AC). Dans un trapèze, les sommets B et D sont de part et d'autre de la diagonale (AC).";
+  let E,pieges;
+  if(k!=="BAC"){const autre=k==="DAC"?"ADC":"DAC",C=chaine([[1,PI],[-1,val[autre]],[-1,x]]);
+    E=[{w:alt+egA("BAC",x)+".",why:whyAlt,pts:1},
+      {w:`Dans le triangle ACD, la somme des angles vaut π (proposition 2.4.2) : ${absAn(k)} ${fx("= π −")} ${absAn(autre)} ${fx("−")} ${absAn("ACD")}.`,why:"Deux angles du triangle ACD sont maintenant connus : le troisième s'en déduit.",pts:0.5},
+      {w:`<b>${absAn(k)} ${fx("= "+C.t)}</b>`,why:`On remplace par les valeurs.${C.pq}`,pts:1}];
+    pieges=[[sub(PI,val[autre]),0,"angle ACD oublié","Où ça part : les angles du triangle ACD.",`Dans le triangle ACD, il faut aussi retirer ${absAn("ACD")}, qui vaut ${fx(angT(x))} : il est alterne-interne avec ${absAn("BAC")}.`],[sub(PI,x),1,`angle ${autre} oublié`,"Où ça part : les angles du triangle ACD.",`Dans le triangle ACD, il faut retirer les deux angles connus, ${absAn(autre)} et ${absAn("ACD")}.`],[add(x,val[autre]),1,"somme des deux angles donnée","Où ça part : l'égalité.",`${fx(angT(add(x,val[autre])))} est la somme des deux angles connus du triangle ACD. Le troisième est ce qui manque pour arriver à π.`]];}
+  else{const C=chaine([[1,PI],[-1,y],[-1,z]]);
+    E=[{w:alt+absAn("BAC")+".",why:whyAlt,pts:1},
+      {w:`Dans le triangle ACD, la somme des angles vaut π (proposition 2.4.2) : ${absAn("ACD")} ${fx("= "+C.t)}.`,why:`On retire de π les deux angles connus du triangle ACD.${C.pq}`,pts:1},
+      {w:`<b>${absAn("BAC")} = ${egA("ACD",x)}</b>`,why:"On reporte l'égalité des angles alternes-internes de la première ligne.",pts:0.5}];
+    pieges=[[sub(PI,y),1,"angle DAC oublié","Où ça part : les angles du triangle ACD.",`Dans le triangle ACD, il faut retirer les deux angles connus, ${absAn("ADC")} et ${absAn("DAC")}.`],[sub(PI,z),1,"angle ADC oublié","Où ça part : les angles du triangle ACD.",`Dans le triangle ACD, il faut retirer les deux angles connus, ${absAn("ADC")} et ${absAn("DAC")}.`],[add(y,z),1,"somme des deux angles donnée","Où ça part : l'égalité.",`${fx(angT(add(y,z)))} est la somme des deux angles connus du triangle ACD. Le troisième, ${absAn("ACD")}, est ce qui manque pour arriver à π.`]];}
+  const ens3={BAC:["C","A","B"],ADC:["A","D","C"],DAC:["D","A","C"]};
+  return unAngle({nom:k,x:val[k],autre:pieges[0][0],etapes:E,pieges,sig:"TR"+JSON.stringify([k,brut(x),brut(y)]),
+    q:`ABCD est un trapèze : les droites (AB) et (DC) sont parallèles. On sait que ${egA(don[0],val[don[0]])} et ${egA(don[1],val[don[1]])}. Calcule ${absAn(k)}.`,corps:fig+`<p>Rappel : ${absAn("BAC")} est l'angle au sommet A entre [AB) et [AC) ; ${absAn("DAC")} est l'angle au sommet A entre [AD) et [AC). ${RAP_RAD}</p>`,
+    texte:`trapèze ABCD, (AB) // (DC), angle ${don[0]} = ${angT(val[don[0]])}, angle ${don[1]} = ${angT(val[don[1]])} ; calculer l'angle ${k}`,nature:"trapèze et diagonale",
+    ens:{P,don:don.map(n=>ens3[n].concat([angV(val[n])])),c:[["par","A","B","D","C"],["opp","B","D","A","C"]],ch:{x:ens3[k]}}});}
+const paralleles=R=>{const r=R();return r<0.4?zigzag(R):r<0.75?parSommet(R):trapeze(R);};
+
+/* comme au CC : plusieurs triangles dans la même figure */
+function isoDouble(R){let a;for(;;){const N=R.choix([5,6,8,9,10,12,12,15,18,20,24]),kk=R.ent(1,N-1);if(R()<0.7&&(N-kk)%2)continue;a=Q(kk,N);if(ok12(a)&&a.n*27<=8*a.d)break;}
+  const be=mul(sub(PI,a),DEMI),t=sub(be,a),mir=R()<0.5,k=R()<0.5?"ABD":"ADB",P=triAng("B","C","A",be,be,mir);P.D=[(mir?-1:1)*Math.cos(angV(a)),Math.sin(angV(a))];
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["A","C"],["B","D"]],points:["D"],marques:[["A","B",1],["A","C",1],["B","D",2],["B","C",2]],angles:[["B","A","C",angT(a),15],k==="ABD"?["A","B","D","?",24]:["A","D","B","?",14]],alt:"Le triangle ABC isocèle en A et le point D de [AC]"});
+  const C2=chaine([[1,PI],[-1,mul(be,2)]]),C3=chaine([[1,be],[-1,a]]);
+  const E=[{w:`ABC est isocèle en A, donc ${absAn("ABC")} = ${absAn("ACB")}, et la somme des angles donne ${absAn("ABC")} ${fx(`= 1/2 × (π − ${angT(a)}) = ${angT(be)}`)}.`,why:"Les angles à la base d'un triangle isocèle sont égaux (feuille 1, exercice 7), et la somme des trois angles vaut π (proposition 2.4.2).",pts:1},
+    {w:`${fx("BD = BC")} : le triangle BCD est isocèle en B, donc ${absAn("BDC")} = ${absAn("BCD")} = ${egA("ACB",be)}.`,why:"Dans BCD, les deux côtés égaux partent de B : les angles à la base sont en C et en D. Et D est sur [AC], donc l'angle BCD est le même que l'angle ACB.",pts:1},
+    {w:`Dans le triangle BCD : ${absAn("DBC")} ${fx(`= π − 2 × ${angT(be)} = `+C2.t)}.`,why:`Somme des angles du triangle BCD (proposition 2.4.2), dont deux valent ${angT(be)}.`,pts:1},
+    {w:`<b>D est entre A et C, donc ${absAn("ABD")} = ${absAn("ABC")} ${fx("−")} ${absAn("DBC")} ${fx("= "+C3.t)}.</b>`,why:"La demi-droite [BD) est à l'intérieur de l'angle ABC : les angles ABD et DBC mis bout à bout font l'angle ABC.",pts:1}];
+  if(k==="ADB")E.splice(2,2,{w:`<b>A, D et C sont alignés, avec D entre A et C : ${absAn("ADB")} ${fx("= π −")} ${absAn("BDC")} ${fx("= "+chaine([[1,PI],[-1,be]]).t)}.</b>`,why:"Les angles ADB et BDC forment ensemble un angle plat : leur somme vaut π.",pts:1});
+  return unAngle({nom:k,x:k==="ABD"?t:sub(PI,be),autre:be,etapes:E,sig:"ID"+JSON.stringify([k,brut(a)]),q:`Soit ABC un triangle isocèle en A tel que ${egA("BAC",a)}. Soit D le point du segment [AC] tel que ${fx("BD = BC")}. Calcule ${absAn(k)}.`,
+    corps:fig+`<p>Rappel : « isocèle en A » veut dire ${fx("AB = AC")}. ${RAP_RAD}</p>`,texte:`ABC isocèle en A, angle BAC = ${angT(a)}, D sur [AC] avec BD = BC ; calculer l'angle ${k}`,nature:"deux triangles isocèles",
+    pieges:k==="ADB"?[[be,2,"angle BDC donné","Où ça part : l'angle demandé.",`${fx(angT(be))}, c'est ${absAn("BDC")}. L'angle demandé, ${absAn("ADB")}, est de l'autre côté de D : il complète ${absAn("BDC")} jusqu'à π.`]]:[[be,3,"angle ABC entier donné","Où ça part : la dernière soustraction.",`${fx(angT(be))}, c'est ${absAn("ABC")} tout entier. L'angle ${absAn("ABD")} n'en est qu'une partie : il faut retirer ${absAn("DBC")}.`],[a,3,"angle DBC donné","Où ça part : l'angle demandé.",`${fx(angT(a))}, c'est ${absAn("DBC")}. L'angle demandé est l'autre morceau de ${absAn("ABC")} : ${absAn("ABD")}.`]],
+    ens:{P,don:[["B","A","C",angV(a)]],c:[["eg","A","B","A","C"],["eg","B","D","B","C"],["entre","D","A","C"]],ch:{x:k==="ABD"?["A","B","D"]:["A","D","B"]}}});}
+
+function bissectrices(R){const un=R()<0.4;let b,c,a;for(;;){const N=R.choix(DENS4);b=Q(R.ent(1,N-2),N);c=Q(R.ent(1,N-2),N);a=sub(sub(PI,b),c);if([a,b,c].every(ok12)&&b.n*12<=b.d*7&&c.n*12<=c.d*7)break;}
+  const mir=R()<0.5,P=triAng("B","C","A",b,c,mir),la=lgr(P.B,P.C),lb=lgr(P.C,P.A),lc=lgr(P.A,P.B),s=la+lb+lc;P.I=[(la*P.A[0]+lb*P.B[0]+lc*P.C[0])/s,(la*P.A[1]+lb*P.B[1]+lc*P.C[1])/s];
+  const hb=mul(b,DEMI),hc=mul(c,DEMI),V=sub(PI,add(hb,hc));
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["A","C"]],tirets:[["B","I"],["C","I"]],points:["I"],angles:(un?[["B","A","C",angT(a),15]]:[["C","B","A",angT(b),15],["A","C","B",angT(c),15]]).concat([["B","I","C","?",13]]),alt:"Le triangle ABC et ses bissectrices issues de B et de C"});
+  let E,pieges;
+  if(!un){const C=chaine([[1,PI],[-1,hb],[-1,hc]]);
+    E=[{w:`[BI) est la bissectrice issue de B : ${absAn("IBC")} ${fx("= 1/2 ×")} ${absAn("ABC")} ${fx("= "+angT(hb))}. De même, ${absAn("ICB")} ${fx("= 1/2 ×")} ${absAn("ACB")} ${fx("= "+angT(hc))}.`,why:"La bissectrice partage l'angle en deux angles égaux : chacun vaut la moitié de l'angle du triangle.",pts:1},
+      {w:`<b>Dans le triangle IBC : ${absAn("BIC")} ${fx("= "+C.t)}.</b>`,why:`Somme des angles du triangle IBC (proposition 2.4.2).${C.pq}`,pts:1.5}];
+    pieges=[[a,1,"bissectrices oubliées","Où ça part : les demi-angles.",`${fx(angT(a))}, c'est ${absAn("BAC")}. Dans le triangle IBC, les angles en B et en C ne sont que les moitiés de ${absAn("ABC")} et ${absAn("ACB")}.`],[add(hb,hc),1,"somme des demi-angles donnée","Où ça part : l'égalité.",`${fx(angT(add(hb,hc)))} est la somme des deux angles connus du triangle IBC. L'angle ${absAn("BIC")} est ce qui manque pour arriver à π.`]];}
+  else{const S2=sub(PI,a),h=mul(S2,DEMI),C=chaine([[1,PI],[-1,h]]);
+    E=[{w:`[BI) et [CI) sont des bissectrices : ${absAn("IBC")} ${fx("= 1/2 ×")} ${absAn("ABC")} et ${absAn("ICB")} ${fx("= 1/2 ×")} ${absAn("ACB")}.`,why:"La bissectrice partage l'angle en deux angles égaux. On ne connaît pas les angles en B et en C : on garde leurs noms.",pts:1},
+      {w:`Dans le triangle ABC : ${absAn("ABC")} ${fx("+")} ${absAn("ACB")} ${fx(`= π − ${angT(a)} = ${angT(S2)}`)}.`,why:"Somme des angles du triangle ABC (proposition 2.4.2) : on connaît la somme des deux angles en B et en C, sans les connaître chacun.",pts:1},
+      {w:`<b>Dans le triangle IBC : ${absAn("BIC")} ${fx("= π − 1/2 ×")} (${absAn("ABC")} ${fx("+")} ${absAn("ACB")}) ${fx(`= π − 1/2 × ${angT(S2)} = `+C.t)}.</b>`,why:`Somme des angles du triangle IBC. Le résultat ne dépend que de l'angle en A : c'est toujours π/2 + ${absAn("BAC")}/2.${C.pq}`,pts:1}];
+    pieges=[[S2,2,"moitié oubliée","Où ça part : les demi-angles.",`${fx(angT(S2))}, c'est ${absAn("ABC")} + ${absAn("ACB")}. Dans le triangle IBC, seules leurs moitiés comptent.`],[h,2,"somme des demi-angles donnée","Où ça part : la dernière ligne.",`${fx(angT(h))}, c'est ${absAn("IBC")} + ${absAn("ICB")}. Il reste à le retirer de π.`],[mul(a,DEMI),1,"moitié de l'angle en A","Où ça part : l'angle demandé.","L'angle en I n'est pas la moitié de l'angle en A : il se calcule dans le triangle IBC."]];}
+  return unAngle({nom:"BIC",x:V,autre:a,etapes:E,pieges,sig:"BI"+JSON.stringify(un?[1,brut(a)]:[0,brut(b),brut(c)]),
+    q:`Soit ABC un triangle tel que ${un?egA("BAC",a):`${egA("ABC",b)} et ${egA("ACB",c)}`}. Les bissectrices issues de B et de C se coupent en I. Calcule ${absAn("BIC")}.${un?` Les angles en B et en C ne sont pas donnés : exprime ce dont tu as besoin avec ${absAn("BAC")}.`:""}`,
+    corps:fig+`<p>Rappel : la bissectrice issue de B est la demi-droite qui partage l'angle ${absAn("ABC")} en deux angles égaux. ${RAP_RAD}</p>`,texte:`ABC, ${un?`angle BAC = ${angT(a)}`:`angle ABC = ${angT(b)}, angle ACB = ${angT(c)}`}, I intersection des bissectrices issues de B et C ; calculer l'angle BIC`,nature:un?"bissectrices, seul l'angle en A":"bissectrices",
+    ens:{P,don:un?[["B","A","C",angV(a)]]:[["C","B","A",angV(b)],["A","C","B",angV(c)]],c:[["bis","I","A","B","C"],["bis","I","A","C","B"]],ch:{x:["B","I","C"]}}});}
+
+function orthocentre(R){const k=R()<0.5?"HBC":"BHC";let b,c,a;for(;;){const N=R.choix(DENS4);b=Q(R.ent(1,N-1),N);c=Q(R.ent(1,N-1),N);a=sub(sub(PI,b),c);if([a,b,c].every(y=>y.n*9>=y.d&&y.n*2<y.d))break;}
+  const mir=R()<0.5,P=triAng("B","C","A",b,c,mir);P.E=pied(P.B,P.A,P.C);P.F=pied(P.C,P.A,P.B);P.H=coupe(P.B,P.E,P.C,P.F);
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["A","C"]],tirets:[["B","E"],["C","F"]],droits:[["B","E","C"],["C","F","B"]],points:["E","F","H"],angles:[["C","B","A",angT(b),15],["A","C","B",angT(c),15],k==="HBC"?["H","B","C","?",26]:["B","H","C","?",12]],alt:"Le triangle ABC, deux de ses hauteurs et l'orthocentre H"});
+  const hB=sub(DEMI,c),hC=sub(DEMI,b),C1=chaine([[1,PI],[-1,DEMI],[-1,c]]);
+  const E=[{w:`(BE) est perpendiculaire à (AC) en E : le triangle BEC est rectangle en E. Et E est sur [AC], donc ${absAn("ECB")} = ${egA("ACB",c)}.`,why:"Les trois angles de ABC sont aigus : le pied de chaque hauteur tombe sur le côté d'en face, entre les deux sommets.",pts:1},
+    {w:`Dans le triangle BEC : ${absAn("EBC")} ${fx("= "+C1.t)}.`,why:"Somme des angles du triangle BEC (proposition 2.4.2), avec l'angle droit en E.",pts:1}];
+  let pieges;
+  if(k==="HBC"){E.push({w:`<b>H est sur le segment [BE], donc ${absAn("HBC")} = ${egA("EBC",hB)}.</b>`,why:"Les demi-droites [BH) et [BE) sont les mêmes : c'est le même angle.",pts:1});
+    pieges=[[c,1,"angle en C recopié","Où ça part : le triangle rectangle BEC.",`${fx(angT(c))} est l'angle en C. Dans le triangle BEC rectangle en E, l'angle en B est ce qui reste : π − π/2 − ${angT(c)}.`],[hC,0,"autre hauteur","Où ça part : le bon triangle rectangle.",`${fx(angT(hC))} est l'angle ${absAn("HCB")}, du côté de C. L'angle ${absAn("HBC")} se calcule dans le triangle BEC, avec l'angle en C.`],[sub(PI,c),1,"angle droit oublié","Où ça part : le triangle rectangle BEC.","Le triangle BEC a un angle droit en E : il faut aussi retirer π/2."]];}
+  else{const C2=chaine([[1,PI],[-1,DEMI],[-1,b]]),C3=chaine([[1,PI],[-1,hB],[-1,hC]]);
+    E.push({w:`H est sur [BE], donc ${absAn("HBC")} ${fx("= "+angT(hB))}. De même, CFB est rectangle en F et H est sur [CF] : ${absAn("HCB")} ${fx("= "+C2.t)}.`,why:"Même raisonnement avec la hauteur issue de C : le triangle CFB est rectangle en F, et son angle en B est l'angle ABC.",pts:1},
+      {w:`<b>Dans le triangle HBC : ${absAn("BHC")} ${fx("= "+C3.t)}.</b>`,why:`Somme des angles du triangle HBC (proposition 2.4.2).${C3.pq} On peut remarquer que le résultat vaut π − ${absAn("BAC")}.`,pts:1});
+    pieges=[[a,3,"angle en A donné","Où ça part : l'angle demandé.",`${fx(angT(a))}, c'est ${absAn("BAC")}. L'angle ${absAn("BHC")} vaut π − ${absAn("BAC")}, il se calcule dans le triangle HBC.`],[add(hB,hC),3,"somme des deux angles donnée","Où ça part : la dernière ligne.",`${fx(angT(add(hB,hC)))}, c'est ${absAn("HBC")} + ${absAn("HCB")}. Il reste à le retirer de π.`]];}
+  return unAngle({nom:k,x:k==="HBC"?hB:add(b,c),autre:k==="HBC"?c:a,etapes:E,pieges,sig:"OR"+JSON.stringify([k,brut(b),brut(c)]),
+    q:`Soit ABC un triangle dont les trois angles sont aigus, avec ${egA("ABC",b)} et ${egA("ACB",c)}. On note E le pied de la hauteur issue de B, F le pied de la hauteur issue de C, et H le point d'intersection des hauteurs (BE) et (CF). Calcule ${absAn(k)}.`,
+    corps:fig+`<p>Rappel : la hauteur issue de B est la droite qui passe par B et qui est perpendiculaire à (AC) ; elle coupe (AC) en E, son pied. ${RAP_RAD}</p>`,texte:`ABC aux angles aigus, angle ABC = ${angT(b)}, angle ACB = ${angT(c)}, hauteurs (BE) et (CF), orthocentre H ; calculer l'angle ${k}`,nature:k==="HBC"?"hauteur : angle en B":"orthocentre : angle en H",
+    ens:{P,don:[["C","B","A",angV(b)],["A","C","B",angV(c)]],c:[["perp","B","E","A","C"],["perp","C","F","A","B"],["entre","E","A","C"],["entre","F","A","B"],["entre","H","B","E"],["entre","H","C","F"]],ch:{x:k==="HBC"?["H","B","C"]:["B","H","C"]}}});}
+
+function hauteurBis(R){let b,c,a;for(;;){const N=R.choix(DENS4);b=Q(R.ent(1,N-1),N);c=Q(R.ent(1,N-1),N);a=sub(sub(PI,b),c);const d=sub(b,c);if([a,b,c].every(ok12)&&b.n*2<b.d&&c.n*2<c.d&&d.n>0&&d.n*9>=d.d)break;}
+  const mir=R()<0.5,P=triAng("B","C","A",b,c,mir);P.H=pied(P.A,P.B,P.C);const AB=lgr(P.A,P.B),AC=lgr(P.A,P.C);P.D=bary(P.B,P.C,AB/(AB+AC));
+  const bah=sub(DEMI,b),h=mul(a,DEMI),V=sub(h,bah),C0=chaine([[1,PI],[-1,DEMI],[-1,b]]),C1=chaine([[1,PI],[-1,b],[-1,c]]),C2=chaine([[1,h],[-1,bah]]);
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["A","C"]],tirets:[["A","H"],["A","D"]],droits:[["A","H","C"]],points:["H","D"],pos:{H:[0,12],D:[0,12]},angles:[["C","B","A",angT(b),15],["A","C","B",angT(c),15],["H","A","D","?",30]],alt:"Le triangle ABC, la hauteur et la bissectrice issues de A"});
+  const E=[{w:`Le triangle ABH est rectangle en H, et H est sur [BC] : ${absAn("BAH")} ${fx("= "+C0.t)}.`,why:"Somme des angles du triangle ABH (proposition 2.4.2), avec l'angle droit en H. Son angle en B est l'angle ABC.",pts:1},
+    {w:`${absAn("BAC")} ${fx("= "+C1.t)}, et [AD) est la bissectrice : ${absAn("BAD")} ${fx(`= 1/2 × ${angT(a)} = ${angT(h)}`)}.`,why:"Somme des angles de ABC, puis la bissectrice partage l'angle en A en deux moitiés.",pts:1},
+    {w:`<b>H est entre B et D, donc ${absAn("HAD")} = ${absAn("BAD")} ${fx("−")} ${absAn("BAH")} ${fx("= "+C2.t)}.</b>`,why:`À partir de [AB), on rencontre d'abord [AH), puis [AD) : l'angle HAD est la différence des deux angles. En lettres, on trouve toujours la moitié de ${absAn("ABC")} − ${absAn("ACB")}.`,pts:1}];
+  return unAngle({nom:"HAD",x:V,autre:h,etapes:E,sig:"HB"+JSON.stringify([brut(b),brut(c)]),
+    q:`Soit ABC un triangle tel que ${egA("ABC",b)} et ${egA("ACB",c)}. On note H le pied de la hauteur issue de A, et D le point où la bissectrice issue de A coupe le segment [BC]. Calcule ${absAn("HAD")}.`,
+    corps:fig+`<p>Rappel : la hauteur issue de A est la droite qui passe par A et qui est perpendiculaire à (BC) ; elle coupe (BC) en H. La bissectrice issue de A partage l'angle ${absAn("BAC")} en deux angles égaux. ${RAP_RAD}</p>`,
+    texte:`ABC, angle ABC = ${angT(b)}, angle ACB = ${angT(c)}, H pied de la hauteur issue de A, D pied de la bissectrice issue de A ; calculer l'angle HAD`,nature:"hauteur et bissectrice",
+    pieges:[[h,2,"angle BAD donné","Où ça part : la dernière soustraction.",`${fx(angT(h))}, c'est ${absAn("BAD")} tout entier. Il faut lui retirer ${absAn("BAH")}.`],[bah,2,"angle BAH donné","Où ça part : l'angle demandé.",`${fx(angT(bah))}, c'est ${absAn("BAH")}. L'angle demandé va de [AH) à [AD).`],[sub(b,c),2,"moitié oubliée","Où ça part : la bissectrice.",`L'angle ${absAn("BAD")} n'est que la moitié de ${absAn("BAC")}.`]],
+    ens:{P,don:[["C","B","A",angV(b)],["A","C","B",angV(c)]],c:[["perp","A","H","B","C"],["bis","D","B","A","C"],["entre","H","B","D"],["entre","D","B","C"]],ch:{x:["H","A","D"]}}});}
+
+function isoInterieur(R){const k=R()<0.5?"DAC":"ADC";let b,c,z;for(;;){const N=R.choix(DENS4);b=Q(R.ent(1,N-1),N);c=Q(R.ent(1,N-1),N);z=sub(sub(PI,mul(b,2)),c);if(ok12(b)&&ok12(c)&&ok12(z)&&b.n*12<=b.d*5)break;}
+  const mir=R()<0.5,P=triAng("B","C","A",b,c,mir),a=sub(sub(PI,b),c),adb=sub(PI,mul(b,2));P.D=bary(P.B,P.C,lgr(P.A,P.B)/(2*Math.cos(angV(b))));
+  const fig=figure(P,{seg:[["A","B"],["B","C"],["A","C"],["A","D"]],points:["D"],pos:{D:[0,12]},marques:[["D","A",1],["D","B",1]],angles:[["C","B","A",angT(b),15],["A","C","B",angT(c),15],k==="DAC"?["D","A","C","?",22]:["A","D","C","?",14]],alt:"Le triangle ABC et le point D de [BC]"});
+  const E0={w:`${fx("DA = DB")} : le triangle ABD est isocèle en D, donc ${absAn("BAD")} = ${absAn("ABD")} = ${egA("ABC",b)}.`,why:"Dans ABD, les deux côtés égaux partent de D : les angles à la base sont en A et en B. Et D est sur [BC], donc l'angle ABD est l'angle ABC.",pts:1};
+  let E,pieges,V;
+  if(k==="DAC"){const C1=chaine([[1,PI],[-1,b],[-1,c]]),C2=chaine([[1,a],[-1,b]]);V=z;
+    E=[E0,{w:`Dans le triangle ABC : ${absAn("BAC")} ${fx("= "+C1.t)}.`,why:"Somme des angles (proposition 2.4.2).",pts:1},
+      {w:`<b>D est entre B et C, donc ${absAn("DAC")} = ${absAn("BAC")} ${fx("−")} ${absAn("BAD")} ${fx("= "+C2.t)}.</b>`,why:"La demi-droite [AD) est à l'intérieur de l'angle BAC : les angles BAD et DAC mis bout à bout font l'angle BAC.",pts:1}];
+    pieges=[[a,2,"angle BAC entier donné","Où ça part : la dernière soustraction.",`${fx(angT(a))}, c'est ${absAn("BAC")} tout entier. Il faut lui retirer ${absAn("BAD")}.`],[b,2,"angle BAD donné","Où ça part : l'angle demandé.",`${fx(angT(b))}, c'est ${absAn("BAD")}. L'angle demandé est l'autre morceau de ${absAn("BAC")}.`]];}
+  else{const C1=chaine([[1,PI],[-1,mul(b,2)]]),C2=chaine([[1,PI],[-1,adb]]);V=mul(b,2);
+    E=[E0,{w:`Dans le triangle ABD : ${absAn("ADB")} ${fx(`= π − 2 × ${angT(b)} = `+C1.t)}.`,why:`Somme des angles du triangle ABD, dont deux valent ${angT(b)}.`,pts:1},
+      {w:`<b>B, D et C sont alignés, avec D entre B et C : ${absAn("ADC")} ${fx("= π −")} ${absAn("ADB")} ${fx("= "+C2.t)}.</b>`,why:"Les angles ADB et ADC forment un angle plat. On retrouve 2 × |ABC| : l'angle en D de ce côté vaut la somme des deux angles à la base du triangle ABD.",pts:1}];
+    pieges=[[adb,2,"angle ADB donné","Où ça part : l'angle demandé.",`${fx(angT(adb))}, c'est ${absAn("ADB")}, du côté de B. L'angle demandé, ${absAn("ADC")}, est de l'autre côté : il complète ${absAn("ADB")} jusqu'à π.`],[b,1,"angle ABD recopié","Où ça part : l'angle demandé.",`${fx(angT(b))} est l'angle en B. L'angle demandé est au sommet D.`]];}
+  return unAngle({nom:k,x:V,autre:b,etapes:E,pieges,sig:"II"+JSON.stringify([k,brut(b),brut(c)]),q:`Soit ABC un triangle tel que ${egA("ABC",b)} et ${egA("ACB",c)}. Soit D le point du segment [BC] tel que ${fx("DA = DB")}. Calcule ${absAn(k)}.`,
+    corps:fig+`<p>Fais le dessin sur ton brouillon et repère le triangle isocèle. ${RAP_RAD}</p>`,texte:`ABC, angle ABC = ${angT(b)}, angle ACB = ${angT(c)}, D sur [BC] avec DA = DB ; calculer l'angle ${k}`,nature:"triangle isocèle dans le triangle",
+    ens:{P,don:[["C","B","A",angV(b)],["A","C","B",angV(c)]],c:[["eg","D","A","D","B"],["entre","D","B","C"]],ch:{x:k==="DAC"?["D","A","C"]:["A","D","C"]}}});}
+const plusieurs=R=>{const r=R();return r<0.14?isoDouble(R):r<0.36?bissectrices(R):r<0.58?orthocentre(R):r<0.76?hauteurBis(R):isoInterieur(R);};
+
 /* ---------- les démonstrations et les énoncés du cours : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
 const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\^\{2\}/g,"²").replace(/\$/g,"").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
   etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
@@ -21790,7 +22019,13 @@ G.add("geo",[
    {t:"Al-Kashi : un côté, avec deux côtés et l'angle entre eux",cc:4,gen:alKashi},
    {t:"le cosinus d'un angle, puis l'angle, avec les trois côtés",cc:5,gen:troisCotes},
    {t:"l'aire, puis une hauteur",cc:5,min:200,gen:aireHauteur},
-   {t:"comme au CC : une bissectrice, une médiane, deux étapes",cc:9,gen:R=>{const r=R();return r<0.5?bissectrice(R):r<0.75?deuxTemps(R):mediane(R);}}]}
+   {t:"comme au CC : une bissectrice, une médiane, deux étapes",cc:9,gen:R=>{const r=R();return r<0.5?bissectrice(R):r<0.75?deuxTemps(R):mediane(R);}}]},
+ {id:"GE3",t:"Triangles : chasse aux angles",tache:"angles dans les triangles",th:"triangles",ex:"cc2",lecons:["g-aires","g-paralleles","g-angles"],
+  paliers:[
+   {t:"la somme des angles d'un triangle",cc:2,gen:somme},
+   {t:"le triangle isocèle",cc:3,gen:isocele},
+   {t:"parallèles et angles alternes-internes",cc:3,min:200,gen:paralleles},
+   {t:"comme au CC : une figure à plusieurs triangles",cc:5,min:200,gen:plusieurs}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,ex:"cc2",fixe:true,seuil:1,pages:[],lecons:r.lecons,paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
