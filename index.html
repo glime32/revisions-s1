@@ -22494,6 +22494,96 @@ function deuxHom(R){const k=R.choix(["compo","compo","compo","inv","trouve","tro
     corps:`<p>Rappel : l'homothétie de centre K et de rapport λ envoie M sur le point M′ tel que ${ve("KM′")} = λ${ve("KM")}. « h₂ ∘ h₁ » veut dire : d'abord h₁, puis h₂.</p>`,texte:{compo:`h1 (K, ${nb(l1)}), h2 (K, ${nb(l2)}) ; rapport de la composée`,inv:`h (K, ${nb(l1)}) ; rapport de g avec g(h(M)) = M`,trouve:`h1 (K, ${nb(l1)}), h2 ∘ h1 de rapport ${nb(P)} ; rapport de h2`}[k],
     nature:{compo:"composée de deux homothéties",inv:"homothétie réciproque",trouve:"rapport manquant"}[k],ens:{k,l1:fl(l1),l2:fl(l2),P:fl(P)}});}
 
+
+/* ---------- GE5 : trigonométrie et produit scalaire (prop. 4.2.3, th. 4.4.1, cor. 4.4.2, déf. 4.6.2, prop. 4.6.3, cor. 4.6.4) ---------- */
+const ANGR=["0","1/6","1/4","1/3","1/2","2/3","3/4","5/6","1"],qk=k=>k==="0"?Q(0):k==="1"?Q(1):Q(+k.split("/")[0],+k.split("/")[1]);
+const POINT={"0":"le point (1, 0)","1/2":"le point (0, 1), tout en haut du cercle","1":"le point (−1, 0)"};
+const ex1=s=>({t:ecrit(s),tape:tape(s),v:val(s)}),opp=s=>S(mul(sq(s).r,-1),sq(s).k);
+function jugeEx(id,V,E,pieges,quoi){return rep=>{const r=lisNombre(rep[id],V,quoi);if(r.inc)return {incomplet:r.inc};if(pres(r.v,V))return {ok:true};
+  for(const p of pieges)if(!pres(p[0],V)&&pres(r.v,p[0]))return faux({f:[id],etape:p[1],type:p[2],titre:p[3],msg:p[4]});
+  return faux({f:[id],etape:E.length-1,type:"calcul",titre:"Où ça part : le calcul.",msg:E[E.length-1].w});};}
+/* une réponse : un nombre exact v = {t, tape, v} ; pièges [valeur, étape, sorte, titre, message] */
+const unExact=({nom,v,pieges,quoi,ex,...o})=>{const a=pieges.map(p=>p[0]).find(w=>!pres(w,v.v));
+  return Object.assign({champs:[champL("x",nom,`$${nom} =$`,ex)],juge:jugeEx("x",v.v,o.etapes,pieges,quoi),bonne:`<span class="en-nb">${fx(`${nom} = ${v.t}`)}</span>`,bonneTxt:`${nom} = ${v.t}`,repBonne:{x:v.tape},repFausse:{x:a!=null?String(a):"("+v.tape+")+1"}},o);};
+const SIGNE={cos:"Le cosinus est positif sur ]0 ; π/2[ et négatif sur ]π/2 ; π[ : le point du cercle trigonométrique est à droite, puis à gauche de l'axe vertical.",sin:"Le sinus est positif sur ]0 ; π[ : le point du cercle trigonométrique est au-dessus de l'axe horizontal."};
+
+function remarquable(R){const k=R.choix(ANGR.slice(1,8).concat(ANGR)),x=qk(k),f=R()<0.5?"cos":"sin",v=f==="cos"?cosA(x):sinA(x),o=f==="cos"?sinA(x):cosA(x),V=val(v);
+  const why=POINT[k]?`Sur le cercle trigonométrique (de rayon 1), l'angle ${angT(x)} donne ${POINT[k]} : son abscisse est le cosinus, son ordonnée le sinus.`:pourquoiTrig(x,f);
+  const E=[{w:`${fx(angT(x))} radians, c'est ${x.n*180/x.d}°.`,why:"Un angle plat mesure π radians, c'est-à-dire 180° : on remplace π par 180.",pts:0.5},{w:`<b>${fx(`${f}(${angT(x)}) = ${ecrit(v)}`)}</b>`,why,pts:1}];
+  return unExact({nom:`${f}(${angT(x)})`,v:ex1(v),quoi:"la valeur",ex:"par exemple √3/2 ou -1/2",etapes:E,sig:"TV"+f+k,q:`Donne la valeur exacte de ${fx(`${f}(${angT(x)})`)}.`,corps:`<p>Rappel : ${RAP_RAD}</p>`,texte:`${f}(${angT(x)})`,nature:"valeur à connaître",
+    pieges:[[val(o),1,"cosinus et sinus échangés","Où ça part : cos ou sin.",`${ecrit(o)} est ${f==="cos"?"le sinus":"le cosinus"} de ${angT(x)}. Le cosinus est l'abscisse du point du cercle, le sinus son ordonnée.`],[-V,1,"signe","Où ça part : le signe.",SIGNE[f]]],ens:{k:"val",f,x:angV(x)}});}
+
+const fracPQ=R=>{for(;;){const q2=R.ent(2,15),p=R.ent(1,q2-1);let a=p,b=q2;while(b)[a,b]=[b,a%b];if(a===1)return Q(p,q2);}};
+function passer(R){const r=fracPQ(R),ob=R()<0.4,f=R()<0.5?"cos":"sin",g=f==="cos"?"sin":"cos",giv=ob&&f==="cos"?mul(r,-1):r,r2=mul(r,r),s2=sub(1,r2),rac=racine(s2),neg=ob&&g==="cos",res=neg?opp(rac):rac,I=ob?"]π/2 ; π[":"]0 ; π/2[";
+  const E=[{w:`Pour tout réel x, ${fx("cos(x)^{2} + sin(x)^{2} = 1")}. Donc ${fx(`${g}(x)^{2} = 1 − ${par(giv)}^{2} = 1 − ${nb(r2)} = ${nb(s2)}`)}.`,why:"C'est la proposition 4.2.3 : le point du cercle trigonométrique d'angle x a pour coordonnées (cos(x), sin(x)) et il est à distance 1 de l'origine, c'est Pythagore.",pts:1},
+    {w:`Sur ${I}, ${g}(x) est ${neg?"négatif":"positif"}, donc <b>${fx(`${g}(x) = ${neg?"−":""}√(${nb(s2)}) = ${ecrit(res)}`)}</b>.`,why:SIGNE[g],pts:1}];
+  return unExact({nom:`${g}(x)`,v:ex1(res),quoi:"la valeur",ex:"par exemple 4/5 ou -√5/3",etapes:E,sig:"PA"+JSON.stringify([brut(r),ob,f]),q:`Soit x un réel de l'intervalle ${I} tel que ${fx(`${f}(x) = ${nb(giv)}`)}. Calcule ${fx(`${g}(x)`)} : donne la valeur exacte.`,corps:`<p>Rappel : ${RAP_RAD}</p>`,
+    texte:`x dans ${I}, ${f}(x) = ${nb(giv)} ; calculer ${g}(x)`,nature:ob?"angle obtus":"angle aigu",
+    pieges:[[-val(res),1,"signe","Où ça part : le signe.",SIGNE[g]],[fl(s2)*(neg?-1:1),1,"racine carrée oubliée","Où ça part : la dernière ligne.",`${nb(s2)}, c'est ${g}(x)², le carré. Il reste à prendre la racine carrée.`],[(1-fl(r))*(neg?-1:1),0,"carré oublié","Où ça part : la relation.",`C'est le carré qui intervient : ${fx(`1 − ${par(giv)}^{2}`)}, pas 1 − ${nb(giv)}.`]],ens:{k:"passe",f,g,giv:fl(giv),ob}});}
+
+/* le cosinus et le sinus de π/12, 5π/12, 7π/12, 11π/12, ou d'un angle double */
+const DECO={"1/12":["1/3","1/4",-1],"5/12":["1/4","1/6",1],"7/12":["1/3","1/4",1],"11/12":["2/3","1/4",1]};
+function addition(R){if(R()<0.7)return angleDouble(R);
+  const k=R.choix(Object.keys(DECO)),[kx,ky,s]=DECO[k],a=qk(k),x=qk(kx),y=qk(ky),f=R()<0.5?"cos":"sin",cx=cosA(x),sx=sinA(x),cy=cosA(y),sy=s<0?opp(sinA(y)):sinA(y);
+  const t1=f==="cos"?fois(cx,cy):fois(sx,cy),t2=f==="cos"?fois(sx,sy):fois(cx,sy),op=f==="cos"?-1:1,T=[[t1.r.n,t1.k],[op*t2.r.n,t2.k]],V=val(t1)+op*val(t2);
+  const pos=T.filter(t=>t[0]>0),neg=T.filter(t=>t[0]<0),fin=pos.length===2?`(√${pos[0][1]} + √${pos[1][1]})/4`:neg.length===2?`−(√${neg[0][1]} + √${neg[1][1]})/4`:`(√${pos[0][1]} − √${neg[0][1]})/4`;
+  const tp=fin.replace(/−/g,"-"),moins=s<0,fy=moins?`−${angT(y)}`:angT(y),form=f==="cos"?"cos(a + b) = cos(a)cos(b) − sin(a)sin(b)":"sin(a + b) = sin(a)cos(b) + cos(a)sin(b)";
+  const E=[{w:fx(`${angT(a)} = ${angT(x)} ${moins?"−":"+"} ${angT(y)}`),why:"On écrit l'angle comme une somme ou une différence de deux angles dont on connaît le cosinus et le sinus par cœur.",pts:0.5},
+    {w:`D'après le théorème 4.4.1, ${fx(form)}, avec ${fx(`a = ${angT(x)}`)} et ${fx(`b = ${fy}`)}.${moins?` Et ${fx(`cos(${fy}) = cos(${angT(y)}) = ${ecrit(cy)}`)}, ${fx(`sin(${fy}) = −sin(${angT(y)}) = ${ecrit(sy)}`)}.`:""}`,why:`Les formules d'addition sont à savoir par cœur (le poly le dit).${moins?" Le cosinus ne change pas quand on change le signe de l'angle, le sinus change de signe.":""}`,pts:1},
+    {w:`<b>${fx(`${f}(${angT(a)}) = ${f==="cos"?`${ecrit(cx)} × ${ecrit(cy)} − ${ecrit(sx)} × ${gr(sy)}`:`${ecrit(sx)} × ${ecrit(cy)} + ${gr(cx)} × ${gr(sy)}`} = ${fin}`)}</b>`,why:"On multiplie : √2 × √3 = √6. Les deux termes ont le même dénominateur, 4, mais pas la même racine : on ne peut pas les regrouper davantage.",pts:1}];
+  const autre=val(t1)-op*val(t2);
+  return {sig:"AD"+f+k,q:`Calcule la valeur exacte de ${fx(`${f}(${angT(a)})`)}.`,corps:`<p>Indice : ${fx(angT(a))} s'écrit avec deux angles dont tu connais le cosinus et le sinus. ${RAP_RAD}</p>`,texte:`${f}(${angT(a)})`,champs:[champL("x",`${f}(${angT(a)})`,`$${f}(${angT(a)}) =$`,"par exemple (√6+√2)/4")],
+    juge:jugeEx("x",V,E,[[autre,1,"signe dans la formule d'addition","Où ça part : la formule.",`${fx(form)} : ${f==="cos"?"pour le cosinus, le signe du milieu est un moins":"pour le sinus, c'est un plus"}.`],[-V,2,"signe du résultat","Où ça part : le signe.",SIGNE[f]]],"la valeur"),etapes:E,
+    bonne:`<span class="en-nb">${fx(`${f}(${angT(a)}) = ${fin}`)}</span>`,bonneTxt:`${f}(${angT(a)}) = ${fin}`,repBonne:{x:tp},repFausse:{x:String(autre)},nature:"formule d'addition",ens:{k:"add",f,a:angV(a)}};}
+function angleDouble(R){const r=fracPQ(R),f=R()<0.5?"cos":"sin",g=R()<0.5?"cos":"sin",o=f==="cos"?"sin":"cos",rS=S(r),aut=racine(sub(1,mul(r,r))),c=f==="cos"?rS:aut,s=f==="sin"?rS:aut;
+  const res=g==="cos"?S(sub(carre(c),carre(s))):fois(2,fois(s,c)),form=g==="cos"?"cos(2x) = cos(x)^{2} − sin(x)^{2}":"sin(2x) = 2 sin(x) cos(x)";
+  const E=[{w:`D'après le corollaire 4.4.2, ${fx(form)}.`,why:"C'est la formule d'addition du théorème 4.4.1 avec les deux angles égaux à x.",pts:1},
+    {w:`${fx(`${o}(x)^{2} = 1 − ${par(r)}^{2} = ${nb(carre(aut))}`)}${g==="sin"?`, et x est entre 0 et π/2, donc ${fx(`${o}(x) = ${ecrit(aut)}`)}`:""}.`,why:`On a besoin de ${o}(x) : on le tire de ${fx("cos(x)^{2} + sin(x)^{2} = 1")} (proposition 4.2.3).${g==="sin"?" Sur ]0 ; π/2[, le cosinus et le sinus sont positifs.":""}`,pts:1},
+    {w:`<b>${fx(g==="cos"?`cos(2x) = ${nb(carre(c))} − ${nb(carre(s))} = ${ecrit(res)}`:`sin(2x) = 2 × ${ecrit(s)} × ${ecrit(c)} = ${ecrit(res)}`)}</b>`,why:"On remplace et on calcule. Pour le cosinus, pas besoin de racine : seuls les carrés servent.",pts:1}];
+  const V=val(res);
+  return unExact({nom:`${g}(2x)`,v:ex1(res),quoi:"la valeur",ex:"par exemple 7/25 ou 4√2/9",etapes:E,sig:"DB"+JSON.stringify([brut(r),f,g]),q:`Soit x un réel de l'intervalle ]0 ; π/2[ tel que ${fx(`${f}(x) = ${nb(r)}`)}. Calcule ${fx(`${g}(2x)`)} : donne la valeur exacte.`,corps:`<p>Rappel : ${RAP_RAD}</p>`,
+    texte:`x dans ]0 ; π/2[, ${f}(x) = ${nb(r)} ; calculer ${g}(2x)`,nature:"angle double",
+    pieges:g==="cos"?[[-V,2,"carrés soustraits à l'envers","Où ça part : la formule.","cos(2x) = cos(x)² − sin(x)² : le carré du cosinus d'abord."],[1,2,"somme des carrés","Où ça part : la formule.","cos(x)² + sin(x)² vaut toujours 1 : dans cos(2x), c'est une différence."],[2*fl(r),0,"2 × cos(x)","Où ça part : la formule.","cos(2x) n'est pas 2cos(x) : utilise le corollaire 4.4.2."]]
+      :[[V/2,2,"facteur 2 oublié","Où ça part : la formule.","sin(2x) = 2 sin(x) cos(x) : il y a un 2 devant."],[2*fl(r),0,"2 × sin(x)","Où ça part : la formule.","sin(2x) n'est pas 2sin(x) : utilise le corollaire 4.4.2."]],ens:{k:"dbl",f,g,r:fl(r)}});}
+
+/* le produit scalaire : par la définition, en coordonnées, puis l'angle entre deux vecteurs */
+const vv=s=>ve(s),nrm=s=>`‖${ve(s)}‖`;
+function produit(R){const k=R.choix(["def","coord","angle","angle"]);if(k==="angle")return angleVec(R);
+  if(k==="def"){const a=R.ent(1,9),b=R.ent(1,9),t=R.choix(ANGR.slice(1,8)),th=qk(t),co=cosA(th),res=fois(S(a*b),co),V=val(res);
+    const E=[{w:`Par la définition 4.6.2 : ⟨${vv("u")}, ${vv("v")}⟩ = ${nrm("u")} × ${nrm("v")} × cos(angle(${vv("u")}, ${vv("v")})).`,why:"Le produit scalaire est un nombre : le produit des deux normes par le cosinus de l'angle entre les vecteurs.",pts:1},
+      {w:fx(`cos(${angT(th)}) = ${ecrit(co)}`),why:t==="1/2"?"Sur le cercle trigonométrique, l'angle π/2 donne le point (0, 1) : son abscisse vaut 0.":pourquoiTrig(th,"cos"),pts:0.5},
+      {w:`<b>⟨${vv("u")}, ${vv("v")}⟩ ${fx(`= ${a} × ${b} × ${gr(co)} = ${ecrit(res)}`)}</b>`,why:t==="1/2"?"Deux vecteurs qui forment un angle droit ont un produit scalaire nul.":"On multiplie les nombres, et on garde la racine.",pts:1}];
+    return unExact({nom:"⟨u, v⟩",v:ex1(res),quoi:"le produit scalaire",ex:"par exemple -6 ou 6√2",etapes:E,sig:"PS"+JSON.stringify([a,b,t]),q:`Soient ${vv("u")} et ${vv("v")} deux vecteurs tels que ${nrm("u")} ${fx("= "+a)}, ${nrm("v")} ${fx("= "+b)}, et dont l'angle vaut ${fx(angT(th))}. Calcule le produit scalaire ⟨${vv("u")}, ${vv("v")}⟩.`,
+      corps:`<p>Rappel : ${nrm("u")} est la norme de ${vv("u")}, c'est-à-dire sa longueur. ${RAP_RAD}</p>`,texte:`‖u‖ = ${a}, ‖v‖ = ${b}, angle ${angT(th)} ; calculer ⟨u, v⟩`,nature:"définition du produit scalaire",
+      pieges:[[a*b*val(sinA(th)),1,"sinus à la place du cosinus","Où ça part : la définition.","Le produit scalaire utilise le cosinus de l'angle, pas le sinus."],[a*b,0,"cosinus oublié","Où ça part : la définition.","Il faut multiplier aussi par le cosinus de l'angle."],[-V,1,"signe du cosinus","Où ça part : le cosinus.","Le cosinus d'un angle obtus est négatif, celui d'un angle aigu positif."]],ens:{k:"def",a,b,th:angV(th)}});}
+  let x,y,x2,y2;for(;;){x=R.ent(-6,6);y=R.ent(-6,6);x2=R.ent(-6,6);y2=R.ent(-6,6);if((x||y)&&(x2||y2)&&x*y2!==y*x2)break;}
+  const res=x*x2+y*y2,cx=x=>x<0?"("+nb(x)+")":String(x);
+  const E=[{w:`D'après la proposition 4.6.3 (corollaire 4.6.5), dans une base orthonormée : ⟨${vv("u")}, ${vv("v")}⟩ ${fx("= xx′ + yy′")}.`,why:"On multiplie les abscisses entre elles, les ordonnées entre elles, et on additionne. Attention : cette formule n'est vraie que dans un repère orthonormé.",pts:1},
+    {w:`<b>⟨${vv("u")}, ${vv("v")}⟩ ${fx(`= ${cx(x)} × ${cx(x2)} + ${cx(y)} × ${cx(y2)} = ${nb(res)}`)}</b>`,why:res===0?"Le produit scalaire est nul : les deux vecteurs sont orthogonaux.":"On calcule les deux produits, puis on les additionne en faisant attention aux signes.",pts:1}];
+  return unExact({nom:"⟨u, v⟩",v:{t:nb(res),tape:String(res),v:res},quoi:"le produit scalaire",ex:"par exemple -7",etapes:E,sig:"PC"+JSON.stringify([x,y,x2,y2]),q:`Dans une base orthonormée, on considère les vecteurs ${vv("u")} de coordonnées ${fx(`(${x}, ${y})`)} et ${vv("v")} de coordonnées ${fx(`(${x2}, ${y2})`)}. Calcule ⟨${vv("u")}, ${vv("v")}⟩.`,
+    corps:"",texte:`u (${x}, ${y}), v (${x2}, ${y2}) dans une base orthonormée ; calculer ⟨u, v⟩`,nature:"produit scalaire en coordonnées",
+    pieges:[[x*y2+y*x2,0,"produits croisés","Où ça part : la formule.","On multiplie abscisse par abscisse et ordonnée par ordonnée : xx′ + yy′."],[x*x2-y*y2,0,"soustraction au lieu d'addition","Où ça part : la formule.","Les deux produits s'additionnent : xx′ + yy′."],[x*y2-y*x2,0,"déterminant à la place du produit scalaire","Où ça part : la formule.","xy′ − yx′ est le déterminant (il dit si les vecteurs sont colinéaires). Le produit scalaire est xx′ + yy′."]],ens:{k:"coord",u:[x,y],v:[x2,y2]}});}
+function angleVec(R){const t=R.choix(["1/4","3/4","1/2","quel","quel"]);let a,b,x2,y2;
+  for(;;){a=R.ent(-4,4);b=R.ent(-4,4);if(!(a||b))continue;const m=R.ent(1,2);
+    if(t==="1/4"){x2=m*(a-b);y2=m*(a+b);}else if(t==="3/4"){x2=m*(-a-b);y2=m*(a-b);}else if(t==="1/2"){x2=-m*b;y2=m*a;}
+    else{x2=R.ent(-5,5);y2=R.ent(-5,5);if(!(x2||y2))continue;const c=(a*x2+b*y2)/Math.hypot(a,b)/Math.hypot(x2,y2);if([0,0.5,-0.5,Math.SQRT1_2,-Math.SQRT1_2,Math.sqrt(3)/2,-Math.sqrt(3)/2,1,-1].some(z=>Math.abs(c-z)<1e-9))continue;}
+    if(Math.max(Math.abs(x2),Math.abs(y2))<=8)break;}
+  const rem=t!=="quel",th=rem?qk(t):null,n=a*x2+b*y2,A=a*a+b*b,B=x2*x2+y2*y2,co=sur(S(n),racine(Q(A*B))),CO=val(co),TH=rem?angV(th):null,cx=x=>x<0?"("+nb(x)+")":String(x);
+  const E=[{w:`D'après la proposition 4.6.3, dans une base orthonormée : ⟨${vv("u")}, ${vv("v")}⟩ ${fx(`= ${cx(a)} × ${cx(x2)} + ${cx(b)} × ${cx(y2)} = ${nb(n)}`)}.`,why:"Abscisse par abscisse, ordonnée par ordonnée, puis on additionne.",pts:1},
+    {w:`D'après le corollaire 4.6.4 : ${nrm("u")} ${fx(`= √(${cx(a)}^{2} + ${cx(b)}^{2}) = ${racLigne(Q(A))}`)} et ${nrm("v")} ${fx(`= √(${cx(x2)}^{2} + ${cx(y2)}^{2}) = ${racLigne(Q(B))}`)}.`,why:"La norme d'un vecteur de coordonnées (x, y) dans une base orthonormée est √(x² + y²) : c'est Pythagore.",pts:1},
+    {w:`<b>Par la définition 4.6.2 : cos(angle(${vv("u")}, ${vv("v")})) ${fx(`= ⟨u, v⟩/(‖u‖ × ‖v‖) = ${nb(n)}/(${ecrit(racine(Q(A)))} × ${ecrit(racine(Q(B)))}) = ${ecrit(co)}`)}</b>`,why:`On isole le cosinus dans ⟨u, v⟩ = ‖u‖ × ‖v‖ × cos(angle).${racine(Q(A*B)).k>1?" On simplifie, et on ne laisse pas de racine au dénominateur.":""}`,pts:1.5}];
+  if(rem)E.push({w:`<b>L'angle entre les deux vecteurs, entre 0 et π, dont le cosinus vaut ${ecrit(co)} est ${fx(angT(th))}.</b>`,why:`Sur [0 ; π], un seul angle a ce cosinus : ${angT(th)}, c'est ${NOMANG[t]}.${n===0?" Produit scalaire nul : les vecteurs sont orthogonaux.":""}`,pts:1});
+  function juge(rep){const rc=lisNombre(rep.cos,CO,"le cosinus");if(rc.inc)return {incomplet:rc.inc};let ra=null;if(rem){ra=lisAngle(rep.ang,TH);if(ra.inc)return {incomplet:ra.inc};}
+    const okC=pres(rc.v,CO),okA=!rem||pres(ra.v,TH),F=[];if(!okC)F.push("cos");if(!okA)F.push("ang");if(!F.length)return {ok:true};
+    const res=`Pas tout à fait : ${!okC&&!okA?"le cosinus et l'angle sont faux":!okC?"le cosinus est faux":"le cosinus est juste, mais pas l'angle"}.`;
+    if(!okC){if(pres(rc.v,n))return faux({f:F,etape:2,type:"produit scalaire donné à la place du cosinus",titre:"Où ça part : le cosinus.",msg:`${nb(n)} est le produit scalaire. Le cosinus s'obtient en le divisant par le produit des normes.`},res);
+      if(pres(rc.v,n/(A*B)))return faux({f:F,etape:1,type:"normes au carré",titre:"Où ça part : les normes.",msg:`La norme est la racine carrée de x² + y² : ${fx(`√${A}`)} et ${fx(`√${B}`)}, pas ${A} et ${B}.`},res);
+      return faux({f:F,etape:2,type:"calcul du cosinus",titre:"Où ça part : le cosinus.",msg:E[2].w},res);}
+    return faux({f:F,etape:3,type:"angle à partir du cosinus",titre:"Où ça part : l'angle.",msg:`L'angle entre 0 et π dont le cosinus vaut ${ecrit(co)} est ${angT(th)}.`},res);}
+  const repB={cos:tape(co)};if(rem)repB.ang=angT(th);
+  return {sig:"AV"+JSON.stringify([a,b,x2,y2]),q:`Dans une base orthonormée, on considère les vecteurs ${vv("u")} de coordonnées ${fx(`(${a}, ${b})`)} et ${vv("v")} de coordonnées ${fx(`(${x2}, ${y2})`)}. Calcule le cosinus de l'angle entre ${vv("u")} et ${vv("v")}${rem?", puis cet angle (entre 0 et π)":""}.`,corps:`<p>Rappel : ${RAP_RAD}</p>`,
+    texte:`u (${a}, ${b}), v (${x2}, ${y2}) ; cosinus de l'angle${rem?" puis l'angle":""}`,champs:[champL("cos","cosinus","cos(angle) =","par exemple -√2/2")].concat(rem?[champA("ang","angle","angle =")]:[]),juge,etapes:E,
+    bonne:`cos(angle) ${fx("= "+ecrit(co))}${rem?` et angle ${fx("= "+angT(th))}`:""}`,bonneTxt:`cos = ${ecrit(co)}${rem?` ; angle = ${angT(th)}`:""}`,repBonne:repB,repFausse:Object.assign({},repB,{cos:String(n===0?1:n)}),nature:rem?"angle entre deux vecteurs":"cosinus de l'angle",ens:{k:"ang",u:[a,b],v:[x2,y2],rem}};}
 /* comme au CC : deux droites sécantes en K, des parallèles, et les homothéties de centre K qu'elles fabriquent */
 function droitesPar(R){const pap=R()<0.45,phi=R.choix([40,50,55,60,65,70])*Math.PI/180,m=R()<0.5?-1:1,u=[1,0],v=[m*Math.cos(phi),Math.sin(phi)],pt=(w,t)=>[w[0]*t,w[1]*t],sg=()=>R()<0.5?-1:1;
   let al,be,ga,gp,ap,bp;
@@ -22594,6 +22684,12 @@ G.add("geo",[
    {t:"le rapport et son signe",cc:3,min:200,gen:rapport},
    {t:"deux homothéties de même centre",cc:3,min:200,gen:deuxHom},
    {t:"comme au CC : deux droites sécantes et des parallèles",cc:8,gen:droitesPar}]},
+ {id:"GE5",t:"Trigonométrie, produit scalaire",tache:"trigonométrie et produit scalaire",th:"rotation",ex:"cc2",lecons:["g2-trigo","g2-rotation-scalaire"],
+  paliers:[
+   {t:"les valeurs à connaître",cc:1,min:15,gen:remarquable},
+   {t:"passer du cosinus au sinus",cc:2,min:150,gen:passer},
+   {t:"formules d'addition et angle double",cc:4,min:120,gen:addition},
+   {t:"produit scalaire et angle entre deux vecteurs",cc:5,gen:produit}]},
  {id:"GE3",t:"Triangles : chasse aux angles",tache:"angles dans les triangles",th:"triangles",ex:"cc2",lecons:["g-aires","g-paralleles","g-angles"],
   paliers:[
    {t:"la somme des angles d'un triangle",cc:2,gen:somme},
