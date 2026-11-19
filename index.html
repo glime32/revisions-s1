@@ -21281,6 +21281,114 @@ const DEDUIRE=[
 function composeDeduire(R){for(;;){const K=R.mel([...DEDUIRE.keys()]).slice(0,4),L=K.map(k=>({txt:DEDUIRE[k][0],v:DEDUIRE[k][1],why:DEDUIRE[k][2],type:/surjective/.test(DEDUIRE[k][0].split(", alors")[1])?"ce que la composée dit de f et de g : surjectivité":"ce que la composée dit de f et de g : injectivité",k}));if(L.every(l=>l.v)||!L.some(l=>l.v))continue;
   return cocheVraies({brut:true,sig:"CD"+K.slice().sort((a,b)=>a-b),q:`Soit f une application de E dans F, et g une application de F dans G. Parmi les quatre affirmations suivantes, coche toutes celles qui sont vraies pour toutes les applications f et g.`,rappel:"Une affirmation est fausse dès qu'on peut trouver un contre-exemple, même tout petit.",texte:"f : E → F, g : F → G",L,nature:"déduire",ens:{type:"cd",K}});}}
 
+/* ---------- RA8 : tables de vérité. Une formule : une lettre, ["non",f], ou [op,f,g] avec op = et, ou, imp, eq ---------- */
+const OPL={et:"∧",ou:"∨",imp:"⇒",eq:"⇔"},OPW={et:"et",ou:"ou",imp:"⇒",eq:"⇔"},NOMC={non:"la négation",et:"le « et »",ou:"le « ou »",imp:"l'implication",eq:"l'équivalence"};
+const vaut=(f,v)=>typeof f==="string"?v[f]:f[0]==="non"?!vaut(f[1],v):f[0]==="et"?vaut(f[1],v)&&vaut(f[2],v):f[0]==="ou"?vaut(f[1],v)||vaut(f[2],v):f[0]==="imp"?!vaut(f[1],v)||vaut(f[2],v):vaut(f[1],v)===vaut(f[2],v);
+const simpleL=f=>typeof f==="string"||(f[0]==="non"&&simpleL(f[1]));
+const ecrisL=(f,dedans)=>typeof f==="string"?f:f[0]==="non"?"¬"+(simpleL(f[1])?ecrisL(f[1]):"("+ecrisL(f[1])+")"):(dedans?"(":"")+ecrisL(f[1],true)+" "+OPL[f[0]]+" "+ecrisL(f[2],true)+(dedans?")":"");
+const ecrisW=(f,dedans)=>typeof f==="string"?f:f[0]==="non"?"non("+ecrisW(f[1])+")":(dedans?"(":"")+ecrisW(f[1],true)+" "+OPW[f[0]]+" "+ecrisW(f[2],true)+(dedans?")":"");
+const lettresL=f=>{const s=new Set(),va=g=>{if(typeof g==="string")s.add(g);else g.slice(1).forEach(va);};va(f);return [...s].sort();};
+const lignesL=n=>[...Array(1<<n)].map((_,i)=>[...Array(n)].map((_,k)=>!((i>>(n-1-k))&1)));
+const envL=(vs,L)=>{const o={};vs.forEach((x,k)=>{o[x]=L[k];});return o;};
+const colL=(f,vs)=>lignesL(vs.length).map(L=>vaut(f,envL(vs,L)));
+const memeL=(f,g,vs)=>colL(f,vs).join()===colL(g,vs).join();
+const VF=b=>b?"V":"F";
+const sousL=f=>{const o=[],va=g=>{if(typeof g==="string")return;g.slice(1).forEach(va);if(!o.some(x=>ecrisL(x)===ecrisL(g)))o.push(g);};va(f);return o;};
+const lisVF=s=>{const t=String(s==null?"":s).trim().toLowerCase();return /^(v|vrai|1)$/.test(t)?true:/^(f|faux|0)$/.test(t)?false:null;};
+const ligneTxt=(vs,L)=>vs.map((x,k)=>`${x} = ${VF(L[k])}`).join(", ");
+const nonS=f=>Array.isArray(f)&&f[0]==="non"?f[1]:["non",f];
+/* négation poussée jusqu'aux lettres (lois de De Morgan, non(H ⇒ K) = H et non K) */
+const nie=f=>typeof f==="string"?["non",f]:f[0]==="non"?f[1]:f[0]==="et"?["ou",nie(f[1]),nie(f[2])]:f[0]==="ou"?["et",nie(f[1]),nie(f[2])]:f[0]==="imp"?["et",f[1],nie(f[2])]:["eq",f[1],nie(f[2])];
+const REGLE={non:"⓪ est vraie exactement quand ① est fausse.",et:"① ∧ ② n'est vraie que si ① et ② sont vraies toutes les deux.",ou:"① ∨ ② est vraie dès que l'une des deux est vraie, ou les deux : le « ou » est inclusif.",imp:"① ⇒ ② n'est fausse que dans un cas : ① vraie et ② fausse.",eq:"① ⇔ ② est vraie quand ① et ② ont la même valeur."};
+const regle=g=>REGLE[g[0]].replace(/⓪/g,fx(ecrisL(g))).replace(/①/g,fx(ecrisL(g[1],g[0]!=="non"))).replace(/②/g,g[2]?fx(ecrisL(g[2],true)):"");
+function etapeCol(g,vs){const c=colL(g,vs),pos=c.map((v,i)=>v?i+1:null).filter(Boolean),neg=c.map((v,i)=>v?null:i+1).filter(Boolean),aux=k=>k.length>1?`aux lignes ${et(k.map(String))}`:`à la ligne ${k[0]}`;
+  const ou=g[0]==="et"||g[0]==="eq"?(pos.length?`Ici elle est vraie ${aux(pos)}, fausse ailleurs.`:"Ici elle n'est vraie sur aucune ligne."):(neg.length?`Ici elle est fausse ${aux(neg)}, vraie ailleurs.`:"Ici elle est vraie sur toutes les lignes.");
+  return {w:`<b>${fx(ecrisL(g))}</b> : ${c.map(VF).join(", ")}.`,why:regle(g)+" "+ou,pts:1};}
+function typeVF(g,col,vs){const j=col.join(),alt=f=>colL(f,vs).join();if(g[0]==="non")return col.join()===colL(g[1],vs).join()?"négation oubliée":"valeur de la négation";
+  const[op,a,b]=g;if(op==="imp"){if(j===alt(["et",a,b]))return "implication confondue avec « et »";if(j===alt(["eq",a,b]))return "implication confondue avec l'équivalence";if(j===alt(["imp",b,a]))return "implication lue dans l'autre sens";
+    if(colL(g,vs).every((v,i)=>v===col[i]||!vaut(a,envL(vs,lignesL(vs.length)[i]))))return "implication dont l'hypothèse est fausse";return "valeur de l'implication";}
+  if(op==="ou"){if(j===alt(["non",["eq",a,b]]))return "« ou » pris comme exclusif";if(j===alt(["et",a,b]))return "« et » et « ou » confondus";}
+  if(op==="et"&&j===alt(["ou",a,b]))return "« et » et « ou » confondus";if(op==="eq"&&j===alt(["imp",a,b]))return "équivalence confondue avec l'implication";
+  return "valeur de "+NOMC[op];}
+function jugeVF(vs,cols,rep){const T=rep.t||[],N=lignesL(vs.length);let trou=false;
+  const lu=N.map((_,r)=>cols.map((_,k)=>{const x=lisVF((T[r]||[])[k]);if(x===null)trou=true;return x;}));if(trou)return {incomplet:"Écris V ou F dans chaque case du tableau."};
+  const faux=[];let pk=-1,pr=-1;cols.forEach((g,k)=>N.forEach((L,r)=>{if(lu[r][k]!==vaut(g,envL(vs,L))){faux.push(`t:${r}:${k}`);if(pk<0){pk=k;pr=r;}}}));if(!faux.length)return {ok:true};
+  const g=cols[pk],v=envL(vs,N[pr]),dit=f=>`${fx(ecrisL(f))} vaut ${VF(vaut(f,v))}`;
+  return {ok:false,faux,pk,diag:{etape:pk,type:typeVF(g,N.map((_,r)=>lu[r][pk]),vs),titre:`Où ça part : la colonne ${ecrisL(g)}, ligne ${pr+1}.`,msg:`Ligne ${pr+1} (${ligneTxt(vs,N[pr])}) : ${g[0]==="non"?dit(g[1]):dit(g[1])+" et "+dit(g[2])}, donc ${dit(g)}. ${regle(g)}`}};}
+function tableVF(o){const vs=o.vs,cols=sousL(o.f),N=lignesL(vs.length),bon=N.map(L=>cols.map(g=>VF(vaut(g,envL(vs,L))))),der=cols.length-1;
+  function juge(rep){const j=jugeVF(vs,cols,rep);if(j.incomplet||j.ok)return j;const n=new Set(j.faux.map(x=>x.split(":")[2])).size;
+    return {ok:false,faux:j.faux,resume:`Pas tout à fait : ${n>1?`${n} colonnes sont à revoir`:`la colonne ${ecrisL(cols[j.pk])} est à revoir`}.`,diag:j.diag};}
+  const ft=ecrisL(o.f),faux=bon.map(L=>L.map((x,k)=>k===der?(x==="V"?"F":"V"):x));
+  return {sig:o.sig,q:o.q,corps:`<p class="muted">${o.rappel||"Rappel : on remplit une colonne après l'autre, de gauche à droite. Chaque colonne se calcule avec les colonnes déjà remplies."}</p>`,texte:`table de vérité de ${ft}`,
+    champs:[{k:"vf",id:"t",donne:vs,cols:cols.map(g=>ecrisL(g)),lignes:N.map(L=>L.map(VF)),aide:"Tape V (vrai) ou F (faux) dans chaque case."}],juge,etapes:cols.map(g=>etapeCol(g,vs)),
+    bonne:cols.map(g=>`${fx(ecrisL(g))} : ${colL(g,vs).map(VF).join(", ")}`).join(" ; "),bonneTxt:cols.map(g=>`${ecrisL(g)} : ${colL(g,vs).map(VF).join(" ")}`).join(" ; "),repBonne:{t:bon},repFausse:{t:faux},nature:o.nature,ens:{type:"tv",f:o.f,vs}};}
+const UNCON=[["et","P","Q"],["ou","P","Q"],["imp","P","Q"],["imp","Q","P"],["eq","P","Q"],["ou",["non","P"],"Q"],["et","P",["non","Q"]],["imp",["non","P"],"Q"],["non",["et","P","Q"]],["non",["ou","P","Q"]],["imp","P",["non","Q"]],["ou","P",["non","Q"]],["eq",["non","P"],"Q"],["non",["imp","P","Q"]],["imp",["non","Q"],["non","P"]],["et",["non","P"],["non","Q"]]];
+function tvUn(R){const i=R.ent(0,UNCON.length-1),f=UNCON[i];return tableVF({f,vs:["P","Q"],sig:"T1"+i,q:`P et Q sont deux propositions. Remplis la table de vérité de ${fx(ecrisL(f))}.`,rappel:`Rappel : ¬ se lit « non », ∧ « et », ∨ « ou », ⇒ « implique », ⇔ « équivaut à ».${f[0]==="non"||sousL(f).length>1?" Remplis d'abord la colonne de gauche.":""}`,nature:f[0]==="non"?"non":f[0]});}
+const litL=(R,xs,p)=>{const x=R.choix(xs);return R()<p?["non",x]:x;};
+function tvDeux(R){for(;;){const bin=()=>{const a=litL(R,["P","Q"],0.3),b=litL(R,["P","Q"],0.3);return [R.choix(["et","ou","imp"]),a,b];},t=R.ent(0,3),op=R.choix(["et","ou","imp","imp","eq"]);
+  const X=t===3?["non",bin()]:bin(),Y=t===0?bin():litL(R,["P","Q"],0.3),f=R()<0.5?[op,X,Y]:[op,Y,X],n=sousL(f).length;
+  if(lettresL(f).length<2||n<3||n>4||ecrisL(X)===ecrisL(Y)||lettresL(X).length<2)continue;
+  return tableVF({f,vs:["P","Q"],sig:"T2"+ecrisL(f),q:`P et Q sont deux propositions. Remplis la table de vérité de ${fx(ecrisL(f))}, colonne par colonne.`,nature:n+" colonnes"});}}
+function formule3(R,neg){const l=R()<0.7?["P","Q","R"]:R.mel(["P","Q","R"]),k=neg?R.ent(0,2):-1,L=l.map((x,i)=>i===k?["non",x]:x),op1=R.choix(["et","ou","imp","imp"]),op2=R.choix(["et","ou","imp"]);
+  return R()<0.6?[op1,[op2,L[0],L[1]],L[2]]:[op1,L[0],[op2,L[1],L[2]]];}
+function tvTrois(R){const f=R()<0.12?["imp",["et",["non","P"],"Q"],"R"]:formule3(R,R()<0.5);
+  return tableVF({f,vs:["P","Q","R"],sig:"T3"+ecrisL(f),q:`P, Q et R sont trois propositions. Remplis la table de vérité de ${fx(ecrisL(f))}.`,rappel:"Avec trois propositions, il y a 8 lignes : toutes les façons de choisir V ou F pour P, Q et R. Remplis une colonne après l'autre.",nature:sousL(f).length+" colonnes"});}
+/* valeur de f quand on fixe certaines lettres : {c} si elle ne dépend plus des autres, sinon {f} ; les raisons vont dans why */
+function fixeL(f,v,why){if(typeof f==="string")return f in v?{c:v[f]}:{f};
+  if(f[0]==="non"){const a=fixeL(f[1],v,why);if("c" in a){if(typeof f[1]!=="string")why.push(`${fx(ecrisL(f[1]))} est ${a.c?"vraie":"fausse"}, donc ${fx(ecrisL(f))} est ${a.c?"fausse":"vraie"}.`);return {c:!a.c};}return {f:nonS(a.f)};}
+  const a=fixeL(f[1],v,why),b=fixeL(f[2],v,why),A=fx(ecrisL(f[1],true)),B=fx(ecrisL(f[2],true)),F=fx(ecrisL(f)),dit=(c,r)=>{why.push(`${r} : ${F} est ${c?"vraie":"fausse"}.`);return {c};};
+  if(f[0]==="et"){if(a.c===false)return dit(false,`${A} est fausse, et un « et » dont un côté est faux est faux`);if(b.c===false)return dit(false,`${B} est fausse, et un « et » dont un côté est faux est faux`);if(a.c&&b.c)return dit(true,`${A} et ${B} sont vraies`);return {f:a.c?b.f:b.c?a.f:["et",a.f,b.f]};}
+  if(f[0]==="ou"){if(a.c===true)return dit(true,`${A} est vraie, et un « ou » dont un côté est vrai est vrai`);if(b.c===true)return dit(true,`${B} est vraie, et un « ou » dont un côté est vrai est vrai`);if(a.c===false&&b.c===false)return dit(false,`${A} et ${B} sont fausses`);return {f:a.c===false?b.f:b.c===false?a.f:["ou",a.f,b.f]};}
+  if(f[0]==="imp"){if(a.c===false)return dit(true,`${A} est fausse, et une implication dont l'hypothèse est fausse est vraie`);if(b.c===true)return dit(true,`${B} est vraie, et une implication dont la conclusion est vraie est vraie`);if(a.c===true&&b.c===false)return dit(false,`${A} est vraie et ${B} est fausse`);return {f:a.c===true?b.f:b.c===false?nonS(a.f):["imp",a.f,b.f]};}
+  if("c" in a&&"c" in b)return dit(a.c===b.c,a.c===b.c?`${A} et ${B} ont la même valeur`:`${A} et ${B} n'ont pas la même valeur`);
+  return {f:a.c===true?b.f:a.c===false?nonS(b.f):b.c===true?a.f:b.c===false?nonS(a.f):["eq",a.f,b.f]};}
+const CONNUE=[["vraie","Oui : elle est vraie"],["fausse","Oui : elle est fausse"],["non","Non : ça dépend des autres propositions"]];
+function tvConnue(R){const veut=R.choix(["vraie","fausse","non","vraie"]);let f,x,b,rep,reste;
+  for(let n=0;;n++){f=R()<0.15?["imp",["et",["non","P"],"Q"],"R"]:formule3(R,R()<0.5);x=R.choix(["P","Q","R"]);b=R()<0.5;reste=["P","Q","R"].filter(y=>y!==x);
+    const c=lignesL(2).map(L=>vaut(f,Object.assign(envL(reste,L),{[x]:b})));rep=c.every(Boolean)?"vraie":c.some(Boolean)?"non":"fausse";if(rep===veut||n>60)break;}
+  const why=[],r=fixeL(f,{[x]:b},why),A=fx(ecrisL(f)),qui=et(reste),sup=`${x} est ${b?"vraie":"fausse"}`;let E;
+  if(rep!=="non")E=why.map((t,i)=>({w:t,why:i?"On remonte la formule, de l'intérieur vers l'extérieur.":`On part de ce qu'on sait : ${sup}.`,pts:1})).concat([{w:`<b>Oui : (Ass) est ${rep}, quelles que soient ${qui}.</b>`,why:"On n'a jamais eu besoin des valeurs des autres propositions.",pts:1}]);
+  else{const N=lignesL(2),v=L=>vaut(f,Object.assign(envL(reste,L),{[x]:b})),Lv=N.find(v),Lf=N.find(L=>!v(L));
+    E=[{w:`Quand ${sup}, (Ass) a la même valeur que ${fx(ecrisL(r.f))}.`,why:why.length?why.join(" "):`On remplace ${x} par ${VF(b)} : il reste une formule de ${qui}.`,pts:1},
+      {w:`Avec ${ligneTxt(reste,Lv)}, (Ass) est vraie. Avec ${ligneTxt(reste,Lf)}, elle est fausse.`,why:"Deux lignes de la table de vérité où les valeurs sont différentes suffisent.",pts:1},{w:"<b>Non : on ne peut pas déterminer la valeur de (Ass).</b>",why:`Elle dépend encore de ${qui}.`,pts:1}];}
+  function juge(rep2){if(!rep2.a)return {incomplet:"Choisis une réponse."};if(rep2.a===rep)return {ok:true};
+    return {ok:false,faux:["a"],resume:"Pas tout à fait.",diag:{etape:0,type:rep==="non"?"valeur crue déterminée alors qu'elle dépend des autres":rep2.a==="non"?"valeur déterminée non vue":"valeur déterminée, mais pas la bonne",titre:"Où ça part : ce que la valeur connue impose.",msg:E.map(e=>e.w).join(" ")}};}
+  return {sig:"TC"+ecrisL(f)+x+b,q:`P, Q et R sont trois propositions. On considère l'assertion (Ass) : ${fx(ecrisL(f))}. On suppose que ${sup}. Peut-on déterminer la valeur de vérité de (Ass) ?`,corps:`<p class="muted">Comme au CC1 2023-2024, exercice 1. On peut écrire la table de vérité, ou seulement ses lignes où ${sup}.</p>`,
+    texte:`(Ass) : ${ecrisL(f)} ; ${sup} ; valeur déterminée ?`,champs:[{k:"choix",id:"a",o:CONNUE}],juge,etapes:E,bonne:CONNUE.find(o=>o[0]===rep)[1],bonneTxt:CONNUE.find(o=>o[0]===rep)[1],repBonne:{a:rep},repFausse:{a:rep==="non"?"vraie":"non"},nature:rep,ens:{type:"tc",f,x,b}};}
+/* QCM : à partir de X, des formules obtenues par une règle du cours (équivalentes) ou par une erreur classique (pièges) */
+const BASESQ=[["imp","A",["et","B","C"]],["imp","A",["ou","B","C"]],["imp",["et","A","B"],"C"],["imp",["ou","A","B"],"C"],["eq",["et","A","B"],"C"],["eq","A","B"],["imp","A","B"]];
+function reglesQ(X,M){const E=[],P=[],w=f=>ecrisW(M(f)),ici=o=>" Ici "+Object.entries(o).map(([k,f])=>`${k} = ${simpleL(M(f))?w(f):"« "+w(f)+" »"}`).join(", ")+".",dm=f=>typeof f==="string"||f[0]==="non"?"":` La négation de ${w(f)} est ${w(nie(f))} (lois de De Morgan).`,e=(f,why)=>E.push({f,why}),p=f=>P.push({f});
+  if(X[0]==="imp"){const[,H,K]=X,hk=ici({H,K});
+    e(["imp",nie(K),nie(H)],"C'est la contraposée : « non(K) ⇒ non(H) » a la même table que « H ⇒ K »."+hk+dm(K)+dm(H));
+    e(["ou",nie(H),K],"« H ⇒ K » a la même table que « non(H) ou K »."+hk+dm(H));
+    p(["imp",K,H]);p(["imp",nie(H),nie(K)]);p(["et",H,K]);p(["ou",H,nie(K)]);
+    if(K[0]==="et"){const o=ici({H,"K₁":K[1],"K₂":K[2]});e(["et",["imp",H,K[1]],["imp",H,K[2]]],"« H ⇒ (K₁ et K₂) » dit que H entraîne K₁, et que H entraîne K₂."+o);
+      p(["ou",["imp",H,K[1]],["imp",H,K[2]]]);p(["ou",["imp",nie(K[1]),nie(H)],["imp",nie(K[2]),nie(H)]]);p(["imp",["et",nie(K[1]),nie(K[2])],nie(H)]);}
+    if(K[0]==="ou"){const o=ici({H,"K₁":K[1],"K₂":K[2]});e(["imp",["et",H,nie(K[1])],K[2]],"« H ⇒ (K₁ ou K₂) » : si H est vraie et K₁ fausse, il faut que K₂ soit vraie."+o);
+      e(["ou",["imp",H,K[1]],["imp",H,K[2]]],"« (H ⇒ K₁) ou (H ⇒ K₂) » s'écrit « non(H) ou K₁ ou non(H) ou K₂ », c'est-à-dire « non(H) ou K₁ ou K₂ »."+o);p(["et",["imp",H,K[1]],["imp",H,K[2]]]);p(["imp",["ou",nie(K[1]),nie(K[2])],nie(H)]);}
+    if(H[0]==="et"){const o=ici({"H₁":H[1],"H₂":H[2],K});e(["imp",H[1],["imp",H[2],K]],"Supposer H₁, puis supposer H₂, revient à supposer « H₁ et H₂ »."+o);
+      e(["ou",["imp",H[1],K],["imp",H[2],K]],"« (H₁ ⇒ K) ou (H₂ ⇒ K) » s'écrit « non(H₁) ou non(H₂) ou K », c'est-à-dire « non(H₁ et H₂) ou K »."+o);p(["et",["imp",H[1],K],["imp",H[2],K]]);}
+    if(H[0]==="ou"){const o=ici({"H₁":H[1],"H₂":H[2],K});e(["et",["imp",H[1],K],["imp",H[2],K]],"« (H₁ ou H₂) ⇒ K » dit que chacune des deux hypothèses suffit pour avoir K."+o);p(["ou",["imp",H[1],K],["imp",H[2],K]]);p(["imp",["et",H[1],H[2]],K]);}}
+  else{const[,U,V]=X,uv=ici({U,V});e(["et",["imp",U,V],["imp",V,U]],"Une équivalence « U ⇔ V », c'est l'implication dans chaque sens."+uv);
+    e(["et",["imp",U,V],["imp",nie(U),nie(V)]],"« non(U) ⇒ non(V) » est la contraposée de « V ⇒ U » : on a bien les deux sens."+uv+dm(U)+dm(V));
+    e(["ou",["et",U,V],["et",nie(U),nie(V)]],"« U ⇔ V » est vraie quand U et V sont vraies toutes les deux, ou fausses toutes les deux."+uv+dm(U)+dm(V));
+    e(["eq",nie(U),nie(V)],"U et V ont la même valeur exactement quand non(U) et non(V) ont la même valeur."+uv+dm(U)+dm(V));
+    p(["et",["imp",U,V],["imp",nie(V),nie(U)]]);p(["ou",["imp",U,V],["imp",V,U]]);p(["et",U,V]);
+    if(U[0]==="et"){e(["et",["imp",U,V],["et",["imp",V,U[1]],["imp",V,U[2]]]],"« V ⇒ (U₁ et U₂) » s'écrit « (V ⇒ U₁) et (V ⇒ U₂) » : c'est encore les deux sens de l'équivalence."+ici({"U₁":U[1],"U₂":U[2],V}));
+      p(["et",["eq",U[1],V],["eq",U[2],V]]);p(["ou",["eq",U[1],V],["eq",U[2],V]]);p(["et",["imp",U,V],["imp",["ou",nie(U[1]),nie(U[2])],V]]);}}
+  return {E,P};}
+const substQ=(f,s)=>typeof f==="string"?s[f]:[f[0],...f.slice(1).map(g=>substQ(g,s))];
+const propreQ=f=>typeof f==="string"?f:f[0]==="non"&&Array.isArray(f[1])&&f[1][0]==="non"?propreQ(f[1][1]):[f[0],...f.slice(1).map(propreQ)];
+function tvQcm(R){for(;;){const B=R.choix(BASESQ),perm=R.mel(["A","B","C"]),s={};["A","B","C"].forEach((x,i)=>{s[x]=R()<0.2?["non",perm[i]]:perm[i];});
+  const M=f=>propreQ(substQ(f,s)),X=M(B),vs=lettresL(X),{E,P}=reglesQ(B,M),tx=ecrisW(X);
+  const cand=R.mel(E.map(x=>({f:M(x.f),why:x.why}))).slice(0,R.ent(1,3)).concat(R.mel(P.map(x=>({f:M(x.f)})))).slice(0,5),vus=new Set();if(cand.length<4)continue;
+  const L=[];for(const c of R.mel(cand)){const t=ecrisW(c.f);if(t===tx||vus.has(t))continue;vus.add(t);const v=memeL(c.f,X,vs);let why=c.why;
+    if(!v){const r=lignesL(vs.length).find(Lg=>vaut(c.f,envL(vs,Lg))!==vaut(X,envL(vs,Lg))),env=envL(vs,r);why=`Avec ${ligneTxt(vs,r)}, ${tx} est ${vaut(X,env)?"vraie":"fausse"}, mais cette proposition est ${vaut(c.f,env)?"vraie":"fausse"} : une seule ligne différente suffit.`;}
+    else if(!why)why="Elle a la même table de vérité.";
+    L.push({txt:t,v,why,type:v?"proposition équivalente non reconnue":"proposition crue équivalente"});}
+  if(L.length<4||L.every(l=>l.v)||!L.some(l=>l.v))continue;
+  return cocheVraies({brut:true,sig:"TQ"+tx+"|"+L.map(l=>l.txt).sort().join("|"),q:`${et(vs)} sont des propositions. Parmi les propositions suivantes, coche toutes celles qui sont logiquement équivalentes à ${tx}.`,rappel:"Comme au QCM du CC : il peut y avoir une ou plusieurs bonnes réponses. Deux propositions sont équivalentes quand elles ont la même table de vérité.",texte:`équivalentes à ${tx}`,L,nature:ecrisW(B),ens:{type:"tq",X,L:L.map(l=>l.txt)}});}}
+
 G.rai={DEDUIRE,appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
@@ -21322,7 +21430,14 @@ G.add("rai",[
    {t:"les formules de g ∘ f et de f ∘ g",cc:4,gen:composeFormule},
    {t:"avec deux tableaux de valeurs : injective, surjective",cc:4,gen:composeTable},
    {t:"la composée existe-t-elle ?",cc:2,gen:composeExiste,min:100},
-   {t:"ce qu'on peut en déduire sur f et sur g",cc:4,gen:composeDeduire,min:100}]}
+   {t:"ce qu'on peut en déduire sur f et sur g",cc:4,gen:composeDeduire,min:100}]},
+ {id:"RA8",t:"Tables de vérité et propositions équivalentes",tache:"tables de vérité",th:"logique",pts:1,lecons:["r-logique"],
+  paliers:[
+   {t:"un connecteur",cc:2,gen:tvUn,min:12},
+   {t:"une formule de P et Q, colonne par colonne",cc:3,gen:tvDeux},
+   {t:"trois propositions P, Q, R",cc:4,gen:tvTrois,min:100},
+   {t:"une seule valeur connue : peut-on conclure ?",cc:2,gen:tvConnue,min:100},
+   {t:"comme au QCM : lesquelles sont équivalentes ?",cc:3,gen:tvQcm}]}
 ]);
 })();
 
@@ -23369,7 +23484,8 @@ const rangTrace=(c,r)=>c.rangs?"ligne "+(r+1):r?"fin du tour "+r:"avant la boucl
 const ligneTrace=(c,r)=>`<tr><td>${rangTrace(c,r)}</td>${c.vars.map((v,k)=>`<td><input class="en-in${c.rangs?" en-large":""}" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${rangTrace(c,r)}"></td>`).join("")}</tr>`;
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="trace")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${c.vars.map(v=>`<th class="var">${esc(v)}</th>`).join("")}</tr></thead><tbody>${[...Array(c.lignes||2)].map((_,r)=>ligneTrace(c,r)).join("")}</tbody></table></div><div class="acts"><button type="button" class="btn" data-plus>${c.rangs?"Ajouter une ligne":"Ajouter un tour"}</button><button type="button" class="btn" data-moins>${c.rangs?"Enlever la dernière ligne":"Enlever le dernier tour"}</button></div></div>`;
-  if(c.k==="choix")return `<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
+  if(c.k==="vf")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr>${c.donne.concat(c.cols).map(v=>`<th class="var">$${esc(v)}$</th>`).join("")}</tr></thead><tbody>${c.lignes.map((L,r)=>`<tr>${L.map(x=>`<td>${x}</td>`).join("")}${c.cols.map((v,k)=>`<td><input class="en-in" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" aria-label="${esc(v)}, ligne ${r+1}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
+  if(c.k==="choix")return `${c.titre?`<p>${c.titre}</p>`:""}<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="sym")return `<div data-ch="${c.id}" class="en-rep">${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
@@ -23381,7 +23497,7 @@ function lire(e){const rep={},b=$("#lpb");
     else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
     else if(c.k==="multi")rep[c.id]=[...b.querySelectorAll(`[data-multi="${c.id}"] [aria-pressed="true"]`)].map(x=>x.dataset.v);
     else if(c.k==="champ"){const i=b.querySelector(`[data-ch="${c.id}"] input`);rep[c.id]=i?i.value:"";}
-    else if(c.k==="trace"){const T=[];b.querySelectorAll(`[data-ch="${c.id}"] tbody tr`).forEach(tr=>T.push([...tr.querySelectorAll("input")].map(i=>i.value)));rep[c.id]=T;}
+    else if(c.k==="trace"||c.k==="vf"){const T=[];b.querySelectorAll(`[data-ch="${c.id}"] tbody tr`).forEach(tr=>T.push([...tr.querySelectorAll("input")].map(i=>i.value)));rep[c.id]=T;}
     else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);rep[id]=i?i.value:"";});});
   return rep;}
 function repTexte(e,rep){return e.champs.map(c=>{
@@ -23390,6 +23506,7 @@ function repTexte(e,rep){return e.champs.map(c=>{
   if(c.k==="multi")return (rep[c.id]||[]).map(v=>(c.o.find(o=>o[0]===v)||[v,v])[1]).join(", ")||"(rien de coché)";
   if(c.k==="champ"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.id)+" : "+(rep[c.id]||"(vide)");}
   if(c.k==="trace")return (rep[c.id]||[]).map((L,r)=>c.rangs?"ligne "+(r+1)+" : "+(L[0]||"(vide)"):(r?"tour "+r:"avant")+" : "+c.vars.map((v,k)=>v+" = "+(L[k]||"?")).join(", ")).join(" | ");
+  if(c.k==="vf")return c.cols.map((v,k)=>v+" : "+c.lignes.map((_,r)=>((rep[c.id]||[])[r]||[])[k]||"?").join(" ")).join(" | ");
   if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
 const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
 const etapesHTML=(e,marque)=>`<ol class="wex">${e.etapes.map((x,k)=>`<li><div>${k===marque?'<span class="pill rev">ton erreur</span> ':""}${x.w}</div><div class="why">${x.why}</div></li>`).join("")}</ol>`;
