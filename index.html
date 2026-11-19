@@ -20757,7 +20757,311 @@ G.add("algo",[
  {id:"AGQ2",t:"Question de cours : mille fois plus lent, θ, o, ω",th:"notations",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursMillion}]},
  {id:"AGQ3",t:"Question de cours : le master theorem",th:"master",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursMaster}]}
 ]);
-G.algo={execute,compte,joue,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
+/* ======================= CC3 : recherche et tris, avec des tableaux ======================= */
+/* expressions en plus : ["idx", T, i] pour T[i], ["taille", T], ["cond", c, a, b] ; instructions en plus : aff sur une case, aff2 (deux affectations sur une ligne), ech (échanger), init (tableau de 0), pour « par pas de -1 » */
+const IX=(t,e)=>["idx",t,e],TA=t=>["taille",t],estT=e=>Array.isArray(e)&&e[0]==="idx";
+function ecritT(e,par,dr){if(typeof e!=="object")return String(e);const k=e[0];
+  if(k==="idx")return `${e[1]}[${ecritT(e[2])}]`;if(k==="taille")return `taille(${e[1]})`;if(k==="cond")return `cond(${ecritT(e[1])}, ${ecritT(e[2])}, ${ecritT(e[3])})`;
+  const q=PRIO[k]||1,p=par?PRIO[par]||1:0,s=`${ecritT(e[1],k)} ${k} ${ecritT(e[2],k,true)}`;
+  return q<p||(dr&&q===p&&(par==="-"||par==="div"||par==="mod"||k==="div"||k==="mod"))?`(${s})`:s;}
+function lignesTn(C,niv){const L=[],I="    ".repeat(niv);C.forEach(s=>{
+  if(s.k==="aff")L.push({t:`${I}${ecritT(s.v)} ← ${ecritT(s.e)}`,n:s});
+  else if(s.k==="aff2")L.push({t:`${I}${s.v.join(", ")} ← ${s.e.map(x=>ecritT(x)).join(", ")}`,n:s});
+  else if(s.k==="init")L.push({t:`${I}Initialiser ${s.t} avec des 0`,n:s});
+  else if(s.k==="ech")L.push({t:`${I}échanger ${ecritT(s.a)} et ${ecritT(s.b)}`,n:s});
+  else if(s.k==="pour"){L.push({t:`${I}pour ${s.v} de ${ecritT(s.a)} à ${ecritT(s.b)}${s.pas<0?" par pas de -1":""} faire`,n:s},...lignesTn(s.c,niv+1),{t:`${I}fin pour;`,n:null});}
+  else if(s.k==="tq"){L.push({t:`${I}tant que ${ecritT(s.cond)} faire`,n:s},...lignesTn(s.c,niv+1),{t:`${I}fin tq;`,n:null});}
+  else if(s.k==="si"){L.push({t:`${I}si ${ecritT(s.cond)} alors`,n:s},...lignesTn(s.alors,niv+1));if(s.sinon)L.push({t:`${I}sinon`,n:null},...lignesTn(s.sinon,niv+1));L.push({t:`${I}fin si;`,n:null});}
+  else L.push({t:`${I}Renvoyer ${ecritT(s.e)}`,n:s});});return L;}
+const texteT=P=>P.entete.concat(["DÉBUT",...lignesTn(P.corps,1).map(x=>x.t),"FIN"]).join("\n");
+/* exécution : valeur renvoyée, tableaux à la fin, photos de la première boucle, comparaisons entre cases, échanges, décalages, tours de chaque boucle du haut */
+function joueT(P,args,o){o=o||{};const env={},photos=[],n={cmp:0,ech:0,dec:0,tours:[]};let vue=false,garde=0;
+  P.params.forEach((p,i)=>{env[p]=Array.isArray(args[i])?args[i].slice():args[i];});if(P.n)env.n=env[P.n].length;
+  const hors=(t,i)=>{if(!Array.isArray(t)||!Number.isInteger(i)||i<0||i>=t.length)throw new Error("case hors du tableau");};
+  const val=e=>{if(typeof e==="number")return e;if(typeof e==="string"){if(env[e]===undefined)throw new Error("variable sans valeur");return env[e];}
+    const k=e[0];if(k==="idx"){const t=env[e[1]],i=val(e[2]);hors(t,i);return t[i];}
+    if(k==="taille")return env[e[1]].length;if(k==="cond")return val(e[1])?val(e[2]):val(e[3]);
+    if(k==="et")return val(e[1])&&val(e[2]);if(k==="ou")return val(e[1])||val(e[2]);
+    const a=val(e[1]),b=val(e[2]);if(!(k in PRIO)&&(estT(e[1])||estT(e[2])))n.cmp++;return CALC[k](a,b);};
+  const pose=(v,x)=>{if(typeof v==="string"){env[v]=x;return;}const t=env[v[1]],i=val(v[2]);hors(t,i);t[i]=x;};
+  let haut=-1;
+  const run=(C,niv)=>{for(const s of C){if(++garde>60000)throw new Error("boucle sans fin");
+    if(s.k==="aff"){if(estT(s.v)&&estT(s.e))n.dec++;pose(s.v,val(s.e));}
+    else if(s.k==="aff2"){const X=s.e.map(val);s.v.forEach((v,i)=>pose(v,X[i]));}
+    else if(s.k==="init")env[s.t]=Array(val(s.taille)).fill(0);
+    else if(s.k==="ech"){const t=env[s.a[1]],i=val(s.a[2]),j=val(s.b[2]);hors(t,i);hors(t,j);[t[i],t[j]]=[t[j],t[i]];n.ech++;}
+    else if(s.k==="ret")return {r:val(s.e)};
+    else if(s.k==="si"){const r=run(val(s.cond)?s.alors:(s.sinon||[]),niv);if(r)return r;}
+    else{const suivie=niv===0&&!vue&&o.photo,ici=niv===0?++haut:-1;if(niv===0)n.tours[ici]=0;if(suivie){vue=true;photos.push(o.photo(env));}
+      const tour=()=>{const r=run(s.c,niv+1);if(niv===0)n.tours[ici]++;if(suivie)photos.push(o.photo(env));return r;};
+      if(s.k==="pour"){const a=val(s.a),b=val(s.b),d=s.pas||1;for(let i=a;d>0?i<=b:i>=b;i+=d){env[s.v]=i;const r=tour();if(r)return r;}}
+      else while(val(s.cond)){const r=tour();if(r)return r;}}}
+    return null;};
+  const r=run(P.corps,0);return {ret:r?r.r:undefined,env,photos,cmp:n.cmp,ech:n.ech,dec:n.dec,tours:n.tours};}
+/* les algorithmes du cours (diapos 89, 92, 98, 102, 105 ; TD 10 ex. 42 et 43) */
+const RECHLIN=()=>({nom:"RechLin",params:["e","T"],entete:["FONCTION : RechLin(E e : nombre, E T : tableau de nombres) : entier","SPÉCIFICATIONS : Si T contient e, renvoie le premier indice de T qui","                 contient e. Sinon, renvoie -1.","Variable : i : entier"],
+  corps:[aff("i",0),tq(["et",["<","i",TA("T")],["≠",IX("T","i"),"e"]],[aff("i",["+","i",1])]),si(["=","i",TA("T")],[ret(-1)],[ret("i")])]});
+const RECHDIC=der=>({nom:der?"RechDicDer":"RechDic",params:["e","T"],entete:[`FONCTION : ${der?"RechDicDer":"RechDic"} (E e : nombre, E T : tableau de nombres) : entier`,`SPÉCIFICATIONS : T trié. Renvoie le plus ${der?"grand":"petit"} i tq T[i]=e ou -1.`,"Variable : deb, mil, fin : entier"],
+  corps:[{k:"aff2",v:["deb","fin"],e:[0,["-",TA("T"),1]]},tq(["≤","deb","fin"],[aff("mil",["div",["+","deb","fin"],2]),si([der?"≤":"<",IX("T","mil"),"e"],[aff("deb",["+","mil",1])],[aff("fin",["-","mil",1])])]),
+    der?ret(["cond",["et",["≥","fin",0],["=",IX("T","fin"),"e"]],"fin",-1]):ret(["cond",["et",["<","deb",TA("T")],["=",IX("T","deb"),"e"]],"deb",-1])]});
+const TRIBULLES=()=>({nom:"TriBulles",params:["T"],n:"T",entete:["PROCÉDURE : TriBulles (ES T : tableau de nombres de taille n)","SPÉCIFICATIONS : Trie le tableau T par ordre croissant."],
+  corps:[pour("i",0,["-","n",2],[{k:"pour",v:"j",a:["-","n",1],b:["+","i",1],pas:-1,c:[si(["<",IX("T","j"),IX("T",["-","j",1])],[{k:"ech",a:IX("T","j"),b:IX("T",["-","j",1])}])]}])]});
+const TRISEL=()=>({nom:"TriSelection",params:["tab"],n:"tab",entete:["PROCÉDURE : TriSelection (ES tab : tableau de nombres de taille n)","SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.","Variable : m : entier"],
+  corps:[pour("i",0,["-","n",2],[aff("m","i"),pour("j",["+","i",1],["-","n",1],[si(["<",IX("tab","j"),IX("tab","m")],[aff("m","j")])]),{k:"ech",a:IX("tab","i"),b:IX("tab","m")}])]});
+const TRIINS=()=>({nom:"TriInsertion",params:["tab"],n:"tab",entete:["PROCÉDURE : TriInsertion (ES tab : tableau de nombres de taille n)","SPÉCIFICATIONS : Trie le tableau tab par ordre croissant.","Variable : a : nombre","           j : entier"],
+  corps:[pour("k",1,["-","n",1],[aff("a",IX("tab","k")),aff("j",["-","k",1]),tq(["et",["≥","j",0],[">",IX("tab","j"),"a"]],[aff(IX("tab",["+","j",1]),IX("tab","j")),aff("j",["-","j",1])]),aff(IX("tab",["+","j",1]),"a")])]});
+const TRIVAL=()=>({nom:"TriValeurs",params:["T","p"],n:"T",entete:["PROCÉDURE : TriValeurs (ES T : tableau d'entier de taille n, E p : entier)","SPÉCIFICATIONS : Les valeurs de T sont dans ⟦0 ; p−1⟧. Trie T.","Variable : Cpt : tableau d'entier de taille p","           j, k : entier"],
+  corps:[{k:"init",t:"Cpt",taille:"p"},pour("i",0,["-","n",1],[aff(IX("Cpt",IX("T","i")),["+",IX("Cpt",IX("T","i")),1])]),{k:"aff2",v:["j","k"],e:[0,0]},
+    tq(["<","j","n"],[si(["=",IX("Cpt","k"),0],[aff("k",["+","k",1])],[aff(IX("T","j"),"k"),aff("j",["+","j",1]),aff(IX("Cpt","k"),["-",IX("Cpt","k"),1])])])]});
+const tabT=T=>`[${T.map(ent).join(", ")}]`;
+const grille=(tete,rows)=>`<div style="overflow-x:auto"><table class="tbl tr"><thead><tr>${tete.map(v=>`<th class="var">${v}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const trie=T=>T.every((x,i)=>!i||T[i-1]<=x);
+/* un tableau à lignes fixes : chaque case est un entier ; renvoie les cases fausses */
+function jugeGrille(rep,id,att,nomLigne){const L=rep[id]||[];
+  for(let r=0;r<att.length;r++)for(let k=0;k<att[r].length;k++){const x=propre(((L[r]||[])[k])||"");if(!x)return {incomplet:`Il reste une case vide (${nomLigne(r)}).`};if(entier(x)===null)return {incomplet:"Chaque case contient un nombre entier."};}
+  const faux=[];let r0=-1;att.forEach((R,r)=>R.forEach((v,k)=>{if(entier(propre(L[r][k]))!==v){faux.push(`${id}:${r}:${k}`);if(r0<0)r0=r;}}));return {faux,r0};}
+const champNb=(id,label)=>({k:"champ",id,nom:label.replace(/ :$/,"").toLowerCase(),label,ex:"un entier",apercu:false});
+function lisNb(rep,id){const v=entier(propre(rep[id]||""));return v;}
+
+/* ---------- AG9 : recherche dans un tableau ---------- */
+function rechLin(R){const n=R.ent(5,8),T=[...Array(n)].map(()=>R.ent(1,20)),s=R();let e;
+  if(s<0.35){do e=R.ent(1,20);while(T.includes(e));}else{const i=R.ent(0,n-2);e=T[i];if(s>0.7){const j=R.ent(i+1,n-1);T[j]=e;}}
+  const P=RECHLIN(),X=joueT(P,[e,T]),r=X.ret,tours=X.tours[0],vus=[...Array(tours)].map((_,i)=>fx(`T[${i}] = ${T[i]} ≠ ${e}`)),apres=T.indexOf(e,r+1);
+  const E=[{w:`Les tours : ${vus.length?vus.join(", "):"aucun"}. La boucle fait <b>${tours} ${tours>1?"tours":"tour"}</b>.`,why:`Elle continue tant que ${fx(`i &lt; taille(T)`)} et ${fx(`T[i] ≠ ${e}`)}. Un tour fait seulement ${fx("i ← i + 1")}, et le test est fait avant chaque tour.`,pts:1},
+    {w:r>=0?`Avec i = ${r}, ${fx(`T[${r}] = ${e}`)} : la condition est fausse, la boucle s'arrête.`:`Avec ${fx(`i = ${n} = taille(T)`)}, la condition est fausse : toutes les cases ont été regardées, ${e} n'y est pas.`,why:r>=0?(apres>=0?`${e} est aussi dans la case ${apres}, mais RechLin s'arrête sur la première case qui le contient : les cases suivantes ne sont pas lues.`:`C'est la seule case qui contient ${e}.`):`Le « et » se lit de gauche à droite : quand ${fx("i = taille(T)")}, la case T[i] n'existe pas et n'est pas lue.`,pts:1},
+    {w:`<b>${fx(`RechLin(${e}, T) = ${r}`)}</b>`,why:r>=0?`Après la boucle, ${fx(`i ≠ taille(T)`)} : la fonction renvoie i.`:`Après la boucle, ${fx("i = taille(T)")} : la fonction renvoie -1.`,pts:1}];
+  function juge(rep){const v=lisNb(rep,"r"),t=lisNb(rep,"t");if(v===null)return {incomplet:"Écris la valeur renvoyée : un entier (-1 si e n'est pas dans T)."};if(t===null)return {incomplet:"Écris aussi le nombre de tours de la boucle."};
+    const F=[];if(v!==r)F.push("r");if(t!==tours)F.push("t");if(!F.length)return {ok:true};
+    const d=v!==r?(r>=0&&v===apres?{etape:1,type:"dernier indice au lieu du premier",titre:"Où ça part : la première case.",msg:`La boucle s'arrête dès que ${fx(`T[i] = ${e}`)}, donc à la case ${r}, la première qui contient ${e}.`}:r<0&&v===n?{etape:2,type:"valeur renvoyée quand e est absent",titre:"Où ça part : la dernière ligne.",msg:`Quand ${fx("i = taille(T)")}, la fonction renvoie -1, pas i.`}:{etape:1,type:"recherche linéaire déroulée",titre:"Où ça part : l'arrêt de la boucle.",msg:r>=0?`La première case qui contient ${e} est la case ${r}.`:`${e} n'est dans aucune case : la fonction renvoie -1.`})
+      :t===tours+1?{etape:0,type:"tour de trop compté",titre:"Où ça part : le nombre de tours.",msg:`Quand ${r>=0?fx(`T[i] = ${e}`):fx("i = taille(T)")}, le test est faux et le tour n'a pas lieu : ${tours} ${tours>1?"tours":"tour"}.`}:{etape:0,type:"nombre de tours d'une recherche linéaire",titre:"Où ça part : le nombre de tours.",msg:`i part de 0 et augmente de 1 à chaque tour, jusqu'à ${r>=0?r:n} : ${tours} ${tours>1?"tours":"tour"}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"la valeur et le nombre de tours sont à revoir":F[0]==="r"?"la valeur renvoyée est à revoir":"le nombre de tours est à revoir"}.`,diag:d};}
+  return {sig:"RL"+e+"|"+T,q:`Voici la recherche linéaire du cours. On l'appelle avec ${fx(`e = ${e}`)} et ${fx(`T = ${tabT(T)}`)}. Que renvoie ${fx(`RechLin(${e}, T)`)} ? Combien de tours fait la boucle « tant que » ?`,corps:code(texteT(P)),texte:`RechLin(${e}, ${tabT(T)}) : valeur renvoyée et nombre de tours`,
+    champs:[champNb("r","Valeur renvoyée :"),champNb("t","Nombre de tours de la boucle :")],juge,etapes:E,bonne:`${fx(`RechLin(${e}, T) = ${r}`)}, après ${tours} ${tours>1?"tours":"tour"}`,bonneTxt:`RechLin(${e}, T) = ${r}, ${tours} tours`,
+    repBonne:{r:String(r),t:String(tours)},repFausse:{r:String(r>=0?r+1:n),t:String(tours)},nature:r<0?"absent":apres>=0?"deux fois":"présent",ens:{type:"lin",e,T,r,tours}};}
+function tableDic(R,der){const n=R.ent(7,10);let T;for(;;){T=[...Array(n)].map(()=>R.ent(2,16)).sort((a,b)=>a-b);if(new Set(T).size>=4)break;}
+  const vals=[...new Set(T)],dupl=vals.filter(v=>T.indexOf(v)!==T.lastIndexOf(v)),s=R();let e;
+  if(s<(der?0.65:0.5))e=dupl.length&&R()<0.7?R.choix(dupl):R.choix(vals);
+  else if(s<0.85){const abs=[...Array(17).keys()].filter(v=>v>T[0]&&v<T[n-1]&&!T.includes(v));e=abs.length?R.choix(abs):T[n-1]+1;}
+  else e=R()<0.5?T[0]-1:T[n-1]+R.ent(1,3);return {T,e};}
+function rechDic(R,der){const {T,e}=tableDic(R,der),n=T.length,P=RECHDIC(der),X=joueT(P,[e,T],{photo:v=>[v.deb,v.fin,v.mil]}),Ph=X.photos,N=Ph.length-1,rows=Ph.map(p=>[p[0],p[1]]),r=X.ret,nom=P.nom;
+  const morceau=(a,b)=>a>b?"vide":tabT(T.slice(a,b+1));
+  const recit=k=>{const m=Ph[k][2],v=T[m],va=der?v<=e:v<e;return `Tour ${k} : ${fx(`mil = (${Ph[k-1][0]} + ${Ph[k-1][1]}) div 2 = ${m}`)}, ${fx(`T[${m}] = ${v}`)} ${va?(der?"≤":"&lt;"):(der?"&gt;":"≥")} ${e}, donc ${va?fx(`deb ← ${m+1}`):fx(`fin ← ${m-1}`)}.`;};
+  const fin=Ph[N],okF=der?fin[1]>=0&&T[fin[1]]===e:fin[0]<n&&T[fin[0]]===e;
+  const E=[{w:`Avant la boucle : ${fx("deb = 0")}, ${fx(`fin = ${n-1}`)}.`,why:`${fx(`taille(T) = ${n}`)}, donc ${fx(`fin = ${n-1}`)} : on cherche dans tout le tableau.`,pts:0.5},
+    {w:`La trace : ${grille(["tour","deb","mil","fin","T[deb..fin]"],Ph.map((p,k)=>[k?k:"avant",p[0],k?p[2]:"",p[1],morceau(p[0],p[1])]))}`,why:[...Array(Math.min(N,3))].map((_,k)=>recit(k+1)).join(" ")+(N>3?" Et ainsi de suite.":""),pts:2},
+    {w:`La boucle s'arrête après <b>${N} tours</b> : ${fx(`deb = ${fin[0]} &gt; fin = ${fin[1]}`)}.`,why:`La partie où on cherche encore est vide. Même quand ${fx("T[mil] = e")}, la boucle ne s'arrête pas : elle continue jusqu'à ${fx("deb &gt; fin")}.`,pts:0.5},
+    {w:`<b>${fx(`${nom}(${e}, T) = ${r}`)}</b>`,why:der?(okF?`${fx(`fin = ${fin[1]} ≥ 0`)} et ${fx(`T[${fin[1]}] = ${e}`)} : la fonction renvoie fin, le dernier indice où se trouve ${e}.`:fin[1]<0?`${fx(`fin = ${fin[1]}`)} : il n'y a pas de case fin, la fonction renvoie -1.`:`${fx(`T[${fin[1]}] = ${T[fin[1]]} ≠ ${e}`)} : ${e} n'est pas dans T, la fonction renvoie -1.`)
+      :(okF?`${fx(`deb = ${fin[0]} &lt; ${n}`)} et ${fx(`T[${fin[0]}] = ${e}`)} : la fonction renvoie deb, le premier indice où se trouve ${e}.`:fin[0]>=n?`${fx(`deb = ${fin[0]} = taille(T)`)} : il n'y a pas de case deb, la fonction renvoie -1.`:`${fx(`T[${fin[0]}] = ${T[fin[0]]} ≠ ${e}`)} : ${e} n'est pas dans T, la fonction renvoie -1.`),pts:1}];
+  function juge(rep){let L=(rep.t||[]).map(x=>x.map(y=>propre(y)));while(L.length>1&&L[L.length-1].every(x=>!x))L.pop();
+    if(!L.length||L[0].some(x=>!x))return {incomplet:"Remplis d'abord la ligne « avant la boucle »."};
+    for(let k=0;k<L.length;k++)for(const x of L[k]){if(!x)return {incomplet:`Il reste une case vide à la ligne « ${k?"fin du tour "+k:"avant la boucle"} ».`};if(entier(x)===null)return {incomplet:"Dans le tableau, chaque case contient un nombre entier."};}
+    const v=lisNb(rep,"r");if(v===null)return {incomplet:"Écris aussi la valeur renvoyée : un entier (-1 si e n'est pas dans T)."};
+    const V=L.map(x=>x.map(entier));
+    for(let k=0;k<Math.min(V.length,rows.length);k++){const K=[0,1].filter(j=>V[k][j]!==rows[k][j]);if(!K.length)continue;
+      return {ok:false,faux:K.map(j=>`t:${k}:${j}`),resume:`Pas tout à fait : la ligne « ${k?"fin du tour "+k:"avant la boucle"} » est à revoir.`,diag:k?{etape:1,type:T[Ph[k][2]]===e?"égalité au milieu mal traitée":"un tour de recherche dichotomique",titre:`Où ça part : le tour ${k}.`,msg:`${recit(k)}${T[Ph[k][2]]===e?` Quand ${fx(`T[mil] = ${e}`)}, la boucle continue : ${der?"on cherche à droite":"on cherche à gauche"}, pour trouver le ${der?"dernier":"premier"} ${e}.`:""}`}:{etape:0,type:"valeurs de départ de deb et fin",titre:"Où ça part : avant la boucle.",msg:`${fx("deb = 0")} et ${fx(`fin = taille(T) − 1 = ${n-1}`)}.`}};}
+    if(V.length!==rows.length)return {ok:false,faux:[],resume:`Pas tout à fait : la boucle ne fait pas ${V.length-1} tours.`,diag:{etape:2,type:V.length>rows.length?"un tour de trop":"un tour manquant",titre:"Où ça part : l'arrêt de la boucle.",msg:`La boucle tourne tant que ${fx("deb ≤ fin")}. Elle s'arrête après le tour ${N}, avec ${fx(`deb = ${fin[0]}`)} et ${fx(`fin = ${fin[1]}`)}.`}};
+    if(v!==r)return {ok:false,faux:["r"],resume:"Pas tout à fait : la trace est juste, mais pas la valeur renvoyée.",diag:{etape:3,type:"dernière ligne de la recherche dichotomique",titre:"Où ça part : la dernière ligne.",msg:E[3].why}};
+    return {ok:true};}
+  const faux=rows.map(x=>x.map(String));faux[N][0]=String(rows[N][0]+1);
+  return {sig:(der?"DD":"RD")+e+"|"+T,q:`Voici la recherche dichotomique du cours${der?", modifiée pour renvoyer le plus grand indice où se trouve e (diapo 98)":""}. On l'appelle avec ${fx(`e = ${e}`)} et ${fx(`T = ${tabT(T)}`)}. Remplis la trace : deb et fin avant la boucle, puis à la fin de chaque tour. Donne ensuite la valeur renvoyée.`,corps:code(texteT(P)),
+    texte:`${nom}(${e}, ${tabT(T)}) : trace de deb et fin, valeur renvoyée`,champs:[{k:"trace",id:"t",vars:["deb","fin"],lignes:2},champNb("r","Valeur renvoyée :")],juge,etapes:E,
+    bonne:`${fx(`${nom}(${e}, T) = ${r}`)}, après ${N} tours`,bonneTxt:`${nom}(${e}, T) = ${r}, ${N} tours`,repBonne:{t:rows.map(x=>x.map(String)),r:String(r)},repFausse:{t:faux,r:String(r)},nature:r<0?"absent":T.indexOf(e)!==T.lastIndexOf(e)?"plusieurs fois":"présent",ens:{type:"dic",der,e,T,rows,r}};}
+function iterDic(R){const t=R.ent(0,2);
+  if(t<2){const k=R.ent(2,6),n=2**k,T=[...Array(n)].map((_,i)=>2*i+2),e=t===0?2*n+3:1,X=joueT(RECHDIC(false),[e,T],{photo:v=>v.fin-v.deb+1}),N=X.tours[0],tailles=X.photos;
+    const E=[{w:t===0?`À chaque tour, ${fx("T[mil] &lt; e")} : ${fx("deb ← mil + 1")}, on garde la moitié droite.`:`À chaque tour, ${fx("T[mil] ≥ e")} : ${fx("fin ← mil − 1")}, on garde la moitié gauche, sans la case du milieu.`,why:`Toutes les valeurs sont ${t===0?"plus petites":"plus grandes"} que e : le test donne toujours la même réponse.`,pts:1},
+      {w:`Le nombre de cases où on cherche encore, ${fx("fin − deb + 1")} : ${tailles.join(" → ")}.`,why:`Il est à peu près divisé par 2 à chaque tour, et la boucle s'arrête quand il vaut 0.`,pts:1},
+      {w:`<b>${N} tours</b>`,why:t===0?`C'est le pire cas du cours (diapo 97) : pour ${fx(`n = 2^{${k}}`)}, il faut ${fx(`k + 1 = ${k+1}`)} itérations, car on divise n par 2 jusqu'à tomber sur 0.`:`Ici on enlève aussi la case du milieu, et on va moins loin que dans le pire cas du cours (${k+1} tours quand tout est plus petit que e).`,pts:1}];
+    const juge=rep=>{const v=lisNb(rep,"v");if(v===null)return {incomplet:"Écris un nombre de tours : un entier."};if(v===N)return {ok:true};return {ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas le bon nombre de tours.",diag:{etape:1,type:v===N+1||v===N-1?"un tour de plus ou de moins dans une recherche dichotomique":"nombre d'itérations d'une recherche dichotomique",titre:"Où ça part : compter les tours.",msg:`Suis le nombre de cases où on cherche encore : ${tailles.join(" → ")}. Chaque flèche est un tour.`}};};
+    return {sig:"ID"+t+k,q:`On lance RechDic (la recherche dichotomique du cours) sur un tableau trié de ${n} cases dont toutes les valeurs sont strictement ${t===0?"plus petites":"plus grandes"} que e. Combien de tours fait la boucle « tant que » ?`,corps:code(texteT(RECHDIC(false))),texte:`RechDic, ${n} cases, toutes ${t===0?"< e":"> e"} : nombre de tours`,
+      champs:[champNb("v","Nombre de tours :")],juge,etapes:E,bonne:`<b>${N} tours</b>`,bonneTxt:`${N} tours`,repBonne:{v:String(N)},repFausse:{v:String(t===0?k:k+1)},nature:t===0?"tout plus petit":"tout plus grand",ens:{type:"iter",t,k,N}};}
+  const N0=R.choix([500,1000,3000,5000,12000,20000,50000]),m=R.choix([2,4,8]),E0=Math.ceil(Math.log2(N0)),p=Math.log2(m),quoi=R.choix([["livres","rangés par numéro","un livre"],["cartes","rangées par numéro","une carte"],["élèves","rangés par ordre alphabétique","un élève"],["légos","rangés par taille","un modèle"]]),rep=E0+p;
+  const E=[{w:`Après le premier essai, il reste ${m*N0/2} ${quoi[0]} où chercher.`,why:`Une recherche dichotomique divise par 2 le nombre de ${quoi[0]} à chaque essai.`,pts:1},
+    {w:m===2?`${m*N0/2} = ${N0} : on retombe sur le cas de départ, qui demande au plus ${E0} essais.`:`Il faut ${p} essais pour revenir à ${N0} ${quoi[0]} (${[...Array(p+1)].map((_,i)=>m*N0/2**i).join(" → ")}), puis au plus ${E0} essais.`,why:"Doubler le nombre de cases n'ajoute qu'un essai : c'est la complexité θ(log n).",pts:1},
+    {w:`<b>${rep} essais au plus</b>`,why:`${E0} + ${p}. C'est le raisonnement du corrigé officiel du CC1 de novembre 2024 (12000 légos, 14 essais ; 24000 légos, 15 essais).`,pts:1}];
+  const juge=r=>{const v=lisNb(r,"v");if(v===null)return {incomplet:"Écris un nombre d'essais : un entier."};if(v===rep)return {ok:true};return {ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas le bon nombre d'essais.",diag:{etape:1,type:v===E0*m?"nombre d'essais multiplié au lieu d'augmenté":"nombre d'essais d'une recherche dichotomique",titre:"Où ça part : ce que coûte un doublement.",msg:`Multiplier le nombre de ${quoi[0]} par 2 n'ajoute qu'un essai. Ici on le multiplie par ${m} = 2 × … : ${p} ${p>1?"essais":"essai"} de plus.`}};};
+  return {sig:"IE"+N0+"|"+m+quoi[0],q:`${N0} ${quoi[0]} sont ${quoi[1]}. Avec une recherche dichotomique, il faut au plus ${E0} essais pour trouver ${quoi[2]} en particulier. Combien en faudrait-il au plus avec ${m*N0} ${quoi[0]} ?`,corps:"",texte:`${N0} ${quoi[0]}, ${E0} essais au plus ; combien pour ${m*N0} ?`,
+    champs:[champNb("v","Nombre d'essais au plus :")],juge,etapes:E,bonne:`<b>${rep}</b>`,bonneTxt:String(rep),repBonne:{v:String(rep)},repFausse:{v:String(E0*m)},nature:"essais",ens:{type:"essais",N0,m,E0,rep}};}
+
+/* ---------- AG10 et AG11 : tris par comparaison, le tableau après chaque tour ---------- */
+const DEFT={bulles:[TRIBULLES,"i",0,"le tri à bulles du cours (diapo 105)"],sel:[TRISEL,"i",0,"le tri par sélection (TD 10, exercice 42)"],ins:[TRIINS,"k",1,"le tri par insertion (TD 10, exercice 43)"]};
+function etatsTri(sorte,T){const P=DEFT[sorte][0](),X=joueT(P,[T],{photo:v=>v[P.n].slice()});return {P,X,rows:X.photos.slice(1)};}
+function decritTour(sorte,av,ap,x){if(sorte==="bulles"){const m=Math.min(...av.slice(x));return `Pour ${fx(`i = ${x}`)}, j recule de la fin jusqu'à ${x+1} : chaque case plus petite que sa voisine de gauche passe devant elle. La plus petite valeur restante, ${m}, arrive en case ${x} : ${fx(tabT(ap))}.`;}
+  if(sorte==="sel"){const reste=av.slice(x),m=Math.min(...reste),j=x+reste.indexOf(m);return j===x?`Pour ${fx(`i = ${x}`)}, la plus petite valeur parmi ${fx(`tab[${x}..${av.length-1}]`)} est ${m}, déjà en case ${x} : l'échange ne change rien. ${fx(tabT(ap))}.`:`Pour ${fx(`i = ${x}`)}, la plus petite valeur parmi ${fx(`tab[${x}..${av.length-1}]`)} est ${m}, en case ${j} : on échange les cases ${x} et ${j}. ${fx(tabT(ap))}.`;}
+  const a=av[x],pos=ap.slice(0,x+1).lastIndexOf(a),dec=x-pos;return dec?`Pour ${fx(`k = ${x}`)}, ${fx(`a = ${a}`)} : ${dec>1?`les ${dec} valeurs plus grandes que ${a} dans ${fx(`tab[0..${x-1}]`)} sont décalées`:`la seule valeur plus grande que ${a} dans ${fx(`tab[0..${x-1}]`)} est décalée`} d'une case vers la droite, et ${a} se place en case ${pos}. ${fx(tabT(ap))}.`:`Pour ${fx(`k = ${x}`)}, ${fx(`a = ${a}`)} et ${fx(`tab[${x-1}] = ${av[x-1]} ≤ a`)} : le test « tab[j] > a » est faux tout de suite, rien ne bouge. ${fx(tabT(ap))}.`;}
+function triTours(R,sorte,avecEch){const n=avecEch?6:R.choix([5,5,6]);let T,o;
+  for(;;){T=avecEch?[...Array(n)].map(()=>R.ent(1,9)):R.mel([...Array(9)].map((_,i)=>i+1)).slice(0,n);if(trie(T)||new Set(T).size<4)continue;o=etatsTri(sorte,T);if(o.X.ech+o.X.dec>=3)break;}
+  const [,v,d0,nomTri]=DEFT[sorte],rows=o.rows,lab=r=>`${v} = ${r+d0}`,av=[T].concat(rows),nE=o.X.ech;
+  const E=[{w:decritTour(sorte,av[0],av[1],d0),why:sorte==="bulles"?"j part de n − 1 et recule : on compare T[j] et T[j − 1], et on les échange si T[j] est plus petit.":sorte==="sel"?"m retient l'indice de la plus petite valeur vue ; un seul échange par itération, après la boucle sur j.":"a garde la valeur de tab[k] ; j recule tant que tab[j] > a, en décalant tab[j] vers la droite ; puis a est posé en tab[j + 1].",pts:1},
+    {w:decritTour(sorte,av[1],av[2],d0+1),why:sorte==="ins"?`Après l'itération k, les cases 0 à k sont triées entre elles.`:`Après l'itération i, les cases 0 à i contiennent les plus petites valeurs, dans l'ordre : elles ne bougent plus.`,pts:1},
+    {w:`Le tableau à la fin de chaque itération : ${grille([v].concat(T.map((_,k)=>`${o.P.n}[${k}]`)),rows.map((L,r)=>[r+d0].concat(L)))}`,why:"On repart toujours du tableau de la ligne du dessus.",pts:1.5}];
+  if(avecEch)E.push({w:`<b>${nE} ${nE>1?"échanges":"échange"}</b> en tout.`,why:sorte==="bulles"?"Chaque échange remet dans l'ordre deux valeurs voisines. Il y a un échange pour chaque paire de valeurs mal rangées l'une par rapport à l'autre ; deux valeurs égales ne sont jamais échangées (le tri à bulles est stable).":"Un échange par itération, même quand il ne change rien.",pts:0.5});
+  function juge(rep){const j=jugeGrille(rep,"t",rows,r=>`ligne ${lab(r)}`);if(j.incomplet)return j;let e=null;if(avecEch){e=lisNb(rep,"e");if(e===null)return {incomplet:"Écris aussi le nombre d'échanges en tout."};}
+    const F=j.faux.slice();if(avecEch&&e!==nE)F.push("e");if(!F.length)return {ok:true};
+    const d=j.r0>=0?{etape:j.r0===0?0:j.r0===1?1:2,type:`itération du ${sorte==="bulles"?"tri à bulles":sorte==="sel"?"tri par sélection":"tri par insertion"}`,titre:`Où ça part : la ligne ${lab(j.r0)}.`,msg:decritTour(sorte,av[j.r0],av[j.r0+1],j.r0+d0)}:{etape:3,type:"nombre d'échanges du tri à bulles",titre:"Où ça part : les échanges.",msg:`Compte les échanges de chaque itération : il y en a ${nE} en tout.`};
+    return {ok:false,faux:F,resume:j.faux.length?`Pas tout à fait : ${new Set(j.faux.map(x=>x.split(":")[1])).size>1?"plusieurs lignes sont à revoir":`la ligne ${lab(j.r0)} est à revoir`}.`:"Pas tout à fait : le tableau est juste, mais pas le nombre d'échanges.",diag:d};}
+  const nomP=o.P.nom,tn=o.P.n,fauxT=rows.map(L=>L.map(String));fauxT[0][0]=String(rows[0][0]+1);
+  return {sig:sorte.slice(0,2).toUpperCase()+T+(avecEch?"E":""),q:`Voici ${nomTri}. On l'applique à ${fx(`${tn} = ${tabT(T)}`)}. Écris le tableau à la fin de chaque itération de la boucle sur ${v}${avecEch?", puis le nombre d'échanges en tout":""}.`,corps:code(texteT(o.P)),
+    texte:`${nomP} sur ${tabT(T)} : le tableau après chaque itération${avecEch?", nombre d'échanges":""}`,champs:[{k:"vf",id:"t",donne:[v],cols:T.map((_,k)=>`${tn}[${k}]`),lignes:rows.map((_,r)=>[r+d0]),aide:"Une ligne par itération : le tableau tel qu'il est à la fin de l'itération."}].concat(avecEch?[champNb("e","Nombre d'échanges :")]:[]),juge,etapes:E,
+    bonne:`à la fin : ${fx(tabT(rows[rows.length-1]))}${avecEch?` ; ${nE} échanges`:""}`,bonneTxt:rows.map(L=>tabT(L)).join(" / ")+(avecEch?` ; ${nE} échanges`:""),repBonne:Object.assign({t:rows.map(L=>L.map(String))},avecEch?{e:String(nE)}:{}),repFausse:Object.assign({t:fauxT},avecEch?{e:String(nE)}:{}),nature:sorte,ens:{type:"tours",sorte,T,rows,nE}};}
+/* quel tri a produit ces tableaux ? */
+function quelTri(R){let T,S,sorte;for(;;){T=R.mel([...Array(9)].map((_,i)=>i+1)).slice(0,R.choix([5,6]));if(trie(T))continue;S={bulles:etatsTri("bulles",T).rows,sel:etatsTri("sel",T).rows,ins:etatsTri("ins",T).rows};
+    const s=Object.values(S).map(r=>JSON.stringify(r[0]));if(new Set(s).size===3)break;}
+  sorte=R.choix(["bulles","sel","ins"]);const rows=S[sorte].slice(0,Math.min(3,S[sorte].length)),NOM={bulles:"le tri à bulles",sel:"le tri par sélection",ins:"le tri par insertion"};
+  const indices={bulles:`Après le 1er tour, la plus petite valeur (${Math.min(...T)}) est en case 0 ; les valeurs qui étaient avant elle ont glissé d'une case vers la droite, et d'autres voisines ont pu être échangées en route.`,sel:`Après le 1er tour, la plus petite valeur (${Math.min(...T)}) est en case 0, et une seule autre case a changé : celle où elle était, qui a reçu l'ancienne valeur de la case 0.`,ins:`Après le 1er tour, seules les deux premières cases ont pu changer : elles sont rangées entre elles, et la plus petite valeur du tableau n'est pas forcément en case 0.`};
+  const E=[{w:`Le tri par sélection donnerait d'abord ${fx(tabT(S.sel[0]))}, le tri à bulles ${fx(tabT(S.bulles[0]))}, le tri par insertion ${fx(tabT(S.ins[0]))}.`,why:"On fait le premier tour de chaque tri sur le tableau de départ.",pts:1.5},
+    {w:`<b>C'est ${NOM[sorte]}.</b>`,why:indices[sorte],pts:1.5}];
+  const juge=r=>{if(!r.c)return {incomplet:"Choisis un des trois tris."};if(r.c===sorte)return {ok:true};return {ok:false,faux:["c"],resume:"Pas tout à fait : ce n'est pas ce tri.",diag:{etape:0,type:"tris par comparaison confondus",titre:"Où ça part : le premier tour.",msg:`${NOM[r.c].charAt(0).toUpperCase()+NOM[r.c].slice(1)} donnerait ${fx(tabT(S[r.c][0]))} après le premier tour, pas ${fx(tabT(rows[0]))}. ${indices[sorte]}`}};};
+  return {sig:"QT"+T+sorte,q:`On trie ${fx(`T = ${tabT(T)}`)} avec un des trois tris du cours : le tri à bulles, le tri par sélection ou le tri par insertion. Voici le tableau à la fin des ${rows.length} premières itérations de la boucle extérieure. Quel tri a été utilisé ?`,corps:grille(["tour"].concat(T.map((_,k)=>`T[${k}]`)),rows.map((L,r)=>[r+1].concat(L))),texte:`${tabT(T)} puis ${rows.map(tabT).join(", ")} : quel tri ?`,
+    champs:[{k:"choix",id:"c",o:[["bulles","Tri à bulles"],["sel","Tri par sélection"],["ins","Tri par insertion"]]}],juge,etapes:E,bonne:`<b>${NOM[sorte]}</b>`,bonneTxt:NOM[sorte],repBonne:{c:sorte},repFausse:{c:sorte==="ins"?"sel":"ins"},nature:sorte,ens:{type:"quel",T,sorte,rows}};}
+/* compter en fonction de n, vérifié en exécutant le tri sur plusieurs tableaux */
+const COMPTES=[["bulles","cmp","alea","comparaisons « T[j] &lt; T[j-1] »","n(n − 1)/2","n(n-1)/2","Pour chaque i, j va de n − 1 à i + 1 : n − 1 − i comparaisons. Au total (n − 1) + (n − 2) + … + 1 = n(n − 1)/2, quel que soit le tableau."],
+  ["bulles","cmp","trie","comparaisons « T[j] &lt; T[j-1] », quand T est déjà trié","n(n − 1)/2","n(n-1)/2","Le tri à bulles du cours fait toutes ses comparaisons même si le tableau est déjà trié : (n − 1) + … + 1 = n(n − 1)/2. Il ne fait simplement aucun échange."],
+  ["bulles","ech","envers","échanges, quand T est rangé à l'envers (du plus grand au plus petit)","n(n − 1)/2","n(n-1)/2","Toutes les paires de valeurs sont mal rangées : chaque comparaison donne un échange, donc n(n − 1)/2 échanges. C'est le pire cas."],
+  ["sel","cmp","alea","comparaisons « tab[j] &lt; tab[m] »","n(n − 1)/2","n(n-1)/2","Pour chaque i, j va de i + 1 à n − 1 : n − 1 − i comparaisons. Au total n(n − 1)/2, quel que soit le tableau."],
+  ["sel","ech","alea","échanges","n − 1","n-1","Un échange à chaque itération de la boucle sur i, qui va de 0 à n − 2 : n − 1 échanges, même quand l'échange ne change rien."],
+  ["ins","cmp","trie","comparaisons « tab[j] &gt; a », quand tab est déjà trié","n − 1","n-1","Quand le tableau est trié, le test « tab[j] > a » est faux tout de suite : une seule comparaison par valeur de k, de 1 à n − 1. C'est le meilleur cas, et c'est pour ça que le cours dit ce tri « adapté lorsque les données sont presque triées »."],
+  ["ins","dec","envers","décalages « tab[j+1] ← tab[j] », quand tab est rangé à l'envers","n(n − 1)/2","n(n-1)/2","Chaque nouvelle valeur est plus petite que toutes celles déjà rangées : pour k, k décalages. Au total 1 + 2 + … + (n − 1) = n(n − 1)/2. C'est le pire cas : θ(n²)."]];
+function compteTri(R){const c=R.choix(COMPTES),[sorte,quoi,cas,dit,ferme,tape,pq]=c,nv=R()<0.5?R.ent(6,20):null,NOMS={bulles:"TriBulles",sel:"TriSelection",ins:"TriInsertion"};
+  const tab=(n,s)=>{const T=[...Array(n)].map((_,i)=>i+1);return cas==="trie"?T:cas==="envers"?T.reverse():(s=>{for(let i=n-1;i>0;i--){s=(s*7+3)%31;const j=s%(i+1);[T[i],T[j]]=[T[j],T[i]];}return T;})(n*5+1);};
+  const vrai=n=>{const X=etatsTri(sorte,tab(n)).X;return quoi==="cmp"?X.cmp:quoi==="ech"?X.ech:X.dec;},NS=[2,3,4,5,6,7,8];
+  const E=[{w:`Pour ${fx("n = 4")} : ${vrai(4)} ; pour ${fx("n = 5")} : ${vrai(5)}.`,why:"On peut toujours vérifier une formule sur un petit tableau, en déroulant le tri.",pts:1},{w:`<b>${fx(ferme)}</b> ${dit.replace(/ «.*$/,"").replace(/,.*$/,"")}`,why:pq,pts:2}];
+  if(nv){const v=vrai(nv);E[1].w=`Pour ${fx(`n = ${nv}`)} : <b>${v}</b> ${dit.replace(/ «.*$/,"").replace(/,.*$/,"")}, car en général ${fx(ferme)}.`;}
+  const juge=r=>{if(nv){const v=lisNb(r,"f");if(v===null)return {incomplet:"Écris un nombre entier."};if(v===vrai(nv))return {ok:true};return {ok:false,faux:["f"],resume:"Pas tout à fait : ce n'est pas le bon nombre.",diag:{etape:1,type:"nombre d'opérations d'un tri",titre:"Où ça part : le calcul.",msg:`${pq} Pour n = ${nv} : ${vrai(nv)}.`}};}
+    if(!propre(r.f))return {incomplet:"Écris le nombre avec la lettre n, par exemple n(n-1)/2."};const W=NS.map(n=>O.calcule(r.f,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple n(n-1)/2 ou n-1."};
+    if(NS.every((n,i)=>Math.abs(W[i]-vrai(n))<1e-9))return {ok:true};const n=NS.find((n,i)=>Math.abs(W[i]-vrai(n))>=1e-9);
+    return {ok:false,faux:["f"],resume:"Pas tout à fait : ce n'est pas le bon nombre.",diag:{etape:1,type:"nombre d'opérations d'un tri",titre:"Où ça part : la formule.",msg:`Pour n = ${n}, ta formule donne ${String(Math.round(W[NS.indexOf(n)]*1000)/1000).replace(".",",")}, alors que ${NOMS[sorte]} fait ${vrai(n)} ${dit.replace(/ «.*$/,"").replace(/,.*$/,"")}.`}};};
+  const P=DEFT[sorte][0]();
+  return {sig:"CT"+COMPTES.indexOf(c)+"|"+nv,q:`Voici ${DEFT[sorte][3]}. Pour un tableau de taille ${nv?nv:"n"}, combien fait-il de ${dit} ?${nv?"":" Donne une formule en n."}`,corps:code(texteT(P)),texte:`${NOMS[sorte]} : nombre de ${dit.replace(/&lt;/g,"<").replace(/&gt;/g,">")} en fonction de n`,
+    champs:[nv?champNb("f","Nombre :"):{k:"champ",id:"f",nom:"formule",label:"Nombre, en fonction de n :",ex:"une formule avec n",sym:[["n","n"],["(","("],[")",")"],["/","/"],["^","^"]]}],juge,etapes:E,bonne:nv?`<b>${vrai(nv)}</b>`:fx(ferme),bonneTxt:nv?String(vrai(nv)):ferme,repBonne:{f:nv?String(vrai(nv)):tape},repFausse:{f:nv?String(vrai(nv)+1):tape==="n-1"?"n":"n^2"},nature:sorte+", "+quoi,ens:{type:"compte",sorte,quoi,cas,tape,nv}};}
+
+/* ---------- AG12 : tri fusion ---------- */
+function fusionJS(T,d1,f1,f2,trace){const T1=T.slice(d1,f1+1),T2=T.slice(f1+1,f2+1);let i=0,j=0;for(let k=d1;k<=f2;k++){if(j>=T2.length||(i<T1.length&&T1[i]<=T2[j])){T[k]=T1[i];i++;}else{T[k]=T2[j];j++;}if(trace)trace.push([T[k],i,j]);}return {T1,T2};}
+const FUSION=`PROCÉDURE : fusion (ES T : tableau de nombre, E deb1, fin1, fin2 : entier)
+SPÉCIFICATIONS : T[deb1..fin1] et T[fin1+1..fin2] triés. Trie T[deb1..fin2].
+Variable : T1, T2 : tab. de fin1-deb1+1 et fin2-fin1 nombres ; i,j : entiers
+DÉBUT
+    recopier T[deb1..fin1] dans T1 et T[fin1+1..fin2] dans T2
+    i,j ← 0,0
+    pour k de deb1 à fin2 faire
+        si j>=taille(T2) ou (i<taille(T1) et T1[i]<=T2[j]) alors
+            T[k] ← T1[i] ; i ← i+1
+        sinon
+            T[k] ← T2[j] ; j ← j+1
+        fin si;
+    fin pour;
+FIN`,TFA=`PROCÉDURE : triFusionAux (ES T : tableau de nombre; E deb, fin : entier)
+SPÉCIFICATIONS : Trie T entre les indices deb et fin.
+Variable : mil : entier
+DÉBUT
+    si deb<fin alors
+        mil ← (deb+fin) div 2
+        triFusionAux(T,deb,mil)
+        triFusionAux(T,mil+1,fin)
+        fusion(T,deb,mil,fin)
+    fin si;
+FIN`;
+function fusionExo(R){const l1=R.ent(2,4),l2=R.ent(2,4),V=R.mel([...Array(15)].map((_,i)=>i+1)),A=V.slice(0,l1).sort((a,b)=>a-b),B=V.slice(l1,l1+l2).sort((a,b)=>a-b);if(R()<0.3)B[0]=A[R.ent(0,l1-1)];B.sort((a,b)=>a-b);
+  const avant=R()<0.3?[R.ent(1,15)]:[],T=avant.concat(A,B),d1=avant.length,f1=d1+l1-1,f2=f1+l2,tr=[],X=T.slice();fusionJS(X,d1,f1,f2,tr);
+  const cle=k=>{const [v,i,j]=tr[k-d1],[ip,jp]=k===d1?[0,0]:tr[k-d1-1].slice(1);return jp>=B.length?`T2 est épuisé : on prend ${fx(`T1[${ip}] = ${A[ip]}`)}.`:ip>=A.length?`T1 est épuisé : on prend ${fx(`T2[${jp}] = ${B[jp]}`)}.`:A[ip]<=B[jp]?`${fx(`T1[${ip}] = ${A[ip]} ≤ T2[${jp}] = ${B[jp]}`)} : on prend ${A[ip]} dans T1.`:`${fx(`T1[${ip}] = ${A[ip]} &gt; T2[${jp}] = ${B[jp]}`)} : on prend ${B[jp]} dans T2.`;};
+  const rows=tr.map(x=>x.slice()),ks=rows.map((_,r)=>r+d1);
+  const E=[{w:`Les copies : ${fx(`T1 = ${tabT(A)}`)} et ${fx(`T2 = ${tabT(B)}`)}.`,why:`T1 reçoit ${fx(`T[${d1}..${f1}]`)} et T2 reçoit ${fx(`T[${f1+1}..${f2}]`)}. On les copie parce que T est écrasé pendant la fusion.`,pts:0.5},
+    {w:`Pour ${fx(`k = ${d1}`)} : ${cle(d1)} Pour ${fx(`k = ${d1+1}`)} : ${cle(d1+1)}`,why:"À chaque case k, on prend le plus petit des deux candidats ; à égalité, celui de T1 (« T1[i] <= T2[j] ») : c'est ce qui rend le tri fusion stable.",pts:1},
+    {w:`Tour par tour : ${grille(["k","T[k]","i","j"],rows.map((x,r)=>[ks[r]].concat(x)))}`,why:"i et j sont les valeurs à la fin du tour : celui des deux qui a donné sa valeur avance de 1.",pts:1.5},
+    {w:`À la fin : ${fx(`T = ${tabT(X)}`)}.`,why:avant.length?`La case 0 n'est pas touchée : la fusion ne travaille qu'entre ${d1} et ${f2}.`:"Les deux moitiés triées sont réunies en un seul tableau trié.",pts:0.5}];
+  function juge(rep){const j=jugeGrille(rep,"t",rows,r=>`ligne k = ${ks[r]}`);if(j.incomplet)return j;if(!j.faux.length)return {ok:true};
+    return {ok:false,faux:j.faux,resume:`Pas tout à fait : la ligne k = ${ks[j.r0]} est à revoir.`,diag:{etape:j.r0<2?1:2,type:"tour de la fusion",titre:`Où ça part : k = ${ks[j.r0]}.`,msg:`${cle(ks[j.r0])} À la fin de ce tour : ${fx(`i = ${rows[j.r0][1]}`)}, ${fx(`j = ${rows[j.r0][2]}`)}.`}};}
+  const faux=rows.map(x=>x.map(String));faux[0][1]=String(rows[0][1]+1);
+  return {sig:"FU"+T+"|"+d1,q:`Voici la procédure fusion du cours. On appelle ${fx(`fusion(T, ${d1}, ${f1}, ${f2})`)} avec ${fx(`T = ${tabT(T)}`)}. Pour chaque valeur de k, écris la valeur mise dans T[k], puis les valeurs de i et de j à la fin du tour.`,corps:code(FUSION),texte:`fusion(${tabT(T)}, ${d1}, ${f1}, ${f2}) : T[k], i et j à chaque tour`,
+    champs:[{k:"vf",id:"t",donne:["k"],cols:["T[k]","i","j"],lignes:ks.map(k=>[k]),aide:"Une ligne par valeur de k : la valeur écrite dans T[k], puis i et j à la fin du tour."}],juge,etapes:E,bonne:`${fx(`T = ${tabT(X)}`)}`,bonneTxt:tabT(X),repBonne:{t:rows.map(x=>x.map(String))},repFausse:{t:faux},nature:avant.length?"au milieu d'un tableau":B.some(x=>A.includes(x))?"avec une égalité":"deux moitiés",ens:{type:"fusion",T,d1,f1,f2,rows}};}
+function appelsTFA(T){const L=[],F=[],A=T.slice();(function va(d,f,niv){L.push("    ".repeat(niv)+`triFusionAux(T,${d},${f})`);if(d<f){const m=Math.floor((d+f)/2);va(d,m,niv+1);va(m+1,f,niv+1);fusionJS(A,d,m,f);F.push({d,m,f,T:A.slice()});L.push("    ".repeat(niv+1)+`fusion(T,${d},${m},${f})   T = ${tabT(A)}`);}})(0,T.length-1,0);return {L,F,A};}
+function triFusionExo(R){const n=R.ent(5,7),T=R.mel([...Array(9)].map((_,i)=>i+1)).slice(0,n),o=appelsTFA(T),rows=o.F.map(x=>x.T),lab=o.F.map(x=>`(${x.d}, ${x.m}, ${x.f})`),m0=Math.floor((n-1)/2);
+  const E=[{w:`Premier appel : ${fx(`triFusionAux(T, 0, ${n-1})`)}, ${fx(`mil = ${m0}`)} : on trie ${fx(`T[0..${m0}]`)}, puis ${fx(`T[${m0+1}..${n-1}]`)}, puis on fusionne.`,why:"La moitié gauche est entièrement triée avant que la moitié droite commence. Chaque fusion vient après les deux appels récursifs de son appel.",pts:1},
+    {w:`Les appels, dans l'ordre : ${code(o.L.join("\n"))}`,why:`Chaque décalage vers la droite est un appel fait par la ligne du dessus. Un appel sur une seule case (deb = fin) ne fait rien.`,pts:1.5},
+    {w:`${2*n-1} appels à triFusionAux et <b>${n-1} fusions</b> ; à la fin, ${fx(`T = ${tabT(o.A)}`)}.`,why:`Il y a toujours n − 1 fusions : chacune réunit deux morceaux en un, et on passe de n morceaux d'une case à un seul tableau.`,pts:0.5}];
+  function juge(rep){const j=jugeGrille(rep,"t",rows,r=>`fusion n° ${r+1}`);if(j.incomplet)return j;if(!j.faux.length)return {ok:true};const x=o.F[j.r0];
+    return {ok:false,faux:j.faux,resume:`Pas tout à fait : la ligne de la fusion n° ${j.r0+1} est à revoir.`,diag:{etape:1,type:"ordre des fusions du tri fusion",titre:`Où ça part : la fusion n° ${j.r0+1}.`,msg:`C'est ${fx(`fusion(T, ${x.d}, ${x.m}, ${x.f})`)} : elle range ensemble les cases ${x.d} à ${x.f}, en réunissant ${fx(`T[${x.d}..${x.m}]`)} et ${fx(`T[${x.m+1}..${x.f}]`)}, déjà triés. Après elle : ${fx(tabT(x.T))}.`}};}
+  const faux=rows.map(L=>L.map(String));faux[0]=faux[0].slice().reverse();
+  return {sig:"TF"+T,q:`On lance le tri fusion du cours sur ${fx(`T = ${tabT(T)}`)} : ${fx(`triFusionAux(T, 0, ${n-1})`)}. Voici, dans l'ordre, les fusions qu'il fait (deb1, fin1, fin2). Écris le tableau T juste après chacune.`,corps:code(TFA),texte:`triFusionAux(${tabT(T)}, 0, ${n-1}) : le tableau après chaque fusion`,
+    champs:[{k:"vf",id:"t",donne:["fusion"],cols:T.map((_,k)=>`T[${k}]`),lignes:lab.map(x=>[x]),aide:"Une ligne par fusion, dans l'ordre où elles sont faites : le tableau juste après elle."}],juge,etapes:E,bonne:`à la fin : ${fx(tabT(o.A))}`,bonneTxt:rows.map(tabT).join(" / "),repBonne:{t:rows.map(L=>L.map(String))},repFausse:{t:faux},nature:n+" cases",ens:{type:"tfa",T,rows}};}
+function compteFusion(R){const n=R.ent(4,20),T=[...Array(n)].map((_,i)=>n-i),o=appelsTFA(T),A=o.L.filter(x=>/triFusionAux/.test(x)).length,F=o.F.length;
+  const E=[{w:`<b>${A} appels</b> à triFusionAux et <b>${F} fusions</b>.`,why:`Chaque fusion réunit deux morceaux triés en un : on passe de ${n} morceaux d'une case à un seul, donc ${fx(`n − 1 = ${F}`)} fusions. Chaque appel qui fusionne fait deux appels, plus le tout premier : ${fx(`2n − 1 = ${A}`)} appels.`,pts:1.5},
+    {w:`Équation de complexité : ${fx("T(n) = 2T(n/2) + θ(n)")}.`,why:"Deux appels récursifs sur une moitié du tableau, et une fusion qui parcourt les n cases.",pts:1},
+    {w:`<b>${fx("T(n) = O(n.log(n))")}</b>`,why:`Master theorem : ${fx("a = 2")}, ${fx("b = 2")}, ${fx("d = 1")}, ${fx("b^{d} = 2 = a")} : ${fx("O(n^{d} log n) = O(n log n)")}. C'est la complexité du tri fusion donnée par le cours, et la borne inférieure d'un tri par comparaison.`,pts:1}];
+  function juge(r){const a=lisNb(r,"a"),f=lisNb(r,"f");if(a===null||f===null)return {incomplet:"Écris les deux nombres : appels et fusions."};const jo=jugeOrdre(r.o,{g:n=>n*Math.log(n)});if(jo.inc)return {incomplet:jo.inc};
+    const X=[];if(a!==A)X.push("a");if(f!==F)X.push("f");if(!jo.ok)X.push("o");if(!X.length)return {ok:true};
+    return {ok:false,faux:X,resume:`Pas tout à fait : ${et(X.map(x=>x==="a"?"le nombre d'appels":x==="f"?"le nombre de fusions":"l'ordre de complexité"))} ${X.length>1?"sont à revoir":"est à revoir"}.`,diag:X[0]==="o"?{etape:2,type:"complexité du tri fusion",titre:"Où ça part : l'ordre de complexité.",msg:E[2].why}:{etape:0,type:a===F&&f===F?"appels confondus avec les fusions":"nombre d'appels du tri fusion",titre:"Où ça part : compter les appels.",msg:E[0].why}};}
+  return {sig:"CF"+n,q:`On trie un tableau de ${n} cases avec le tri fusion du cours, ${fx(`triFusionAux(T, 0, ${n-1})`)}. Combien d'appels à triFusionAux sont faits en tout, le premier compris ? Combien de fusions ? Donne enfin l'ordre de complexité du tri fusion : ${fx("T(n) = O(…)")}.`,corps:code(TFA),texte:`tri fusion de ${n} cases : appels, fusions, ordre de complexité`,
+    champs:[champNb("a","Appels à triFusionAux :"),champNb("f","Fusions :"),{k:"champ",id:"o",nom:"ordre de complexité",label:"$T(n) = O($ … $)$ avec :",ex:"par exemple n^2",sym:[["n","n"],["log(n)","log(n)"],[".","."],["^","^"]]}],juge,etapes:E,
+    bonne:`${A} appels, ${F} fusions ; ${fx("O(n.log(n))")}`,bonneTxt:`${A} appels, ${F} fusions, O(n log n)`,repBonne:{a:String(A),f:String(F),o:"n*log(n)"},repFausse:{a:String(F),f:String(F),o:"n*log(n)"},nature:"compter",ens:{type:"cf",n,A,F}};}
+
+/* ---------- AG13 : tri par valeurs ---------- */
+function tirageVal(R){const p=R.ent(3,5),n=R.ent(8,12);let T;for(;;){T=[...Array(n)].map(()=>R.ent(0,p-1));if(new Set(T).size>=p-1&&!trie(T))break;}return {p,n,T};}
+function cptExo(R){const {p,n,T}=tirageVal(R),X=joueT(TRIVAL(),[T,p]),C=[...Array(p)].map((_,v)=>T.filter(x=>x===v).length),noms=C.map((_,v)=>`Cpt[${v}]`);
+  const E=[{w:`On compte chaque valeur : ${C.map((c,v)=>`${c} ${c>1?"fois":"fois"} ${v}`).join(", ")}.`,why:`Le « pour » lit T[0], T[1], … et ajoute 1 à la case Cpt de la valeur lue : ${fx("Cpt[T[i]] ← Cpt[T[i]] + 1")}.`,pts:1.5},
+    {w:`<b>${fx(`Cpt = ${tabT(C)}`)}</b>`,why:`La somme des cases de Cpt fait ${n}, le nombre de cases de T : chaque case de T est comptée une fois.${C.includes(0)?" Une valeur absente de T garde 0.":""}`,pts:1},
+    {w:`Le tableau trié : ${fx(tabT(X.env.T))}.`,why:"Le tant que recopie ensuite autant de 0 que Cpt[0], puis autant de 1 que Cpt[1], et ainsi de suite.",pts:0.5}];
+  function juge(r){const V=noms.map(x=>entier(propre((r.c||{})[x]||"")));if(V.some(v=>v===null))return {incomplet:"Remplis chaque case de Cpt avec un entier."};const F=noms.filter((x,v)=>V[v]!==C[v]);if(!F.length)return {ok:true};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"plusieurs cases de Cpt sont à revoir":`${F[0]} est à revoir`}.`,diag:{etape:0,type:V.reduce((a,b)=>a+b,0)!==n?"une case de T oubliée ou comptée deux fois":"comptage du tri par valeurs",titre:"Où ça part : le comptage.",msg:`Cpt[v] est le nombre de cases de T qui valent v. Par exemple ${fx(`Cpt[${noms.indexOf(F[0])}] = ${C[noms.indexOf(F[0])]}`)}. La somme doit faire ${n}.`}};}
+  return {sig:"CV"+T+"|"+p,q:`Voici le tri par valeurs du cours. On l'applique à ${fx(`T = ${tabT(T)}`)} avec ${fx(`p = ${p}`)}. Que contient le tableau Cpt juste après la boucle « pour » ?`,corps:code(texteT(TRIVAL())),texte:`TriValeurs(${tabT(T)}, ${p}) : Cpt après le comptage`,
+    champs:[{k:"cases",id:"c",noms}],juge,etapes:E,bonne:fx(`Cpt = ${tabT(C)}`),bonneTxt:`Cpt = ${tabT(C)}`,repBonne:{c:Object.fromEntries(noms.map((x,v)=>[x,String(C[v])]))},repFausse:{c:Object.fromEntries(noms.map((x,v)=>[x,String(C[v]+(v?0:1))]))},nature:C.includes(0)?"une valeur absente":"toutes présentes",ens:{type:"cpt",T,p,C}};}
+function tqVal(R){const {p,n,T}=tirageVal(R),X=joueT(TRIVAL(),[T,p]),tours=X.tours[1],kf=X.env.k,mx=Math.max(...T);
+  const E=[{w:`À chaque tour du tant que, soit on écrit une valeur dans T (j augmente de 1), soit Cpt[k] vaut 0 et on passe à la valeur suivante (k augmente de 1).`,why:"Les deux branches du si.",pts:1},
+    {w:`On écrit les ${n} valeurs : ${n} tours. On passe de k = 0 à ${fx(`k = ${mx}`)}, la plus grande valeur de T : ${mx} tours.`,why:`La boucle s'arrête dès que j = n, juste après avoir écrit le dernier ${mx} : k ne dépasse jamais ${mx}.${mx<p-1?` Il n'atteint pas ${p-1}, car aucune case ne vaut ${p-1}.`:""}`,pts:1.5},
+    {w:`<b>${tours} tours</b>, et ${fx(`k = ${kf}`)} à la fin.`,why:`${n} + ${mx}. La complexité est θ(n + p) : n écritures, et au plus p − 1 passages d'une valeur à la suivante.`,pts:0.5}];
+  function juge(r){const t=lisNb(r,"t"),k=lisNb(r,"k");if(t===null||k===null)return {incomplet:"Écris les deux nombres : les tours et la valeur de k."};const F=[];if(t!==tours)F.push("t");if(k!==kf)F.push("k");if(!F.length)return {ok:true};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux nombres sont à revoir":F[0]==="t"?"le nombre de tours est à revoir":"la valeur de k est à revoir"}.`,diag:{etape:1,type:t===n?"passages d'une valeur à la suivante oubliés":k===p-1||k===p?"k va jusqu'à p − 1":"tours du tant que du tri par valeurs",titre:"Où ça part : les deux sortes de tours.",msg:E[1].w.replace(/<[^>]+>/g,"")+" "+E[1].why}};}
+  return {sig:"TV"+T+"|"+p,q:`Voici le tri par valeurs du cours. On l'applique à ${fx(`T = ${tabT(T)}`)} avec ${fx(`p = ${p}`)}. Combien de tours fait la boucle « tant que » ? Que vaut k à la fin ?`,corps:code(texteT(TRIVAL())),texte:`TriValeurs(${tabT(T)}, ${p}) : tours du tant que, k à la fin`,
+    champs:[champNb("t","Tours du tant que :"),champNb("k","Valeur de k à la fin :")],juge,etapes:E,bonne:`${tours} tours, ${fx(`k = ${kf}`)}`,bonneTxt:`${tours} tours, k = ${kf}`,repBonne:{t:String(tours),k:String(kf)},repFausse:{t:String(n),k:String(kf)},nature:mx<p-1?"plus grande valeur absente":"jusqu'à p − 1",ens:{type:"tqv",T,p,tours,kf}};}
+
+/* ---------- questions de cours du CC3, sur papier ---------- */
+const coursDic=()=>papierQ("QD","Questions de cours sur la recherche dichotomique (diapos 95 et 97).",`<ol type="a"><li>Prouve que RechDic s'arrête.</li><li>Donne sa complexité dans le pire cas, en expliquant le calcul.</li></ol>`,[
+  ["a) fin − deb + 1 est un entier naturel ; il décroît strictement à chaque itération ; le tant que s'arrête lorsqu'il vaut 0 ou moins.","C'est la preuve de la diapo 95. fin − deb + 1 est le nombre de cases où on cherche encore : à chaque tour, on garde au plus la moitié.",1],
+  ["Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme se termine.","Les trois phrases de conclusion du cours, à écrire telles quelles.",0.5],
+  [`b) Pire cas : tout le tableau est &lt; e. On prend ${fx("n = 2^{k}")} (pas de perte de généralité).`,"Diapo 97 : c'est le cas où la boucle fait le plus de tours.",0.5],
+  ["Nombre d'itérations = nombre de divisions de n par 2 jusqu'à tomber sur 0, donc k + 1. Chaque itération est en θ(1).","Chaque tour fait un nombre fixe d'opérations, qui ne dépend pas de n.",0.5],
+  [`${fx("T_{n} = θ(1) + (k + 1).θ(1) = θ(k)")}, donc ${fx("T_{n} = θ(log(n))")} : l'algorithme est logarithmique.`,`Comme ${fx("n = 2^{k}")}, ${fx("k = log₂(n)")}.`,0.5]],"dichotomie");
+const coursTris=()=>papierQ("QT","Questions de cours sur les tris (diapos 100 à 114).",`<ol type="a"><li>Donne la complexité du tri par valeurs, du tri à bulles, du tri par sélection, du tri par insertion et du tri fusion.</li><li>Lesquels sont stables ? Lequel n'est pas en place ?</li><li>Quelles sont les bornes inférieures d'un tri de tableau, et d'un tri par comparaison ?</li></ol>`,[
+  ["a) Tri par valeurs : θ(p + n), soit θ(n) si p = O(n). Tri à bulles, par sélection, par insertion : θ(n²). Tri fusion : θ(n log n).","Diapos 102, 105, 112 et 114.",1.5],
+  ["b) Le tri à bulles et le tri fusion sont stables (les éléments égaux restent dans le même ordre). Le tri fusion n'est pas en place : il a besoin d'espace en plus pour la fusion.","Diapos 105 et 112 : le tri à bulles est en place et stable.",1],
+  ["c) Tout tri de tableau est en Ω(n) : il faut au moins parcourir toutes les cases. Le tri par valeurs l'atteint.","Diapo 104.",0.75],
+  ["Un tri par comparaison est en Ω(n log n) : il faut au moins n log n/4 comparaisons. Le tri fusion l'atteint.","Diapo 113.",0.75]],"tris");
+const coursQuelTri=()=>papierQ("QQ","Examen de janvier 2023, exercice 4, question 1 (2 points), puis CC1 de novembre 2024.",`<ol type="a"><li>On veut trier un tableau de chiffres de taille n. Anakin affirme pouvoir l'écrire en θ(n²), Leia en θ(n log(n)), Chewbacca en θ(n) et Luke en θ(1). Parmi ces propositions, lesquelles sont impossibles ? Justifier. Parmi les autres, donner le nom d'un tri du cours qui permet d'obtenir le meilleur ordre de complexité.</li><li>Luc veut ranger ses vaisseaux spatiaux par ordre de taille. Sa seule action possible est de permuter deux vaisseaux. Citer deux tris du cours qui lui permettent d'y arriver.</li></ol>`,[
+  ["a) La proposition de Luke est impossible, car il faut au moins parcourir le tableau pour pouvoir le trier, donc l'algorithme de tri est en Ω(n).","Corrigé officiel de janvier 2023.",0.75],
+  ["La proposition de Chewbacca est possible, car chaque chiffre peut prendre uniquement 10 valeurs : on peut trier le tableau par valeurs avec une complexité en temps θ(n).","Corrigé officiel : c'est le nom du tri qui est demandé, le tri par valeurs.",0.75],
+  ["Les propositions d'Anakin et Leia sont moins performantes, donc possibles aussi.","Corrigé officiel : −0,5 point si on propose θ(n log(n)) comme meilleur ordre.",0.5],
+  ["b) Il peut utiliser le tri à bulles ou le tri par sélection, qui reposent sur la permutation d'éléments.","Corrigé officiel du CC1 de novembre 2024.",0.5]],"quel tri");
+
+G.add("algo",[
+ {id:"AG9",t:"Recherche dans un tableau : linéaire et dichotomique",tache:"recherche linéaire et dichotomique",th:"dicho",ex:"cc3",pts:4,lecons:["a3-dicho"],
+  paliers:[
+   {t:"la recherche linéaire : valeur renvoyée et nombre de tours",cc:3,gen:rechLin},
+   {t:"la recherche dichotomique : la trace",cc:5,gen:R=>rechDic(R,false)},
+   {t:"combien de tours, combien d'essais",cc:3,gen:iterDic,min:35},
+   {t:"la variante qui renvoie le dernier indice (diapo 98)",cc:5,gen:R=>rechDic(R,true)}]},
+ {id:"AG10",t:"Tri à bulles : le tableau après chaque tour",tache:"tri à bulles",th:"fusion",ex:"cc3",pts:2,lecons:["a3-fusion"],
+  paliers:[
+   {t:"le tableau après chaque itération",cc:4,gen:R=>triTours(R,"bulles",false)},
+   {t:"avec des valeurs égales, et le nombre d'échanges",cc:5,gen:R=>triTours(R,"bulles",true)}]},
+ {id:"AG11",t:"Tri par sélection et tri par insertion",tache:"tri par sélection et tri par insertion",th:"tris",ex:"cc3",pts:4,lecons:["a3-tris"],apres:["AG10"],
+  paliers:[
+   {t:"le tri par sélection, après chaque itération",cc:4,gen:R=>triTours(R,"sel",false)},
+   {t:"le tri par insertion, après chaque itération",cc:4,gen:R=>triTours(R,"ins",false)},
+   {t:"quel tri a produit ces tableaux ?",cc:3,gen:quelTri},
+   {t:"compter les comparaisons, les échanges, les décalages",cc:3,gen:compteTri,min:60}]},
+ {id:"AG12",t:"Tri fusion : la fusion, les appels, la complexité",tache:"tri fusion",th:"fusion",ex:"cc3",pts:3,lecons:["a3-fusion"],apres:["AG10"],
+  paliers:[
+   {t:"la fusion de deux moitiés triées",cc:4,gen:fusionExo},
+   {t:"le tableau après chaque fusion",cc:6,gen:triFusionExo},
+   {t:"appels, fusions et ordre de complexité",cc:3,gen:compteFusion,min:15}]},
+ {id:"AG13",t:"Tri par valeurs",tache:"tri par valeurs",th:"valeurs",ex:"cc3",pts:2,lecons:["a3-valeurs"],
+  paliers:[
+   {t:"le tableau Cpt après le comptage",cc:3,gen:cptExo},
+   {t:"les tours du tant que",cc:4,gen:tqVal}]},
+ {id:"AGQ4",t:"Question de cours : l'arrêt et la complexité de la recherche dichotomique",th:"dicho",ex:"cc3",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursDic}]},
+ {id:"AGQ5",t:"Question de cours : complexités et propriétés des tris",th:"tris",ex:"cc3",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursTris}]},
+ {id:"AGQ6",t:"Question de cours : quel tri, quelles complexités possibles",th:"valeurs",ex:"cc3",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursQuelTri}]}
+]);
+G.algo={joueT,texteT,ecritT,lignesTn,execute,compte,joue,colonnes,texteProg,ecrit,vaut,aff,pour,tq,si,ret,prog,code,tableTrace};
 })();
 
 </script>
