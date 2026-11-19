@@ -19988,6 +19988,9 @@ const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>
 const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
 const ent=x=>x<0?"−"+(-x):String(x);
+/* k fois la somme 1 + 2 + … + x, écrit le plus simplement : 2 × x(x + 1)/2 devient x(x + 1) */
+const kTri=(k,x)=>k%2?`${k===1?"":k}${x}(${x} + 1)/2`:`${k===2?"":k/2}${x}(${x} + 1)`;
+const fxs=t=>t.split(", c'est-à-dire ").map(x=>fx(h(x))).join(", c'est-à-dire ");
 
 /* ---------- le mini-langage ---------- */
 /* expression : un entier, un nom de variable, ou [opérateur, gauche, droite] */
@@ -20030,7 +20033,7 @@ function execute(P,args,suivi){const env={},T=[];P.params.forEach((p,i)=>{env[p]
 const tableTrace=(cols,T,surligne)=>`<div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${cols.map(v=>`<th class="var">${v}</th>`).join("")}</tr></thead><tbody>${T.map((L,r)=>`<tr${r===surligne?' class="on"':""}><td>${r?"fin du tour "+r:"avant la boucle"}</td>${L.map(x=>`<td>${ent(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 function entier(s){const x=nombre(s);return x&&x.d===1?x.n:null;}
 /* o : {P, args, formule:{t, tape, why}} */
-function traceExo(o){const P=o.P,cols=colonnes(P),B=boucleDe(P),X=execute(P,o.args,cols),T=X.T,N=T.length-1,appel=`${P.nom}(${o.args.map(ent).join(", ")})`,imb=B.c.some(s=>s.k==="pour"||s.k==="tq");
+function traceExo(o){const P=o.P,cols=o.cols||colonnes(P),B=boucleDe(P),X=execute(P,o.args,cols),T=X.T,N=T.length-1,appel=`${P.nom}(${o.args.map(ent).join(", ")})`,imb=B.c.some(s=>s.k==="pour"||s.k==="tq");
   const recit=k=>cols.map((v,j)=>T[k][j]===T[k-1][j]?`${v} reste à ${ent(T[k][j])}`:`${v} passe de ${ent(T[k-1][j])} à ${ent(T[k][j])}`).join(", ");
   const arret=B.k==="pour"?`La boucle fait un tour pour chaque valeur de ${B.v}, de ${ecrit(B.a)} à ${ecrit(B.b)} : ici de ${ent(vaut(B.a,X.env))} à ${ent(vaut(B.b,X.env))}, soit ${N} ${N>1?"tours":"tour"}.`:`La condition « ${h(ecrit(B.cond))} » est testée avant chaque tour. Après le tour ${N}, elle est fausse (${cols.map((v,j)=>`${v} = ${ent(T[N][j])}`).join(", ")}) : la boucle s'arrête.`;
   const E=[{w:`Avant la boucle : ${cols.map((v,j)=>fx(`${v} = ${ent(T[0][j])}`)).join(", ")}.`,why:`Ce sont les valeurs données par les lignes écrites avant la boucle${imb?"":`, avec ${fx(`${P.params[0]} = ${ent(o.args[0])}`)}`}.`,pts:0.5},
@@ -20056,7 +20059,7 @@ function traceExo(o){const P=o.P,cols=colonnes(P),B=boucleDe(P),X=execute(P,o.ar
   const champs=[{k:"trace",id:"t",vars:cols,lignes:2},{k:"champ",id:"r",nom:"valeur renvoyée",label:"Valeur renvoyée :",ex:"un entier"}];
   if(F)champs.push({k:"champ",id:"f",nom:"formule",label:`Pour un entier n quelconque, $${P.nom}(n) =$`,ex:"une formule avec n",sym:[["n","n"],["^","^"],["/","/"],["(","("],[")",")"]]});
   return {sig:"TR"+texteProg(P).replace(/\s+/g," ")+"|"+o.args.join(","),
-    q:`Voici une fonction écrite dans le pseudo-code du cours. On calcule ${fx(appel)}. Remplis la trace : la valeur de chaque variable avant la boucle, puis à la fin de chaque tour de la boucle${imb?" extérieure (celle de "+(B.v||"la première ligne « tant que »")+")":""}. Ajoute une ligne par tour, puis donne la valeur renvoyée.${F?` Enfin, donne ce que renvoie ${P.nom}(n) pour un entier n quelconque.`:""}`,
+    q:`Voici une fonction écrite dans le pseudo-code du cours. On calcule ${fx(appel)}. Remplis la trace : la valeur ${o.cols?"de "+et(cols):"de chaque variable"} avant la boucle, puis à la fin de chaque tour de la boucle${imb?" extérieure (celle de "+(B.v||"la première ligne « tant que »")+")":""}.${o.cache?" "+o.cache:""} Ajoute une ligne par tour, puis donne la valeur renvoyée.${F?` Enfin, donne ce que renvoie ${P.nom}(n) pour un entier n quelconque.`:""}`,
     corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — trace de ${appel}${F?", puis formule en n":""}`,champs,juge,etapes:E,
     bonne:`${fx(`${appel} = ${ent(X.ret)}`)}, après ${N} ${N>1?"tours":"tour"}${F?` ; ${fx(`${P.nom}(n) = ${F.t}`)}`:""}`,bonneTxt:`${appel} = ${ent(X.ret)}, après ${N} ${N>1?"tours":"tour"}${F?` ; ${P.nom}(n) = ${F.t}`:""}`,
     repBonne:Object.assign({t:bonT,r:String(X.ret)},F?{f:F.tape}:{}),repFausse:Object.assign({t:fausse,r:String(X.ret)},F?{f:F.tape}:{}),nature:o.nature,ens:{P,args:o.args,cols,nmin:o.nmin||0}};}
@@ -20086,7 +20089,7 @@ function imbriquees(R){const t=R.ent(0,4),n=R.ent(3,4),k=R.ent(1,3),plus=x=>aff(
   if(t===0)P=prog(R,["c","i","j"],[aff("c",0),pour("i",1,"n",[pour("j",1,"i",[plus(k)])]),ret("c")]);
   else if(t===1)P=prog(R,["c","i","j"],[aff("c",R.ent(0,2)),pour("i",1,"n",[pour("j",1,"n",[plus(R.choix(["j","i",1,k]))])]),ret("c")]);
   else if(t===2)P=prog(R,["c","i","j"],[aff("c",0),pour("i",1,"n",[pour("j","i","n",[plus(R.choix([1,"j"]))])]),ret("c")]);
-  else if(t===3)P=prog(R,["c","x","i"],[aff("c",0),aff("x",0),pour("i",1,R.choix(["n",["+","n",2]]),[aff("x","i"),tq([">","x",0],[aff("x",["div","x",2]),plus(1)])]),ret("c")]);
+  else if(t===3)return traceExo({P:prog(R,["c","x","i"],[aff("c",0),aff("x",0),pour("i",1,R.choix(["n",["+","n",2]]),[aff("x","i"),tq([">","x",0],[aff("x",["div","x",2]),plus(1)])]),ret("c")]),args:[n],nature:"imbriquées",cols:["c"],cache:"La colonne de x n'est pas demandée : à la fin de chaque tour, la boucle « tant que » l'a ramené à 0."});
   else P=prog(R,["c","d","i","j"],[aff("c",0),aff("d",R.ent(0,2)),pour("i",1,"n",[aff("d",["+","d",k]),pour("j",1,"d",[plus(1)])]),ret("c")]);
   return traceExo({P,args:[n],nature:"imbriquées"});}
 /* palier 5 : comme au CC, la trace puis « que calcule-t-elle ? » */
@@ -20101,7 +20104,7 @@ function avecFormule(R){const t=R.ent(0,9),n=R.ent(3,5),k=R.ent(2,5),c0=R.ent(1,
   else if(t===6){P=prog(R,["x","y"],[aff("x",0),aff("y","n"),tq([">","y",0],[aff("x",["+","x",k]),aff("y",["-","y",1])]),ret("x")]);F={t:`${k}n`,tape:`${k}n`,why:`y part de n et perd 1 à chaque tour : la boucle fait n tours. À chaque tour, x gagne ${k}. ${PAS}`};}
   else if(t===7){P=prog(R,["s","i"],[aff("s",c0),pour("i",1,"n",[aff("s",["+","s",k])]),ret("s")]);F={t:`${k}n + ${c0}`,tape:`${k}n+${c0}`,why:`s part de ${c0} et gagne ${k} à chacun des n tours. ${PAS}`};}
   else if(t===8){P=prog(R,["a","b","i"],[aff("a",1),aff("b",0),pour("i",1,"n",[aff("b",["+","b","a"]),aff("a",["+","a",2])]),ret("b")]);F={t:"n²",tape:"n^2",why:"a prend les valeurs 1, 3, 5, … : les nombres impairs. b les additionne, et la trace donne § : ce sont les carrés. À la fin du tour i, a vaut 2i + 1 et b vaut i²."};}
-  else{P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",k,"i"]])]),ret("s")]);F={t:`${k}n(n + 1)/2`,tape:`${k}n(n+1)/2`,why:`La fonction additionne ${k} × 1 + ${k} × 2 + … + ${k} × n, c'est-à-dire ${k} fois 1 + 2 + … + n.`};}
+  else{P=prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",k,"i"]])]),ret("s")]);F={t:kTri(k,"n"),tape:`${k}n(n+1)/2`,why:`La fonction additionne ${k} × 1 + ${k} × 2 + … + ${k} × n, c'est-à-dire ${k} fois 1 + 2 + … + n.`};}
   return traceExo({P,args:[n],formule:F,nature:"formule"});}
 
 /* ---------- AG2 : équations d'itération et invariant ---------- */
@@ -20140,16 +20143,26 @@ function iteration(o){const P=o.P,B=boucleDe(P),cols=o.V.map(x=>x.v),NN=7,X=exec
 function famille(R,sorte){const k=R.ent(2,5),c0=R.ent(0,6),t=R.ent(0,9);
   if(sorte==="lin"){if(R()<0.5)return {P:prog(R,["s","i"],[aff("s",c0),pour("i",1,"n",[aff("s",["+","s",k])]),ret("s")]),V:[{v:"s",ei:`s_{i−1} + ${k}`,eiTape:`s${PREC}+${k}`,ferme:c0?`${k}i + ${c0}`:`${k}i`,fermeTape:`${k}i+${c0}`,f0:String(c0),hyp:c0?`${k}(i − 1) + ${c0}`:`${k}(i − 1)`,calc:`${c0?`${k}(i − 1) + ${c0}`:`${k}(i − 1)`} + ${k}`}],pq:`s part de ${c0} et gagne ${k} à chaque tour : après i tours, il a gagné ${k}i.`,rend:c0?`${k}n + ${c0}`:`${k}n`,nature:"plus k"};
     const d0=c0+20;return {P:prog(R,["s","i"],[aff("s",d0),pour("i",1,"n",[aff("s",["-","s",k])]),ret("s")]),V:[{v:"s",ei:`s_{i−1} − ${k}`,eiTape:`s${PREC}-${k}`,ferme:`${d0} − ${k}i`,fermeTape:`${d0}-${k}i`,f0:String(d0),hyp:`${d0} − ${k}(i − 1)`,calc:`${d0} − ${k}(i − 1) − ${k}`}],pq:`s part de ${d0} et perd ${k} à chaque tour : après i tours, il a perdu ${k}i.`,rend:`${d0} − ${k}n`,nature:"moins k"};}
-  if(sorte==="som"){const u=t%4;
+  if(sorte==="som"){const u=R.ent(0,8),c1=R.ent(1,6),k3=R.ent(3,5);
     if(u===0)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s","i"])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + i",eiTape:`s${PREC}+i`,ferme:"i(i + 1)/2",fermeTape:"i(i+1)/2",f0:"0",hyp:"(i − 1)i/2",calc:"(i − 1)i/2 + i = i(i − 1 + 2)/2"}],pq:"s additionne 1 + 2 + … + i : la somme des i premiers entiers vaut i(i + 1)/2.",rend:"n(n + 1)/2",nature:"somme"};
     if(u===1)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["-",["*",2,"i"],1]])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + 2i − 1",eiTape:`s${PREC}+2i-1`,ferme:"i²",fermeTape:"i^2",f0:"0",hyp:"(i − 1)²",calc:"(i − 1)² + 2i − 1 = i² − 2i + 1 + 2i − 1"}],pq:"s additionne les nombres impairs 1 + 3 + 5 + … : la trace donne les carrés 1, 4, 9, 16.",rend:"n²",nature:"impairs"};
     if(u===2)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",2,"i"]])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + 2i",eiTape:`s${PREC}+2i`,ferme:"i(i + 1)",fermeTape:"i(i+1)",f0:"0",hyp:"(i − 1)i",calc:"(i − 1)i + 2i = i(i − 1 + 2)"}],pq:"s additionne 2 + 4 + … + 2i, c'est-à-dire 2 fois la somme 1 + 2 + … + i.",rend:"n(n + 1)",nature:"pairs"};
-    const b=R.choix([2,3]),c=R.ent(1,4);return {P:prog(R,["p","i"],[aff("p",c),pour("i",1,"n",[aff("p",["*","p",b])]),ret("p")]),V:[{v:"p",ei:`${b} × p_{i−1}`,eiTape:`${b}*p${PREC}`,ferme:c===1?`${b}^{i}`:`${c} × ${b}^{i}`,fermeTape:`${c}*${b}^i`,f0:String(c),hyp:c===1?`${b}^{i−1}`:`${c} × ${b}^{i−1}`,calc:`${c===1?"":c+" × "}${b}^{i−1} × ${b}`}],pq:`p part de ${c} et il est multiplié par ${b} à chaque tour : après i tours, il a été multiplié par ${b} puissance i.`,rend:c===1?`${b}^{n}`:`${c} × ${b}^{n}`,nature:"puissance"};}
-  const u=t%4;
+    if(u===3){const b=R.choix([2,3]),c=R.ent(1,4);return {P:prog(R,["p","i"],[aff("p",c),pour("i",1,"n",[aff("p",["*","p",b])]),ret("p")]),V:[{v:"p",ei:`${b} × p_{i−1}`,eiTape:`${b}*p${PREC}`,ferme:c===1?`${b}^{i}`:`${c} × ${b}^{i}`,fermeTape:`${c}*${b}^i`,f0:String(c),hyp:c===1?`${b}^{i−1}`:`${c} × ${b}^{i−1}`,calc:`${c===1?"":c+" × "}${b}^{i−1} × ${b}`}],pq:`p part de ${c} et il est multiplié par ${b} à chaque tour : après i tours, il a été multiplié par ${b} puissance i.`,rend:c===1?`${b}^{n}`:`${c} × ${b}^{n}`,nature:"puissance"};}
+    if(u===4)return {P:prog(R,["s","i"],[aff("s",c1),pour("i",1,"n",[aff("s",["+","s","i"])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + i",eiTape:`s${PREC}+i`,ferme:`i(i + 1)/2 + ${c1}`,fermeTape:`i(i+1)/2+${c1}`,f0:String(c1),hyp:`(i − 1)i/2 + ${c1}`,calc:`(i − 1)i/2 + ${c1} + i = i(i − 1 + 2)/2 + ${c1}`}],pq:`s part de ${c1}, puis on lui ajoute 1, 2, …, i : la somme des i premiers entiers vaut i(i + 1)/2, et on n'oublie pas le ${c1} du départ.`,rend:`n(n + 1)/2 + ${c1}`,nature:"somme avec un départ"};
+    if(u===5)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+",["*",2,"s"],1])]),ret("s")]),V:[{v:"s",ei:"2 × s_{i−1} + 1",eiTape:`2*s${PREC}+1`,ferme:"2^{i} − 1",fermeTape:"2^i-1",f0:"0",hyp:"2^{i−1} − 1",calc:"2(2^{i−1} − 1) + 1 = 2^{i} − 2 + 1"}],pq:"La trace donne 0, 1, 3, 7, 15, 31 : chaque valeur est une puissance de 2 moins 1.",rend:"2^{n} − 1",nature:"double plus un"};
+    if(u===6)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s","n"])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + n",eiTape:`s${PREC}+n`,ferme:"i × n",fermeTape:"i*n",f0:"0",hyp:"(i − 1) × n",calc:"(i − 1) × n + n"}],pq:"À chaque tour, on ajoute n, qui ne change pas pendant la boucle : après i tours, s vaut i fois n. La formule contient donc i et n.",rend:"n²",nature:"ajoute n"};
+    if(u===7)return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["+",["*",2,"i"],1]])]),ret("s")]),V:[{v:"s",ei:"s_{i−1} + 2i + 1",eiTape:`s${PREC}+2i+1`,ferme:"i(i + 2)",fermeTape:"i(i+2)",f0:"0",hyp:"(i − 1)(i + 1)",calc:"(i − 1)(i + 1) + 2i + 1 = i² − 1 + 2i + 1"}],pq:"La trace donne 3, 8, 15, 24 : chaque valeur est un carré moins 1, (i + 1)² − 1, c'est-à-dire i(i + 2).",rend:"n(n + 2)",nature:"impairs à partir de 3"};
+    return {P:prog(R,["s","i"],[aff("s",0),pour("i",1,"n",[aff("s",["+","s",["*",k3,"i"]])]),ret("s")]),V:[{v:"s",ei:`s_{i−1} + ${k3}i`,eiTape:`s${PREC}+${k3}i`,ferme:kTri(k3,"i"),fermeTape:`${k3}i(i+1)/2`,f0:"0",hyp:`${k3}(i − 1)i/2`,calc:`${k3}(i − 1)i/2 + ${k3}i = ${k3}i(i − 1 + 2)/2`}],pq:`s additionne ${k3} × 1 + ${k3} × 2 + … + ${k3} × i, c'est-à-dire ${k3} fois la somme 1 + 2 + … + i.`,rend:kTri(k3,"n"),nature:"k fois la somme"};}
+  const u=R.ent(0,8);
   if(u===0)return {P:prog(R,["a","b","i"],[aff("a",1),aff("b",0),pour("i",1,"n",[aff("b",["+","b","a"]),aff("a",["+","a",2])]),ret("b")]),V:[{v:"a",ferme:"2i + 1",fermeTape:"2i+1",ei:"a_{i−1} + 2"},{v:"b",ferme:"i²",fermeTape:"i^2",ei:"b_{i−1} + a_{i−1}"}],pq:"a gagne 2 à chaque tour : il prend les valeurs impaires 1, 3, 5, … b les additionne, mais avec la valeur de a du tour d'avant, car la ligne de b est écrite en premier : 1, 4, 9, 16.",nature:"impairs et carrés"};
   if(u===1)return {P:prog(R,["a","b","i"],[aff("a",0),aff("b",0),pour("i",1,"n",[aff("a",["+","a",1]),aff("b",["+","b","a"])]),ret("b")]),V:[{v:"a",ferme:"i",fermeTape:"i",ei:"a_{i−1} + 1"},{v:"b",ferme:"i(i + 1)/2",fermeTape:"i(i+1)/2",ei:"b_{i−1} + a_{i−1} + 1"}],pq:"a compte les tours. b additionne la nouvelle valeur de a, car la ligne de a est écrite en premier : 1 + 2 + … + i.",nature:"compteur et somme"};
   if(u===2)return {P:prog(R,["x","y"],[aff("x",0),aff("y","n"),tq([">","y",0],[aff("x",["+","x",k]),aff("y",["-","y",1])]),ret("x")]),V:[{v:"x",ferme:`${k}i`,fermeTape:`${k}i`,ei:`x_{i−1} + ${k}`},{v:"y",ferme:"n − i",fermeTape:"n-i",ei:"y_{i−1} − 1"}],pq:`x gagne ${k} à chaque tour. y part de n et perd 1 à chaque tour : la formule de y contient n.`,nature:"monte et descend"};
-  return {P:prog(R,["a","b","i"],[aff("a",1),aff("b",1),pour("i",1,"n",[aff("a",["*","a",2]),aff("b",["+","b","a"])]),ret("b")]),V:[{v:"a",ferme:"2^{i}",fermeTape:"2^i",ei:"2 × a_{i−1}"},{v:"b",ferme:"2^{i+1} − 1",fermeTape:"2^(i+1)-1",ei:"b_{i−1} + 2 × a_{i−1}"}],pq:"a double à chaque tour : 2, 4, 8, … b additionne 1 + 2 + 4 + … + 2 puissance i, ce qui fait 2 puissance (i + 1), moins 1 : la trace donne 3, 7, 15, 31.",nature:"puissances de 2"};}
+  if(u===3)return {P:prog(R,["a","b","i"],[aff("a",1),aff("b",1),pour("i",1,"n",[aff("a",["*","a",2]),aff("b",["+","b","a"])]),ret("b")]),V:[{v:"a",ferme:"2^{i}",fermeTape:"2^i",ei:"2 × a_{i−1}"},{v:"b",ferme:"2^{i+1} − 1",fermeTape:"2^(i+1)-1",ei:"b_{i−1} + 2 × a_{i−1}"}],pq:"a double à chaque tour : 2, 4, 8, … b additionne 1 + 2 + 4 + … + 2 puissance i, ce qui fait 2 puissance (i + 1), moins 1 : la trace donne 3, 7, 15, 31.",nature:"puissances de 2"};
+  if(u===4)return {P:prog(R,["x","y","i"],[aff("x",0),aff("y",0),pour("i",1,"n",[aff("x",["+","x","y"]),aff("y",["+","y",1])]),ret("x")]),V:[{v:"x",ferme:"i(i − 1)/2",fermeTape:"i(i-1)/2",ei:"x_{i−1} + y_{i−1}"},{v:"y",ferme:"i",fermeTape:"i",ei:"y_{i−1} + 1"}],pq:"y compte les tours. x ajoute l'ancienne valeur de y, car la ligne de x est écrite en premier : x vaut 0 + 1 + … + (i − 1), c'est-à-dire i(i − 1)/2. La trace donne 0, 1, 3, 6, 10.",nature:"somme décalée"};
+  if(u===5)return {P:prog(R,["a","b","i"],[aff("a",0),aff("b",1),pour("i",1,"n",[aff("a",["+","a","b"]),aff("b",["*",2,"b"])]),ret("a")]),V:[{v:"a",ferme:"2^{i} − 1",fermeTape:"2^i-1",ei:"a_{i−1} + b_{i−1}"},{v:"b",ferme:"2^{i}",fermeTape:"2^i",ei:"2 × b_{i−1}"}],pq:"b double à chaque tour : 1, 2, 4, 8. a ajoute l'ancienne valeur de b, car la ligne de a est écrite en premier : 1 + 2 + … + 2 puissance (i − 1), ce qui fait 2 puissance i, moins 1. La trace donne 0, 1, 3, 7, 15.",nature:"somme de puissances de 2"};
+  if(u===6)return {P:prog(R,["x","y"],[aff("x",0),aff("y","n"),tq([">","y",0],[aff("x",["+","x",k]),aff("y",["-","y",2])]),ret("x")]),V:[{v:"x",ferme:`${k}i`,fermeTape:`${k}i`,ei:`x_{i−1} + ${k}`},{v:"y",ferme:"n − 2i",fermeTape:"n-2i",ei:"y_{i−1} − 2"}],pq:`x gagne ${k} à chaque tour. y part de n et perd 2 à chaque tour : après i tours, il a perdu 2i.`,nature:"descend de 2"};
+  if(u===7)return {P:prog(R,["a","b","i"],[aff("a",0),aff("b",0),pour("i",1,"n",[aff("a",["+","a",k]),aff("b",["+","b","a"])]),ret("b")]),V:[{v:"a",ferme:`${k}i`,fermeTape:`${k}i`,ei:`a_{i−1} + ${k}`},{v:"b",ferme:kTri(k,"i"),fermeTape:`${k}i(i+1)/2`,ei:`b_{i−1} + a_{i−1} + ${k}`}],pq:`a gagne ${k} à chaque tour : ${k}, ${2*k}, ${3*k}, … b additionne la nouvelle valeur de a, car la ligne de a est écrite en premier : ${k} × (1 + 2 + … + i).`,nature:"multiples et somme"};
+  return {P:prog(R,["a","b","i"],[aff("a",0),aff("b",0),pour("i",1,"n",[aff("b",["+","b",["*",2,"a"]]),aff("a",["+","a",1])]),ret("b")]),V:[{v:"a",ferme:"i",fermeTape:"i",ei:"a_{i−1} + 1"},{v:"b",ferme:"i(i − 1)",fermeTape:"i(i-1)",ei:"b_{i−1} + 2 × a_{i−1}"}],pq:"a compte les tours. b ajoute deux fois l'ancienne valeur de a, car la ligne de b est écrite en premier : 2 × (0 + 1 + … + (i − 1)) = i(i − 1). La trace donne 0, 0, 2, 6, 12.",nature:"double de la somme décalée"};}
 /* la preuve complète, avec la méthode en quatre étapes du cours */
 function preuveBoucle(R){const o=famille(R,R()<0.35?"lin":"som"),x=o.V[0],v=x.v,ind=t=>`${v}_{${t}}`,P=o.P;
   const lignes=[[`Équations d'itération : ${fx(`${ind(0)} = ${x.f0}`)} et, pour ${fx("i ≥ 1")}, ${fx(`${ind("i")} = ${x.ei}`)}.`,`C'est la « vérité » : on la lit sur l'algorithme. ${fx(ind("i"))} est la valeur de ${v} à la fin de l'itération numéro i, ${fx(ind(0))} sa valeur au début des itérations.`,1],
@@ -20212,11 +20225,11 @@ function uneBoucle(R){const b1=R.choix(CORPS)(),b2=R()<0.45?R.choix(CORPS.filter
   return comptage({P,lettre:"n",arg:k=>k,formule:poly([[a,"n"],[b,""]]),tape:`${a}n+${b}`,etapes:E,nature:tant?"tant que":"pour",piegeTest:tant?1:0,etapeTest:1});}
 function deuxBoucles(R){const tri=R()<0.5,b1=R.choix([aff("c",["+","c",1]),aff("s",["+","s","j"]),aff("s",["+","s",["*","i","j"]]),aff("c",["+","c",["*",2,"j"]])]),v=b1.v,ext=R()<0.5?[aff("d",["+","d","i"])]:[],V=[v].concat(ext.length?["d"]:[]),ini=V.map(x=>aff(x,0));
   const P=prog(R,V.concat(["i","j"]),ini.concat([pour("i",1,"n",ext.concat([pour("j",1,tri?"i":"n",[b1])])),ret(v)])),k=coutAff(b1),m=somme(ext),c=ini.length;
-  const formule=(tri?`${k===1?"":k}n(n + 1)/2`:`${k===1?"":k}n²`)+(m?` + ${m}n`:"")+` + ${c}`,tape=(tri?`${k}n(n+1)/2`:`${k}n^2`)+`+${m}n+${c}`;
+  const formule=(tri?kTri(k,"n"):`${k===1?"":k}n²`)+(m?` + ${m}n`:"")+` + ${c}`,tape=(tri?`${k}n(n+1)/2`:`${k}n^2`)+`+${m}n+${c}`;
   const E=[{w:`Avant les boucles : ${pl(c,"opération")}.`,why:`Une affectation par ligne.`,pts:0.5},
     {w:`La ligne du milieu : ${detail(b1)}. ${tri?`Au tour i de la boucle extérieure, elle est faite i fois : au total ${fx("1 + 2 + … + n = n(n + 1)/2")} fois.`:`Elle est faite n fois à chaque tour de la boucle extérieure, qui fait n tours : ${fx("n × n = n²")} fois.`}`,why:tri?`La boucle intérieure va de 1 à i : elle fait 1 tour quand i = 1, puis 2, puis 3, et ainsi de suite jusqu'à n.`:`Pour deux boucles imbriquées, les nombres de tours se multiplient.`,pts:2}];
   if(m)E.push({w:`La ligne de la boucle extérieure : ${detail(ext[0])}, faite n fois : ${fx(m+"n")}.`,why:`Elle est dans la boucle extérieure mais pas dans la boucle intérieure : une fois par tour extérieur.`,pts:0.5});
-  E.push({w:`<b>${fx(`T_{n} = ${formule}`)}</b>`,why:`On additionne les trois morceaux. Le terme en n² est celui qui compte quand n est grand.`,pts:1});
+  E.push({w:`<b>${fx(`T_{n} = ${formule}`)}</b>`,why:`On additionne les ${m?"trois":"deux"} morceaux. Le terme en n² est celui qui compte quand n est grand.`,pts:1});
   return comptage({P,lettre:"n",arg:x=>x,formule,tape,etapes:E,nature:tri?"triangle":"carré"});}
 function boucleDouble(R){const moitie=R()<0.4,large=!moitie&&R()<0.4,b1=R()<0.6?[R.choix([aff("c",["+","c",1]),aff("s",["+","s","i"]),aff("s",["+",["*",2,"s"],1])])]:[],v=b1.length?b1[0].v:"i",ini=b1.length?[aff(v,0)]:[];
   const pas=moitie?aff("i",["div","i",2]):aff("i",["*","i",2]),cond=moitie?[">","i",1]:[large?"≤":"<","i","n"],P=prog(R,(b1.length?[v]:[]).concat(["i"]),ini.concat([aff("i",moitie?"n":1),tq(cond,b1.concat([pas])),ret(v)]));
@@ -20312,16 +20325,20 @@ function quotient(R,vraiFaux){const exp=R()<0.2,S=sommeRef(R,R.choix([1,2,2]),!e
 const PUISS=["1","n","n²","n³"],puissTape=["1","n","n^2","n^3"];
 const tireMaster=(R,amax)=>{for(;;){const b=R.choix([2,2,2,3,4]),d=R.ent(0,b===2?3:2),bd=Math.pow(b,d),t=R();let C;
   if(t<0.35)C=[bd];else if(t<0.65)C=[1,2,3,4,8].filter(x=>x<bd);else C=[b*bd,b*bd,b*b*bd,bd+1,2*bd].filter(x=>x>bd&&x<=32);
-  C=C.filter(x=>x<=(amax||32));if(!C.length)continue;return {a:R.choix(C),b,d,bd};}};
-const equaT=m=>`T(n) = ${m.a===1?"":m.a}T(⌊n/${m.b}⌋) + O(${PUISS[m.d]})`;
+  C=C.filter(x=>x<=(amax||32));if(!C.length)continue;return {a:R.choix(C),b,d,bd,f:amax?0:R.choix([0,0,1,2,3]),k:R.ent(2,7),j:R.ent(1,9)};}};
+/* les opérations faites en plus des appels : O(n^d), θ(n^d), ou un nombre d'opérations écrit en entier */
+const LEAD=["1","n","n²","n³"],autour=m=>m.f===1||m.f===3?`θ(${PUISS[m.d]})`:m.f===2?[`${m.k}`,`${m.k}n + ${m.j}`,`${m.k}n² + ${m.j}n`,`n³ + ${m.j}n²`][m.d]:`O(${PUISS[m.d]})`;
+const equaT=m=>m.f===3?`T(n) = ${autour(m)} + ${m.a===1?"":m.a}T(⌊n/${m.b}⌋)`:`T(n) = ${m.a===1?"":m.a}T(⌊n/${m.b}⌋) + ${autour(m)}`;
+const sigM=m=>[m.a,m.b,m.d,m.f].concat(m.f===2?[m.k,m.j]:[]);
+const lireD=m=>m.f===2?(m.d?` : ici ${fx(autour(m))}, et le terme qui l'emporte est ${fx(m.d===3?"n³":m.k+LEAD[m.d])}, donc d = ${m.d}`:` : ici un nombre fixe d'opérations, ${m.k}, c'est ${fx("O(1) = O(n⁰)")}, donc d = 0`):m.d===0?` : ${fx(autour(m))}, c'est ${fx("n⁰")}, donc d = 0`:m.f===1||m.f===3?` : ${fx(autour(m))} veut dire « de l'ordre de ${PUISS[m.d]} », c'est donc aussi un ${fx(`O(${PUISS[m.d]})`)}, et d = ${m.d}`:"";
 function ordreMaster(m){const cas=m.bd>m.a?">":m.bd===m.a?"=":"<",k=Math.log(m.a)/Math.log(m.b),ke=Math.abs(k-Math.round(k))<1e-9?Math.round(k):null;
   const t=cas===">"?PUISS[m.d]:cas==="="?(m.d?`${PUISS[m.d]}.log(n)`:"log(n)"):ke!==null?PUISS[ke]||`n^{${ke}}`:`n^{log ${m.a} / log ${m.b}}`;
   const tape=cas===">"?puissTape[m.d]:cas==="="?(m.d?`${puissTape[m.d]}*log(n)`:"log(n)"):ke!==null?`n^${ke}`:`n^(log(${m.a})/log(${m.b}))`;
   const g=cas===">"?n=>Math.pow(n,m.d):cas==="="?n=>Math.pow(n,m.d)*Math.log(n):n=>Math.pow(n,k);return {cas,t,tape,g,k,ke};}
-const CASM={">":"Si b^{d} &gt; a, alors T(n) = O(n^{d}).","=":"Si b^{d} = a, alors T(n) = O(n^{d} log n).","<":"Si b^{d} &lt; a, alors T(n) = O(n^{log a / log b})."};
-const etapesMaster=(m,o,debut)=>(debut||[]).concat([{w:`${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}`,why:`a est le nombre d'appels récursifs${m.a===1?" (quand rien n'est écrit devant T, c'est 1)":""}, b le nombre par lequel la taille n est divisée, d la puissance de n dans les opérations faites en plus des appels${m.d===0?" : O(1), c'est O(n⁰), donc d = 0":""}.`,pts:1},
+const CASM={">":`Si ${O.fx("b^{d} &gt; a")}, alors ${O.fx("T(n) = O(n^{d})")}.`,"=":`Si ${O.fx("b^{d} = a")}, alors ${O.fx("T(n) = O(n^{d} log n)")}.`,"<":`Si ${O.fx("b^{d} &lt; a")}, alors ${O.fx("T(n) = O(n^{log a / log b})")}.`};
+const etapesMaster=(m,o,debut)=>(debut||[]).concat([{w:`${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}`,why:`a est le nombre d'appels récursifs${m.a===1?" (quand rien n'est écrit devant T, c'est 1)":""}, b le nombre par lequel la taille n est divisée, d la puissance de n dans les opérations faites en plus des appels${lireD(m)}.`,pts:1},
   {w:`${fx(`b^{d} = ${m.b}^{${m.d}} = ${m.bd}`)}, à comparer avec ${fx(`a = ${m.a}`)} : <b>${fx(`b^{d} ${o.cas==="<"?"&lt;":o.cas===">"?"&gt;":"="} a`)}</b>.`,why:`C'est la comparaison qui décide du cas du master theorem.`,pts:1},
-  {w:`<b>${fx(`T(n) = O(${o.t})`)}</b>`,why:`${fx(CASM[o.cas])}${o.cas==="<"&&o.ke!==null?` Ici ${fx(`log ${m.a} / log ${m.b} = ${o.ke}`)}, car ${fx(`${m.b}^{${o.ke}} = ${m.a}`)}.`:""}`,pts:1}]);
+  {w:`<b>${fx(`T(n) = O(${o.t})`)}</b>`,why:`${CASM[o.cas]}${o.cas==="<"&&o.ke!==null?` Ici ${fx(`log ${m.a} / log ${m.b} = ${o.ke}`)}, car ${fx(`${m.b}^{${o.ke}} = ${m.a}`)}.`:""}`,pts:1}]);
 function jugeOrdre(src,o){if(!propre(src))return {inc:"Écris aussi l'ordre de complexité, par exemple n^2 ou n.log(n)."};const t=versN(src),PT=[8,50,300],W=PT.map(n=>O.calcule(t,{n}));
   if(W.some(v=>v===null||!Number.isFinite(v)))return {inc:"Je n'arrive pas à lire l'ordre de complexité. Écris-le avec la lettre n, par exemple n^2, n.log(n) ou n^(log(3)/log(2))."};
   if(PT.every((n,i)=>Math.abs(W[i]-o.g(n))<=1e-9*o.g(n)))return {ok:true};
@@ -20330,31 +20347,32 @@ function jugeOrdre(src,o){if(!propre(src))return {inc:"Écris aussi l'ordre de c
 function masterLire(R){const m=tireMaster(R);
   function juge(rep){const V=["a","b","d"].map(k=>nombre((rep.c||{})[k]));if(V.some(x=>!x||x.d!==1))return {incomplet:"Remplis les trois cases avec des entiers."};
     const F=["a","b","d"].filter((k,i)=>V[i].n!==m[k]);if(!F.length)return {ok:true};
-    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:0,type:F.includes("d")&&m.d===0?"O(1) lu comme d = 1":F.includes("a")&&m.a===1?"a oublié quand il vaut 1":"lecture de a, b et d",titre:"Où ça part : le rôle des trois nombres.",msg:`a est devant T (le nombre d'appels), b est sous n (la taille est divisée par b), d est la puissance de n dans le O : ici ${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}.`}};}
-  return {sig:"ML"+[m.a,m.b,m.d],q:`Le nombre d'opérations d'un algorithme récursif vérifie ${fx(equaT(m))}. Pour appliquer le master theorem, donne les trois nombres a, b et d.`,corps:`<p class="muted">Rappel : le master theorem s'applique quand ${fx("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")}.</p>`,texte:`${equaT(m)} ; lire a, b, d`,
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:0,type:F.includes("d")&&m.d===0?"O(1) lu comme d = 1":F.includes("a")&&m.a===1?"a oublié quand il vaut 1":"lecture de a, b et d",titre:"Où ça part : le rôle des trois nombres.",msg:`a est devant T (le nombre d'appels), b est sous n (la taille est divisée par b), d est la puissance de n dans les opérations faites en plus des appels${m.f===2&&m.d?", celle du terme qui l'emporte":""} : ici ${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}.`}};}
+  return {sig:"ML"+sigM(m),q:`Le nombre d'opérations d'un algorithme récursif vérifie ${fx(equaT(m))}. Pour appliquer le master theorem, donne les trois nombres a, b et d.`,corps:`<p class="muted">Rappel : le master theorem s'applique quand ${fx("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")}.</p>`,texte:`${equaT(m)} ; lire a, b, d`,
     champs:[{k:"cases",id:"c",noms:["a","b","d"]}],juge,etapes:[etapesMaster(m,ordreMaster(m))[0]],bonne:`${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}`,bonneTxt:`a = ${m.a}, b = ${m.b}, d = ${m.d}`,
     repBonne:{c:{a:String(m.a),b:String(m.b),d:String(m.d)}},repFausse:{c:{a:String(m.b),b:String(m.a===m.b?m.a+1:m.a),d:String(m.d)}},nature:"lire",ens:{type:"master",m}};}
 const CASO=[[">","b^d > a"],["=","b^d = a"],["<","b^d < a"]];
-function masterConclure(R,code_){const m=tireMaster(R,code_?4:0),o=ordreMaster(m);let corps=`<p class="muted">Rappel du master theorem, quand ${fx("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")} : ${fx(CASM[">"])} ${fx(CASM["="])} ${fx(CASM["<"])}</p>`,debut=[],q,texte;
-  if(code_){const nom=R.choix(["F","G","H"]),I="    ",L=[`PROCÉDURE : ${nom} (E n : entier)`,"SPÉCIFICATIONS : n ∈ ℕ","DÉBUT",`${I}si n > 1 alors`];
-    ["i","j","k"].slice(0,m.d).forEach((v,x)=>L.push(`${I.repeat(2+x)}pour ${v} de 1 à n faire`));L.push(`${I.repeat(2+m.d)}op élém`);for(let x=m.d-1;x>=0;x--)L.push(`${I.repeat(2+x)}fin pour;`);
-    for(let x=0;x<m.a;x++)L.push(`${I.repeat(2)}${nom}(n div ${m.b})`);L.push(`${I}fin si;`,"FIN");corps=code(L.join("\n"))+`<p class="muted">« op élém » désigne une opération élémentaire.</p>`+corps;
-    q=`Voici une procédure récursive. On note T(n) son nombre d'opérations. Donne les nombres a, b et d du master theorem, puis l'ordre de complexité : ${fx("T(n) = O(…)")}.`;texte=`procédure : ${m.d} boucle(s) pour de 1 à n autour d'une opération, puis ${m.a} appel(s) ${nom}(n div ${m.b}) ; a, b, d et ordre de complexité`;
-    debut=[{w:`Équation de complexité : ${fx(equaT(m))}.`,why:`${m.d?`Les ${m.d>1?m.d+" boucles « pour » imbriquées font":"La boucle « pour » fait"} ${fx(PUISS[m.d])} fois l'opération élémentaire`:"Il n'y a pas de boucle : une seule opération élémentaire, O(1)"}. Puis la procédure s'appelle ${m.a} fois, avec une taille divisée par ${m.b}.`,pts:1}];}
+function masterConclure(R,code_){const m=tireMaster(R,code_?4:0),o=ordreMaster(m);let corps=`<p class="muted">Rappel du master theorem, quand ${fx("T(n) ≤ aT(⌈n/b⌉) + O(n^{d})")} : ${[">","=","<"].map(c=>CASM[c].replace(/^S/,"s").replace(/\.$/,"")).join(" ; ")}.</p>`,debut=[],q,texte;
+  if(code_){const nom=R.choix(["F","G","H"]),I="    ",L=[`PROCÉDURE : ${nom} (E n : entier)`,"SPÉCIFICATIONS : n ∈ ℕ","DÉBUT",`${I}si n > 1 alors`],avant=R()<0.35,enBoucle=m.a>=2&&R()<0.3,borne=m.d?R.choix(["n","n","n","n div 2","2 * n"]):"n",B=[],A=[];
+    ["i","j","k"].slice(0,m.d).forEach((v,x)=>B.push(`${I.repeat(2+x)}pour ${v} de 1 à ${x?"n":borne} faire`));B.push(`${I.repeat(2+m.d)}op élém`);for(let x=m.d-1;x>=0;x--)B.push(`${I.repeat(2+x)}fin pour;`);
+    if(enBoucle)A.push(`${I.repeat(2)}pour t de 1 à ${m.a} faire`,`${I.repeat(3)}${nom}(n div ${m.b})`,`${I.repeat(2)}fin pour;`);else for(let x=0;x<m.a;x++)A.push(`${I.repeat(2)}${nom}(n div ${m.b})`);
+    L.push(...(avant?A.concat(B):B.concat(A)),`${I}fin si;`,"FIN");corps=code(L.join("\n"))+`<p class="muted">« op élém » désigne une opération élémentaire.</p>`+corps;m.code=[avant,enBoucle,borne];
+    q=`Voici une procédure récursive. On note T(n) son nombre d'opérations. Donne les nombres a, b et d du master theorem, puis l'ordre de complexité : ${fx("T(n) = O(…)")}.`;texte=`procédure : ${m.d} boucle(s) pour${m.d?` (la première de 1 à ${borne})`:""} autour d'une opération, ${avant?"avant elles":"puis"} ${m.a} appel(s) ${nom}(n div ${m.b})${enBoucle?" dans une boucle":""} ; a, b, d et ordre de complexité`;
+    debut=[{w:`Équation de complexité : ${fx(equaT(m))}.`,why:`${m.d?`${m.d>1?"Les "+m.d+" boucles « pour » imbriquées font":"La boucle « pour » fait"} ${fx(PUISS[m.d])} fois l'opération élémentaire${borne!=="n"?` (la première boucle fait ${fx(borne==="n div 2"?"n div 2":"2n")} tours : c'est encore de l'ordre de n, la constante ne compte pas)`:""}`:"Il n'y a pas de boucle autour de l'opération élémentaire : O(1)"}. ${enBoucle?`La procédure s'appelle ${m.a} fois, avec une taille divisée par ${m.b} : la boucle « pour t de 1 à ${m.a} » ne va pas jusqu'à n, elle fait seulement ${m.a} tours, donc a = ${m.a}.`:`Puis la procédure s'appelle ${m.a} fois, avec une taille divisée par ${m.b}.`}${avant?" Que les appels soient écrits avant ou après les boucles ne change rien au nombre d'opérations.":""}`,pts:1}];}
   else{q=`Le nombre d'opérations d'un algorithme récursif vérifie ${fx(equaT(m))}. Calcule ${fx("b^{d}")}, compare-le à a, puis donne l'ordre de complexité : ${fx("T(n) = O(…)")}.`;texte=`${equaT(m)} ; b^d, comparaison avec a, ordre de complexité`;}
   const E=etapesMaster(m,o,debut),e0=debut.length;
   function juge(rep){const F=[];let d=null;
     if(code_){const V=["a","b","d"].map(k=>nombre((rep.c||{})[k]));if(V.some(x=>!x||x.d!==1))return {incomplet:"Remplis les trois cases a, b et d avec des entiers."};["a","b","d"].forEach((k,i)=>{if(V[i].n!==m[k])F.push(k);});
-      if(F.length)d={etape:e0,type:"lecture de a, b et d dans un algorithme récursif",titre:"Où ça part : a, b et d.",msg:`a est le nombre d'appels récursifs écrits dans la procédure (${m.a}), b le nombre par lequel n est divisé dans ces appels (${m.b}), d le nombre de boucles « pour » imbriquées qui vont jusqu'à n (${m.d}).`};}
+      if(F.length)d={etape:e0,type:"lecture de a, b et d dans un algorithme récursif",titre:"Où ça part : a, b et d.",msg:`a est le nombre d'appels récursifs faits par la procédure (${m.a}), b le nombre par lequel n est divisé dans ces appels (${m.b}), d le nombre de boucles « pour » imbriquées autour de l'opération élémentaire, qui font chacune de l'ordre de n tours (${m.d}).`};}
     else{const bd=nombre((rep.c||{})["b^{d}"]);if(!bd||bd.d!==1)return {incomplet:"Calcule d'abord b puissance d : un entier."};if(!rep.cas)return {incomplet:"Choisis aussi le cas : plus grand, égal ou plus petit que a."};
       if(bd.n!==m.bd){F.push("b^{d}");d={etape:e0+1,type:"calcul de b puissance d",titre:"Où ça part : b puissance d.",msg:`${fx(`b^{d} = ${m.b}^{${m.d}} = ${m.bd}`)}${m.d===0?" : un nombre à la puissance 0 vaut 1":""}.`};}
       if(rep.cas!==o.cas){F.push("cas");if(!d)d={etape:e0+1,type:"comparaison de b puissance d avec a",titre:"Où ça part : la comparaison.",msg:`${m.bd} et ${m.a} : ${fx(`b^{d} ${o.cas==="<"?"&lt;":o.cas===">"?"&gt;":"="} a`)}.`};}}
     const jo=jugeOrdre(rep.o,o);if(jo.inc)return {incomplet:jo.inc};
-    if(!jo.ok){F.push("o");if(!d)d={etape:e0+2,type:"cas du master theorem",titre:"Où ça part : la conclusion.",msg:`${fx(CASM[o.cas])} Ici : ${fx(`T(n) = O(${o.t})`)}.`};}
+    if(!jo.ok){F.push("o");if(!d)d={etape:e0+2,type:"cas du master theorem",titre:"Où ça part : la conclusion.",msg:`${CASM[o.cas]} Ici : ${fx(`T(n) = O(${o.t})`)}.`};}
     if(!F.length)return {ok:true};
     return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F.map(x=>x==="o"?"l'ordre de complexité":x==="cas"?"la comparaison":x==="b^{d}"?"b puissance d":x))} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:d};}
   const bon=code_?{c:{a:String(m.a),b:String(m.b),d:String(m.d)},o:o.tape}:{c:{"b^{d}":String(m.bd)},cas:o.cas,o:o.tape},fausse=JSON.parse(JSON.stringify(bon));fausse.o=o.cas===">"?puissTape[m.d]+"*log(n)":"n^"+(m.d+4);
-  return {sig:(code_?"MC":"MO")+[m.a,m.b,m.d],q,corps,texte,champs:(code_?[{k:"cases",id:"c",noms:["a","b","d"]}]:[{k:"cases",id:"c",noms:["b^{d}"]},{k:"choix",id:"cas",o:CASO.map(x=>[x[0],x[1]])}]).concat([{k:"champ",id:"o",nom:"ordre de complexité",label:"$T(n) = O($ … $)$ avec :",ex:"par exemple n^2",sym:[["n","n"],["^","^"],["log(n)","log(n)"],[".","."],["(","("],[")",")"],["/","/"]]}]),
+  return {sig:(code_?"MC"+[m.a,m.b,m.d].concat(m.code):"MO"+sigM(m)),q,corps,texte,champs:(code_?[{k:"cases",id:"c",noms:["a","b","d"]}]:[{k:"cases",id:"c",noms:["b^{d}"]},{k:"choix",id:"cas",o:CASO.map(x=>[x[0],x[1]])}]).concat([{k:"champ",id:"o",nom:"ordre de complexité",label:"$T(n) = O($ … $)$ avec :",ex:"par exemple n^2",sym:[["n","n"],["^","^"],["log(n)","log(n)"],[".","."],["(","("],[")",")"],["/","/"]]}]),
     juge,etapes:E,bonne:fx(`T(n) = O(${o.t})`),bonneTxt:`a = ${m.a}, b = ${m.b}, d = ${m.d} ; T(n) = O(${o.t.replace(/[{}]/g,"")})`,repBonne:bon,repFausse:fausse,nature:"cas "+o.cas,ens:{type:"master",m,g:o.g}};}
 /* machine plus rapide, entrée plus grande : ce que change l'ordre de complexité */
 function machine(R){const t=R.ent(0,3),d=R.ent(1,3),mm=R.choix([2,3,4,5,10]),N=R.choix([100,200,500,1000,2000]),k=Math.pow(mm,d),j=R.ent(3,10);let q,rep,E,nature;
@@ -20410,12 +20428,18 @@ function joue(P,args){const out=[""],aff=[];let appels=0;
 
 /* ---------- AG3 : l'arrêt d'une boucle tant que ---------- */
 /* o : {P, entrees (valeurs de n à essayer), q (quantité affichée), tape, depart, baisse, stop, max} */
-function boucleArret(R,sorte){const k=R.ent(1,4),t=R.ent(0,3);
+function boucleArret(R,sorte){const k=R.ent(1,4),t=R.ent(0,6);
   if(sorte==="compte"){
+    if(t===4)return {P:prog(R,["i","s"],[aff("i",1),aff("s",0),tq(["≤","i","n"],[aff("s",["+","s","i"]),aff("i",["+","i",1])]),ret("s")]),q:"n + 1 − i",tape:"n+1-i",depart:"n",baisse:"la ligne « i ← i + 1 » ajoute 1 à i, donc retire 1 à n + 1 − i",stop:"i > n, c'est-à-dire n + 1 − i ≤ 0",max:"n",nature:"monte jusqu'à n",pos:"La condition « i ≤ n » dit que n − i ≥ 0 pendant la boucle, donc n + 1 − i ≥ 1."};
+    if(t===5)return {P:prog(R,["c"],[aff("c",0),tq(["<",["*","c","c"],"n"],[aff("c",["+","c",1])]),ret("c")]),q:"n − c × c",tape:"n-c*c",depart:"n",baisse:"c gagne 1, donc c × c augmente et n − c × c diminue strictement",stop:"c × c ≥ n, c'est-à-dire n − c × c ≤ 0",max:"n",nature:"carré"};
+    if(t===6)return {P:prog(R,["i","s"],[aff("i","n"),aff("s",0),tq(["≠","i",0],[aff("s",["+","s","i"]),aff("i",["-","i",1])]),ret("s")]),q:"i",tape:"i",depart:"n",baisse:"la ligne « i ← i - 1 » lui retire 1",stop:"i = 0",max:"n",nature:"descend jusqu'à 0",pos:"Ici la condition est « i ≠ 0 », pas « i > 0 » : il faut dire pourquoi i reste positif. Il part de n, qui est positif, et perd exactement 1 à chaque tour : il passe forcément par 0, et la boucle s'arrête à ce moment-là."};
     if(t===0)return {P:prog(R,["c","s"],[aff("c","n"),aff("s",0),tq([">","c",0],[aff("s",["+","s","c"]),aff("c",["-","c",k])]),ret("s")]),q:"c",tape:"c",depart:"n",baisse:`la ligne « c ← c - ${k} » lui retire ${k}`,stop:"c ≤ 0",max:k===1?"n":"n",nature:"descend"};
     if(t===1)return {P:prog(R,["i","s"],[aff("i",0),aff("s",0),tq(["<","i","n"],[aff("s",["+","s",["*",2,"i"]]),aff("i",["+","i",k])]),ret("s")]),q:"n − i",tape:"n-i",depart:"n",baisse:`la ligne « i ← i + ${k} » ajoute ${k} à i, donc retire ${k} à n − i`,stop:"i ≥ n, c'est-à-dire n − i ≤ 0",max:"n",nature:"monte"};
     if(t===2){const b0=R.ent(0,3);return {P:prog(R,["a","b"],[aff("a","n"),aff("b",b0),tq([">","a","b"],[aff("a",["-","a",1]),aff("b",["+","b",1])]),ret(["+","a","b"])]),q:"a − b",tape:"a-b",depart:`n − ${b0}`.replace(" − 0",""),baisse:"a perd 1 et b gagne 1 : a − b perd 2",stop:"a ≤ b, c'est-à-dire a − b ≤ 0",max:"n",nature:"deux variables"};}
     return {P:prog(R,["x","y"],[aff("x","n"),aff("y",0),tq(["≥","x",k],[aff("x",["-","x",k]),aff("y",["+","y",1])]),ret("y")]),q:"x",tape:"x",depart:"n",baisse:`la ligne « x ← x - ${k} » lui retire ${k}`,stop:`x < ${k}`,max:"n",nature:"descend"};}
+  if(t===4)return {P:prog(R,["p","c"],[aff("p",1),aff("c",0),tq(["≤","p","n"],[aff("p",["*",3,"p"]),aff("c",["+","c",1])]),ret("c")]),q:"n − p",tape:"n-p",depart:"n − 1",baisse:"p est remplacé par 3p, qui est strictement plus grand que p car p vaut au moins 1 : n − p diminue",stop:"p > n, c'est-à-dire n − p < 0",max:"n",nature:"triple",pos:"La condition « p ≤ n » dit que n − p ≥ 0 pendant la boucle."};
+  if(t===5)return {P:prog(R,["x","c"],[aff("x","n"),aff("c",0),tq([">","x",1],[si(["=",["mod","x",2],0],[aff("x",["div","x",2])],[aff("x",["-","x",1])]),aff("c",["+","c",1])]),ret("c")]),q:"x",tape:"x",depart:"n",baisse:"si x est pair, il est remplacé par x div 2, plus petit car x > 1 ; sinon il perd 1 : dans les deux cas, x diminue strictement",stop:"x ≤ 1",max:"n",nature:"si, division"};
+  if(t===6)return {P:prog(R,["m","c"],[aff("m","n"),aff("c",0),tq([">","m",0],[aff("m",["div","m",10]),aff("c",["+","c",1])]),ret("c")]),q:"m",tape:"m",depart:"n",baisse:"m est remplacé par m div 10, qui est strictement plus petit que m dès que m vaut au moins 1",stop:"m ≤ 0, c'est-à-dire m = 0",max:"n",nature:"chiffres"};
   if(t===0)return {P:prog(R,["m","c"],[aff("m","n"),aff("c",0),tq([">","m",1],[aff("m",["div","m",2]),aff("c",["+","c",1])]),ret("c")]),q:"m",tape:"m",depart:"n",baisse:"m est remplacé par m div 2, qui est strictement plus petit que m dès que m vaut au moins 1",stop:"m ≤ 1",max:"n",nature:"division"};
   if(t===1)return {P:prog(R,["i","c"],[aff("i",1),aff("c",0),tq(["<","i","n"],[aff("i",["*","i",2]),aff("c",["+","c",1])]),ret("c")]),q:"n − i",tape:"n-i",depart:"n − 1",baisse:"i est remplacé par 2i, qui est strictement plus grand que i car i vaut au moins 1 : n − i diminue",stop:"i ≥ n, c'est-à-dire n − i ≤ 0",max:"n",nature:"double"};
   if(t===2){const b=R.choix([3,10]);return {P:prog(R,["m","c"],[aff("m","n"),aff("c",1),tq(["≥","m",b],[aff("m",["div","m",b]),aff("c",["+","c",1])]),ret("c")]),q:"m",tape:"m",depart:"n",baisse:`m est remplacé par m div ${b}, qui est strictement plus petit que m`,stop:`m < ${b}`,max:"n",nature:"division"};}
@@ -20431,9 +20455,9 @@ function essaieQuantite(P,src){const B=boucleDe(P),prob=[];
     if(avant!==null){const v=O.calcule(src,env);if(v===null)return {illisible:true};if(v>=avant)return {pb:"diminue",n,v,avant};}}
   return {ok:true};}
 function arret(R,sorte){const o=boucleArret(R,sorte),P=o.P,B=boucleDe(P),V=P.vars.concat(["n"]);
-  const E=[{w:`La quantité <b>${fx(o.q)}</b> est un entier, positif tant que la boucle tourne. Avant la boucle, elle vaut ${fx(o.depart)}.`,why:`On cherche une quantité qui ne peut pas diminuer indéfiniment : un entier naturel. La condition « ${h(ecrit(B.cond))} » dit justement qu'elle est positive pendant la boucle.`,pts:1},
+  const E=[{w:`La quantité <b>${fx(o.q)}</b> est un entier, positif tant que la boucle tourne. Avant la boucle, elle vaut ${fx(o.depart)}.`,why:`On cherche une quantité qui ne peut pas diminuer indéfiniment : un entier naturel. ${o.pos||`La condition « ${h(ecrit(B.cond))} » dit justement qu'elle est positive pendant la boucle.`}`,pts:1},
     {w:`Elle diminue strictement à chaque tour.`,why:`Dans la boucle, ${o.baisse}.`,pts:1},
-    {w:`La boucle s'arrête quand ${fx(h(o.stop))} : elle fait au plus ${fx(o.max)} tours.`,why:`Un entier naturel qui diminue strictement à chaque tour ne peut le faire qu'un nombre fini de fois. Il y a donc un nombre fini d'itérations, chaque itération se termine, donc l'algorithme s'arrête.`,pts:1}];
+    {w:`La boucle s'arrête quand ${fxs(o.stop)} : elle fait au plus ${fx(o.max)} tours.`,why:`Un entier naturel qui diminue strictement à chaque tour ne peut le faire qu'un nombre fini de fois. Il y a donc un nombre fini d'itérations, chaque itération se termine, donc l'algorithme s'arrête.`,pts:1}];
   function juge(rep){if(!propre(rep.q))return {incomplet:`Écris une quantité avec les variables de la fonction (${et(V)}), par exemple n - i.`};
     const r=essaieQuantite(P,rep.q);if(r.illisible)return {incomplet:`Je n'arrive pas à lire cette quantité. Écris-la avec les variables ${et(V)}, par exemple n - i.`};
     if(r.ok)return {ok:true};
@@ -20443,12 +20467,12 @@ function arret(R,sorte){const o=boucleArret(R,sorte),P=o.P,B=boucleDe(P),V=P.var
     return {ok:false,faux:["q"],resume:"Pas tout à fait : cette quantité ne prouve pas l'arrêt.",diag:d};}
   return {sig:"AR"+texteProg(P).replace(/\s+/g," "),q:`Pour prouver que la boucle « tant que » de cette fonction s'arrête, donne une quantité, écrite avec les variables, qui est un entier positif tant que la boucle tourne et qui diminue strictement à chaque tour. On suppose que n est un entier naturel.`,corps:code(texteProg(P)),
     texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — quantité entière positive qui diminue à chaque tour`,
-    champs:[{k:"champ",id:"q",nom:"quantité",label:"Quantité qui diminue :",ex:"par exemple n - i",sym:V.map(v=>[v,v]).concat([["-","-"],["+","+"]]),aide:"Toute quantité qui convient est acceptée : le site l'essaie sur de vraies exécutions."}],juge,etapes:E,
-    bonne:fx(o.q),bonneTxt:o.q+" (par exemple)",repBonne:{q:o.tape},repFausse:{q:"n"+"+"+P.vars[1]},nature:o.nature,ens:{type:"arret",P}};}
+    champs:[{k:"champ",id:"q",nom:"quantité",label:"Quantité qui diminue :",ex:"par exemple n - i",sym:V.map(v=>[v,v]).concat([["-","-"],["+","+"],["×","*"]]),aide:"Toute quantité qui convient est acceptée : le site l'essaie sur de vraies exécutions."}],juge,etapes:E,
+    bonne:fx(o.q),bonneTxt:o.q+" (par exemple)",repBonne:{q:o.tape},repFausse:{q:"n+1"},nature:o.nature,ens:{type:"arret",P}};}
 function redacArret(R){const o=boucleArret(R,R()<0.5?"compte":"moitie"),P=o.P,B=boucleDe(P);
-  const L=[[`L'expression entière ${fx(o.q)} vaut initialement ${fx(o.depart)}, et elle est positive tant que la boucle tourne.`,`On nomme la quantité, on dit qu'elle est entière et d'où elle part. La condition « ${h(ecrit(B.cond))} » garantit qu'elle est positive pendant la boucle.`,0.5],
+  const L=[[`L'expression entière ${fx(o.q)} vaut initialement ${fx(o.depart)}, et elle est positive tant que la boucle tourne.`,`On nomme la quantité, on dit qu'elle est entière et d'où elle part. ${o.pos||`La condition « ${h(ecrit(B.cond))} » garantit qu'elle est positive pendant la boucle.`}`,0.5],
     [`Elle décroît strictement à chaque itération.`,`Dans la boucle, ${o.baisse}. Sur la copie, une phrase suffit, mais il faut le mot « strictement ».`,0.5],
-    [`Le tant que s'arrête lorsque ${fx(h(o.stop))} : il effectue au maximum ${fx(o.max)} itérations.`,`C'est la forme du corrigé officiel de janvier 2023 : on dit quand la boucle s'arrête, et combien d'itérations elle fait au plus.`,0.5],
+    [`Le tant que s'arrête lorsque ${fxs(o.stop)} : il effectue au maximum ${fx(o.max)} itérations.`,`C'est la forme du corrigé officiel de janvier 2023 : on dit quand la boucle s'arrête, et combien d'itérations elle fait au plus.`,0.5],
     [`Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme s'arrête.`,`Les trois phrases du cours (diapo 95), à écrire telles quelles.`,0.5]];
   return {sig:"RAR"+texteProg(P).replace(/\s+/g," "),q:`Prouve que cette fonction s'arrête, pour tout entier naturel n.`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — preuve de l'arrêt`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
     etapes:L.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`quantité ${o.q}, qui décroît strictement`,repBonne:{},nature:"papier, "+o.nature,ens:{type:"arretp",P,tape:o.tape}};}
@@ -20456,9 +20480,12 @@ function redacArret(R){const o=boucleArret(R,R()<0.5?"compte":"moitie"),P=o.P,B=
 /* ---------- AG4 : algorithmes récursifs ---------- */
 const NOMR=["F","G","H","R"];
 /* une fonction récursive à un appel : F(base) = c, F(n) = comb(n, F(n − 1)), avec sa formule quand elle est simple */
-function recSimple(R,avecFormule){const nom=R.choix(NOMR),ap=["appel",nom,["-","n",1]],k=R.ent(2,4),c=R.ent(0,3);
+function recSimple(R,avecFormule){const nom=R.choix(NOMR),ap=["appel",nom,["-","n",1]],k=R.ent(2,4),c=R.ent(0,3),c1=R.ent(1,4),c2=R.ent(2,5),k3=R.ent(3,5);
   const T=[[["+",ap,"n"],0,"n(n + 1)/2","n(n+1)/2",`${nom}(n − 1) + n`,"(n − 1)n/2 + n = n(n − 1 + 2)/2"],[["*",2,ap],1,"2^{n}","2^n",`2 × ${nom}(n − 1)`,"2 × 2^{n−1}"],[["+",ap,["-",["*",2,"n"],1]],0,"n²","n^2",`${nom}(n − 1) + 2n − 1`,"(n − 1)² + 2n − 1 = n² − 2n + 1 + 2n − 1"],
-    [["+",ap,k],c,c?`${k}n + ${c}`:`${k}n`,`${k}n+${c}`,`${nom}(n − 1) + ${k}`,`${c?`${k}(n − 1) + ${c}`:`${k}(n − 1)`} + ${k}`],[["*",3,ap],1,"3^{n}","3^n",`3 × ${nom}(n − 1)`,"3 × 3^{n−1}"],[["+",ap,["*",2,"n"]],0,"n(n + 1)","n(n+1)",`${nom}(n − 1) + 2n`,"(n − 1)n + 2n = n(n − 1 + 2)"]];
+    [["+",ap,k],c,c?`${k}n + ${c}`:`${k}n`,`${k}n+${c}`,`${nom}(n − 1) + ${k}`,`${c?`${k}(n − 1) + ${c}`:`${k}(n − 1)`} + ${k}`],[["*",3,ap],1,"3^{n}","3^n",`3 × ${nom}(n − 1)`,"3 × 3^{n−1}"],[["+",ap,["*",2,"n"]],0,"n(n + 1)","n(n+1)",`${nom}(n − 1) + 2n`,"(n − 1)n + 2n = n(n − 1 + 2)"],
+    [["+",["*",2,ap],1],0,"2^{n} − 1","2^n-1",`2 × ${nom}(n − 1) + 1`,"2(2^{n−1} − 1) + 1 = 2^{n} − 2 + 1"],[["+",ap,"n"],c1,`n(n + 1)/2 + ${c1}`,`n(n+1)/2+${c1}`,`${nom}(n − 1) + n`,`(n − 1)n/2 + ${c1} + n = n(n − 1 + 2)/2 + ${c1}`],
+    [["*",2,ap],c2,`${c2} × 2^{n}`,`${c2}*2^n`,`2 × ${nom}(n − 1)`,`2 × ${c2} × 2^{n−1}`],[["+",ap,["+",["*",2,"n"],1]],1,"(n + 1)²","(n+1)^2",`${nom}(n − 1) + 2n + 1`,"n² + 2n + 1"],
+    [["+",ap,["*",k3,"n"]],0,kTri(k3,"n"),`${k3}n(n+1)/2`,`${nom}(n − 1) + ${k3}n`,`${k3}(n − 1)n/2 + ${k3}n = ${k3}n(n − 1 + 2)/2`]];
   const autres=[[["*","n",ap],1],[["+",["*",2,ap],1],R.ent(0,2)],[["-",ap,1],R.ent(5,9)],[["+",["*","n","n"],ap],0]];
   const ch=avecFormule?R.choix(T):R()<0.6?R.choix(T):R.choix(autres);
   return {P:{nom,params:["n"],vars:[],corps:[si(["=","n",0],[ret(ch[1])],[ret(ch[0])])]},nom,base:ch[1],ex:ch[0],ferme:ch[2],tape:ch[3],eq:ch[4],calc:ch[5]};}
@@ -20472,8 +20499,8 @@ function valeurRec(R){const o=recSimple(R,false),k=R.ent(3,5),P=o.P,V=[];for(let
     champs:[{k:"cases",id:"c",noms:[nomK]}],juge,etapes:E,bonne:fx(`${nomK} = ${ent(V[k])}`),bonneTxt:`${nomK} = ${ent(V[k])}`,repBonne:{c:{[nomK]:String(V[k])}},repFausse:{c:{[nomK]:String(V[k-1]===V[k]?V[k]+1:V[k-1])}},nature:"valeur",ens:{type:"rec",P,args:[k]}};}
 function ordreAff(R){const nom=R.choix(["P","Q","Aff"]),k=R.ent(3,5),t=R.ent(0,4),pas=t===4?["div","n",2]:["-","n",R()<0.8?1:2],quoi=R.choix(["n","n",["*",2,"n"],["+","n",1]]),A=ecrire(quoi),C=appelS(nom,pas),n0=t===4?R.choix([6,9,12,20]):k;
   const corps=t===0?[A,C]:t===1?[C,A]:t===2?[A,C,A]:t===3?[C,A]:[C,A],P={nom,params:["n"],vars:[],proc:true,corps:[si([">","n",0],corps)]},X=joue(P,[n0]),att=X.aff;
-  const avant=corps[0]===A,apres=corps[corps.length-1]===A;
-  const E=[{w:`Les appels : ${fx(`${nom}(${n0})`)} appelle ${fx(`${nom}(${ecrit(pas).replace("n",n0)})`)}, et ainsi de suite, jusqu'à un appel où n n'est plus strictement positif : celui-là n'affiche rien.`,why:"On écrit d'abord la chaîne des appels, sans s'occuper des affichages.",pts:1},
+  const avant=corps[0]===A,apres=corps[corps.length-1]===A,CH=[n0];while(CH[CH.length-1]>0)CH.push(vaut(pas,{n:CH[CH.length-1]}));const dernier=fx(`${nom}(${ent(CH[CH.length-1])})`);
+  const E=[{w:`Les appels successifs : ${CH.map(v=>fx(`${nom}(${ent(v)})`)).join(", ")}. Le dernier, ${dernier}, n'affiche rien et ne fait pas d'appel : n n'est plus strictement positif.`,why:`On écrit d'abord la chaîne des appels, sans s'occuper des affichages : chaque appel recalcule n avec « ${ecrit(pas)} ».`,pts:1},
     {w:avant&&apres?"Chaque appel affiche une fois avant son appel récursif, et une fois après.":avant?"Chaque appel affiche avant son appel récursif : les affichages se font en descendant, du premier appel au dernier.":"Chaque appel affiche après son appel récursif : il attend que tous les appels suivants soient finis. Les affichages se font en remontant, du dernier appel au premier.",why:"C'est la place de la ligne « affiche » par rapport à l'appel récursif qui décide de l'ordre.",pts:1},
     {w:`<b>Nombres affichés, dans l'ordre : ${att.map(ent).join(" ")}</b>`,why:`${att.length} ${att.length>1?"affichages":"affichage"} en tout.`,pts:1}];
   function juge(rep){const L=propre(rep.s).split(/[\s,;]+/).filter(Boolean).map(x=>nombre(x));if(!L.length||L.some(x=>!x||x.d!==1))return {incomplet:"Écris les nombres affichés, dans l'ordre, séparés par des espaces : par exemple 3 2 1."};
@@ -20498,12 +20525,12 @@ function deuxAppels(R){const nom=R.choix(NOMR),a1=["appel",nom,["-","n",1]],a2=[
     champs:[{k:"cases",id:"c",noms:[nomK]},{k:"champ",id:"a",nom:"nombre d'appels",label:"Nombre d'appels en tout :",ex:"un entier"}],juge,etapes:E,bonne:`${fx(`${nomK} = ${ent(V[k])}`)} ; ${A[k]} appels`,bonneTxt:`${nomK} = ${ent(V[k])} ; ${A[k]} appels`,
     repBonne:{c:{[nomK]:String(V[k])},a:String(A[k])},repFausse:{c:{[nomK]:String(V[k])},a:String(A[k]-1)},nature:"deux appels",ens:{type:"rec2",P,args:[k]}};}
 /* comme les sujets de 2023 : G(n, d) affiche des lignes */
-function procedureG(R){const nom="G",t=R.ent(0,3),div=R.choix([2,2,3]),n0=div===3?R.choix([9,10,11,12]):R.choix([5,6,7,9,10,11,12]),quoi=t===3?R.choix(["d",["-","n","d"]]):"d",suiv=t===3?appelS(nom,["-","n",1],["+","d",1]):appelS(nom,["div","n",div],R()<0.8?["+","d",1]:"d");
+function procedureG(R){const nom="G",t=R.ent(0,3),div=R.choix([2,2,3]),n0=div===3?R.choix([9,10,11,12]):R.choix([5,6,7,9,10,11,12]),quoi=t===3?R.choix(["d",["+","n","d"]]):"d",suiv=t===3?appelS(nom,["-","n",1],["+","d",1]):appelS(nom,["div","n",div],R()<0.8?["+","d",1]:"d");
   const bloc=[pour("i",1,"n",[ecrire(quoi)]),aLaLigne()],n1=t===3?R.ent(3,5):n0,corps=t===1||t===3?[suiv].concat(bloc):bloc.concat([suiv]);
   const P={nom,params:["n","d"],vars:["i"],proc:true,corps:[si(["≠","n",0],corps)]},X=joue(P,[n1,0]),att=X.lignes,apres=corps[0]===suiv;
   const chaine=[];{let n=n1,d=0;while(n!==0&&chaine.length<12){chaine.push([n,d]);const s=suiv.args;n=vaut(s[0],{n,d});d=vaut(s[1],{n,d:chaine[chaine.length-1][1]});}}
-  const E=[{w:`Les appels : ${chaine.map(c=>`${nom}(${c[0]}, ${c[1]})`).join(", ")}, puis un appel avec n = 0 qui ne fait rien.`,why:"À chaque appel, on recalcule les deux paramètres avec la ligne de l'appel récursif.",pts:1},
-    {w:`Chaque appel affiche une ligne : n fois le nombre ${fx(ecrit(quoi))}, puis un retour à la ligne.`,why:`La boucle « pour i de 1 à n » répète l'affichage n fois, sans espace. Par exemple ${nom}(${chaine[0][0]}, ${chaine[0][1]}) écrit ${chaine[0][0]} fois le nombre ${ent(vaut(quoi,{n:chaine[0][0],d:chaine[0][1]}))}.`,pts:1},
+  const E=[{w:`Les appels : ${chaine.map(c=>fx(`${nom}(${c[0]}, ${c[1]})`)).join(", ")}, puis un appel avec n = 0 qui ne fait rien.`,why:"À chaque appel, on recalcule les deux paramètres avec la ligne de l'appel récursif.",pts:1},
+    {w:`Chaque appel affiche une ligne : n fois le nombre ${fx(ecrit(quoi))}, puis un retour à la ligne.`,why:`La boucle « pour i de 1 à n » répète l'affichage n fois, sans espace. Par exemple ${fx(`${nom}(${chaine[0][0]}, ${chaine[0][1]})`)} écrit ${chaine[0][0]} fois le nombre ${ent(vaut(quoi,{n:chaine[0][0],d:chaine[0][1]}))}.`,pts:1},
     {w:apres?"L'appel récursif est écrit avant la boucle : la ligne du premier appel sort en dernier.":"L'appel récursif est écrit après le retour à la ligne : les lignes sortent dans l'ordre des appels.",why:"Un appel ne passe à sa ligne suivante que lorsque l'appel récursif est complètement terminé.",pts:1},
     {w:`<b>Ce qui est affiché :</b> ${code(att.join("\n"))}`,why:`${att.length} lignes, une par appel avec n différent de 0.`,pts:1}];
   const net=x=>propre(x).replace(/\s+/g,"");
@@ -20516,6 +20543,30 @@ function procedureG(R){const nom="G",t=R.ent(0,3),div=R.choix([2,2,3]),n0=div===
   return {sig:"PG"+texteProg(P).replace(/\s+/g," ")+n1,q:`Voici une procédure récursive à deux paramètres. « affiche(x) » écrit le nombre x sans aller à la ligne, « aLaLigne() » passe à la ligne. Qu'affiche ${fx(`${nom}(${n1}, 0)`)} ? Écris une ligne d'écran par ligne du tableau.`,corps:code(texteProg(P)),
     texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — affichage de ${nom}(${n1}, 0)`,champs:[{k:"trace",id:"t",vars:["ce qui est affiché"],lignes:2,rangs:true}],juge,etapes:E,
     bonne:code(att.join("\n")),bonneTxt:att.join(" / "),repBonne:{t:att.map(x=>[x])},repFausse:{t:att.slice().reverse().map((x,i)=>[i?x:x+"0"])},nature:apres?"appel d'abord":"affichage d'abord",ens:{type:"proc",P,args:[n1,0]}};}
+/* comme l'examen de janvier 2023 : G(n, d) affiche sa ligne et s'appelle deux fois, avec d puis d + 1 */
+function procedureDeux(R){const nom="G",div=R.choix([2,2,3]),n0=div===2?R.choix([4,5,6,7]):R.choix([9,10,11]),d0=R.choix([0,0,1]),inverse=R()<0.4,place=R.choix([0,0,1,2]);
+  const c1=appelS(nom,["div","n",div],"d"),c2=appelS(nom,["div","n",div],["+","d",1]),ap=inverse?[c2,c1]:[c1,c2],bloc=[pour("i",1,"n",[ecrire("d")]),aLaLigne()];
+  const corps=place===0?bloc.concat(ap):place===1?ap.concat(bloc):[ap[0]].concat(bloc,[ap[1]]);
+  const P={nom,params:["n","d"],vars:["i"],proc:true,corps:[si(["≠","n",0],corps)]},att=joue(P,[n0,d0]).lignes,G_=(n,d)=>fx(`${nom}(${n}, ${d})`);
+  const fils=(n,d)=>ap.map(c=>[vaut(c.args[0],{n,d}),vaut(c.args[1],{n,d})]),arbre=[];
+  (function va(n,d){if(!n)return;const F=fils(n,d);if(F[0][0])arbre.push(`${G_(n,d)} lance ${G_(...F[0])} puis ${G_(...F[1])}`);F.forEach(f=>va(...f));})(n0,d0);
+  const ordre=place===0?`Chaque appel écrit d'abord sa ligne, puis il lance ses deux appels l'un après l'autre. Le premier appel récursif écrit toutes ses lignes (et celles de ses propres appels) avant que le second commence.`
+    :place===1?`Chaque appel lance d'abord ses deux appels, et n'écrit sa ligne qu'après eux : la ligne de ${G_(n0,d0)} sort en dernier.`
+    :`Chaque appel lance son premier appel récursif, écrit sa ligne, puis lance le second : la ligne de ${G_(n0,d0)} sort au milieu.`;
+  const E=[{w:`L'arbre des appels : ${arbre.join(" ; ")}. Ensuite, chaque appel avec ${fx(`n &lt; ${div}`)} lance deux appels avec n = 0, qui ne font rien.`,why:`Avec n = ${n0}, « n div ${div} » donne ${vaut(["div",n0,div],{})}. On dessine l'arbre avant de s'occuper des affichages : chaque appel a deux fils, ${inverse?"d'abord celui avec d + 1, puis celui avec d":"d'abord celui avec d, puis celui avec d + 1"}.`,pts:1.5},
+    {w:`Chaque appel ${fx("G(n, d)")} avec n ≠ 0 écrit une ligne : n fois le chiffre d, puis un retour à la ligne.`,why:`La boucle « pour i de 1 à n » répète affiche(d) n fois, sans espace. Par exemple ${G_(n0,d0)} écrit ${n0} fois le chiffre ${d0}.`,pts:1},
+    {w:place===0?"La ligne d'un appel sort avant celles de ses deux appels récursifs.":place===1?"La ligne d'un appel sort après celles de ses deux appels récursifs.":"La ligne d'un appel sort entre celles de son premier appel et celles de son second.",why:ordre,pts:1},
+    {w:`<b>Ce qui est affiché :</b> ${code(att.join("\n"))}`,why:`${att.length} lignes, une par appel avec n différent de 0.`,pts:1.5}];
+  const net=x=>propre(x).replace(/\s+/g,"");
+  function juge(rep){let L=(rep.t||[]).map(r=>net(r[0]||""));while(L.length&&!L[L.length-1])L.pop();if(!L.length)return {incomplet:"Écris ce qui est affiché, une ligne d'écran par ligne du tableau."};if(L.some(x=>!x))return {incomplet:"Il reste une ligne vide au milieu. Enlève-la, ou écris ce qu'elle contient."};
+    if(L.length===att.length&&L.every((x,i)=>x===att[i]))return {ok:true};
+    const tri=a=>a.slice().sort().join("|"),memes=L.length===att.length&&tri(L)===tri(att),i=L.findIndex((x,j)=>x!==att[j]);
+    return {ok:false,faux:i>=0&&i<att.length?[`t:${i}:0`]:[],resume:"Pas tout à fait : ce n'est pas ce qui est affiché.",diag:L.length!==att.length?{etape:0,type:"nombre d'appels d'une procédure à deux appels récursifs",titre:"Où ça part : l'arbre des appels.",msg:`Il y a ${att.length} lignes : une par appel avec n différent de 0. Chaque appel avec n ≠ 0 en lance deux : dessine l'arbre en entier.`}
+      :memes?{etape:2,type:"ordre des lignes avec deux appels récursifs",titre:"Où ça part : l'ordre des lignes.",msg:`Les lignes sont les bonnes, mais pas leur ordre. ${ordre}`}
+      :{etape:1,type:"contenu d'une ligne affichée",titre:`Où ça part : la ligne ${i+1}.`,msg:`La ligne ${i+1} est « ${att[i]} » : le chiffre d de cet appel, répété n fois.`}};}
+  return {sig:"P2"+texteProg(P).replace(/\s+/g," ")+n0+","+d0,q:`Voici une procédure récursive à deux paramètres, qui s'appelle deux fois. « affiche(x) » écrit le nombre x sans aller à la ligne, « aLaLigne() » passe à la ligne. Qu'affiche ${G_(n0,d0)} ? Écris une ligne d'écran par ligne du tableau.`,corps:code(texteProg(P)),
+    texte:`${texteProg(P).split("\n").slice(3,-1).map(x=>x.trim()).join(" ; ")} — affichage de ${nom}(${n0}, ${d0})`,champs:[{k:"trace",id:"t",vars:["ce qui est affiché"],lignes:2,rangs:true}],juge,etapes:E,
+    bonne:code(att.join("\n")),bonneTxt:att.join(" / "),repBonne:{t:att.map(x=>[x])},repFausse:{t:att.slice().reverse().map((x,i)=>[i?x:x+"0"])},nature:["ligne puis appels","appels puis ligne","ligne entre les appels"][place],ens:{type:"proc2",P,args:[n0,d0],div,arbre:arbre.length}};}
 /* la formule de ce que calcule F ; sur papier, la preuve par récurrence du cours */
 function formuleRec(R){const o=recSimple(R,true),P=o.P,nom=o.nom,KS=[0,1,2,3,4,5,6,7],V=KS.map(n=>joue(P,[n]).ret),hyp=o.ferme.replace(/n/g,"(n − 1)").replace("(n − 1)((n − 1) + 1)","(n − 1)n").replace("^{(n − 1)}","^{n−1}").replace("(n − 1)²","(n − 1)²");
   const E=[{w:`Équations de récurrence : ${fx(`${nom}(0) = ${ent(o.base)}`)} et, pour ${fx("n &gt; 0")}, ${fx(`${nom}(n) = ${o.eq}`)}.`,why:"C'est la « vérité » : on la lit sur l'algorithme, une ligne pour le cas de base et une pour l'appel récursif.",pts:1},
@@ -20581,7 +20632,7 @@ function fautes(P,sorte){const L=lignesNum(P),F=[];L.forEach((l,i)=>{const s=l.n
   if(sorte==="base"&&s.k==="ret"&&typeof s.e==="number"){add(q=>{q.e=s.e===0?1:0;});add(q=>{q.e=s.e+2;});}
   if(sorte==="base"&&s.k==="si"){add(q=>{q.cond=["=","n",1];});}
   if(sorte==="appel"&&s.k==="ret"&&typeof s.e!=="number"){const remplace=(e,f)=>Array.isArray(e)?(e[0]==="appel"?f(e):e.map((x,j)=>j?remplace(x,f):x)):e;
-    add(q=>{q.e=remplace(q.e,a=>["appel",a[1],"n"]);});add(q=>{q.e=remplace(q.e,a=>["appel",a[1],["-","n",2]]);});add(q=>{q.e=[q.e[0]==="*"?"+":"*",q.e[1],q.e[2]];});add(q=>{q.e=remplace(q.e,a=>["appel",a[1],["+","n",1]]);});}});
+    add(q=>{q.e=remplace(q.e,a=>["appel",a[1],"n"]);});add(q=>{q.e=remplace(q.e,a=>["appel",a[1],["-","n",2]]);});if(s.e[0]==="*"||s.e[0]==="+")add(q=>{q.e=[q.e[0]==="*"?"+":"*",q.e[1],q.e[2]];});add(q=>{q.e=remplace(q.e,a=>["appel",a[1],["+","n",1]]);});}});
   return F;}
 const ESSAIS=[0,1,2,3,4,5,6];
 const resultats=P=>ESSAIS.map(n=>{try{const r=joue(P,[n]).ret;return Number.isFinite(r)?r:"rien";}catch(e){return "ne s'arrête pas";}});
@@ -20621,21 +20672,21 @@ G.add("algo",[
  {id:"AG2",t:"Équations d'itération et invariant de boucle",tache:"équations d'itération et invariant",th:"preuves",ex:"cc2",pts:3,lecons:["a2-invariant"],apres:["AG1"],
   paliers:[
    {t:"l'équation d'itération, puis la formule : cas simples",cc:3,gen:R=>iteration(Object.assign(famille(R,"lin"),{demandeEI:true})),min:60},
-   {t:"sommes et puissances",cc:4,gen:R=>iteration(Object.assign(famille(R,"som"),{demandeEI:true})),min:15},
-   {t:"deux variables liées",cc:5,gen:R=>iteration(famille(R,"deux")),min:8},
+   {t:"sommes et puissances",cc:4,gen:R=>iteration(Object.assign(famille(R,"som"),{demandeEI:true})),min:70},
+   {t:"deux variables liées",cc:5,gen:R=>iteration(famille(R,"deux")),min:65},
    {t:"la preuve complète, sur papier, avec la méthode du cours",cc:10,gen:preuveBoucle,min:40}]},
  {id:"AG3",t:"Arrêt d'une boucle tant que",tache:"arrêt d'une boucle",th:"preuves",ex:"cc2",pts:2,lecons:["a2-invariant"],apres:["AG1"],
   paliers:[
-   {t:"une boucle qui compte",cc:3,gen:R=>arret(R,"compte"),min:15},
-   {t:"une division ou un doublement, deux conditions",cc:3,gen:R=>arret(R,"moitie"),min:12},
-   {t:"la preuve rédigée, sur papier, comme aux examens de 2023",cc:5,gen:redacArret,min:25}]},
+   {t:"une boucle qui compte",cc:3,gen:R=>arret(R,"compte"),min:65},
+   {t:"une division ou un doublement, deux conditions",cc:3,gen:R=>arret(R,"moitie"),min:45},
+   {t:"la preuve rédigée, sur papier, comme aux examens de 2023",cc:5,gen:redacArret,min:90}]},
  {id:"AG4",t:"Algorithme récursif : valeur, affichages, appels",tache:"algorithmes récursifs",th:"preuves",ex:"cc2",pts:3,lecons:["a2-recursif"],
   paliers:[
    {t:"la valeur renvoyée",cc:3,gen:valeurRec,min:60},
    {t:"l'ordre des affichages : avant ou après l'appel",cc:3,gen:ordreAff,min:60},
    {t:"deux appels récursifs : valeur et nombre d'appels",cc:5,gen:deuxAppels,min:25},
-   {t:"une procédure G(n, d), comme aux sujets de 2023",cc:5,gen:procedureG,min:25},
-   {t:"ce que calcule la fonction, puis la preuve par récurrence",cc:8,gen:formuleRec,min:12}]},
+   {t:"une procédure G(n, d), comme aux sujets de 2023",cc:5,gen:R=>R()<0.5?procedureG(R):procedureDeux(R),min:75},
+   {t:"ce que calcule la fonction, puis la preuve par récurrence",cc:8,gen:formuleRec,min:55}]},
  {id:"AG5",t:"Compter les opérations",th:"compter",ex:"cc2",pts:4.5,lecons:["a2-compter"],
   paliers:[
    {t:"une boucle",cc:3,gen:uneBoucle,min:100},
@@ -20650,9 +20701,9 @@ G.add("algo",[
    {t:"vrai ou faux avec O, Ω, o, ω, θ",cc:3,gen:R=>quotient(R,true)}]},
  {id:"AG7",t:"Master theorem",th:"master",ex:"cc2",pts:3,lecons:["a2-boucles"],apres:["AG6"],
   paliers:[
-   {t:"lire a, b et d dans l'équation",cc:1,gen:masterLire,min:40},
-   {t:"comparer b puissance d et a, puis conclure",cc:3,gen:R=>masterConclure(R,false),min:40},
-   {t:"à partir d'une procédure récursive",cc:4,gen:R=>masterConclure(R,true),min:30},
+   {t:"lire a, b et d dans l'équation",cc:1,gen:masterLire,min:115},
+   {t:"comparer b puissance d et a, puis conclure",cc:3,gen:R=>masterConclure(R,false),min:105},
+   {t:"à partir d'une procédure récursive",cc:4,gen:R=>masterConclure(R,true),min:95},
    {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100}]},
  {id:"AG8",t:"Trouver la ligne fausse, écrire la ligne manquante",tache:"trouver la ligne fausse",th:"preuves",ex:"cc2",pts:1,lecons:["a2-invariant"],apres:["AG1"],
   paliers:[
