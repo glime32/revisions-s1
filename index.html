@@ -24818,7 +24818,7 @@ function exoLigne(F,i,o){o=o||{};const L=F.L.slice(),bonne=L[i].trim(),ind=/^\s*
     const x=essais[r.k],v=r.obtenu;
     if(v==="boucle")return faux("appel récursif qui ne raccourcit pas l'entrée","Où ça part : la fonction ne s'arrête pas.",`Sur ${c(x)}, le calcul ne s'arrête pas : l'appel récursif doit se faire sur une entrée plus petite, pour finir par arriver au cas de base.`);
     if(/^exception/.test(v))return faux("exception levée par la ligne écrite","Où ça part : une exception.",`Sur ${c(x)}, ta version lève ${c(v.slice(10))}.${/Division_by_zero/.test(v)?" Une division ou un mod par 0 n'a pas de sens : regarde quand le paramètre arrive à 0.":/"(hd|tl)"/.test(v)?` ${c("List.hd")} et ${c("List.tl")} n'ont pas de sens sur la liste vide : le test du cas de base doit passer avant.`:""}`);
-    return faux(F.roles[i][0]==="base"?"valeur du cas de base":F.roles[i][0]==="fn"?"fonction donnée à l'itérateur":"cas général d'une fonction récursive","Où ça part : une valeur fausse.",`Sur ${c(x)}, ta version renvoie ${c(v)} au lieu de ${c(att[r.k])}.`);}
+    return faux({base:"valeur du cas de base",fn:"fonction donnée à l'itérateur",init:"valeur de départ de l'accumulateur",acc:"pas de l'accumulateur",branche:"branche d'un match"}[F.roles[i][0]]||"cas général d'une fonction récursive","Où ça part : une valeur fausse.",`Sur ${c(x)}, ta version renvoie ${c(v)} au lieu de ${c(att[r.k])}.`);}
   return {sig:"L"+def.replace(/\s+/g," ")+"|"+i,code:def,
     q:`Cette fonction doit renvoyer ${F.dit}. Par exemple, ${c(ex)} vaut ${c(vEx)}. La ligne ${num} a été effacée : écris-la.`,
     corps:bloc(montre),texte:finLigne(montre)+" — ligne "+num+" à écrire",
@@ -25044,6 +25044,42 @@ const FS={
  feuilles:R=>({nom:"feuilles",dit:"le nombre de feuilles de l'arbre (nœuds sans enfant)",L:[...tyL("arbre"),"let rec feuilles : int tree -> int =","  function","  | Empty -> 0","  | Node (_, Empty, Empty) -> 1","  | Node (_, g, d) ->","    feuilles g + feuilles d"],roles:{5:["branche","L'arbre vide n'a aucune feuille."],6:["branche","Un nœud sans enfant est une feuille. Cette branche doit venir avant la suivante, plus générale."],8:["rec","Les feuilles sont dans les deux sous-arbres."]},args:["Empty","(Node (1, Empty, Empty))",`(${arbreML([5,[3,null,null],null])})`,`(${arbreML([5,[3,null,null],[8,null,null]])})`,`(${arbreML([2,[7,null,null],[4,[1,null,null],[6,null,null]]])})`]}),
  rouge:R=>({nom:"rouge",dit:"true pour Carreau et Coeur, false sinon",L:[...tyL("couleur"),"let rouge : couleur -> bool = function","  | Carreau | Coeur -> true","  | Trefle | Pique -> false"],roles:{3:["branche","Les deux couleurs rouges, réunies dans une seule branche avec |."],4:["branche","Les deux couleurs noires."]},args:["Trefle","Carreau","Coeur","Pique"]})};
 
+/* ---------- PF6 : « de trois façons » ---------- */
+ROLE.init=["la valeur de départ de l'accumulateur","ce que vaut le résultat quand la liste est vide"];
+ROLE.acc=["le pas de l'accumulateur","comment l'accumulateur change à chaque élément"];
+/* une fonction, écrite en récursif (match), en récursif terminal (fonction aux avec accumulateur), puis avec un itérateur */
+const TROIS={
+ somme:R=>({nom:"somme",dit:"la somme des éléments de la liste",args:listes(R,1,9),sig:"int list -> int",
+   V:[["  function","  | [] -> 0","  | x :: r -> x + somme r"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | x :: r -> aux (acc + x) r","  in aux 0 li"],["  fun li ->","  List.fold_left","    (fun acc x -> acc + x) 0 li"]],
+   roles:[{2:["base","La somme d'une liste vide vaut 0."],3:["rec","x plus la somme du reste."]},{3:["base","Plus d'élément : l'accumulateur contient la somme."],4:["acc","On ajoute x à l'accumulateur, puis on continue sur r."],5:["init","L'accumulateur part de 0, la somme de rien."]},{3:["fn","À chaque élément, le nouvel accumulateur est l'ancien plus x ; il part de 0."]}]}),
+ longueur:R=>({nom:"longueur",dit:"le nombre d'éléments de la liste",args:listes(R,1,9),sig:"int list -> int",
+   V:[["  function","  | [] -> 0","  | _ :: r -> 1 + longueur r"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | _ :: r -> aux (acc + 1) r","  in aux 0 li"],["  fun li ->","  List.fold_left","    (fun acc _ -> acc + 1) 0 li"]],
+   roles:[{2:["base","La liste vide n'a aucun élément."],3:["rec","Un élément, plus ceux du reste."]},{3:["base","Plus d'élément : l'accumulateur contient le compte."],4:["acc","Chaque élément ajoute 1 au compte."],5:["init","Le compte part de 0."]},{3:["fn","Chaque élément compte pour 1 ; le compte part de 0."]}]}),
+ produit:R=>({nom:"produit",dit:"le produit des éléments de la liste",args:listes(R,1,5),sig:"int list -> int",
+   V:[["  function","  | [] -> 1","  | x :: r -> x * produit r"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | x :: r -> aux (acc * x) r","  in aux 1 li"],["  fun li ->","  List.fold_left","    (fun acc x -> acc * x) 1 li"]],
+   roles:[{2:["base","Le produit vide vaut 1."],3:["rec","x fois le produit du reste."]},{3:["base","Plus d'élément : l'accumulateur contient le produit."],4:["acc","On multiplie l'accumulateur par x."],5:["init","Le produit part de 1 : avec 0, il vaudrait toujours 0."]},{3:["fn","On multiplie l'accumulateur par x ; il part de 1."]}]}),
+ nbPairs:R=>({nom:"nbPairs",dit:"le nombre d'éléments pairs",args:listes(R,1,9),sig:"int list -> int",
+   V:[["  function","  | [] -> 0","  | x :: r ->","    if x mod 2 = 0 then 1 + nbPairs r","    else nbPairs r"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | x :: r ->","      if x mod 2 = 0","      then aux (acc + 1) r","      else aux acc r","  in aux 0 li"],["  fun li ->","  List.fold_left","    (fun acc x ->","      if x mod 2 = 0 then acc + 1","      else acc) 0 li"]],
+   roles:[{2:["base","Aucun élément pair dans la liste vide."],4:["rec","x est pair : on le compte."],5:["rec","x est impair : on ne compte rien pour lui."]},{3:["base","Plus d'élément : l'accumulateur contient le compte."],6:["acc","x est pair : on ajoute 1 à l'accumulateur."],7:["acc","x est impair : l'accumulateur ne change pas."],8:["init","Le compte part de 0."]},{4:["fn","x est pair : un de plus."]}]}),
+ nbSup:R=>{const k=R.ent(2,7);return {nom:"nbSup",dit:`le nombre d'éléments plus grands que ${k}`,args:listes(R,1,9),sig:"int list -> int",
+   V:[["  function","  | [] -> 0","  | x :: r ->",`    if x > ${k} then 1 + nbSup r`,"    else nbSup r"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | x :: r ->",`      if x > ${k} then aux (acc + 1) r`,"      else aux acc r","  in aux 0 li"],["  fun li ->","  List.fold_left","    (fun acc x ->",`      if x > ${k} then acc + 1`,"      else acc) 0 li"]],
+   roles:[{2:["base","Aucun élément dans la liste vide."],4:["rec",`x est plus grand que ${k} : on le compte.`]},{3:["base","Plus d'élément : l'accumulateur contient le compte."],5:["acc",`x est plus grand que ${k} : on ajoute 1.`],7:["init","Le compte part de 0."]},{4:["fn",`x plus grand que ${k} : un de plus.`]}]};},
+ somCarres:R=>({nom:"somCarres",dit:"la somme des carrés des éléments",args:listes(R,1,5),sig:"int list -> int",
+   V:[["  function","  | [] -> 0","  | x :: r -> x * x + somCarres r"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | x :: r -> aux (acc + x * x) r","  in aux 0 li"],["  fun li ->","  List.fold_left","    (fun acc x -> acc + x * x) 0 li"]],
+   roles:[{2:["base","Rien à ajouter pour la liste vide."],3:["rec","Le carré de x plus la somme des carrés du reste."]},{3:["base","Plus d'élément : l'accumulateur contient la somme."],4:["acc","On ajoute le carré de x à l'accumulateur."],5:["init","La somme part de 0."]},{3:["fn","On ajoute x * x à l'accumulateur."]}]}),
+ miroir:R=>({nom:"miroir",dit:"la liste à l'envers",args:listes(R,1,9),sig:"int list -> int list",
+   V:[["  function","  | [] -> []","  | x :: r -> miroir r @ [x]"],["  fun li ->","  let rec aux acc l = match l with","    | [] -> acc","    | x :: r -> aux (x :: acc) r","  in aux [] li"],["  fun li ->","  List.fold_left","    (fun acc x -> x :: acc) [] li"]],
+   roles:[{2:["base","La liste vide à l'envers est vide."],3:["rec","Le reste à l'envers, puis x à la fin, avec @ (x n'est pas une liste : [x])."]},{3:["base","Plus d'élément : l'accumulateur contient la liste retournée."],4:["acc","On pose x devant l'accumulateur : le premier élément finit au fond."],5:["init","L'accumulateur part de la liste vide."]},{3:["fn","Chaque élément est posé devant ceux déjà vus."]}]}),
+ plus:R=>{const k=R.ent(1,9);return {nom:"plus",dit:`la liste où ${k} est ajouté à chaque élément`,args:listes(R,1,9),sig:"int list -> int list",
+   V:[["  function","  | [] -> []",`  | x :: r -> (x + ${k}) :: plus r`],["  fun li ->","  let rec aux acc l = match l with","    | [] -> List.rev acc",`    | x :: r -> aux ((x + ${k}) :: acc) r`,"  in aux [] li"],["  fun li ->","  List.fold_right",`    (fun x acc -> (x + ${k}) :: acc)`,"    li []"]],
+   roles:[{2:["base","La liste vide donne la liste vide."],3:["rec",`x + ${k} devant le résultat sur le reste.`]},{3:["base","L'accumulateur est à l'envers (le dernier élément traité est devant) : on le remet dans l'ordre avec List.rev."],4:["acc",`On pose x + ${k} devant l'accumulateur.`]},{3:["fn",`fold_right part de la fin : chaque x + ${k} est posé devant le reste, l'ordre est gardé.`]}]};}};
+function tireTrois(R,k){for(;;){const T=R.choix(Object.values(TROIS))(R);
+  const vers=T.V.map((V,j)=>[`let ${j?"":"rec "}${T.nom} : ${T.sig} =`].concat(V)),F={nom:T.nom,dit:T.dit,args:T.args,L:vers[k],roles:T.roles[k]};
+  const I=Object.keys(F.roles).map(Number);if(!I.length)continue;const e=exoLigne(F,R.choix(I),{sym:[["|","->","::","[]"],["|","->","::","[]","acc"],["fun","->","::","acc"]][k]});if(!e)continue;
+  const autres=vers.map((L,j)=>`(* ${["récursive","récursive terminale","avec un itérateur"][j]} *)\n`+L.join("\n")).join("\n\n");
+  e.etapes[2].w+=`<br>Les trois façons d'écrire ${c(T.nom)}&nbsp;:${bloc(autres)}`;e.ens.trois=vers.map(L=>L.join("\n"));
+  const n0=e.ens.ocaml.length;vers.forEach((L,j)=>{if(j!==k)e.ens.essais.forEach((x,m)=>e.ens.ocaml.push({code:L.join("\n")+" in "+x,attendu:e.ens.ocaml[m].attendu}));});e.nature=["récursive","terminale","itérateur"][k]+" · "+F.roles[e.ens.ligne][0];return e;}}
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
@@ -25074,7 +25110,12 @@ G.add("pf",[
   paliers:[
    {t:"écrire une valeur du type",cc:2,min:40,gen:tireValeur},
    {t:"ce que renvoie une fonction sur le type",cc:3,min:40,gen:tireSomme},
-   {t:"écrire la branche manquante",cc:3,min:18,gen:R=>tireLigne(R,FS,["branche","rec"],["|","->","(",")","Empty"])}]}
+   {t:"écrire la branche manquante",cc:3,min:18,gen:R=>tireLigne(R,FS,["branche","rec"],["|","->","(",")","Empty"])}]},
+ {id:"PF6",t:"« De trois façons » : récursif, terminal, itérateur",tache:"de trois façons",th:"ordre",ex:"ct",pts:4.5,lecons:["p2-match","p2-terminal","p2-iter"],apres:["PF3"],
+  paliers:[
+   {t:"la version récursive",cc:3,min:20,gen:R=>tireTrois(R,0)},
+   {t:"la version terminale, avec un accumulateur",cc:3,min:20,gen:R=>tireTrois(R,1)},
+   {t:"la version avec un itérateur",cc:3,min:15,gen:R=>tireTrois(R,2)}]}
 ]);
 })();
 
