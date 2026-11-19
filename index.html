@@ -24023,6 +24023,66 @@ const FI={
 function tireLigne(R,T,roles,sym){for(;;){const F=R.choix(Object.values(T))(R),I=Object.keys(F.roles).map(Number).filter(i=>roles.includes(F.roles[i][0]));if(!I.length)continue;
   const e=exoLigne(F,R.choix(I),{sym});if(e)return e;}}
 
+/* ---------- PF4 : trouver la ligne fausse ---------- */
+/* exécute une version de la fonction sur les essais : {err, msg, extrait} ou {k, obtenu} pour le premier essai faux, ou {ok:true} */
+function essaieCode(code,essais,att){const S2=ML.session(),D=S2.lis(code);const f=D.find(x=>x.faute);
+  if(f)return {err:f.faute==="syntaxe"?"syntaxe":"type",msg:f.msg,extrait:f.extrait};
+  for(let k=0;k<essais.length;k++){const r=S2.lis(essais[k])[0];const v=r.faute?(r.boucle||/s'arrête pas/.test(r.msg)?"boucle":"err"):r.exc?"exception "+r.ecritExc:r.ecrit;
+    if(v!==att[k])return {k,obtenu:v};}
+  return {ok:true};}
+const vraiDe=v=>/^exception /.test(v)?"EXC:"+v.slice(10).split(" ")[0]:null;
+function mutationsType(l){const M=[];
+  [["List.hd li + ","li + "],["List.hd li * ","li * "],["(List.tl li)","(List.hd li)"],[" then []"," then 0"],[" then 0"," then []"],[" then 1"," then []"],[" :: "," @ "],[" + "," +. "],[" * "," *. "],
+   [" mod "," /. "],["li = []","li = 0"],["n = 0","n = []"],["(n / 10)","(n /. 10)"],[" acc + 1"," acc ^ 1"],["then false","then 0"],["x = "," x == 0. && x = "],["(fun x -> x > ","(fun x -> x ^ "],["(x + ","(x ^ "]]
+    .forEach(([a,b])=>{if(l.includes(a))M.push(l.replace(a,b));});return M;}
+function exoFausse(F,i,sorte,o){o=o||{};const L=F.L.slice(),bonne=L[i].trim(),ind=/^\s*/.exec(L[i])[0],def=L.join("\n");
+  const S=ML.session();if(S.lis(def).some(x=>x.faute))throw new Error("définition fausse : "+def);
+  const essais=[...new Set(F.args)].map(a=>F.nom+" "+a),att=essais.map(x=>{const r=S.lis(x)[0];if(r.faute||r.exc)throw new Error("essai impossible : "+x);return r.ecrit;});
+  if(att.some(v=>v.length>40))return null;
+  const avec=(j,l)=>{const L2=L.slice();L2[j]=/^\s/.test(l)?l:ind+l;return L2.join("\n");};
+  const num=i+1,typeDe=x=>S.lis(x)[0].type,ocaml=essais.map((x,k)=>({code:def+" in "+x,attendu:"T:"+typeDe(x)+"|V:"+att[k]}));
+  let E,montre,champs,juge,bonneTxt,repBonne,repFausse,q;
+  const verif={w:`Vérification, avec ${sorte==="match"?"la branche ajoutée":"la ligne corrigée"} : ${essais.slice(0,5).map((x,k)=>c(x+" = "+att[k])).join(", ")}.`,why:`Ce sont les valeurs attendues : ${F.dit}.`,pts:0.5};
+  const lisLigne=(t,r)=>{if(/^let\b/.test(t)&&!/^let\b/.test(bonne))return {incomplet:"Écris seulement la ligne, pas toute la fonction."};
+    if(/^\|/.test(bonne)&&!/^\|/.test(t))return {incomplet:"Une branche de match commence par une barre « | »."};return null;};
+  const raconte=(r,x)=>r.err==="syntaxe"?`OCaml ne peut plus lire la fonction. ${esc(r.msg)}`:r.err?`${r.extrait?`À cet endroit, ${c(r.extrait)} : `:""}${esc(r.msg)}`
+    :r.obtenu==="boucle"?`Sur ${c(x)}, le calcul ne s'arrête pas : l'appel récursif ne se rapproche pas du cas de base.`
+    :/^exception/.test(r.obtenu)?`Sur ${c(x)}, la fonction lève ${c(r.obtenu.slice(10).replace(/^Match_failure.*/,"Match_failure"))}.`:`Sur ${c(x)}, elle renvoie ${c(r.obtenu)} au lieu de ${c(att[r.k])}.`;
+  if(sorte==="match"){
+    if(!/^\|.*->\s*\S/.test(bonne))return null;
+    const L2=L.filter((_,j)=>j!==i),code2=L2.join("\n"),r=essaieCode(code2,essais,att);if(r.ok||r.err)return null;
+    const motif=/^\|\s*(.*?)\s*->/.exec(bonne)[1],places=L2.map((l,j)=>/^\s*\|/.test(l)||(j>0&&/^\s*\|/.test(L2[j-1]||"")&&j===L2.length)?j:-1).filter(j=>j>=0).concat([L2.length]);
+    montre=code2;q=`Cette fonction doit renvoyer ${F.dit}. Un cas a été oublié dans son match : écris la branche qui manque.`;
+    E=[{w:`Le cas ${c(motif)} n'a pas de branche.`,why:`${raconte(r,essais[r.k])} Un match doit prévoir toutes les formes possibles de la valeur : OCaml le signale d'ailleurs par un avertissement (« this pattern-matching is not exhaustive »).`,pts:1},
+      {w:`La branche qui manque : <b>${c(bonne)}</b>`,why:F.roles[i][1],pts:2},verif];
+    champs=[{k:"champ",id:"l",nom:"branche",label:"La branche qui manque :",ex:"elle commence par |",apercu:false,sym:symDe(SYML,["|","->","::","[]"])}];
+    juge=rep=>{const t=normalise(rep.l||"").trim();if(!t)return {incomplet:"Écris la branche qui manque, en commençant par |."};const p=lisLigne(t);if(p)return p;
+      let r2=null;for(const j of [...new Set(places.concat([i]))]){const L3=L2.slice();L3.splice(j,0,"  "+t);const x=essaieCode(L3.join("\n"),essais,att);if(x.ok)return {ok:true};if(j===i||!r2)r2=x;}
+      return {ok:false,faux:["l"],resume:"Pas tout à fait : avec cette branche, la fonction ne fait pas ce qu'on attend.",diag:{etape:1,type:"branche de match oubliée",titre:"Où ça part : la branche ajoutée.",msg:raconte(r2,essais[r2.k])}};};
+    bonneTxt=bonne;repBonne={l:bonne};const ff=["| _ -> 0","| _ -> []","| _ -> 1","| [] -> 1","| _ -> false","| _ -> true"].find(x=>juge({l:x}).ok===false);if(!ff)return null;repFausse={l:ff};
+    const v=vraiDe(r.obtenu);if(v)ocaml.push({code:code2+" in "+essais[r.k],attendu:v});}
+  else{
+    const cand=(sorte==="type"?mutationsType(bonne):mutations(bonne)).map(m=>[m,essaieCode(avec(i,m),essais,att)]).filter(([m,r])=>(ind+m).length<=40&&(sorte==="type"?r.err==="type":!r.ok&&!r.err));
+    if(!cand.length)return null;const [fausse,r]=o.R.choix(cand);
+    montre=L.map((l,j)=>(j===i?ind+fausse:l)).map((l,j)=>(j+1)+" "+l).join("\n");
+    q=`Cette fonction doit renvoyer ${F.dit}. Une de ses lignes est fausse${sorte==="type"?" : OCaml refuse la fonction":""}. Donne le numéro de la ligne fausse, puis écris-la corrigée.`;
+    E=[{w:`La ligne fausse est la ligne ${num} : ${c(fausse)}`,why:sorte==="type"?`OCaml refuse la fonction et signale l'erreur ici : ${raconte(r)} L'endroit signalé n'est pas toujours la ligne fausse : OCaml lit la fonction dans l'ordre et s'arrête au premier désaccord. On cherche la ligne qui ne respecte pas la signature.`:raconte(r,essais[r.k]),pts:1},
+      {w:`La ligne corrigée : <b>${c(bonne)}</b>`,why:F.roles[i][1],pts:2},verif];
+    champs=[{k:"champ",id:"n",nom:"numéro",label:"Numéro de la ligne fausse :",ex:"un nombre",apercu:false},{k:"champ",id:"l",nom:"ligne corrigée",label:"La ligne corrigée :",ex:"sans le numéro",apercu:false,sym:o.sym?symDe(SYMV.concat(SYML),o.sym):SYML}];
+    juge=rep=>{const n=String(rep.n||"").trim(),t=normalise(rep.l||"").trim().replace(/^\d+\s+/,"");if(!/^\d+$/.test(n))return {incomplet:"Écris le numéro de la ligne fausse : un nombre."};
+      if(!t)return {incomplet:"Écris aussi la ligne corrigée."};const p=lisLigne(t);if(p)return p;
+      const j=+n-1;if(j!==i)return {ok:false,faux:["n"],resume:"Pas tout à fait : ce n'est pas la bonne ligne.",diag:{etape:0,type:sorte==="type"?"ligne de l'erreur de type":"ligne de l'erreur de logique",titre:"Où ça part : la ligne fausse est ailleurs.",
+        msg:j>=0&&j<L.length?`La ligne ${n} est juste. ${sorte==="type"?"Cherche l'opérateur ou la fonction qui reçoit une valeur du mauvais type.":"Essaie la fonction à la main sur un petit exemple, ligne par ligne."}`:`Il n'y a pas de ligne ${n} qui puisse être en cause.`}};
+      const x=essaieCode(avec(i,t),essais,att);if(x.ok)return {ok:true};
+      return {ok:false,faux:["l"],resume:"Pas tout à fait : c'est la bonne ligne, mais ta correction ne marche pas.",diag:{etape:1,type:sorte==="type"?"correction d'une erreur de type":"correction d'une erreur de logique",titre:"Où ça part : la correction.",msg:raconte(x,essais[x.k])}};};
+    bonneTxt=`ligne ${num} : ${bonne}`;repBonne={n:String(num),l:bonne};repFausse={n:String(num),l:fausse};
+    const w=avec(i,fausse);if(sorte==="type")ocaml.push({code:w+" in "+essais[0],attendu:"ERR"});
+    else if(r.obtenu!=="boucle"){const v=vraiDe(r.obtenu);ocaml.push({code:w+" in "+essais[r.k],attendu:v||"T:"+typeDe(essais[r.k])+"|V:"+r.obtenu});}}
+  return {sig:"F"+sorte+def.replace(/\s+/g," ")+"|"+i+"|"+(repFausse.l||""),code:def,q,corps:bloc(montre),texte:finLigne(montre)+" — "+(sorte==="match"?"branche oubliée":"ligne fausse"),
+    champs,juge,etapes:E,bonne:c(bonneTxt),bonneTxt,repBonne,repFausse,nature:sorte,ens:{code:def,montre,essais,att,ocaml}};}
+function tireFausse(R,T,sorte,sym){for(;;){const F=R.choix(Object.values(T))(R),I=Object.keys(F.roles).map(Number);if(!I.length)continue;
+  const e=exoFausse(F,R.choix(I),sorte,{R,sym});if(e)return e;}}
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
@@ -24043,7 +24103,12 @@ G.add("pf",[
    {t:"le cas de base",cc:2,min:30,gen:R=>tireLigne(R,FL,["base"],["[]","List.hd","List.tl","true","false"])},
    {t:"le cas général, avec l'appel récursif",cc:3,min:30,gen:R=>tireLigne(R,FL,["rec"],["List.hd","List.tl","::","mod","&&","||"])},
    {t:"une branche de match",cc:3,min:30,gen:R=>tireLigne(R,FM,["branche","rec"],["|","->","::","[]","mod"])},
-   {t:"la fonction donnée à fold, map ou filter",cc:3,min:30,gen:R=>tireLigne(R,FI,["fn"],["fun","->","::","mod"])}]}
+   {t:"la fonction donnée à fold, map ou filter",cc:3,min:30,gen:R=>tireLigne(R,FI,["fn"],["fun","->","::","mod"])}]},
+ {id:"PF4",t:"Trouver la ligne fausse",tache:"trouver la ligne fausse",th:"listes",pts:3,lecons:["p-rec","p-listes","p-match"],apres:["PF3"],
+  paliers:[
+   {t:"une erreur de type",cc:3,min:30,gen:R=>tireFausse(R,Object.assign({},FL,FI),"type",["List.hd","List.tl","::","[]"])},
+   {t:"une erreur de logique",cc:3,min:30,gen:R=>tireFausse(R,Object.assign({},FL,FM,FI),"logique",["List.hd","List.tl","::","[]","&&","||"])},
+   {t:"un cas oublié dans un match",cc:3,min:20,gen:R=>tireFausse(R,FM,"match")}]}
 ]);
 })();
 
