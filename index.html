@@ -23202,6 +23202,59 @@ function droitesPar(R){const pap=R()<0.45,phi=R.choix([40,50,55,60,65,70])*Math.
     bonne:`${pap?"rapport":fx("λ_{1}")} ${fx("= "+nb(V))} et ${fx(`${nomW} = ${nb(W)}`)}`,bonneTxt:`rapport = ${nb(V)} ; ${nomW} = ${nb(W)}`,repBonne:{x:brut(V),y:brut(W)},repFausse:{x:brut(mul(V,-1)),y:brut(W)},nature:pap?"deux homothéties, comme au CC2 2025":"homothétie et parallèles (feuille 3, exercice 2)",
     ens:{k:pap?"pap":"par",P,u,v}};}
 
+/* ---------- GE2, palier 1 : les translations (définition 3.3.1, théorème 3.3.2, feuille 3 exercice 3) ---------- */
+const pt2=(n,x,y)=>fx(`${n}(${nb(x)} ; ${nb(y)})`),vc2=(n,x,y)=>`${ve(n)}${fx(`(${nb(x)} ; ${nb(y)})`)}`,plus=(x,a)=>`${nb(x)} ${a<0?"−":"+"} ${Math.abs(a)}`;
+function jugeCoord(V,E,pieges){return rep=>{const c=rep.c||{},x=O.nombre(c.x),y=O.nombre(c.y);
+  if(!x||!y)return {incomplet:"Écris les deux coordonnées : deux nombres, par exemple 3 et -2."};
+  const vx=x.n/x.d,vy=y.n/y.d,F=[];if(vx!==V[0])F.push("x");if(vy!==V[1])F.push("y");if(!F.length)return {ok:true};
+  for(const p of pieges)if(vx===p[0][0]&&vy===p[0][1])return faux({f:F,etape:p[1],type:p[2],titre:p[3],msg:p[4]});
+  return faux({f:F,etape:E.length-1,type:"calcul des coordonnées",titre:"Où ça part : le calcul.",msg:E[E.length-1].w});};}
+const unCoord=({quoi,V,pieges,...o})=>{const autre=pieges.map(p=>p[0]).find(w=>w[0]!==V[0]||w[1]!==V[1])||[V[0]+1,V[1]],t=`(${nb(V[0])} ; ${nb(V[1])})`;
+  return Object.assign({champs:[{k:"cases",id:"c",titre:`Les coordonnées ${quoi} :`,noms:["x","y"],aide:"Deux nombres, avec leur signe."}],juge:jugeCoord(V,o.etapes,pieges),bonne:fx(t),bonneTxt:t,repBonne:{c:{x:String(V[0]),y:String(V[1])}},repFausse:{c:{x:String(autre[0]),y:String(autre[1])}}},o);};
+const RAP_T=`<p>Rappel : la translation de vecteur ${ve("u")} envoie chaque point M sur le point M′ tel que ${ve("MM′")} = ${ve("u")} (définition 3.3.1).</p>`;
+function translations(R){const r=R();
+  if(r<0.3){const a=R.nz(-6,6),b=R.nz(-6,6),x=R.ent(-6,6),y=R.ent(-6,6),V=[x+a,y+b];
+    const E=[{w:`Par définition (3.3.1), M′ = t(M) est le point tel que ${ve("MM′")} = ${ve("u")}.`,why:"Une translation déplace tous les points de la même façon : de M à son image, on parcourt exactement le vecteur de la translation.",pts:1},
+      {w:`En coordonnées : ${fx(`x′ − ${par(x)} = ${nb(a)}`)} et ${fx(`y′ − ${par(y)} = ${nb(b)}`)}.`,why:"Les coordonnées du vecteur MM′ sont celles de l'arrivée M′ moins celles du départ M.",pts:1},
+      {w:`<b>${fx(`M′(${plus(x,a)} ; ${plus(y,b)}) = M′(${nb(V[0])} ; ${nb(V[1])})`)}</b>`,why:"On ajoute les coordonnées du vecteur à celles du point : abscisse avec abscisse, ordonnée avec ordonnée.",pts:1}];
+    return unCoord({quoi:"de M′",V,etapes:E,sig:"TI"+JSON.stringify([a,b,x,y]),q:`Dans un repère du plan, soit t la translation de vecteur ${vc2("u",a,b)}. Quelles sont les coordonnées de l'image M′ = t(M) du point ${pt2("M",x,y)} ?`,corps:RAP_T,
+      texte:`translation de vecteur (${nb(a)} ; ${nb(b)}), image de M(${nb(x)} ; ${nb(y)})`,nature:"image d'un point",ens:{k:"timg",u:[a,b],M:[x,y]},
+      pieges:[[[x-a,y-b],2,"vecteur retiré au lieu d'être ajouté","Où ça part : le sens.","Pour aller de M à son image, on ajoute le vecteur de la translation. En le retirant, on trouve le point dont M est l'image."],
+        [[x+b,y+a],2,"coordonnées du vecteur échangées","Où ça part : abscisse et ordonnée.","La première coordonnée du vecteur s'ajoute à l'abscisse de M, la seconde à son ordonnée."],
+        [[a,b],0,"coordonnées du vecteur recopiées","Où ça part : ce qui est demandé.","Ce sont les coordonnées du vecteur de la translation. L'image de M est le point où l'on arrive en partant de M et en parcourant ce vecteur."]]});}
+  if(r<0.55){let x1,y1,x3,y3;const a=R.nz(-5,5),b=R.nz(-5,5);do{x1=R.ent(-5,5);y1=R.ent(-5,5);x3=R.ent(-5,5);y3=R.ent(-5,5);}while(x1===x3&&y1===y3);const x2=x1+a,y2=y1+b,V=[x3+a,y3+b];
+    const E=[{w:`t envoie A sur A′ : son vecteur est ${ve("AA′")}, de coordonnées ${fx(`(${nb(x2)} − ${par(x1)} ; ${nb(y2)} − ${par(y1)}) = (${nb(a)} ; ${nb(b)})`)}.`,why:"Les coordonnées d'un vecteur : arrivée moins départ. Une translation n'a qu'un seul vecteur, celui qui mène de n'importe quel point à son image.",pts:1.5},
+      {w:`<b>${fx(`B′(${plus(x3,a)} ; ${plus(y3,b)}) = B′(${nb(V[0])} ; ${nb(V[1])})`)}</b>`,why:`B′ = t(B) vérifie ${ve("BB′")} = ${ve("AA′")} : on ajoute à B le vecteur trouvé.`,pts:1.5}];
+    return unCoord({quoi:"de B′",V,etapes:E,sig:"TV"+JSON.stringify([x1,y1,a,b,x3,y3]),q:`Dans un repère du plan, t est la translation qui envoie ${pt2("A",x1,y1)} sur ${pt2("A′",x2,y2)}. Quelles sont les coordonnées de l'image B′ = t(B) du point ${pt2("B",x3,y3)} ?`,corps:RAP_T,
+      texte:`translation qui envoie A(${nb(x1)} ; ${nb(y1)}) sur A′(${nb(x2)} ; ${nb(y2)}), image de B(${nb(x3)} ; ${nb(y3)})`,nature:"translation donnée par un point et son image",ens:{k:"tvec",A:[x1,y1],A2:[x2,y2],B:[x3,y3]},
+      pieges:[[[x3-a,y3-b],0,"vecteur calculé à l'envers : départ moins arrivée","Où ça part : le vecteur.","Le vecteur de la translation va de A vers son image A′ : on calcule les coordonnées de A′ moins celles de A."],
+        [[x2,y2],1,"image de A recopiée","Où ça part : le point demandé.","Ce sont les coordonnées de A′, l'image de A. On demande l'image de B : le même vecteur, posé en B."],
+        [[a,b],1,"vecteur donné à la place du point","Où ça part : la dernière étape.","Ce sont les coordonnées du vecteur de la translation. Il reste à l'ajouter aux coordonnées de B."]]});}
+  if(r<0.75){let a,b,c,d;do{a=R.nz(-6,6);b=R.nz(-6,6);c=R.nz(-6,6);d=R.nz(-6,6);}while((a+c===0&&b+d===0)||(a===c&&b===d));const inv=R()<0.5,nom=inv?"t′ ∘ t":"t ∘ t′",V=[a+c,b+d];
+    const E=[{w:inv?`Soit M un point. On pose M′ = t(M), puis M″ = t′(M′) : ${ve("MM′")} = ${ve("u")} et ${ve("M′M″")} = ${ve("v")}.`:`Soit M un point. On pose M′ = t′(M), puis M″ = t(M′) : ${ve("MM′")} = ${ve("v")} et ${ve("M′M″")} = ${ve("u")}.`,why:`${nom} veut dire : on applique d'abord ${inv?"t":"t′"}, puis ${inv?"t′":"t"}. La transformation écrite à droite agit la première.`,pts:1},
+      {w:`Par la relation de Chasles, ${ve("MM″")} = ${ve("MM′")} + ${ve("M′M″")} = ${ve("u")} + ${ve("v")}. La composée est donc la translation de vecteur ${ve("u")} + ${ve("v")}.`,why:"Ce vecteur est le même pour tous les points M : c'est bien une translation (feuille 3, exercice 3). Et comme l'addition des vecteurs ne dépend pas de l'ordre, t ∘ t′ = t′ ∘ t.",pts:1},
+      {w:`<b>${ve("u")} + ${ve("v")} ${fx(`= (${plus(a,c)} ; ${plus(b,d)}) = (${nb(V[0])} ; ${nb(V[1])})`)}</b>`,why:"On additionne les coordonnées : abscisse avec abscisse, ordonnée avec ordonnée.",pts:1}];
+    return unCoord({quoi:`du vecteur de ${nom}`,V,etapes:E,sig:"TC"+JSON.stringify([a,b,c,d,inv]),q:`Dans un repère du plan, soient t la translation de vecteur ${vc2("u",a,b)} et t′ la translation de vecteur ${vc2("v",c,d)}. La composée ${nom} est une translation. Quelles sont les coordonnées de son vecteur ?`,corps:RAP_T,
+      texte:`translations de vecteurs (${nb(a)} ; ${nb(b)}) et (${nb(c)} ; ${nb(d)}), vecteur de ${nom}`,nature:"composée de deux translations",ens:{k:"tcomp",u:[a,b],v:[c,d],inv},
+      pieges:[[[a-c,b-d],1,"différence des deux vecteurs","Où ça part : l'opération.","On enchaîne les deux déplacements : les vecteurs s'ajoutent (relation de Chasles), ils ne se retranchent pas."],[[c-a,d-b],1,"différence des deux vecteurs","Où ça part : l'opération.","On enchaîne les deux déplacements : les vecteurs s'ajoutent (relation de Chasles), ils ne se retranchent pas."],
+        [[a*c,b*d],2,"coordonnées multipliées","Où ça part : le calcul.","Pour ajouter deux vecteurs, on ajoute leurs coordonnées. On ne les multiplie pas."],[[a,b],0,"un seul des deux vecteurs","Où ça part : la composée.","La composée applique les deux translations l'une après l'autre : les deux vecteurs comptent."],[[c,d],0,"un seul des deux vecteurs","Où ça part : la composée.","La composée applique les deux translations l'une après l'autre : les deux vecteurs comptent."]]});}
+  if(r<0.85){const [p1,p2,p3,p4]=R.choix(["ABCD","MNPQ","EFGH","RSTU"]).split(""),w=R.ent(0,1),O4={ok:p1+p2+p4+p3,w1:p1+p2+p3+p4,w2:p1+p3+p2+p4,w3:p1+p4+p3+p2};
+    const E=[{w:`${p4} = t(${p3}) veut dire ${ve(p3+p4)} = ${ve(p1+p2)}.`,why:"C'est la définition 3.3.1 : le vecteur qui va d'un point à son image est le vecteur de la translation.",pts:1},
+      {w:`<b>${O4.ok} est un parallélogramme.</b>`,why:`Le poly le dit juste après la définition : quand le vecteur de la translation est ${ve(p1+p2)}, l'image M′ d'un point M est l'unique point tel que ${p1}${p2}M′M soit un parallélogramme. Ici M = ${p3} et M′ = ${p4}. On fait le tour : ${p1}, ${p2}, puis l'image ${p4}, puis ${p3}.`,pts:1}];
+    return {sig:"TP"+JSON.stringify([p1,w]),q:`Soient ${p1}, ${p2} et ${p3} trois points non alignés, et t la translation ${w?`qui envoie ${p1} sur ${p2}`:`de vecteur ${ve(p1+p2)}`}. On note ${p4} = t(${p3}). Lequel de ces quadrilatères est un parallélogramme ?`,corps:"",texte:`translation de vecteur ${p1}${p2}, ${p4} = t(${p3}) ; quel parallélogramme`,nature:"translation et parallélogramme",
+      champs:[champC("x",null,R.mel(Object.keys(O4)).map(c=>[c,O4[c]]))],juge:jugeQ({x:"ok"},()=>[1,"parallélogramme nommé dans le mauvais ordre","Où ça part : l'ordre des sommets.",`Les vecteurs égaux sont ${ve(p1+p2)} et ${ve(p3+p4)}. En faisant le tour du parallélogramme, on part de ${p1}, on va en ${p2}, puis en ${p4} (l'image), et on revient par ${p3} : c'est ${O4.ok}.`]),
+      etapes:E,bonne:O4.ok,bonneTxt:O4.ok,repBonne:{x:"ok"},repFausse:{x:"w1"},ens:{k:"tpara",o:O4}};}
+  let d,l;do{d=R.ent(2,12);l=R.ent(1,9);}while(d===l);const img=R()<0.55,N=img?"A′B′":"AA′",v=img?d:l;
+  const E=img?[{w:`D'après le théorème 3.3.2 (i), une translation préserve les distances : ${fx("t(A)t(B) = AB")}.`,why:"Les vecteurs AA′ et BB′ sont égaux, donc AA′B′B est un parallélogramme : ses côtés opposés [AB] et [A′B′] ont la même longueur.",pts:1},
+      {w:`<b>${fx(`A′B′ = AB = ${d}`)}</b>`,why:`La norme du vecteur, ${l}, ne sert pas ici : elle dit de combien chaque point se déplace, pas la distance entre deux images.`,pts:1}]
+    :[{w:`Par définition (3.3.1), ${ve("AA′")} = ${ve("u")}.`,why:"L'image de A est au bout du vecteur de la translation, quand on le pose en A.",pts:1},
+      {w:`<b>${fx(`AA′ = ${l}`)}</b> : c'est la norme de ${ve("u")}.`,why:`La distance AA′ est la longueur du vecteur AA′. La distance AB = ${d} ne sert pas ici.`,pts:1}];
+  return unNombre({nom:N,v:Q(v),autre:Q(img?l:d),quoi:"la distance "+N,ex:"par exemple 6",etapes:E,sig:"TD"+JSON.stringify([d,l,img]),
+    q:`Soit t une translation de vecteur ${ve("u")}, avec <span class="en-nb">${nrm("u")} ${fx("= "+l)}</span>. Soient A et B deux points tels que ${fx("AB = "+d)}. On note A′ = t(A) et B′ = t(B). Calcule la distance ${fx(N)}.`,
+    corps:`<p>Rappel : ${nrm("u")} est la norme du vecteur ${ve("u")}, c'est-à-dire sa longueur.</p>`,texte:`translation de vecteur de norme ${l}, AB = ${d} ; calculer ${N}`,nature:img?"distance entre deux images":"distance d'un point à son image",ens:{k:"tdist",d,l,img},
+    pieges:[[Q(img?l:d),img?0:1,img?"norme du vecteur donnée au lieu de la distance AB":"distance AB donnée au lieu de la norme du vecteur","Où ça part : la longueur à prendre.",img?"La norme du vecteur est la distance entre un point et son image. Ici on demande la distance entre les deux images : elle est égale à AB.":"AB est la distance entre les deux points de départ. On demande la distance entre A et son image : c'est la norme du vecteur."],
+      [Q(d+l),img?0:1,"les deux longueurs ajoutées","Où ça part : l'opération.","Il n'y a rien à additionner : une seule des deux longueurs de l'énoncé répond à la question."]]});}
+
 /* ---------- GE7 : triangles isométriques (les droites du triangle, le cas, les deux bons triangles, puis sur papier) ---------- */
 const champC=(id,titre,o)=>({k:"choix",id,titre,o});
 const maj=s=>s.charAt(0).toUpperCase()+s.slice(1),nu=s=>String(s).replace(/<[^>]+>/g,"").replace(/\$/g,"");
@@ -23434,8 +23487,9 @@ G.add("geo",[
    {t:"le cosinus d'un angle, puis l'angle, avec les trois côtés",cc:5,gen:troisCotes},
    {t:"l'aire, puis une hauteur",cc:5,min:200,gen:aireHauteur},
    {t:"comme au CC : une bissectrice, une médiane, deux étapes",cc:9,gen:R=>{const r=R();return r<0.5?bissectrice(R):r<0.75?deuxTemps(R):mediane(R);}}]},
- {id:"GE2",t:"Homothéties",tache:"homothéties",th:"transfo",ex:"cc2",lecons:["g2-transfo"],
+ {id:"GE2",t:"Translations et homothéties",tache:"translations et homothéties",th:"transfo",ex:"cc2",lecons:["g2-transfo"],
   paliers:[
+   {t:"les translations",cc:2,min:200,gen:translations},
    {t:"l'image d'une longueur",cc:2,min:200,gen:imageLongueur},
    {t:"le rapport et son signe",cc:3,min:200,gen:rapport},
    {t:"deux homothéties de même centre",cc:3,min:200,gen:deuxHom},
