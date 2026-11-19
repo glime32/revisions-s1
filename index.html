@@ -23312,8 +23312,8 @@ function famille(Y,B){const cst=Y.cst;if(cst.length<2)return {pb:cst.length?"une
   if(rang2(dir)<2)return {pb:"rang"};
   return {ok:true};}
 /* les nombres tapés dans un champ, séparés par « ; » ou « et » */
-function lisListe(t){const s=String(t==null?"":t).replace(/^[^=]*=/,"");if(!propre(s))return {vide:1};
-  const L=s.split(/;| et /).map(x=>x.trim()).filter(Boolean).map(lisCx);if(L.some(x=>x.vide||x.illisible))return {illisible:1};if(L.some(x=>x.neg))return {neg:1};return {L:L.map(x=>x.v)};}
+function lisListe(t){const s=String(t==null?"":t);if(!propre(s))return {vide:1};
+  const L=s.split(/;| et /).map(x=>x.replace(/^[^=]*=/,"").trim()).filter(Boolean).map(lisCx);if(L.some(x=>x.vide||x.illisible))return {illisible:1};if(L.some(x=>x.neg))return {neg:1};return {L:L.map(x=>x.v)};}
 function memeListe(L,att){if(L.length!==att.length)return false;const reste=att.slice();for(const v of L){const k=reste.findIndex(w=>presC(v,w));if(k<0)return false;reste.splice(k,1);}return true;}
 const rx=r=>{r=q(r);const A=absQ(r),s=r.n<0?"−":"";return A.d===1?s+(A.n===1?"":A.n)+"x":s+(A.n===1?"":A.n)+"x/"+A.d;};
 const ex=r=>`e^{${rx(r)}}`,exT=r=>`e^(${brut(r)}*x)`;
@@ -23634,6 +23634,112 @@ function valeurPi12(R){const m1=R.choix([2,4,8,10,-2,-4,-8,-10]),m2=R.choix([3,-
   return {sig:"P"+m1+"|"+m2+op,q:`Soient ${fx(`z₁ = ${z1}`)} et ${fx(`z₂ = ${z2}`)}. Donne une forme exponentielle de ${fx(`z₁`)}, ${fx(`z₂`)} et ${fx(nom)}. En déduire les valeurs exactes de ${fx(`cos(${ph})`)} et ${fx(`sin(${ph})`)}.`,corps:`<p class="muted">Comme au TD 3, exercice 7 : on écrit le même nombre de deux façons, puis on compare.</p>`,texte:`cos et sin de ${ph} avec z₁ = ${z1}, z₂ = ${z2}`,
     champs:[{k:"cases",id:"cs",noms:["c","s"],titre:`Écris $c = cos(${ph})$ et $s = sin(${ph})$ :`,sym:["√","/","(",")"],aide:"Par exemple (√6 − √2)/4, ou (sqrt(6)-sqrt(2))/4."}],juge,etapes:E,
     bonne:`${fx(`cos(${ph}) = ${cT}`)} et ${fx(`sin(${ph}) = ${sT}`)}`,bonneTxt:`cos(${ph}) = ${cT}, sin(${ph}) = ${sT}`,repBonne:{cs:{c:tp(cu),s:tp(cw)}},repFausse:{cs:{c:tp(cw),s:tp(cu)}},nature:op==="x"?"par un produit":"par un quotient",ens:{type:"pi12",phi:Math.PI*M/12}};}
+/* ---------- CA4 : racines carrées, second degré dans ℂ ---------- */
+const listeT=L=>L.join(" ; "),cxF=z=>Array.isArray(z)?z:zf(z);
+/* une liste de solutions tapée, comparée sans tenir compte de l'ordre ; o.att : valeurs [re, im], o.txt : écritures */
+function exoListe(o){const att=o.att,n=att.length,dern=o.etapes.length-1;
+  function juge(rep){const L=lisListe(rep.z);if(L.vide)return {incomplet:`Écris les ${n} solutions, séparées par « ; ».`};
+    if(L.neg)return {incomplet:"La racine carrée d'un nombre négatif n'existe pas dans ℝ : écris i√3 au lieu de √(−3)."};
+    if(L.illisible)return {incomplet:"Je n'arrive pas à lire une des solutions. Écris par exemple (-1+i√3)/2 ; (-1-i√3)/2."};
+    if(L.L.length<n)return {incomplet:`Il y a ${n} solutions : il en manque ${n-L.L.length}. Sépare-les par « ; ».`};
+    if(memeListe(L.L,att))return {ok:true};
+    if(L.L.some(v=>L.L.filter(w=>presC(v,w)).length>1))return {incomplet:"Tu as écrit deux fois la même solution."};
+    const pg=(o.pieges||[]).find(p=>memeListe(L.L,p[0]));
+    const bons=L.L.filter(v=>att.some(w=>presC(v,w))).length;
+    return {ok:false,faux:["z"],resume:`Pas tout à fait : ${bons?`${bons} ${bons>1?"solutions sont justes":"solution est juste"}, pas toutes.`:"aucune de ces solutions ne vérifie l'équation."}`,diag:pg?pg[1]:{etape:o.fin==null?dern:o.fin,type:o.type||"calcul des solutions",titre:"Où ça part : le calcul.",msg:`Les solutions sont ${fx(listeT(o.txt))}. Vérifie chacune en la remettant dans l'équation.`}};}
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[{k:"champ",id:"z",nom:"solutions",label:o.label||"Les solutions :",ex:"séparées par ;",sym:["i","√","/","(",")"],apercu:false,aide:"Sépare les solutions par « ; ». Par exemple : (-1+i√3)/2 ; (-1-i√3)/2."}],juge,etapes:o.etapes,
+    bonne:fx(listeT(o.txt)),bonneTxt:listeT(o.txt),repBonne:{z:o.tape.join(" ; ")},repFausse:{z:o.faux},nature:o.nature,ens:Object.assign({att},o.ens)};}
+const zRtape=(a,b)=>`${rTape(a)}+(${rTape(b)})*i`;
+function deltaNeg(R){let a,b,c;do{a=R()<0.65?1:R.choix([2,3,4]);b=R.ent(-6,6);c=R.ent(1,15);}while(b*b-4*a*c>=0);
+  const D=b*b-4*a*c,dl=rRac(Q(-D)),re=Q(-b,2*a),im=simpR(div(dl.c,2*a),dl.s),z1=[re.n/re.d,rF(im)],z2=[z1[0],-z1[1]],eq=`${S([[a,"z²"],[b,"z"],[c,""]])} = 0`;
+  const t1=zR(Rd(re),im),t2=zR(Rd(re),{c:mul(im.c,-1),s:im.s});
+  const E=[{w:`${fx(`Δ = b² − 4ac = ${b*b} − ${4*a*c} = ${nb(D)}`)} : Δ est négatif.`,why:"Dans ℝ, l'équation n'aurait pas de solution. Dans ℂ, un nombre négatif a deux racines carrées.",pts:1},
+    {w:`Une racine carrée de Δ : ${fx(`δ = i√${-D}${rT(dl)!=="√"+(-D)?" = "+rT({c:dl.c,s:dl.s}).replace(/^(\d*)√/,"$1i√").replace(/^(\d+)$/,"$1i"):""}`)}, car ${fx(`δ² = i² × ${-D} = ${nb(D)}`)}.`,why:`${fx("i² = −1")}. On n'écrit jamais ${fx(`√(${nb(D)})`)} : la racine carrée d'un négatif n'a pas de sens dans ℝ.`,pts:1},
+    {w:`${fx("z = (−b ± δ)/(2a)")} : ${fx(`z₁ = ${t1}`)} et ${fx(`z₂ = ${t2}`)}.`,why:`On divise ${fx(nb(-b))} et ${fx(rT(dl))} par ${fx(String(2*a))}. Les deux solutions sont conjuguées : c'est toujours le cas quand a, b et c sont réels.`,pts:1}];
+  const opp=[[-z1[0],-z1[1]],[-z2[0],-z2[1]]];
+  return exoListe({sig:"N"+eq,att:[z1,z2],txt:[t1,t2],tape:[zRtape(Rd(re),im),zRtape(Rd(re),{c:mul(im.c,-1),s:im.s})],faux:b?`${rTape(Rd(Q(b,2*a)))}+(${rTape(im)})*i ; ${rTape(Rd(Q(b,2*a)))}-(${rTape(im)})*i`:`2*(${rTape(im)})*i ; -2*(${rTape(im)})*i`,etapes:E,
+    q:`Résous dans ℂ l'équation ${fx(eq)}.`,corps:`<p class="muted">Rappel : pour ${fx("az² + bz + c = 0")}, on calcule ${fx("Δ = b² − 4ac")}, puis une racine carrée δ de Δ (un nombre tel que ${fx("δ² = Δ")}), et ${fx("z = (−b ± δ)/(2a)")}.</p>`,nature:"discriminant négatif",texte:`résoudre ${eq}`,
+    pieges:b?[[opp,{etape:2,type:"signe de b",titre:"Où ça part : la formule.",msg:`${fx("z = (−b ± δ)/(2a)")} : avec ${fx(`b = ${nb(b)}`)}, ${fx(`−b = ${nb(-b)}`)}.`}]]:[],ens:{type:"eq2",co:[[a,0],[b,0],[c,0]]}});}
+function racineCarree(R){const t=R();let d;
+  if(t<0.8){do d=Z(R.ent(1,7),R.nz(-7,7));while(egal(d.a,absQ(d.b))&&R()<0.5);}else if(t<0.9)d=Z(0,R.ent(1,9));else{const m=R.ent(1,5);d=Z(m,R.choix([m,-m]));}
+  const w=zmul(d,d),A=w.a,B=w.b,M=zn2(d),x2=div(add(M,A),2),y2=div(sub(M,A),2),md=Z(mul(d.a,-1),mul(d.b,-1));
+  const E=[{w:`On cherche ${fx("δ = x + iy")} avec ${fx(`δ² = ${zt(w)}`)}. En développant ${fx("δ² = x² − y² + 2ixy")} : ${fx(`x² − y² = ${nb(A)}`)} et ${fx(`2xy = ${nb(B)}`)}.`,why:"Deux complexes égaux ont la même partie réelle et la même partie imaginaire.",pts:1},
+    {w:`Les modules : ${fx(`x² + y² = |δ|² = |${zt(w)}| = √(${nb(mul(A,A))} + ${nb(mul(B,B))}) = ${nb(M)}`)}.`,why:`${fx("|δ²| = |δ|²")} : c'est la troisième équation, qui rend le calcul facile.`,pts:1},
+    {w:`En ajoutant et en retranchant : ${fx(`x² = ${nb(x2)}`)} et ${fx(`y² = ${nb(y2)}`)}.`,why:`${fx(`2x² = ${nb(M)} + ${par(A)}`)} et ${fx(`2y² = ${nb(M)} − ${par(A)}`)}.`,pts:1},
+    {w:nul(B)?`${fx("2xy = 0")} et ${fx("x = 0")} : les racines carrées sont ${fx(`${zt(d)}`)} et ${fx(zt(md))}.`:`${fx(`2xy = ${nb(B)}`)} est ${B.n>0?"positif : x et y ont le même signe":"négatif : x et y sont de signes contraires"}. Les racines carrées sont ${fx(zt(d))} et ${fx(zt(md))}.`,why:`Vérification : ${fx(`(${zt(d)})² = ${zt(w)}`)}. Il y a toujours deux racines carrées, opposées.`,pts:1}];
+  const mauvais=Z(d.a,mul(d.b,-1));
+  return exoListe({sig:"R"+zt(w),att:[zf(d),zf(md)],txt:[zt(d),zt(md)],tape:[ztx(d),ztx(md)],faux:nul(d.a)||nul(d.b)?`${ztx(Z(add(d.a,1),d.b))} ; ${ztx(md)}`:`${ztx(mauvais)} ; ${ztx(Z(mul(mauvais.a,-1),mul(mauvais.b,-1)))}`,label:"Les deux racines carrées :",etapes:E,
+    q:`Détermine les racines carrées du nombre complexe ${fx(`w = ${zt(w)}`)}, c'est-à-dire les complexes δ tels que ${fx(`δ² = ${zt(w)}`)}.`,corps:`<p class="muted">Méthode : ${fx("δ = x + iy")}, avec ${fx("x² − y² = A")}, ${fx("2xy = B")} et ${fx("x² + y² = |w|")}.</p>`,nature:nul(w.b)?"un réel négatif":nul(w.a)?"un imaginaire pur":"a + ib",texte:`racines carrées de ${zt(w)}`,
+    pieges:nul(d.a)||nul(d.b)?[]:[[[zf(mauvais),[-zf(mauvais)[0],-zf(mauvais)[1]]],{etape:3,type:"signe de 2xy",titre:"Où ça part : les signes.",msg:`${fx(`2xy = ${nb(B)}`)} : ${B.n>0?"x et y ont le même signe":"x et y sont de signes contraires"}. Vérifie en élevant au carré.`}]],ens:{type:"rac2",w:zf(w)}});}
+const ztx=z=>{const a=q(z.a),b=q(z.b);return nul(b)?brut(a):(nul(a)?"":brut(a)+(b.n<0?"":"+"))+(egal(b,1)?"":egal(b,-1)?"-":brut(b)+"*")+"i";};
+function coefComplexes(R){let z1,z2;do{z1=Z(R.ent(-4,4),R.ent(-4,4));z2=Z(R.ent(-4,4),R.ent(-4,4));}while(zeq(z1,z2)||nul(zn2(zadd(z1,z2)))||nul(zn2(z1))||nul(zn2(z2))||(nul(z1.b)&&nul(z2.b))||nul(zadd(z1,z2).b)&&nul(zmul(z1,z2).b));
+  const b=Z(mul(zadd(z1,z2).a,-1),mul(zadd(z1,z2).b,-1)),c=zmul(z1,z2),D=zsub(zmul(b,b),zmul(Z(4),c)),d=zsub(z1,z2),M=zn2(d);
+  const eq=`z²${nul(b.a)&&nul(b.b)?"":facS(b)+"z"}${plusZ(c)} = 0`;
+  const E=[{w:`${fx(`Δ = b² − 4c = ${zt(D)}`)}.`,why:`Ici ${fx(`b = ${zt(b)}`)} et ${fx(`c = ${zt(c)}`)} : ${fx(`b² = ${zt(zmul(b,b))}`)} et ${fx(`4c = ${zt(zmul(Z(4),c))}`)}.`,pts:1},
+    {w:`Une racine carrée de Δ, par la méthode ${fx("δ = x + iy")} : ${fx(`x² − y² = ${nb(D.a)}`)}, ${fx(`x² + y² = |Δ| = ${nb(M)}`)} et ${fx(`2xy = ${nb(D.b)}`)}, donc ${fx(`δ = ${zt(d)}`)}.`,why:`Vérification : ${fx(`(${zt(d)})² = ${zt(D)}`)}.`,pts:1.5},
+    {w:`${fx("z = (−b ± δ)/2")} : ${fx(`z₁ = ${zt(z1)}`)} et ${fx(`z₂ = ${zt(z2)}`)}.`,why:`${fx(`−b = ${zt(Z(mul(b.a,-1),mul(b.b,-1)))}`)} ; on ajoute puis on retranche δ, et on divise par 2. Vérification : ${fx(`z₁ + z₂ = −b`)} et ${fx("z₁z₂ = c")}.`,pts:1}];
+  return exoListe({sig:"C"+eq,att:[zf(z1),zf(z2)],txt:[zt(z1),zt(z2)],tape:[ztx(z1),ztx(z2)],faux:`${ztx(Z(mul(z1.a,-1),mul(z1.b,-1)))} ; ${ztx(Z(mul(z2.a,-1),mul(z2.b,-1)))}`,etapes:E,
+    q:`Résous dans ℂ l'équation ${fx(eq)}.`,corps:"",nature:"coefficients complexes",texte:`résoudre ${eq}`,
+    pieges:[[[zf(Z(mul(z1.a,-1),mul(z1.b,-1))),zf(Z(mul(z2.a,-1),mul(z2.b,-1)))],{etape:2,type:"signe de b",titre:"Où ça part : la formule.",msg:`${fx("z = (−b ± δ)/2")} : attention au signe de b.`}]],ens:{type:"eq2",co:[[1,0],zf(b),zf(c)]}});}
+function bicarree(R){const t=R();let Zs,zs;
+  if(t<0.3){let m,n;do{m=R.ent(1,5);n=R.ent(1,5);}while(m===n);Zs=[Z(-m*m),Z(-n*n)];zs=[Z(0,m),Z(0,-m),Z(0,n),Z(0,-n)];}
+  else if(t<0.6){const k=R.ent(1,5),m=R.ent(1,5);Zs=[Z(k*k),Z(-m*m)];zs=[Z(k),Z(-k),Z(0,m),Z(0,-m)];}
+  else{const d=Z(R.ent(1,4),R.ent(1,4));Zs=[zmul(d,d),zconj(zmul(d,d))];zs=[d,Z(mul(d.a,-1),mul(d.b,-1)),zconj(d),Z(mul(d.a,-1),d.b)];}
+  const p=mul(add(Zs[0].a,Zs[1].a),-1),qq=sub(mul(Zs[0].a,Zs[1].a),mul(Zs[0].b,Zs[1].b)),eq=`${S([[1,"z⁴"],[p,"z²"],[qq,""]])} = 0`,D=sub(mul(p,p),mul(4,qq));
+  const E=[{w:`On pose ${fx("Z = z²")} : ${fx(`${S([[1,"Z²"],[p,"Z"],[qq,""]])} = 0`)}.`,why:"z⁴ = (z²)² : l'équation devient du second degré en Z.",pts:1},
+    {w:`${fx(`Δ = ${nb(mul(p,p))} − ${nb(mul(4,qq)).replace(/^−/,"(−")+(qq.n<0?")":"")} = ${nb(D)}`)}, donc ${fx(`Z₁ = ${zt(Zs[0])}`)} et ${fx(`Z₂ = ${zt(Zs[1])}`)}.`,why:D.n<0?`Δ < 0 : ${fx(`δ = i√${nb(mul(D,-1))}`)}, et ${fx("Z = (−p ± δ)/2")}.`:`${fx("Z = (−p ± √Δ)/2")}.`,pts:1},
+    {w:`On revient à z : les racines carrées de ${fx(zt(Zs[0]))} sont ${fx(`${zt(zs[0])}`)} et ${fx(zt(zs[1]))} ; celles de ${fx(zt(Zs[1]))} sont ${fx(zt(zs[2]))} et ${fx(zt(zs[3]))}.`,why:`${fx("z² = Z")} : chaque Z donne deux valeurs de z, opposées. Vérification : ${fx(`(${zt(zs[0])})² = ${zt(Zs[0])}`)}.`,pts:1.5},
+    {w:`Quatre solutions : ${fx(listeT(zs.map(zt)))}.`,why:"Une équation de degré 4 a quatre solutions dans ℂ (comptées avec leur multiplicité).",pts:0.5}];
+  return exoListe({sig:"B"+eq,att:zs.map(zf),txt:zs.map(zt),tape:zs.map(ztx),faux:(()=>{const F=[zs[0],zs[1],Zs[1],Z(mul(Zs[1].a,-1),mul(Zs[1].b,-1))],dis=F.every((u,i)=>F.every((v,j)=>i===j||!zeq(u,v)));return (dis?F:zs.slice(0,3).concat([Z(0)])).map(ztx).join(" ; ");})(),label:"Les quatre solutions :",etapes:E,
+    q:`Résous dans ℂ l'équation ${fx(eq)}.`,corps:`<p class="muted">Indication : pose ${fx("Z = z²")}, comme au TD 3 (exercice 11).</p>`,nature:"équation bicarrée",texte:`résoudre ${eq}`,
+    pieges:[[[zf(zs[0]),zf(zs[1]),zf(Zs[1]),[-zf(Zs[1])[0],-zf(Zs[1])[1]]],{etape:2,type:"Z pris pour z",titre:"Où ça part : le retour à z.",msg:`Les valeurs de Z sont les valeurs de z², pas de z : il faut encore prendre leurs racines carrées.`}]],ens:{type:"bic",p:p.n/p.d,q:qq.n/qq.d}});}
+
+/* ---------- CA5 : racines n-ièmes ---------- */
+const kpi=n=>n===2?"kπ":n%2===0?`kπ/${n/2}`:`2kπ/${n}`;
+const casesRK=()=>({k:"cases",id:"p",noms:["r","θₖ"],titre:"Les solutions s'écrivent $r e^{iθₖ}$ pour $k = 0, 1, …, n − 1$. Écris $r$, puis $θₖ$ en fonction de $k$ :",large:true,sym:["√","π","k","/","^"],aide:"Par exemple r = 2^(1/3) et θₖ = π/12 + 2kπ/3 (ou pi/12+2*k*pi/3)."});
+const W1=[[Z(1),Q(0)],[Z(-1),Q(1)],[Z(0,1),Q(1,2)],[Z(0,-1),Q(-1,2)]];
+const radPow=(rho,n)=>rpow(rho,n);
+const rhoT=(rho)=>rT(rho);
+function exoRK(o){const n=o.n,rho=rF(o.rho),phi=angF(o.phi),att=[...Array(n)].map((_,k)=>(phi+2*k*Math.PI)/n),dern=o.etapes.length-1;
+  const memeEns=V=>V.length===att.length&&att.every(a=>V.filter(v=>memeAngle(v,a)).length===1);
+  function juge(rep){const P=rep.p||{},A=lisReel(P.r),ts=String(P["θₖ"]==null?"":P["θₖ"]),T=propre(ts)?lis(ts.replace(/^[^=]*=/,""),["k"]):null;
+    if(A.vide||!propre(ts))return {incomplet:"Remplis les deux cases : r, puis θₖ."};
+    if(A.illisible||A.neg||A.avecI)return {incomplet:"Je n'arrive pas à lire r. Écris par exemple 2, √3 ou 2^(1/3)."};
+    if(!T)return {incomplet:"Je n'arrive pas à lire θₖ. Écris par exemple π/12 + 2kπ/3."};
+    const L=[...lettres(T)];if(L.length)return {incomplet:L.includes("n")?`Remplace n par sa valeur, ${n}.`:`Écris θₖ avec la lettre k seulement (pas ${L[0]}).`};
+    let V;try{V=[...Array(n)].map((_,k)=>val(T,{k})[0]);}catch(e){return {incomplet:"Je n'arrive pas à calculer θₖ : vérifie les parenthèses."};}
+    const okR=pres(A.v,rho),okT=memeEns(V);if(okR&&okT)return {ok:true};
+    if(!okR&&A.dec&&Math.abs(A.v-rho)<0.02)return {incomplet:"Écris la valeur exacte du module, par exemple 2^(1/3) ou √2, pas une valeur approchée."};
+    const F=[];if(!okR)F.push("r");if(!okT)F.push("θₖ");let d;
+    if(!okR)d=pres(A.v,rF(o.R))?{etape:1,type:"module de w au lieu de sa racine n-ième",titre:"Où ça part : le module.",msg:`${fx(`rⁿ = ${rT(o.R)}`)} : r est la racine ${n}-ième de ${fx(rT(o.R))}, ${fx(`r = ${rhoT(o.rho)}`)}.`}:pres(A.v,rF(o.R)/n)?{etape:1,type:"module divisé par n",titre:"Où ça part : le module.",msg:`r n'est pas le module divisé par ${n} : c'est sa racine ${n}-ième.`}:{etape:1,type:"module",titre:"Où ça part : le module.",msg:`${fx(`r = ${rhoT(o.rho)}`)}.`};
+    else if(V.every(v=>memeAngle(v,V[0])))d={etape:2,type:"2kπ non divisé par n",titre:"Où ça part : les arguments.",msg:`Tes ${n} angles donnent tous le même point. ${fx("nθ = φ + 2kπ")} donne ${fx("θ = φ/n + 2kπ/n")} : le 2kπ est aussi divisé par n.`};
+    else if(V.every(v=>att.some(a=>memeAngle(v,-a))))d={etape:0,type:"argument de w",titre:"Où ça part : l'argument de w.",msg:`L'argument de w est ${fx(angT(o.phi))}, pas son opposé.`};
+    else d={etape:2,type:"arguments",titre:"Où ça part : les arguments.",msg:`${fx(`θₖ = ${o.thT}`)}, pour ${fx(`k = 0, …, ${n-1}`)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"r et θₖ sont à revoir":F[0]==="r"?"r est à revoir":"les arguments sont à revoir"}.`,diag:d};}
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[casesRK()],juge,etapes:o.etapes,bonne:`${fx(`r = ${rhoT(o.rho)}`)} et ${fx(`θₖ = ${o.thT}`)}, ${fx(`k = 0, …, ${n-1}`)}`,bonneTxt:`r = ${rhoT(o.rho)}, θk = ${o.thT}`,
+    repBonne:{p:{r:o.rhoTape,"θₖ":o.thTape}},repFausse:{p:{r:o.rhoTape,"θₖ":`${angTape(div(o.phi,n))}+2*k*pi`}},nature:o.nature,ens:{type:"rk",n,w:o.w}};}
+/* ρ, ρⁿ et l'angle : z^n = w avec w = ρⁿ e^{iφ} */
+function racN(R,genre){let n,rho,phi,w,wT;
+  if(genre===1){n=R.ent(2,8);const [z,f]=R.choix(W1);rho=Rd(1);phi=f;w=zf(z);wT=zt(z);}
+  else if(genre===2){const ch=R();n=R.ent(2,6);rho=ch<0.5?Rd(2):ch<0.75?Rd(3):Rd(1,R.choix([2,3]));if(rho.s>1&&n%2)n++;if(rT(rho)==="3"&&n>4)n=R.ent(2,4);
+    const RR=rpow(rho,n),[z,f]=R.choix(W1);phi=f;w=[rF(RR)*zf(z)[0],rF(RR)*zf(z)[1]];wT=zt(zmul(Z(mul(RR.c,1)),z));}
+  else{n=R.ent(2,4);rho=R.choix([Rd(1),Rd(2),Rd(1,2),Rd(Q(1,2),2)]);phi=R.choix(ANG.filter(t=>trig(t)&&mul(t,12).n%6!==0));const RR=rpow(rho,n),{a,b}=algDe(RR,phi);w=[rF(a),rF(b)];wT=zR(a,b);}
+  const RR=rpow(rho,n),thT=`${angT(div(phi,n))==="0"?"":angT(div(phi,n))+" + "}${kpi(n)}`,thTape=`${angTape(div(phi,n))}+2*k*pi/${n}`;
+  const rhoTape=rTape(rho),RT=rT(RR);
+  const E=[{w:`On écrit w en forme exponentielle : ${fx(`w = ${expT(RR,phi)==="1"?"e^{0}":expT(RR,phi)}`)}${nul(phi)?"":""}.`,why:`Module ${fx(`|w| = ${RT}`)} et argument ${fx(angT(phi))}${genre===3?" (calculés comme pour une forme exponentielle)":""}.`,pts:1},
+    {w:`On cherche ${fx("z = r e^{iθ}")} : ${fx(`zⁿ = rⁿ e^{inθ}`)}, donc ${fx(`r^{${n}} = ${RT}`)}, c'est-à-dire ${fx(`r = ${rT(rho)}`)}.`,why:`Deux complexes égaux ont le même module. ${fx("r &gt; 0")}, donc r est la racine ${n}-ième positive de ${fx(RT)}.`,pts:1},
+    {w:`Et ${fx(`${n}θ = ${angT(phi)} + 2kπ`)}, donc ${fx(`θₖ = ${thT}`)}, pour ${fx(`k = 0, 1, …, ${n-1}`)}.`,why:`Les arguments de deux complexes égaux sont égaux à 2π près. Pour k = ${n}, on retombe sur le point de k = 0 : il y a exactement ${n} solutions.`,pts:1}];
+  return exoRK({sig:"K"+genre+"|"+wT+"|"+n,n,rho,R:RR,phi,w,thT,thTape,rhoTape,etapes:E,q:`Résous dans ℂ l'équation ${fx(`z^{${n}} = ${wT}`)}.`,corps:genre===1?`<p class="muted">Méthode : écris w en forme exponentielle ${fx("w = R e^{iφ}")}, puis cherche ${fx("z = r e^{iθ}")} : ${fx("rⁿ = R")} et ${fx("nθ = φ + 2kπ")}.</p>`:"",nature:["","racines de 1, −1, i, −i","un réel ou un imaginaire pur","w en forme algébrique"][genre],texte:`résoudre z^${n} = ${wT}`});}
+/* toutes les solutions en forme algébrique */
+function racAlg(R){const cas=R.choix([[3,Q(0)],[3,Q(1)],[3,Q(1,2)],[3,Q(-1,2)],[4,Q(0)],[4,Q(1)],[4,Q(2,3)],[4,Q(-2,3)],[6,Q(0)],[6,Q(1)],[2,Q(1,2)],[2,Q(2,3)],[2,Q(-1,3)]]),n=cas[0],phi=cas[1],rho=R.choix(n===6?[Rd(1),Rd(1,3),Rd(1,2)]:[Rd(1),Rd(2),Rd(1,2),Rd(1,3)]);
+  const RR=rpow(rho,n),{a,b}=algDe(RR,phi),wT=zR(a,b),sol=[...Array(n)].map((_,k)=>angP(add(div(phi,n),Q(2*k,n)))),Zs=sol.map(t=>algDe(rho,t)),txt=Zs.map(z=>zR(z.a,z.b));
+  const E=[{w:`${fx(`w = ${expT(RR,phi)}`)} : les solutions sont ${fx(`z = ${rT(rho)==="1"?"":rT(rho)}e^{iθₖ}`)}, avec ${fx(`θₖ = ${nul(phi)?"":angT(div(phi,n))+" + "}${kpi(n)}`)}.`,why:`${fx(`rⁿ = ${rT(RR)}`)} donne ${fx(`r = ${rT(rho)}`)}, et ${fx(`nθ = φ + 2kπ`)}.`,pts:1},
+    {w:`Les ${n} angles : ${fx(sol.map(angT).join(" ; "))}.`,why:"On prend k = 0, 1, … jusqu'à n − 1, et on ramène chaque angle dans ]−π, π].",pts:1},
+    {w:`En forme algébrique, avec ${fx("r e^{iθ} = r(cos θ + i sin θ)")} : ${fx(listeT(txt))}.`,why:"Ce sont des angles connus (multiples de π/6 ou de π/4) : on lit leurs cosinus et sinus.",pts:1.5}];
+  const fx0=Zs.map(z=>[rF(z.a),-rF(z.b)]);
+  return exoListe({sig:"Z"+wT+"|"+n,att:Zs.map(z=>[rF(z.a),rF(z.b)]),txt,tape:Zs.map(z=>zRtape(z.a,z.b)),faux:Zs.slice(0,n-1).map(z=>zRtape(z.a,z.b)).concat(["0"]).join(" ; "),label:`Les ${n} solutions :`,etapes:E,
+    q:`Résous dans ℂ l'équation ${fx(`z^{${n}} = ${wT}`)}. Donne les ${n} solutions sous forme algébrique.`,corps:"",nature:`n = ${n}`,texte:`solutions algébriques de z^${n} = ${wT}`,
+    pieges:[[fx0,{etape:0,type:"argument de w",titre:"Où ça part : l'argument de w.",msg:`Tu as les conjuguées des solutions : l'argument de w est ${fx(angT(phi))}.`}]],ens:{type:"zn",n,w:[rF(a),rF(b)]}});}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -23669,7 +23775,19 @@ G.add("calc",[
    {t:"linéariser cos², sin² et sin cos",cc:3,min:45,gen:lineaire2},
    {t:"linéariser cos³, sin³, cos⁴…",cc:4,min:25,gen:lineaire3},
    {t:"cos(3θ) et sin(3θ)",cc:3,min:85,gen:triple},
-   {t:"cos et sin d'un angle en π/12, comme au TD 3 (exercice 7)",cc:8,min:20,gen:valeurPi12}]}
+   {t:"cos et sin d'un angle en π/12, comme au TD 3 (exercice 7)",cc:8,min:20,gen:valeurPi12}]},
+ {id:"CA4",t:"Racines carrées et second degré dans ℂ",tache:"second degré dans ℂ",th:"cxeq",pts:2.5,ex:"cc2",lecons:["c2-cx-eq"],apres:["CA1"],
+  paliers:[
+   {t:"un discriminant négatif",cc:3,min:180,gen:deltaNeg},
+   {t:"les racines carrées de a + ib",cc:4,min:90,gen:racineCarree},
+   {t:"des coefficients complexes",cc:6,gen:coefComplexes},
+   {t:"une équation bicarrée, comme au TD 3 (exercice 11)",cc:7,min:40,gen:bicarree}]},
+ {id:"CA5",t:"Racines n-ièmes",tache:"racines n-ièmes",th:"racn",pts:2,ex:"cc2",lecons:["c2-cx-racn"],apres:["CA2"],
+  paliers:[
+   {t:"zⁿ = 1, −1, i ou −i",cc:3,min:25,gen:R=>racN(R,1)},
+   {t:"zⁿ = un réel ou un imaginaire pur",cc:3,min:40,gen:R=>racN(R,2)},
+   {t:"zⁿ = w en forme algébrique, comme au TD 3 (exercice 12)",cc:4,min:100,gen:R=>racN(R,3)},
+   {t:"les n solutions en forme algébrique",cc:7,min:35,gen:racAlg}]}
 ]);
 })();
 
