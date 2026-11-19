@@ -513,6 +513,9 @@ details.ex .body{padding:0 16px 16px;display:grid;gap:12px}
 .tbl.tr th,.tbl th.var{text-transform:none}
 .tbl td:first-child{font-weight:650;white-space:nowrap}
 .tbl input{font:inherit;background:#000;color:var(--encre);border:2px solid var(--trait);border-radius:8px;padding:3px 6px;color-scheme:dark}
+.tbl .manote{display:inline-block;margin-top:4px;white-space:nowrap;font-weight:650;color:var(--encre)}
+.tbl .manote input{width:4.2em;text-align:center}
+.tbl input.faux{border-color:var(--rouge)}
 .timer{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .timer .score.end{color:var(--rouge)}
 .notation{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:10px 18px;align-items:baseline}
@@ -27958,6 +27961,7 @@ function subject(sid){
    +(A.annOf(S).length?sw({href:`#/${sid}/annales`,c,tile:ico("i-doc"),kicker:exW(S)==="CC"?"Comme au CC":"Comme à l'examen",name:"Annales et chrono",sub:`${A.annOf(S).length} ${plural(A.annOf(S).length,"sujet")} corrigé${A.annOf(S).length>1?"s":""}`}):"")
    +(A4[sid]?sw({href:`#/${sid}/p/feuille`,c,tile:ico("i-doc"),kicker:"Pour le jour du CC",name:"Ma feuille à recopier",sub:A4[sid]}):"")
    +`</ul>`;
+  const mn=A.notesHTML(sid);if(mn)h+=tiroir("Mes notes",`<div class="check" id="mesnotes">${mn}</div>`,c);
   const chs=[...new Set(S.ORDER.map(x=>x.ch))],isOut=ch=>S.ORDER.filter(x=>x.ch===ch).every(x=>x.out);
   const phone=matchMedia("(max-width:600px)").matches;
   const chap=ch=>{const L=S.ORDER.filter(x=>x.ch===ch),k=L.filter(x=>st.known[x.id]).length,r=L.filter(x=>st.review[x.id]).length;
@@ -28527,7 +28531,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},skip:{},cren:{},sans:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
+const hub={theme:local.theme,exams:{},notes:{},skip:{},cren:{},sans:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -28550,7 +28554,7 @@ const neuve=day=>{CARTES.neuves[day]=(CARTES.neuves[day]||0)+1;};
 const mesureCarte=(e,day)=>{if(e.ms>0)CARTES.L.push([Math.min(180000,e.ms),e.re?0:1,day]);};
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("carnet:")===0){CARTES.carnet[e.key.slice(7)]=e.v;}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("sans:")===0){const k=e.key.slice(5);if(e.v)hub.sans[k]=+e.v;else delete hub.sans[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("carnet:")===0){CARTES.carnet[e.key.slice(7)]=e.v;}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("sans:")===0){const k=e.key.slice(5);if(e.v)hub.sans[k]=+e.v;else delete hub.sans[k];}else if(typeof e.key==="string"&&e.key.indexOf("note:")===0){const k=e.key.slice(5);if(typeof e.v==="number"&&e.v>=0&&e.v<=20)hub.notes[k]=e.v;else delete hub.notes[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -28578,7 +28582,7 @@ function applyEv(e){
   else if(e.k==="card"){mesureCarte(e,day);const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.skip={};hub.cren={};hub.sans={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];CARTES.L=[];CARTES.neuves={};CARTES.carnet={};hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.notes={};hub.skip={};hub.cren={};hub.sans={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];CARTES.L=[];CARTES.neuves={};CARTES.carnet={};hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(applyEv);}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -28686,8 +28690,85 @@ function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)r
   const mins=(T.les||[]).map(l=>"L-"+l).concat(T.tasks||[]).reduce((s,x)=>s+((S.TB[x]||{}).min||0),0);return gainTheme(sid,T)/Math.max(mins,10);}
 const examStart=S=>{const e=exam(S);return toD(e.day,mm(e.start));};
 function jx(S){const e=exam(S),n=NOW(),k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
-const weight=S=>{const e=exam(S);return S.coef*(e.share!=null?e.share:S.share);};
-const WMAX=Math.max(...SIDS.map(id=>weight(SUBJ[id])));
+const poids0=S=>{const e=exam(S);return S.coef*(e.share!=null?e.share:S.share);};
+const WMAX=Math.max(...SIDS.map(id=>poids0(SUBJ[id])));
+
+/* ---------- ses notes ---------- */
+/* Modalités de contrôle 2026-2027 : toutes les épreuves d'une matière, même celles que le planning n'a pas
+   (date pas encore publiée, exercices en ligne) : [identifiant, nom, part, texte si elle n'aura jamais de date ici, 1 si elle est déjà passée].
+   sc = seconde chance du contrôle continu intégral : "premex" sans la première épreuve, "mincex" sans la moins coefficientée.
+   Les notes ne sont que dans le journal (réglage note:<matière>.<épreuve>), jamais dans les fichiers du site. */
+const MCC={geo:{b:"m",sc:"premex",ep:[["cc1","CC1",0.3],["cc2","CC2",0.3],["fin","Épreuve finale",0.4]]},
+  calc:{b:"m",sc:"premex",ep:[["cc1","CC1",0.25],["cc2","CC2",0.25],["fin","CC final",0.5]]},
+  lin:{b:"m",ep:[["cc1","CC1",0.2],["cc2","CC2",0.2],["ct","Examen",0.6]]},
+  ana:{b:"m",ep:[["cc1","CC1",0.25],["cc2","CC2",0.25],["ct","Examen",0.5]]},
+  rai:{b:"m",ep:[["cc2","CC2",0.55],["ligne","Exercices en ligne",0.45,"clos le 2 octobre",1]]},
+  algo:{b:"i",sc:"mincex",ep:[["cc1","CC1",0.32],["cc2","CC2",0.34],["cc3","CC3",0.34]]},
+  pf:{b:"i",ep:[["cc1","CC",0.3],["tp","TP noté",0.03,"en séance de TP"],["ct","Examen",0.67]]},
+  usi:{b:"i",ep:[["exam","Examen",1]]}};
+const fr=x=>String(Math.round(x*100)/100).replace(".",",");
+const et=L=>L.length>1?L.slice(0,-1).join(", ")+" et "+L[L.length-1]:L[0]||"";
+const nomEp=(x,a,b,c)=>/^Exercices/.test(x.label)?c+" "+x.label.toLowerCase():/^[ÉE]/.test(x.label)?b+x.label.toLowerCase():a+" "+x.label;
+const auEp=x=>nomEp(x,"au","à l'","aux"),duEp=x=>nomEp(x,"du","de l'","des");
+/* une épreuve des modalités est celle du planning qui a le même identifiant, sinon la suivante pas encore prise */
+function epreuves(sid){const S=SUBJ[sid],M=MCC[sid];if(!M)return [];const L=examsOf(S),pris=new Set(),n0=NOW();
+  const E=M.ep.map(([id,label,w,hors,clos])=>({id,label,w,hors:hors||"",clos:!!clos,i:hors?-1:L.findIndex(e=>e.id===id)}));
+  E.forEach(x=>{if(x.i>=0)pris.add(x.i);});
+  E.forEach(x=>{if(x.i<0&&!x.hors){x.i=L.findIndex((e,j)=>!pris.has(j));if(x.i>=0)pris.add(x.i);}});
+  E.forEach(x=>{const e=x.i>=0?examAt(S,x.i):null,v=hub.notes[sid+"."+x.id];x.e=e;if(e)x.label=e.label;x.past=e?toD(e.day,mm(e.end||e.start))<=n0:x.clos;x.n=typeof v==="number"?v:null;});
+  return E;}
+/* Où il en est dans une matière. moy = moyenne des notes entrées ; need = moyenne qu'il faut aux épreuves sans note pour avoir 10 ;
+   fin = note de la matière quand tout est noté. La seconde chance est comptée comme une moyenne pondérée par les parts,
+   et la meilleure des deux notes est gardée (les modalités ne le disent pas en toutes lettres). */
+function bilan(sid){const E=epreuves(sid),M=MCC[sid];if(!E.length)return null;
+  const calc=L=>{const W=L.reduce((s,x)=>s+x.w,0),G=L.filter(x=>x.n!=null),wg=G.reduce((s,x)=>s+x.w,0)/W,pts=G.reduce((s,x)=>s+x.w*x.n,0)/W;
+    return {W,moy:wg?pts/wg:null,need:wg<0.999?(10-pts)/(1-wg):null,fin:wg>=0.999?pts:null,reste:L.filter(x=>x.n==null)};};
+  const A=calc(E),drop=M.sc?(M.sc==="premex"?E[0]:E.slice().sort((x,y)=>x.w-y.w)[0]):null,B=drop?calc(E.filter(x=>x!==drop)):null;
+  /* l'épreuve s'efface quand la formule sans elle demande moins (ou donne plus, une fois tout noté) */
+  const efface=!!(B&&drop.n!=null&&(A.fin!=null?B.fin>A.fin:B.need!=null&&B.need<A.need)),V=efface?B:A;
+  return {E,A,B,drop,efface,manque:E.filter(x=>x.past&&x.n==null),nb:E.filter(x=>x.n!=null).length,moy:V.moy!=null?V.moy:A.moy,need:V.need,fin:A.fin!=null?Math.max(A.fin,B&&B.fin!=null?B.fin:0):null,reste:V.reste,part:x=>x.w/V.W};}
+/* note estimée pour l'épreuve courante d'après les entraînements : la maîtrise des thèmes, pondérée par leurs points,
+   dès qu'on sait quelque chose sur la moitié des points. der = jour de la dernière réponse ou leçon comptée. */
+function estime(sid){const S=SUBJ[sid],st=ST[sid],TH=themesOf(S),tot=TH.reduce((s,T)=>s+T.pts,0);let su=0,pts=0,der="";
+  TH.forEach(T=>{const m=maitrise(sid,T);if(m==null)return;su+=T.pts;pts+=T.pts*m;
+    [(st.diag[T.id]||{}).on].concat((T.les||[]).map(l=>(st.les[l]||{}).on)).forEach(d=>{if(d&&d>der)der=d;});});
+  return tot&&su>=tot/2?{note:20*pts/su,der}:null;}
+/* le poids d'une matière dans le planning. Avec ses notes : une épreuve effacée par la seconde chance donne sa part aux autres,
+   et une matière où il faut plus de 10 aux épreuves qui restent pèse plus (1,5 fois au plus), moins s'il faut moins (0,7 au moins). */
+function weight(S){let p=poids0(S);const M=MCC[S.id];if(!M||!M.ep.some(x=>hub.notes[S.id+"."+x[0]]!=null))return p;
+  const B=bilan(S.id),e=exam(S),x=B.E.find(y=>y.i===e.idx);if(B.manque.length)return p;
+  if(B.efface&&x&&x!==B.drop)p=S.coef*B.part(x);
+  return p*(B.need==null?1:Math.min(1.5,Math.max(0.7,B.need/10)));}
+const sur20=v=>`${fr(v)} sur 20`,pct=v=>`${Math.round(v*100)}\u00a0%`;
+const besoin=v=>fr(Math.ceil(v*100-1e-6)/100);
+/* les phrases de la carte « Mes notes » d'une matière */
+function phrasesNotes(sid){const S=SUBJ[sid],B=bilan(sid),out=[];if(!B)return out;const d=B.drop,aux=et(B.reste.map(auEp));
+  if(B.manque.length)out.push(`Dès que tu as ta note ${et(B.manque.map(duEp))}, tape-la : le calcul en a besoin.`);
+  if(!B.nb){if(!B.manque.length)out.push("Aucune note entrée pour l'instant.");}
+  else if(B.fin!=null)out.push(`Note de la matière : <b>${sur20(B.fin)}</b>.`);
+  else if(B.efface)out.push(`Seconde chance : ton ${d.label} (${fr(d.n)}) s'efface si tu fais mieux aux épreuves qui restent. La note devient la moyenne ${et(B.E.filter(x=>x!==d).map(x=>`${duEp(x)} (${pct(B.part(x))})`))}.${B.B.moy!=null?` Sans le ${d.label}, ta note du moment : <b>${sur20(B.B.moy)}</b>.`:""}`);
+  else out.push(`Ta note du moment : <b>${sur20(B.moy)}</b>, sur ${pct(B.E.filter(x=>x.n!=null).reduce((s,x)=>s+x.w,0))} de la note.${d&&d.n!=null?` Ton ${d.label} reste dans le calcul : il te sert.`:""}`);
+  if(B.need!=null&&!B.manque.length){
+    if(B.need<=0)out.push("Tu as déjà 10 dans la matière, quelles que soient les épreuves qui restent.");
+    else if(B.need>20)out.push(`Avoir 10 dans la matière n'est plus possible avec les épreuves qui restent (il faudrait ${besoin(B.need)}). Chaque point compte quand même : les matières se compensent dans le bloc.`);
+    else out.push(`Pour avoir 10 dans la matière : <b>il te faut ${besoin(B.need)} de moyenne</b> ${aux}.${B.efface&&B.A.need>B.need?` Sans la seconde chance, il faudrait ${besoin(B.A.need)}.`:""}`);}
+  if(examStart(S)>NOW()){const v=estime(sid),e=exam(S),x=B.E.find(y=>y.i===e.idx)||{label:e.label};
+    out.push(v?`Niveau estimé ${auEp(x)} d'après tes entraînements : <b>${Math.round(v.note)} sur 20</b>${!B.manque.length&&B.need>0&&B.need<=20?`, il te faut ${besoin(B.need)}`:""}${v.der?` (dernière mesure le ${dayName(v.der,false)})`:" (d'après ce qui est coché, pas encore de mesure)"}.`:`Niveau pas encore mesuré : fais <a href="#/${sid}/niveau">Où j'en suis</a>.`);}
+  return out;}
+const ligneEp=(B,x)=>`<b>${x.label}</b> (${pct(x.w)}) : ${x.n!=null?sur20(x.n)+(B.efface&&x===B.drop?", s'efface":""):x.past?"pas de note entrée":x.e?`le ${dayName(x.e.day,false)}`:x.hors||"date pas encore publiée"}`;
+function notesHTML(sid){const B=bilan(sid);if(!B)return "";
+  return `<div>${B.E.map(x=>ligneEp(B,x)).join("<br>")}</div>${phrasesNotes(sid).map(p=>`<div>${p}</div>`).join("")}<a class="btn" href="#/examens">Taper ou corriger une note</a>`;}
+const carteNotes=sid=>{const h=notesHTML(sid);return h?`<section class="check" id="mesnotes"><h2 style="font-size:1.1rem">Mes notes</h2>${h}</section>`:"";};
+/* le tableau d'ensemble de la page Examens et coefficients, et la moyenne du moment de chaque bloc */
+function bilanHTML(){const ids=SIDS.filter(id=>MCC[id]),n0=NOW();
+  const rows=ids.map(id=>{const S=SUBJ[id],B=bilan(id),G=B.E.filter(x=>x.n!=null),v=examStart(S)>n0?estime(id):null,e=exam(S);
+    return `<tr><td><i class="sdot" style="background:${S.color}"></i> ${S.name}</td><td>${B.manque.length?`<span class="muted">tape ta note ${et(B.manque.map(duEp))}</span>`:B.need==null?"":B.need<=0?"déjà 10":B.need>20?`<span class="r">${besoin(B.need)}</span>`:`<b>${besoin(B.need)}</b> ${et(B.reste.map(auEp))}`}</td><td>${examStart(S)<=n0?"":v?`${Math.round(v.note)} sur 20 pour ${nomEp({label:e.label||"CC"},"le","l'","les")}${v.der?`, mesuré le ${dayName(v.der,false,true)}`:""}`:`<span class="muted">pas encore mesuré</span>`}</td><td>${G.length?G.map(x=>`${x.label} : ${fr(x.n)}${B.efface&&x===B.drop?", s'efface":""}`).join("<br>"):`<span class="muted">aucune</span>`}</td><td>${B.fin!=null?`<b>${fr(B.fin)}</b>`:B.nb?fr(B.moy):`<span class="muted">pas encore</span>`}</td></tr>`;}).join("");
+  const bloc=(b,nom)=>{const L=ids.filter(id=>MCC[id].b===b),G=L.map(id=>({c:SUBJ[id].coef,m:bilan(id)})).filter(x=>x.m.nb),c=G.reduce((s,x)=>s+x.c,0);
+    return `<b>${nom}</b>, premier semestre : ${c?`${sur20(G.reduce((s,x)=>s+x.c*(x.m.fin!=null?x.m.fin:x.m.moy),0)/c)} pour l'instant, avec ${G.length} matière${G.length>1?"s":""} notée${G.length>1?"s":""} sur ${L.length}`:"pas encore de note"}.`;};
+  return `<h2 style="font-size:1.1rem">Tes notes : où tu en es</h2><p class="muted">Tape tes notes dans le grand tableau du dessous, case « Ma note » d'une épreuve passée. Elles restent dans ton journal (cet appareil et ta synchronisation privée), jamais dans le site public.</p>
+   <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Matière</th><th>Il te faut, pour avoir 10</th><th>Niveau estimé</th><th>Tes notes</th><th>Note du moment</th></tr></thead><tbody>${rows}</tbody></table></div>
+   <div>${bloc("m","Bloc maths")}<br>${bloc("i","Bloc informatique")}</div>
+   <p class="muted" style="font-size:.9rem">Il te faut 10 dans chaque bloc sur l'année, second semestre compris. La seconde chance est comptée comme une moyenne pondérée par les parts, la meilleure des deux notes gardée : à confirmer auprès des enseignants. Le niveau estimé vient de tes mini-contrôles, quiz, cartes et leçons. Le planning en tient compte : une épreuve effacée donne sa part aux suivantes, et une matière où il te faut plus de 10 passe devant.</p>`;}
 
 /* ---------- thème : un seul, le noir du nouvel onglet ---------- */
 document.documentElement.dataset.theme="sombre";
@@ -29053,15 +29134,17 @@ function lierSeances(root,box,refresh){
 
 /* ---------- examens et coefficients ---------- */
 function examens(){
-  const n0=NOW(),rows=SIDS.map(id=>{const S=SUBJ[id],L=examsOf(S);return L.map((x,i)=>{const e=examAt(S,i),past=toD(e.day,mm(e.end||e.start))<=n0,sh=e.share!=null?e.share:S.share;
+  const n0=NOW(),caseNote=(S,x)=>x&&(x.past||x.hors)?`<br><label class="manote">Ma note<br><input type="text" inputmode="decimal" size="4" data-note="${S.id}.${x.id}" value="${x.n!=null?fr(x.n):""}" aria-label="Ma note, ${x.label}, ${S.name}, sur 20"> sur 20</label>`:"";
+  const rows=SIDS.map(id=>{const S=SUBJ[id],L=examsOf(S),E=epreuves(id),plus=E.filter(x=>x.i<0);return L.map((x,i)=>{const e=examAt(S,i),past=toD(e.day,mm(e.end||e.start))<=n0,sh=e.share!=null?e.share:S.share;
     const off=!past&&(e.off||L.some((y,j)=>j!==i&&!examAt(S,j).off));
-    return `<tr${past||e.off?' class="muted"':""}>${i===0?`<td rowspan="${L.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":e.off?"<br>enlevé du planning":""}</td><td><input type="date" value="${e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted"><span class="nf">${e.place}</span>, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}${off?`<br><button class="btn" data-exoff="${examKey(S,i)}" aria-pressed="${!!e.off}">Cette épreuve n'a pas lieu</button>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("");}).join("");
+    return `<tr${past||e.off?' class="muted"':""}>${i===0?`<td rowspan="${L.length+plus.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":e.off?"<br>enlevé du planning":""}${caseNote(S,E.find(y=>y.i===i))}</td><td><input type="date" value="${e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted"><span class="nf">${e.place}</span>, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}${off?`<br><button class="btn" data-exoff="${examKey(S,i)}" aria-pressed="${!!e.off}">Cette épreuve n'a pas lieu</button>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("")+plus.map(x=>`<tr class="muted"><td><b>${x.label}</b>${caseNote(S,x)}</td><td>${x.hors||"date pas encore publiée"}</td><td>${pct(x.w)}</td><td><b>${String((S.coef*x.w).toFixed(2)).replace(".",",")}</b></td><td></td></tr>`).join("");}).join("");
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Examens et coefficients</h1></div>
    <p class="lead">D'après le document officiel des modalités de contrôle 2026-2027 et les pages Moodle. Le poids d'un CC dans ta moyenne du semestre, c'est le coefficient de la matière multiplié par la part de ce CC dans sa note.</p>
-   <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Matière</th><th>Épreuve</th><th>Date et heure</th><th>Part de la note</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
+   <section class="check" id="bilan">${bilanHTML()}</section>
+   <div style="overflow-x:auto"><table class="tbl" id="extbl"><thead><tr><th>Matière</th><th>Épreuve</th><th>Date et heure</th><th>Part de la note</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
    <section class="check"><h2 style="font-size:1.1rem">Ton rythme de révision</h2><p class="muted">Le temps de révision prévu au maximum par jour. Le plan se recalcule tout de suite.</p><div class="filters" id="ry">${[["leger","Léger : 3 h de travail les jours libres, 1 h 30 les jours de cours"],["normal","Normal : 4 h 30 et 2 h 30"],["intensif","Intensif : 6 h et 3 h 30"]].map(r=>`<button class="btn" data-ry="${r[0]}" aria-pressed="${(hub.rythme||"normal")===r[0]}">${r[1]}</button>`).join("")}</div><p class="muted" id="ryout"></p><p class="muted" style="font-size:.9rem">Sans compter les pauses : 15 min au milieu de chaque séance de plus d'une heure, et 20 min entre deux séances.</p></section>
    <section class="check"><h2 style="font-size:1.1rem">Ta vitesse</h2><p class="muted">Combien de fois plus de temps qu'indiqué au départ une leçon te prend. Par défaut, le site la mesure sur tes leçons (pause comprise jusqu'à 20 min par écran). Tu peux la fixer toi-même si la mesure te semble fausse.</p><div class="filters" id="vi">${[["auto",(SIDS.some(id=>measured(id)==="mesuré")?"Mesurée : ×":"Automatique (estimée pour l'instant) : ×")+String(factor().toFixed(1)).replace(".",",")],["2","×2"],["3","×3"],["4","×4"],["5","×5"]].map(r=>`<button class="btn" data-vi="${r[0]}" aria-pressed="${(hub.vitesse||"auto")===r[0]}">${r[1]}</button>`).join("")}</div></section>
-   <section class="usage"><h2>Ce que ça change</h2><p>Les coefficients ne sont pas tous égaux : l'algorithmique et la programmation fonctionnelle (coef 5) pèsent plus que la géométrie (coef 4) et le calculus (coef 3). Le planificateur s'en sert pour départager deux matières aussi urgentes, et pour choisir quoi laisser tomber s'il manque du temps.</p><p>Si une heure de CC change, corrige-la dans le tableau : le plan se recalcule tout seul. Si un CC n'a pas lieu, appuie sur « Cette épreuve n'a pas lieu » sous sa date : ses révisions passent au CC suivant de la matière. Le même bouton le remet.</p></section>
+   <section class="usage"><h2>Ce que ça change</h2><p>Les coefficients ne sont pas tous égaux : l'algorithmique et la programmation fonctionnelle (coef 5) pèsent plus que la géométrie (coef 4) et le calculus (coef 3). Le planificateur s'en sert pour départager deux matières aussi urgentes, et pour choisir quoi laisser tomber s'il manque du temps.</p><p>Si une heure de CC change, corrige-la dans le tableau : le plan se recalcule tout seul. Si un CC n'a pas lieu, appuie sur « Cette épreuve n'a pas lieu » sous sa date : ses révisions passent au CC suivant de la matière. Le même bouton le remet.</p><p>Tes notes comptent aussi : tape-les dans la case « Ma note » d'une épreuve passée. Quand un CC1 s'efface par la seconde chance, les épreuves qui restent pèsent plus dans le planning, et une matière où il te faut plus de 10 passe devant.</p></section>
     <section class="usage"><h2>Seconde chance : ce qui se rattrape</h2><p>D'après les modalités de contrôle 2026-2027 de la double licence (document officiel du 11 septembre 2026).</p>
     <p><b>Géométrie et Calculus</b> (contrôle continu intégral) : la note est aussi calculée sans le CC1, avec « la moyenne des N−1 dernières épreuves », c'est-à-dire le CC2 et l'épreuve finale. Un CC1 raté se rattrape donc en entier avec les deux épreuves qui restent.</p>
     <p><b>Algorithmique 1</b> (contrôle continu intégral) : la note est aussi calculée sans l'épreuve à 32 %, avec « la moyenne des N−1 épreuves les plus coefficientées ». Le document ne dit pas laquelle des trois épreuves est à 32 % : le site suppose que c'est le CC1.</p>
@@ -29073,8 +29156,11 @@ function examens(){
   const ryOut=()=>{const P=plan(),tot=P.blocks.reduce((s,b)=>s+work(b.end-b.start),0),nb=Object.values(P.bonus).reduce((s,L)=>s+L.length,0);$("#ryout").textContent=`Avec ce rythme et cette vitesse : ${hm(tot)} de travail prévues jusqu'au dernier CC. Il faudrait ${hm(P.need||0)} pour l'essentiel (leçons et un examen blanc par matière)${nb?` : ${nb} étape(s) restent facultatives, faute de temps`:""}.`;};ryOut();
   $("#ry").addEventListener("click",e=>{const b=e.target.closest("[data-ry]");if(!b)return;emit({k:"set",key:"rythme",v:b.dataset.ry});document.querySelectorAll("#ry [data-ry]").forEach(x=>x.setAttribute("aria-pressed",x===b));ryOut();});
   $("#vi").addEventListener("click",e=>{const b=e.target.closest("[data-vi]");if(!b)return;emit({k:"set",key:"vitesse",v:b.dataset.vi});document.querySelectorAll("#vi [data-vi]").forEach(x=>x.setAttribute("aria-pressed",x===b));ryOut();});
-  $("#main .tbl").addEventListener("change",e=>{const k=e.target.dataset.ex;if(!k)return;const[id,f]=k.split(":");emit({k:"set",key:"exam:"+id+":"+f,v:e.target.value});topInfo();renderSide();});
-  $("#main .tbl").addEventListener("click",e=>{const b=e.target.closest("[data-exoff]");if(!b)return;emit({k:"set",key:"exam:"+b.dataset.exoff+":off",v:b.getAttribute("aria-pressed")==="true"?"":"1"});examens();topInfo();renderSide();});
+  $("#extbl").addEventListener("change",e=>{const c=e.target.dataset.note;if(!c)return;const t=e.target.value.trim().replace(",","."),v=t===""?"":+t,old=hub.notes[c];
+    if(v!==""&&!(v>=0&&v<=20)){e.target.value=old!=null?fr(old):"";e.target.classList.add("faux");return;}
+    e.target.classList.remove("faux");if(v!==(old!=null?old:"")){emit({k:"set",key:"note:"+c,v});ryOut();}e.target.value=v===""?"":fr(v);$("#bilan").innerHTML=bilanHTML();topInfo();renderSide();});
+  $("#extbl").addEventListener("change",e=>{const k=e.target.dataset.ex;if(!k)return;const[id,f]=k.split(":");emit({k:"set",key:"exam:"+id+":"+f,v:e.target.value});topInfo();renderSide();});
+  $("#extbl").addEventListener("click",e=>{const b=e.target.closest("[data-exoff]");if(!b)return;emit({k:"set",key:"exam:"+b.dataset.exoff+":off",v:b.getAttribute("aria-pressed")==="true"?"":"1"});examens();topInfo();renderSide();});
 }
 
 /* ---------- accueil d'une matière ---------- */
@@ -29090,6 +29176,7 @@ function subjHome(sid){
   if(done.length)body+=sec(k++,"Déjà fait",`<details class="day"><summary><b>${done.length} étape(s) terminée(s)</b><span>clique pour voir</span></summary><ol class="todo" style="padding:0 12px 12px">${done.map(t=>taskHTML(sid,t,false)).join("")}</ol></details>`);
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${S.name}</h1><span class="muted">${S.code}</span></div>
    <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${dayName(e.day,false)} à ${e.start.replace(":","h")}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}</div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
+   ${carteNotes(sid)}
    ${body}</div>`;
   bindTicks($("#main"),()=>subjHome(sid));fixLinks($("#main"),sid);
 }
@@ -29471,10 +29558,14 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
+/* ?note=geo.cc1:12.5 dans l'adresse : entre cette note si la case est vide, puis retire le paramètre de l'adresse */
+(function(){const q=new URLSearchParams(location.search),t=q.get("note");if(!t)return;
+  t.split(";").forEach(p=>{const m=/^([a-z]+)\.([a-z0-9]+):(\d+(?:\.\d+)?)$/.exec(p);if(!m||!MCC[m[1]]||!SUBJ[m[1]]||!MCC[m[1]].ep.some(x=>x[0]===m[2])||+m[3]>20)return;const k=m[1]+"."+m[2];if(hub.notes[k]==null)emit({k:"set",key:"note:"+k,v:+m[3]});});
+  q.delete("note");const r=q.toString();try{history.replaceState(null,"",location.pathname+(r?"?"+r:"")+location.hash);}catch(e){}})();
 window.addEventListener("hashchange",route);
 /* formules en écriture mathématique dans les matières de maths (?maths=0 pour s'en passer).
    Seuls les morceaux de page qui viennent de changer sont repassés ; un corrigé replié l'est à son ouverture. */
