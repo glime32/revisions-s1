@@ -21612,7 +21612,7 @@ G.add("rai",[
 /* Générateurs de Géométrie (CC2 : translations et homothéties, Pythagore, trigonométrie, aire, Al-Kashi, cercles). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nb,brut,propre}=O;
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nb,brut,par,propre}=O;
 const an=s=>`<span class="ang">${s}</span>`,ve=s=>`<span class="vec">${s}</span>`;
 const cosAn=s=>`<span class="en-nb">cos(${an(s)})</span>`,absAn=s=>`<span class="en-nb">|${an(s)}|</span>`;
 const fx=s=>s.replace(/[_{}^]/g,"").length>30?O.f(s):O.fx(s);
@@ -22133,6 +22133,104 @@ function isoInterieur(R){const k=R()<0.5?"DAC":"ADC";let b,c,z;for(;;){const N=R
     ens:{P,don:[["C","B","A",angV(b)],["A","C","B",angV(c)]],c:[["eg","D","A","D","B"],["entre","D","B","C"]],ch:{x:k==="DAC"?["D","A","C"]:["A","D","C"]}}});}
 const plusieurs=R=>{const r=R();return r<0.14?isoDouble(R):r<0.36?bissectrices(R):r<0.58?orthocentre(R):r<0.76?hauteurBis(R):isoInterieur(R);};
 
+/* ---------- GE2 : homothéties (définition 3.3.3, théorème 3.3.4, feuille 3) ---------- */
+const LAMS=[[2,1],[3,1],[1,2],[1,3],[3,2],[2,3],[4,3],[3,4],[5,2],[5,3],[-2,1],[-3,1],[-1,2],[-1,3],[-3,2],[-2,3],[-4,3],[-3,4],[-5,2],[-1,1]].map(x=>Q(x[0],x[1]));
+const vabs=x=>x.n<0?mul(x,-1):x,fl=x=>x.n/x.d;
+function jugeNb(V,E,pieges,quoi){return rep=>{const r=lisNombre(rep.x,V,quoi);if(r.inc)return {incomplet:r.inc};if(pres(r.v,V))return {ok:true};
+  for(const p of pieges){const w=fl(p[0]);if(!pres(w,V)&&pres(r.v,w))return faux({etape:p[1],type:p[2],titre:p[3],msg:p[4]});}
+  return faux({etape:E.length-1,type:"calcul",titre:"Où ça part : le calcul.",msg:E[E.length-1].w});};}
+const unNombre=({nom,v,autre,pieges,ex,quoi,...o})=>{autre=[autre].concat(pieges.map(p=>p[0])).find(y=>y&&!egal(y,v))||add(v,1);
+  return Object.assign({champs:[champL("x",nom,`$${nom} =$`,ex)],juge:jugeNb(fl(v),o.etapes,pieges,quoi),bonne:fx(`${nom} = ${nb(v)}`),bonneTxt:`${nom} = ${nb(v)}`.replace(/_\{(\d)\}/g,"$1"),repBonne:{x:brut(v)},repFausse:{x:brut(autre)}},o);};
+const sens=(pos,K,M,N)=>pos?`${N} est du même côté de ${K} que ${M} : les vecteurs ${ve(K+M)} et ${ve(K+N)} ont le même sens, le rapport est positif`:`${N} est de l'autre côté de ${K} : les vecteurs ${ve(K+M)} et ${ve(K+N)} sont de sens contraires, le rapport est négatif`;
+const quot=(a,b,r)=>{if(b===1)return String(a);const t=`${a}/${b}`;return t===nb(r)?t:t+" = "+nb(r);};
+
+function imageLongueur(R){const k=R()<0.6?"seg":"centre",l=R.choix(LAMS),d=Q(R.ent(1,12),R.choix([1,1,1,2,3])),a=vabs(l),V=mul(a,d),N=k==="seg"?"h(A)h(B)":"KM′";
+  const calc=l.n<0?`= |${nb(l)}| × ${nb(d)} = ${nb(a)} × ${nb(d)} = ${nb(V)}`:`= ${nb(l)} × ${nb(d)} = ${nb(V)}`;
+  const E=k==="seg"?[{w:`D'après le théorème 3.3.4 (i), une homothétie de rapport λ multiplie toutes les distances par |λ| : ${fx("h(A)h(B) = |λ| × AB")}.`,why:"C'est la valeur absolue du rapport qui compte : une distance est toujours positive, même quand le rapport est négatif.",pts:1}]
+    :[{w:`Par définition (3.3.3), ${ve("KM′")} = λ${ve("KM")}. En passant aux longueurs : ${fx("KM′ = |λ| × KM")}.`,why:"La longueur du vecteur λu est |λ| fois la longueur de u : la valeur absolue enlève le signe du rapport.",pts:1}];
+  E.push({w:`<b>${fx(N+" "+calc)}</b>`,why:`On remplace par les valeurs de l'énoncé, puis on simplifie.${l.n<0&&k==="centre"?" M′ est de l'autre côté de K, mais sa distance à K reste positive.":""}`,pts:1});
+  return unNombre({nom:N,v:V,autre:mul(l,d),quoi:"la longueur "+N,ex:"par exemple 6 ou 15/2",etapes:E,sig:"IL"+JSON.stringify([k,brut(l),brut(d)]),
+    q:k==="seg"?`Soit h l'homothétie de centre K et de rapport ${fx("λ = "+nb(l))}. Soient A et B deux points du plan tels que ${fx("AB = "+nb(d))}. Calcule la distance ${fx("h(A)h(B)")}.`:`Soit h l'homothétie de centre K et de rapport ${fx("λ = "+nb(l))}, et M un point tel que ${fx("KM = "+nb(d))}. On note M′ = h(M). Calcule ${fx("KM′")}.`,
+    corps:`<p>Rappel : l'homothétie h de centre K et de rapport λ envoie un point M sur le point h(M) tel que ${ve("Kh(M)")} = λ${ve("KM")} (définition 3.3.3).</p>`,texte:`h de centre K et de rapport ${nb(l)}, ${k==="seg"?"AB":"KM"} = ${nb(d)} ; calculer ${N}`,nature:k==="seg"?"image d'un segment":"distance au centre",
+    pieges:[[mul(l,d),1,"valeur absolue oubliée","Où ça part : le signe.","Une distance est positive : c'est |λ| qui multiplie, pas λ."],[div(d,a),1,"division au lieu de multiplication","Où ça part : l'opération.","On multiplie la distance par |λ|, on ne la divise pas."],[d,0,"distance crue conservée","Où ça part : le théorème.","Une homothétie ne conserve pas les distances (sauf si |λ| = 1) : elle les multiplie par |λ|. C'est une translation qui conserve les distances."]],
+    ens:{k,l:fl(l),d:fl(d)}});}
+
+const NOMS2=[["K","A","A′"],["O","M","M′"],["I","B","C"],["Ω","P","Q"]];
+function rapport(R){const [K,A,B]=R.choix(NOMS2),l=R.choix(LAMS.filter(x=>!egal(vabs(x),1))),p=l.d*R.ent(1,4),qq=Math.abs(l.n)*p/l.d,avec=R()<0.4,pos=l.n>0,a=vabs(l);
+  const ab=pos?Math.abs(qq-p):qq+p,ordre=!pos?[K,A,B]:qq>p?[A,K,B]:[B,K,A],entre=`${ordre[0]} est entre ${ordre[1]} et ${ordre[2]}`;
+  const E=[];
+  if(avec)E.push({w:`${entre}, donc ${fx(!pos?`${K}${B} = ${A}${B} − ${K}${A} = ${ab} − ${p} = ${qq}`:qq>p?`${K}${B} = ${K}${A} + ${A}${B} = ${p} + ${ab} = ${qq}`:`${K}${B} = ${K}${A} − ${A}${B} = ${p} − ${ab} = ${qq}`)}.`,why:"Quand un point est entre deux autres, les deux petites distances s'ajoutent pour donner la grande (on lit l'ordre des points sur la droite).",pts:1});
+  E.push({w:`h(${A}) = ${B} veut dire ${ve(K+B)} = λ${ve(K+A)}. En longueurs : ${fx(`${K}${B} = |λ| × ${K}${A}`)}, donc ${fx(`|λ| = ${K}${B}/${K}${A} = ${quot(qq,p,a)}`)}.`,why:"On passe aux longueurs : la longueur de λu est |λ| fois celle de u. Cela donne la valeur absolue du rapport, pas encore son signe.",pts:1},
+    {w:`<b>${sens(pos,K,A,B)} : ${fx("λ = "+nb(l))}.</b>`,why:"D'après la définition 3.3.3 : si λ ≥ 0, h(M) est sur la demi-droite d'origine le centre qui passe par M ; si λ ≤ 0, il est de l'autre côté du centre.",pts:1});
+  const iS=E.length-1;
+  return unNombre({nom:"λ",v:l,autre:mul(l,-1),quoi:"le rapport λ",ex:"par exemple 3/2 ou -2",etapes:E,sig:"RA"+JSON.stringify([K,brut(l),p,avec]),
+    q:`Soient ${K}, ${A} et ${B} trois points alignés, avec ${fx(`${K}${A} = ${p}`)}, ${avec?fx(`${A}${B} = ${ab}`)+` et ${entre}`:fx(`${K}${B} = ${qq}`)+(pos?` et ${B} sur la demi-droite [${K}${A})`:` et ${K} entre ${A} et ${B}`)}. Soit h l'homothétie de centre ${K} telle que h(${A}) = ${B}. Donne son rapport λ.`,
+    corps:`<p>Rappel : h(${A}) = ${B} veut dire ${ve(K+B)} = λ${ve(K+A)} (définition 3.3.3). Fais un petit dessin de la droite avec les trois points.</p>`,texte:`${K}, ${A}, ${B} alignés, ${K}${A} = ${p}, ${avec?`${A}${B} = ${ab}, ${ordre[0]} entre ${ordre[1]} et ${ordre[2]}`:`${K}${B} = ${qq}, ${pos?"même côté":`${K} entre ${A} et ${B}`}`} ; rapport de h de centre ${K} avec h(${A}) = ${B}`,nature:avec?"rapport avec l'ordre des points":"rapport avec deux distances au centre",
+    pieges:[[mul(l,-1),iS,"signe du rapport","Où ça part : le signe.",pos?`${B} est du même côté de ${K} que ${A} : le rapport est positif.`:`${K} est entre ${A} et ${B} : ${B} est de l'autre côté de ${K}, le rapport est négatif.`],[div(Q(1),l),iS-1,"rapport à l'envers","Où ça part : le quotient.",`${ve(K+B)} = λ${ve(K+A)} : λ est ${K}${B} divisé par ${K}${A}, le point d'arrivée au numérateur.`],[div(Q(-1),l),iS-1,"rapport à l'envers et signe","Où ça part : le quotient.",`λ est ${K}${B} divisé par ${K}${A}, et son signe vient de la position des points.`]],
+    ens:{k:"rap",X:{[K]:0,[A]:p,[B]:fl(l)*p},noms:[K,A,B],don:avec?[[K,A,p],[A,B,ab]]:[[K,A,p],[K,B,qq]],entre:avec?ordre:pos?[A,K,B].filter(()=>false):[K,A,B],meme:!avec&&pos}});}
+
+function deuxHom(R){const k=R.choix(["compo","compo","compo","inv","trouve","trouve"]);let l1,l2;for(;;){l1=R.choix(LAMS);l2=R.choix(LAMS);if(!(k==="trouve"&&egal(vabs(l1),1)))break;}
+  const P=mul(l1,l2),deux=`Soit h₁ l'homothétie de centre K et de rapport ${fx("λ_{1} = "+nb(l1))}`;let E,pieges,nom,V,q,quoi;
+  if(k==="compo"){const h21=R()<0.6,o=h21?"h₂ ∘ h₁":"h₁ ∘ h₂",[f,s,lf,ls]=h21?["h₁","h₂","λ₁","λ₂"]:["h₂","h₁","λ₂","λ₁"];nom="λ";V=P;quoi="le rapport λ";
+    q=`${deux}, et h₂ l'homothétie de même centre K et de rapport ${fx("λ_{2} = "+nb(l2))}. L'application ${o} est une homothétie de centre K : donne son rapport λ.`;
+    E=[{w:`Pour tout point M, par définition : ${ve(`K${f}(M)`)} = ${lf}${ve("KM")}, puis ${ve(`K${s}(${f}(M))`)} = ${ls}${ve(`K${f}(M)`)} = ${ls}${lf}${ve("KM")}.`,why:`On applique deux fois la définition 3.3.3 : d'abord ${f} à M, puis ${s} au point obtenu. Les deux homothéties ont le même centre K, c'est ce qui permet d'enchaîner (feuille 3, exercice 1).`,pts:1},
+      {w:`<b>Donc ${o} est l'homothétie de centre K et de rapport ${fx(`λ_{1} × λ_{2} = ${par(l1)} × ${par(l2)} = ${nb(P)}`)}.</b>`,why:"Les rapports se multiplient. Le signe suit la règle des signes d'un produit.",pts:1}];
+    pieges=[[add(l1,l2),1,"somme des rapports","Où ça part : la composée.","Les rapports se multiplient, ils ne s'ajoutent pas : on applique une homothétie, puis l'autre."],[mul(P,-1),1,"signe du produit","Où ça part : le signe.","Moins par moins donne plus ; plus par moins donne moins."],[div(l1,l2),1,"quotient des rapports","Où ça part : la composée.","Les rapports se multiplient, ils ne se divisent pas."]];}
+  else if(k==="inv"){V=div(Q(1),l1);nom="μ";quoi="le rapport μ";
+    q=`Soit h l'homothétie de centre K et de rapport ${fx("λ = "+nb(l1))}. Soit g l'homothétie de centre K telle que g(h(M)) = M pour tout point M. Donne le rapport μ de g.`;
+    E=[{w:`g ∘ h est l'homothétie de centre K et de rapport ${fx("μ × λ")} (feuille 3, exercice 1). Or g ∘ h laisse chaque point à sa place : c'est l'homothétie de centre K et de rapport 1.`,why:`Une homothétie de rapport 1 envoie chaque point M sur lui-même, car ${ve("KM′")} = 1 × ${ve("KM")}.`,pts:1},
+      {w:`<b>${fx(`μ × ${par(l1)} = 1`)}, donc ${fx(`μ = 1/${par(l1)} = ${nb(V)}`)}.</b>`,why:"Le rapport de g est l'inverse de celui de h : g « défait » ce que fait h.",pts:1}];
+    pieges=[[mul(l1,-1),1,"opposé au lieu de l'inverse","Où ça part : l'inverse.","Le rapport de g est l'inverse de λ (1/λ), pas son opposé (−λ)."],[div(Q(-1),l1),1,"signe de l'inverse","Où ça part : le signe.","L'inverse de λ a le même signe que λ."],[l1,0,"même rapport","Où ça part : la composée.","Avec le même rapport, g ∘ h aurait pour rapport λ², pas 1."]];}
+  else{V=l2;nom="λ_{2}";quoi="le rapport λ₂";
+    q=`${deux}, et h₂ une homothétie de même centre K. On sait que h₂ ∘ h₁ est l'homothétie de centre K et de rapport ${fx(nb(P))}. Donne le rapport λ₂ de h₂.`;
+    E=[{w:`h₂ ∘ h₁ est l'homothétie de centre K et de rapport ${fx("λ_{2} × λ_{1}")} (feuille 3, exercice 1). Donc ${fx(`λ_{2} × ${par(l1)} = ${nb(P)}`)}.`,why:"Composer deux homothéties de même centre multiplie les rapports : on écrit l'égalité des rapports.",pts:1},
+      {w:`<b>${fx(`λ_{2} = ${par(P)}/${par(l1)} = ${nb(l2)}`)}</b>`,why:"On divise par λ₁. Diviser par une fraction, c'est multiplier par son inverse.",pts:1}];
+    pieges=[[div(l1,P),1,"quotient à l'envers","Où ça part : la division.",`On divise le rapport de la composée, ${nb(P)}, par λ₁ : pas l'inverse.`],[sub(P,l1),1,"soustraction au lieu de division","Où ça part : la composée.","Les rapports se multiplient : pour retrouver λ₂, on divise, on ne soustrait pas."],[mul(P,l1),1,"multiplication au lieu de division","Où ça part : la division.","Pour isoler λ₂, on divise par λ₁."]];}
+  return unNombre({nom,v:V,autre:pieges[0][0],quoi,ex:"par exemple 3/2 ou -2",etapes:E,pieges,sig:"DH"+JSON.stringify(k==="inv"?[k,brut(l1)]:[k,brut(l1),brut(l2),q.indexOf("h₂ ∘ h₁")>=0]),q,
+    corps:`<p>Rappel : l'homothétie de centre K et de rapport λ envoie M sur le point M′ tel que ${ve("KM′")} = λ${ve("KM")}. « h₂ ∘ h₁ » veut dire : d'abord h₁, puis h₂.</p>`,texte:{compo:`h1 (K, ${nb(l1)}), h2 (K, ${nb(l2)}) ; rapport de la composée`,inv:`h (K, ${nb(l1)}) ; rapport de g avec g(h(M)) = M`,trouve:`h1 (K, ${nb(l1)}), h2 ∘ h1 de rapport ${nb(P)} ; rapport de h2`}[k],
+    nature:{compo:"composée de deux homothéties",inv:"homothétie réciproque",trouve:"rapport manquant"}[k],ens:{k,l1:fl(l1),l2:fl(l2),P:fl(P)}});}
+
+/* comme au CC : deux droites sécantes en K, des parallèles, et les homothéties de centre K qu'elles fabriquent */
+function droitesPar(R){const pap=R()<0.45,phi=R.choix([40,50,55,60,65,70])*Math.PI/180,m=R()<0.5?-1:1,u=[1,0],v=[m*Math.cos(phi),Math.sin(phi)],pt=(w,t)=>[w[0]*t,w[1]*t],sg=()=>R()<0.5?-1:1;
+  let al,be,ga,gp,ap,bp;
+  for(;;){al=sg()*R.ent(2,6);be=sg()*R.ent(2,7);ga=sg()*R.ent(2,7);ap=sg()*R.ent(2,6);gp=ap;
+    if(al===be||(pap&&(ga===al||ga===be)))continue;
+    if(pap){bp=ga*gp/be;ap=ga*gp/al;}else bp=be*ap/al;
+    if(Math.max(Math.abs(ap),Math.abs(bp))<=12&&Math.min(Math.abs(ap),Math.abs(bp))>=1)break;}
+  const P={K:[0,0],A:pt(u,al),B:pt(u,be),"A′":pt(v,ap),"B′":pt(v,bp)};if(pap){P.C=pt(u,ga);P["C′"]=pt(v,gp);}
+  const ext=(L,w)=>{const t=L.map(n=>[n,(P[n][0]*w[0]+P[n][1]*w[1])]).sort((x,y)=>x[1]-y[1]);return [t[0][0],t[t.length-1][0]];};
+  const l1=Q(be,al),cot=(a,b)=>`${b} est ${Math.sign(P[a][0])===Math.sign(P[b][0])?"du même côté de K que":"de l'autre côté de K par rapport à"} ${a}`,abs=Math.abs,F=(a,b)=>Q(abs(a),abs(b));
+  const fig=figure(P,{droites:[ext(pap?["K","A","B","C"]:["K","A","B"],u),ext(pap?["K","A′","B′","C′"]:["K","A′","B′"],v)],seg:pap?[["A","B′"],["B","A′"],["B","C′"],["C","B′"]]:[["A","A′"],["B","B′"]],points:Object.keys(P),alt:"Deux droites sécantes en K et des segments parallèles"});
+  const E=[],l1t=`${ve("KB")} = λ₁${ve("KA")}, avec ${fx(`|λ_{1}| = KB/KA = ${quot(abs(be),abs(al),F(be,al))}`)} ; ${sens(be*al>0,"K","A","B")} : ${fx("λ_{1} = "+nb(l1))}`;
+  let V,W,nomW,q,pv,pw;
+  if(!pap){V=l1;W=F(be*ap,al);nomW="KB′";
+    q=`Deux droites Δ et Δ′ se coupent en K. Les points A et B sont sur Δ, les points A′ et B′ sur Δ′, tous distincts de K, et les droites (AA′) et (BB′) sont parallèles. On sait que ${fx(`KA = ${abs(al)}`)}, ${fx(`KB = ${abs(be)}`)}, ${fx(`KA′ = ${abs(ap)}`)}, et ${be*al>0?"A et B sont du même côté de K":"K est entre A et B"}. (1) Donne le rapport λ₁ de l'homothétie h de centre K telle que h(A) = B. (2) Calcule KB′.`;
+    E.push({w:`K, A et B sont alignés et A ≠ K : il existe un réel λ₁ tel que ${l1t}. L'homothétie h de centre K et de rapport λ₁ vérifie h(A) = B.`,why:"C'est la définition 3.3.3 lue à l'envers : le rapport se lit sur les longueurs, son signe sur la position de B par rapport à K.",pts:1},
+      {w:"D'après le théorème 3.3.4 (ii), h((AA′)) est une droite parallèle à (AA′). Elle passe par h(A) = B : c'est la parallèle à (AA′) passant par B, c'est-à-dire (BB′).",why:"Par un point passe une seule parallèle à une droite donnée : h((AA′)) et (BB′) sont parallèles à (AA′) et passent toutes deux par B.",pts:1},
+      {w:`Le point h(A′) est sur Δ′, car ${ve("Kh(A′)")} = λ₁${ve("KA′")}, et sur h((AA′)) = (BB′). Donc h(A′) est le point d'intersection de Δ′ et de (BB′) : h(A′) = B′.`,why:"Deux droites sécantes ont un seul point commun : B′.",pts:1},
+      {w:`<b>D'après le théorème 3.3.4 (i), ${fx(`KB′ = |λ_{1}| × KA′ = ${nb(vabs(l1))} × ${abs(ap)} = ${nb(W)}`)}.</b>`,why:"h(K) = K et h(A′) = B′ : la distance KB′ est |λ₁| fois la distance KA′. On retrouve le résultat de Thalès : KB′/KA′ = KB/KA.",pts:1});
+    pv={signe:be*al>0?"A et B sont du même côté de K : le rapport est positif.":"K est entre A et B : le rapport est négatif.",envers:"λ₁ = KB/KA, car h(A) = B : le point d'arrivée au numérateur."};pw=div(Q(abs(ap)),vabs(l1));}
+  else{const l2=Q(ga,be),l3=Q(ga,al);V=l3;W=F(ga*gp,al);nomW="KA′";
+    q=`Deux droites Δ et Δ′ se coupent en K. Les points A, B, C sont sur Δ et A′, B′, C′ sur Δ′, tous distincts de K. On suppose (AB′) // (BA′) et (BC′) // (CB′). On note h₁ l'homothétie de centre K telle que h₁(A) = B, et h₂ celle de centre K telle que h₂(B) = C. On sait que ${fx(`KA = ${abs(al)}`)}, ${fx(`KB = ${abs(be)}`)}, ${fx(`KC = ${abs(ga)}`)}, ${fx(`KC′ = ${abs(gp)}`)} ; ${cot("A","B")}, et ${cot("B","C")}. (1) Donne le rapport de h₂ ∘ h₁. (2) Calcule KA′.`;
+    E.push({w:`${l1t}. De même, ${ve("KC")} = λ₂${ve("KB")}, avec ${fx(`|λ_{2}| = KC/KB = ${quot(abs(ga),abs(be),F(ga,be))}`)} ; ${sens(ga*be>0,"K","B","C")} : ${fx("λ_{2} = "+nb(l2))}.`,why:"h₁ envoie A sur B : son rapport est KB/KA, avec le signe donné par la position de B. Même chose pour h₂, qui envoie B sur C.",pts:1},
+      {w:"(AB′) // (BA′) : h₁((AB′)) est la parallèle à (AB′) passant par h₁(A) = B, c'est (BA′). Le point h₁(B′) est sur Δ′ et sur (BA′) : h₁(B′) = A′.",why:"C'est le raisonnement de l'exercice 2 de la feuille 3 : l'image d'une droite par une homothétie est une droite parallèle (théorème 3.3.4 (ii)).",pts:1},
+      {w:"De même, (BC′) // (CB′) et h₂(B) = C donnent h₂(C′) = B′.",why:"On applique le même raisonnement à h₂, avec les droites (BC′) et (CB′).",pts:1},
+      {w:`<b>h₂ ∘ h₁ est l'homothétie de centre K et de rapport ${fx(`λ_{1} × λ_{2} = ${par(l1)} × ${par(l2)} = ${nb(l3)}`)}.</b>`,why:"La composée de deux homothéties de même centre est une homothétie de ce centre, dont le rapport est le produit des rapports (feuille 3, exercice 1).",pts:1},
+      {w:`<b>h₁ et h₂ commutent, donc (h₂ ∘ h₁)(C′) = h₁(h₂(C′)) = h₁(B′) = A′, et ${fx(`KA′ = |λ_{1}λ_{2}| × KC′ = ${nb(vabs(l3))} × ${abs(gp)} = ${nb(W)}`)}.</b>`,why:"Deux homothéties de même centre commutent (feuille 3, exercice 1), comme dans le corrigé du CC2 2025. Puis le théorème 3.3.4 (i) pour la distance.",pts:1});
+    pv={signe:"Le signe du produit suit la règle des signes : regarde le signe de λ₁ et celui de λ₂.",envers:"λ₁ = KB/KA et λ₂ = KC/KB : leur produit vaut KC/KA, avec le bon signe."};pw=div(Q(abs(gp)),vabs(l3));}
+  const VV=fl(V),WW=fl(W),iV=pap?3:0,iW=E.length-1;
+  function juge(rep){const r1=lisNombre(rep.x,VV,"le rapport");if(r1.inc)return {incomplet:r1.inc};const r2=lisNombre(rep.y,WW,"la longueur "+nomW);if(r2.inc)return {incomplet:r2.inc};
+    const o1=pres(r1.v,VV),o2=pres(r2.v,WW),Fx=[];if(!o1)Fx.push("x");if(!o2)Fx.push("y");if(!Fx.length)return {ok:true};
+    const res=`Pas tout à fait : ${!o1&&!o2?"les deux réponses sont fausses":!o1?"le rapport est faux":"le rapport est juste, mais pas "+nomW}.`;
+    if(!o1){if(pres(r1.v,-VV))return faux({f:Fx,etape:iV,type:"signe du rapport",titre:"Où ça part : le signe.",msg:pv.signe},res);if(pres(r1.v,1/VV))return faux({f:Fx,etape:0,type:"rapport à l'envers",titre:"Où ça part : le quotient.",msg:pv.envers},res);return faux({f:Fx,etape:iV,type:"calcul du rapport",titre:"Où ça part : le rapport.",msg:E[iV].w},res);}
+    if(pres(r2.v,fl(pw)))return faux({f:Fx,etape:iW,type:"division au lieu de multiplication",titre:"Où ça part : la distance.",msg:`L'homothétie multiplie la distance à K par |λ| : ${E[iW].w}`},res);
+    return faux({f:Fx,etape:iW,type:"calcul de "+nomW,titre:"Où ça part : la distance.",msg:E[iW].w},res);}
+  return {sig:"DP"+JSON.stringify([pap,al,be,ga,gp,ap]),q,corps:fig+`<p>Rappel : l'homothétie h de centre K et de rapport λ envoie M sur le point h(M) tel que ${ve("Kh(M)")} = λ${ve("KM")}. Elle multiplie les distances par |λ| et envoie chaque droite sur une droite parallèle (théorème 3.3.4).</p>`,
+    texte:pap?`Δ et Δ′ sécantes en K, A B C sur Δ, A′ B′ C′ sur Δ′, (AB′) // (BA′), (BC′) // (CB′), KA = ${abs(al)}, KB = ${abs(be)}, KC = ${abs(ga)}, KC′ = ${abs(gp)} ; rapport de h2 ∘ h1 et KA′`:`Δ et Δ′ sécantes en K, A B sur Δ, A′ B′ sur Δ′, (AA′) // (BB′), KA = ${abs(al)}, KB = ${abs(be)}, KA′ = ${abs(ap)} ; rapport de h et KB′`,
+    champs:[champL("x","rapport",pap?"rapport de h₂ ∘ h₁ :":"$λ_{1} =$","par exemple -5/3"),champL("y",nomW,`$${nomW} =$`,"par exemple 21/4")],juge,etapes:E,
+    bonne:`${pap?"rapport":fx("λ_{1}")} ${fx("= "+nb(V))} et ${fx(`${nomW} = ${nb(W)}`)}`,bonneTxt:`rapport = ${nb(V)} ; ${nomW} = ${nb(W)}`,repBonne:{x:brut(V),y:brut(W)},repFausse:{x:brut(mul(V,-1)),y:brut(W)},nature:pap?"deux homothéties, comme au CC2 2025":"homothétie et parallèles (feuille 3, exercice 2)",
+    ens:{k:pap?"pap":"par",P,u,v}};}
+
 /* ---------- les démonstrations et les énoncés du cours : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
 const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\^\{2\}/g,"²").replace(/\$/g,"").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
   etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
@@ -22186,6 +22284,12 @@ G.add("geo",[
    {t:"le cosinus d'un angle, puis l'angle, avec les trois côtés",cc:5,gen:troisCotes},
    {t:"l'aire, puis une hauteur",cc:5,min:200,gen:aireHauteur},
    {t:"comme au CC : une bissectrice, une médiane, deux étapes",cc:9,gen:R=>{const r=R();return r<0.5?bissectrice(R):r<0.75?deuxTemps(R):mediane(R);}}]},
+ {id:"GE2",t:"Homothéties",tache:"homothéties",th:"transfo",ex:"cc2",lecons:["g2-transfo"],
+  paliers:[
+   {t:"l'image d'une longueur",cc:2,min:200,gen:imageLongueur},
+   {t:"le rapport et son signe",cc:3,min:200,gen:rapport},
+   {t:"deux homothéties de même centre",cc:3,min:200,gen:deuxHom},
+   {t:"comme au CC : deux droites sécantes et des parallèles",cc:8,gen:droitesPar}]},
  {id:"GE3",t:"Triangles : chasse aux angles",tache:"angles dans les triangles",th:"triangles",ex:"cc2",lecons:["g-aires","g-paralleles","g-angles"],
   paliers:[
    {t:"la somme des angles d'un triangle",cc:2,gen:somme},
