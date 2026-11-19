@@ -25378,12 +25378,164 @@ G.add("pf",[
 
 </script>
 <script>
-/* Générateurs de USI. */
+/* Générateurs d'USI.
+   Un petit bash et un petit find écrits en JavaScript jugent les commandes tapées sur des arborescences tirées au hasard.
+   Les mêmes commandes sont exécutées par le vrai bash et le vrai find (tools/verif/usi-vrai/vrai-bash.js), et comparées par tools/verif/usi.js. */
 (function(){
 "use strict";
 const G=window.GEN,O=G.outils;
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const c=s=>`<code>${esc(s)}</code>`;
+const bloc=t=>window.W&&window.W.code?window.W.code(t,"sh"):`<pre>${esc(t)}</pre>`;
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+const propre=s=>String(s==null?"":s).normalize("NFKC").replace(/[“”«»]/g,'"').replace(/[’‘]/g,"'").replace(/[−–—]/g,"-").replace(/\s+/g," ").trim();
+
+/* ---------- l'arborescence : {n:nom, d:[enfants]} pour un dossier, {n:nom} pour un fichier ---------- */
+const ACCUEIL="/home/etu",COURANT="/home/etu/projet";
+const dossier=(n,d)=>({n,d}),fichier=n=>({n});
+const tri=L=>L.slice().sort((a,b)=>a.n<b.n?-1:1);
+function noeud(R,chemin){if(chemin==="/")return R;let t=R;for(const p of chemin.split("/").filter(Boolean)){if(!t.d)return null;t=t.d.find(x=>x.n===p);if(!t)return null;}return t;}
+/* dessin comme la commande tree */
+function dessin(t,titre){const L=[titre||t.n];const va=(x,pre)=>{const E=tri(x.d||[]);E.forEach((y,i)=>{const der=i===E.length-1;L.push(pre+(der?"└── ":"├── ")+y.n+(y.d?"/":""));if(y.d)va(y,pre+(der?"    ":"│   "));});};va(t,"");return L.join("\n");}
+
+/* ---------- le petit bash : mots, guillemets, ~, $HOME, motifs * ? [ ] développés dans le dossier courant ---------- */
+function motifRe(m){let s="^";for(let i=0;i<m.length;i++){const ch=m[i];
+    if(ch==="*")s+=".*";else if(ch==="?")s+=".";else if(ch==="["){const j=m.indexOf("]",i+2);if(j<0){s+="\\[";continue;}let k=m.slice(i+1,j);if(k[0]==="!")k="^"+k.slice(1);s+="["+k.replace(/\\/g,"\\\\")+"]";i=j;}
+    else if(ch==="\\"&&i+1<m.length){s+=m[++i].replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+    else s+=ch.replace(/[.+^${}()|\\]/g,"\\$&");}
+  return new RegExp(s+"$");}
+function mots(ligne,R){const W=[];let i=0;const n=ligne.length;
+  while(i<n){while(i<n&&ligne[i]===" ")i++;if(i>=n)break;let w="",libre="";
+    while(i<n&&ligne[i]!==" "){const ch=ligne[i];
+      if(ch==='"'||ch==="'"){const j=ligne.indexOf(ch,i+1);if(j<0)return {err:`Un guillemet ${ch} n'est pas refermé.`};let x=ligne.slice(i+1,j);if(ch==='"')x=x.replace(/\$HOME|\$\{HOME\}/g,ACCUEIL);w+=x;libre+=x.replace(/./g,"_");i=j+1;}
+      else if(ch==="\\"&&i+1<n){w+=ligne[i+1];libre+="_";i+=2;}
+      else if(ch==="|"||ch===">"||ch==="<"||ch==="&")return {err:`Ici, écris une seule commande find, sans ${ch}.`};
+      else if(ch==="~"&&w===""&&(i+1===n||ligne[i+1]===" "||ligne[i+1]==="/")){w+=ACCUEIL;libre+="_".repeat(ACCUEIL.length);i++;}
+      else if(ligne.startsWith("$HOME",i)){w+=ACCUEIL;libre+="_".repeat(ACCUEIL.length);i+=5;}
+      else{w+=ch;libre+=ch;i++;}}
+    /* bash remplace un motif non protégé par les noms qui lui correspondent dans le dossier courant (s'il y en a) */
+    if(/[*?[]/.test(libre)&&!w.includes("/")){const re=motifRe(w),C=(noeud(R,COURANT).d||[]).map(x=>x.n).filter(x=>x[0]!=="."&&re.test(x)).sort();
+      if(C.length){W.push(...C.map(x=>({w:x,developpe:w})));continue;}}
+    W.push({w});}
+  return {W};}
+
+/* ---------- le petit find : -name, -iname, -type, -maxdepth, -print, -delete, -exec … {} \; ou + ---------- */
+const absolu=p=>{const P=[];(p[0]==="/"?p:COURANT+"/"+p).split("/").forEach(x=>{if(!x||x===".")return;if(x==="..")P.pop();else P.push(x);});return "/"+P.join("/");};
+/* rend {err} ou {trouve:[chemins affichés], abs:[chemins absolus], action:{cmd,args,fin}|null} */
+function find(ligne,R){ligne=propre(ligne);const M=mots(ligne,R);if(M.err)return {err:M.err};const W=M.W.map(x=>x.w);
+  if(W[0]!=="find")return {err:W[0]==="ls"?"Ici, la question demande une commande find : ls ne regarde qu'un dossier (ls -R | grep marche, mais compte moins de points).":"La commande doit commencer par find."};
+  let i=1;const departs=[];while(i<W.length&&!/^[-!(]/.test(W[i]))departs.push(W[i++]);if(!departs.length)departs.push(".");
+  const tests=[];let action=null,maxd=Infinity;
+  while(i<W.length){const w=W[i++];
+    if(w==="-name"||w==="-iname"){const m=W[i++];if(m===undefined)return {err:`Il manque le motif après ${w}.`};const re=motifRe(w==="-iname"?m.toLowerCase():m);tests.push(n=>re.test(w==="-iname"?n.nom.toLowerCase():n.nom));}
+    else if(w==="-type"){const t=W[i++];if(t!=="f"&&t!=="d")return {err:"Après -type, il faut f (fichier ordinaire) ou d (répertoire)."};tests.push(n=>t==="d"?!!n.t.d:!n.t.d);}
+    else if(w==="-maxdepth"){const k=+W[i++];if(!(k>=0))return {err:"Après -maxdepth, il faut un nombre."};maxd=k;}
+    else if(w==="-print"){}
+    else if(w==="-delete"){action={cmd:"rm",args:["{}"],fin:"delete"};}
+    else if(w==="-exec"||w==="-ok"){const A=[];while(i<W.length&&W[i]!==";"&&W[i]!=="+")A.push(W[i++]);if(i>=W.length)return {err:"Il manque la fin de -exec : \\; (ou +)."};
+      const fin=W[i++];if(!A.length)return {err:"Il manque la commande après -exec."};if(!A.includes("{}"))return {err:"Il manque {} dans -exec : c'est lui qui est remplacé par chaque fichier trouvé."};action={cmd:A[0],args:A.slice(1),fin};}
+    else if(/^-/.test(w))return {err:`find ne connaît pas ${w}.`};
+    else return {err:M.W[i-1].developpe?`bash a remplacé le motif ${M.W[i-1].developpe} par les noms du dossier courant qui lui correspondent : find reçoit plusieurs mots au lieu d'un seul motif, et s'arrête (« paths must precede expression »). Mets le motif entre guillemets.`:`find ne sait pas quoi faire de « ${w} » (« paths must precede expression »).`};}
+  const trouve=[],abs=[];
+  for(const d of departs){const a=absolu(d),t=noeud(R,a);if(!t)return {err:`find : « ${d} » : aucun fichier ou dossier de ce nom.`};
+    (function va(x,aff,ab,prof){if(prof>maxd)return;const n={nom:prof?x.n:(a.split("/").pop()||"/"),t:x};if(tests.every(f=>f(n))){trouve.push(aff);abs.push(ab);}
+      if(x.d)tri(x.d).forEach(y=>va(y,aff.replace(/\/$/,"")+"/"+y.n,ab.replace(/\/$/,"")+"/"+y.n,prof+1));})(t,d,a,0);}
+  return {trouve,abs,action};}
+
+/* ---------- les arborescences : l'accueil /home/etu contient tp (le dossier courant), un autre dossier et des fichiers ---------- */
+const NOMSF=["notes.txt","a.log","erreurs.log","log.txt","main.c","tp1.py","calcul.py","2023-photo.jpg","photo2023.jpg","DATA.csv","mesDATA.txt","data.csv","brouillon.txt#","x#","#temp","rapport.pdf","script.sh","tp2.c","2024.txt","resultats.csv","README","old.py"];
+const NOMSD=["src","tp2","tps","photos","old","docs","data2023","bin"];
+/* vise : [où, nom, dossier?] à placer ; sansD : les noms de dossiers interdits (ils ne doivent pas correspondre au motif) */
+function tireArbo(R,vise,sansD){const okD=x=>!(sansD&&sansD(x)),prend=(L,k)=>R.mel(L).slice(0,k);
+  const feuille=()=>prend(NOMSF,R.ent(1,3)).map(fichier),sous=()=>dossier(R.choix(NOMSD.filter(okD)),feuille());
+  const tp=dossier("projet",[...feuille(),sous()]);if(R()<0.6)tp.d.push(sous());
+  const acc=dossier("etu",[tp,dossier(R.choix(["docs","photos","cours"].filter(okD)),feuille()),...feuille()]);
+  (vise||[]).forEach(([ou,n,dir])=>{const cible=ou==="courant"?tp:ou==="sous"?(tp.d.find(x=>x.d)||tp):ou==="autre"?acc.d[1]:acc;cible.d.push(dir?dossier(n,feuille()):fichier(n));});
+  const uniq=t=>{if(!t.d)return;const vu=new Set();t.d=t.d.filter(x=>vu.has(x.n)?false:(vu.add(x.n),true));t.d.forEach(uniq);};uniq(acc);
+  return dossier("",[dossier("home",[acc])]);}
+
+G.usi={mots,find,motifRe,dessin,tireArbo,noeud,ACCUEIL,COURANT};
+
+/* ---------- US5 : find ---------- */
+const DEPARTS={courant:[".","du dossier courant"],accueil:["~","du dossier d'accueil"],parent:["..","du dossier parent"]};
+const SORTES={finit:[x=>"*"+x,"se termine par","finit par"],commence:[x=>x+"*","commence par","commence par"],contient:[x=>"*"+x+"*","contient","contient"]};
+const VALEURS={finit:[".log",".py",".txt",".csv",".jpg","#",".c",".sh",".pdf"],commence:["2023","tp","2024","old","log","rapport","notes","main"],contient:["DATA","2023","tp","log","photo","2024","notes"]};
+/* les noms à placer pour qu'une mauvaise commande se trompe : des noms qui correspondent, et d'autres qui en sont proches */
+const proches=(sorte,x)=>{const re=motifRe(SORTES[sorte][0](x)),pres=NOMSF.filter(n=>n.includes(x.replace(/^\./,""))||n.toLowerCase().includes(x.toLowerCase()));
+  const oui=[...new Set([...pres.filter(n=>re.test(n)),sorte==="finit"?"rapport"+x:sorte==="commence"?x+"-notes.txt":"copie-"+x+".txt"])],non=pres.filter(n=>!re.test(n));return {oui,non};};
+const relatif=(abs,dep)=>dep==="~"?abs:dep===".."?abs.replace(/^\/home\/etu/,".."):abs.replace(/^\/home\/etu\/projet/,".");
+const ensembles=(a,b)=>a.length===b.length&&a.slice().sort().every((x,i)=>x===b.slice().sort()[i]);
+/* juge une commande find tapée sur plusieurs arborescences ; o.type : -type attendu ; o.action : "rm" | "cat" | "ls" */
+function jugeFind(texte,A,ref,o){const t=propre(texte);if(!t)return {incomplet:"Écris la commande."};
+  const faux=(etape,sorte,titre,msg)=>({ok:false,faux:["c"],resume:"Pas tout à fait : cette commande ne fait pas ce qui est demandé.",diag:{etape,type:sorte,titre,msg}});
+  for(const T of A){const r=find(t,T),b=find(ref,T);if(r.err)return faux(1,"commande find mal écrite","Où ça part : la commande ne marche pas.",esc(r.err));
+    if(!ensembles(r.abs,b.abs)){const dep=t.split(" ")[1]||".",depB=ref.split(" ")[1];
+      const tous=find(`find ${depB}`,T).abs,parti=dep[0]==="-"?".":dep;
+      if(absolu(parti.replace(/^~/,ACCUEIL))!==absolu(depB.replace(/^~/,ACCUEIL)))return faux(0,"dossier de départ de find","Où ça part : le dossier de départ.",`Ta commande part de ${c(parti)}. La question demande de partir ${o.depDit}, qui s'écrit ${c(depB)}.`);
+      const manque=b.abs.find(x=>!r.abs.includes(x)),trop=r.abs.find(x=>!b.abs.includes(x)),nom=x=>x.split("/").pop();
+      if(o.type&&trop&&noeud(T,trop).d&&o.type==="f")return faux(1,"-type f oublié","Où ça part : le type.",`Ta commande trouve aussi le répertoire ${c(relatif(trop,depB))}. Pour ne garder que les fichiers ordinaires : ${c("-type f")}.`);
+      if(o.type&&trop&&!noeud(T,trop).d&&o.type==="d")return faux(1,"-type d oublié","Où ça part : le type.",`Ta commande trouve aussi le fichier ${c(relatif(trop,depB))}. Pour ne garder que les répertoires : ${c("-type d")}.`);
+      if(manque)return faux(1,"motif de -name","Où ça part : le motif.",`Ta commande ne trouve pas ${c(relatif(manque,depB))}, dont le nom ${o.sortDit}.${tous.includes(manque)&&!/["']/.test(t)?" Pense aussi aux guillemets autour du motif.":""}`);
+      return faux(1,"motif de -name","Où ça part : le motif.",`Ta commande trouve aussi ${c(relatif(trop,depB))}, alors que le nom ${c(nom(trop))} ne correspond pas.`);}
+    if(o.action){const a=r.action;
+      if(!a)return faux(2,"action -exec oubliée","Où ça part : l'action.",`Ta commande ne fait qu'afficher les noms. Pour agir sur chaque fichier trouvé : ${c("-exec commande {} \\;")}.`);
+      const bon=o.action==="rm"?a.cmd==="rm":o.action==="cat"?a.cmd==="cat"&&!a.args.some(x=>x!=="{}"):a.cmd==="ls"&&a.args.some(x=>/^-[a-z]*l/.test(x));
+      if(!bon)return faux(2,"commande lancée par -exec","Où ça part : la commande de -exec.",`Pour ${o.actionDit}, la commande est ${c(o.action==="ls"?"ls -l":o.action)}.`);}}
+  return {ok:true};}
+function exoFind(R,palier){
+  if(palier===0){/* lire : que trouve cette commande ? */
+    const [cmd,dep]=R.choix([[`find . -name "*.log"`,"."],[`find . -name "*.py"`,"."],[`find ~ -name "*.csv"`,"~"],[`find . -type d`,"."],[`find ~ -name "*.py" -type f`,"~"],[`find . -name "tp*"`,"."],[`find .. -name "*DATA*"`,".."],[`find . -name "*.c" -type f`,"."],[`find ~ -type d -name "p*"`,"~"]]);
+    const A=tireArbo(R,[["courant","b.log"],["sous","calcul.py"],["accueil","notes.csv"]]),r=find(cmd,A);if(r.err)throw new Error(cmd+" : "+r.err);if(r.trouve.length<1||r.trouve.length>6)return null;
+    const voir=dep==="."?dessin(noeud(A,COURANT),"."):dessin(noeud(A,ACCUEIL),"~ (le dossier d'accueil, /home/etu)");
+    const E=[{w:`D'où part la recherche : ${c(dep)}, ${dep==="."?"le dossier courant (projet)":dep==="~"?"le dossier d'accueil, /home/etu":"le dossier parent du dossier courant"}. find descend dans tous les sous-dossiers.`,why:`find examine aussi le dossier de départ lui-même, puis chaque fichier et chaque dossier qu'il contient, à tous les niveaux.`,pts:1},
+      {w:`Les critères : ${/-name/.test(cmd)?`le nom doit correspondre à ${c(/-name "([^"]*)"/.exec(cmd)[1])}`:""}${/-name/.test(cmd)&&/-type/.test(cmd)?", et ":""}${/-type d/.test(cmd)?"ce doit être un répertoire":/-type f/.test(cmd)?"ce doit être un fichier ordinaire":""}.`,why:`Dans le motif de -name, ${c("*")} veut dire « n'importe quelle suite de caractères, même vide ». ${/-type/.test(cmd)?`${c("-type d")} garde les répertoires, ${c("-type f")} les fichiers ordinaires.`:""}`,pts:1},
+      {w:`<b>find affiche ${r.trouve.length>1?"ces chemins":"ce chemin"}&nbsp;:</b>${bloc(r.trouve.join("\n"))}`,why:`Chaque chemin commence par le départ tel qu'il est écrit dans la commande (${c(dep==="~"?"/home/etu":dep)}).`,pts:1}];
+    const norm=x=>{x=x.replace(/\/+$/,"");if(dep==="~")x=x.replace(/^~/,ACCUEIL);else if(dep==="."&&x!=="."&&!/^(\.\/|\/|\.\.)/.test(x))x="./"+x;return x;};
+    function juge(rep){const L=propre(rep.s).split(/[\s,;]+/).filter(Boolean).map(norm);if(!L.length)return {incomplet:"Écris les chemins affichés, séparés par des espaces."};
+      const faux=(etape,sorte,titre,msg)=>({ok:false,faux:["s"],resume:"Pas tout à fait : ce n'est pas ce qu'affiche find.",diag:{etape,type:sorte,titre,msg}});
+      if(ensembles(L,r.trouve))return {ok:true};
+      const manque=r.trouve.find(x=>!L.includes(x)),trop=L.find(x=>!r.trouve.includes(x));
+      if(manque&&manque===dep)return faux(0,"dossier de départ trouvé par find","Où ça part : le départ lui-même.",`find examine aussi le dossier de départ : ${c(dep)} est un répertoire, il est affiché aussi.`);
+      if(manque&&manque.split("/").length>(dep==="~"?4:2))return faux(0,"find descend dans les sous-dossiers","Où ça part : les sous-dossiers.",`find descend dans les sous-dossiers : il trouve aussi ${c(manque)}.`);
+      if(manque&&r.trouve.length>L.length)return faux(1,"fichier oublié par find","Où ça part : un chemin oublié.",`find trouve aussi ${c(manque)} : il correspond aux critères.`);
+      if(trop&&!r.trouve.map(x=>x.split("/").pop()).includes(trop.split("/").pop()))return faux(1,"critère de find","Où ça part : les critères.",`${c(trop)} ne correspond pas aux critères de la commande.`);
+      return faux(2,"chemin affiché par find","Où ça part : l'écriture des chemins.",`Écris chaque chemin complet, depuis le départ : par exemple ${c(r.trouve[0])}.`);}
+    return {sig:"F0"+cmd+JSON.stringify(A),q:`Voici une arborescence et une commande. Qu'affiche ${c(cmd)} ? Écris les chemins, séparés par des espaces, dans n'importe quel ordre.`,corps:bloc(voir),texte:cmd+" — chemins affichés",
+      champs:[{k:"champ",id:"s",nom:"chemins",label:"Ce qu'affiche find :",ex:"par exemple ./a.log ./src/b.log",apercu:false,sym:[["./","./"],["/","/"]]}],juge,etapes:E,
+      bonne:c(r.trouve.join(" ")),bonneTxt:r.trouve.join(" "),repBonne:{s:r.trouve.join(" ")},repFausse:{s:r.trouve.length>1?r.trouve.slice(1).join(" "):"./rien"},nature:"lire",
+      ens:{bash:[{arbo:A,cmd,abs:r.abs.slice().sort()}]}};}
+  /* écrire la commande */
+  const sorte=R.choix(Object.keys(SORTES)),x=R.choix(VALEURS[sorte]),motif=SORTES[sorte][0](x),re=motifRe(motif),depK=R.choix(Object.keys(DEPARTS)),[dep,depDit]=DEPARTS[depK];
+  const typ=palier===2?R.choix(["f","d"]):null,act=palier===3?R.choix([["rm","supprime"],["cat","affiche le contenu de"],["ls","affiche la liste détaillée (ls -l) de"]]):null;
+  if(typ==="d"&&!["tp","old","data","2023","photo","log"].some(v=>v===x))return null;
+  const P=proches(sorte,x),sansD=typ?null:n=>re.test(n);
+  const nomDe=k=>motif.replace(/^\*/,["mes","vieux","new","a"][k]).replace(/\*$/,["2","s","_b","x"][k]);
+  const vise=typ?[["courant",typ==="d"?nomDe(2)+".txt":P.oui[0],false],["sous",nomDe(0),typ==="d"],["accueil",nomDe(1),typ!=="d"],["courant",nomDe(3),typ==="d"]]
+    :[["courant",P.oui[0]],["sous",P.oui[1]||P.oui[0]],["accueil",P.oui[P.oui.length-1]],["autre",P.oui[0]],...P.non.slice(0,3).map((n,i)=>[["courant","sous","accueil"][i],n])];
+  const A=[0,1,2].map(k=>{const T=tireArbo(R,vise.filter((v,i)=>v[1]&&(k===0||R()<0.8||i===0)),sansD);if(k===2&&!typ){const tp=noeud(T,COURANT);if(!tp.d.some(y=>re.test(y.n)))tp.d.push(fichier(P.oui[0]));}return T;});
+  const ref=`find ${dep}${typ?` -type ${typ}`:""} -name "${motif}"${act?` -exec ${act[0]==="ls"?"ls -l":act[0]} {} \\;`:""}`;
+  const quoi=typ==="d"?"les répertoires":typ==="f"?"les fichiers ordinaires (pas les répertoires)":"les fichiers",q=act?`Donne la commande qui, à partir ${depDit}, ${act[1]} tous ${quoi.replace(/^les /,"les ")} dont le nom ${SORTES[sorte][1]} ${c('"'+x+'"')}.`.replace(" de tous les"," tous les").replace("affiche le contenu tous","affiche le contenu de tous").replace("(ls -l) tous","(ls -l) de tous"):`Donne la commande qui recherche, à partir ${depDit}, ${quoi} dont le nom ${SORTES[sorte][1]} ${c('"'+x+'"')}.`;
+  const r0=find(ref,A[0]);if(r0.err)throw new Error(ref+" : "+r0.err);if(!r0.abs.length)return null;
+  const o={depDit,sortDit:SORTES[sorte][2]+" « "+x+" »",type:typ,action:act&&act[0],actionDit:act&&act[1].replace(" de","").replace("affiche le contenu","afficher le contenu").replace("supprime","supprimer").replace("affiche la liste détaillée (ls -l)","afficher la liste détaillée")};
+  const E=[{w:`Le départ : ${c(dep)}, ${depDit.replace(/^du /,"le ").replace(/^de la /,"la ")}.`,why:`${c(".")} est le dossier courant, ${c("~")} le dossier d'accueil, ${c("..")} le dossier parent. find descend ensuite dans tous les sous-dossiers.`,pts:1},
+    {w:`Le nom : ${c(`-name "${motif}"`)}${typ?`, et le type : ${c("-type "+typ)}`:""}.`,why:`Un nom qui ${SORTES[sorte][2]} ${c('"'+x+'"')} : ${c(motif)}, où ${c("*")} remplace n'importe quelle suite de caractères. Les guillemets empêchent bash de remplacer le motif par les noms du dossier courant avant de lancer find.${typ?` ${c("-type d")} garde les répertoires, ${c("-type f")} les fichiers ordinaires.`:""}`,pts:act?1:1.5},
+    ...(act?[{w:`L'action : ${c(`-exec ${act[0]==="ls"?"ls -l":act[0]} {} \\;`)}`,why:`${c("{}")} est remplacé par chaque fichier trouvé, et ${c("\\;")} termine la commande lancée. ${act[0]==="rm"?`On peut aussi écrire ${c("-delete")}.`:""}`,pts:1}]:[]),
+    {w:`La commande : <b>${c(ref)}</b>`,why:`Sur la première arborescence d'essai, elle ${act?"agit sur":"trouve"} : ${r0.trouve.map(c).join(", ")}.`,pts:0.5}];
+  const juge=rep=>jugeFind(rep.c,A,ref,o);
+  const fausse=[ref.replace(/"/g,""),ref.replace(` ${dep} `,` ${dep==="."?"~":"."} `),ref.replace(` ${dep} `,` ${dep===".."?".":".."} `),ref.replace(`"${motif}"`,`"${x}"`),ref.replace(/ -type [fd]/,""),ref.replace(/ -exec.*$/,"")].find(f=>f!==ref&&juge({c:f}).ok===false);
+  if(!fausse)return null;
+  return {sig:"F"+palier+q,q,corps:"",texte:q.replace(/<[^>]+>/g,"").replace(/&quot;/g,'"'),champs:[{k:"champ",id:"c",nom:"commande",label:"La commande :",ex:"find …",apercu:false,sym:[["~","~"],["..",".."],['"','"'],["*","*"],["-name","-name "],["-type","-type "],...(act?[["-exec","-exec "],["{}","{}"],["\\;","\\;"]]:[])]}],juge,etapes:E,
+    bonne:c(ref),bonneTxt:ref,repBonne:{c:ref},repFausse:{c:fausse},nature:palier===1?"nom":palier===2?"type":"exec",
+    ens:{bash:A.map(T=>({arbo:T,cmd:ref,abs:find(ref,T).abs.slice().sort()})).concat(A.map(T=>{const f=find(fausse,T);return {arbo:T,cmd:fausse,abs:f.err?null:f.abs.slice().sort()};}))}};}
+const tireFind=k=>R=>{for(;;){const e=exoFind(R,k);if(e)return e;}};
 
 G.add("usi",[
+ {id:"US5",t:"find : chercher des fichiers",tache:"find",th:"recherche",pts:1.5,lecons:["u-find"],
+  paliers:[
+   {t:"ce qu'affiche une commande find",cc:2,gen:tireFind(0)},
+   {t:"écrire la commande : départ et nom",cc:2,min:60,gen:tireFind(1)},
+   {t:"avec -type",cc:2,min:70,gen:tireFind(2)},
+   {t:"avec -exec, comme aux examens",cc:2,min:120,gen:tireFind(3)}]}
 ]);
 })();
 
