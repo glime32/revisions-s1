@@ -22768,6 +22768,9 @@ function etapesFn(fn,src,T){const m=x=>cite(src,x),noms={m:new Map(),n:0,w:0},si
 /* ---------- PF1 : type et valeur d'une expression ---------- */
 const SYMT=[["int","int"],["float","float"],["bool","bool"],["string","string"],["list"," list"],["->"," -> "],["*"," * "],["'a","'a"],["(","("],[")",")"]];
 const SYMV=[["[","["],["]","]"],[";","; "],["true","true"],["false","false"],['"','"'],[".","."],["(","("],[")",")"],["<fun>","<fun>"]];
+/* les boutons de symboles d'un palier (choix P0b du 19/11) */
+const symDe=(L,noms)=>L.filter(s=>noms.includes(s[0]));
+const ST1=["int","float","bool","string"],SV1=["true","false",'"',"."];
 const constante=e=>["int","float","bool","str","char","unit"].includes(e.k)||((e.k==="list"||e.k==="tuple")&&e.L.every(constante))||(e.k==="ctor"&&(!e.arg||constante(e.arg)));
 function lisTypeRep(S,texte){const t=normalise(texte).trim();if(!t)return {vide:true};
   try{return {t:S.lisType(t)};}catch(x){if(!x.faute)throw x;return {pb:x.msg+(/^Le type « [a-z] »/.test(x.msg)?" Une variable de type s'écrit avec une apostrophe : 'a.":"")};}}
@@ -22832,8 +22835,8 @@ function exoType(code,o){o=o||{};code=coupe(code);const S=ML.session(),r=S.lis(c
     if(!convient(lv.t,T))return fauxV("valeur écrite avec un autre type",`Tu as écrit ${c(lv.ecrit)}, qui est ${un(lv.type)}. Or la valeur est ${un(type)}.${type==="float"?` Un float s'écrit avec un point, comme ${c("3.")} ou ${c("2.5")}.`:/list$/.test(type)&&/\*/.test(lv.type)?" Dans une liste, les éléments sont séparés par des points-virgules. Avec des virgules, on écrit un couple.":type==="int"&&lv.type==="float"?` Entre deux int, ${c("/")} est la division entière : le résultat reste un int, sans point.`:""}`);
     if(lv.ecrit!==ecrit)return fauxV(lignes.includes(lv.ecrit)?"calcul arrêté en route":"valeur d'une expression",lignes.includes(lv.ecrit)?`${c(lv.ecrit)} apparaît bien pendant le calcul, mais ce n'est pas encore la valeur finale : il reste des opérations à faire.`:`Tu as trouvé ${c(lv.ecrit)}. Reprends le calcul ligne par ligne.${/ \/ | mod /.test(code)?` Attention à ${c("/")} et ${c("mod")} : le quotient et le reste de la division entière.`:""}`);
     return {ok:true};}
-  const champs=o.sig?[{k:"champ",id:"t",nom:"signature",label:`Signature de ${r.noms[0].n} :`,ex:"par exemple int -> bool",apercu:false,sym:SYMT}]
-    :[{k:"choix",id:"ok",o:[["oui","Elle a un type"],["non","Erreur de type"]]},{k:"champ",id:"t",nom:"type",label:"Son type :",ex:"par exemple int list",si:{ok:"oui"},apercu:false,sym:SYMT},{k:"champ",id:"v",nom:"valeur",label:"Sa valeur :",ex:"comme OCaml l'écrit",si:{ok:"oui"},apercu:false,sym:o.fun?SYMV:SYMV.slice(0,-1)}];
+  const champs=o.sig?[{k:"champ",id:"t",nom:"signature",label:`Signature de ${r.noms[0].n} :`,ex:"par exemple int -> bool",apercu:false,sym:o.symT?symDe(SYMT,o.symT):SYMT}]
+    :[{k:"choix",id:"ok",o:[["oui","Elle a un type"],["non","Erreur de type"]]},{k:"champ",id:"t",nom:"type",label:"Son type :",ex:"par exemple int list",si:{ok:"oui"},apercu:false,sym:o.symT?symDe(SYMT,o.symT):SYMT},{k:"champ",id:"v",nom:"valeur",label:"Sa valeur :",ex:"comme OCaml l'écrit",si:{ok:"oui"},apercu:false,sym:o.symV?symDe(SYMV,o.symV):o.fun?SYMV:SYMV.slice(0,-1)}];
   const autreT=type==="int"?"float":type==="bool"?"int":"bool";
   return {sig:"T"+code,code,
     q:o.sig?`Voici une fonction OCaml. Donne sa signature : le type de son ou de ses paramètres, puis une flèche, puis le type du résultat.`
@@ -22877,7 +22880,7 @@ function signature(R){for(;;){const [x,y,z]=R.choix(NOMSP),f=R.choix(["f","g","h
     if(n===1)code=plie(R.choix([`let ${f} = function ${x} ->`,`let ${f} = fun ${x} ->`,`let ${f} ${x} =`]),R.choix(C1)(x));
     else if(n===2)code=plie(R.choix([`let ${f} = function (${x}, ${y}) ->`,`let ${f} = fun ${x} ${y} ->`,`let ${f} = fun ${x} ${y} ->`,`let ${f} ${x} ${y} =`,`let ${f} (${x}, ${y}) =`]),R.choix(C2)(x,y));
     else code=plie(R.choix([`let ${f} = fun ${x} ${y} ${z} ->`,`let ${f} = function (${x}, ${y}, ${z}) ->`,`let ${f} = fun (${x}, ${y}) ${z} ->`,`let ${f} ${x} ${y} ${z} =`]),R.choix(C3)(x,y,z));
-    const e=exoType(code,{sig:true});if(e)return e;}}
+    const e=exoType(code,{sig:true,symT:ST1.concat(["list","->","*","'a","(",")"])});if(e)return e;}}
 const SUP=[
  R=>{const a=R.ent(2,9),b=R.ent(2,9),k=R.ent(2,5);return R.choix([`(fun x -> x * ${k}) ${a}`,`(fun x y -> x - y) ${a+b} ${b}`,`let f = fun x y -> x + y in f ${a}`,`let f = fun x -> x * ${k} in f (f ${a})`,`(fun (x, y) -> x * y) (${a}, ${b})`,`let double = fun f x -> f (f x) in double (fun n -> n + ${k}) ${a}`,`(fun x -> x > ${k}) ${a}`,`let f = fun x y -> x ^ y in f "a"`,`(fun x -> (x, x + 1)) ${a}`,`let g = fun (x, y) -> x + y in g (${a}, ${b}) * ${k}`,`(fun x y -> x :: y) ${a} [${b}]`,`(fun x y -> x :: y) ${a}`]);},
  R=>{const L=R.mel([1,2,3,4,5,6,7,8,9]).slice(0,R.ent(3,4)),l=`[${L.join("; ")}]`,k=R.ent(2,5),m=R.mel(MOTSF);return R.choix([`List.map (fun x -> x * ${k}) ${l}`,`List.map (fun x -> x > ${k}) ${l}`,`List.filter (fun x -> x mod 2 = 0) ${l}`,`List.filter (fun x -> x > ${k}) ${l}`,`List.fold_left (+) 0 ${l}`,`List.fold_left (fun a x -> a * x) 1 [${L.slice(0,3).join("; ")}]`,`List.map String.length ["${m[0]}"; "${m[1]}"]`,`List.map (fun (a, b) -> a + b) [(${L[0]}, ${L[1]}); (${L[2]}, ${k})]`,`List.map fst [(${L[0]}, "a"); (${L[1]}, "b")]`,`let p = fun x -> x > ${k} in List.length (List.filter p [${L.slice(0,3).join("; ")}])`,`let add = fun x y -> x + y in List.map (add ${k}) ${l}`,`List.fold_left (fun a x -> a + x * x) 0 [${L.slice(0,3).join("; ")}]`,`List.fold_left (fun a x -> x :: a) [] ${l}`,`List.map (fun x -> [x]) [${L.slice(0,3).join("; ")}]`,`List.fold_left max 0 ${l}`]);},
@@ -22885,14 +22888,165 @@ const SUP=[
 const SUPF=[
  R=>{const a=R.ent(2,9),b=R.ent(2,9),L=`[${R.mel([1,2,3,4,5,6]).slice(0,3).join("; ")}]`;return R.choix([[`(fun x -> x + 1) true`,null],[`List.map (fun x -> x + 1) ${a}`,`List.map (fun x -> x + 1) [${a}]`],[`(fun x y -> x + y) ${a} ${b} 1`,`(fun x y -> x + y) ${a} ${b}`],[`List.map ${L} (fun x -> x + 1)`,`List.map (fun x -> x + 1) ${L}`],[`List.filter (fun x -> x + 1) ${L}`,`List.filter (fun x -> x > 1) ${L}`],[`List.fold_left (+) ${L} 0`,`List.fold_left (+) 0 ${L}`],[`let f = fun x -> x + 1 in f f`,`let f = fun x -> x + 1 in f (f ${a})`],[`(fun x -> x ^ "a") ${a}`,`(fun x -> x ^ "a") "${a}"`],[`List.map (fun x -> x * 2) ${a} :: ${L}`,`List.map (fun x -> x * 2) (${a} :: ${L})`],[`(fun (x, y) -> x + y) ${a} ${b}`,`(fun (x, y) -> x + y) (${a}, ${b})`],[`List.map (fun x -> x ^ "a") ${L}`,null],[`(fun x -> x) ${a} + (fun x -> x) true`,null]]);}];
 
+/* ---------- PF2 : que renvoie cette fonction pour cette entrée ? ---------- */
+const NOMSF=["f","g","h","mystere"];
+const lst=L=>`[${L.join("; ")}]`;
+const SYMR=SYMV.filter(s=>s[0]!=="<fun>");
+const finLigne=s=>s.replace(/\s*\n\s*/g," ");
+const estValeur=t=>{try{return constante(analyse(t,"expr").arbre);}catch(x){if(!x.faute)throw x;return false;}};
+/* une valeur fausse plausible, du même type, pour les essais */
+function voisine(type,ecrit,autres){const a=autres.find(x=>x!==ecrit);if(a!==undefined)return a;
+  if(type==="bool")return String(ecrit!=="true");if(type==="string")return ecrit==='"zz"'?'"yy"':'"zz"';
+  if(ecrit==="[]")return /^bool/.test(type)?"[true]":/^string/.test(type)?'["a"]':"[0]";
+  if(/\d/.test(ecrit))return ecrit.replace(/\d+/,m=>String(+m+1));
+  return ecrit.replace(/true|false/,m=>m==="true"?"false":"true");}
+/* o : {it:{k,fn,init}} pour une fonction écrite avec un itérateur de List ; nat : la sorte d'exercice */
+function exoRenvoie(def,appel,o){o=o||{};
+  def=def.replace(/^(let (?:rec )?\w+ : [^\n]*? =) ((?:fun|function)\b[^\n]*)/,(m,a,b)=>m.length>40?a+"\n  "+b:m);
+  const avant=def;def=coupe(def);
+  const nom=/^let (?:rec )?([a-z_]+)/.exec(def)[1],rec=/^let rec /.test(def);
+  const S=ML.session(),suivi={nom},R=S.lis(def+"\n;;\n"+appel,{suivi}),r=R[R.length-1];
+  if(R.some(x=>x.faute)||!r||r.sorte!=="expr"||r.exc)return null;
+  const type=r.type,ecrit=r.ecrit,T=r.t;
+  if(/'|_weak|<fun>|<poly>/.test(type+ecrit)||ecrit.length>40)return null;
+  let E,inter=[],base=null,aRebours=null;
+  const fin=pourquoi=>({w:`Donc ${c(appel)} vaut <b>${c(ecrit)}</b>`,why:pourquoi+` Son type est ${c(type)} : c'est ce qu'annonce la fin de la signature de ${c(nom)}.`,pts:0.5});
+  if(rec){const d=S.deplie(suivi);if(!d||d.arbre||d.lignes.length<2||d.lignes.length>7)return null;
+    const val=l=>l.parts[l.parts.length-1];inter=d.lignes.map(val);base=val(d.lignes[0]);const dernier=d.ordre[d.ordre.length-1];
+    if(d.terminale){
+      E=[{w:`Les appels, du premier au dernier&nbsp;:${bloc(coupe(d.ordre.join("\n= ")+"\n= "+ecrit,"    "))}`,why:`Chaque appel se contente de rappeler ${c(nom)} avec de nouveaux arguments : le calcul se fait dans les arguments, au fil de la descente. Il ne reste rien à faire en remontant.`,pts:2},
+        {w:`Le dernier appel, ${c(dernier)}, est le cas de base : il renvoie ${c(base)}.`,why:"Avec un accumulateur, la valeur du cas de base est déjà la réponse.",pts:0.5},
+        fin("C'est la valeur du cas de base, renvoyée telle quelle par chaque appel.")];}
+    else{
+      E=[{w:`Les appels s'enchaînent jusqu'au cas de base : ${d.ordre.map(c).join(" → ")}.`,why:`Chaque appel attend le résultat de l'appel suivant. ${c(dernier)} répond sans rappeler ${c(nom)} : c'est le cas de base.`,pts:1},
+        {w:`On remonte, du cas de base vers le premier appel&nbsp;:${bloc(d.lignes.map(l=>coupe(l.parts.join(" = "),"    ")).join("\n"))}`,why:"Chaque ligne remplace l'appel récursif par sa valeur, trouvée juste au-dessus, puis fait le calcul.",pts:1.5},
+        fin("C'est la dernière ligne de la remontée : la valeur du premier appel.")];}}
+  else{const S2=ML.session();S2.lis(def);const d=S2.deroule(appel);
+    if(!d.fini||d.exc||d.lignes[d.lignes.length-1]!==ecrit)throw new Error("calcul montré différent de la valeur : "+appel+" → "+d.lignes.join(" = "));
+    if(d.lignes.length<3)return null;
+    const sub=bloc(coupe(d.lignes[0]+"\n= "+finLigne(d.lignes[1]),"    "));
+    if(o.it){const it=o.it,P=/^fun \(?(\w+)\)? (\w+) ->/.exec(it.fn)||/^fun (\w+) ->/.exec(it.fn),L=JSON.parse(it.L),pas=[],app=(...a)=>{const x=ML.session().deroule(`(${it.fn}) ${a.join(" ")}`);return [finLigne(x.lignes[1]||x.lignes[0]),x.lignes[x.lignes.length-1]];};
+      const fr=v=>/^-/.test(v)?"("+v+")":v;let w0,w1,why1;
+      if(it.k==="map"){L.forEach(x=>{const [m,v]=app(fr(x));pas.push(`${P[1]} = ${x} : ${m} = ${v}`);inter.push(v);});
+        w0=`${c("List.map")} applique ${c(it.fn)} à chaque élément de la liste.`;w1=`Élément par élément, dans l'ordre&nbsp;:`;why1="La liste rendue a autant d'éléments que la liste de départ, dans le même ordre.";}
+      else if(it.k==="filter"){const garde=[],jete=[];L.forEach(x=>{const [m,v]=app(fr(x));pas.push(`${P[1]} = ${x} : ${m} vaut ${v}, ${v==="true"?"gardé":"enlevé"}`);(v==="true"?garde:jete).push(x);});
+        aRebours=lst(jete);w0=`${c("List.filter")} essaie ${c(it.fn)} sur chaque élément, et garde ceux pour lesquels elle rend ${c("true")}.`;w1=`Le test, élément par élément&nbsp;:`;why1="Les éléments gardés restent dans leur ordre de départ.";}
+      else if(it.k==="fold_left"){let a=it.init;pas.push(`${P[1]} = ${a}`);L.forEach(x=>{const [m,v]=app(fr(a),fr(x));pas.push(`${P[2]} = ${x} : ${P[1]} = ${m} = ${v}`);a=v;inter.push(v);});inter.pop();
+        w0=`${c("List.fold_left")} part de ${c(P[1]+" = "+it.init)}, puis parcourt la liste de gauche à droite.`;w1=`L'accumulateur ${c(P[1])}, élément par élément&nbsp;:`;why1=`À chaque élément, ${c(it.fn)} calcule le nouveau ${c(P[1])} à partir de l'ancien et de l'élément. La valeur finale est le dernier ${c(P[1])}.`;}
+      else{let a=it.init;pas.push(`${P[2]} = ${a}`);L.slice().reverse().forEach(x=>{const [m,v]=app(fr(x),fr(a));pas.push(`${P[1]} = ${x} : ${P[2]} = ${m} = ${v}`);a=v;inter.push(v);});inter.pop();
+        w0=`${c("List.fold_right")} part de la fin de la liste, avec ${c(P[2]+" = "+it.init)}.`;w1=`L'accumulateur ${c(P[2])}, du dernier élément au premier&nbsp;:`;why1=`${c("List.fold_right f [a; b; c] x")} calcule ${c("f a (f b (f c x))")} : l'élément le plus à droite est traité en premier.`;}
+      E=[{w:`On remplace le paramètre par la liste de l'appel&nbsp;:${sub}`,why:w0,pts:1},{w:w1+bloc(pas.map(l=>coupe(l,"    ")).join("\n")),why:why1,pts:1.5},fin("C'est ce que rend l'itérateur.")];}
+    else{const reste=d.lignes.slice(1),re=recit(d.faits.filter(f=>f.quoi!=="appel"));inter=d.lignes.slice(2,-1);
+      E=[{w:`On remplace les paramètres par les valeurs de l'appel&nbsp;:${sub}`,why:"Pour appliquer une fonction, on remplace chaque paramètre par l'argument qui est à sa place, dans le corps de la fonction (ce qui suit la flèche).",pts:1},
+        reste.length>2?{w:`Puis on calcule&nbsp;:${montreCalcul({lignes:reste})}`,why:re||"On calcule d'abord ce qui est entre parenthèses, puis les opérations dans l'ordre des priorités.",pts:1.5}:null,
+        fin("C'est la dernière ligne du calcul.")].filter(Boolean);}}
+  const iFin=E.length-1,S0=ML.session();
+  function juge(rep){const lv=lisValeurRep(S0,rep.v);if(lv.vide)return {incomplet:`Écris la valeur de ${appel}, comme OCaml l'affiche.`};if(lv.pb)return {incomplet:lv.pb};
+    const faux=(etape,sorte,titre,msg)=>({ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la valeur renvoyée.",diag:{etape,type:sorte,titre,msg}});
+    if(lv.fun)return faux(iFin,"valeur d'un appel complet","Où ça part : l'appel a tous ses arguments.",`${c(appel)} donne à ${c(nom)} tous ses arguments : le calcul va jusqu'au bout, et sa valeur est ${un(type)}.`);
+    if(!convient(lv.t,T))return faux(iFin,"type de la valeur renvoyée","Où ça part : le type de la valeur.",`Tu as écrit ${c(lv.ecrit)}, qui est ${un(lv.type)}. Or ${c(nom)} renvoie ${un(type)} : c'est ce qu'annonce la fin de sa signature.`);
+    if(lv.ecrit===ecrit)return {ok:true};
+    const v=lv.ecrit;
+    if(aRebours&&v===aRebours)return faux(1,"filtre inversé","Où ça part : ce qu'on garde.",`Ce sont les éléments pour lesquels le test vaut ${c("false")}. ${c("List.filter")} garde ceux pour lesquels il vaut ${c("true")}.`);
+    if(/^\[.*\]$/.test(v)&&v!=="[]"){const inv=v.slice(1,-1).split("; ").reverse().join("; ");if("["+inv+"]"===ecrit)return faux(Math.min(1,iFin),"ordre des éléments d'une liste","Où ça part : l'ordre de la liste.",`Les éléments sont les bons, mais pas leur ordre. ${c("x :: reste")} met x devant reste.`);}
+    if(rec&&base!==null&&v===base&&inter.length>1)return faux(1,"valeur du cas de base","Où ça part : la remontée.",`${c(v)} est la valeur du cas de base. Il reste à remonter, appel par appel, jusqu'au premier.`);
+    if(inter.includes(v))return faux(Math.min(1,iFin),rec?"remontée arrêtée en route":"calcul arrêté en route","Où ça part : le calcul s'arrête trop tôt.",`${c(v)} apparaît bien pendant le calcul, mais ce n'est pas encore la valeur finale. Va jusqu'au bout.`);
+    return faux(Math.min(1,iFin),rec?"valeur d'une fonction récursive":"valeur d'un appel de fonction","Où ça part : un des calculs.",rec?"Reprends la remontée ligne par ligne : chaque appel remplace l'appel récursif par la valeur trouvée juste au-dessus.":"Reprends le calcul ligne par ligne, après avoir remplacé chaque paramètre par sa valeur.");}
+  inter=inter.filter(estValeur);
+  const fausse=voisine(type,ecrit,inter.filter(x=>{const t=ML.calcule(x);return !t.faute&&!t.exc&&t.type===type;}));
+  return {sig:"R"+def.replace(/\s+/g," ")+"|"+appel,code:def,
+    q:`Voici une fonction${rec?" récursive":""} OCaml. Que renvoie ${c(appel)} ? Écris la valeur comme OCaml l'affiche.`,
+    corps:bloc(def),texte:finLigne(def)+" — valeur de "+appel,
+    champs:[{k:"champ",id:"v",nom:"valeur",label:`Valeur de ${esc(appel)} :`,ex:"comme OCaml l'écrit",apercu:false,sym:o.sym?symDe(SYMR,o.sym):SYMR}],juge,etapes:E,
+    bonne:c(ecrit),bonneTxt:ecrit,repBonne:{v:ecrit},repFausse:{v:fausse},nature:o.nat||"valeur",
+    ens:{code:def,appel,type,ecrit,coupe:(r=>coupe(r)!==r)(avant.split("\n").slice(1).join("\n")),ocaml:[{code:def+" in "+appel,attendu:"T:"+type+"|V:"+ecrit}]}};}
+/* une famille rend [définition, appel] ou [définition, appel, itérateur] */
+const tireRenvoie=(R,F,nat,sym)=>{for(;;){const x=R.choix(F)(R);if(!x)continue;const e=exoRenvoie(x[0],x[1],{it:x[2],nat,sym});if(e)return e;}};
+const nf=R=>R.choix(NOMSF),nc=R=>R.choix(["f","g","h"]),sig=(f,t)=>`let ${f} : ${t} =`;
+const SANSREC=[
+ R=>{const f=nf(R),b=R.choix([2,3,4,5]),a=R()<0.5?b*R.ent(2,6):R.ent(7,29);return [`${sig(f,"int -> int -> int")} fun a b ->\n  if a mod b = 0 then a / b\n  else a * b`,`${f} ${a} ${b}`];},
+ R=>{const f=nf(R),x=R.ent(1,9),y=R.ent(1,9);return [`${sig(f,"int * int -> int")}\n  function (a, b) ->\n  if a > b then a - b else b - a`,`${f} (${x}, ${y})`];},
+ R=>{const f=nf(R),k=R.ent(2,3),s=R.choix([10,12,15]),n=R.ent(2,9);return [`${sig(f,"int -> int")} function n ->\n  let m = n * ${k} in\n  if m > ${s} then m - ${s} else m + 1`,`${f} ${n}`];},
+ R=>{const f=nf(R),d=R.choix([10,10,3,4,7]),n=R.ent(11,99);return [`${sig(f,"int -> int * int")}\n  function n -> (n / ${d}, n mod ${d})`,`${f} ${n}`];},
+ R=>{const f=nf(R),k=R.ent(5,15),op=R.choix(["&&","||"]),n=R.ent(2,20);return [`${sig(f,"int -> bool")} function n ->\n  n mod 2 = 0 ${op} n > ${k}`,`${f} ${n}`];},
+ R=>{const f=nf(R),k=R.ent(1,4),m=R.choix(["ab","oc","to","li"]),n=R.ent(0,6);return [`${sig(f,"string -> int -> string")}\n  fun s n ->\n  if n > ${k} then s ^ s else s ^ "!"`,`${f} "${m}" ${n}`];},
+ R=>{const f=nf(R),L=[R.ent(1,9),R.ent(1,9),R.ent(1,9)],op=R.choix(["+","*","-"]);return [`${sig(f,"int list -> int")} function li ->\n  List.hd li ${op} List.hd (List.tl li)`,`${f} ${lst(L)}`];},
+ R=>{const f=nf(R),L=R.mel([1,2,3,4,5,6,7,8,9]).slice(0,R.ent(3,4));return R.choix([[`${sig(f,"int list -> int list")}\n  function li ->\n  List.hd li :: List.tl (List.tl li)`,`${f} ${lst(L)}`],[`${sig(f,"int list -> int list")}\n  function li ->\n  List.hd (List.tl li) :: List.hd li\n  :: List.tl (List.tl li)`,`${f} ${lst(L)}`]]);},
+ R=>{const f=nf(R),a=R.ent(1,5),b=R.ent(1,5);return [`${sig(f,"int -> int -> int")} fun a b ->\n  let c = a + b in\n  c * c - a`,`${f} ${a} ${b}`];},
+ R=>{const f=nf(R),a=R.ent(2,9),b=R.ent(2,5);return [`${sig(f,"int * int -> int * int")}\n  function (a, b) ->\n  ${R.choix(["(a + b, a * b)","(b, a - b)","(a / b, a mod b)","(a * a, b + 1)"])}`,`${f} (${a}, ${b})`];},
+ R=>{const f=nf(R),n=R.ent(3,20);return [`${sig(f,"int -> string")} function n ->\n  if n mod 3 = 0 then "a"\n  else if n mod 3 = 1 then "b"\n  else "c"`,`${f} ${n}`];},
+ R=>{const f=nf(R),a=R.ent(2,15),b=R.ent(2,9);return [`${sig(f,"int -> int -> int")} fun a b ->\n  if a < b then b - a\n  else if a = b then 0\n  else a mod b`,`${f} ${a} ${b}`];},
+ R=>{const f=nf(R),a=R.ent(1,30),b=R.ent(1,30);return [`${sig(f,"int -> int -> bool")} fun a b ->\n  a mod 2 = b mod 2`,`${f} ${a} ${b}`];},
+ R=>{const f=nf(R),n=R.ent(1,9);return [`${sig(f,"int -> float")} function n ->\n  float_of_int n /. 2.`,`${f} ${n}`];}];
+const chiffres=(R,k)=>{let s="";for(let i=0;i<k;i++)s+=R.ent(i?0:1,9);return +s;};
+const RECENT=[
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int = function n ->\n  if n < 10 then n\n  else n mod 10 + ${f} (n / 10)`,`${f} ${chiffres(R,R.ent(3,4))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int = function n ->\n  if n < 10 then 1\n  else 1 + ${f} (n / 10)`,`${f} ${chiffres(R,R.ent(3,5))}`];},
+ R=>{const f=nf(R),k=R.ent(1,3),n=+[...Array(R.ent(3,4))].map(()=>R()<0.75?k:R.ent(1,9)).join("");return [`let rec ${f} : int -> bool = function n ->\n  if n < 10 then n = ${k}\n  else n mod 10 = ${k} && ${f} (n / 10)`,`${f} ${n}`];},
+ R=>{const f=nf(R),n=R.choix([12,18,20,24,30,36]),i=R.ent(3,6);return [`let rec ${f} : int -> int -> int =\n  fun n i ->\n  if i = 0 then 1\n  else if n mod i = 0\n  then i * ${f} n (i - 1)\n  else ${f} n (i - 1)`,`${f} ${n} ${i}`];},
+ R=>{const f=nf(R),n=R.choix([12,15,16,18,20,24,28,30]),i=R.ent(4,7);return [`let rec ${f} : int -> int -> int =\n  fun n i ->\n  if i = 0 then 0\n  else if n mod i = 0\n  then 1 + ${f} n (i - 1)\n  else ${f} n (i - 1)`,`${f} ${n} ${i}`];},
+ R=>{const f=nf(R),n=R.choix([12,15,16,18,20,24,28,30]),i=R.ent(4,7);return [`let rec ${f} : int -> int -> int =\n  fun n i ->\n  if i = 0 then 0\n  else if n mod i = 0\n  then i + ${f} n (i - 1)\n  else ${f} n (i - 1)`,`${f} ${n} ${i}`];},
+ R=>{const f=nf(R),x=R.ent(2,3),n=R.ent(3,5);return [`let rec ${f} : int -> int -> int =\n  fun x n ->\n  if n = 0 then 1\n  else x * ${f} x (n - 1)`,`${f} ${x} ${n}`];},
+ R=>{const f=nf(R),k=R.ent(2,3),n=R.ent(5,11);return [`let rec ${f} : int -> int = function n ->\n  if n <= 0 then 0\n  else n + ${f} (n - ${k})`,`${f} ${n}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int = function n ->\n  if n = 0 then 0\n  else (if n mod 2 = 0 then 1 else 0)\n    + ${f} (n / 10)`,`${f} ${chiffres(R,R.ent(3,4))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int = function n ->\n  if n < 10 then n\n  else max (n mod 10) (${f} (n / 10))`,`${f} ${chiffres(R,R.ent(3,4))}`];},
+ R=>{const f=nf(R),n=R.ent(4,8);return [`let rec ${f} : int -> int = function n ->\n  if n <= 1 then 1\n  else n * ${f} (n - 2)`,`${f} ${n}`];},
+ R=>{const f=nf(R),n=R.choix([12,20,24,28,40,48,56,80,96]);return [`let rec ${f} : int -> int = function n ->\n  if n mod 2 <> 0 then 0\n  else 1 + ${f} (n / 2)`,`${f} ${n}`];},
+ R=>{const f=nf(R),k=R.ent(2,3),n=R.ent(5,9);return [`let rec ${f} : int -> int = function n ->\n  if n < ${k} then n\n  else ${f} (n - ${k}) + 1`,`${f} ${n}`];}];
+const petiteListe=(R,a,b,n1,n2)=>[...Array(R.ent(n1||3,n2||4))].map(()=>R.ent(a,b));
+const RECLI=[
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function li ->\n  if li = [] then 0\n  else List.hd li + ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function li ->\n  if li = [] then 0\n  else 1 + ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9,2,5))}`];},
+ R=>{const f=nf(R),k=R.ent(1,3);return [`let rec ${f} : int list -> int list =\n  function li ->\n  if li = [] then []\n  else (List.hd li + ${k})\n    :: ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nc(R);return [`let rec ${f} : int list -> int list =\n  function li ->\n  if li = [] then []\n  else if List.hd li mod 2 = 0\n  then List.hd li :: ${f} (List.tl li)\n  else ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9,4,5))}`];},
+ R=>{const f=nc(R);return [`let rec ${f} : int list -> int list =\n  function li ->\n  if li = [] then []\n  else if List.hd li mod 2 = 0\n  then ${f} (List.tl li)\n  else List.hd li :: ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9,4,5))}`];},
+ R=>{const f=nf(R),x=R.ent(1,3),L=[...Array(R.ent(4,5))].map(()=>R()<0.4?x:R.ent(1,4));return [`let rec ${f} : int -> int list -> int =\n  fun x li ->\n  if li = [] then 0\n  else if List.hd li = x\n  then 1 + ${f} x (List.tl li)\n  else ${f} x (List.tl li)`,`${f} ${x} ${lst(L)}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int -> int list =\n  fun li n ->\n  if li = [] || n = 0 then []\n  else List.hd li\n    :: ${f} (List.tl li) (n - 1)`,`${f} ${lst(petiteListe(R,1,9,3,5))} ${R.ent(1,4)}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function li ->\n  if List.tl li = [] then List.hd li\n  else max (List.hd li)\n    (${f} (List.tl li))`,`${f} ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function li ->\n  if List.tl li = [] then List.hd li\n  else ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nf(R),L=petiteListe(R,1,9),x=R()<0.5?R.choix(L):R.ent(1,9);return [`let rec ${f} : int -> int list -> bool =\n  fun x li ->\n  if li = [] then false\n  else List.hd li = x\n    || ${f} x (List.tl li)`,`${f} ${x} ${lst(L)}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function li ->\n  if li = [] then 1\n  else List.hd li * ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,5))}`];},
+ R=>{const f=nf(R),k=R.ent(3,6);return [`let rec ${f} : int list -> int = function li ->\n  if li = [] then 0\n  else if List.hd li > ${k}\n  then 1 + ${f} (List.tl li)\n  else ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9,4,5))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> bool = function li ->\n  if li = [] then true\n  else List.hd li > 0\n    && ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,R()<0.5?-2:1,9))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function li ->\n  if li = [] then 0\n  else List.hd li - ${f} (List.tl li)`,`${f} ${lst(petiteListe(R,1,9))}`];}];
+const MATCHACC=[
+ R=>{const f=nf(R),k=R.ent(2,5),e=R.choix([` x + ${f} r`,` x * x + ${f} r`,`\n    if x > ${k} then x + ${f} r\n    else ${f} r`]);return [`let rec ${f} : int list -> int = function\n  | [] -> 0\n  | x :: r ->${e}`,`${f} ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int = function\n  | [] -> 0\n  | [x] -> x\n  | x :: y :: r -> x - y + ${f} r`,`${f} ${lst(petiteListe(R,1,9,3,5))}`];},
+ R=>{const f=nf(R),k=R.ent(0,4);return [`let rec ${f} : int list -> int list =\n  function\n  | [] -> []\n  | x :: r ->\n    if x > ${k} then x :: ${f} r\n    else ${f} r`,`${f} ${lst(petiteListe(R,0,8,4,5))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int list -> int =\n  fun acc li ->\n  match li with\n  | [] -> acc\n  | x :: r -> ${f} (acc + x) r`,`${f} ${R.ent(0,3)} ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int list -> int list =\n  fun acc li ->\n  match li with\n  | [] -> acc\n  | x :: r -> ${f} (x :: acc) r`,`${f} [] ${lst(petiteListe(R,1,9))}`];},
+ R=>{const f=nf(R);let n;do n=chiffres(R,3);while(String(n)===[...String(n)].reverse().join(""));return [`let rec ${f} : int -> int -> int =\n  fun acc n ->\n  if n = 0 then acc\n  else ${f}\n    (acc * 10 + n mod 10) (n / 10)`,`${f} 0 ${n}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int = function\n  | 0 -> 0\n  | n -> n mod 10 + ${f} (n / 10)`,`${f} ${chiffres(R,R.ent(3,4))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int list =\n  function\n  | [] -> []\n  | [x] -> [x]\n  | x :: y :: r -> x :: ${f} r`,`${f} ${lst(petiteListe(R,1,9,4,5))}`];},
+ R=>{const f=nc(R);return [`let rec ${f} : int -> int list -> int =\n  fun acc li ->\n  match li with\n  | [] -> acc\n  | x :: r ->\n    if x mod 2 = 0 then ${f} (acc + 1) r\n    else ${f} acc r`,`${f} 0 ${lst(petiteListe(R,1,9,4,5))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int -> int list -> int =\n  fun m li ->\n  match li with\n  | [] -> m\n  | x :: r -> ${f} (max m x) r`,`${f} 0 ${lst(petiteListe(R,1,9,3,5))}`];},
+ R=>{const f=nf(R);return [`let rec ${f} : int list -> int list =\n  function\n  | [] -> []\n  | x :: r -> (2 * x) :: ${f} r`,`${f} ${lst(petiteListe(R,1,9))}`];}];
+const ITER=[
+ R=>{const f=nf(R),k=R.ent(2,4),fn=R.choix([`fun x -> x * ${k} + 1`,`fun x -> x * x`,`fun x -> x mod ${k}`,`fun x -> x - ${k}`]),L=petiteListe(R,1,9);return [`${sig(f,"int list -> int list")}\n  function li ->\n  List.map (${fn}) li`,`${f} ${lst(L)}`,{k:"map",fn,L:JSON.stringify(L)}];},
+ R=>{const f=nf(R),k=R.ent(2,4),fn=R.choix([`fun x -> x > ${k}`,`fun x -> x mod ${k} = 0`]),L=petiteListe(R,1,9);return [`${sig(f,"int list -> bool list")}\n  function li ->\n  List.map (${fn}) li`,`${f} ${lst(L)}`,{k:"map",fn,L:JSON.stringify(L)}];},
+ R=>{const f=nf(R),k=R.ent(2,5),[fn,p]=R.choix([[`fun x -> x mod ${k} = 0`,x=>x%k===0],[`fun x -> x > ${k}`,x=>x>k],[`fun x -> x mod 2 = 1`,x=>x%2===1],[`fun x -> x <> ${k}`,x=>x!==k]]),L=petiteListe(R,1,9,4,5);if(L.every(p)||!L.some(p))return null;return [`${sig(f,"int list -> int list")}\n  function li ->\n  List.filter (${fn}) li`,`${f} ${lst(L)}`,{k:"filter",fn,L:JSON.stringify(L)}];},
+ R=>{const f=nf(R),[fn,init]=R.choix([["fun acc x -> acc + x * x","0"],["fun acc x -> acc * x","1"],["fun m x -> if x > m then x else m","0"],["fun acc x -> acc * 10 + x","0"],["fun acc x -> acc - x",String(R.ent(10,20))],["fun a x -> a + 2 * x","0"]]),L=petiteListe(R,1,fn.includes("* 10")?9:5,3,4);
+   return [`${sig(f,"int list -> int")} function li ->\n  List.fold_left\n    (${fn})\n    ${init} li`,`${f} ${lst(L)}`,{k:"fold_left",fn,init,L:JSON.stringify(L)}];},
+ R=>{const f=nf(R),L=petiteListe(R,1,9,2,4);return [`${sig(f,"int list -> int list")}\n  function li ->\n  List.fold_left\n    (fun acc x -> x :: acc) [] li`,`${f} ${lst(L)}`,{k:"fold_left",fn:"fun acc x -> x :: acc",init:"[]",L:JSON.stringify(L)}];},
+ R=>{const f=nf(R),[fn,init,t]=R.choix([["fun x acc -> x :: x :: acc","[]","int list -> int list"],["fun x acc -> x - acc","0","int list -> int"],["fun x acc -> x + 2 * acc","0","int list -> int"],["fun x acc -> acc @ [x]","[]","int list -> int list"]]),L=petiteListe(R,1,5,2,3);
+   return [`${sig(f,t)}\n  function li ->\n  List.fold_right\n    (${fn}) li ${init}`,`${f} ${lst(L)}`,{k:"fold_right",fn,init,L:JSON.stringify(L)}];},
+ R=>{const f=nf(R),k=R.ent(2,5),L=petiteListe(R,1,9,4,5);return R.choix([[`${sig(f,"int list -> int")} function li ->\n  List.length\n    (List.filter (fun x -> x > ${k}) li)`,`${f} ${lst(L)}`],[`${sig(f,"int list -> int")} function li ->\n  List.fold_left (+) 0\n    (List.map (fun x -> x * ${k}) li)`,`${f} ${lst(L.slice(0,3))}`]]);}];
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
-   {t:"int, float, bool, string",cc:2,gen:R=>tireParmi(R,BASE,BASEF,0.3)},
-   {t:"if et let … in",cc:2,gen:R=>tireParmi(R,IFLET,IFLETF,0.28)},
-   {t:"listes et couples",cc:2,gen:R=>tireParmi(R,LISTES,LISTESF,0.28)},
+   {t:"int, float, bool, string",cc:2,gen:R=>tireParmi(R,BASE,BASEF,0.3,{symT:ST1,symV:SV1})},
+   {t:"if et let … in",cc:2,gen:R=>tireParmi(R,IFLET,IFLETF,0.28,{symT:ST1,symV:SV1})},
+   {t:"listes et couples",cc:2,gen:R=>tireParmi(R,LISTES,LISTESF,0.28,{symT:ST1.concat(["list","*","(",")"]),symV:["[","]",";"].concat(SV1,["(",")"])})},
    {t:"la signature d'une fonction",cc:3,gen:signature,min:150},
-   {t:"fun, fonctions en argument, 'a",cc:3,gen:R=>tireParmi(R,SUP,SUPF,0.2,{fun:true}),min:150}]}
+   {t:"fun, fonctions en argument, 'a",cc:3,gen:R=>tireParmi(R,SUP,SUPF,0.2,{fun:true,symT:["int","bool","string","list","->","*","'a","(",")"],symV:["[","]",";","true","false",'"',"(",")","<fun>"]}),min:150}]},
+ {id:"PF2",t:"Que renvoie cette fonction ?",tache:"que renvoie cette fonction",th:"rec",pts:7,lecons:["p-fonctions","p-rec","p-listes"],apres:["PF1"],
+  paliers:[
+   {t:"fonction sans récursivité",cc:2,gen:R=>tireRenvoie(R,SANSREC,"sans récursivité",["[","]",";","true","false",'"',".","(",")"])},
+   {t:"récursivité sur un entier : chiffres, diviseurs",cc:3,gen:R=>tireRenvoie(R,RECENT,"entier",["true","false"])},
+   {t:"récursivité sur une liste",cc:3,gen:R=>tireRenvoie(R,RECLI,"liste",["[","]",";","true","false"])},
+   {t:"match et accumulateur",cc:3,gen:R=>tireRenvoie(R,MATCHACC,"match",["[","]",";"])},
+   {t:"List.map, List.filter, List.fold_left",cc:3,gen:R=>tireRenvoie(R,ITER,"itérateur",["[","]",";","true","false"])}]}
 ]);
 })();
 
