@@ -23282,6 +23282,155 @@ function conditionsSM(R){const [cas,sorte]=R.choix(SORTES5),X=exoSM(R,cas,sorte)
     champs:[{k:"champ",id:"y",nom:"solution",label:"$y =$",ex:"une fonction de x, sans constante",sym:SYM_Y.slice(0,2).concat(["cos(","sin(","/"]),aide:"Écris e^(2x) avec des parenthèses, et les fractions avec /."}],juge,etapes:E,
     bonne:fx(`y = ${solT}`),bonneTxt:`y = ${solT}`,repBonne:{y:`(${brut(C1)})*${B1[0]}+(${brut(C2)})*${B1[1]}+${ypTape(M.y)}`},repFausse:{y:`(${brut(C1)})*${B1[0]}+(${brut(C2)})*${B1[1]}`},
     nature:{cst:"second membre constant",poly:"polynôme",exp:"exponentielle",res:"exponentielle déjà solution",lin:"polynôme fois exponentielle",trig:"cosinus ou sinus"}[sorte],ens:{type:"smci",p:o.p.n/o.p.d,c:o.c.n/o.c.d,f:M.f,y0,y1}};}
+/* ---------- CA3 : Moivre et Euler ----------
+   La réponse est une formule en θ : sa valeur est comparée en plusieurs angles, et sa forme est lue sur l'arbre
+   (seulement cos θ, seulement sin θ, ou « linéarisée » : aucun carré ni produit de cosinus et de sinus). */
+const VT=["θ","x","t"],TH=[0.3,0.7,1.3,2.1,-0.8,2.9];
+const envT=v=>({θ:v,x:v,t:v});
+function trigs(A,L){L=L||[];if(!A)return L;if(A.t==="f"&&(A.f==="cos"||A.f==="sin")){let k=null;try{const u=val(A.a,envT(1)),w=val(A.a,envT(2));if(Math.abs(u[1])<1e-12&&Math.abs(w[0]-2*u[0])<1e-12&&Math.abs(u[0]-Math.round(u[0]))<1e-12)k=Math.round(u[0]);}catch(e){}L.push({f:A.f,k});}
+  ["a","l","r"].forEach(x=>A[x]&&!(A.t==="f"&&x==="a"&&(A.f==="cos"||A.f==="sin"))&&trigs(A[x],L));return L;}
+function degT(A){switch(A.t){case "n":case "pi":case "e":case "i":return 0;case "c":case "v":return Infinity;
+  case "f":return A.f==="cos"||A.f==="sin"?(trigs({t:"f",f:A.f,a:A.a})[0].k===null?Infinity:1):Infinity;
+  case "+":case "-":return Math.max(degT(A.l),degT(A.r));case "*":return degT(A.l)+degT(A.r);
+  case "/":return degT(A.r)===0?degT(A.l):Infinity;case "-u":return degT(A.a);
+  case "^":{if(degT(A.r)!==0)return Infinity;let n;try{n=val(A.r,{})[0];}catch(e){return Infinity;}return Number.isInteger(n)&&n>=0?n*degT(A.l):Infinity;}}return Infinity;}
+const FORME={cos:"avec seulement cos θ (pas de sin, pas de cos(2θ))",sin:"avec seulement sin θ (pas de cos, pas de sin(2θ))",cs:"avec seulement cos θ et sin θ (pas de cos(2θ) ni de sin(3θ))",lin:"sans puissance ni produit de cosinus et de sinus : seulement des cos(kθ) et des sin(kθ), et des nombres"};
+function formeOK(A,mode){const L=trigs(A);if(mode==="lin")return degT(A)<=1;
+  if(L.some(t=>t.k!==1))return false;if(mode==="cos")return L.every(t=>t.f==="cos");if(mode==="sin")return L.every(t=>t.f==="sin");return true;}
+const SYM_T=["cos(θ)","sin(θ)","θ","^","/","(",")"];
+/* o : mode, cible (θ ↦ valeur), lab (le membre de gauche), ans, tape, pieges [[fonction, diag]], etapes */
+function exoF(o){const dern=o.etapes.length-1;
+  function juge(rep){const t=String(rep.f==null?"":rep.f),k=t.lastIndexOf("="),src=k>=0?t.slice(k+1):t;if(!propre(src))return {incomplet:"Écris la formule."};
+    const A=lis(src,VT);if(!A)return {incomplet:"Je n'arrive pas à lire la formule. Écris par exemple 2cos(θ)^2 - 1, avec des parenthèses."};
+    const L=[...lettres(A)];if(L.length)return {incomplet:`Je ne connais pas la lettre ${L[0]} : écris la formule avec θ (ou x).`};
+    let V;try{V=TH.map(v=>val(A,envT(v)));}catch(e){return {incomplet:"Je n'arrive pas à calculer ta formule : vérifie les parenthèses."};}
+    const juste=V.every((v,i)=>Math.abs(v[1])<1e-9&&Math.abs(v[0]-o.cible(TH[i]))<1e-9);
+    if(juste&&formeOK(A,o.mode))return {ok:true};
+    if(juste)return {incomplet:`C'est égal, mais ce n'est pas encore la forme demandée : écris-la ${FORME[o.mode]}.`};
+    const pg=(o.pieges||[]).find(p=>V.every((v,i)=>Math.abs(v[0]-p[0](TH[i]))<1e-9));
+    return {ok:false,faux:["f"],resume:"Pas tout à fait : ta formule ne donne pas la bonne valeur pour tous les θ.",diag:pg?pg[1]:{etape:o.fin==null?dern:o.fin,type:o.type||"formule",titre:"Où ça part : le calcul.",msg:`On trouve ${fx(`${o.lab} = ${o.ans}`)}. Essaie ta formule avec θ = 0 : elle doit donner ${dec(o.cible(0))}.`}};}
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[{k:"champ",id:"f",nom:"formule",label:`$${o.lab} =$`,ex:"une formule en θ",sym:SYM_T,aide:"Les boutons écrivent cos(θ) et sin(θ). Pour un carré, écris cos(θ)^2."}],juge,etapes:o.etapes,
+    bonne:fx(`${o.lab} = ${o.ans}`),bonneTxt:`${o.lab} = ${o.ans}`,repBonne:{f:o.tape},repFausse:{f:o.faux||`(${o.tape})+1`},nature:o.nature,ens:Object.assign({type:"f",mode:o.mode},o.ens)};}
+const dec=v=>String(+v.toFixed(4)).replace(".",",").replace("-","−");
+/* une valeur exacte tapée : o.v (nombre), o.vT (écriture), o.tape, pieges [[valeur, diag]] */
+function exoN(o){const dern=o.etapes.length-1;
+  function juge(rep){const A=lisReel(rep.v);if(A.vide)return {incomplet:"Écris la valeur."};if(A.avecI)return {incomplet:"Le résultat est un nombre réel : pas de i."};if(A.illisible||A.neg)return {incomplet:"Je n'arrive pas à lire ce nombre. Écris par exemple -7/9 ou 24/25."};
+    if(pres(A.v,o.v))return {ok:true};if(A.dec&&Math.abs(A.v-o.v)<0.02)return {incomplet:"Écris la valeur exacte, avec une fraction, pas une valeur approchée."};
+    const pg=(o.pieges||[]).find(p=>pres(A.v,p[0]));
+    return {ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la bonne valeur.",diag:pg?pg[1]:{etape:dern,type:o.type||"calcul",titre:"Où ça part : le calcul.",msg:`On trouve ${fx(`${o.lab} = ${o.vT}`)}.`}};}
+  const f0=(o.pieges||[]).find(p=>!pres(p[0],o.v));
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[{k:"champ",id:"v",nom:"valeur",label:`$${o.lab} =$`,ex:"une valeur exacte, par exemple -7/9",sym:["/","√"]}],juge,etapes:o.etapes,
+    bonne:fx(`${o.lab} = ${o.vT}`),bonneTxt:`${o.lab} = ${o.vT}`,repBonne:{v:o.tape},repFausse:{v:f0?String(f0[0]):`(${o.tape})+1`},nature:o.nature,ens:Object.assign({type:"n"},o.ens)};}
+const MOIVRE2={w:`Formule de Moivre avec n = 2 : ${fx("(cos θ + i sin θ)² = cos(2θ) + i sin(2θ)")}. On développe le membre de gauche : ${fx("cos²θ + 2i sin θ cos θ + i²sin²θ = (cos²θ − sin²θ) + i(2 sin θ cos θ)")}.`,why:`${fx("(a + b)² = a² + 2ab + b²")}, et ${fx("i² = −1")}. La formule de Moivre vient de ${fx("(e^{iθ})² = e^{2iθ}")}.`,pts:1};
+const IDENT2={w:`On identifie les parties réelles et les parties imaginaires : ${fx("cos(2θ) = cos²θ − sin²θ")} et ${fx("sin(2θ) = 2 sin θ cos θ")}.`,why:"Deux complexes égaux ont la même partie réelle et la même partie imaginaire.",pts:1};
+const PYTH="Avec cos²θ + sin²θ = 1 : on remplace sin²θ par 1 − cos²θ, ou cos²θ par 1 − sin²θ.";
+const FR=[[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,6],[5,6],[2,7],[3,7],[5,7],[1,8],[3,8],[5,8],[7,8],[1,9],[2,9],[4,9],[5,9],[7,9],[8,9],[3,10],[7,10],[9,10]];
+const TRIPLE=[[3,5],[4,5],[5,13],[12,13],[8,17],[15,17],[7,25],[24,25]];
+const C=Math.cos,Sn=Math.sin;
+function double(R){const t=R();
+  if(t<0.4){const v=R.choix(["c","s","cs","s2"]),D={
+      c:{lab:"cos(2θ)",mode:"cos",ans:"2cos²θ − 1",tape:"2cos(θ)^2-1",f:x=>C(2*x),q:"Exprime cos(2θ) en fonction de cos θ seulement.",fin:{w:`${PYTH} ${fx("cos(2θ) = cos²θ − (1 − cos²θ) = 2cos²θ − 1")}.`,why:"On veut une formule qui ne contient plus que cos θ.",pts:1},pg:[[x=>1-2*C(x)**2,"signe"],[x=>2*C(x)**2,"le − 1 oublié"]]},
+      s:{lab:"cos(2θ)",mode:"sin",ans:"1 − 2sin²θ",tape:"1-2sin(θ)^2",f:x=>C(2*x),q:"Exprime cos(2θ) en fonction de sin θ seulement.",fin:{w:`${PYTH} ${fx("cos(2θ) = (1 − sin²θ) − sin²θ = 1 − 2sin²θ")}.`,why:"On veut une formule qui ne contient plus que sin θ.",pts:1},pg:[[x=>2*Sn(x)**2-1,"signe"],[x=>1-Sn(x)**2,"un seul sin²θ enlevé"]]},
+      cs:{lab:"cos(2θ)",mode:"cs",ans:"cos²θ − sin²θ",tape:"cos(θ)^2-sin(θ)^2",f:x=>C(2*x),q:"Exprime cos(2θ) en fonction de cos θ et de sin θ.",pg:[[x=>Sn(x)**2-C(x)**2,"signe"],[()=>1,"i² compté comme +1"]]},
+      s2:{lab:"sin(2θ)",mode:"cs",ans:"2 sin θ cos θ",tape:"2sin(θ)cos(θ)",f:x=>Sn(2*x),q:"Exprime sin(2θ) en fonction de cos θ et de sin θ.",pg:[[x=>Sn(x)*C(x),"le facteur 2 oublié"]]}}[v];
+    const E=[MOIVRE2,IDENT2];if(D.fin)E.push(D.fin);
+    return exoF({sig:"D"+v,mode:D.mode,cible:D.f,lab:D.lab,ans:D.ans,tape:D.tape,q:D.q+" Indication : la formule de Moivre.",corps:`<p class="muted">Formule de Moivre : ${fx("(cos θ + i sin θ)ⁿ = cos(nθ) + i sin(nθ)")}.</p>`,etapes:E,nature:"formule de cos 2θ",texte:D.q,
+      pieges:D.pg.map(([g,ty])=>[g,{etape:ty==="i² compté comme +1"?0:E.length-1,type:ty,titre:"Où ça part : la formule.",msg:`${fx(`${D.lab} = ${D.ans}`)} : ${ty==="signe"?"vérifie avec θ = 0, où cos(0) = 1 et sin(0) = 0.":ty==="i² compté comme +1"?"en développant, i² = −1 donne un signe −.":"vérifie avec θ = 0."}`}]),ens:{cible:v}});}
+  const [n,d]=R.choix(FR),sg=R()<0.5?1:-1;
+  if(t<0.6){const a=Q(sg*n,d),v=sub(mul(2,mul(a,a)),1);
+    return exoN({sig:"Nc"+brut(a),v:v.n/v.d,vT:nb(v),tape:brut(v),lab:"cos(2θ)",q:`On sait que ${fx(`cos θ = ${nb(a)}`)}. Calcule la valeur exacte de ${fx("cos(2θ)")}.`,etapes:[
+      {w:`${fx("cos(2θ) = 2cos²θ − 1")}.`,why:`C'est la formule de Moivre avec n = 2 : ${fx("cos(2θ) = cos²θ − sin²θ")}, puis ${fx("sin²θ = 1 − cos²θ")}.`,pts:1},
+      {w:`${fx(`cos(2θ) = 2 × (${nb(a)})² − 1 = 2 × ${nb(mul(a,a))} − 1 = ${nb(v)}`)}.`,why:"On remplace cos θ par sa valeur. Le carré d'un nombre négatif est positif.",pts:1}],
+      pieges:[[2*a.n/a.d,{etape:0,type:"cos(2θ) pris pour 2cos θ",titre:"Où ça part : la formule.",msg:`${fx("cos(2θ)")} n'est pas ${fx("2cos θ")} : c'est ${fx("2cos²θ − 1")}.`}],[2*(a.n/a.d)**2,{etape:0,type:"le − 1 oublié",titre:"Où ça part : la formule.",msg:`${fx("cos(2θ) = 2cos²θ − 1")} : il manque le ${fx("− 1")}.`}],[1-2*(a.n/a.d)**2,{etape:0,type:"signe",titre:"Où ça part : la formule.",msg:`${fx("cos(2θ) = 2cos²θ − 1")}, pas ${fx("1 − 2cos²θ")} : vérifie avec θ = 0.`}]],nature:"cos 2θ en nombres",texte:`cos θ = ${nb(a)}, cos 2θ ?`,ens:{a:a.n/a.d,quoi:"c2"}});}
+  if(t<0.8){const a=Q(sg*n,d),v=sub(1,mul(2,mul(a,a)));
+    return exoN({sig:"Ns"+brut(a),v:v.n/v.d,vT:nb(v),tape:brut(v),lab:"cos(2θ)",q:`On sait que ${fx(`sin θ = ${nb(a)}`)}. Calcule la valeur exacte de ${fx("cos(2θ)")}.`,etapes:[
+      {w:`${fx("cos(2θ) = 1 − 2sin²θ")}.`,why:`${fx("cos(2θ) = cos²θ − sin²θ")} (Moivre), puis ${fx("cos²θ = 1 − sin²θ")}.`,pts:1},
+      {w:`${fx(`cos(2θ) = 1 − 2 × ${nb(mul(a,a))} = ${nb(v)}`)}.`,why:"On remplace sin θ par sa valeur.",pts:1}],
+      pieges:[[-(v.n/v.d),{etape:0,type:"signe",titre:"Où ça part : la formule.",msg:`${fx("cos(2θ) = 1 − 2sin²θ")} : vérifie avec θ = 0, où sin 0 = 0 et cos 0 = 1.`}],[1-(a.n/a.d)**2,{etape:0,type:"un seul sin²θ enlevé",titre:"Où ça part : la formule.",msg:`${fx("cos(2θ) = cos²θ − sin²θ = (1 − sin²θ) − sin²θ = 1 − 2sin²θ")}.`}]],nature:"cos 2θ en nombres",texte:`sin θ = ${nb(a)}, cos 2θ ?`,ens:{s:a.n/a.d,quoi:"c2s"}});}
+  const [p,h]=R.choix(TRIPLE),c=Q(sg*p,h),haut=R()<0.5,sn=Q((haut?1:-1)*Math.round(Math.sqrt(h*h-p*p)),h),v=mul(2,mul(sn,c));
+  return exoN({sig:"Nt"+brut(c)+haut,v:v.n/v.d,vT:nb(v),tape:brut(v),lab:"sin(2θ)",q:`On sait que ${fx(`cos θ = ${nb(c)}`)} et que ${fx(haut?"θ ∈ ]0 ; π[":"θ ∈ ]−π ; 0[")}. Calcule la valeur exacte de ${fx("sin(2θ)")}.`,etapes:[
+    {w:`${fx(`sin²θ = 1 − cos²θ = 1 − ${nb(mul(c,c))} = ${nb(mul(sn,sn))}`)}, et ${haut?"sin θ > 0":"sin θ &lt; 0"} : ${fx(`sin θ = ${nb(sn)}`)}.`,why:`${fx("cos²θ + sin²θ = 1")}. ${haut?"Sur ]0 ; π[, le sinus est positif.":"Sur ]−π ; 0[, le sinus est négatif."}`,pts:1},
+    {w:`${fx("sin(2θ) = 2 sin θ cos θ")}.`,why:"C'est la partie imaginaire de la formule de Moivre avec n = 2.",pts:1},
+    {w:`${fx(`sin(2θ) = 2 × ${par(sn)} × ${par(c)} = ${nb(v)}`)}.`,why:"On remplace par les valeurs.",pts:1}],
+    pieges:[[-(v.n/v.d),{etape:0,type:"signe de sin θ",titre:"Où ça part : le signe de sin θ.",msg:`${haut?"Sur ]0 ; π[, sin θ est positif":"Sur ]−π ; 0[, sin θ est négatif"} : ${fx(`sin θ = ${nb(sn)}`)}.`}]],nature:"sin 2θ en nombres",texte:`cos θ = ${nb(c)}, sin 2θ ?`,ens:{c:c.n/c.d,haut,quoi:"s2"}});}
+
+const argT=a=>a===1?"θ":a+"θ";
+function lineaire2(R){const v=R.choix(["c","s","cs"]),k=R.choix([1,2,3,4,6,8]),a=R.choix([1,1,2,3]),u=argT(a),u2=argT(2*a),K=k===1?"":k;
+  const D={c:{lab:`${K}cos²(${u})`,f:x=>k*C(a*x)**2,ans:k%2?`${k===1?"":k}(1 + cos(${u2}))/2`:`${k/2===1?"":k/2}(1 + cos(${u2}))`.replace(/^\(1 \+ cos\((.*)\)\)$/,"1 + cos($1)"),
+      eul:`${fx(`cos(${u}) = (e^{i${u}} + e^{−i${u}})/2`)}, donc ${fx(`cos²(${u}) = (e^{2i${u}} + 2 + e^{−2i${u}})/4`)}.`,grp:`${fx(`e^{2i${u}} + e^{−2i${u}} = 2cos(${u2})`)} : ${fx(`cos²(${u}) = (2cos(${u2}) + 2)/4 = (1 + cos(${u2}))/2`)}.`,pg:[[x=>k*(1-C(2*a*x))/2,"signe"],[x=>k*C(2*a*x),"la constante oubliée"],[x=>k*(1+C(2*a*x)),"la division par 2 oubliée"]]},
+    s:{lab:`${K}sin²(${u})`,f:x=>k*Sn(a*x)**2,ans:k%2?`${k===1?"":k}(1 − cos(${u2}))/2`:`${k/2===1?"":k/2}(1 − cos(${u2}))`.replace(/^\(1 − cos\((.*)\)\)$/,"1 − cos($1)"),
+      eul:`${fx(`sin(${u}) = (e^{i${u}} − e^{−i${u}})/(2i)`)}, donc ${fx(`sin²(${u}) = (e^{2i${u}} − 2 + e^{−2i${u}})/(2i)²`)}, avec ${fx("(2i)² = −4")}.`,grp:`${fx(`e^{2i${u}} + e^{−2i${u}} = 2cos(${u2})`)} : ${fx(`sin²(${u}) = (2cos(${u2}) − 2)/(−4) = (1 − cos(${u2}))/2`)}.`,pg:[[x=>k*(1+C(2*a*x))/2,"signe : (2i)² = −4"],[x=>k*(C(2*a*x)-1)/2,"signe : (2i)² = −4"],[x=>k*(1-C(2*a*x)),"la division par 2 oubliée"]]},
+    cs:{lab:`${K}sin(${u})cos(${u})`,f:x=>k*Sn(a*x)*C(a*x),ans:k%2?`${k===1?"":k}sin(${u2})/2`:`${k/2===1?"":k/2}sin(${u2})`,
+      eul:`${fx(`sin(${u})cos(${u}) = (e^{i${u}} − e^{−i${u}})(e^{i${u}} + e^{−i${u}})/(4i) = (e^{2i${u}} − e^{−2i${u}})/(4i)`)}.`,grp:`${fx(`e^{2i${u}} − e^{−2i${u}} = 2i sin(${u2})`)} : ${fx(`sin(${u})cos(${u}) = 2i sin(${u2})/(4i) = sin(${u2})/2`)}.`,pg:[[x=>k*Sn(2*a*x),"la division par 2 oubliée"],[x=>k*C(2*a*x)/2,"cosinus au lieu de sinus"]]}}[v];
+  const tape=D.ans.replace(/cos\((\d*)θ\)/g,"cos($1*θ)").replace(/sin\((\d*)θ\)/g,"sin($1*θ)").replace(/\(\*θ\)/g,"(θ)").replace(/−/g,"-");
+  const E=[{w:`Formules d'Euler : ${D.eul}`,why:`${fx("cos u = (e^{iu} + e^{−iu})/2")} et ${fx("sin u = (e^{iu} − e^{−iu})/(2i)")}. On développe avec ${fx("(A + B)² = A² + 2AB + B²")} et ${fx("e^{iu} × e^{−iu} = 1")}.`,pts:1},
+    {w:`On regroupe les exponentielles deux par deux : ${D.grp}`,why:`${fx("e^{iu} + e^{−iu} = 2cos u")} et ${fx("e^{iu} − e^{−iu} = 2i sin u")}.`,pts:1},
+    {w:`Donc ${fx(`${D.lab} = ${D.ans}`)}.`,why:k===1?"C'est la forme linéarisée : plus de carré ni de produit.":`On multiplie par ${k}, et on simplifie.`,pts:0.5}];
+  return exoF({sig:"L"+v+k+a,mode:"lin",cible:D.f,lab:D.lab,ans:D.ans,tape,q:`Linéarise ${fx(D.lab)} : écris-le sans carré ni produit de cosinus et de sinus, avec des cos(kθ) et des sin(kθ).`,corps:`<p class="muted">Indication : les formules d'Euler, ${fx("cos u = (e^{iu} + e^{−iu})/2")} et ${fx("sin u = (e^{iu} − e^{−iu})/(2i)")}.</p>`,etapes:E,nature:"linéariser un carré",texte:`linéariser ${D.lab}`,
+    pieges:D.pg.map(([g,ty])=>[g,{etape:ty.startsWith("signe")?0:ty.includes("division")?1:2,type:ty,titre:"Où ça part : la linéarisation.",msg:`${fx(`${D.lab} = ${D.ans}`)}. Vérifie avec θ = 0 : ${fx(D.lab)} vaut alors ${v==="c"?k:0}.`}]),ens:{cible:v,k,a}});}
+
+const LIN3=[
+ {id:"c3",lab:"cos³θ",f:x=>C(x)**3,ans:"(cos(3θ) + 3cos θ)/4",tape:"(cos(3θ)+3cos(θ))/4",eul:"(e^{iθ} + e^{−iθ})³/8 = (e^{3iθ} + 3e^{iθ} + 3e^{−iθ} + e^{−3iθ})/8",grp:"(2cos(3θ) + 6cos θ)/8 = (cos(3θ) + 3cos θ)/4",pg:[[x=>(3*C(x)-C(3*x))/4,"signe"]]},
+ {id:"s3",lab:"sin³θ",f:x=>Sn(x)**3,ans:"(3sin θ − sin(3θ))/4",tape:"(3sin(θ)-sin(3θ))/4",eul:"(e^{iθ} − e^{−iθ})³/(2i)³ = (e^{3iθ} − 3e^{iθ} + 3e^{−iθ} − e^{−3iθ})/(−8i)",grp:"(2i sin(3θ) − 6i sin θ)/(−8i) = (3sin θ − sin(3θ))/4",pg:[[x=>(Sn(3*x)-3*Sn(x))/4,"signe : (2i)³ = −8i"]]},
+ {id:"s2c",lab:"sin²θ cos θ",f:x=>Sn(x)**2*C(x),ans:"(cos θ − cos(3θ))/4",tape:"(cos(θ)-cos(3θ))/4",eul:"(e^{iθ} − e^{−iθ})²(e^{iθ} + e^{−iθ})/((2i)² × 2) = (e^{2iθ} − 2 + e^{−2iθ})(e^{iθ} + e^{−iθ})/(−8) = (e^{3iθ} − e^{iθ} − e^{−iθ} + e^{−3iθ})/(−8)",grp:"(2cos(3θ) − 2cos θ)/(−8) = (cos θ − cos(3θ))/4",pg:[[x=>(C(3*x)-C(x))/4,"signe : (2i)² = −4"]]},
+ {id:"c2s",lab:"cos²θ sin θ",f:x=>C(x)**2*Sn(x),ans:"(sin θ + sin(3θ))/4",tape:"(sin(θ)+sin(3θ))/4",eul:"(e^{iθ} + e^{−iθ})²(e^{iθ} − e^{−iθ})/(4 × 2i) = (e^{2iθ} + 2 + e^{−2iθ})(e^{iθ} − e^{−iθ})/(8i) = (e^{3iθ} + e^{iθ} − e^{−iθ} − e^{−3iθ})/(8i)",grp:"(2i sin(3θ) + 2i sin θ)/(8i) = (sin θ + sin(3θ))/4",pg:[[x=>(Sn(3*x)-Sn(x))/4,"signe"]]},
+ {id:"c4",lab:"cos⁴θ",f:x=>C(x)**4,ans:"(cos(4θ) + 4cos(2θ) + 3)/8",tape:"(cos(4θ)+4cos(2θ)+3)/8",eul:"(e^{iθ} + e^{−iθ})⁴/16 = (e^{4iθ} + 4e^{2iθ} + 6 + 4e^{−2iθ} + e^{−4iθ})/16",grp:"(2cos(4θ) + 8cos(2θ) + 6)/16 = (cos(4θ) + 4cos(2θ) + 3)/8",pg:[[x=>(C(4*x)+4*C(2*x)+6)/8,"le 6 non divisé par 2"]]},
+ {id:"s4",lab:"sin⁴θ",f:x=>Sn(x)**4,ans:"(cos(4θ) − 4cos(2θ) + 3)/8",tape:"(cos(4θ)-4cos(2θ)+3)/8",eul:"(e^{iθ} − e^{−iθ})⁴/(2i)⁴ = (e^{4iθ} − 4e^{2iθ} + 6 − 4e^{−2iθ} + e^{−4iθ})/16",grp:"(2cos(4θ) − 8cos(2θ) + 6)/16 = (cos(4θ) − 4cos(2θ) + 3)/8",pg:[[x=>(C(4*x)+4*C(2*x)+3)/8,"signes du binôme"]]},
+ {id:"s2c2",lab:"sin²θ cos²θ",f:x=>(Sn(x)*C(x))**2,ans:"(1 − cos(4θ))/8",tape:"(1-cos(4θ))/8",eul:"(sin θ cos θ)² = (sin(2θ)/2)² = sin²(2θ)/4",grp:"sin²(2θ) = (1 − cos(4θ))/2, donc sin²θ cos²θ = (1 − cos(4θ))/8",pg:[[x=>(1+C(4*x))/8,"signe"]]}];
+function lineaire3(R){const D=R.choix(LIN3),k=R.choix([1,2,4,8]),lab=(k===1?"":k)+D.lab,f=x=>k*D.f(x),ans=k===1?D.ans:`${k} × ${D.ans}`,tape=k===1?D.tape:`${k}*${D.tape}`;
+  const dd=+D.ans.match(/\/(\d+)$/)[1],corps=D.ans.replace(/\/\d+$/,""),nu=c=>c.replace(/^\((.*)\)$/,"$1");
+  const fin=k===1?D.ans:dd%k===0?(dd===k?nu(corps):`${corps}/${dd/k}`):k%dd===0?(k===dd?nu(corps):`${k/dd}${corps}`):`${k}${corps}/${dd}`;
+  const E=[{w:`Formules d'Euler : ${fx(`${D.lab} = ${D.eul}`)}.`,why:`${fx("cos θ = (e^{iθ} + e^{−iθ})/2")}, ${fx("sin θ = (e^{iθ} − e^{−iθ})/(2i)")}, puis on développe (binôme, ${fx("e^{iθ} × e^{−iθ} = 1")}).`,pts:1},
+    {w:`On regroupe les exponentielles deux par deux : ${fx(`${D.lab} = ${D.grp}`)}.`,why:`${fx("e^{ikθ} + e^{−ikθ} = 2cos(kθ)")} et ${fx("e^{ikθ} − e^{−ikθ} = 2i sin(kθ)")}.`,pts:1},
+    {w:`Donc ${fx(`${lab} = ${fin}`)}.`,why:k===1?"C'est la forme linéarisée.":`On multiplie par ${k} et on simplifie.`,pts:0.5}];
+  return exoF({sig:"M"+D.id+k,mode:"lin",cible:f,lab,ans:fin,tape,q:`Linéarise ${fx(lab)} : écris-le sans puissance ni produit de cosinus et de sinus.`,corps:`<p class="muted">Indication : les formules d'Euler.</p>`,etapes:E,nature:"linéariser une puissance 3 ou 4",texte:`linéariser ${lab}`,
+    pieges:D.pg.map(([g,ty])=>[x=>k*g(x),{etape:ty.startsWith("signe")?0:1,type:ty,titre:"Où ça part : la linéarisation.",msg:`${fx(`${lab} = ${fin}`)}. Vérifie avec θ = 0 ou θ = π/2.`}]),ens:{cible:D.id,k}});}
+
+const M3=[
+ {id:"c3c",lab:"cos(3θ)",mode:"cos",ans:"4cos³θ − 3cos θ",tape:"4cos(θ)^3-3cos(θ)",f:x=>C(3*x),q:"Exprime cos(3θ) en fonction de cos θ seulement.",fin:`${fx("cos(3θ) = cos³θ − 3cos θ(1 − cos²θ) = 4cos³θ − 3cos θ")}`,pg:[[x=>3*C(x)-4*C(x)**3,"signe"]]},
+ {id:"s3s",lab:"sin(3θ)",mode:"sin",ans:"3sin θ − 4sin³θ",tape:"3sin(θ)-4sin(θ)^3",f:x=>Sn(3*x),q:"Exprime sin(3θ) en fonction de sin θ seulement.",fin:`${fx("sin(3θ) = 3(1 − sin²θ)sin θ − sin³θ = 3sin θ − 4sin³θ")}`,pg:[[x=>4*Sn(x)**3-3*Sn(x),"signe"]]},
+ {id:"c3cs",lab:"cos(3θ)",mode:"cs",ans:"cos³θ − 3cos θ sin²θ",tape:"cos(θ)^3-3cos(θ)sin(θ)^2",f:x=>C(3*x),q:"Exprime cos(3θ) en fonction de cos θ et de sin θ.",pg:[[x=>C(x)**3+3*C(x)*Sn(x)**2,"i² compté comme +1"]]},
+ {id:"s3cs",lab:"sin(3θ)",mode:"cs",ans:"3cos²θ sin θ − sin³θ",tape:"3cos(θ)^2sin(θ)-sin(θ)^3",f:x=>Sn(3*x),q:"Exprime sin(3θ) en fonction de cos θ et de sin θ.",pg:[[x=>3*C(x)**2*Sn(x)+Sn(x)**3,"i³ compté comme i"]]}];
+const DEV3=`${fx("(cos θ + i sin θ)³ = cos³θ + 3i cos²θ sin θ − 3cos θ sin²θ − i sin³θ")}`;
+function triple(R){const t=R();
+  if(t<0.45){const D=R.choix(M3),E=[{w:`Formule de Moivre avec n = 3 : ${fx("(cos θ + i sin θ)³ = cos(3θ) + i sin(3θ)")}. On développe : ${DEV3}.`,why:`${fx("(a + b)³ = a³ + 3a²b + 3ab² + b³")}, avec ${fx("i² = −1")} et ${fx("i³ = −i")}.`,pts:1},
+      {w:`On identifie : ${fx("cos(3θ) = cos³θ − 3cos θ sin²θ")} et ${fx("sin(3θ) = 3cos²θ sin θ − sin³θ")}.`,why:"Parties réelles d'un côté, parties imaginaires de l'autre.",pts:1}];
+    if(D.fin)E.push({w:`${PYTH} ${D.fin}.`,why:"On veut une formule avec une seule des deux fonctions.",pts:1});
+    return exoF({sig:"T"+D.id,mode:D.mode,cible:D.f,lab:D.lab,ans:D.ans,tape:D.tape,q:D.q+" Indication : la formule de Moivre.",etapes:E,nature:"formule de cos 3θ",texte:D.q,
+      pieges:D.pg.map(([g,ty])=>[g,{etape:ty==="signe"?E.length-1:0,type:ty,titre:"Où ça part : le développement.",msg:`${fx(`${D.lab} = ${D.ans}`)}. ${ty==="signe"?"Vérifie avec θ = 0.":"Dans le développement, i² = −1 et i³ = −i."}`}]),ens:{cible:D.id}});}
+  const [n,d]=R.choix(FR),sg=R()<0.5?1:-1,a=Q(sg*n,d);
+  if(t<0.75){const v=sub(mul(4,mul(a,mul(a,a))),mul(3,a));
+    return exoN({sig:"Uc"+brut(a),v:v.n/v.d,vT:nb(v),tape:brut(v),lab:"cos(3θ)",q:`On sait que ${fx(`cos θ = ${nb(a)}`)}. Calcule la valeur exacte de ${fx("cos(3θ)")}.`,etapes:[
+      {w:`${fx("cos(3θ) = 4cos³θ − 3cos θ")}.`,why:`Formule de Moivre avec n = 3, partie réelle : ${fx("cos³θ − 3cos θ sin²θ")}, puis ${fx("sin²θ = 1 − cos²θ")}.`,pts:1},
+      {w:`${fx(`cos(3θ) = 4 × ${par(mul(a,mul(a,a)))} − 3 × ${par(a)} = ${nb(v)}`)}.`,why:`${fx(`(${nb(a)})³ = ${nb(mul(a,mul(a,a)))}`)}.`,pts:1}],
+      pieges:[[-(v.n/v.d),{etape:0,type:"signe",titre:"Où ça part : la formule.",msg:`${fx("cos(3θ) = 4cos³θ − 3cos θ")}, pas ${fx("3cos θ − 4cos³θ")} : vérifie avec θ = 0.`}],[3*a.n/a.d,{etape:0,type:"cos(3θ) pris pour 3cos θ",titre:"Où ça part : la formule.",msg:`${fx("cos(3θ)")} n'est pas ${fx("3cos θ")}.`}]],nature:"cos 3θ en nombres",texte:`cos θ = ${nb(a)}, cos 3θ ?`,ens:{a:a.n/a.d,quoi:"c3"}});}
+  const v=sub(mul(3,a),mul(4,mul(a,mul(a,a))));
+  return exoN({sig:"Us"+brut(a),v:v.n/v.d,vT:nb(v),tape:brut(v),lab:"sin(3θ)",q:`On sait que ${fx(`sin θ = ${nb(a)}`)}. Calcule la valeur exacte de ${fx("sin(3θ)")}.`,etapes:[
+    {w:`${fx("sin(3θ) = 3sin θ − 4sin³θ")}.`,why:`Formule de Moivre avec n = 3, partie imaginaire : ${fx("3cos²θ sin θ − sin³θ")}, puis ${fx("cos²θ = 1 − sin²θ")}.`,pts:1},
+    {w:`${fx(`sin(3θ) = 3 × ${par(a)} − 4 × ${par(mul(a,mul(a,a)))} = ${nb(v)}`)}.`,why:`${fx(`(${nb(a)})³ = ${nb(mul(a,mul(a,a)))}`)}.`,pts:1}],
+    pieges:[[-(v.n/v.d),{etape:0,type:"signe",titre:"Où ça part : la formule.",msg:`${fx("sin(3θ) = 3sin θ − 4sin³θ")} : vérifie avec θ = π/2, où sin(3π/2) = −1.`}]],nature:"sin 3θ en nombres",texte:`sin θ = ${nb(a)}, sin 3θ ?`,ens:{s:a.n/a.d,quoi:"s3"}});}
+
+/* TD 3, ex. 7 : cos et sin d'un angle en π/12, par un produit ou un quotient de deux complexes de module 1 */
+const S6=(u,v)=>u>0?`(√6 ${v>0?"+":"−"} √2)/4`:v>0?"(√2 − √6)/4":"−(√6 + √2)/4";
+function valeurPi12(R){const m1=R.choix([2,4,8,10,-2,-4,-8,-10]),m2=R.choix([3,-3,9,-9]),op=R()<0.5?"x":"/",t1=Q(m1,12),t2=Q(m2,12),T1=trig(t1),T2=trig(t2),z1=zR(T1.c,T1.s),z2=zR(T2.c,T2.s);
+  const phi=angP(op==="x"?add(t1,t2):sub(t1,t2)),M=mul(phi,12).n,u=Math.cos(Math.PI*M/12),w=Math.sin(Math.PI*M/12);
+  const co=x=>{const a=Math.round((x*4)*(Math.sqrt(6)+Math.sqrt(2))/8),b=Math.round((x*4)*(Math.sqrt(6)-Math.sqrt(2))/8);/* x·4 = u√6 + v√2 avec u, v = ±1 */for(const p of [1,-1])for(const q2 of [1,-1])if(Math.abs(p*Math.sqrt(6)+q2*Math.sqrt(2)-4*x)<1e-9)return [p,q2];return null;};
+  const cu=co(u),cw=co(w),cT=S6(...cu),sT=S6(...cw),tp=([p,q2])=>`(${p<0?"-":""}sqrt(6)${q2<0?"-":"+"}sqrt(2))/4`;
+  const ph=angT(phi),nom=op==="x"?"z₁z₂":"z₁/z₂";
+  const E=[{w:`Formes exponentielles : ${fx(`z₁ = e^{${angE(t1)}}`)} et ${fx(`z₂ = e^{${angE(t2)}}`)}, donc ${fx(`${nom} = e^{i(${angT(t1)} ${op==="x"?"+":"−"} ${t2.n<0?"("+angT(t2)+")":angT(t2)})} = e^{${angE(phi)}}`)}.`,why:`Les deux modules valent 1 ; ${op==="x"?"les arguments s'ajoutent":"les arguments se retranchent"}. Donc ${fx(`${nom} = cos(${ph}) + i sin(${ph})`)}.`,pts:1.5},
+    {w:`En forme algébrique : ${fx(`${nom} = ${op==="x"?`(${z1})(${z2})`:`(${z1})(${zR(T2.c,{c:mul(T2.s.c,-1),s:T2.s.s})})`}`)}, de partie réelle ${fx(cT)} et de partie imaginaire ${fx(sT)}.`,why:op==="x"?"On développe, avec i² = −1 ; chaque produit de deux racines donne √6 ou √2, sur 4.":"Diviser par un complexe de module 1, c'est multiplier par son conjugué. On développe, avec i² = −1.",pts:1.5},
+    {w:`On identifie : ${fx(`cos(${ph}) = ${cT}`)} et ${fx(`sin(${ph}) = ${sT}`)}.`,why:"Deux écritures du même nombre ont la même partie réelle et la même partie imaginaire.",pts:1}];
+  const dern=2;
+  function juge(rep){const P=rep.cs||{},A=lisReel(P.c),B=lisReel(P.s);if(A.vide||B.vide)return {incomplet:"Remplis les deux cases."};if(A.avecI||B.avecI)return {incomplet:"Un cosinus et un sinus sont des réels : pas de i."};
+    if(A.illisible||A.neg||B.illisible||B.neg)return {incomplet:"Je n'arrive pas à lire une des cases. Écris par exemple (√6 − √2)/4."};
+    const okA=pres(A.v,u),okB=pres(B.v,w);if(okA&&okB)return {ok:true};
+    if((!okA&&A.dec&&Math.abs(A.v-u)<0.02)||(!okB&&B.dec&&Math.abs(B.v-w)<0.02))return {incomplet:"Écris la valeur exacte, avec √6 et √2, pas une valeur approchée."};
+    const F=[];if(!okA)F.push("c");if(!okB)F.push("s");
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux valeurs sont à revoir":F[0]==="c"?"le cosinus est à revoir":"le sinus est à revoir"}.`,
+      diag:pres(A.v,w)&&pres(B.v,u)?{etape:dern,type:"cosinus et sinus échangés",titre:"Où ça part : l'identification.",msg:"Le cosinus est la partie réelle, le sinus la partie imaginaire."}:pres(Math.abs(A.v),Math.abs(u))&&pres(Math.abs(B.v),Math.abs(w))?{etape:1,type:"signe dans le développement",titre:"Où ça part : le développement.",msg:`Refais le développement en surveillant les signes : ${fx(`cos(${ph}) = ${cT}`)}.`}:{etape:1,type:"calcul de la forme algébrique",titre:"Où ça part : la forme algébrique.",msg:`${fx(`cos(${ph}) = ${cT}`)} et ${fx(`sin(${ph}) = ${sT}`)}.`}};}
+  return {sig:"P"+m1+"|"+m2+op,q:`Soient ${fx(`z₁ = ${z1}`)} et ${fx(`z₂ = ${z2}`)}. Donne une forme exponentielle de ${fx(`z₁`)}, ${fx(`z₂`)} et ${fx(nom)}. En déduire les valeurs exactes de ${fx(`cos(${ph})`)} et ${fx(`sin(${ph})`)}.`,corps:`<p class="muted">Comme au TD 3, exercice 7 : on écrit le même nombre de deux façons, puis on compare.</p>`,texte:`cos et sin de ${ph} avec z₁ = ${z1}, z₂ = ${z2}`,
+    champs:[{k:"cases",id:"cs",noms:["c","s"],titre:`Écris $c = cos(${ph})$ et $s = sin(${ph})$ :`,sym:["√","/","(",")"],aide:"Par exemple (√6 − √2)/4, ou (sqrt(6)-sqrt(2))/4."}],juge,etapes:E,
+    bonne:`${fx(`cos(${ph}) = ${cT}`)} et ${fx(`sin(${ph}) = ${sT}`)}`,bonneTxt:`cos(${ph}) = ${cT}, sin(${ph}) = ${sT}`,repBonne:{cs:{c:tp(cu),s:tp(cw)}},repFausse:{cs:{c:tp(cw),s:tp(cu)}},nature:op==="x"?"par un produit":"par un quotient",ens:{type:"pi12",phi:Math.PI*M/12}};}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -23310,7 +23459,14 @@ G.add("calc",[
    {t:"un polynôme",cc:6,gen:R=>particuliere(R,R.choix(["2","2","1","3"]),"poly")},
    {t:"une exponentielle",cc:5,gen:R=>particuliere(R,R.choix(["2","2","1","3"]),"exp")},
    {t:"une exponentielle déjà solution de l'équation sans second membre",cc:5,min:150,gen:R=>particuliere(R,R()<0.65?"2":"1","res")},
-   {t:"avec y(0) et y′(0), comme au TD 2 (exercice 4)",cc:10,gen:conditionsSM}]}
+   {t:"avec y(0) et y′(0), comme au TD 2 (exercice 4)",cc:10,gen:conditionsSM}]},
+ {id:"CA3",t:"Moivre et Euler",tache:"Moivre et Euler",th:"euler",pts:2.5,ex:"cc2",lecons:["c2-cx-euler"],apres:["CA2"],
+  paliers:[
+   {t:"cos(2θ) et sin(2θ)",cc:2,min:90,gen:double},
+   {t:"linéariser cos², sin² et sin cos",cc:3,min:45,gen:lineaire2},
+   {t:"linéariser cos³, sin³, cos⁴…",cc:4,min:25,gen:lineaire3},
+   {t:"cos(3θ) et sin(3θ)",cc:3,min:85,gen:triple},
+   {t:"cos et sin d'un angle en π/12, comme au TD 3 (exercice 7)",cc:8,min:20,gen:valeurPi12}]}
 ]);
 })();
 
