@@ -979,6 +979,7 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .en-case.en-long{flex-wrap:wrap;white-space:normal}
 .en-in:focus{outline:none;border-color:var(--violet-hi)}
 .en-in[aria-invalid="true"]{border-color:var(--rouge)}
+.en-in.en-code{display:block;width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:.92em;line-height:1.45;white-space:pre;overflow-x:auto;resize:vertical;tab-size:2}
 .mat .en-in,.tbl.tr .en-in{width:3.4em;padding:3px 6px;text-align:center}
 .en-cherche{display:grid;gap:14px}
 .pcheck label>span{flex:1;min-width:0}
@@ -25999,6 +26000,7 @@ const rangTrace=(c,r)=>c.rangs?"ligne "+(r+1):r?"fin du tour "+r:"avant la boucl
 const ligneTrace=(c,r)=>`<tr><td>${rangTrace(c,r)}</td>${c.vars.map((v,k)=>`<td><input class="en-in${c.rangs?" en-large":""}" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${rangTrace(c,r)}"></td>`).join("")}</tr>`;
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="trace")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${c.vars.map(v=>`<th class="var">${esc(v)}</th>`).join("")}</tr></thead><tbody>${[...Array(c.lignes||2)].map((_,r)=>ligneTrace(c,r)).join("")}</tbody></table></div><div class="acts"><button type="button" class="btn" data-plus>${c.rangs?"Ajouter une ligne":"Ajouter un tour"}</button><button type="button" class="btn" data-moins>${c.rangs?"Enlever la dernière ligne":"Enlever le dernier tour"}</button></div></div>`;
+  if(c.k==="code")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.label?`<p>${c.label}</p>`:""}<textarea class="en-in en-code" data-n="${c.id}" rows="${c.lignes||6}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="${esc(c.nom||c.label||c.id)}"${c.ex?` placeholder="${esc(c.ex)}"`:""}></textarea>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="vf")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr>${c.donne.concat(c.cols).map(v=>`<th class="var">$${esc(v)}$</th>`).join("")}</tr></thead><tbody>${c.lignes.map((L,r)=>`<tr>${L.map(x=>`<td>${x}</td>`).join("")}${c.cols.map((v,k)=>`<td><input class="en-in" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" aria-label="${esc(v)}, ligne ${r+1}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   if(c.k==="choix")return `${c.titre?`<p>${c.titre}</p>`:""}<div class="filters" data-ch="${c.id}">${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="cases")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.titre?`<p>${c.titre}</p>`:""}<div class="mq-row">${c.noms.map(x=>`<label class="en-case">$${x} =$<input class="en-in${c.large?" en-large":""}" data-n="${x}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>`).join("")}</div>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
@@ -26012,6 +26014,7 @@ function lire(e){const rep={},b=$("#lpb");
     else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
     else if(c.k==="multi")rep[c.id]=[...b.querySelectorAll(`[data-multi="${c.id}"] [aria-pressed="true"]`)].map(x=>x.dataset.v);
     else if(c.k==="champ"){const i=b.querySelector(`[data-ch="${c.id}"] input`);rep[c.id]=i?i.value:"";}
+    else if(c.k==="code"){const i=b.querySelector(`[data-ch="${c.id}"] textarea`);rep[c.id]=i?i.value:"";}
     else if(c.k==="trace"||c.k==="vf"){const T=[];b.querySelectorAll(`[data-ch="${c.id}"] tbody tr`).forEach(tr=>T.push([...tr.querySelectorAll("input")].map(i=>i.value)));rep[c.id]=T;}
     else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);rep[id]=i?i.value:"";});});
   return rep;}
@@ -26021,6 +26024,7 @@ function repTexte(e,rep){return e.champs.map(c=>{
   if(c.k==="multi")return (rep[c.id]||[]).map(v=>(c.o.find(o=>o[0]===v)||[v,v])[1]).join(", ")||"(rien de coché)";
   if(c.k==="champ"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.id)+" : "+(rep[c.id]||"(vide)");}
   if(c.k==="trace")return (rep[c.id]||[]).map((L,r)=>c.rangs?"ligne "+(r+1)+" : "+(L[0]||"(vide)"):(r?"tour "+r:"avant")+" : "+c.vars.map((v,k)=>v+" = "+(L[k]||"?")).join(", ")).join(" | ");
+  if(c.k==="code"){if(c.si&&rep[Object.keys(c.si)[0]]!==Object.values(c.si)[0])return "";return (c.nom||c.label||c.id)+" : "+(String(rep[c.id]||"").trim().replace(/\s*\n\s*/g," ⏎ ")||"(vide)");}
   if(c.k==="vf")return c.cols.map((v,k)=>v+" : "+c.lignes.map((_,r)=>((rep[c.id]||[])[r]||[])[k]||"?").join(" ")).join(" | ");
   if(c.k==="trous")return c.ids.map(id=>id+" = "+(rep[id]||"?")).join(", ");return "";}).filter(Boolean).join(" ; ");}
 const pastilles=(lv,N)=>`<p class="legend"><span>${[...Array(N)].map((_,k)=>`<i class="dot${k<lv?" known":k===lv?" seen":""}"></i>`).join("")}</span><span>Palier ${lv+1} sur ${N} : ${P.d.paliers[lv].t}</span></p>`;
@@ -26063,9 +26067,10 @@ function dessine(){
     b.querySelectorAll("[data-plus]").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),c=e.champs.find(z=>z.id===g.dataset.ch),tb=g.querySelector("tbody");tb.insertAdjacentHTML("beforeend",ligneTrace(c,tb.children.length));const i=tb.lastElementChild.querySelector("input");if(i)i.focus();}));
     b.querySelectorAll("[data-moins]").forEach(x=>x.addEventListener("click",()=>{if(P.res)return;const tb=x.closest("[data-ch]").querySelector("tbody");if(tb.children.length>1)tb.lastElementChild.remove();}));
     b.addEventListener("input",ev=>{const g=ev.target.closest&&ev.target.closest("[data-ch]"),ap=g&&g.querySelector(".mq-apercu");if(!ap)return;const v=ev.target.value.trim();ap.hidden=!v;if(v)ap.innerHTML=tx("Ce que tu as écrit : $"+versFormule(v)+"$");});
-    let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT")dernier=ev.target;});
+    let dernier=null;b.addEventListener("focusin",ev=>{if(ev.target.tagName==="INPUT"||ev.target.tagName==="TEXTAREA")dernier=ev.target;});
+    b.querySelectorAll("textarea.en-code").forEach(t=>t.addEventListener("keydown",ev=>{if(ev.key==="Tab"&&!ev.shiftKey&&!ev.ctrlKey&&!ev.altKey){ev.preventDefault();t.setRangeText("  ",t.selectionStart,t.selectionEnd,"end");}else if(ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey)){ev.preventDefault();if(!P.res)valide(false);}}));
     b.querySelectorAll(".en-sym button").forEach(x=>{x.addEventListener("pointerdown",ev=>ev.preventDefault());
-      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:(g.querySelector("input")||b.querySelector("input"));if(!i)return;
+      x.addEventListener("click",()=>{if(P.res)return;const g=x.closest("[data-ch]"),i=dernier&&b.contains(dernier)&&!dernier.closest("[hidden]")?dernier:(g.querySelector("input,textarea")||b.querySelector("input,textarea"));if(!i)return;
         const a=i.selectionStart==null?i.value.length:i.selectionStart,z=i.selectionEnd==null?a:i.selectionEnd,t=x.dataset.ins;i.value=i.value.slice(0,a)+t+i.value.slice(z);i.focus();i.setSelectionRange(a+t.length,a+t.length);i.dispatchEvent(new Event("input",{bubbles:true}));});});
     b.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.tagName==="INPUT"&&!ev.target.closest(".en-cherche")){ev.preventDefault();if(!P.res)valide(false);}});
     const ind=$("#en-ind");if(ind)ind.addEventListener("click",()=>{P.aide=true;ind.disabled=true;$("#en-fb").innerHTML=tx(`<div class="expl"><b>Indice : le début de la correction.</b><br>${e.etapes[0].w}<br><span class="muted">${e.etapes[0].why}</span></div><p class="muted">Avec l'indice, une réponse juste ne compte ni juste ni faux pour le palier. Une réponse fausse reste fausse.</p>`);});
@@ -26112,8 +26117,8 @@ function valide(nsp){
   stop();P.res=j;
   const r=j.ok?(P.aide?2:1):0,cherche=!j.ok&&!j.diag&&j.cherche?j.cherche:null;
   const R=enregistre(r,{type:j.diag&&j.diag.type,carnet:{reponse:nsp?"(je ne sais pas)":repTexte(e,rep),etape:j.diag?j.diag.titre:null,erreur:j.diag?j.diag.type:null,explication:j.diag?A.brut(j.diag.msg):null}});
-  b.querySelectorAll("input,.filters button,#en-plus button,[data-plus],[data-moins]").forEach(x=>{x.disabled=true;});
-  (j.faux||[]).forEach(id=>{const m=/^(.+):(\d+):(\d+)$/.exec(id),i=m?b.querySelector(`[data-ch="${m[1]}"] input[data-r="${m[2]}"][data-k="${m[3]}"]`):b.querySelector(`input[data-n="${id}"]:not([hidden]),input[data-c="${id}"]`);if(i&&!i.closest("[hidden]"))i.setAttribute("aria-invalid","true");});
+  b.querySelectorAll("input,textarea,.filters button,#en-plus button,[data-plus],[data-moins]").forEach(x=>{x.disabled=true;});
+  (j.faux||[]).forEach(id=>{const m=/^(.+):(\d+):(\d+)$/.exec(id),i=m?b.querySelector(`[data-ch="${m[1]}"] input[data-r="${m[2]}"][data-k="${m[3]}"]`):b.querySelector(`input[data-n="${id}"]:not([hidden]),textarea[data-n="${id}"],input[data-c="${id}"]`);if(i&&!i.closest("[hidden]"))i.setAttribute("aria-invalid","true");});
   const S=SUBJ[d.sid],temps=`${duree(R.ms)} : ${auCC(S)}, tu aurais environ ${R.cc} min pour cet exercice.`,ch=changement(d,R.av,R.ap);
   let h;
   if(r===1&&R.lent&&P.m==="p"&&P.lv===dernier(d))h=`<div class="verdict info">Juste, mais en ${duree(R.ms)}. Au dernier palier il faut aussi tenir le temps : au plus ${LENT*R.cc} min ici (${auCC(S)}, environ ${R.cc} min). Cet exercice ne compte ni juste ni faux.</div>`;
