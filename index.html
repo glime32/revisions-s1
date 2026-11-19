@@ -19194,6 +19194,148 @@ function commeAuCC(R){for(;;){const t=R.choix(["34","34","34","44","44","43","24
   else{const cols=R.choix([[0,1,2],[0,1,3],[0,2,3],[0,1],[0,1,2,3]]),U=haut(R,4,4,cols,null,2),L=bas(R,4,1);A=prod(L,U);b=[0,0,0,0];}
   if(petit(A,b,9,25)&&A.every(r=>r.some(x=>x!==0))&&new Set(A.map(r=>r.join())).size===A.length)return [A,b];}}
 
+/* ---------- AL5 : sous-espace vectoriel ou pas (hors de la liste du CC1 ; tombé aux CC1 de 2022 et 2023) ---------- */
+/* un ensemble F est décrit par des données simples (e.ens), relues telles quelles par le contrôle indépendant */
+const ESP=["","","ℝ²","ℝ³"],GNOM=["v₁","v₂"];
+const nulV=n=>Array(n).fill(0),unite=(n,i,c)=>nulV(n).map((_,k)=>k===i?c:0),platV=v=>"("+v.join(", ")+")";
+const pl=(c,v)=>c.reduce((s,a,i)=>add(s,mul(a,v[i])),Q(0)),carreQ=x=>mul(x,x),entQ=x=>q(x).d===1;
+const PN=E=>E.D.length===1?["t"]:["s","t"];
+function dansE(E,v){
+  if(E.k==="eq")return E.A.every((r,i)=>egal(pl(r,v),E.b[i]));
+  if(E.k==="par")return rangM(E.D.concat([v.map((x,i)=>sub(x,E.a[i]))]))===rangM(E.D);
+  if(E.k==="demi")return q(pl(E.c,v)).n*E.sens>=0;
+  if(E.k==="prod")return egal(mul(v[E.i],v[E.j]),E.d);
+  if(E.k==="quadrant")return q(mul(v[E.i],v[E.j])).n>=0;
+  if(E.k==="para")return egal(v[E.j],mul(E.a,carreQ(v[E.i])));
+  if(E.k==="cercle")return egal(add(carreQ(v[0]),carreQ(v[1])),E.r);
+  return egal(carreQ(v[0]),carreQ(v[1]));}
+const tupleE=E=>{const P=PN(E);return "("+E.a.map((c,i)=>aff({c:Q(c),k:Object.fromEntries(P.map((p,j)=>[p,Q(E.D[j][i])]))},P)).join(", ")+")";};
+const carreTxt=E=>(E.a===1?"":E.a===-1?"−":nb(E.a))+XYZ[E.i]+"²";
+function ensTxt(E){const V=XYZ.slice(0,E.n);
+  if(E.k==="par")return `{${tupleE(E)} | ${PN(E).join(", ")} ∈ ℝ}`;
+  const X=V[E.i],Y=V[E.j];
+  const cond=E.k==="eq"?E.A.map((r,i)=>`${comb(r,V)} = ${nb(E.b[i])}`).join(" et ")
+    :E.k==="demi"?`${comb(E.c,V)} ${E.sens>0?"≥":"≤"} 0`
+    :E.k==="prod"?`${X}${Y} = ${nb(E.d)}`
+    :E.k==="quadrant"?`${X}${Y} ≥ 0`
+    :E.k==="para"?`${Y} = ${carreTxt(E)}`
+    :E.k==="cercle"?`x² + y² = ${nb(E.r)}`:"x² = y²";
+  return `{(${V.join(", ")}) ∈ ${ESP[E.n]} | ${cond}}`;}
+/* la justification la plus directe, avec son contre-exemple ou ses vecteurs */
+function analyseE(E){const n=E.n;
+  if(E.k==="eq")return E.b.every(x=>!x)?{sev:true,rai:"homo",dim:n-rangM(E.A)}:{sev:false,rai:"zero"};
+  if(E.k==="par"){const d=rangM(E.D);return rangM(E.D.concat([E.a]))===d?{sev:true,rai:"vect",dim:d}:{sev:false,rai:"zero"};}
+  if(E.k==="demi"){const i=E.c.findIndex(x=>x);return {sev:false,rai:"mul",u:unite(n,i,E.sens*Math.sign(E.c[i]))};}
+  if(E.k==="prod")return E.d?{sev:false,rai:"zero"}:{sev:false,rai:"add",u:unite(n,E.i,1),v:unite(n,E.j,1)};
+  if(E.k==="quadrant")return {sev:false,rai:"add",u:nulV(n).map((_,k)=>k===E.i?2:k===E.j?1:0),v:nulV(n).map((_,k)=>k===E.i?-1:k===E.j?-2:0)};
+  if(E.k==="para")return {sev:false,rai:"add",u:nulV(n).map((_,k)=>k===E.i?1:k===E.j?E.a:0),v:nulV(n).map((_,k)=>k===E.i?-1:k===E.j?E.a:0)};
+  if(E.k==="cercle")return {sev:false,rai:"zero"};
+  return {sev:false,rai:"add",u:[1,1],v:[1,-1]};}
+/* pourquoi le vecteur nul n'est pas dans un ensemble à paramètres : on annule une ou deux composantes, une autre ne suit pas */
+function pasNul(E){const n=E.n,a=E.a,D=E.D;let m=null;
+  if(D.length===1){const d=D[0];
+    for(let p=0;p<n;p++){if(!d[p])continue;const t0=Q(-a[p],d[p]);for(let r=0;r<n;r++){if(r===p)continue;const val=add(a[r],mul(t0,d[r]));if(!nul(val)&&(!m||(entQ(t0)&&!m.ent)))m={ent:entQ(t0),r,val,sol:`t = ${nb(t0)}`,quoi:`La ${rangOrd(p)} composante est nulle seulement pour`};}}
+    return m;}
+  for(let p=0;p<n;p++)for(let c=p+1;c<n;c++){const det=D[0][p]*D[1][c]-D[1][p]*D[0][c];if(!det)continue;
+    const s0=Q(-a[p]*D[1][c]+a[c]*D[1][p],det),t0=Q(-D[0][p]*a[c]+D[0][c]*a[p],det),ent=entQ(s0)&&entQ(t0);
+    for(let r=0;r<n;r++){if(r===p||r===c)continue;const val=add(a[r],add(mul(s0,D[0][r]),mul(t0,D[1][r])));if(!nul(val)&&(!m||(ent&&!m.ent)))m={ent,r,val,sol:`s = ${nb(s0)} et t = ${nb(t0)}`,quoi:`Les ${rangOrd(p)} et ${rangOrd(c)} composantes sont nulles seulement pour`};}}
+  return m;}
+function sevOuPas(E){const n=E.n,V=XYZ.slice(0,n),Z=nulV(n),A=analyseE(E),ens=ensTxt(E),esp=ESP[n],zt=vt(Z),exV=n===2?"(1, 0)":"(1, 0, 2)";
+  const nbG=A.sev?A.dim:E.k==="par"?E.D.length:1,X=V[E.i],Y=V[E.j],xy=X+Y;
+  const pasSev=quoi=>`<b>F n'est pas stable par ${quoi} : ce n'est pas un sous-espace vectoriel de ${fx(esp)}.</b>`;
+  const unSeul=`Un contre-exemple chiffré suffit : dès qu'une des trois conditions de la définition manque, ce n'est pas un sev.`;
+  let Et,bonneTxt,repBonne;
+  if(A.sev&&E.k==="eq"){const une=E.A.length===1;
+    Et=[{w:`La condition qui définit F est ${une?"une équation <b>linéaire</b>":"un système d'équations <b>linéaires</b>"} (${V.join(", ")} multipliés par des nombres, puis additionnés) et <b>homogène</b> (${une?"le second membre vaut 0":"les seconds membres valent 0"}).`,why:`Pas de carré, pas de produit de deux inconnues, pas d'inégalité, et 0 à droite : F est l'ensemble des solutions d'un système linéaire homogène.`,pts:1},
+      {w:`<b>D'après la proposition 39 du cours, l'ensemble des solutions d'un système linéaire homogène est un sous-espace vectoriel : F est un sous-espace vectoriel de ${fx(esp)}.</b>`,why:`Citer ce résultat du cours est la justification la plus directe, et elle suffit.`,pts:1}];
+    bonneTxt="Oui : F est l'ensemble des solutions d'un système linéaire homogène (proposition 39).";repBonne={sev:"oui",rai:"homo"};}
+  else if(A.sev){const P=PN(E),lin=E.a.every(x=>!x),vects=E.D.map(vt).join(", "),fin={w:`<b>D'après la proposition 37 du cours, tout Vect est un sous-espace vectoriel : F est un sous-espace vectoriel de ${fx(esp)}.</b>`,why:`Citer la proposition 37 suffit.`,pts:1};
+    if(lin)Et=[{w:`On sépare ce qui est multiplié par ${P.join(" et par ")} : ${fx(`${tupleE(E)} = ${P.map((p,j)=>p+vt(E.D[j])).join(" + ")}`)}.`,why:`Chaque composante se lit en colonnes : les coefficients de ${P[0]} forment un vecteur${P.length>1?", ceux de t un autre":""}.`,pts:1},
+      {w:`Donc ${fx(`F = Vect(${vects})`)}.`,why:`F est l'ensemble de toutes les combinaisons linéaires de ${P.length>1?"ces vecteurs":"ce vecteur"} : c'est la définition de Vect.`,pts:1},fin];
+    else{const d=E.D[0],p=d.findIndex(x=>x),k=Q(E.a[p],d[p]),fac=aff({c:k,k:{t:Q(1)}},["t"]);
+      Et=[{w:`On teste d'abord le vecteur nul : pour ${fx(`t = ${nb(mul(k,-1))}`)}, on trouve ${fx(zt)}. Le vecteur nul est dans F : on ne peut pas conclure tout de suite.`,why:`Une partie constante ne suffit pas pour dire « ce n'est pas un sev » : il faut regarder si le vecteur nul est atteint.`,pts:1},
+        {w:`On met le vecteur en facteur : ${fx(`${tupleE(E)} = (${fac})${vt(d)}`)}. Quand t parcourt ℝ, ${fx(fac)} prend toutes les valeurs réelles, donc ${fx(`F = Vect(${vt(d)})`)}.`,why:`La partie constante ${vt(E.a)} est un multiple du vecteur ${vt(d)} : elle se range avec lui.`,pts:1},fin];}
+    bonneTxt=`Oui : F = Vect(${vects}) (proposition 37).`;repBonne={sev:"oui",rai:"vect",gen:Object.fromEntries(E.D.map((d,j)=>[GNOM[j],platV(d)]))};}
+  else if(A.rai==="zero"){const fin=pourquoi=>({w:`<b>Le vecteur nul n'est pas dans F : F n'est pas un sous-espace vectoriel de ${fx(esp)}.</b>`,why:pourquoi,pts:1});
+    if(E.k==="par"){const P=PN(E),m=pasNul(E);
+      Et=[{w:`On teste le vecteur nul : il est dans F seulement si ${P.length>1?"des valeurs de s et de t annulent":"une valeur de t annule"} les ${n===2?"deux":"trois"} composantes en même temps.`,why:`Avec une partie constante, le premier réflexe est de tester le vecteur nul : c'est la première condition de la définition d'un sous-espace vectoriel.`,pts:1},
+        {w:`${m.quoi} ${fx(m.sol)}. La ${rangOrd(m.r)} composante vaut alors ${fx(nb(m.val))}, qui n'est pas nul.`,why:`On résout avec ${P.length>1?"deux composantes":"une composante"}, puis on regarde ce que donne ${P.length>1?"la troisième":"une autre"}.`,pts:1},
+        fin(`Aucune valeur ${P.length>1?"de s et de t":"de t"} ne donne le vecteur nul. Dès qu'une des trois conditions de la définition manque, ce n'est pas un sev.`)];}
+    else{const i=E.k==="eq"?E.b.findIndex(x=>x):0,g=E.k==="eq"?comb(E.A[i],V):E.k==="prod"?xy:"x² + y²",dr=E.k==="eq"?E.b[i]:E.k==="prod"?E.d:E.r;
+      Et=[{w:`On teste le vecteur nul : pour ${fx(`(${V.join(", ")}) = ${zt}`)}, ${fx(g)} vaut 0, et ${fx(`0 ≠ ${nb(dr)}`)}.`,why:`Premier réflexe : le vecteur nul. C'est la première condition de la définition d'un sous-espace vectoriel.`,pts:1},
+        fin(E.k==="eq"?`Dès qu'une des trois conditions de la définition manque, ce n'est pas un sev. La proposition 39 ne s'applique pas ici : le second membre n'est pas nul.`:`Dès qu'une des trois conditions de la définition manque, ce n'est pas un sev : inutile de regarder les deux autres.`)];}
+    bonneTxt="Non : le vecteur nul n'est pas dans F.";repBonne={sev:"non",rai:"zero"};}
+  else if(A.rai==="mul"){const cu=q(pl(E.c,A.u)),mu=A.u.map(x=>-x),g=comb(E.c,V);
+    Et=[{w:`Le vecteur nul est dans F, et la somme de deux vecteurs de F reste dans F. On essaie donc de multiplier un vecteur de F par un nombre négatif.`,why:`Une inégalité change de sens quand on multiplie par un nombre négatif : c'est là que la condition casse.`,pts:1},
+      {w:`${fx(`u = ${vt(A.u)}`)} est dans F : ${fx(g)} vaut ${fx(nb(cu))}.`,why:`On choisit un vecteur simple pour lequel l'inégalité est vraie, sans tomber sur 0.`,pts:1},
+      {w:`${fx(`(−1)u = ${vt(mu)}`)} n'est pas dans F : ${fx(g)} vaut ${fx(nb(mul(cu,-1)))}, qui est strictement ${E.sens>0?"négatif":"positif"}. ${pasSev("multiplication par un réel")}`,why:unSeul,pts:1}];
+    bonneTxt=`Non : ${vt(A.u)} est dans F, mais pas (−1) × ${vt(A.u)} = ${vt(mu)}.`;repBonne={sev:"non",rai:"mul",cm:{"λ":"-1",u:platV(A.u)}};}
+  else{const s=A.u.map((x,k)=>x+A.v[k]),uv=`${fx(`u = ${vt(A.u)}`)} et ${fx(`v = ${vt(A.v)}`)} sont dans F`,som=`${fx(`u + v = ${vt(s)}`)} n'est pas dans F`;
+    const carre=`Le vecteur nul est dans F : il faut chercher ailleurs. Le carré montre que la condition n'est pas linéaire : on essaie l'addition.`,carreW=`Un carré, un produit de deux inconnues ou une inégalité : la proposition 39 ne s'applique pas, on cherche un contre-exemple.`;
+    if(E.k==="prod")Et=[{w:`Le vecteur nul est dans F, et un multiple d'un vecteur de F reste dans F. On essaie donc l'addition, avec deux vecteurs simples de F.`,why:`Un produit est nul quand l'un des deux facteurs est nul. Deux vecteurs de F peuvent avoir chacun un facteur nul différent : leur somme n'en a plus aucun.`,pts:1},
+      {w:`${uv} : pour chacun, ${fx(xy)} vaut 0.`,why:`Dans u, c'est ${Y} qui est nul ; dans v, c'est ${X}.`,pts:1},
+      {w:`${som} : ${fx(xy)} vaut 1, qui n'est pas nul. ${pasSev("addition")}`,why:unSeul,pts:1}];
+    else if(E.k==="quadrant")Et=[{w:`Le vecteur nul est dans F, et un multiple d'un vecteur de F reste dans F (le produit ${xy} est multiplié par λ², qui n'est jamais négatif). On essaie donc l'addition.`,why:`La condition dit que ${X} et ${Y} ont le même signe. En ajoutant un vecteur où ils sont positifs et un vecteur où ils sont négatifs, les signes peuvent se séparer.`,pts:1},
+      {w:`${uv} : pour chacun, ${fx(xy)} vaut 2.`,why:`Deux nombres de même signe ont un produit positif.`,pts:1},
+      {w:`${som} : ${fx(xy)} vaut −1, qui est strictement négatif. ${pasSev("addition")}`,why:unSeul,pts:1}];
+    else if(E.k==="para")Et=[{w:carre,why:carreW,pts:1},
+      {w:`${uv} : pour chacun, ${fx(carreTxt(E))} vaut ${fx(nb(E.a))}, comme ${Y}.`,why:`On choisit deux vecteurs de F avec des ${X} opposés : leur somme aura ${fx(X+" = 0")}.`,pts:1},
+      {w:`${som} : ${fx(carreTxt(E))} vaut 0, alors que ${fx(`${Y} = ${nb(2*E.a)}`)}. ${pasSev("addition")}`,why:unSeul,pts:1}];
+    else Et=[{w:carre,why:carreW,pts:1},
+      {w:`${uv} : pour chacun, x² et y² valent 1.`,why:`On choisit deux vecteurs de F très simples.`,pts:1},
+      {w:`${som} : x² vaut 4 et y² vaut 0. ${pasSev("addition")}`,why:unSeul,pts:1}];
+    bonneTxt=`Non : ${vt(A.u)} et ${vt(A.v)} sont dans F, mais pas leur somme ${vt(s)}.`;repBonne={sev:"non",rai:"add",ca:{u:platV(A.u),v:platV(A.v)}};}
+  function juge(rep){
+    if(!rep.sev)return {incomplet:"Réponds d'abord : est-ce un sous-espace vectoriel, oui ou non ?"};
+    if(!rep.rai)return {incomplet:"Choisis ta justification."};
+    const oui=rep.sev==="oui";
+    if(oui!==A.sev)return {ok:false,faux:["sev"],resume:A.sev?"Si : F est un sous-espace vectoriel.":"Non : F n'est pas un sous-espace vectoriel.",diag:{etape:Et.length-1,type:"sous-espace vectoriel ou pas",titre:"Où ça part : la conclusion.",msg:bonneTxt}};
+    const mauvaise=(msg,ch)=>({ok:false,faux:[ch||"rai"],resume:`Ta réponse (${oui?"oui":"non"}) est bonne, mais pas ta justification. ${msg}`,diag:{etape:0,type:ch?"contre-exemple ou vecteurs d'un sous-espace":"justification d'un sous-espace vectoriel",titre:"Où ça part : la justification.",msg:bonneTxt}});
+    if(oui){
+      if(rep.rai==="homo")return E.k==="eq"?{ok:true}:mauvaise("F n'est pas donné par des équations : écris-le plutôt sous la forme Vect(…).");
+      if(rep.rai!=="vect")return mauvaise("Cette justification sert à montrer qu'un ensemble n'est pas un sev. Pour un sev, on cite la proposition 37 (un Vect) ou la proposition 39 (les solutions d'un système linéaire homogène).");
+      const W=GNOM.slice(0,nbG).map(g=>liste((rep.gen||{})[g],n));
+      if(W.some(w=>!w))return {incomplet:`Écris ${nbG>1?"chaque vecteur":"le vecteur"} avec ${n} nombres, par exemple ${exV}.`};
+      if(W.some(w=>!dansE(E,w)))return mauvaise(`${nbG>1?"Un de tes vecteurs":"Ton vecteur"} n'est pas dans F.`,"gen");
+      return rangM(W)===A.dim?{ok:true}:mauvaise(nbG>1?"Tes deux vecteurs sont colinéaires : ils n'engendrent pas tout F.":"Le vecteur nul n'engendre pas F.","gen");}
+    if(rep.rai==="vect"||rep.rai==="homo")return mauvaise("Cette justification sert à montrer qu'un ensemble est un sev.");
+    if(rep.rai==="zero")return dansE(E,Z)?mauvaise("Le vecteur nul est dans F : c'est une autre condition de la définition qui manque."):{ok:true};
+    if(rep.rai==="add"){const u=liste((rep.ca||{}).u,n),v=liste((rep.ca||{}).v,n);
+      if(!u||!v)return {incomplet:`Écris u et v avec ${n} nombres chacun, par exemple ${exV}.`};
+      if(!dansE(E,u)||!dansE(E,v))return mauvaise(`${dansE(E,u)?"v":"u"} n'est pas dans F : il faut deux vecteurs de F.`,"ca");
+      return dansE(E,u.map((x,i)=>add(x,v[i])))?mauvaise("u + v est encore dans F : ce n'est pas un contre-exemple.","ca"):{ok:true};}
+    const l=nombre((rep.cm||{})["λ"]),u=liste((rep.cm||{}).u,n);
+    if(!l||!u)return {incomplet:`Écris un nombre pour λ et un vecteur de ${n} nombres pour u, par exemple ${exV}.`};
+    if(!dansE(E,u))return mauvaise("u n'est pas dans F : il faut partir d'un vecteur de F.","cm");
+    return dansE(E,u.map(x=>mul(l,x)))?mauvaise("λu est encore dans F : ce n'est pas un contre-exemple.","cm"):{ok:true};}
+  return {sig:"SV"+JSON.stringify(E),ens:E,q:`Dans ${fx(esp)}, on considère l'ensemble ${fx(`F = ${ens}`)}. F est-il un sous-espace vectoriel de ${fx(esp)} ? Donne la justification la plus directe.`,corps:"",texte:`F = ${ens} : sous-espace vectoriel de ${esp} ?`,
+    champs:[{k:"choix",id:"sev",o:[["oui","Oui, c'est un sev"],["non","Non"]]},
+      {k:"choix",id:"rai",titre:"Ta justification :",o:[["homo","Solutions d'un système linéaire homogène"],["vect","F s'écrit Vect(…)"],["zero","Le vecteur nul n'est pas dans F"],["add","Pas stable par addition"],["mul","Pas stable par multiplication par un réel"]]},
+      {k:"cases",id:"gen",noms:GNOM.slice(0,nbG),si:{rai:"vect"},large:true,aide:`${nbG>1?"Les vecteurs qui engendrent":"Le vecteur qui engendre"} F, par exemple ${exV}.`},
+      {k:"cases",id:"ca",noms:["u","v"],si:{rai:"add"},large:true,aide:`Deux vecteurs u et v de F dont la somme n'est pas dans F, par exemple ${exV}.`},
+      {k:"cases",id:"cm",noms:["λ","u"],si:{rai:"mul"},large:true,aide:"Un réel λ et un vecteur u de F tels que λu n'est pas dans F."}],
+    juge,etapes:Et,bonne:bonneTxt,bonneTxt,repBonne,repFausse:A.sev?{sev:"non",rai:"zero"}:{sev:"oui",rai:"homo"},nature:A.sev?"oui":"non, "+A.rai};}
+function tireEq(R,n,hom){for(;;){const k=n===3&&R()<0.4?2:1,A=[];for(let i=0;i<k;i++)A.push(nulV(n).map(()=>R.ent(-5,5)));
+  if(rangM(A)!==k||A.some(r=>{const z=r.filter(x=>x);return r[r.findIndex(x=>x)]<0||(z.length===1&&z[0]!==1)||(z.length===1&&R()<0.8)||Math.abs(z.reduce((g,x)=>{x=Math.abs(x);while(x){[g,x]=[x,g%x];}return g;},0))>1;}))continue;
+  const b=hom?nulV(k):A.map(()=>R.ent(-4,4));if(!hom&&b.every(x=>!x))continue;return {n,k:"eq",A,b};}}
+function tireDemi(R,n){for(;;){const c=nulV(n).map(()=>R.ent(-3,3)),z=c.filter(x=>x),p=c.findIndex(x=>x);
+  if(!z.length||z.length>2||c[p]<0||(z.length===1&&c[p]!==1)||(z.length===2&&(Math.abs(z[0])===Math.abs(z[1])?Math.abs(z[0])!==1:z.every(x=>x%2===0)||z.every(x=>x%3===0))))continue;return {n,k:"demi",c,sens:R()<0.75?1:-1};}}
+/* sorte : "lin" (pas de constante, un sev), "aff" (le vecteur nul n'est jamais atteint), "piege" (la constante est un multiple du vecteur : un sev) */
+function tirePar(R,n,sorte){for(;;){const np=sorte==="piege"||n===2?1:R()<0.7?2:1;let a=nulV(n),D;
+  if(sorte==="lin"){D=[];for(let j=0;j<np;j++)D.push(nulV(n).map(()=>R.ent(-3,3)));if(rangM(D)!==np)continue;}
+  else if(sorte==="piege"){const d=nulV(n).map(()=>R.nz(-3,3)),k=R.choix([1,2,-1,-2,3]);if(d[0]<0)continue;D=[d];a=d.map(x=>k*x);if(a.some(x=>Math.abs(x)>6))continue;}
+  else if(np===1){const d=nulV(n).map(()=>R.nz(-3,3)),t0=R.ent(-2,2),p=R.ent(0,n-1);a=d.map((x,i)=>i===p?-x*t0:R.ent(-3,3));D=[d];if(rangM([d,a])<2)continue;}
+  else{const [i,j,k]=R.mel([0,1,2]),t0=R.choix([0,0,1,-1,2]),ga=R.choix([1,1,-1,2]),ep=R.ent(-3,3),ak=R.nz(-3,3);if(ak+ep*t0===0)continue;
+    const d0=nulV(3),d1=nulV(3);d0[i]=R.choix([1,1,2,-1,3]);d0[j]=R.ent(-2,2);d0[k]=R.ent(-2,2);d1[j]=ga;d1[k]=ep;a[j]=-ga*t0;a[k]=ak;D=[d0,d1];}
+  if(a.some((x,i)=>!x&&D.every(d=>!d[i])))continue;
+  return {n,k:"par",a,D};}}
+function tireNonLin(R,n){const [i,j]=R.mel(n===2?[0,1]:[0,1,2]),lo=Math.min(i,j),hi=Math.max(i,j),r=R();
+  if(r<0.3)return {n,k:"prod",i:lo,j:hi,d:0};
+  if(r<0.45)return {n,k:"prod",i:lo,j:hi,d:R.choix([1,2,-1,4])};
+  if(r<0.6)return {n,k:"quadrant",i:lo,j:hi};
+  if(r<0.85||n===3)return {n,k:"para",i,j,a:R.choix([1,1,2,-1,3,-2])};
+  return R()<0.5?{n:2,k:"cercle",r:R.choix([1,4,2,9])}:{n:2,k:"carres"};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -19232,7 +19374,12 @@ G.add("lin",[
  {id:"AL7",t:"Calculer avec des vecteurs de ℝⁿ",tache:"calculer avec des vecteurs de ℝⁿ",th:"rn",pts:1.5,lecons:["l-rn"],
   paliers:[
    {t:"calculer une combinaison comme 2u − 3v",cc:2,gen:calculRn},
-   {t:"trouver le vecteur x d'une équation entre vecteurs",cc:3,gen:equationRn}]}
+   {t:"trouver le vecteur x d'une équation entre vecteurs",cc:3,gen:equationRn}]},
+ {id:"AL5",t:"Sous-espace vectoriel ou pas",tache:"sous-espace vectoriel ou pas",th:"reste",pts:0.4,pages:["m-sev"],lecons:["l-sev2"],
+  paliers:[
+   {t:"dans ℝ² : une équation, une inégalité, un produit ou un paramètre",cc:2,min:100,gen:R=>{const r=R();return sevOuPas(r<0.3?tireEq(R,2,true):r<0.4?tirePar(R,2,"lin"):r<0.58?tireEq(R,2,false):r<0.78?tireDemi(R,2):tireNonLin(R,2));}},
+   {t:"dans ℝ³ : des équations ou des paramètres",cc:3,gen:R=>{const r=R();return sevOuPas(r<0.25?tireEq(R,3,true):r<0.45?tireEq(R,3,false):r<0.72?tirePar(R,3,"lin"):tirePar(R,3,"aff"));}},
+   {t:"comme aux anciens CC : tout mélangé, avec les pièges",cc:4,gen:R=>{const r=R(),n=R()<0.4?2:3;return sevOuPas(r<0.18?tireEq(R,n,true):r<0.32?tireEq(R,n,false):r<0.5?tirePar(R,n,"lin"):r<0.66?tirePar(R,n,"aff"):r<0.76?tirePar(R,n,"piege"):r<0.88?tireNonLin(R,n):tireDemi(R,n));}}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
