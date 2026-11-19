@@ -23704,6 +23704,123 @@ const ITER=[
    return [`${sig(f,t)}\n  function li ->\n  List.fold_right\n    (${fn}) li ${init}`,`${f} ${lst(L)}`,{k:"fold_right",fn,init,L:JSON.stringify(L)}];},
  R=>{const f=nf(R),k=R.ent(2,5),L=petiteListe(R,1,9,4,5);return R.choix([[`${sig(f,"int list -> int")} function li ->\n  List.length\n    (List.filter (fun x -> x > ${k}) li)`,`${f} ${lst(L)}`],[`${sig(f,"int list -> int")} function li ->\n  List.fold_left (+) 0\n    (List.map (fun x -> x * ${k}) li)`,`${f} ${lst(L.slice(0,3))}`]]);}];
 
+/* ---------- PF3 : compléter la ligne effacée ---------- */
+const ROLE={base:["le cas de base","la valeur pour la plus petite entrée, sans appel récursif"],rec:["le cas général","il combine un morceau de l'entrée avec l'appel récursif sur une entrée plus petite"],
+  branche:["une branche du match","ce que vaut la fonction quand l'entrée a cette forme"],fn:["la fonction donnée à l'itérateur","ce qu'il faut faire avec chaque élément"]};
+/* une ligne fausse et plausible : un nombre changé, un opérateur échangé, l'appel récursif qui ne raccourcit plus l'entrée */
+function mutations(l){const M=[];const m=/\d+/.exec(l);if(m)M.push(l.slice(0,m.index)+(+m[0]+1)+l.slice(m.index+m[0].length));
+  [[" + "," * "],[" * "," + "],[" && "," || "],[" || "," && "],["(List.tl li)","li"],["(n / 10)","n"],["(i - 1)","i"],[" :: "," @ "],["[]","[0]"],[" r"," (x :: r)"],[" acc + 1"," acc"],[" < "," <= "],[" = "," <> "],["true","false"],["false","true"]]
+    .forEach(([a,b])=>{if(l.includes(a))M.push(l.replace(a,b));});return M;}
+function exoLigne(F,i,o){o=o||{};const L=F.L.slice(),bonne=L[i].trim(),ind=/^\s*/.exec(L[i])[0],def=L.join("\n");
+  const S=ML.session(),R=S.lis(def);if(R.some(x=>x.faute))throw new Error("définition fausse : "+def);
+  const essais=[...new Set(F.args)].map(a=>F.nom+" "+a),att=essais.map(x=>{const r=S.lis(x)[0];if(r.faute||r.exc)throw new Error("essai impossible : "+x);return r.ecrit;});
+  if(att.some(v=>v.length>40))return null;
+  const avec=ligne=>{const L2=L.slice();L2[i]=ind+ligne;return L2.join("\n");};
+  /* exécute la fonction avec la ligne donnée : rend {err} ou {k, obtenu} pour le premier essai faux, ou {ok:true} */
+  function essaie(ligne){const S2=ML.session(),D=S2.lis(avec(ligne));const f=D.find(x=>x.faute);
+    if(f)return {err:f.faute==="syntaxe"?"syntaxe":"type",msg:f.msg,extrait:f.extrait};
+    for(let k=0;k<essais.length;k++){const r=S2.lis(essais[k])[0];const v=r.faute?(r.boucle||/s'arrête pas/.test(r.msg)?"boucle":"err"):r.exc?"exception "+r.ecritExc:r.ecrit;
+      if(v!==att[k])return {k,obtenu:v};}
+    return {ok:true};}
+  const fausse=mutations(bonne).find(m=>!essaie(m).ok);if(!fausse)return null;
+  const num=i+1,[role,sens]=ROLE[F.roles[i][0]],montre=L.map((l,j)=>j===i?ind+"(* ← ligne "+num+" effacée *)":l).join("\n");
+  const ex=essais[F.ex||Math.min(2,essais.length-1)],vEx=att[essais.indexOf(ex)];
+  const E=[{w:`La ligne ${num} est ${role} : ${sens}.`,why:F.roles[i][2]||"On cherche d'abord à quoi sert la ligne : sa place dans la fonction le dit.",pts:1},
+    {w:`La ligne : <b>${c(bonne)}</b>`,why:F.roles[i][1],pts:2},
+    {w:`Vérification, avec la ligne remise : ${essais.slice(0,5).map((x,k)=>c(x+" = "+att[k])).join(", ")}.`,why:`Ce sont les valeurs attendues : ${F.dit}.`,pts:0.5}];
+  function juge(rep){const t=normalise(rep.l||"").trim();if(!t)return {incomplet:`Écris la ligne ${num}, sans les espaces du début.`};
+    if(/^let\b/.test(t)&&!/^let\b/.test(bonne))return {incomplet:`Écris seulement la ligne ${num}, pas toute la fonction.`};
+    if(/^\|/.test(bonne)&&!/^\|/.test(t))return {incomplet:"Une branche de match commence par une barre « | »."};
+    const r=essaie(t),faux=(type,titre,msg)=>({ok:false,faux:["l"],resume:"Pas tout à fait : avec cette ligne, la fonction ne fait pas ce qu'on attend.",diag:{etape:1,type,titre,msg}});
+    if(r.ok)return {ok:true};
+    if(r.err==="syntaxe")return faux("ligne mal écrite (syntaxe)","Où ça part : OCaml ne peut pas lire la fonction.",`Avec ta ligne, OCaml ne comprend plus la fonction. ${esc(r.msg)}`);
+    if(r.err)return faux("erreur de type dans la ligne écrite","Où ça part : une erreur de type.",`${r.extrait?`À cet endroit, ${c(r.extrait)} : `:""}${esc(r.msg)}`);
+    const x=essais[r.k],v=r.obtenu;
+    if(v==="boucle")return faux("appel récursif qui ne raccourcit pas l'entrée","Où ça part : la fonction ne s'arrête pas.",`Sur ${c(x)}, le calcul ne s'arrête pas : l'appel récursif doit se faire sur une entrée plus petite, pour finir par arriver au cas de base.`);
+    if(/^exception/.test(v))return faux("exception levée par la ligne écrite","Où ça part : une exception.",`Sur ${c(x)}, ta version lève ${c(v.slice(10))}.${/Division_by_zero/.test(v)?" Une division ou un mod par 0 n'a pas de sens : regarde quand le paramètre arrive à 0.":/"(hd|tl)"/.test(v)?` ${c("List.hd")} et ${c("List.tl")} n'ont pas de sens sur la liste vide : le test du cas de base doit passer avant.`:""}`);
+    return faux(F.roles[i][0]==="base"?"valeur du cas de base":F.roles[i][0]==="fn"?"fonction donnée à l'itérateur":"cas général d'une fonction récursive","Où ça part : une valeur fausse.",`Sur ${c(x)}, ta version renvoie ${c(v)} au lieu de ${c(att[r.k])}.`);}
+  return {sig:"L"+def.replace(/\s+/g," ")+"|"+i,code:def,
+    q:`Cette fonction doit renvoyer ${F.dit}. Par exemple, ${c(ex)} vaut ${c(vEx)}. La ligne ${num} a été effacée : écris-la.`,
+    corps:bloc(montre),texte:finLigne(montre)+" — ligne "+num+" à écrire",
+    champs:[{k:"champ",id:"l",nom:"ligne",label:`La ligne ${num} :`,ex:"sans les espaces du début",apercu:false,sym:o.sym?symDe(SYMV.concat(SYML),o.sym):SYML}],juge,etapes:E,
+    bonne:c(bonne),bonneTxt:bonne,repBonne:{l:bonne},repFausse:{l:fausse},nature:F.roles[i][0],
+    ens:{code:def,ligne:i,essais,att,ocaml:essais.map((x,k)=>({code:def+" in "+x,attendu:"T:"+S.lis(x)[0].type+"|V:"+att[k]}))}};}
+const SYML=[["::"," :: "],["->"," -> "],["|","| "],["List.hd","List.hd "],["List.tl","List.tl "],["mod"," mod "],["fun","fun "],["[]","[]"],["&&"," && "],["||"," || "]];
+/* une fonction écrite comme dans le cours, avec le rôle de chaque ligne à effacer : [rôle, la ligne expliquée, pourquoi ce rôle] */
+const entiers=(R,n)=>[0,7,R.ent(10,99),R.ent(100,999),R.ent(1000,9999),R.ent(100,999)].slice(0,n||6);
+const listes=(R,a,b)=>["[]",lst([R.ent(a,b)]),lst(petiteListe(R,a,b,3,4)),lst(petiteListe(R,a,b,2,5)),lst(petiteListe(R,a,b,4,5))];
+const FL={
+ somElem:R=>({nom:"somElem",dit:"la somme des éléments de la liste",L:["let rec somElem : int list -> int =","  function li ->","  if li = [] then 0","  else List.hd li + somElem (List.tl li)"],
+   roles:{2:["base","La somme d'une liste vide vaut 0 : 0 ne change pas une somme."],3:["rec","La somme, c'est le premier élément plus la somme des autres. L'appel récursif se fait sur la queue, List.tl li, qui est plus courte."]},args:listes(R,1,9)}),
+ longueur:R=>({nom:"longueur",dit:"le nombre d'éléments de la liste",L:["let rec longueur : int list -> int =","  function li ->","  if li = [] then 0","  else 1 + longueur (List.tl li)"],
+   roles:{2:["base","La liste vide n'a aucun élément."],3:["rec","Un élément de plus que la queue : on compte 1 pour la tête, sans regarder sa valeur."]},args:listes(R,1,9)}),
+ ajout:R=>{const k=R.ent(1,3);return {nom:"ajout"+k,dit:`la liste où ${k} est ajouté à chaque élément`,L:[`let rec ajout${k} : int list -> int list =`,"  function li ->","  if li = [] then []",`  else (List.hd li + ${k})`,`    :: ajout${k} (List.tl li)`],
+   roles:{2:["base","Rien à transformer : la liste vide donne la liste vide."]},args:listes(R,1,9)};},
+ liPairs:R=>({nom:"pairs",dit:"la liste des éléments pairs, dans le même ordre",L:["let rec pairs : int list -> int list =","  function li ->","  if li = [] then []","  else if List.hd li mod 2 = 0","  then List.hd li :: pairs (List.tl li)","  else pairs (List.tl li)"],
+   roles:{2:["base","Aucun élément pair dans la liste vide."],4:["rec","La tête est paire : on la garde devant le résultat de l'appel sur la queue."],5:["rec","La tête est impaire : on ne la garde pas, on continue avec la queue."]},args:listes(R,1,9)}),
+ nbOcc:R=>{const x=R.ent(1,3);return {nom:"nbOcc",dit:"le nombre de fois où x apparaît dans la liste",L:["let rec nbOcc : int -> int list -> int =","  fun x li ->","  if li = [] then 0","  else if List.hd li = x","  then 1 + nbOcc x (List.tl li)","  else nbOcc x (List.tl li)"],
+   roles:{2:["base","x n'apparaît jamais dans la liste vide."],4:["rec","La tête vaut x : on compte 1, plus les apparitions dans la queue."],5:["rec","La tête ne vaut pas x : on ne compte rien pour elle."]},args:["[]",lst([x]),lst([x,2,x]),lst(petiteListe(R,1,3,4,5)),lst(petiteListe(R,1,3,3,5))].map(l=>x+" "+l)};},
+ maxListe:R=>({nom:"maxListe",dit:"le plus grand élément d'une liste non vide",L:["let rec maxListe : int list -> int =","  function li ->","  if List.tl li = [] then List.hd li","  else max (List.hd li)","    (maxListe (List.tl li))"],
+   roles:{2:["base","Une liste à un seul élément : c'est lui le plus grand. On teste List.tl li = [] car la fonction n'est pas définie sur la liste vide."]},args:listes(R,1,9).slice(1)}),
+ appartient:R=>{const x=R.ent(1,5);return {nom:"appartient",dit:"true si x est dans la liste, false sinon",L:["let rec appartient :","  int -> int list -> bool =","  fun x li ->","  if li = [] then false","  else List.hd li = x","    || appartient x (List.tl li)"],
+   roles:{3:["base","La liste vide ne contient rien."],4:["rec","x est dans la liste s'il est la tête, ou s'il est dans la queue : c'est un « ou »."]},args:["[]",lst([x]),lst([x+1,x]),lst(petiteListe(R,1,9,3,4)),lst([1,2,3].map(y=>y+x))].map(l=>x+" "+l)};},
+ produit:R=>({nom:"produit",dit:"le produit des éléments de la liste",L:["let rec produit : int list -> int =","  function li ->","  if li = [] then 1","  else List.hd li * produit (List.tl li)"],
+   roles:{2:["base","Le produit d'une liste vide vaut 1 : 1 ne change pas un produit (avec 0, tout le produit vaudrait 0)."],3:["rec","Le premier élément fois le produit des autres."]},args:listes(R,1,5)}),
+ sommeChiffres:R=>({nom:"sommeChiffres",dit:"la somme des chiffres de n (n ≥ 0)",L:["let rec sommeChiffres : int -> int =","  function n ->","  if n < 10 then n","  else n mod 10 + sommeChiffres (n / 10)"],
+   roles:{2:["base","Un nombre d'un seul chiffre : la somme de ses chiffres, c'est lui."],3:["rec","n mod 10 est le dernier chiffre ; n / 10 enlève ce dernier chiffre. On ajoute le dernier chiffre à la somme des autres."]},args:entiers(R)}),
+ nbChiffres:R=>({nom:"nbChiffres",dit:"le nombre de chiffres de n (n ≥ 0)",L:["let rec nbChiffres : int -> int =","  function n ->","  if n < 10 then 1","  else 1 + nbChiffres (n / 10)"],
+   roles:{2:["base","Un nombre plus petit que 10 s'écrit avec un seul chiffre (0 aussi)."],3:["rec","On compte le dernier chiffre, puis les chiffres de n / 10."]},args:entiers(R)}),
+ queDesK:R=>{const k=R.ent(1,3);return {nom:"queDes"+["","Un","Deux","Trois"][k],dit:`true si tous les chiffres de n valent ${k}`,L:[`let rec queDes${["","Un","Deux","Trois"][k]} : int -> bool =`,"  function n ->",`  if n < 10 then n = ${k}`,`  else n mod 10 = ${k}`,`    && queDes${["","Un","Deux","Trois"][k]} (n / 10)`],
+   roles:{2:["base",`Un seul chiffre : le test, c'est « ce chiffre vaut ${k} ».`]},args:[String(k),String(k+1),String(k*11),String(k*111),String(k*100+k*10+5),String(k*1000+k*100+k*10+k)]};},
+ prodDiv:R=>({nom:"prodDiv",dit:"le produit des diviseurs de n inférieurs ou égaux à i",L:["let rec prodDiv : int -> int -> int =","  fun n i ->","  if i = 0 then 1","  else if n mod i = 0","  then i * prodDiv n (i - 1)","  else prodDiv n (i - 1)"],
+   roles:{2:["base","Plus aucun candidat : le produit vide vaut 1."],4:["rec","i divise n : on le multiplie avec le produit des diviseurs plus petits."],5:["rec","i ne divise pas n : on passe au candidat suivant, i - 1, sans rien multiplier."]},args:["12 0","12 1","12 4","20 5","18 6","30 5"]}),
+ nbDiv:R=>({nom:"nbDiv",dit:"le nombre de diviseurs de n inférieurs ou égaux à i",L:["let rec nbDiv : int -> int -> int =","  fun n i ->","  if i = 0 then 0","  else if n mod i = 0","  then 1 + nbDiv n (i - 1)","  else nbDiv n (i - 1)"],
+   roles:{2:["base","Plus aucun candidat : on n'a rien compté."],4:["rec","i divise n : on le compte, puis on regarde i - 1."],5:["rec","i ne divise pas n : on ne compte rien pour lui."]},args:["12 0","12 1","12 6","20 10","18 9","7 7"]}),
+ nbSup:R=>{const k=R.ent(2,7);return {nom:"nbSup"+k,dit:`le nombre d'éléments plus grands que ${k}`,L:[`let rec nbSup${k} : int list -> int =`,"  function li ->","  if li = [] then 0",`  else if List.hd li > ${k}`,`  then 1 + nbSup${k} (List.tl li)`,`  else nbSup${k} (List.tl li)`],
+   roles:{2:["base","Aucun élément dans la liste vide, donc aucun plus grand que "+k+"."],4:["rec",`La tête est plus grande que ${k} : on la compte, puis on continue sur la queue.`],5:["rec","La tête ne compte pas : on continue sur la queue sans rien ajouter."]},args:listes(R,1,9)};},
+ somme:R=>({nom:"somme",dit:"1 + 2 + … + n (n ≥ 0)",L:["let rec somme : int -> int =","  function n ->","  if n = 0 then 0","  else n + somme (n - 1)"],roles:{2:["base","La somme jusqu'à 0 vaut 0."],3:["rec","La somme jusqu'à n, c'est n plus la somme jusqu'à n − 1."]},args:["0","1","4","6","10"]}),
+ fact:R=>({nom:"fact",dit:"la factorielle de n : 1 × 2 × … × n (n ≥ 0)",L:["let rec fact : int -> int =","  function n ->","  if n = 0 then 1","  else n * fact (n - 1)"],roles:{2:["base","Par convention, la factorielle de 0 vaut 1 (le produit vide)."],3:["rec","n! = n × (n − 1)!"]},args:["0","1","3","5","6"]}),
+ compte:R=>{const k=R.ent(1,9);return {nom:"compte"+k,dit:`le nombre de chiffres de n égaux à ${k} (n ≥ 0)`,L:[`let rec compte${k} : int -> int =`,"  function n ->","  if n = 0 then 0",`  else if n mod 10 = ${k}`,`  then 1 + compte${k} (n / 10)`,`  else compte${k} (n / 10)`],
+   roles:{2:["base","0 n'a plus de chiffre à regarder."],4:["rec",`Le dernier chiffre vaut ${k} : on le compte, puis on regarde n / 10.`],5:["rec",`Le dernier chiffre ne vaut pas ${k} : on regarde les autres, sans compter.`]},args:["0",String(k),String(k*11),String(k*100+3),String(R.ent(1000,9999)),String(k*1000+R.ent(10,99)*10+k)]};},
+ sommeDiv:R=>({nom:"sommeDiv",dit:"la somme des diviseurs de n inférieurs ou égaux à i",L:["let rec sommeDiv : int -> int -> int =","  fun n i ->","  if i = 0 then 0","  else if n mod i = 0","  then i + sommeDiv n (i - 1)","  else sommeDiv n (i - 1)"],
+   roles:{2:["base","Plus de candidat : la somme vide vaut 0."],4:["rec","i divise n : on l'ajoute à la somme des diviseurs plus petits."],5:["rec","i ne divise pas n : on passe à i − 1 sans rien ajouter."]},args:["12 0","12 1","12 6","20 10","18 9","28 14"]}),
+ puissance:R=>({nom:"puissance",dit:"x à la puissance n (n ≥ 0)",L:["let rec puissance : int -> int -> int =","  fun x n ->","  if n = 0 then 1","  else x * puissance x (n - 1)"],
+   roles:{2:["base","x puissance 0 vaut 1."],3:["rec","x puissance n, c'est x fois x puissance n − 1."]},args:["2 0","3 1","2 5","3 3","5 2"]})};
+/* les mêmes fonctions, écrites avec match */
+const FM={
+ somElem:R=>({nom:"somElem",dit:"la somme des éléments de la liste",L:["let rec somElem : int list -> int =","  function","  | [] -> 0","  | x :: r -> x + somElem r"],roles:{2:["branche","La liste vide : la somme vaut 0."],3:["branche","Une tête x et une queue r : x plus la somme de r."]},args:listes(R,1,9)}),
+ longueur:R=>({nom:"longueur",dit:"le nombre d'éléments de la liste",L:["let rec longueur : int list -> int =","  function","  | [] -> 0","  | _ :: r -> 1 + longueur r"],roles:{2:["branche","La liste vide n'a aucun élément."],3:["branche","Un élément (sa valeur ne sert pas, d'où _) plus ceux de r."]},args:listes(R,1,9)}),
+ liPairs:R=>({nom:"liPairs",dit:"la liste des éléments pairs, dans le même ordre",L:["let rec liPairs : int list -> int list =","  function","  | [] -> []","  | x :: r ->","    if x mod 2 = 0 then x :: liPairs r","    else liPairs r"],roles:{2:["branche","Aucun élément pair dans la liste vide."],4:["rec","x est pair : on le garde devant le résultat sur r."]},args:listes(R,1,9)}),
+ alterne:R=>({nom:"alterne",dit:"la somme des éléments de rang impair (le 1er, le 3e…)",L:["let rec alterne : int list -> int =","  function","  | [] -> 0","  | [x] -> x","  | x :: _ :: r -> x + alterne r"],roles:{2:["branche","La liste vide : rien à ajouter."],3:["branche","Un seul élément : il est de rang 1, on le garde."],4:["branche","Au moins deux éléments : on garde le premier, on saute le deuxième, et on recommence sur r."]},args:listes(R,1,9)}),
+ dernier:R=>({nom:"dernier",dit:"le dernier élément d'une liste non vide",L:["let rec dernier : int list -> int =","  function","  | [x] -> x","  | _ :: r -> dernier r","  | [] -> failwith \"liste vide\""],roles:{2:["branche","Un seul élément : c'est le dernier."],3:["branche","Plus d'un élément : le dernier est dans r."]},args:listes(R,1,9).slice(1)}),
+ doubler:R=>({nom:"doubler",dit:"la liste où chaque élément est multiplié par 2",L:["let rec doubler : int list -> int list =","  function","  | [] -> []","  | x :: r -> 2 * x :: doubler r"],roles:{2:["branche","La liste vide donne la liste vide."],3:["branche","On met 2 * x devant le résultat sur r."]},args:listes(R,1,9)}),
+ sommeChiffres:R=>({nom:"somChif",dit:"la somme des chiffres de n (n ≥ 0)",L:["let rec somChif : int -> int =","  function","  | 0 -> 0","  | n -> n mod 10 + somChif (n / 10)"],roles:{2:["branche","0 n'a que des chiffres nuls."],3:["branche","Le dernier chiffre plus la somme des autres."]},args:entiers(R)}),
+ nbSup:R=>{const k=R.ent(2,7);return {nom:"nbSup"+k,dit:`le nombre d'éléments plus grands que ${k}`,L:[`let rec nbSup${k} : int list -> int =`,"  function","  | [] -> 0","  | x :: r ->",`    if x > ${k} then 1 + nbSup${k} r`,`    else nbSup${k} r`],roles:{2:["branche","Aucun élément dans la liste vide."],4:["rec",`x est plus grand que ${k} : on le compte.`],5:["rec","x ne compte pas : on continue sur r."]},args:listes(R,1,9)};},
+ plus:R=>{const k=R.ent(1,9);return {nom:"plus"+k,dit:`la liste où ${k} est ajouté à chaque élément`,L:[`let rec plus${k} : int list -> int list =`,"  function","  | [] -> []",`  | x :: r -> (x + ${k}) :: plus${k} r`],roles:{2:["branche","La liste vide donne la liste vide."],3:["branche",`On met x + ${k} devant le résultat sur r.`]},args:listes(R,1,9)};},
+ produit:R=>({nom:"produit",dit:"le produit des éléments de la liste",L:["let rec produit : int list -> int =","  function","  | [] -> 1","  | x :: r -> x * produit r"],roles:{2:["branche","Le produit vide vaut 1."],3:["branche","x fois le produit des éléments de r."]},args:listes(R,1,5)}),
+ estDans:R=>{const k=R.ent(1,9);return {nom:"estDans",dit:"true si x est dans la liste",L:["let rec estDans :","  int -> int list -> bool =","  fun x li ->","  match li with","  | [] -> false","  | y :: r -> y = x || estDans x r"],roles:{4:["branche","La liste vide ne contient rien."],5:["branche","x est la tête y, ou bien il est dans r."]},args:["[]",lst([k]),lst([k+1,k]),lst(petiteListe(R,1,9,3,4)),lst([1,2,3].map(y=>y+k))].map(l=>k+" "+l)};},
+ somAcc:R=>({nom:"somAcc",dit:"acc plus la somme des éléments de la liste (on l'appelle avec acc = 0)",L:["let rec somAcc :","  int -> int list -> int =","  fun acc li ->","  match li with","  | [] -> acc","  | x :: r -> somAcc (acc + x) r"],roles:{4:["branche","Plus rien à ajouter : l'accumulateur contient déjà la somme."],5:["branche","On ajoute x à l'accumulateur, et on continue sur r."]},args:listes(R,1,9).map(l=>"0 "+l)}),
+ miroir:R=>({nom:"miroir",dit:"la liste à l'envers, posée devant acc (on l'appelle avec acc = [])",L:["let rec miroir :","  int list -> int list -> int list =","  fun acc li ->","  match li with","  | [] -> acc","  | x :: r -> miroir (x :: acc) r"],roles:{4:["branche","Plus d'élément : acc contient la liste retournée."],5:["branche","On pose x devant acc : le premier élément finit au fond."]},args:listes(R,1,9).map(l=>"[] "+l)})};
+/* avec un itérateur : la fonction donnée à fold ou map */
+const FI={
+ somme:R=>({nom:"somme",dit:"la somme des éléments de la liste",L:["let somme : int list -> int =","  function li ->","  List.fold_left","    (fun acc x -> acc + x)","    0 li"],roles:{3:["fn","À chaque élément x, le nouvel accumulateur est l'ancien plus x."]},args:listes(R,1,9)}),
+ produit:R=>({nom:"produit",dit:"le produit des éléments de la liste",L:["let produit : int list -> int =","  function li ->","  List.fold_left","    (fun acc x -> acc * x)","    1 li"],roles:{3:["fn","À chaque élément, on multiplie l'accumulateur par x (il part de 1)."]},args:listes(R,1,5)}),
+ nbPairs:R=>({nom:"nbPairs",dit:"le nombre d'éléments pairs de la liste",L:["let nbPairs : int list -> int =","  function li ->","  List.fold_left","    (fun acc x ->","      if x mod 2 = 0 then acc + 1","      else acc)","    0 li"],roles:{4:["fn","x est pair : on compte 1 de plus."],5:["fn","x est impair : l'accumulateur ne change pas."]},args:listes(R,1,9)}),
+ longueur:R=>({nom:"longueur",dit:"le nombre d'éléments de la liste",L:["let longueur : int list -> int =","  function li ->","  List.fold_left","    (fun acc _ -> acc + 1)","    0 li"],roles:{3:["fn","Chaque élément compte pour 1, quelle que soit sa valeur."]},args:listes(R,1,9)}),
+ maxi:R=>({nom:"maxi",dit:"le plus grand élément (les éléments sont positifs)",L:["let maxi : int list -> int =","  function li ->","  List.fold_left","    (fun m x -> if x > m then x else m)","    0 li"],roles:{3:["fn","On garde le plus grand de m et de x."]},args:listes(R,1,9)}),
+ renverse:R=>({nom:"renverse",dit:"la liste à l'envers",L:["let renverse : int list -> int list =","  function li ->","  List.fold_left","    (fun acc x -> x :: acc)","    [] li"],roles:{3:["fn","Chaque élément est posé devant ceux déjà vus : le premier finit à la fin."]},args:listes(R,1,9)}),
+ doubles:R=>({nom:"doubles",dit:"la liste où chaque élément est multiplié par 2",L:["let doubles : int list -> int list =","  function li ->","  List.map (fun x -> 2 * x) li"],roles:{2:["fn","List.map applique la fonction à chaque élément : ici, multiplier par 2."]},args:listes(R,1,9)}),
+ garderPairs:R=>({nom:"garderPairs",dit:"les éléments pairs, dans le même ordre",L:["let garderPairs : int list -> int list =","  function li ->","  List.filter","    (fun x -> x mod 2 = 0) li"],roles:{3:["fn","List.filter garde les éléments pour lesquels la fonction rend true : ici, x pair."]},args:listes(R,1,9)}),
+ somCarres:R=>({nom:"somCarres",dit:"la somme des carrés des éléments",L:["let somCarres : int list -> int =","  function li ->","  List.fold_left","    (fun acc x -> acc + x * x)","    0 li"],roles:{3:["fn","À chaque élément, on ajoute son carré x * x à l'accumulateur."]},args:listes(R,1,5)}),
+ nbSup:R=>{const k=R.ent(2,7);return {nom:"nbSup"+k,dit:`le nombre d'éléments plus grands que ${k}`,L:[`let nbSup${k} : int list -> int =`,"  function li ->","  List.fold_left","    (fun acc x ->",`      if x > ${k} then acc + 1`,"      else acc)","    0 li"],roles:{4:["fn",`x est plus grand que ${k} : on compte 1 de plus.`],5:["fn","Sinon l'accumulateur ne change pas."]},args:listes(R,1,9)};},
+ plus:R=>{const k=R.ent(1,9);return {nom:"plus"+k,dit:`la liste où ${k} est ajouté à chaque élément`,L:[`let plus${k} : int list -> int list =`,"  function li ->",`  List.map (fun x -> x + ${k}) li`],roles:{2:["fn",`List.map applique la fonction à chaque élément : ici, ajouter ${k}.`]},args:listes(R,1,9)};},
+ sup:R=>{const k=R.ent(2,7);return {nom:"sup"+k,dit:`les éléments plus grands que ${k}, dans le même ordre`,L:[`let sup${k} : int list -> int list =`,"  function li ->","  List.filter",`    (fun x -> x > ${k}) li`],roles:{3:["fn",`List.filter garde les éléments pour lesquels la fonction rend true : ici, x > ${k}.`]},args:listes(R,1,9)};},
+ multiples:R=>{const k=R.ent(2,5);return {nom:"multiples"+k,dit:`les multiples de ${k}, dans le même ordre`,L:[`let multiples${k} : int list -> int list =`,"  function li ->","  List.filter",`    (fun x -> x mod ${k} = 0) li`],roles:{3:["fn",`x est un multiple de ${k} quand le reste de sa division par ${k} vaut 0.`]},args:listes(R,1,12)};},
+ copie:R=>({nom:"copie",dit:"la même liste, construite avec fold_right",L:["let copie : int list -> int list =","  function li ->","  List.fold_right","    (fun x acc -> x :: acc)","    li []"],roles:{3:["fn","fold_right part de la fin : chaque x est posé devant le reste, l'ordre est gardé."]},args:listes(R,1,9)})};
+/* choisit une fonction et une ligne du rôle voulu */
+function tireLigne(R,T,roles,sym){for(;;){const F=R.choix(Object.values(T))(R),I=Object.keys(F.roles).map(Number).filter(i=>roles.includes(F.roles[i][0]));if(!I.length)continue;
+  const e=exoLigne(F,R.choix(I),{sym});if(e)return e;}}
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
@@ -23718,7 +23835,13 @@ G.add("pf",[
    {t:"récursivité sur un entier : chiffres, diviseurs",cc:3,gen:R=>tireRenvoie(R,RECENT,"entier",["true","false"])},
    {t:"récursivité sur une liste",cc:3,gen:R=>tireRenvoie(R,RECLI,"liste",["[","]",";","true","false"])},
    {t:"match et accumulateur",cc:3,gen:R=>tireRenvoie(R,MATCHACC,"match",["[","]",";"])},
-   {t:"List.map, List.filter, List.fold_left",cc:3,gen:R=>tireRenvoie(R,ITER,"itérateur",["[","]",";","true","false"])}]}
+   {t:"List.map, List.filter, List.fold_left",cc:3,gen:R=>tireRenvoie(R,ITER,"itérateur",["[","]",";","true","false"])}]},
+ {id:"PF3",t:"Compléter la ligne effacée",tache:"compléter la ligne effacée",th:"listes",pts:7,lecons:["p-rec","p-listes","p-schema"],apres:["PF2"],
+  paliers:[
+   {t:"le cas de base",cc:2,min:30,gen:R=>tireLigne(R,FL,["base"],["[]","List.hd","List.tl","true","false"])},
+   {t:"le cas général, avec l'appel récursif",cc:3,min:30,gen:R=>tireLigne(R,FL,["rec"],["List.hd","List.tl","::","mod","&&","||"])},
+   {t:"une branche de match",cc:3,min:30,gen:R=>tireLigne(R,FM,["branche","rec"],["|","->","::","[]","mod"])},
+   {t:"la fonction donnée à fold, map ou filter",cc:3,min:30,gen:R=>tireLigne(R,FI,["fn"],["fun","->","::","mod"])}]}
 ]);
 })();
 
