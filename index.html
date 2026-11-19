@@ -22792,6 +22792,96 @@ function conditionsED(R){const cas=R.choix(["2","2","1","3"]),o=tireED(R,cas),eq
   return {sig:"I"+eq+"|"+y0+"|"+y1,q:`Résous l'équation différentielle ${fx(eq)} avec les conditions initiales ${fx(`y(0) = ${nb(y0)}`)} et ${fx(`y′(0) = ${nb(y1)}`)}.`,corps:"",texte:`${eq}, y(0) = ${nb(y0)}, y′(0) = ${nb(y1)}`,
     champs:[{k:"champ",id:"y",nom:"solution",label:"$y =$",ex:"une fonction de x, sans constante",sym:SYM_Y.slice(0,2).concat(["cos(","sin(","/"]),aide:"Écris e^(2x) avec des parenthèses, et les fractions avec /."}],juge,etapes:E,
     bonne:fx(`y = ${solT}`),bonneTxt:`y = ${solT}`,repBonne:{y:solTape},repFausse:{y:`(${brut(C1)})*${B1[0]}+(${brut(add(C2,1))})*${B1[1]}`},nature:{"2":"deux racines réelles","1":"racine double","3":"racines complexes"}[cas],ens:{type:"ci",k:o.k,p:o.p.n/o.p.d,c:o.c.n/o.c.d,y0,y1}};}
+/* ---------- CA7 : ordre 2 avec second membre ----------
+   Une solution particulière exacte : polynôme, B xᵐ e^{kx}, (ax + b)e^{kx} ou α cos ωx + β sin ωx. */
+const plusT=(a,b)=>b[0]==="−"?a+" − "+b.slice(1):a+" + "+b;
+const ypT=y=>y.f==="poly"?S([[y.c[2],"x²"],[y.c[1],"x"],[y.c[0],""]]):y.f==="exp"?S([[y.B,(y.m===2?"x²":y.m===1?"x":"")+ex(y.k)]]):y.f==="lin"?`(${S([[y.a,"x"],[y.b,""]])})${ex(y.k)}`:S([[y.al,`cos(${bx(y.w)})`],[y.be,`sin(${bx(y.w)})`]]);
+const ypTape=y=>y.f==="poly"?`(${brut(y.c[2])})*x^2+(${brut(y.c[1])})*x+(${brut(y.c[0])})`:y.f==="exp"?`(${brut(y.B)})*${y.m===2?"x^2*":y.m===1?"x*":""}${exT(y.k)}`:y.f==="lin"?`((${brut(y.a)})*x+(${brut(y.b)}))*${exT(y.k)}`:`(${brut(y.al)})*cos(${y.w}*x)+(${brut(y.be)})*sin(${y.w}*x)`;
+const ypF=y=>{const F=v=>v.n/v.d;return y.f==="poly"?x=>F(y.c[0])+F(y.c[1])*x+F(y.c[2])*x*x:y.f==="exp"?x=>F(y.B)*Math.pow(x,y.m)*Math.exp(F(y.k)*x):y.f==="lin"?x=>(F(y.a)*x+F(y.b))*Math.exp(F(y.k)*x):x=>F(y.al)*Math.cos(y.w*x)+F(y.be)*Math.sin(y.w*x);};
+/* y_p(0) et y_p′(0), exacts */
+const yp0=y=>y.f==="poly"?[y.c[0],y.c[1]]:y.f==="exp"?(y.m===0?[y.B,mul(y.B,y.k)]:y.m===1?[Q(0),y.B]:[Q(0),Q(0)]):y.f==="lin"?[y.b,add(y.a,mul(y.b,y.k))]:[y.al,mul(y.be,y.w)];
+function tireH(R,cas){let o;do o=tireED(R,cas);while(cas==="1"&&o.r.d!==1);o.k=1;return o;}
+const Pk=(o,k)=>add(add(mul(k,k),mul(o.p,k)),o.c);
+const estRacine=(o,k)=>nul(Pk(o,k));
+/* le second membre et sa solution particulière, selon la sorte demandée */
+function secondMembre(R,o,sorte){const P=k=>Pk(o,k);
+  if(sorte==="cst"){const K=R.nz(-9,9),y={f:"poly",c:[div(K,o.c),Q(0),Q(0)]};return {f:nb(K),y,forme:"une constante c",why0:"Le second membre est une constante : on essaie une constante.",
+    det:`${fx("y_{p}′ = y_{p}″ = 0")}, donc l'équation devient ${fx(`${S([[o.c,"c"]])} = ${nb(K)}`)} : ${fx(`c = ${nb(div(K,o.c))}`)}.`,piege:[{f:"poly",c:[Q(K),Q(0),Q(0)]},"second membre recopié sans diviser"]};}
+  if(sorte==="poly"){const d=R()<0.5?1:2,a2=d===2?Q(R.nz(-3,3)):Q(0),a1=Q(d===2?R.ent(-4,4):R.nz(-4,4)),a0=Q(R.ent(-5,5)),p=o.p,c=o.c;
+    const F2=mul(c,a2),F1=add(mul(c,a1),mul(mul(2,p),a2)),F0=add(add(mul(c,a0),mul(p,a1)),mul(2,a2)),y={f:"poly",c:[a0,a1,a2]};
+    const lettre=d===2?"ax² + bx + c":"ax + b",der=d===2?`${fx("y_{p}′ = 2ax + b")} et ${fx("y_{p}″ = 2a")}`:`${fx("y_{p}′ = a")} et ${fx("y_{p}″ = 0")}`;
+    const ident=d===2?`${fx(`${S([[c,"a"]])} = ${nb(F2)}`)}, ${fx(`${S([[c,"b"],[mul(2,p),"a"]])} = ${nb(F1)}`)} et ${fx(`${S([[c,"c"],[p,"b"],[2,"a"]])} = ${nb(F0)}`)}`:`${fx(`${S([[c,"a"]])} = ${nb(F1)}`)} et ${fx(`${S([[c,"b"],[p,"a"]])} = ${nb(F0)}`)}`;
+    return {f:S([[F2,"x²"],[F1,"x"],[F0,""]]),y,forme:lettre,why0:`Le second membre est un polynôme de degré ${d} : on essaie un polynôme du même degré (0 n'est pas racine de l'équation caractéristique).`,
+      det:`${der}. On remplace et on identifie les coefficients de chaque puissance de x : ${ident}. Donc ${d===2?`${fx(`a = ${nb(a2)}`)}, ${fx(`b = ${nb(a1)}`)}, ${fx(`c = ${nb(a0)}`)}`:`${fx(`a = ${nb(a1)}`)}, ${fx(`b = ${nb(a0)}`)}`}.`,piege:null};}
+  if(sorte==="exp"){let k;do k=R.nz(-3,3);while(estRacine(o,k));const A=Q(R.nz(-6,6)),B=div(A,P(k)),y={f:"exp",B,m:0,k:Q(k)};
+    return {f:S([[A,ex(Q(k))]]),y,forme:`B${ex(Q(k))}`,why0:`Le second membre est ${fx(S([[A,ex(Q(k))]]))}, et ${k} n'est pas racine de l'équation caractéristique : on essaie ${fx(`B${ex(Q(k))}`)}.`,
+      det:`${fx(`y_{p}′ = ${S([[k,"B"+ex(Q(k))]])}`)} et ${fx(`y_{p}″ = ${S([[k*k,"B"+ex(Q(k))]])}`)}. En remplaçant : ${fx(`(${S([[k*k,""],[mul(o.p,k),""],[o.c,""]])})B = ${nb(A)}`)}, soit ${fx(`${nb(P(k))}B = ${nb(A)}`)} et ${fx(`B = ${nb(B)}`)}.`,piege:[{f:"exp",B:A,m:0,k:Q(k)},"B pris égal au coefficient du second membre"]};}
+  if(sorte==="res"){/* k racine de l'équation caractéristique */const k=o.cas==="1"?o.r:R.choix([o.r1,o.r2]),m=o.cas==="1"?2:1,A=Q(R.nz(-6,6)),dd=o.cas==="1"?Q(2):add(mul(2,k),o.p),B=div(A,dd),y={f:"exp",B,m,k};
+    return {f:S([[A,ex(k)]]),y,forme:`B${m===2?"x²":"x"}${ex(k)}`,why0:`${nb(k)} est racine ${m===2?"double":"simple"} de l'équation caractéristique : ${fx(`B${ex(k)}`)} est déjà solution de l'équation homogène et ne peut pas donner ${fx(S([[A,ex(k)]]))}. On multiplie par ${m===2?"x²":"x"}.`,
+      det:m===2?`En remplaçant ${fx(`y_{p} = Bx²${ex(k)}`)}, tous les termes s'annulent sauf ${fx(`2B${ex(k)}`)} : ${fx(`2B = ${nb(A)}`)}, donc ${fx(`B = ${nb(B)}`)}.`:`En remplaçant ${fx(`y_{p} = Bx${ex(k)}`)}, les termes en x s'annulent (${fx(nb(k))} est racine) et il reste ${fx(`(${S([[mul(2,k),""],[o.p,""]])})B${ex(k)}`)} : ${fx(`${nb(dd)}B = ${nb(A)}`)}, donc ${fx(`B = ${nb(B)}`)}.`,piege:[{f:"exp",B,m:m===2?1:0,k},m===2?"racine double : x au lieu de x²":"x oublié"]};}
+  if(sorte==="lin"){let k;do k=R.nz(-2,2);while(estRacine(o,k));const a=Q(R.nz(-3,3)),b=Q(R.ent(-3,3)),Pq=P(k),m1=mul(Pq,a),n1=add(mul(Pq,b),mul(add(mul(2,k),o.p),a)),y={f:"lin",a,b,k:Q(k)};
+    return {f:`(${S([[m1,"x"],[n1,""]])})${ex(Q(k))}`,y,forme:`(ax + b)${ex(Q(k))}`,why0:`Le second membre est un polynôme de degré 1 fois ${fx(ex(Q(k)))}, et ${k} n'est pas racine : on essaie ${fx(`(ax + b)${ex(Q(k))}`)}.`,
+      det:`En remplaçant et en simplifiant par ${fx(ex(Q(k)))} : ${fx(`${S([[Pq,"(ax + b)"],[add(mul(2,k),o.p),"a"]])} = ${S([[m1,"x"],[n1,""]])}`)}. Donc ${fx(`a = ${nb(a)}`)} et ${fx(`b = ${nb(b)}`)}.`,piege:null};}
+  /* cos ou sin */const w=R.ent(1,3),A=Q(R.nz(-5,5)),cosi=R()<0.5,u=sub(o.c,w*w),D=add(mul(u,u),mul(mul(o.p,o.p),w*w));
+  let al,be;if(cosi){al=div(mul(A,u),D);be=div(mul(mul(A,o.p),w),D);}else{al=div(mul(mul(A,o.p),-w),D);be=div(mul(A,u),D);}
+  return {f:S([[A,`${cosi?"cos":"sin"}(${bx(w)})`]]),y:{f:"trig",al,be,w},forme:`α cos(${bx(w)}) + β sin(${bx(w)})`,why0:`Le second membre est ${cosi?"un cosinus":"un sinus"} : on essaie ${fx(`α cos(${bx(w)}) + β sin(${bx(w)})`)}, les deux à la fois.`,
+    det:`En remplaçant, et en identifiant les coefficients de ${fx(`cos(${bx(w)})`)} et de ${fx(`sin(${bx(w)})`)} : ${fx(`${S([[u,"α"],[mul(o.p,w),"β"]])} = ${cosi?nb(A):"0"}`)} et ${fx(`${S([[u,"β"],[mul(o.p,-w),"α"]])} = ${cosi?"0":nb(A)}`)}. Donc ${fx(`α = ${nb(al)}`)} et ${fx(`β = ${nb(be)}`)}.`,piege:null};}
+function exoSM(R,cas,sorte){let o,M;for(;;){o=tireH(R,cas);if(sorte!=="cst"&&sorte!=="poly"||!nul(o.c)){if(sorte==="trig"&&nul(o.p))continue;M=secondMembre(R,o,sorte);break;}}
+  const eq=`${S([[1,"y″"],[o.p,"y′"],[o.c,"y"]])} = ${M.f}`,B=baseED(o),yf=ypF(M.y),yh=genT(o),gen=plusT(yh,ypT(M.y));
+  const E=[{w:`L'équation homogène ${fx(yEq(1,o.p,o.c))} : l'équation caractéristique ${fx(carEq(1,o.p,o.c))} a pour racines ${fx(racT(o))}, donc ${fx(`y_{h} = ${yh}`)}.`,why:`Toutes les solutions s'écrivent ${fx("y = y_{h} + y_{p}")} : les solutions de l'équation sans second membre, plus une solution particulière.`,pts:1},
+    {w:`On cherche ${fx("y_{p}")} de la forme ${fx(M.forme)}.`,why:M.why0,pts:1},
+    {w:M.det,why:`On remplace ${fx("y_{p}")}, ${fx("y_{p}′")} et ${fx("y_{p}″")} dans l'équation, puis on identifie les deux membres.`,pts:1},
+    {w:`${fx(`y_{p} = ${ypT(M.y)}`)}, et toutes les solutions : ${fx(`y = ${gen}`)}.`,why:"On ajoute la solution particulière aux solutions de l'équation homogène.",pts:1}];
+  return {o,M,eq,B,yf,E,gen};}
+function familleP(Y,B,yf){const V=valeurs(Y.A,Object.fromEntries(Y.cst.map(c=>[c,0])));if(!V)return {pb:"calcul"};
+  const D=V.map((v,i)=>v[0]-yf(XS[i])),f=ajuste(D,B.map(g=>XS.map(g)));if(!f||!f.ok)return {pb:"pasSolution"};
+  const dir=Y.cst.map((c,i)=>{const W=valeurs(Y.A,Object.fromEntries(Y.cst.map((d,j)=>[d,i===j?1:0])));return W&&W.map((w,k)=>w[0]-V[k][0]);});
+  if(dir.some(x=>!x))return {pb:"calcul"};const C=dir.map(d=>{const g=ajuste(d,B.map(h=>XS.map(h)));return g&&g.ok?g.c:null;});
+  if(C.some(x=>!x))return {pb:"pasSolution"};if(Y.cst.length<2)return {pb:Y.cst.length?"une":"aucune"};if(rang2(C)<2)return {pb:"rang"};return {ok:true};}
+function particuliere(R,cas,sorte){const X=exoSM(R,cas,sorte),{o,M,eq,B,yf,E,gen}=X;
+  function juge(rep){const P=lisY(rep.yp),Y=lisY(rep.y);
+    if(P.vide||Y.vide)return {incomplet:"Remplis les deux champs : une solution particulière, puis toutes les solutions."};
+    if(P.illisible||Y.illisible)return {incomplet:"Je n'arrive pas à lire une des formules. Écris par exemple 2*x*e^(3x), avec des parenthèses après e^."};
+    if(P.cst.length)return {incomplet:"Une solution particulière n'a pas de constante C1 ou C2 : c'est une seule fonction."};
+    const V=valeurs(P.A,{});if(!V)return {incomplet:"Je n'arrive pas à calculer ta formule pour toutes les valeurs de x : vérifie les parenthèses."};
+    const Dp=V.map((v,i)=>v[0]-yf(XS[i])),fp=V.every(v=>Math.abs(v[1])<1e-9)&&ajuste(Dp,B.map(g=>XS.map(g))),okP=!!(fp&&fp.ok),fy=familleP(Y,B,yf);
+    if(fy.pb==="calcul")return {incomplet:"Je n'arrive pas à calculer la formule de y pour toutes les valeurs de x : vérifie les parenthèses."};
+    if(okP&&fy.ok)return {ok:true};
+    const F=[];if(!okP)F.push("yp");if(!fy.ok)F.push("y");let d;
+    if(!okP){const pg=M.piege&&ypF(M.piege[0]),ressemble=pg&&V.every((v,i)=>Math.abs(v[0]-pg(XS[i]))<1e-7*Math.max(1,Math.abs(pg(XS[i]))));
+      const homog=ajuste(V.map(v=>v[0]),B.map(g=>XS.map(g)));
+      d=ressemble?{etape:M.piege[1].includes("x")?1:2,type:M.piege[1],titre:"Où ça part : la solution particulière.",msg:`Ta fonction ne vérifie pas l'équation. ${M.why0}`}
+        :homog&&homog.ok?{etape:1,type:"solution de l'équation homogène prise pour y_p",titre:"Où ça part : la solution particulière.",msg:`Ta fonction est solution de l'équation sans second membre : elle donne 0, pas ${fx(M.f)}. ${M.why0}`}
+        :{etape:2,type:"calcul de la solution particulière",titre:"Où ça part : les coefficients.",msg:`Ta fonction ne vérifie pas l'équation. On trouve ${fx(`y_{p} = ${ypT(M.y)}`)}.`};}
+    else d=fy.pb==="pasSolution"?{etape:3,type:"y_p oubliée dans la solution générale",titre:"Où ça part : toutes les solutions.",msg:`Toutes les solutions s'écrivent ${fx("y_{h} + y_{p}")} : ${fx(`y = ${gen}`)}.`}:{etape:0,type:"deux constantes",titre:"Où ça part : l'équation homogène.",msg:`Il faut les deux constantes de l'équation homogène : ${fx(`y = ${gen}`)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux réponses sont à revoir":F[0]==="yp"?"la solution particulière est à revoir":"la solution générale est à revoir"}.`,diag:d};}
+  const pgF=M.piege&&ypF(M.piege[0]),pgMeme=pgF&&XS.every(x=>Math.abs(pgF(x)-yf(x))<1e-9),fauxP=M.piege&&!pgMeme?ypTape(M.piege[0]):`(${ypTape(M.y)})+1`;
+  return {sig:"S"+eq,q:`Résous l'équation différentielle ${fx(eq)} : donne une solution particulière ${fx("y_{p}")}, puis toutes les solutions.`,corps:sorte==="cst"?`<p class="muted">Rappel : toutes les solutions = les solutions de l'équation sans second membre + une solution particulière. Pour un second membre constant, essaie une constante.</p>`:"",texte:`solution particulière et solutions de ${eq}`,
+    champs:[{k:"champ",id:"yp",nom:"solution particulière",label:"$y_{p} =$",ex:"une fonction de x, sans constante",sym:SYM_Y.slice(0,2).concat(["cos(","sin(","/"])},{k:"champ",id:"y",nom:"solutions",label:"$y =$",ex:"avec x et deux constantes C1 et C2",sym:SYM_Y,aide:"Écris e^(2x) avec des parenthèses, les fractions avec /."}],
+    juge,etapes:E,bonne:`${fx(`y_{p} = ${ypT(M.y)}`)} ; ${fx(`y = ${gen}`)}`,bonneTxt:`yp = ${ypT(M.y)} ; y = ${gen}`,repBonne:{yp:ypTape(M.y),y:`${genTape(o)}+${ypTape(M.y)}`},repFausse:{yp:fauxP,y:`${genTape(o)}+${fauxP}`},
+    nature:{cst:"second membre constant",poly:"polynôme",exp:"exponentielle",res:"exponentielle déjà solution",lin:"polynôme fois exponentielle",trig:"cosinus ou sinus"}[sorte],ens:{type:"sm",p:o.p.n/o.p.d,c:o.c.n/o.c.d,f:M.f,yp:ypTape(M.y)}};}
+const SORTES5=[["2","cst"],["2","poly"],["2","exp"],["3","exp"],["1","exp"],["2","res"],["1","res"],["2","lin"],["3","lin"],["2","trig"],["1","trig"]];
+function conditionsSM(R){const [cas,sorte]=R.choix(SORTES5),X=exoSM(R,cas,sorte),{o,M,eq,B,yf,E,gen}=X;let y0,y1;do{y0=R.ent(-2,3);y1=R.ent(-3,3);}while(!y0&&!y1);
+  const [p0,p1]=yp0(M.y),A=o.cas==="2"?[[1,1],[o.r1,o.r2]]:o.cas==="1"?[[1,0],[o.r,1]]:[[1,0],[o.al,o.be]],b=[sub(y0,p0),sub(y1,p1)];
+  const det=sub(mul(A[0][0],A[1][1]),mul(A[0][1],A[1][0])),C1=div(sub(mul(b[0],A[1][1]),mul(A[0][1],b[1])),det),C2=div(sub(mul(A[0][0],b[1]),mul(A[1][0],b[0])),det);
+  const Bf=B,full=x=>(C1.n/C1.d)*Bf[0](x)+(C2.n/C2.d)*Bf[1](x)+yf(x);
+  const hT=o.cas==="2"?S([[C1,ex(o.r1)],[C2,ex(o.r2)]]):o.cas==="1"?(nul(C2)?S([[C1,ex(o.r)]]):nul(C1)?S([[C2,"x"+ex(o.r)]]):`(${S([[C1,""],[C2,"x"]])})${ex(o.r)}`):(()=>{const tr=S([[C1,`cos(${bx(o.be)})`],[C2,`sin(${bx(o.be)})`]]);return nul(o.al)?tr:`${ex(o.al)}(${tr})`;})();
+  const solT=nul(C1)&&nul(C2)?ypT(M.y):plusT(hT,ypT(M.y)),B1=o.cas==="2"?[exT(o.r1),exT(o.r2)]:o.cas==="1"?[exT(o.r),`x*${exT(o.r)}`]:[`${nul(o.al)?"":exT(o.al)+"*"}cos(${o.be}*x)`,`${nul(o.al)?"":exT(o.al)+"*"}sin(${o.be}*x)`];
+  E.push({w:`On dérive la solution complète, puis ${fx(`y(0) = ${nb(y0)}`)} et ${fx(`y′(0) = ${nb(y1)}`)} donnent : ${O.sys(A,b,["C₁","C₂"])} Donc ${fx(`C₁ = ${nb(C1)}`)} et ${fx(`C₂ = ${nb(C2)}`)}.`,why:`Les conditions portent sur la solution complète ${fx("y_{h} + y_{p}")}, pas sur ${fx("y_{h}")} seule : ici ${fx(`y_{p}(0) = ${nb(p0)}`)} et ${fx(`y_{p}′(0) = ${nb(p1)}`)} passent de l'autre côté.`,pts:1.5},
+    {w:`${fx(`y = ${solT}`)}.`,why:"On remplace C₁ et C₂. Vérification : en x = 0, on retrouve y(0) et y′(0).",pts:1});
+  function juge(rep){const Y=lisY(rep.y);if(Y.vide)return {incomplet:"Écris la solution y."};if(Y.illisible)return {incomplet:"Je n'arrive pas à lire y. Écris par exemple 2*e^(2x) - x*e^(x), avec des parenthèses après e^."};
+    if(Y.cst.length)return {incomplet:`Il reste ${Y.cst.length>1?"des constantes":"une constante"} (${Y.cst.join(", ")}) : utilise y(0) = ${nb(y0)} et y′(0) = ${nb(y1)} pour les calculer.`};
+    const V=valeurs(Y.A,{});if(!V)return {incomplet:"Je n'arrive pas à calculer ta formule pour toutes les valeurs de x : vérifie les parenthèses."};
+    if(V.every((v,i)=>Math.abs(v[1])<1e-9&&Math.abs(v[0]-full(XS[i]))<=1e-7*Math.max(1,Math.abs(full(XS[i])))))return {ok:true};
+    const Dp=V.map((v,i)=>v[0]-yf(XS[i])),f=ajuste(Dp,B.map(g=>XS.map(g))),h=ajuste(V.map(v=>v[0]),B.map(g=>XS.map(g)));
+    const d=f&&f.ok?{etape:4,type:"constantes avec les conditions initiales",titre:"Où ça part : les constantes.",msg:`Ta fonction vérifie bien l'équation, mais pas les conditions. Dérive la solution complète ${fx("y_{h} + y_{p}")}, puis remplace x par 0 dans y et dans y′.`}
+      :h&&h.ok?{etape:3,type:"y_p oubliée",titre:"Où ça part : la solution particulière.",msg:"Ta fonction est solution de l'équation sans second membre : il manque la solution particulière."}
+      :{etape:2,type:"solution particulière",titre:"Où ça part : la solution particulière.",msg:`Ta fonction ne vérifie pas l'équation. ${M.why0}`};
+    return {ok:false,faux:["y"],resume:"Pas tout à fait : cette fonction n'est pas la bonne.",diag:d};}
+  return {sig:"T"+eq+"|"+y0+"|"+y1,q:`Résous l'équation différentielle ${fx(eq)} avec les conditions initiales ${fx(`y(0) = ${nb(y0)}`)} et ${fx(`y′(0) = ${nb(y1)}`)}.`,corps:"",texte:`${eq}, y(0) = ${y0}, y′(0) = ${y1}`,
+    champs:[{k:"champ",id:"y",nom:"solution",label:"$y =$",ex:"une fonction de x, sans constante",sym:SYM_Y.slice(0,2).concat(["cos(","sin(","/"]),aide:"Écris e^(2x) avec des parenthèses, et les fractions avec /."}],juge,etapes:E,
+    bonne:fx(`y = ${solT}`),bonneTxt:`y = ${solT}`,repBonne:{y:`(${brut(C1)})*${B1[0]}+(${brut(C2)})*${B1[1]}+${ypTape(M.y)}`},repFausse:{y:`(${brut(C1)})*${B1[0]}+(${brut(C2)})*${B1[1]}`},
+    nature:{cst:"second membre constant",poly:"polynôme",exp:"exponentielle",res:"exponentielle déjà solution",lin:"polynôme fois exponentielle",trig:"cosinus ou sinus"}[sorte],ens:{type:"smci",p:o.p.n/o.p.d,c:o.c.n/o.c.d,f:M.f,y0,y1}};}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -22813,7 +22903,14 @@ G.add("calc",[
    {t:"deux racines réelles",cc:3,min:100,gen:R=>generaleED(R,"2")},
    {t:"une racine double",cc:3,min:45,gen:R=>generaleED(R,"1")},
    {t:"des racines complexes",cc:3,min:60,gen:R=>generaleED(R,"3")},
-   {t:"avec y(0) et y′(0), comme au TD 2",cc:7,gen:conditionsED}]}
+   {t:"avec y(0) et y′(0), comme au TD 2",cc:7,gen:conditionsED}]},
+ {id:"CA7",t:"Ordre 2 avec second membre",tache:"ordre 2 avec second membre",th:"ed2sm",pts:4,ex:"cc2",lecons:["c2-ed2-sm"],apres:["CA6"],
+  paliers:[
+   {t:"un second membre constant",cc:4,min:120,gen:R=>particuliere(R,R.choix(["2","2","1","3"]),"cst")},
+   {t:"un polynôme",cc:6,gen:R=>particuliere(R,R.choix(["2","2","1","3"]),"poly")},
+   {t:"une exponentielle",cc:5,gen:R=>particuliere(R,R.choix(["2","2","1","3"]),"exp")},
+   {t:"une exponentielle déjà solution de l'équation sans second membre",cc:5,min:150,gen:R=>particuliere(R,R()<0.65?"2":"1","res")},
+   {t:"avec y(0) et y′(0), comme au TD 2 (exercice 4)",cc:10,gen:conditionsSM}]}
 ]);
 })();
 
