@@ -8999,8 +8999,8 @@ SUBJ.lin={name:"Algèbre",code:"HAX102X",color:"#FF7AB8",coef:5,share:0.20,key:"
  {id:"xcl",t:"Refaire sans le corrigé : TD 3, ex. 3 (combinaisons linéaires)",min:20,p:1,td:["3.3"],links:[["td","Exercices de TD"]],why:"Dans la liste annoncée par le prof pour le CC1 (mail du 11/11). Deuxième passage, quelques jours après la leçon."},
  {id:"xrep",t:"Refaire sans le corrigé : TD 1, ex. 1 (nouveau repère)",min:12,p:1,td:["1.1"],links:[["td","Exercices de TD"]],why:"Dans la liste annoncée par le prof pour le CC1 (mail du 11/11). Deuxième passage, quelques jours après la leçon."},
  {id:"xrn",t:"Refaire sans le corrigé : TD 1, ex. 7 (λx = 0)",min:8,p:1,td:["1.7"],links:[["td","Exercices de TD"]],why:"Dans la liste annoncée par le prof pour le CC1 (mail du 11/11). Deuxième passage, quelques jours après la leçon."},
- {id:"blancA",t:"Sujet blanc A en 1 h : la liste du prof avec d'autres nombres, puis correction et note sur 20",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Au cas où le prof change les nombres : définition, repère, pivot, condition sur a, b, c, combinaisons linéaires."},
- {id:"blancB",t:"Sujet blanc B en 1 h : la suite de la liste, puis correction et note sur 20",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Démonstration de la proposition 37, λx = 0, paramètre m, propriétés de Vect, vecteurs à supprimer."},
+ {id:"blancA",t:"Sujet blanc A en 1 h (définition d'un sous-espace vectoriel, repère, pivot, condition sur a, b, c, combinaisons linéaires), puis correction et note sur 20",min:70,p:1,manual:true,links:[["annales","Annales et chrono"]],why:"Au cas où le prof change les nombres : définition, repère, pivot, condition sur a, b, c, combinaisons linéaires."},
+ {id:"blancB",apres:"blancA",t:"Sujet blanc B en 1 h, l'autre moitié de la liste du prof (démonstration de la proposition 37, λx = 0, paramètre m, Vect), puis correction et note sur 20",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Démonstration de la proposition 37, λx = 0, paramètre m, propriétés de Vect, vecteurs à supprimer."},
  {id:"tdsys",t:"Autres exercices de TD sur les systèmes, hors de la liste annoncée",min:40,p:2,td:["2.6","2.8","2.11"],links:[["td","Exercices de TD"]]},
  {id:"tdsev",t:"Autres exercices de TD sur les sous-espaces, hors de la liste annoncée",min:45,p:2,td:["3.6","3.7","3.8","3.11"],links:[["td","Exercices de TD"]]},
  {id:"blanc",t:"Annale CC1 2023-2024, ex. 7 à 11, en 1 h, puis correction",min:70,p:2,manual:true,links:[["annales","Annales et chrono"]],why:"Hors de la liste annoncée : seulement s'il te reste du temps."},
@@ -26332,6 +26332,7 @@ function journees(P){
     A.creneauxDu(d).map(c=>({k:"mien",a:c.a,b:c.b,c})),
     A.coursJour(d).map(c=>({k:"cls",a:mm(c.start),b:mm(c.end),c})),
     A.epreuvesDu(d).map(({S,e})=>({k:"exam",a:mm(e.start),b:e.end?mm(e.end):mm(e.start)+60,S,e})),
+    (P.rituels||[]).filter(r=>r.day===d).map(r=>({k:"rit",a:r.start,b:r.end,r})),
     P.blocks.filter(b=>b.day===d).map(B=>({k:"rev",a:B.start,b:B.end,B})));
   const KK={},cot=d=>KK[d]||(KK[d]=A.cotes(d,P));
   const ev=(d,x,h0)=>{const pos=`top:${(x.a-h0)*PX}px;height:${Math.max(18,(x.b-x.a)*PX-2)}px`,K=cot(d);
@@ -26339,6 +26340,7 @@ function journees(P){
     if(x.k==="cls"){const c=x.c,fini=d<t0||(d===t0&&x.b<=now);
       return `<div class="ev cls${c.skip?" skip":""}${K.cours(x.a,x.b)}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="${pos}"><b>${c.name}</b><span>${hh(x.a)}, ${c.skip?(fini||c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;}
     if(x.k==="exam")return `<a class="ev exam${K.autre(x.a,x.b)}" href="#/${x.S.id}" style="${pos}"><b>${x.e.label||"CC"} ${x.S.name}</b><span>${hh(x.a)}, <span class="nf">${x.e.place}</span></span></a>`;
+    if(x.k==="rit")return `<a class="ev rev${A.dansCreneau(d,x.a,x.b)?" in":""}${K.autre(x.a,x.b)}${x.b-x.a<48?" court":""}" href="${x.r.L[0].href}" style="--sc:var(--cornflower);${pos}"><b>D'abord</b><span>${hh(x.a)}–${hh(x.b)} · ${x.r.L.map(i=>esc(i.t)).join(", ")}</span></a>`;
     const B=x.B,S=SUBJ[B.sid],t=B.tasks.map(id=>S.TB[id]).find(t=>t&&!isDone(B.sid,t));
     return `<a class="ev rev${t?"":" done"}${A.dansCreneau(d,B.start,B.end)?" in":""}${K.autre(B.start,B.end)}${B.end-B.start<48?" court":""}" href="${t?hrefTask(B.sid,t):"#/"+B.sid}" style="--sc:${S.color};${pos}"><b>${S.name}</b><span>${hh(B.start)}–${hh(B.end)}${t?" · "+esc(t.t):", fait"}</span></a>`;};
   const grille=(days,cls)=>{const L=days.map(acts),all=L.flat();
@@ -27272,16 +27274,31 @@ function freeBlocks(day,from,capOv){
 const mienAvant=(day,until)=>seancesMiennes(day,0).reduce((s,[a,b])=>a<until?s+work(Math.min(b,until)-a):s,0);
 
 /* ---------- le plan de la semaine ---------- */
-function pendingTasks(sid){const S=SUBJ[sid];return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t));}
+/* une étape marquée apres:"<id>" n'est proposée qu'une fois l'étape <id> faite (le 2e sujet blanc après le 1er) */
+function pendingTasks(sid){const S=SUBJ[sid],attend=t=>{const a=t.apres&&S.TB[t.apres];return a&&inScope(S,a)&&!isDone(sid,a);};return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t)&&!attend(t));}
+/* ce qui se fait d'abord chaque jour et qui est du temps de révision : « Où j'en suis » quand il est nécessaire, l'entretien du jour,
+   le mini-contrôle mélangé et les cartes de Réviser ; pour les jours suivants, seules les cartes sont connues d'avance */
+function rituels(day){const X=APP.ext,L=[];
+  if(day===today()){const D=diagAFaire().find(x=>x.need),E=window.ENT&&ENT.jour?ENT.jour():null,M=miniDu();
+    if(D)L.push({t:"Où j'en suis en "+SUBJ[D.sid].name,min:D.min,href:`#/${D.sid}/niveau`});
+    if(E)L.push({t:"Entretien du jour",min:E.min,href:"#/entrainer/jour"});
+    if(M.du)L.push({t:"Mini-contrôle mélangé",min:10,href:"#/mix"});}
+  const n=X&&X.cartesDu?X.cartesDu(day):0;
+  if(n)L.push({t:n+(n>1?" cartes":" carte"),min:Math.min(45,Math.max(1,Math.round(n*tempsCarte().ms/60000))),href:"#/reviser"});
+  return L.length?{L,min:L.reduce((s,x)=>s+x.min,0)}:null;}
 function buildPlan(){
   const n=NOW(),t0=ymd(n),nowMin=n.getHours()*60+n.getMinutes();
   const active=SIDS.filter(id=>examStart(SUBJ[id])>n&&pendingTasks(id).length);
   /* une leçon marquée « Jamais vu » dans Réviser passe devant tout le reste */
   const PRI=new Set();active.forEach(id=>pendingTasks(id).forEach(t=>{if(t.lesson&&ST[id].prio[t.lesson])PRI.add(t);}));const pri=t=>PRI.has(t)?1:0;
-  const plan={day:t0,blocks:[],assign:{},bonus:{}};
+  const plan={day:t0,blocks:[],assign:{},bonus:{},rituels:[]};
   if(!active.length)return plan;
   const lastDay=ymd(new Date(Math.max(...active.map(id=>examStart(SUBJ[id]).getTime()))));
-  let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){freeBlocks(d,d===t0?Math.ceil((nowMin+10)/5)*5:0,d===t0?Math.max(0,dayCap(t0)-Math.max(0,doneTodayMin()-mienAvant(t0,nowMin))):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
+  /* les rituels du jour prennent le début du premier moment libre (25 min au moins, pour rester lisibles sur la grille) ; les séances viennent après */
+  let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){let from=d===t0?Math.ceil((nowMin+10)/5)*5:0;
+    const R=rituels(d),lib=R&&freeBlocks(d,from,1e4)[0];
+    if(lib){from=Math.min(lib[1],lib[0]+Math.max(25,Math.ceil(R.min/5)*5));plan.rituels.push({day:d,start:lib[0],end:from,L:R.L});}
+    freeBlocks(d,from,d===t0?Math.max(0,dayCap(t0)-Math.max(0,doneTodayMin()-mienAvant(t0,nowMin))):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
   const dl=id=>examStart(SUBJ[id]).getTime();
   /* 1. Ce qu'on garde, quand tout ne tient pas : le temps est partagé entre les matières en proportion du poids de chaque CC
         dans la moyenne (coefficient × part du CC), de sa proximité (bonus dans les 7 jours) et des points qu'il reste
@@ -27429,6 +27446,7 @@ function edt(){
   const col=d=>{const K=cotes(d,P);let s=creneauxDu(d).map(c=>cadreCren(c,P,(c.a-H0)*PX,(c.b-c.a)*PX,K.autre(c.a,c.b))).join("");coursJour(d).forEach(c=>{s+=`<div class="ev cls${c.skip?" skip":""}${K.cours(mm(c.start),mm(c.end))}" role="button" tabindex="0" data-cl="${d}|${c.start}" style="top:${(mm(c.start)-H0)*PX}px;height:${(mm(c.end)-mm(c.start))*PX}px"><b>${c.name}</b><span>${hh(mm(c.start))}, ${c.skip?(c.skip==="abs"?"pas allé":"révision à la place"):c.detail}</span></div>`;});
     epreuvesDu(d).forEach(({S,e})=>{s+=`<a class="ev exam${K.autre(mm(e.start),mm(e.end||e.start))}" href="#/${S.id}" style="top:${(mm(e.start)-H0)*PX}px;height:${Math.max(40,(mm(e.end||e.start)-mm(e.start))*PX)}px"><b>${e.label||"CC"} ${S.name}</b><span>${hh(mm(e.start))}, <span class="nf">${e.place}</span></span></a>`;});
     P.blocks.filter(b=>b.day===d).forEach(b=>{const S=SUBJ[b.sid];const done=b.tasks.every(tid=>isDone(b.sid,S.TB[tid]));s+=`<a class="ev rev${done?" done":""}${dansCreneau(d,b.start,b.end)?" in":""}${K.autre(b.start,b.end)}" href="#/${b.sid}" style="--sc:${S.color};top:${(b.start-H0)*PX}px;height:${(b.end-b.start)*PX}px"><b>${S.name}</b><span>${hh(b.start)}–${hh(b.end)}${done?", fait":""}</span></a>`;});
+    (P.rituels||[]).filter(r=>r.day===d).forEach(r=>{s+=`<a class="ev rev${dansCreneau(d,r.start,r.end)?" in":""}${K.autre(r.start,r.end)}" href="${r.L[0].href}" title="${r.L.map(x=>x.t).join(", ")}" style="--sc:var(--cornflower);top:${(r.start-H0)*PX}px;height:${(r.end-r.start)*PX}px"><b>D'abord</b><span>${hh(r.start)}–${hh(r.end)}</span></a>`;});
     if(d===t0&&nowMin>H0&&nowMin<H1)s+=`<div class="edt-now" style="top:${(nowMin-H0)*PX}px"><span>${hh(nowMin)}</span></div>`;
     return s;};
   let hours="";for(let h=8;h<=22;h++)hours+=`<span style="top:${(h*60-H0)*PX}px">${h}h</span>`;
@@ -27456,10 +27474,10 @@ const hhmm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart
 /* un cours où il ne va pas, avec une séance, une épreuve ou un de ses créneaux à la même heure :
    le cours passe dans une bande à droite (cote), le reste se serre à gauche (serre) */
 function cotes(day,P){const hit=(a,b,L)=>L.some(([x,y])=>a<y&&b>x),Cr=creneauxDu(day).map(s=>[s.a,s.b]);
-  const tout=P.blocks.filter(b=>b.day===day).map(b=>[b.start,b.end]).concat(Cr,epreuvesDu(day).map(({e})=>[mm(e.start),e.end?mm(e.end):mm(e.start)+60]));
+  const tout=P.blocks.concat(P.rituels||[]).filter(b=>b.day===day).map(b=>[b.start,b.end]).concat(Cr,epreuvesDu(day).map(({e})=>[mm(e.start),e.end?mm(e.end):mm(e.start)+60]));
   const cote=coursJour(day).filter(c=>c.skip).map(c=>[mm(c.start),mm(c.end)]).filter(([a,b])=>hit(a,b,tout)),crS=Cr.filter(([a,b])=>hit(a,b,cote));
   return{cours:(a,b)=>cote.some(([x,y])=>x===a&&y===b)?" cote":"",autre:(a,b)=>hit(a,b,cote)||hit(a,b,crS)?" serre":""};}
-function cadreCren(c,P,top,h,cls){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
+function cadreCren(c,P,top,h,cls){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.concat(P.rituels||[]).some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
   return `<div class="ev mien${cls||""}" role="button" tabindex="0" data-cr="${c.id}|${c.day}" title="${t}, ${hh(c.a)}–${hh(c.b)}" style="top:${top}px;height:${h}px"><i>${t}</i>${vide&&!fini?"<span>rien de prévu</span>":""}</div>`;}
 function boiteCren(box,o,refresh){
   const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0;
