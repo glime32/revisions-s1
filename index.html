@@ -12550,7 +12550,7 @@ FIN`)}<p>Réponse écrite par le prof en amphi :</p><ul><li>« res ← 1 » : 1 
   {w:"« i ← 0 » : 1 opération.",why:"Une affectation."},
   {w:"Le test du tant que fait 5 opérations : la comparaison de i avec taille(T), l'appel taille(T), le « et », l'accès T[i], la comparaison avec 0. Il est vérifié n + 1 fois : 5(n + 1).",why:"n fois où il est vrai, plus une dernière fois où il est faux et fait sortir de la boucle."},
   {w:"« i ← i+1 » : 2 opérations (l'addition et l'affectation), n fois : 2n.",why:"Une fois par tour."},
-  {w:"T<sub>n</sub> = 1 + 5(n + 1) + 2n = 7n + 6 dans le pire cas (ou 7n + 4 avec l'évaluation paresseuse). 1 variable : V<sub>n</sub> = 1.",why:"Évaluation paresseuse : au dernier test, « i<taille(T) » est faux, donc la suite du « et » n'est pas calculée. C'est ce que le prof a écrit en amphi."}],{code:`FONCTION : F4 (E T : tableau d'entier) : entier
+  {w:"T<sub>n</sub> = 1 + 5(n + 1) + 2n = 7n + 6 dans le pire cas (ou 7n + 4 avec l'évaluation paresseuse). 1 variable : V<sub>n</sub> = 1.",why:"Évaluation paresseuse : au dernier test, « i<taille(T) » est faux, donc la suite du « et » n'est pas calculée : ni l'accès T[i], ni la comparaison avec 0. Ce dernier test fait 2 opérations de moins : 7n + 6 − 2 = 7n + 4. C'est ce que le prof a écrit en amphi."}],{code:`FONCTION : F4 (E T : tableau d'entier) : entier
 Variable : i : nombre
 DÉBUT
     i ← 0
@@ -20168,6 +20168,13 @@ const ent=x=>x<0?"−"+(-x):String(x);
 /* k fois la somme 1 + 2 + … + x, écrit le plus simplement : 2 × x(x + 1)/2 devient x(x + 1) */
 const kTri=(k,x)=>k%2?`${k===1?"":k}${x}(${x} + 1)/2`:`${k===2?"":k/2}${x}(${x} + 1)`;
 const fxs=t=>t.split(", c'est-à-dire ").map(x=>fx(h(x))).join(", c'est-à-dire ");
+/* une formule tapée : exposants écrits en petit (2ⁿ, n⁴), « Tₙ = » ou « F(n) = » recopié devant, log₂ */
+const PETITS={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","ⁿ":"n","⁺":"+","⁻":"-","⁽":"(","⁾":")"};
+const sansNom=s=>String(s==null?"":s).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹ⁿ⁺⁻⁽⁾]+/g,m=>"^("+[...m].map(c=>PETITS[c]).join("")+")").replace(/^\s*[A-Za-z][\w₀-ₜ]*\s*(\(\s*[a-z]\s*\)|\{\s*[a-z]\s*\})?\s*=(?!=)\s*/,"").replace(/log\s*(?:_\s*\{?\s*2\s*\}?|₂)/gi,"log2");
+const lisF=s=>sansNom(s).replace(/log2\s*([a-z])\b/g,"log2($1)").replace(/log\s*([a-z])\b/g,"log($1)").replace(/log2\s*\(([^()]*)\)/g,"(log($1)/log(2))");
+const calc=(s,v)=>O.calcule(lisF(s),v);
+/* un ordre de complexité : θ( … ) recopié autour, et tous les logarithmes se valent */
+const lisOrdre=s=>{let t=sansNom(s).trim();const m=/^(?:θ|Θ|O|[Tt]h?[eé]ta)\s*\((.*)\)$/.exec(t);if(m)t=m[1];return t.replace(/log2(?=\s*[(a-z])/g,"log");};
 
 /* ---------- le mini-langage ---------- */
 /* expression : un entier, un nom de variable, ou [opérateur, gauche, droite] */
@@ -20223,7 +20230,7 @@ function traceExo(o){const P=o.P,cols=o.cols||colonnes(P),B=boucleDe(P),X=execut
     if(!L.length||L[0].some(x=>!x))return {incomplet:"Remplis d'abord la ligne « avant la boucle »."};
     for(let r=0;r<L.length;r++)for(const x of L[r]){if(!x)return {incomplet:`Il reste une case vide à la ligne « ${r?"fin du tour "+r:"avant la boucle"} ». Si la boucle a fait moins de tours, enlève la dernière ligne.`};if(entier(x)===null)return {incomplet:"Dans le tableau, chaque case contient un nombre entier."};}
     const rv=entier(rep.r);if(rv===null)return {incomplet:"Écris aussi la valeur renvoyée : un nombre entier."};
-    let fv=null;if(F){if(!propre(rep.f))return {incomplet:`Écris aussi la formule : ce que renvoie ${P.nom}(n), avec la lettre n.`};fv=NS.map(n=>O.calcule(rep.f,{n}));if(fv.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre n, par exemple n(n+1)/2 ou 2^n."};}
+    let fv=null;if(F){if(!propre(rep.f))return {incomplet:`Écris aussi la formule : ce que renvoie ${P.nom}(n), avec la lettre n.`};fv=NS.map(n=>calc(rep.f,{n}));if(fv.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre n, par exemple n(n+1)/2 ou 2^n."};}
     const V=L.map(r=>r.map(entier));
     for(let r=0;r<Math.min(V.length,T.length);r++){const K=cols.map((_,j)=>j).filter(j=>V[r][j]!==T[r][j]);if(!K.length)continue;
       return {ok:false,faux:K.map(j=>`t:${r}:${j}`),resume:`Pas tout à fait : la ligne « ${r?"fin du tour "+r:"avant la boucle"} » est à revoir.`,diag:r?{etape:1,type:"calcul d'un tour de boucle",titre:`Où ça part : le tour ${r}.`,msg:`Au tour ${r}, ${recit(r)}. On repart toujours des valeurs de la ligne du dessus, et les lignes de la boucle s'exécutent dans l'ordre.`}:{etape:0,type:"valeurs avant la boucle",titre:"Où ça part : avant la boucle.",msg:`Avant le premier tour : ${cols.map((v,j)=>fx(`${v} = ${ent(T[0][j])}`)).join(", ")}.`}};}
@@ -20299,10 +20306,10 @@ function iteration(o){const P=o.P,B=boucleDe(P),cols=o.V.map(x=>x.v),NN=7,X=exec
     {w:`<b>${o.V.map(x=>fx(`${ind(x.v,"i")} = ${x.ferme}`)).join(" et ")}</b>`,why:`${o.pq} C'est l'invariant de boucle : on le démontre par récurrence sur i, avec les équations d'itération.`,pts:1.5}];
   function juge(rep){const F=[];let d=null;
     if(o.demandeEI)for(let j=0;j<o.V.length;j++){const src=rep["e"+j];if(!propre(src))return {incomplet:`Écris l'équation d'itération de ${cols[j]} : ce que vaut ${cols[j]} à la fin du tour i, avec sa valeur du tour d'avant.`};
-      const W=ESS.map(e=>O.calcule(versCalc(src),{i:e.i,n:NN,q:e.a,r:e.b}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:`Je n'arrive pas à lire l'équation d'itération. Utilise le bouton ${cols[j]}${PREC} pour la valeur du tour d'avant, et la lettre i.`};
+      const W=ESS.map(e=>calc(versCalc(src),{i:e.i,n:NN,q:e.a,r:e.b}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:`Je n'arrive pas à lire l'équation d'itération. Utilise le bouton ${cols[j]}${PREC} pour la valeur du tour d'avant, et la lettre i.`};
       if(!ESS.every((e,k)=>Math.abs(W[k]-apres(e,j))<1e-9)){F.push("e"+j);if(!d)d={etape:0,type:"équation d'itération",titre:"Où ça part : l'équation d'itération.",msg:`La ligne de la boucle donne ${fx(`${ind(cols[j],"i")} = ${o.V[j].ei}`)} : la valeur d'avant est ${fx(ind(cols[j],"i − 1"))}, la nouvelle est ${fx(ind(cols[j],"i"))}.`};}}
     for(let j=0;j<o.V.length;j++){const src=rep["f"+j];if(!propre(src))return {incomplet:`Écris la formule de ${cols[j]} à la fin du tour i, avec la lettre i.`};
-      const W=KS.map(k=>O.calcule(src,{i:k,n:NN}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre i, par exemple 3i + 2, i(i+1)/2 ou 2^i."};
+      const W=KS.map(k=>calc(src,{i:k,n:NN}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre i, par exemple 3i + 2, i(i+1)/2 ou 2^i."};
       if(KS.every(k=>Math.abs(W[k]-T[k][j])<1e-9))continue;F.push("f"+j);if(d)continue;
       const dec=KS.slice(0,-1).every(k=>Math.abs(W[k]-T[k+1][j])<1e-9)||KS.slice(1).every(k=>Math.abs(W[k]-T[k-1][j])<1e-9),k=KS.find(k=>Math.abs(W[k]-T[k][j])>=1e-9);
       d=dec?{etape:2,type:"formule décalée d'un tour",titre:"Où ça part : le numéro du tour.",msg:`Ta formule est décalée d'un tour. ${fx(ind(cols[j],"i"))} est la valeur à la fin du tour i, et ${fx(ind(cols[j],0))} la valeur avant la boucle : ici ${fx(`${ind(cols[j],0)} = ${ent(T[0][j])}`)}.`}
@@ -20377,7 +20384,7 @@ const poly=(T,lettre)=>T.filter(x=>x[0]).map((x,i)=>(i?" + ":"")+(x[1]?(x[0]===1
 /* o : {P, lettre ("n" ou "p"), arg(k) (valeur de n pour la lettre), formule (affichée), tape, etapes, nature, piegeTest (coût du test, pour reconnaître l'oubli du dernier test)} */
 function comptage(o){const P=o.P,L=o.lettre,KS=[0,1,2,3,4,5,6].filter(k=>k>=(o.kmin||0)),vrai=k=>compte(P,[o.arg(k)]).ops,nom=L==="n"?"T_{n}":"T";
   function juge(rep){if(!propre(rep.T))return {incomplet:`Écris le nombre d'opérations avec la lettre ${L}, par exemple 3${L} + 2.`};
-    const W=KS.map(k=>O.calcule(rep.T,{[L]:k}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:`Je n'arrive pas à lire cette formule. Écris-la avec la lettre ${L}, par exemple 3${L} + 2 ou 2${L}^2 + 1.`};
+    const W=KS.map(k=>calc(rep.T,{[L]:k}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:`Je n'arrive pas à lire cette formule. Écris-la avec la lettre ${L}, par exemple 3${L} + 2 ou 2${L}^2 + 1.`};
     if(KS.every((k,i)=>Math.abs(W[i]-vrai(k))<1e-9))return {ok:true};
     const comme=f=>KS.every((k,i)=>Math.abs(W[i]-f(k))<1e-9),k=KS.find((k,i)=>Math.abs(W[i]-vrai(k))>=1e-9);let d;
     if(comme(k=>compte(P,[o.arg(k)],true).ops))d={etape:0,type:"affectations non comptées",titre:"Où ça part : les affectations.",msg:"Une affectation (la flèche ←) compte pour 1 opération, en plus des calculs écrits à sa droite."};
@@ -20425,7 +20432,7 @@ function recursif(R){const nom=R.choix(["F","G","H","Rec","Calc"]),ap=["appel",n
     {w:`Équation de complexité : <b>${fx(`T_{n} = ${a} + T_{n−1}`)}</b> pour ${fx(`n &gt; ${base}`)}.`,why:`Quand n est plus grand que ${base} : la comparaison, puis dans « ${ecrit(ex)} » : ${listeOps(L)}. Cela fait ${pl(a,"opération")}, plus toutes celles de l'appel ${nom}(n − 1), qui sont au nombre de ${fx("T_{n−1}")}.`,pts:1.5},
     {w:`<b>${fx(`T_{n} = ${formule}`)}</b>`,why:`C'est une suite arithmétique : on ajoute ${a} à chaque fois, en partant de ${fx(`${ind} = ${T0}`)}. Après ${base?"n − 1":"n"} pas : ${fx(base?`${T0} + ${a}(n − 1)`:`${T0} + ${a}n`)}.`,pts:1.5}];
   function juge(rep){const b=nombre((rep.c||{})[ind]),aa=nombre((rep.c||{}).a);if(!b||!aa)return {incomplet:`Remplis les deux cases avec des entiers : ${ind.replace(/[_{}]/g,"")} et le nombre a de l'équation.`};
-    if(!propre(rep.T))return {incomplet:"Écris aussi la formule de Tₙ, avec la lettre n."};const W=KS.map(n=>O.calcule(rep.T,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre n, par exemple 4n + 1."};
+    if(!propre(rep.T))return {incomplet:"Écris aussi la formule de Tₙ, avec la lettre n."};const W=KS.map(n=>calc(rep.T,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire la formule. Écris-la avec la lettre n, par exemple 4n + 1."};
     const ok=[b.d===1&&b.n===T0,aa.d===1&&aa.n===a,KS.every((n,i)=>Math.abs(W[i]-compte(P,[n]).ops)<1e-9)],F=[ind,"a","T"].filter((_,i)=>!ok[i]);if(!F.length)return {ok:true};
     const d=!ok[0]?{etape:0,type:"opérations du cas de base",titre:"Où ça part : le cas de base.",msg:`Pour n = ${base}, il n'y a qu'une opération : la comparaison du « si ». Renvoyer un nombre ne compte pas.`}
       :!ok[1]?{etape:1,type:"opérations d'un appel, hors appel récursif",titre:"Où ça part : l'équation de complexité.",msg:`Dans un appel avec n plus grand que ${base} : la comparaison, puis ${listeOps(L)}. Cela fait ${a}. L'appel lui-même compte pour 1, et la soustraction « n − 1 » aussi.`}
@@ -20468,7 +20475,7 @@ function simplifier(R){const S=sommeRef(R,R.choix([2,3,3]),R()<0.8,true),ref=S.d
     {w:`Le terme qui l'emporte est ${fx(termeT(S.dom[0],ref))}.`,why:`${pourquoiDom(S)} ${LISTE}`,pts:1},
     {w:`<b>${fx(`T_{n} = θ(${ref.t})`)}</b>`,why:`${fx(`T_{n}/${ref.t}`)} tend vers ${S.dom[0]}, un nombre strictement positif : ${fx("T_{n}")} est de l'ordre de ${fx(ref.t)}. Dans θ, on écrit la suite de référence seule, sans constante.`,pts:1}];
   function juge(rep){if(!propre(rep.r))return {incomplet:"Écris la suite de référence, par exemple n^2, n.log(n) ou 2^n."};
-    const src=versN(rep.r),W=PT.map(n=>O.calcule(src,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette suite. Écris-la avec la lettre n, par exemple n^2, n.log(n) (avec les parenthèses) ou 2^n."};
+    const src=versN(lisOrdre(rep.r)),W=PT.map(n=>O.calcule(src,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette suite. Écris-la avec la lettre n, par exemple n^2, n.log(n) (avec les parenthèses) ou 2^n."};
     if(PT.every((n,i)=>Math.abs(W[i]-ref.f(n))<=1e-9*ref.f(n)))return {ok:true};
     const Q=G.map(n=>O.calcule(src,{n})/ref.f(n));
     if(Q.every(x=>Number.isFinite(x)&&x>0)&&Math.abs(Q[2]/Q[1]-1)<0.03&&Math.abs(Q[1]/Q[0]-1)<0.2)return {incomplet:"C'est le bon ordre de grandeur. Mais dans θ, on écrit la suite de référence toute seule : sans constante devant, et sans terme plus petit."};
@@ -20516,7 +20523,7 @@ const CASM={">":`Si ${O.fx("b^{d} &gt; a")}, alors ${O.fx("T(n) = O(n^{d})")}.`,
 const etapesMaster=(m,o,debut)=>(debut||[]).concat([{w:`${fx(`a = ${m.a}`)}, ${fx(`b = ${m.b}`)}, ${fx(`d = ${m.d}`)}`,why:`a est le nombre d'appels récursifs${m.a===1?" (quand rien n'est écrit devant T, c'est 1)":""}, b le nombre par lequel la taille n est divisée, d la puissance de n dans les opérations faites en plus des appels${lireD(m)}.`,pts:1},
   {w:`${fx(`b^{d} = ${m.b}^{${m.d}} = ${m.bd}`)}, à comparer avec ${fx(`a = ${m.a}`)} : <b>${fx(`b^{d} ${o.cas==="<"?"&lt;":o.cas===">"?"&gt;":"="} a`)}</b>.`,why:`C'est la comparaison qui décide du cas du master theorem.`,pts:1},
   {w:`<b>${fx(`T(n) = O(${o.t})`)}</b>`,why:`${CASM[o.cas]}${o.cas==="<"&&o.ke!==null?` Ici ${fx(`log ${m.a} / log ${m.b} = ${o.ke}`)}, car ${fx(`${m.b}^{${o.ke}} = ${m.a}`)}.`:""}`,pts:1}]);
-function jugeOrdre(src,o){if(!propre(src))return {inc:"Écris aussi l'ordre de complexité, par exemple n^2 ou n.log(n)."};const t=versN(src),PT=[8,50,300],W=PT.map(n=>O.calcule(t,{n}));
+function jugeOrdre(src,o){if(!propre(src))return {inc:"Écris aussi l'ordre de complexité, par exemple n^2 ou n.log(n)."};const t=versN(lisOrdre(src)),PT=[8,50,300],W=PT.map(n=>O.calcule(t,{n}));
   if(W.some(v=>v===null||!Number.isFinite(v)))return {inc:"Je n'arrive pas à lire l'ordre de complexité. Écris-le avec la lettre n, par exemple n^2, n.log(n) ou n^(log(3)/log(2))."};
   if(PT.every((n,i)=>Math.abs(W[i]-o.g(n))<=1e-9*o.g(n)))return {ok:true};
   const Q=[1e4,1e8,1e12].map(n=>O.calcule(t,{n})/o.g(n));if(Q.every(x=>x>0&&Number.isFinite(x))&&Math.abs(Q[2]/Q[1]-1)<0.02&&Math.abs(Q[1]/Q[0]-1)<0.02)return {inc:"C'est le bon ordre de grandeur, mais on l'écrit sans constante devant."};
@@ -20625,11 +20632,11 @@ function boucleArret(R,sorte){const k=R.ent(1,4),t=R.ent(0,6);
 function essaieQuantite(P,src){const B=boucleDe(P),prob=[];
   for(const n of [0,1,2,3,7,12,25]){const env={n};let tours=0,avant=null;
     for(const s of P.corps){if(s===B)break;if(s.k==="aff")env[s.v]=vaut(s.e,env);}
-    while(vaut(B.cond,env)){const v=O.calcule(src,env);if(v===null)return {illisible:true};
+    while(vaut(B.cond,env)){const v=calc(src,env);if(v===null)return {illisible:true};
       if(!Number.isFinite(v)||Math.abs(v-Math.round(v))>1e-9)return {pb:"entier",n,v};
       if(v<0)return {pb:"négatif",n,v};if(avant!==null&&v>=avant)return {pb:"diminue",n,v,avant};
       avant=v;unTour(B.c,env);if(++tours>3000)return {pb:"infini"};}
-    if(avant!==null){const v=O.calcule(src,env);if(v===null)return {illisible:true};if(v>=avant)return {pb:"diminue",n,v,avant};}}
+    if(avant!==null){const v=calc(src,env);if(v===null)return {illisible:true};if(v>=avant)return {pb:"diminue",n,v,avant};}}
   return {ok:true};}
 function arret(R,sorte){const o=boucleArret(R,sorte),P=o.P,B=boucleDe(P),V=P.vars.concat(["n"]);
   const E=[{w:`La quantité <b>${fx(o.q)}</b> est un entier, positif tant que la boucle tourne. Avant la boucle, elle vaut ${fx(o.depart)}.`,why:`On cherche une quantité qui ne peut pas diminuer indéfiniment : un entier naturel. ${o.pos||`La condition « ${h(ecrit(B.cond))} » dit justement qu'elle est positive pendant la boucle.`}`,pts:1},
@@ -20751,7 +20758,7 @@ function formuleRec(R){const o=recSimple(R,true),P=o.P,nom=o.nom,KS=[0,1,2,3,4,5
     {w:`Initialisation : pour n = 0, ${fx(`${nom}(0) = ${ent(o.base)}`)} d'après les équations de récurrence, et la formule donne bien ${ent(o.base)} : ${fx("Inv_{0}")} est vrai.`,why:"On vérifie l'invariant pour le cas de base.",pts:0.5},
     {w:`Récurrence : pour ${fx("n &gt; 0")}, si ${fx("Inv_{n−1}")} est vrai, alors ${fx(`${nom}(n) = ${o.eq}`)} donne ${fx(o.calc)}, c'est-à-dire ${fx(o.ferme)} : ${fx("Inv_{n}")} est vrai.`,why:`On remplace ${fx(`${nom}(n − 1)`)} par sa formule, celle de l'invariant au rang n − 1, dans l'équation de récurrence.`,pts:1.5},
     {w:`Conclusion : pour tout entier naturel n, <b>${fx(`${nom}(n) = ${o.ferme}`)}</b>.`,why:"L'invariant est vrai à tous les rangs : l'algorithme renvoie bien cette valeur.",pts:1}];
-  function juge(rep){if(!propre(rep.f))return {incomplet:`Écris ce que renvoie ${nom}(n), avec la lettre n.`};const W=KS.map(n=>O.calcule(rep.f,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple n(n+1)/2 ou 2^n."};
+  function juge(rep){if(!propre(rep.f))return {incomplet:`Écris ce que renvoie ${nom}(n), avec la lettre n.`};const W=KS.map(n=>calc(rep.f,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple n(n+1)/2 ou 2^n."};
     if(KS.every((n,i)=>Math.abs(W[i]-V[i])<1e-9))return {ok:true};const n=KS.find((n,i)=>Math.abs(W[i]-V[i])>=1e-9);
     return {ok:false,faux:["f"],resume:"Pas tout à fait : ce n'est pas la bonne formule.",diag:{etape:1,type:"formule de ce que calcule une fonction récursive",titre:"Où ça part : la formule.",msg:`Pour n = ${n}, ta formule donne ${String(Math.round(W[n]*1000)/1000).replace(".",",")}, alors que ${fx(`${nom}(${n}) = ${ent(V[n])}`)}. Calcule les premières valeurs : ${V.slice(0,5).map(ent).join(", ")}.`}};}
   return {sig:"FR"+texteProg(P).replace(/\s+/g," "),q:`Voici une fonction récursive. Donne, en fonction de n, ce que renvoie ${fx(`${nom}(n)`)} pour tout entier naturel n. Sur papier, tu le démontres par récurrence avec la méthode du cours.`,corps:code(texteProg(P)),texte:`${texteProg(P).split("\n").slice(2,-1).map(x=>x.trim()).join(" ; ")} — formule de ${nom}(n), puis preuve par récurrence`,
@@ -21062,7 +21069,7 @@ function compteTri(R){const c=R.choix(COMPTES),[sorte,quoi,cas,dit,ferme,tape,pq
   const E=[{w:`Pour ${fx("n = 4")} : ${vrai(4)} ; pour ${fx("n = 5")} : ${vrai(5)}.`,why:"On peut toujours vérifier une formule sur un petit tableau, en déroulant le tri.",pts:1},{w:`<b>${fx(ferme)}</b> ${dit.replace(/ «.*$/,"").replace(/,.*$/,"")}`,why:pq,pts:2}];
   if(nv){const v=vrai(nv);E[1].w=`Pour ${fx(`n = ${nv}`)} : <b>${v}</b> ${dit.replace(/ «.*$/,"").replace(/,.*$/,"")}, car en général ${fx(ferme)}.`;}
   const juge=r=>{if(nv){const v=lisNb(r,"f");if(v===null)return {incomplet:"Écris un nombre entier."};if(v===vrai(nv))return {ok:true};return {ok:false,faux:["f"],resume:"Pas tout à fait : ce n'est pas le bon nombre.",diag:{etape:1,type:"nombre d'opérations d'un tri",titre:"Où ça part : le calcul.",msg:`${pq} Pour n = ${nv} : ${vrai(nv)}.`}};}
-    if(!propre(r.f))return {incomplet:"Écris le nombre avec la lettre n, par exemple n(n-1)/2."};const W=NS.map(n=>O.calcule(r.f,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple n(n-1)/2 ou n-1."};
+    if(!propre(r.f))return {incomplet:"Écris le nombre avec la lettre n, par exemple n(n-1)/2."};const W=NS.map(n=>calc(r.f,{n}));if(W.some(v=>v===null||!Number.isFinite(v)))return {incomplet:"Je n'arrive pas à lire cette formule. Écris-la avec la lettre n, par exemple n(n-1)/2 ou n-1."};
     if(NS.every((n,i)=>Math.abs(W[i]-vrai(n))<1e-9))return {ok:true};const n=NS.find((n,i)=>Math.abs(W[i]-vrai(n))>=1e-9);
     return {ok:false,faux:["f"],resume:"Pas tout à fait : ce n'est pas le bon nombre.",diag:{etape:1,type:"nombre d'opérations d'un tri",titre:"Où ça part : la formule.",msg:`Pour n = ${n}, ta formule donne ${String(Math.round(W[NS.indexOf(n)]*1000)/1000).replace(".",",")}, alors que ${NOMS[sorte]} fait ${vrai(n)} ${dit.replace(/ «.*$/,"").replace(/,.*$/,"")}.`}};};
   const P=DEFT[sorte][0]();
