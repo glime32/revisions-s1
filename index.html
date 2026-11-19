@@ -22735,6 +22735,41 @@ function angleDouble(R){const r=fracPQ(R),f=R()<0.5?"cos":"sin",g=R()<0.5?"cos":
     pieges:g==="cos"?[[-V,2,"carrés soustraits à l'envers","Où ça part : la formule.","cos(2x) = cos(x)² − sin(x)² : le carré du cosinus d'abord."],[1,2,"somme des carrés","Où ça part : la formule.","cos(x)² + sin(x)² vaut toujours 1 : dans cos(2x), c'est une différence."],[2*fl(r),0,"2 × cos(x)","Où ça part : la formule.","cos(2x) n'est pas 2cos(x) : utilise le corollaire 4.4.2."]]
       :[[V/2,2,"facteur 2 oublié","Où ça part : la formule.","sin(2x) = 2 sin(x) cos(x) : il y a un 2 devant."],[2*fl(r),0,"2 × sin(x)","Où ça part : la formule.","sin(2x) n'est pas 2sin(x) : utilise le corollaire 4.4.2."]],ens:{k:"dbl",f,g,r:fl(r)}});}
 
+
+/* les rotations (définition 4.5.1, théorème 4.5.2, feuille 4 exercice 1, CC2 2024 exercice 2 (d)) */
+const prin=x=>{let y=x;while(fl(y)>1)y=sub(y,2);while(fl(y)<=-1)y=add(y,2);return y;},angS=x=>x.n<0?"−"+angT(mul(x,-1)):angT(x),tapeA=x=>angS(x).replace("−","-");
+function rotDist(R){const al=R.choix([Q(1,3),Q(1,2),Q(2,3),Q(1),Q(-1,3),Q(-1,2),Q(-2,3)]),d=R.ent(1,9),a=vabs(al),co=cosA(a),aa2=mul(mul(2*d*d,1),sub(1,co.r.n/co.r.d===0?Q(0):co.r)),res=racine(aa2);
+  const E=[{w:`Par la définition 4.5.1, ${fx(`ZA′ = ZA = ${d}`)} et l'angle orienté ${an("AZA′")} vaut ${fx(angS(al))}. Donc le triangle ZAA′ est isocèle en Z, et ${absAn("AZA′")} ${fx("= "+angT(a))}.`,why:"Une rotation ne change pas la distance au centre, et elle fait tourner de l'angle α. En valeur absolue, l'angle du triangle en Z est |α|.",pts:1},
+    {w:`D'après le théorème d'Al-Kashi dans ZAA′ : ${fx(`AA′^{2} = ${d}^{2} + ${d}^{2} − 2 × ${d} × ${d} × cos(${angT(a)}) = ${2*d*d} − ${2*d*d} × ${gr(co)} = ${nb(aa2)}`)}.`,why:`On connaît deux côtés, ZA et ZA′, et l'angle entre eux. ${pourquoiTrig(a,"cos")}`.replace("radians, c'est undefined","radians"),pts:1},
+    {w:`<b>${fx(`AA′ = ${racLigne(aa2)}`)}</b>`,why:`Une longueur est positive : on prend la racine carrée.${egal(a,Q(1,3))?" Le triangle ZAA′ est même équilatéral : isocèle avec un angle de π/3.":egal(a,Q(1))?" Pour un demi-tour, Z est le milieu de [AA′] : AA′ = 2 ZA.":""}`,pts:1}];
+  return unExact({nom:"AA′",v:ex1(res),quoi:"la longueur AA′",ex:"par exemple 5√3",etapes:E,sig:"RD"+JSON.stringify([brut(al),d]),q:`Soit r la rotation de centre Z et d'angle ${fx(angS(al))}, et A un point tel que ${fx(`ZA = ${d}`)}. On note A′ = r(A). Calcule la distance AA′ : donne la valeur exacte.`,
+    corps:`<p>Rappel : la rotation de centre Z et d'angle α envoie M sur le point r(M) tel que Zr(M) = ZM et que l'angle orienté de sommet Z allant de M à r(M) vaille α (définition 4.5.1). ${RAP_RAD}</p>`,texte:`rotation de centre Z, angle ${angS(al)}, ZA = ${d} ; calculer AA′`,nature:"distance AA′",
+    pieges:[[fl(aa2),2,"racine oubliée","Où ça part : la dernière ligne.",`${nb(aa2)}, c'est AA′². Il reste à prendre la racine carrée.`],[d,1,"AA′ cru égal à ZA","Où ça part : le triangle ZAA′.",egal(a,Q(1,3))?"":"ZA′ = ZA, mais AA′ dépend de l'angle : il faut Al-Kashi."],[2*d,1,"points crus alignés","Où ça part : le triangle ZAA′.","A, Z et A′ ne sont alignés que pour un demi-tour (angle π)."]],ens:{k:"rot",al:angV(al),d}});}
+function rotCompo(R){let a,b;for(;;){const N=R.choix([2,3,4,6]);a=Q(R.nz(-N+1,N),N);b=Q(R.nz(-N+1,N),N);if(!egal(prin(add(a,b)),Q(0))&&fl(add(a,b))!==fl(prin(add(a,b))))break;if(R()<0.35&&!egal(add(a,b),Q(0)))break;}
+  const s=add(a,b),p=prin(s),reduit=!egal(s,p);
+  const E=[{w:"D'après l'exercice 1 de la feuille 4, r ∘ r′ est la rotation de centre Z et d'angle α + α′.",why:"On tourne d'abord de α′ autour de Z, puis de α : les distances à Z ne changent pas et les angles s'ajoutent par la relation de Chasles.",pts:1},
+    {w:`${reduit?"":"<b>"}${fx(`α + α′ = ${angS(a)} + ${b.n<0?"("+angS(b)+")":angS(b)} = ${angS(s)}`)}${reduit?"":"</b>"}.`,why:"On met les deux fractions au même dénominateur avant d'ajouter.",pts:1}];
+  if(reduit)E.push({w:`<b>${fx(angS(s))} n'est pas dans ]−π ; π] : on ${fl(s)>1?"retire":"ajoute"} un tour complet, ${fx(`${angS(s)} ${fl(s)>1?"−":"+"} 2π = ${angS(p)}`)}.</b>`,why:"Un angle orienté est défini à 2π près : ajouter ou retirer un tour ne change pas la rotation. La mesure principale est le seul représentant dans ]−π ; π].",pts:1});
+  const V=angV(p);
+  function juge(rep){const r=lisAngle(rep.x,V);if(r.inc)return {incomplet:r.inc};if(pres(r.v,V))return {ok:true};
+    if(reduit&&pres(r.v,angV(s)))return faux({etape:2,type:"mesure principale oubliée",titre:"Où ça part : la mesure principale.",msg:`${angS(s)} est une mesure juste, mais pas dans ]−π ; π]. ${E[2].w}`});
+    if(pres(r.v,angV(sub(a,b)))||pres(r.v,angV(prin(sub(a,b)))))return faux({etape:0,type:"angles soustraits",titre:"Où ça part : la composée.","msg":"Les angles s'ajoutent : α + α′."});
+    return faux({etape:E.length-1,type:"calcul de l'angle",titre:"Où ça part : le calcul.",msg:E[E.length-1].w});}
+  return {sig:"RC"+JSON.stringify([brut(a),brut(b)]),q:`Soient r et r′ les rotations de même centre Z et d'angles ${fx("α = "+angS(a))} et ${fx("α′ = "+angS(b))}. L'application r ∘ r′ est une rotation de centre Z : donne la mesure principale de son angle, dans ]−π ; π].`,corps:`<p>Rappel : r ∘ r′ veut dire « d'abord r′, puis r ». ${RAP_RAD}</p>`,
+    texte:`rotations de centre Z, angles ${angS(a)} et ${angS(b)} ; angle de r ∘ r′ dans ]−π ; π]`,champs:[champA("x","angle","angle de r ∘ r′ :")],juge,etapes:E,bonne:`angle ${fx("= "+angS(p))}`,bonneTxt:`angle = ${angS(p)}`,repBonne:{x:tapeA(p)},repFausse:{x:reduit?tapeA(s):tapeA(prin(sub(a,b)))==tapeA(p)?"0":tapeA(prin(sub(a,b)))},nature:reduit?"composée, mesure principale":"composée de deux rotations",ens:{k:"rcomp",a:angV(a),b:angV(b)}};}
+const RAPS=[[Q(1,2),"1/2"],[Q(2),"2"],[Q(3),"3"],[Q(1,3),"1/3"],[S(DEMI,2),"1/√2"],[S(1,2),"√2"]];
+function rotHom(R){const [k,kt]=R.choix(RAPS),th=R.choix([Q(1,4),Q(-1,4),Q(1,3),Q(-1,3),Q(1,2),Q(-1,2),Q(2,3),Q(-2,3)]),d=R.ent(1,8),res=fois(sq(k),d),Vd=val(res),Va=angV(th);
+  const E=[{w:`Notons X″ = r(X). Par la définition 4.5.1, ${fx(`AX″ = AX = ${d}`)} et l'angle orienté ${an("XAX″")} vaut ${fx(angS(th))}.`,why:"La rotation de centre A garde la distance à A et fait tourner de son angle.",pts:1},
+    {w:`X′ = h(X″) : par la définition 3.3.3, ${ve("AX′")} = ${kt} ${ve("AX″")}. Le rapport est positif, donc X′ est sur la demi-droite [AX″) et ${fx(`AX′ = ${kt} × AX″`)}.`,why:"Une homothétie de rapport positif garde la direction et le sens depuis son centre : l'angle orienté X″AX′ est nul.",pts:1},
+    {w:`<b>${fx(`AX′ = ${kt} × ${d} = ${ecrit(res)}`)}, et ${an("XAX′")} = ${an("XAX″")} + ${an("X″AX′")} ${fx(`= ${angS(th)} + 0 = ${angS(th)}`)}.</b>`,why:"Relation de Chasles pour les angles orientés. C'est la question (d) (i) du CC2 2024, avec ces nombres.",pts:1}];
+  function juge(rep){const r1=lisNombre(rep.x,Vd,"la longueur AX′");if(r1.inc)return {incomplet:r1.inc};const r2=lisAngle(rep.y,Va);if(r2.inc)return {incomplet:r2.inc};
+    const o1=pres(r1.v,Vd),o2=pres(r2.v,Va),F=[];if(!o1)F.push("x");if(!o2)F.push("y");if(!F.length)return {ok:true};const res2=`Pas tout à fait : ${!o1&&!o2?"la longueur et l'angle sont faux":!o1?"la longueur est fausse":"la longueur est juste, mais pas l'angle"}.`;
+    if(!o1)return faux({f:F,etape:pres(r1.v,d/val(sq(k)))?1:2,type:pres(r1.v,d/val(sq(k)))?"division par le rapport":"calcul de AX′",titre:"Où ça part : la distance.",msg:`L'homothétie multiplie la distance à A par ${kt} : ${fx(`AX′ = ${kt} × ${d}`)}.`},res2);
+    return faux({f:F,etape:pres(r2.v,-Va)?0:2,type:pres(r2.v,-Va)?"sens de l'angle":"angle de la composée",titre:"Où ça part : l'angle.",msg:`L'homothétie de rapport positif ne fait pas tourner : l'angle ${an("XAX′")} est celui de la rotation, ${angS(th)}.`},res2);}
+  return {sig:"RH"+JSON.stringify([kt,brut(th),d]),q:`Soit r la rotation de centre A et d'angle ${fx(angS(th))}, h l'homothétie de centre A et de rapport ${fx(kt)}, et f = h ∘ r. Soit X un point tel que ${fx(`AX = ${d}`)}, et X′ = f(X). Calcule AX′, puis l'angle orienté ${an("XAX′")} (mesure dans ]−π ; π]).`,corps:`<p>Rappel : h ∘ r veut dire « d'abord r, puis h ». ${RAP_RAD}</p>`,
+    texte:`f = h ∘ r, r de centre A et d'angle ${angS(th)}, h de centre A et de rapport ${kt}, AX = ${d} ; calculer AX′ et l'angle XAX′`,champs:[champL("x","AX′","$AX′ =$","par exemple 3√2"),champA("y","angle",`${an("XAX′")} =`)],juge,etapes:E,
+    bonne:`${fx(`AX′ = ${ecrit(res)}`)} et ${an("XAX′")} ${fx("= "+angS(th))}`,bonneTxt:`AX′ = ${ecrit(res)} ; angle XAX′ = ${angS(th)}`,repBonne:{x:tape(res),y:tapeA(th)},repFausse:{x:tape(res),y:tapeA(mul(th,-1))},nature:"rotation puis homothétie, comme au CC2 2024",ens:{k:"rhom",k2:val(sq(k)),th:angV(th),d}};}
+const rotations=R=>{const r=R();return r<0.4?rotDist(R):r<0.7?rotCompo(R):rotHom(R);};
 /* le produit scalaire : par la définition, en coordonnées, puis l'angle entre deux vecteurs */
 const vv=s=>ve(s),nrm=s=>`‖${ve(s)}‖`;
 function produit(R){const k=R.choix(["def","coord","angle","angle"]);if(k==="angle")return angleVec(R);
@@ -22964,11 +22999,12 @@ G.add("geo",[
    {t:"le rapport et son signe",cc:3,min:200,gen:rapport},
    {t:"deux homothéties de même centre",cc:3,min:200,gen:deuxHom},
    {t:"comme au CC : deux droites sécantes et des parallèles",cc:8,gen:droitesPar}]},
- {id:"GE5",t:"Trigonométrie, produit scalaire",tache:"trigonométrie et produit scalaire",th:"rotation",ex:"cc2",lecons:["g2-trigo","g2-rotation-scalaire"],
+ {id:"GE5",t:"Trigonométrie, rotations, produit scalaire",tache:"trigonométrie, rotations et produit scalaire",th:"rotation",ex:"cc2",lecons:["g2-trigo","g2-rotation-scalaire"],
   paliers:[
    {t:"les valeurs à connaître",cc:1,min:15,gen:remarquable},
    {t:"passer du cosinus au sinus",cc:2,min:150,gen:passer},
    {t:"formules d'addition et angle double",cc:4,min:120,gen:addition},
+   {t:"les rotations",cc:4,min:150,gen:rotations},
    {t:"produit scalaire et angle entre deux vecteurs",cc:5,gen:produit}]},
  {id:"GE4",t:"Angle au centre, angle inscrit",tache:"angle au centre et angle inscrit",th:"centre",ex:"cc2",lecons:["g2-angle-centre"],
   paliers:[
