@@ -26871,8 +26871,8 @@ G.add("pf",[
 </script>
 <script>
 /* Générateurs d'USI.
-   Un petit bash et un petit find écrits en JavaScript jugent les commandes tapées sur des arborescences tirées au hasard.
-   Les mêmes commandes sont exécutées par le vrai bash et le vrai find (tools/verif/usi-vrai/vrai-bash.js), et comparées par tools/verif/usi.js. */
+   Un petit bash, un petit find et un petit grep écrits en JavaScript jugent les commandes tapées sur des arborescences tirées au hasard.
+   Les mêmes commandes sont exécutées par le vrai bash, le vrai find et le vrai grep (tools/verif/usi-vrai/vrai-bash.js), et comparées par tools/verif/usi.js. */
 (function(){
 "use strict";
 const G=window.GEN,O=G.outils;
@@ -27021,13 +27021,399 @@ function exoFind(R,palier){
     ens:{bash:A.map(T=>({arbo:T,cmd:ref,abs:find(ref,T).abs.slice().sort()})).concat(A.map(T=>{const f=find(fausse,T);return {arbo:T,cmd:fausse,abs:f.err?null:f.abs.slice().sort()};}))}};}
 const tireFind=k=>R=>{for(;;){const e=exoFind(R,k);if(e)return e;}};
 
+/* ---------- le petit grep : une expression de grep -E ("E"), de grep seul ("G") ou d'un corrigé qui écrit \d ("P"), traduite pour JavaScript ---------- */
+/* le site lit $…$ comme une formule : dans tout ce qui est affiché, le dollar d'une expression est écrit &#36; */
+const d36=h=>String(h).replace(/\$/g,"&#36;"),cr=s=>d36(c(s)),blocr=t=>d36(bloc(t));
+const POSIX={digit:"0-9",alpha:"a-zA-Z",alnum:"a-zA-Z0-9",upper:"A-Z",lower:"a-z",space:" \\t"};
+/* rend {js, avert}, ou {err} si l'expression est mal écrite, ou {inconnu} si elle sort du programme */
+function ere(src,mode){const BRE=mode==="G",PY=mode==="P",n=src.length;let i=0,out="",prof=0,rep=0,avert="";
+  const KO=m=>{throw {err:m};},NC=m=>{throw {inconnu:m};},lit=x=>/[.*+?^${}()|[\]\\\/]/.test(x)?"\\"+x:x;
+  const quant=q=>{if(rep===2)NC(`Deux répétitions à la suite (${q} après une autre) : le site ne sait pas lire ça. Écris-le autrement.`);
+    if(!rep)KO(`${q[0]} ne suit rien ici : dans une expression régulière, il répète ce qui est juste avant lui.${q==="*"?" Ce n'est pas le * de bash : « n'importe quelle suite de caractères » s'écrit .*":""}`);out+=q;rep=2;};
+  const ouvre=()=>{if(!BRE&&src[i]==="?")NC("Les groupes qui commencent par (? ne sont pas au programme : le site ne sait pas les lire.");out+="(";prof++;rep=0;};
+  const ferme=()=>{if(!prof)KO("Une parenthèse fermante est en trop.");prof--;out+=")";rep=1;};
+  const inter=()=>{const f=BRE?"\\}":"}",j=src.indexOf(f,i);if(j<0)KO("Une accolade { n'est pas refermée.");const t=src.slice(i,j);i=j+f.length;
+    if(/^,\d+$/.test(t))NC(`Le site ne lit pas {${t}} : écris {0${t}}.`);
+    if(!/^\d+(,\d*)?$/.test(t))KO("Entre accolades, il faut un nombre, comme {2}, deux nombres, comme {1,3}, ou un nombre et une virgule, comme {2,}.");
+    const [a,b]=t.split(",");if(b&&+b<+a)KO(`{${t}} : le premier nombre doit être le plus petit.`);if(+a>60||+b>60)NC("Le site ne lit pas les répétitions de plus de 60 fois.");quant("{"+t+"}");};
+  const classe=()=>{let j=i,s="[",vide=true;if(src[j]==="^"){s+="^";j++;}
+    for(;;j++){const x=src[j];if(x===undefined)KO("Un crochet [ n'est pas refermé par ].");if(x==="]"&&!vide)break;
+      if(x==="["&&src[j+1]===":"){const f=src.indexOf(":]",j+2),C=f<0?null:POSIX[src.slice(j+2,f)];if(!C)NC("Le site ne connaît pas cette classe entre [: et :].");s+=C;j=f+1;}
+      else if(x==="\\"&&PY){const y=src[++j];if(y===undefined)KO("Un crochet [ n'est pas refermé par ].");if(/[A-Za-z0-9]/.test(y)&&!/[dws]/.test(y))NC(`\\${y} entre crochets n'est pas au programme : le site ne sait pas le lire.`);s+="\\"+y;}
+      else s+=/[\\\][^]/.test(x)?"\\"+x:x;
+      vide=false;}
+    i=j+1;return s+"]";};
+  try{while(i<n){const x=src[i++];
+      if(x==="\\"){const d=src[i++];if(d===undefined)KO("L'expression finit par une barre oblique inverse toute seule.");
+        if(BRE&&"()|{}+?".includes(d)){if(d==="(")ouvre();else if(d===")")ferme();else if(d==="|"){out+="|";rep=0;}else if(d==="{")inter();else if(d==="}")KO("Une accolade fermante est en trop.");else quant(d);}
+        else if(/[0-9<>]/.test(d))NC(`\\${d} n'est pas au programme : le site ne sait pas le lire.`);
+        else if(/[wWsS]/.test(d)){out+="\\"+d;rep=1;}
+        else if(/[bB]/.test(d)){out+="\\"+d;rep=0;}
+        else if(PY&&/[dD]/.test(d)){out+="\\"+d;rep=1;}
+        else if(/[A-Za-z]/.test(d)){if(PY)NC(`\\${d} n'est pas au programme : le site ne sait pas le lire.`);avert=avert||d;out+=d;rep=1;}
+        else{out+=lit(d);rep=1;}}
+      else if(x==="["){out+=classe();rep=1;}
+      else if(x==="."){out+=".";rep=1;}
+      else if(x==="^"){if(!BRE||i===1||/\\[(|]$/.test(src.slice(0,i-1))){out+="^";rep=0;}else{out+="\\^";rep=1;}}
+      else if(x==="$"){if(!BRE||i===n||/^\\[)|]/.test(src.slice(i))){out+="$";rep=0;}else{out+="\\$";rep=1;}}
+      else if(x==="*")quant("*");
+      else if(!BRE&&(x==="+"||x==="?"))quant(x);
+      else if(!BRE&&x==="(")ouvre();
+      else if(!BRE&&x===")")ferme();
+      else if(!BRE&&x==="|"){out+="|";rep=0;}
+      else if(!BRE&&x==="{")inter();
+      else{out+=lit(x);rep=1;}}
+    if(prof)KO("Une parenthèse ( n'est pas refermée.");
+    new RegExp(out);return {js:out,avert};}
+  catch(e){return e.err||e.inconnu?e:{err:"L'expression est mal écrite : regarde les crochets (une suite à l'envers comme [z-a], par exemple)."};}}
+/* o : deb, fin (ancres ajoutées), x (ligne entière), i (majuscules ignorées), v (tri inversé) */
+function filtre(src,mode,o){o=o||{};const r=ere(src,mode);if(r.js===undefined)return r;
+  const re=new RegExp((o.deb||o.x?"^(?:":"(?:")+r.js+(o.fin||o.x?")$":")"),o.i?"i":"");return {f:s=>re.test(s)!==!!o.v,avert:r.avert};}
+const classeB=(re,mode,B,o)=>{const r=filtre(re,mode,o);return r.f?{mal:B.filter(x=>r.f(x.s)!==x.ok),avert:r.avert}:r;};
+const hors=(t,quoi,par)=>t.replace(/\\.|\[\^?\]?[^\]]*\]|[\s\S]/g,m=>m===quoi?par:m);
+
+/* ---------- les formes : une chaîne décrite morceau par morceau, d'où sortent l'expression, des exemples et des pièges ---------- */
+/* écriture, caractères pour les exemples, nom au singulier, au pluriel, caractères qui n'en font pas partie */
+const CLS={ch:["[0-9]","0123456789","un chiffre","chiffres",["a"]],mi:["[a-z]","abcdefgmnprstuvz","une lettre minuscule","lettres minuscules",["A","7"]],ma:["[A-Z]","ABCDEFGMNPRSTUVZ","une lettre majuscule","lettres majuscules",["a","7"]],
+  le:["[a-zA-Z]","abcxyzABCXYZ","une lettre","lettres",["7","-"]],an:["[a-zA-Z0-9]","abxyABXY0189","une lettre ou un chiffre","lettres ou chiffres",["-","_"]],to:[".","abxy0189","un caractère quelconque","caractères quelconques",[]]};
+const NEG={".":["un point","abxy0189","."],"0-9":["un chiffre","abxyABXY","5"],"A-Z":["une lettre majuscule","abxy0189","B"]," ":["un espace","abxy0189"," "],"-":["un tiret","abxy0189","-"],"/":["une barre oblique","abxy0189","/"],":":["un deux-points","abxy0189",":"]};
+const NOMCAR={".":"un point",",":"une virgule","-":"un tiret","/":"une barre oblique",":":"un deux-points","#":"un dièse","+":"un signe plus","0":"le chiffre 0"};
+const Cl=(k,a=1,b=a)=>({t:"c",k,a,b}),Sauf=(x,a=0,b=99)=>({t:"n",x,a,b}),Lit=(s,a=1)=>({t:"l",s,a,b:1}),Alt=L=>({t:"a",L}),Grp=M=>({t:"g",M}),Nb=(a=1,b=99)=>Cl("ch",a,b);
+const qre=(a,b)=>a===1&&b===1?"":a===0&&b===99?"*":a===1&&b===99?"+":a===0&&b===1?"?":a===b?`{${a}}`:b===99?`{${a},}`:`{${a},${b}}`;
+const lre=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const ecritM=m=>m.t==="c"?CLS[m.k][0]+qre(m.a,m.b):m.t==="n"?`[^${m.x}]`+qre(m.a,m.b):m.t==="l"?(m.a?lre(m.s):m.s.length>1?`(${lre(m.s)})?`:lre(m.s)+"?"):m.t==="a"?`(${m.L.map(lre).join("|")})`:`(${m.M.map(ecritM).join("")})?`;
+const ecrit=F=>(F.deb?"^":"")+F.M.map(ecritM).join("")+(F.fin?"$":"");
+function nomM(m){
+  if(m.t==="l"){const n=m.s.length===1&&NOMCAR[m.s]?NOMCAR[m.s]:`le texte ${cr(m.s)}`;return m.a?n:n+", ou rien";}
+  if(m.t==="a")return m.L.map(cr).join(" ou ");
+  if(m.t==="g")return "si on veut : "+m.M.map(nomM).join(", puis ");
+  const u=m.t==="c"?CLS[m.k][2]:"un caractère autre qu'"+NEG[m.x][0],d=m.t==="c"?CLS[m.k][3]:"caractères autres qu'"+NEG[m.x][0];
+  return m.a===1&&m.b===1?u:m.a===1&&m.b===99?u+" ou plus":m.a===0&&m.b===99?"des "+d+", ou aucun":m.a===0&&m.b===1?u+", ou rien":m.a===m.b?`exactement ${m.a} ${d}`:m.b===99?`au moins ${m.a} ${d}`:`de ${m.a} à ${m.b} ${d}`;}
+function pourquoi(M,S){S=S||new Set();for(const m of M){
+    if(m.t==="g"){S.add(`${cr("( … )?")} : tout le groupe entre parenthèses peut manquer`);pourquoi(m.M,S);continue;}
+    if(m.t==="a")S.add(`${cr("(a|b)")} : l'un ou l'autre`);
+    if(m.t==="l"&&!/[.+*?()[\]{}^$|\\]/.test(m.s))S.add(`${cr(m.s)} s'écrit tel quel : ${m.s.length>1?"ce sont des caractères ordinaires":"c'est un caractère ordinaire"}`);
+    if(m.t==="l"&&/[.+*?()[\]{}^$|\\]/.test(m.s))S.add(m.s.includes(".")?`${cr("\\.")} : un vrai point (le point seul voudrait dire « n'importe quel caractère »)`:`${cr(lre(m.s))} : la barre oblique inverse enlève au caractère son rôle spécial`);
+    if(m.t==="n")S.add(`${cr("[^"+m.x+"]")} : n'importe quel caractère sauf ${NEG[m.x][0]}`);
+    if(m.t==="c")S.add(m.k==="to"?`${cr(".")} : un caractère quelconque`:`${cr(CLS[m.k][0])} : ${CLS[m.k][2]}, ${/^une /.test(CLS[m.k][2])?"une seule":"un seul"}`);
+    const q=m.t==="l"?(m.a?"":"?"):m.t==="a"?"":qre(m.a,m.b);
+    if(q==="+")S.add(`${cr("+")} : une fois ou plus`);if(q==="*")S.add(`${cr("*")} : zéro fois ou plus`);if(q==="?")S.add(`${cr("?")} : zéro ou une fois`);
+    if(q[0]==="{")S.add(`${cr(q)} : ${m.a===m.b?`exactement ${m.a} fois`:m.b===99?`au moins ${m.a} fois`:`de ${m.a} à ${m.b} fois`}`);}
+  return [...S].join(" ; ")+".";}
+const hasard=g=>{let a=g>>>0;const f=()=>(a=Math.imul(a,1664525)+1013904223>>>0)/4294967296;f.ent=(x,y)=>x+Math.floor(f()*(y-x+1));f.choix=L=>L[Math.floor(f()*L.length)];return f;};
+/* f : {k, n} impose n répétitions au morceau k, {k, intrus} y glisse un caractère interdit, {k, rempl} remplace un texte, plein : aucun morceau vide */
+function fab(F,R,f){f=f||{};const tire=(car,nb)=>{let s="";for(let j=0;j<nb;j++)s+=car[R.ent(0,car.length-1)];return s;};
+  const fais=(m,k)=>{const moi=f.k===k;
+    if(m.t==="l")return moi&&f.rempl!==undefined?f.rempl:m.a||f.plein||R()<0.5?m.s:"";
+    if(m.t==="a")return moi&&f.rempl!==undefined?f.rempl:R.choix(m.L);
+    if(m.t==="g")return (moi?f.n:f.plein||R()<0.5)?m.M.map(x=>fais(x,-1)).join(""):"";
+    const nb=moi&&f.n!==undefined?f.n:m.a===m.b?m.a:R.ent(Math.max(m.a,f.plein?1:0),Math.min(m.b,m.a+2)),s=tire(m.t==="c"?CLS[m.k][1]:NEG[m.x][1],nb);
+    return moi&&f.intrus?(s.length>2?s[0]+f.intrus+s.slice(2):f.intrus+s.slice(1)):s;};
+  const parts=F.M.map(fais);return {s:parts.join(""),parts};}
+/* les chaînes d'essai d'une forme, toujours les mêmes : {s, ok, pq} ; pq dit pourquoi une chaîne refusée l'est */
+const BQ={};
+function banque(F){const ref=ecrit(F),cle=ref+"|"+(F.plus||[]).length+(F.sans?"s":"")+(F.vide===0?"v":"");if(BQ[cle])return BQ[cle];
+  let g=7;for(const x of ref)g=Math.imul(g,31)+x.charCodeAt(0)|0;
+  const R=hasard(g),f0=filtre(ref,"E").f,B=[],vu=new Set();
+  const met=(s,pq)=>{if(vu.has(s)||!/^[\x20-\x7e]*$/.test(s)||s.length>30||(s===""&&F.vide===0)||(F.sans&&F.sans(s)))return;vu.add(s);B.push({s,ok:f0(s),pq:pq||""});};
+  const base=[fab(F,R,{plein:1}).s,fab(F,R).s,fab(F,R).s,fab(F,R).s];base.forEach(s=>met(s));
+  F.M.forEach((m,k)=>{const nm=nomM(m);
+    if(m.t==="c"||m.t==="n"){
+      if(m.a>=1)met(fab(F,R,{k,n:m.a-1,plein:1}).s,m.a===1?`il manque ${nm.replace(/ ou plus$/,"")}`:`il n'y a pas ${nm}`);
+      if(m.b<99)met(fab(F,R,{k,n:m.b+1,plein:1}).s,m.b===1?`il y a ${nm.replace(/, ou rien$/,"")} en trop`:`il n'y a pas ${nm}`);
+      for(const x of m.t==="c"?CLS[m.k][4]:[NEG[m.x][2]])met(fab(F,R,{k,intrus:x,n:m.a===m.b?m.a:Math.min(m.b,Math.max(m.a,3)),plein:1}).s,m.t==="c"?`${cr(x)} n'est pas ${CLS[m.k][2]}`:`il y a ${NEG[m.x][0]} en trop`);}
+    else if(m.t==="l"){const r=/[^a-zA-Z0-9]/.test(m.s)?m.s.replace(/[^a-zA-Z0-9]/,"x"):"xy",nl=nomM(Lit(m.s));
+      met(fab(F,R,{k,rempl:r,plein:1}).s,`${cr(r)} remplace ${nl}`);if(m.a)met(fab(F,R,{k,rempl:"",plein:1}).s,`il manque ${nl}`);met(fab(F,R,{k,rempl:m.s+m.s,plein:1}).s,`${nl} est là deux fois`);}
+    else if(m.t==="a"){met(fab(F,R,{k,rempl:"xyz",plein:1}).s,`${cr("xyz")} n'est pas dans la liste`);met(fab(F,R,{k,rempl:m.L[0]+m.L[0].slice(-1),plein:1}).s,"il y a une lettre en trop");}
+    else{met(fab(F,R,{k,n:1,plein:1}).s);met(fab(F,R,{k,n:0,plein:1}).s);}});
+  for(const s of base.slice(0,2)){const p=F.deb?"":"ab",z=F.fin?"":"yz";
+    (F.deb?[]:["ab","tp1","notes"]).forEach(x=>met(x+s));(F.fin?[]:["yz","_2"]).forEach(x=>met(s+x));
+    if(F.deb)["x","7","-"].forEach(x=>met(x+s+z,"il y a un caractère en trop au début"));
+    if(F.fin)["x","7","-"].forEach(x=>met(p+s+x,"il y a un caractère en trop à la fin"));}
+  ["abc","ABC","123","a.b","-_-"].forEach(s=>met(s));met("");
+  (F.plus||[]).forEach(x=>Array.isArray(x)?met(x[0],x[1]):met(x));
+  if(B.filter(x=>x.ok).length<2||B.filter(x=>!x.ok).length<3)throw new Error("banque trop pauvre : "+ref);
+  return BQ[cle]=B;}
+
+/* ---------- reconnaître l'erreur : l'expression est retouchée (une ancre, un point protégé…) et rejugée sur les chaînes d'essai ---------- */
+const REP=[
+  {type:"^ oublié",e:2,si:F=>F.deb,f:(t,o)=>/^\^/.test(t)||o.deb||o.x?null:[t,Object.assign({},o,{deb:1})],m:`il manque ${cr("^")} au début : sans lui, la forme peut commencer n'importe où dans la chaîne`},
+  {type:"$ oublié",e:2,si:F=>F.fin,f:(t,o)=>/[^\\]\$$/.test(t)||o.fin||o.x?null:[t,Object.assign({},o,{fin:1})],m:`il manque ${cr("$")} à la fin : sans lui, la forme peut s'arrêter n'importe où dans la chaîne`},
+  {type:"^ en trop",e:2,si:F=>!F.deb,f:(t,o)=>/^\^/.test(t)?[t.slice(1),o]:null,m:`${cr("^")} est en trop : il oblige la forme à être tout au début, alors qu'elle peut être n'importe où`},
+  {type:"$ en trop",e:2,si:F=>!F.fin,f:(t,o)=>/[^\\]\$$/.test(t)?[t.slice(0,-1),o]:null,m:`${cr("$")} est en trop : il oblige la forme à être tout à la fin, alors qu'elle peut être n'importe où`},
+  {type:"point non protégé",e:1,si:()=>1,f:(t,o)=>{const u=t.replace(/\\.|\[\^?\]?[^\]]*\]|\.(?![*+?{])/g,m=>m==="."?"\\.":m);return u===t?null:[u,o];},m:`le point seul veut dire « n'importe quel caractère » : un vrai point s'écrit ${cr("\\.")}, avec une barre oblique inverse devant`},
+  {type:"* à la place de +",e:1,si:()=>1,f:(t,o,g)=>{const u=hors(t,"*",g==="G"?"\\{1,\\}":"+");return u===t?null:[u,o];},m:`${cr("*")} accepte aussi zéro fois : « au moins une fois » s'écrit ${cr("+")}`},
+  {type:"+ à la place de *",e:1,si:()=>1,f:(t,o,g)=>{const u=g==="G"?t:hors(t,"+","*");return u===t?null:[u,o];},m:`${cr("+")} exige au moins une fois : « peut-être aucune » s'écrit ${cr("*")}`}];
+function diagExpr(t,mode,B,F,o){o=o||{};const mal=classeB(t,mode,B,o).mal,a=mal.find(x=>!x.ok),b=mal.find(x=>x.ok),lg=s=>s===""?"la ligne vide":cr(s);
+  const quoi="Ton expression ne trie pas bien : "+[a&&`elle accepte ${lg(a.s)}, qui ne doit pas passer${a.pq&&a.s?` (${a.pq})`:""}`,b&&`elle refuse ${lg(b.s)}, qui doit passer`].filter(Boolean).join(", et ")+".";
+  const va=L=>{let u=t,p=o;for(const k of L){const x=REP[k].si(F)&&REP[k].f(u,p,mode);if(!x)return false;[u,p]=x;}const z=classeB(u,mode,B,p);return !!z.mal&&!z.mal.length;};
+  const C=REP.map((_,k)=>[k]);REP.forEach((_,i)=>REP.forEach((_,j)=>{if(i<j)C.push([i,j]);}));C.push([0,1,4],[0,1,5]);
+  const L=C.find(va);
+  if(L)return {etape:Math.min(...L.map(k=>REP[k].e)),type:L.map(k=>REP[k].type).join(", "),titre:L.every(k=>REP[k].e===2)?"Où ça part : le début et la fin.":"Où ça part : un morceau de l'expression.",msg:`${quoi} La cause : ${L.map(k=>REP[k].m).join(" ; et ")}.`};
+  return {etape:1,type:a&&b?"expression qui trie mal":a?"expression trop large":"expression trop stricte",titre:"Où ça part : un morceau de l'expression.",msg:quoi+(F.astuce?" "+F.astuce:"")};}
+function jugeExpr(texte,B,F){const t=propre(texte);if(!t)return {incomplet:"Écris l'expression."};
+  if(t.length>1&&/^(["'\/]).*\1$/.test(t))return {incomplet:"Écris l'expression seule, sans guillemets ni barres autour."};
+  if(/^(e?grep|ls|cat)( |$)/.test(t))return {incomplet:"Ici, on demande seulement l'expression, pas la commande."};
+  const faux=d=>({ok:false,faux:["e"],resume:"Pas tout à fait : cette expression ne garde pas les bonnes chaînes.",diag:d});
+  const r=classeB(t,"P",B);if(r.inconnu)return {incomplet:d36(esc(r.inconnu))};
+  if(r.err)return faux({etape:1,type:"expression mal écrite",titre:"Où ça part : l'expression est mal écrite.",msg:d36(esc(r.err))});
+  return r.mal.length?faux(diagExpr(t,"P",B,F)):{ok:true};}
+
+/* ---------- la ligne de commande : ls, cat et grep reliés par des tubes, jouée sur l'arborescence ---------- */
+function tubes(l){const S=[];let cur="",q=null;
+  for(let i=0;i<l.length;i++){const x=l[i],d=l[i+1]||"";
+    if(q){cur+=x;if(x===q)q=null;else if(q==='"'&&(x==="`"||(x==="\\"&&d&&'\\"$`'.includes(d))||(x==="$"&&/[A-Za-z_{(]/.test(d))))return {inconnu:"Entre guillemets doubles, bash transforme encore $nom, \\$ et \\\\ : mets plutôt l'expression entre guillemets simples."};}
+    else if(x==='"'||x==="'"){q=x;cur+=x;}
+    else if(x==="\\"&&d){cur+=x+d;i++;}
+    else if(x==="|"){if(d==="|")return {err:"|| n'est pas un tube : il en faut un seul."};S.push(cur.trim());cur="";}
+    else if(x==="("||x===")")return {err:"Sans guillemets, bash ne comprend pas les parenthèses de l'expression : la commande ne se lance pas. Mets l'expression entre guillemets.",type:"guillemets oubliés"};
+    else if(x==="{"&&/^[^} ]*,[^} ]*\}/.test(l.slice(i+1)))return {err:"Sans guillemets, bash développe les accolades {a,b} en plusieurs mots avant de lancer grep. Mets l'expression entre guillemets.",type:"guillemets oubliés"};
+    else if(";<>&`".includes(x)||(x==="$"&&/[A-Za-z_{(]/.test(d)))return {inconnu:`Écris une seule ligne de commandes reliées par des tubes, sans ${x}.`};
+    else cur+=x;}
+  if(q)return {err:`Un guillemet ${q} n'est pas refermé.`};S.push(cur.trim());return {S};}
+/* les mots d'une commande, guillemets retirés mais barres obliques inverses gardées : ce que l'expression serait avec des guillemets */
+const crus=seg=>{const L=[];let w="",q=null,la=false;for(const x of seg){if(q){if(x===q)q=null;else w+=x;}else if(x==='"'||x==="'"){q=x;la=true;}else if(x===" "){if(la){L.push(w);w="";la=false;}}else{w+=x;la=true;}}if(la)L.push(w);return L;};
+const contenu=x=>x.c?x.c.replace(/\n$/,"").split("\n"):[];
+/* rend {entree, greps:[{mode, o, re, cru, lit}]}, ou {err}, ou {inconnu} */
+function planGrep(t,T){const D=tubes(t);if(!D.S)return D;let L=null;const P={entree:null,greps:[]};
+  for(let k=0;k<D.S.length;k++){const seg=D.S[k];if(!seg)return {err:"Il manque une commande d'un côté du tube |."};
+    const M=mots(seg,T);if(M.err)return {err:M.err};const W=M.W,C=crus(seg),nom=W[0].w;
+    if(nom==="ls"||nom==="cat"){if(k)return {err:`${nom} ne lit pas ce qui arrive par le tube : place-le au début.`};
+      const A=W.slice(1).filter(x=>!/^-/.test(x.w)),opt=W.slice(1).filter(x=>/^-/.test(x.w)).map(x=>x.w).join("");
+      if(nom==="cat"){if(opt||!A.length)return {inconnu:"Écris cat suivi du nom du fichier."};L=[];for(const a of A){const x=noeud(T,absolu(a.w));if(!x||x.d)return {err:`cat : ${a.w} : aucun fichier de ce nom.`};L.push(...contenu(x));}continue;}
+      if(/l/.test(opt))return {inconnu:"Avec ls -l, grep recevrait toute la ligne (droits, taille, date) et l'afficherait : utilise ls seul."};
+      if(/R/.test(opt))return {inconnu:"ls -R descend dans les sous-dossiers : ici, seul le dossier courant est demandé. Utilise ls seul."};
+      if(A.some(x=>x.developpe||/[*?]/.test(x.w)))return {inconnu:"Après ls, * et ? sont des motifs de bash, pas une expression régulière. Écris ls seul : c'est grep qui trie les noms."};
+      if(/[^-1aA]/.test(opt)||A.length>1)return {inconnu:"Ici, écris ls seul (ou ls -a) : c'est grep qui trie les noms."};
+      const d=noeud(T,absolu(A.length?A[0].w:"."));if(!d||!d.d)return {err:`ls : ${A[0].w} n'est pas un dossier.`};
+      L=tri(d.d).map(x=>x.n).filter(x=>/[aA]/.test(opt)||x[0]!==".");if(/a/.test(opt))L=[".","..",...L];}
+    else if(nom==="grep"||nom==="egrep"){const g={mode:nom==="egrep"?"E":"G",o:{},re:null,cru:null,lit:null},F=[];let e=false;
+      for(let j=1;j<W.length;j++){const w=W[j].w;
+        if(W[j].developpe)return {err:`bash a remplacé ${W[j].developpe} par les noms du dossier courant qui lui correspondent, avant de lancer grep. Mets l'expression entre guillemets.`,type:"guillemets oubliés"};
+        if(/^-./.test(w)&&!e){for(const x of w.slice(1)){if("EPG".includes(x))g.mode=x;else if("ivxc".includes(x))g.o[x]=1;else if(x==="e")e=true;else return {inconnu:`Le site ne connaît pas l'option -${x} de grep ici : écris la commande avec grep -E.`};}}
+        else if(g.re===null||e){g.re=w;g.cru=C[j];e=false;}else F.push(w);}
+      if(g.re===null)return {err:"grep : il manque l'expression régulière."};
+      if(F.length>1)return {inconnu:"Donne un seul fichier à grep : avec plusieurs, il écrit le nom du fichier devant chaque ligne."};
+      if(F.length){const x=noeud(T,absolu(F[0]));if(!x||x.d)return {err:`grep : ${F[0]} : aucun fichier de ce nom.`};g.lit=contenu(x);}
+      else if(L===null&&!P.greps.length)return {err:"grep n'a rien à lire : donne-lui un fichier, ou envoie-lui des lignes par un tube |."};
+      if(!P.greps.length)P.entree=g.lit||L;P.greps.push(g);}
+    else if(nom==="find")return {err:"find cherche avec un motif de bash (-name), pas avec une expression régulière. Ici, la question demande grep.",type:"find au lieu de grep"};
+    else if(k&&P.greps.length&&!/^(sort|wc|head|tail|uniq|cut|tr|less|more)$/.test(nom))return {err:`Sans guillemets, bash a pris la barre | de l'expression pour un tube : il cherche une commande « ${nom} ». Mets l'expression entre guillemets.`,type:"guillemets oubliés"};
+    else return {inconnu:`Ici, le site connaît ls, cat et grep, pas ${nom}.`};}
+  return P.greps.length?P:{err:"Il manque grep : c'est lui qui lit les expressions régulières.",type:"commande sans grep"};}
+function joue(P){let L=P.entree,avert="";for(const g of P.greps){if(g.lit)L=g.lit;const r=filtre(g.re,g.mode,g.o);if(!r.f)return r;avert=avert||r.avert;L=L.filter(r.f);if(g.o.c)L=[String(L.length)];}return {sortie:L,avert};}
+function jugeCmd(texte,T,B,O){const t=propre(texte);if(!t)return {incomplet:"Écris la commande."};
+  const faux=(etape,type,titre,msg)=>({ok:false,faux:["c"],resume:"Pas tout à fait : cette commande n'affiche pas ce qui est demandé.",diag:{etape,type,titre,msg}});
+  const P=planGrep(t,T);if(P.inconnu)return {incomplet:d36(esc(P.inconnu))};
+  if(P.err)return faux(/guillemets/.test(P.type||"")?2:0,P.type||"commande mal écrite",P.type?"Où ça part : "+P.type+".":"Où ça part : la commande ne marche pas.",d36(esc(P.err)));
+  const bon=B.filter(x=>x.ok).map(x=>x.s),tout=B.map(x=>x.s),J=joue(P);if(J.inconnu)return {incomplet:d36(esc(J.inconnu))};
+  if(J.err)return faux(1,"expression mal écrite","Où ça part : l'expression est mal écrite.",d36(esc(J.err)));
+  if(ensembles(J.sortie,bon))return {ok:true};
+  if(!tout.every(s=>P.entree.includes(s)))return faux(0,"lignes données à grep","Où ça part : ce que grep reçoit.",O.ls?`La question porte sur les noms des fichiers du dossier courant : c'est ${cr("ls")} qui les donne, et le tube ${cr("|")} les envoie à grep.`:`La question porte sur les lignes du fichier ${cr(O.nom)} : ${cr('grep -E "…" '+O.nom)}.`);
+  const lg=s=>s===""?"la ligne vide":cr(s),a=B.find(x=>!x.ok&&J.sortie.includes(x.s)),b=B.find(x=>x.ok&&!J.sortie.includes(x.s));
+  const quoi="Ta commande "+[a&&`affiche ${lg(a.s)}, qui ne doit pas sortir${a.pq&&a.s?` (${a.pq})`:""}`,b&&`n'affiche pas ${lg(b.s)}, qui doit sortir`].filter(Boolean).join(", et ")+".";
+  if(!a&&!b)return faux(0,"lignes en trop données à grep","Où ça part : ce que grep reçoit.",`Ta commande affiche aussi ${lg(J.sortie.find(s=>!tout.includes(s)))}, qui ne fait pas partie de ce qui est demandé.`);
+  if(P.greps.length>1)return faux(1,"plusieurs grep à la suite","Où ça part : l'expression.",quoi+" Une seule commande grep -E suffit.");
+  const g=P.greps[0];
+  if(g.o.c)return faux(3,"-c à la place de l'affichage","Où ça part : l'option -c.",`Avec ${cr("-c")}, grep écrit le nombre de lignes trouvées au lieu de les afficher.`);
+  const essai=m=>{const r=joue({entree:P.entree,greps:[Object.assign({},g,m)]});return !!r.sortie&&ensembles(r.sortie,bon);};
+  if(g.o.v&&essai({o:Object.assign({},g.o,{v:0})}))return faux(3,"-v en trop","Où ça part : l'option -v.",`${cr("-v")} inverse le tri : grep affiche les lignes qui ne correspondent pas à l'expression.`);
+  const ops=["+","?","|","(",")","{","}"].filter(x=>g.re.includes(x)).map(cr);
+  const RC=[[g.cru!==g.re,{re:g.cru},"guillemets oubliés",`sans guillemets, bash enlève les barres obliques inverses avant de lancer grep, qui reçoit ${cr(g.re)} au lieu de ${cr(g.cru)}`],
+    [g.mode==="G",{mode:"E"},"-E oublié",`sans ${cr("-E")}, grep prend ${ops.length===1?ops[0]+" pour un caractère ordinaire":(ops.join(", ")||"+ ? | ( … ) { … }")+" pour des caractères ordinaires"}`],
+    [J.avert==="d",{mode:"P"},"\\d avec grep",`grep ne connaît pas ${cr("\\d")} : il cherche la lettre d. Écris ${cr("[0-9]")}${g.mode==="G"&&ops.length?`, et ajoute ${cr("-E")}`:""}`]];
+  const K=[[0],[1],[2],[0,1],[0,2]].filter(L=>L.every(k=>RC[k][0])).find(L=>essai(Object.assign({},...L.map(k=>RC[k][1]))));
+  if(K)return faux(2,K.map(k=>RC[k][2]).join(", "),"Où ça part : -E et les guillemets.",`${quoi} La cause : ${K.map(k=>RC[k][3]).join(" ; et ")}.`);
+  const d=diagExpr(g.re,g.mode,B,O.F,g.o);d.etape=1;return {ok:false,faux:["c"],resume:"Pas tout à fait : cette commande n'affiche pas ce qui est demandé.",diag:d};}
+
+G.usi.ere=ere;G.usi.filtre=filtre;G.usi.planGrep=planGrep;G.usi.joue=joue;
+
+/* ---------- US6 : expressions régulières ---------- */
+/* palier 1 : une expression et sept lignes ; + devant une ligne que grep affiche, - devant les autres, puis la raison ({…} : du code) */
+const LIRE=[
+ ["^[0-9]+$","+2024","-12a|il y a une lettre à la fin","-a12|il y a une lettre au début","+7","-3.14|le point n'est pas un chiffre","-deux","-20 24|l'espace n'est pas un chiffre"],
+ ["[0-9]+","+2024","+12a|12 suffit","+a12|12 suffit","-tp","+x7y|7 suffit","-deux","+3.14"],
+ ["^[0-9]","+2024","+12a|le début est un chiffre, la suite est libre","-a12|le premier caractère est une lettre","+7up","-tp3|le chiffre n'est pas au début","-x","+3 pommes"],
+ ["[0-9]$","+tp3","-3tp|le chiffre n'est pas à la fin","+a12","-12a|le dernier caractère est une lettre","-note","+v2","-2 fois"],
+ ["^[a-z]+$","+note","-Note|N est une majuscule","-tp3|3 n'est pas une lettre","+abc","-a b|l'espace n'est pas une lettre","+x","-a.b"],
+ ["^[A-Z]","+Note","-note","+NOTE","-nOTE|le premier caractère est une minuscule","+Tp3","-3A|le premier caractère est un chiffre","+A"],
+ ["\\.py$","+tp1.py","-tp1.pyc|il y a un c après {.py}","-copy|il n'y a pas de point","-tp.py.txt|{.py} n'est pas à la fin","+a.py","-xpy|il n'y a pas de point","+.py"],
+ [".py$","+tp1.py","+copy|le point accepte n'importe quel caractère, ici o","+xpy|le point accepte n'importe quel caractère, ici x","-py|il faut un caractère avant py","-a.pyc","+happy","-pyx"],
+ ["a.c","+abc|le point accepte b","+a.c","-ac|il faut un caractère entre a et c","+aXc","-bac|il n'y a rien entre a et c","-a..c|il y a deux caractères entre a et c","+xa-cx|a-c est au milieu, et rien n'oblige à être au début ou à la fin"],
+ ["a\\.c","-abc|b n'est pas un point","+a.c","-ac","+xa.cx|rien n'oblige à être au début ou à la fin","-a..c","-A.c|A est une majuscule","-a,c"],
+ ["ab*c","+ac|b peut manquer : * accepte zéro fois","+abc","+abbbc","-ab|il manque c","-abxc|x n'est pas un b","-bc|il manque a","+xacx"],
+ ["ab+c","-ac|il faut au moins un b","+abc","+abbbc","-ab","-abxc","+aabcc|abc est au milieu","-a+c|ici + n'est pas un caractère à chercher"],
+ ["ab?c","+ac|b peut manquer","+abc","-abbc|un seul b au plus","+xacx","-abxc","-bc","-ab"],
+ ["^[^.]*$","+notes","-a.b|il y a un point","+README","-tp1.py","+2024","-.|c'est un point","+a,b"],
+ ["^[^.]*\\.[^.]*$","+a.b","-notes|il n'y a pas de point","-a.b.c|il y a deux points","+tp1.py","+.|rien avant, rien après : * accepte zéro fois","-v1.2.3","+a."],
+ ["^[0-9]+\\.[0-9]+$","+3.14","-3,14|une virgule n'est pas un point","-12.|il manque des chiffres après le point","-.5|il manque des chiffres avant le point","-10.0.1|il y a deux points","-a1.2","+1.2"],
+ ["[0-9]+\\.[0-9]+","+3.14","+v1.2.3|1.2 suffit","-12.","+pi=3.14 ok|3.14 est au milieu","-3,14","-1.x","-.5"],
+ ["\\.jpe?g$","+a.jpg","+a.jpeg","-a.jpeeg|un seul e au plus","-a.jpg.txt|{.jpg} n'est pas à la fin","-jpg|il n'y a pas de point","-b.JPG|ce sont des majuscules","-a.jpe"],
+ ["\\.(py|sh)$","+a.py","+b.sh","-c.pyc","-sh|il n'y a pas de point","-x.sh.old","-d.zsh|le point n'est pas juste avant sh","+.sh"],
+ ["^(tp|td)[0-9]$","+tp1","+td2","-tp12|un seul chiffre","-te1","-tp|il manque le chiffre","-xtp1","-TD1"],
+ ["^[0-9]{2}$","+12","-7|un seul chiffre","-123|trois chiffres","-ab","-1a","+00","-1 2"],
+ ["[0-9]{2}","+12","-7","+123|12 suffit : rien n'oblige à prendre toute la ligne","-a1b2|les deux chiffres ne se suivent pas","+x45y","-1 2","+2024"],
+ ["^[A-Z][a-z]+$","+Paul","-paul","-PAUL|après la majuscule, il faut des minuscules","-P|il faut au moins une minuscule","-Jean3","+Marie","-Jean Paul"],
+ ["^[0-9]{2}/[0-9]{2}/[0-9]{4}$","+12/03/2024","-1/3/2024|il faut deux chiffres pour le jour","-12-03-2024","-12/03/24|il faut quatre chiffres pour l'année","+99/99/9999|l'expression ne vérifie pas que la date existe","-le 12/03/2024|il y a du texte avant","-12/03/2024."],
+ ["^0[0-9]{9}$","+0612345678","-1612345678|le premier chiffre n'est pas 0","-061234567|neuf chiffres seulement","-06123456789|onze chiffres","-06 12 34 56 78|les espaces ne sont pas des chiffres","+0000000000","-O612345678|c'est la lettre O"],
+ ["^-?[0-9]+$","+-12","+12|le signe moins peut manquer","---12|un seul signe moins au plus","--|il manque les chiffres","-1-2","-+12","+0"],
+ ["^[a-z]+[0-9]*$","+tp|les chiffres peuvent manquer","+tp12","-12|il faut au moins une lettre au début","-tp12b|il y a une lettre après les chiffres","-TP1","+t1","-tp 1"],
+ ["^[^0-9]+$","+notes","-tp3|il y a un chiffre","+a.b","-2024","+A b","+x","-v2"],
+ ["^[a-zA-Z0-9]+$","+tp3","-tp_3|_ n'est ni une lettre ni un chiffre","+Tp3","-a.b","+2024","-a b","+X"],
+ ["^.{3}$","+abc","-ab|deux caractères seulement","-abcd|quatre caractères","+a.c","+123","+a c|l'espace est un caractère comme un autre","-a"],
+ ["^[0-9].*[0-9]$","+2024","+1a2","-12a|le dernier caractère est une lettre","-a12","-7|il faut un chiffre au début et un autre à la fin","+1 et 2","+3.14"],
+ ["^[^.]*\\.[^.]*\\.[^.]*$","+a.b.c","-a.b|un seul point","-v1.2.3.4|trois points","+..|deux points, et rien autour","+1.2.3","+a..b","-abc"],
+ ["^tp","+tp1.py","-atp.py|tp n'est pas au début","+tp","-Tp1","+tpx","-t p","-1tp"],
+ ["txt$","+notes.txt","+txt","-notes.txt.old","+montxt|aucun point n'est demandé","-txt2","-TXT","+a.txt"],
+ ["^[a-z]+\\.[a-z]+$","+notes.txt","-Notes.txt","-notes.","-tp1.py|1 n'est pas une lettre","+a.b","-a.b.c","-notes"]];
+const NOMCL={"[0-9]":"un chiffre","[a-z]":"une lettre minuscule","[A-Z]":"une lettre majuscule","[a-zA-Z]":"une lettre","[a-zA-Z0-9]":"une lettre ou un chiffre","[^.]":"un caractère autre qu'un point","[^0-9]":"un caractère autre qu'un chiffre"};
+function lecture(re){const L=[],J=re.match(/\\.|\[\^?\]?[^\]]*\]|\([^()]*\)|\{[^}]*\}|[\s\S]/g)||[],Q={"*":"zéro fois ou plus","+":"une fois ou plus","?":"zéro ou une fois"};
+  for(let i=0;i<J.length;i++){const x=J[i],q=/^([*+?]|\{.*\})$/.test(J[i+1]||"")?J[++i]:"";let sens,texte=false;
+    if(x==="^")sens="le début de la ligne";else if(x==="$")sens="la fin de la ligne";else if(x===".")sens="un caractère quelconque";
+    else if(x[0]==="\\")sens=x==="\\."?"un vrai point":`le caractère ${cr(x[1])}`;
+    else if(x[0]==="[")sens=NOMCL[x]||(x[1]==="^"?"un caractère qui n'est pas dans la liste":"un caractère de la liste");
+    else if(x[0]==="(")sens=x.slice(1,-1).split("|").map(cr).join(" ou ");
+    else{sens=q?`le caractère ${cr(x)}`:`le texte ${cr(x)}`;texte=!q;}
+    if(q){const m=/^\{(\d+)(,(\d*))?\}$/.exec(q);sens+=", "+(Q[q]||(m[2]===undefined?`exactement ${m[1]} fois`:m[3]===""?`au moins ${m[1]} fois`:`de ${m[1]} à ${m[3]} fois`));}
+    const d=L[L.length-1];if(texte&&d&&d.texte){d.bout+=x;d.sens=`le texte ${cr(d.bout)}`;}else L.push({bout:x+q,sens,texte});}
+  return L;}
+const LECT=[
+  ["ancres ignorées",re=>/^\^|[^\\]\$$/.test(re)?[re.replace(/^\^/,"").replace(/([^\\])\$$/,"$1"),{}]:null,`${cr("^")} colle l'expression au début de la ligne et ${cr("$")} à la fin : tu as coché des lignes où la forme est seulement quelque part dans la ligne.`],
+  ["expression lue comme si elle prenait toute la ligne",re=>/^\^/.test(re)&&/[^\\]\$$/.test(re)?null:[re,{x:1}],`Sans ${cr("^")} au début (ou sans ${cr("$")} à la fin), il suffit qu'un morceau de la ligne ait cette forme : la ligne n'a pas besoin de l'avoir en entier.`],
+  ["point lu comme un vrai point",re=>{const u=hors(re,".","\\.");return u===re?null:[u,{}];},`Le point seul veut dire « n'importe quel caractère ». Un vrai point s'écrit ${cr("\\.")}, avec une barre oblique inverse devant.`],
+  ["* ou ? lus comme « au moins une fois »",re=>{const u=hors(hors(re,"*","+"),"?","");return u===re?null:[u,{}];},`${cr("*")} veut dire « zéro fois ou plus » et ${cr("?")} « zéro ou une fois » : ce qui les précède peut manquer.`]];
+const arboDe=F=>dossier("",[dossier("home",[dossier("etu",[dossier("projet",F)])])]);
+const brut=h=>String(h).replace(/<[^>]+>/g,"").replace(/&#36;/g,"$").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&amp;/g,"&");
+function exoLire(R){const X=R.choix(LIRE),re=X[0],f=filtre(re,"E").f,T=X.slice(1).map(s=>{const [l,pq]=s.slice(1).split("|");return {s:l,veut:s[0]==="+",pq:d36((pq||"").replace(/\{([^}]*)\}/g,(m,x)=>c(x)))};});
+  T.forEach(x=>{if(f(x.s)!==x.veut)throw new Error(re+" : « "+x.s+" » est mal prévue");});
+  const L=R.mel(T).slice(0,6),bon=L.map(x=>x.veut),N=bon.filter(Boolean).length;if(!N||N===6)return null;
+  const cmd=`grep -E "${re}" lignes.txt`,deb=re[0]==="^",fin=/[^\\]\$$/.test(re),bonnes=L.filter(x=>x.veut).map(x=>x.s),ids=L.map((_,i)=>String(i)).filter(i=>bon[i]);
+  function juge(rep){const S=(rep.g||[]).map(String);if(!S.length)return {incomplet:"Coche les lignes que grep affiche."};
+    const moi=L.map((_,i)=>S.includes(String(i)));if(moi.every((v,i)=>v===bon[i]))return {ok:true};
+    const faux=(etape,type,titre,msg)=>({ok:false,faux:["g"],resume:"Pas tout à fait : ce ne sont pas les lignes que grep affiche.",diag:{etape,type,titre,msg}});
+    for(const [type,tr,msg] of LECT){const x=tr(re);if(!x)continue;const r=filtre(x[0],"E",x[1]);if(r.f&&L.every((y,i)=>r.f(y.s)===moi[i]))return faux(0,type,"Où ça part : la lecture de l'expression.",msg);}
+    const i=moi.findIndex((v,k)=>v!==bon[k]);
+    return faux(1,bon[i]?"ligne affichée oubliée":"ligne cochée à tort","Où ça part : une ligne.",`grep ${bon[i]?"affiche aussi":"n'affiche pas"} ${cr(L[i].s)}${L[i].pq?" : "+L[i].pq:""}.`);}
+  const E=[{w:`Lis l'expression morceau par morceau :<br>${lecture(re).map(o=>`${cr(o.bout)} : ${o.sens}`).join("<br>")}`,why:deb&&fin?`Avec ${cr("^")} et ${cr("$")}, c'est la ligne entière qui doit avoir cette forme.`:deb?`Avec ${cr("^")} seul, la ligne doit commencer par cette forme ; la suite est libre.`:fin?`Avec ${cr("$")} seul, la ligne doit finir par cette forme ; le début est libre.`:`Il n'y a ni ${cr("^")} ni ${cr("$")} : il suffit qu'un morceau de la ligne, n'importe où, ait cette forme.`,pts:1},
+    {w:`Ligne par ligne :<br>${L.map(x=>`${cr(x.s)} : ${x.veut?"affichée":"pas affichée"}${x.pq?` (${x.pq})`:""}`).join("<br>")}`,why:"grep affiche une ligne dès qu'il y trouve un morceau qui correspond à l'expression, et il l'affiche en entier.",pts:1},
+    {w:`<b>grep affiche ${N>1?"ces lignes":"cette ligne"}&nbsp;: ${bonnes.map(cr).join(", ")}</b>`,why:`${N} ligne${N>1?"s":""} sur 6.`,pts:1}];
+  return {sig:"R0"+re+"|"+L.map(x=>x.s).sort().join("|"),q:`Le fichier ${cr("lignes.txt")} contient les six lignes proposées plus bas. Coche celles qu'affiche cette commande.`,corps:blocr(cmd),texte:cmd+" — lignes : "+L.map(x=>x.s).join(" | "),
+    champs:[{k:"multi",id:"g",o:L.map((x,i)=>[String(i),cr(x.s)])}],juge,etapes:E,bonne:bonnes.map(cr).join(", "),bonneTxt:bonnes.join(" | "),repBonne:{g:ids},repFausse:{g:bon[0]?(ids.length>1?ids.slice(1):[ids[0],String(bon.indexOf(false))]):["0",...ids]},nature:"lire",
+    ens:{bash:[{arbo:arboDe([{n:"lignes.txt",c:T.map(x=>x.s).join("\n")+"\n"}]),cmd,abs:T.filter(x=>x.veut).map(x=>x.s).sort(),brut:true}],lignes:L.map(x=>x.s)}};}
+
+/* les énoncés : q finit la phrase « … qui vérifie qu'une chaîne de caractères », F est la forme */
+const un=k=>CLS[k][2],des=k=>CLS[k][3],suite=(...M)=>({deb:1,fin:1,M}),E1=[],E2=[],E3=[];
+const EXT=[["py","sh"],["c","h"],["jpg","jpeg","\\.jpe?g$",[["photo.jpeeg","il y a un e en trop"]],"examen de janvier 2026"],["jpg","png"],["txt","md"],["htm","html","\\.html?$",[["page.htmll","il y a un l en trop"]]],["csv","txt"],["log","txt"]];
+const ext=([a,b,autre,plus,src])=>({F:{fin:1,M:[Lit("."),Alt([a,b])],plus},note:autre?`Autre écriture, plus courte : ${cr(autre)}.`:"",src:src||""});
+const FICH=[["tp",".py"],["photo",".jpg"],["log",".txt"],["td",".c"]];
+for(const k of ["ch","mi","ma","le"])E1.push({fam:"que",q:`ne contient que des ${des(k)} (au moins ${un(k)})`,F:suite(Cl(k,1,99)),src:k==="ch"?"examen de janvier 2022":""});
+for(const k of ["ch","mi","ma"]){
+  E1.push({fam:"commence",q:`commence par ${un(k)}`,F:{deb:1,M:[Cl(k)]}},{fam:"finit",q:`se termine par ${un(k)}`,F:{fin:1,M:[Cl(k)]}},{fam:"contient",q:`contient au moins ${un(k)}`,F:{M:[Cl(k)]}});
+  for(const n of [2,3,4,5,6])E1.push({fam:"exact",q:`est faite d'exactement ${n} ${des(k)}, et de rien d'autre`,F:suite(Cl(k,n))});}
+for(const s of ["tp","2023","log","#","old","IMG"])E1.push({fam:"commenceL",q:`commence par ${cr(s)}`,F:{deb:1,M:[Lit(s)]}});
+for(const s of [".py",".txt",".log",".c",".sh",".csv",".jpg","#"])E1.push({fam:"finitL",q:`se termine par ${cr(s)}`,F:{fin:1,M:[Lit(s)]}});
+for(const s of [".","+","DATA"])E1.push({fam:"contientL",q:`contient ${s.length>1?cr(s):NOMCAR[s]+" ("+cr(s)+")"}`,F:{M:[Lit(s)]}});
+for(const [x,plus] of [[".",[["tp1.py","il y a un point"],["a.b.c","il y a des points"]]],["0-9",[["tp3","il y a un chiffre"],["2024","ce sont des chiffres"]]],["A-Z",[["Notes","N est une majuscule"],["tpA","A est une majuscule"]]],[" ",[["a b","il y a un espace"],["deux mots","il y a un espace"]]]])
+  E1.push({fam:"aucun",q:`ne contient ${NEG[x][0].replace(/^une /,"aucune ").replace(/^un /,"aucun ")}`,F:{deb:1,fin:1,vide:0,M:[Sauf(x)],plus}});
+
+for(const [s,nom] of [[".","un point"],[",","une virgule"],["-","un tiret"],["/","une barre oblique"],[":","un deux-points"]])E2.push({fam:"deuxEntiers",q:`ne contient que deux nombres entiers séparés par ${nom}`,F:suite(Nb(),Lit(s),Nb()),src:s==="."?"examen de janvier 2025":""});
+E2.push({fam:"nEntiers",q:"ne contient que trois nombres entiers séparés par des points",F:suite(Nb(),Lit("."),Nb(),Lit("."),Nb())},{fam:"nEntiers",q:"ne contient que quatre nombres entiers séparés par des points",F:suite(Nb(),Lit("."),Nb(),Lit("."),Nb(),Lit("."),Nb())});
+for(const [s,nom] of [[".","point"],["-","tiret"],["/","barre oblique"],[":","deux-points"]])[1,2,3].forEach(n=>{const M=[Sauf(s)],fois=["une","deux","trois"][n-1];for(let j=0;j<n;j++)M.push(Lit(s),Sauf(s));
+  E2.push({fam:"exactCar",q:`contient ${fois} fois (et seulement ${fois} fois) le caractère ${nom} (${cr(s)})`,src:n===2&&s==="."?"examen de janvier 2024":"",
+    F:{deb:1,fin:1,M,astuce:`Pour « seulement ${fois} fois », le reste de la chaîne ne doit contenir aucun ${nom} : ${cr("[^"+s+"]*")}, et pas ${cr(".*")}.`}});});
+for(const a of ["ch","mi","ma"])for(const b of ["ch","mi","ma"])E2.push({fam:"debFin",q:`commence par ${un(a)} et se termine par ${un(b)}`,F:{deb:1,fin:1,M:[Cl(a),Cl("to",0,99),Cl(b)],sans:a===b?s=>s.length===1:null},src:a==="ch"&&b==="ch"?"examen de janvier 2023":"",
+  note:a===b?`Avec un seul caractère, cette expression répond non, comme celle du corrigé de l'examen ; pour l'accepter aussi : ${cr(`^${CLS[a][0]}(.*${CLS[a][0]})?$`)}.`:""});
+for(const [f,s,L] of [["jj/mm/aaaa","/",[2,2,4]],["jj-mm-aaaa","-",[2,2,4]],["aaaa-mm-jj","-",[4,2,2]]])E2.push({fam:"date",q:`est une date de la forme ${cr(f)} : ${L.map(n=>(n===2?"deux":"quatre")+" chiffres").join(", "+NOMCAR[s]+", ")} (on ne vérifie pas que le jour et le mois existent)`,F:suite(Nb(L[0],L[0]),Lit(s),Nb(L[1],L[1]),Lit(s),Nb(L[2],L[2]))});
+E2.push({fam:"heure",q:`est une heure de la forme ${cr("hh:mm")} : deux chiffres, un deux-points, deux chiffres`,F:suite(Nb(2,2),Lit(":"),Nb(2,2))},{fam:"heure",q:`est une heure de la forme ${cr("hh:mm:ss")} : trois fois deux chiffres, séparés par des deux-points`,F:suite(Nb(2,2),Lit(":"),Nb(2,2),Lit(":"),Nb(2,2))});
+for(const [d,p] of [["0","1612345678"],["06","0712345678"],["07","0612345678"]])E2.push({fam:"numero",q:`est un numéro de téléphone : dix chiffres en tout, et il commence par ${cr(d)}`,F:{deb:1,fin:1,M:[Lit(d),Nb(10-d.length,10-d.length)],plus:[[p,`il ne commence pas par ${cr(d)}`]]}});
+for(const x of EXT)E2.push(Object.assign({fam:"ext2",q:`se termine par ${cr("."+x[0])} ou par ${cr("."+x[1])}`},ext(x)));
+E2.push({fam:"relatif",q:`est un nombre entier, avec ou sans signe moins devant (comme ${cr("-12")} ou ${cr("7")})`,F:suite(Lit("-",0),Nb())});
+for(const [s,nom] of [[",","une virgule"],[".","un point"]])E2.push({fam:"decimal",q:`est un nombre : des chiffres, puis, si on veut, ${nom} et d'autres chiffres (comme ${cr("12")} ou ${cr("12"+s+"5")})`,
+  F:{deb:1,fin:1,M:[Nb(),Grp([Lit(s),Nb()])],plus:[["12"+s,`il n'y a rien après ${nom}`],[s+"5",`il n'y a rien avant ${nom}`],["12x5",`${cr("x")} remplace ${nom}`],["1"+s+"2"+s+"3",`il y a deux fois ${nom}`]]}});
+[["commence par une lettre, et n'a ensuite que des lettres ou des chiffres (ou plus rien)",suite(Cl("le"),Cl("an",0,99))],
+ [`est faite d'une lettre majuscule suivie de lettres minuscules (au moins une), comme ${cr("Paul")}`,suite(Cl("ma"),Cl("mi",1,99))],
+ [`est faite de lettres minuscules (au moins une) suivies de chiffres (au moins un), comme ${cr("tp12")}`,suite(Cl("mi",1,99),Nb())],
+ [`est faite de lettres majuscules (au moins une) suivies de chiffres (au moins un), comme ${cr("AB12")}`,suite(Cl("ma",1,99),Nb())],
+ [`est faite de chiffres (au moins un) suivis de lettres minuscules (au moins une), comme ${cr("12ab")}`,suite(Nb(),Cl("mi",1,99))],
+ [`est une plaque de la forme ${cr("AB-123-CD")} : deux lettres majuscules, un tiret, trois chiffres, un tiret, deux lettres majuscules`,suite(Cl("ma",2),Lit("-"),Nb(3,3),Lit("-"),Cl("ma",2))]
+].forEach(([q,F])=>E2.push({fam:"suite",q,F}));
+for(const [a,b] of [["ma","ch"],["mi","ch"],["ch","ma"]])for(const [n,m] of [[2,3],[1,4],[3,2]]){const F=suite(Cl(a,n),Cl(b,m));E2.push({fam:"code",q:`est faite de : ${nomM(F.M[0])}, puis ${nomM(F.M[1])}, et rien d'autre`,F});}
+for(const [a,b] of FICH){const F=suite(Lit(a),Nb(),Lit(b));E2.push({fam:"fichier",q:`est un nom de fichier fait de : ${nomM(F.M[0])}, puis un chiffre ou plus, puis ${nomM(F.M[2])} (comme ${cr(a+"12"+b)})`,F});}
+for(const [k,a,b] of [["ch",2,4],["mi",3,8],["ma",2,3],["ch",1,3],["ch",3,99],["mi",2,99]])E2.push({fam:"bornes",q:`est faite ${b===99?"d'au moins "+a:"de "+a+" à "+b} ${des(k)}, et de rien d'autre`,F:suite(Cl(k,a,b))});
+
+/* palier 4 : ls donne les noms du dossier courant (ls:1), ou grep lit un fichier ; q finit « … qui » ou « … du fichier X » */
+for(const x of EXT)E3.push(Object.assign({fam:"ext2",ls:1,q:`se terminent par ${cr("."+x[0])} ou par ${cr("."+x[1])}`},ext(x)));
+for(const s of [".py",".txt",".log",".c",".sh",".csv"])E3.push({fam:"finitL",ls:1,q:`se terminent par ${cr(s)}`,F:{fin:1,M:[Lit(s)]}});
+for(const s of ["tp","2023","log","old","IMG"])E3.push({fam:"commenceL",ls:1,q:`commencent par ${cr(s)}`,F:{deb:1,M:[Lit(s)]}});
+const NOMS=["notes.txt","tp1.py","Rapport.pdf","README","2024.txt","1er-essai.c","photo2","tp1","Makefile","data.CSV","IMG_2023","main.c","resultats","td3"];
+for(const k of ["ch","ma","mi"])E3.push({fam:"commence",ls:1,q:`commencent par ${un(k)}`,F:{deb:1,M:[Cl(k)],plus:NOMS}},{fam:"finit",ls:1,q:`se terminent par ${un(k)}`,F:{fin:1,M:[Cl(k)],plus:NOMS}});
+E3.push({fam:"contient",ls:1,q:"contiennent au moins un chiffre",F:{M:[Cl("ch")],plus:NOMS}},{fam:"que",ls:1,q:"ne sont faits que de lettres minuscules",F:{deb:1,fin:1,M:[Cl("mi",1,99)],plus:NOMS}},{fam:"que",ls:1,q:"ne sont faits que de chiffres",F:{deb:1,fin:1,M:[Nb()],plus:[...NOMS,"2024","42"]}});
+for(const [a,b] of FICH)E3.push({fam:"fichier",ls:1,q:`sont faits de : ${nomM(Lit(a))}, puis un chiffre ou plus, puis ${nomM(Lit(b))} (comme ${cr(a+"12"+b)})`,F:suite(Lit(a),Nb(),Lit(b))});
+E3.push(
+ {fam:"ip",q:"dans lesquelles apparaît au moins une adresse IP (à peu près : quatre nombres entiers séparés par des points)",src:"examen de juin 2025",F:{M:[Nb(),Lit("."),Nb(),Lit("."),Nb(),Lit("."),Nb()],
+   plus:["connexion depuis 192.168.1.20","ping 8.8.8.8 ok","serveur 10.0.0.1 en panne",["version 2.4.1 du logiciel","il n'y a que trois nombres"],["ticket 1234567 ouvert","il n'y a aucun point"],["prix : 12.50 euros","il n'y a que deux nombres"],["a.b.c.d","ce ne sont pas des nombres"]]}},
+ {fam:"dateDans",q:`qui contiennent une date de la forme ${cr("jj/mm/aaaa")} (deux chiffres, une barre oblique, deux chiffres, une barre oblique, quatre chiffres)`,F:{M:[Nb(2,2),Lit("/"),Nb(2,2),Lit("/"),Nb(4,4)],
+   plus:["rendu le 12/03/2024","note du 05/11/2026 : 14",["rendu le 12-03-2024","des tirets remplacent les barres obliques"],["le 5/11/2026","le jour n'a qu'un chiffre"],["page 12/03","il manque l'année"]]}},
+ {fam:"heureDans",q:`qui contiennent une heure de la forme ${cr("hh:mm")} (deux chiffres, un deux-points, deux chiffres)`,F:{M:[Nb(2,2),Lit(":"),Nb(2,2)],plus:["debut 08:30","fin : 17:45 salle 3",["8h30","il n'y a pas de deux-points"],["score 3:2","il n'y a qu'un chiffre de chaque côté"]]}},
+ {fam:"virgule",q:"qui contiennent un nombre à virgule (des chiffres, une virgule, des chiffres)",F:{M:[Nb(),Lit(","),Nb()],plus:["moyenne : 12,5","total 3,14 m",["1, 2 et 3","il y a un espace après la virgule"],["12.5","c'est un point, pas une virgule"]]}},
+ {fam:"que",q:"qui ne contiennent que des chiffres (au moins un)",F:suite(Nb())},
+ {fam:"commence",q:"qui commencent par un chiffre",F:{deb:1,M:[Cl("ch")],plus:["3 pommes","12 mars",["le 12 mars","le chiffre n'est pas au début"]]}},
+ {fam:"commence",q:"qui commencent par une lettre majuscule",F:{deb:1,M:[Cl("ma")],plus:["Bonjour","ERREUR 12",["bonjour Paul","la majuscule n'est pas au début"]]}},
+ {fam:"finit",q:"qui se terminent par un point",F:{fin:1,M:[Lit(".")],plus:["Fin du test.",["Fin du test. ok","le point n'est pas à la fin"]]}},
+ {fam:"finit",q:"qui se terminent par un chiffre",F:{fin:1,M:[Cl("ch")],plus:["total : 42",["42 points","le chiffre n'est pas à la fin"]]}},
+ {fam:"deuxEntiers",q:"qui sont faites de deux nombres entiers séparés par un point, et de rien d'autre",F:suite(Nb(),Lit("."),Nb())},
+ {fam:"commenceL",q:`qui commencent par ${cr("ERREUR")}`,F:{deb:1,M:[Lit("ERREUR")],plus:["ERREUR disque plein",["aucune ERREUR ici","ERREUR n'est pas au début"],["erreur 12","c'est écrit en minuscules"]]}},
+ {fam:"aucun",q:"qui ne contiennent aucun chiffre",F:{deb:1,fin:1,vide:0,M:[Sauf("0-9")],plus:["rien a signaler",["erreur 12","il y a un chiffre"]]}},
+ {fam:"deuxChiffres",q:"qui contiennent au moins deux chiffres à la suite",F:{M:[Cl("ch",2)],plus:["salle 12","en 2024",["a1b2","les deux chiffres ne se suivent pas"],["1 2 3","les chiffres sont séparés par des espaces"]]}});
+
+const SYM=[["^","^"],["＄","$"],["[0-9]","[0-9]"],["[a-z]","[a-z]"],["[A-Z]","[A-Z]"],["[^","[^"],["]","]"],["\\.","\\."],["+","+"],["*","*"],["{","{"],["}","}"]];
+function ancres(F,B,s){const tr=B.find(x=>!x.ok&&/en trop au début|en trop à la fin/.test(x.pq)),lg=filtre(ecrit(F),"E",{x:1});
+  return F.deb&&F.fin?[`Toute la chaîne doit avoir cette forme : ${cr("^")} au début et ${cr("$")} à la fin.`,`Sans eux, il suffirait qu'un morceau de la chaîne ait cette forme${tr?` : ${cr(tr.s)} passerait`:""}.`]
+    :F.deb?[`Seul le début est imposé : ${cr("^")} au début, et pas de ${cr("$")}.`,`${cr("^")} colle l'expression au début de la chaîne ; ce qui suit est libre.`]
+    :F.fin?[`Seule la fin est imposée : ${cr("$")} à la fin, et pas de ${cr("^")}.`,`${cr("$")} colle l'expression à la fin de la chaîne ; ce qui précède est libre.`]
+    :[`La forme peut être n'importe où dans la chaîne : ni ${cr("^")} ni ${cr("$")}.`,`Avec ${cr("^")} et ${cr("$")}, la chaîne entière devrait avoir cette forme${lg.f("ab"+s+"yz")?"":`, et ${cr("ab"+s+"yz")} serait refusée`}.`];}
+const fausses=(F,ref)=>[F.fin&&ref.slice(0,-1),F.deb&&ref.slice(1),ref.replace(/\\\./g,"."),ref.replace(/([\])])\+/g,"$1*"),F.deb&&F.fin?null:"^"+ref.replace(/^\^|\$$/g,"")+"$",ref.replace(/\[0-9\]/g,"[a-z]"),".*"].filter(x=>x&&x!==ref);
+function exoExpr(R,p){const X=R.choix(p===1?E1:E2),F=X.F,ref=ecrit(F),B=banque(F),juge=rep=>jugeExpr(rep.e,B,F);
+  const q=`Donne l'expression régulière qui vérifie qu'une chaîne de caractères ${X.q}.`,ex=fab(F,R,{plein:1}),s=(F.deb?"":"ab")+ex.s+(F.fin?"":"yz"),an=ancres(F,B,ex.s);
+  const oui=B.filter(x=>x.ok&&x.s),non=B.filter(x=>!x.ok&&x.s&&x.pq),parts=ex.parts.filter(Boolean);
+  const E=[{w:`Un exemple qui doit passer : ${cr(s)}.${parts.length>1?` Découpe-le en morceaux : ${parts.map(cr).join(" · ")}.`:s!==ex.s?` Le morceau qui compte : ${cr(ex.s)}.`:""}`,why:"C'est la méthode du cours : chaque morceau de l'exemple va devenir un bout de l'expression.",pts:1},
+    {w:`Un bout d'expression par morceau :<br>${F.M.map((m,k)=>`${ex.parts[k]?cr(ex.parts[k])+" : ":""}${nomM(m)} → ${cr(ecritM(m))}`).join("<br>")}`,why:"Les signes : "+pourquoi(F.M),pts:1.5},
+    {w:an[0],why:an[1],pts:1},
+    {w:`L'expression : <b>${cr(ref)}</b>`,why:`Elle accepte ${oui.slice(0,2).map(x=>cr(x.s)).join(" et ")}.${non.length?` Elle refuse ${non.slice(0,3).map(x=>`${cr(x.s)} (${x.pq})`).join(", ")}.`:""}${/\[0-9\]/.test(ref)?` Dans un corrigé, ${cr("[0-9]")} s'écrit aussi ${cr("\\d")} ; dans une commande grep, garde ${cr("[0-9]")}.`:""}${X.note?" "+X.note:""}${X.src?` C'est la question de l'${X.src}.`:""}`,pts:0.5}];
+  const cand=fausses(F,ref),fausse=cand.find(x=>juge({e:x}).ok===false);if(!fausse)return null;
+  const A=arboDe([{n:"lignes.txt",c:B.map(x=>x.s).join("\n")+"\n"}]),garde=(re,m)=>{const r=filtre(re,m);return r.f?B.map(x=>x.s).filter(r.f).sort():null;};
+  return {sig:"R"+p+q,q,corps:"",texte:brut(q),champs:[{k:"champ",id:"e",nom:"expression",label:"L'expression régulière :",ex:"par exemple ^[a-z]+",apercu:false,sym:p===1?SYM:SYM.concat([["?","?"],["(","("],["|","|"],[")",")"]])}],juge,etapes:E,
+    bonne:cr(ref),bonneTxt:ref,repBonne:{e:ref},repFausse:{e:fausse},nature:X.fam,
+    ens:{F,B,bash:[["E",ref],["G",ref],["P",ref.replace(/\[0-9\]/g,"\\d")],...cand.slice(0,5).map(x=>["E",x])].map(([m,re])=>({arbo:A,cmd:`grep ${m==="G"?"":"-"+m+" "}-e '${re}' lignes.txt`,abs:garde(re,m),brut:true})).filter(x=>x.abs)}};}
+function exoCmd(R){const X=R.choix(E3),F=X.F,ref=ecrit(F),ls=!!X.ls,nom=ls?"":R.choix(["log.txt","notes.txt","mesures.txt","journal.log"]);
+  const B=ls?banque(F).filter(x=>x.s&&!/[\/ ]/.test(x.s)&&!/^[.-]/.test(x.s)):banque(F),ved=new Set((F.plus||[]).map(x=>Array.isArray(x)?x[0]:x)),devant=L=>L.filter(x=>ved.has(x.s)).concat(L.filter(x=>!ved.has(x.s)));
+  const bon=devant(B.filter(x=>x.ok)).map(x=>x.s),non=devant(B.filter(x=>!x.ok&&x.s));if(bon.length<2||non.length<3)return null;
+  const T=arboDe(ls?B.map(x=>fichier(x.s)):[{n:nom,c:B.map(x=>x.s).join("\n")+"\n"},{n:"README",c:"projet\n"}]),cmd=ls?`ls | grep -E "${ref}"`:`grep -E "${ref}" ${nom}`,juge=rep=>jugeCmd(rep.c,T,B,{ls,nom,F});
+  const q=ls?`Donne une commande qui, en utilisant une expression régulière, affiche les noms des fichiers du dossier courant qui ${X.q}.`:`Donne la commande qui affiche les lignes du fichier ${cr(nom)} ${X.q}.`,an=ancres(F,B,fab(F,R,{plein:1}).s);
+  const E=[{w:ls?`D'où viennent les lignes : ${cr("ls")} donne les noms du dossier courant, et le tube ${cr("|")} les envoie à grep.`:`D'où viennent les lignes : grep lit le fichier, dont on écrit le nom à la fin : ${cr("grep … "+nom)}.`,why:ls?"Quand sa sortie part dans un tube, ls écrit un nom par ligne. grep garde les lignes où il trouve l'expression.":`${cr("cat "+nom+" | grep …")} marche aussi : grep lit alors ce qui arrive par le tube.`,pts:1},
+    {w:`L'expression : ${cr(ref)}<br>${F.M.map(m=>`${nomM(m)} → ${cr(ecritM(m))}`).join("<br>")}`,why:`${an[0]} Les signes : ${pourquoi(F.M)}`,pts:1.5},
+    {w:`L'option ${cr("-E")} et les guillemets : ${cr(`grep -E "${ref}"`)}`,why:`Sans ${cr("-E")}, grep prend + ? | ( … ) { … } pour des caractères ordinaires. Les guillemets empêchent bash de toucher à l'expression : sans eux, il enlève les barres obliques inverses et peut remplacer * ou ? par des noms de fichiers. Dans une commande grep, écris ${cr("[0-9]")} : grep -E ne connaît pas ${cr("\\d")}.`,pts:1},
+    {w:`La commande : <b>${cr(cmd)}</b>`,why:`Sur ${ls?"le dossier":"le fichier"} d'essai, elle affiche ${bon.slice(0,3).map(cr).join(", ")}${bon.length>3?"…":""} ; elle n'affiche pas ${non.slice(0,3).map(x=>cr(x.s)+(x.pq?` (${x.pq})`:"")).join(", ")}.${X.src?` C'est la question de l'${X.src}.`:""}${X.note?" "+X.note:""}`,pts:0.5}];
+  const avec=re=>cmd.replace(`"${ref}"`,()=>`"${re}"`),cand=[cmd.replace("grep -E","grep"),...fausses(F,ref).map(avec)],fausse=cand.find(x=>juge({c:x}).ok===false);if(!fausse)return null;
+  const essais=[cmd,cmd.replace(/"/g,"'"),cmd.replace("grep -E","egrep"),cmd.replace("grep -E","grep"),ls?null:`cat ${nom} | grep -E "${ref}"`,/[{(|]/.test(ref)?null:cmd.replace(/"/g,""),avec(ref.replace(/\[0-9\]/g,"\\d")),...cand.slice(1,4)].filter(Boolean);
+  return {sig:"R3"+q,q,corps:"",texte:brut(q),champs:[{k:"champ",id:"c",nom:"commande",label:"La commande :",ex:"… grep …",apercu:false,sym:[["ls","ls "],["|","| "],["grep -E","grep -E "],['"','"'],["^","^"],["＄","$"],["[0-9]","[0-9]"],["[a-z]","[a-z]"],["\\.","\\."],["+","+"],["?","?"],["(","("],[")",")"],["{","{"],["}","}"]]}],juge,etapes:E,
+    bonne:cr(cmd),bonneTxt:cmd,repBonne:{c:cmd},repFausse:{c:fausse},nature:X.fam,
+    ens:{F,B,bash:[...new Set(essais)].map(x=>{const P=planGrep(x,T),J=P.greps?joue(P):P;return J.sortie?{arbo:T,cmd:x,abs:J.sortie.slice().sort(),brut:true}:null;}).filter(Boolean)}};}
+const tireRe=k=>R=>{for(;;){const e=k===0?exoLire(R):k===3?exoCmd(R):exoExpr(R,k);if(e)return e;}};
+
 G.add("usi",[
  {id:"US5",t:"find : chercher des fichiers",tache:"find",th:"recherche",pts:1.5,lecons:["u-find"],
   paliers:[
    {t:"ce qu'affiche une commande find",cc:2,gen:tireFind(0)},
    {t:"écrire la commande : départ et nom",cc:2,min:60,gen:tireFind(1)},
    {t:"avec -type",cc:2,min:70,gen:tireFind(2)},
-   {t:"avec -exec, comme aux examens",cc:2,min:120,gen:tireFind(3)}]}
+   {t:"avec -exec, comme aux examens",cc:2,min:120,gen:tireFind(3)}]},
+ {id:"US6",t:"Expressions régulières",tache:"expressions régulières",th:"recherche",pts:1.5,lecons:["u-regex"],
+  paliers:[
+   {t:"ce que garde une expression",cc:2,min:150,gen:tireRe(0)},
+   {t:"écrire l'expression : début, fin, un morceau",cc:2,min:45,gen:tireRe(1)},
+   {t:"plusieurs morceaux, comme aux examens",cc:2,min:65,gen:tireRe(2)},
+   {t:"la commande grep -E entière",cc:3,min:60,gen:tireRe(3)}]}
 ]);
 })();
 
