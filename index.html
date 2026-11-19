@@ -20785,7 +20785,7 @@ function joueT(P,args,o){o=o||{};const env={},photos=[],n={cmp:0,ech:0,dec:0,tou
     const a=val(e[1]),b=val(e[2]);if(!(k in PRIO)&&(estT(e[1])||estT(e[2])))n.cmp++;return CALC[k](a,b);};
   const pose=(v,x)=>{if(typeof v==="string"){env[v]=x;return;}const t=env[v[1]],i=val(v[2]);hors(t,i);t[i]=x;};
   let haut=-1;
-  const run=(C,niv)=>{for(const s of C){if(++garde>60000)throw new Error("boucle sans fin");
+  const run=(C,niv)=>{for(const s of C){if(++garde>(o.garde||60000))throw new Error("boucle sans fin");
     if(s.k==="aff"){if(estT(s.v)&&estT(s.e))n.dec++;pose(s.v,val(s.e));}
     else if(s.k==="aff2"){const X=s.e.map(val);s.v.forEach((v,i)=>pose(v,X[i]));}
     else if(s.k==="init")env[s.t]=Array(val(s.taille)).fill(0);
@@ -21014,6 +21014,72 @@ function tqVal(R){const {p,n,T}=tirageVal(R),X=joueT(TRIVAL(),[T,p]),tours=X.tou
     champs:[champNb("t","Tours du tant que :"),champNb("k","Valeur de k à la fin :")],juge,etapes:E,bonne:`${tours} tours, ${fx(`k = ${kf}`)}`,bonneTxt:`${tours} tours, k = ${kf}`,repBonne:{t:String(tours),k:String(kf)},repFausse:{t:String(n),k:String(kf)},nature:mx<p-1?"plus grande valeur absente":"jusqu'à p − 1",ens:{type:"tqv",T,p,tours,kf}};}
 
 /* ---------- questions de cours du CC3, sur papier ---------- */
+/* ---------- AG14 : la ligne fausse d'une recherche ou d'un tri ---------- */
+function lisExprT(src){const T=[];const re=/\s*(\d+|[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_]*|≤|≥|≠|[-+*()<>=,\[\]])/y;
+  const t=src.replace(/<=|=</g,"≤").replace(/>=|=>/g,"≥").replace(/!=|<>/g,"≠").replace(/[×·]/g,"*").replace(/[−–]/g,"-").trim();let m;
+  while(re.lastIndex<t.length){m=re.exec(t);if(!m)return null;T.push(m[1]);}
+  let p=0;const nx=()=>T[p],low=x=>x===undefined?x:x.toLowerCase();
+  const prim=()=>{const x=nx();if(x===undefined)return null;
+    if(x==="("){p++;const e=ou();if(e===null||nx()!==")")return null;p++;return e;}
+    if(x==="-"){p++;const e=prim();return e===null?null:typeof e==="number"?-e:["-",0,e];}
+    if(/^\d+$/.test(x)){p++;return +x;}
+    if(/^[A-Za-zÀ-ÿ_]/.test(x)&&!["div","mod","et","ou"].includes(low(x))){p++;
+      if(nx()==="["){p++;const e=ou();if(e===null||nx()!=="]")return null;p++;return IX(x,e);}
+      if(nx()==="("){p++;const A=[];if(nx()!==")"){for(;;){const e=ou();if(e===null)return null;A.push(e);if(nx()===","){p++;continue;}break;}}if(nx()!==")")return null;p++;
+        if(low(x)==="taille"&&A.length===1&&typeof A[0]==="string")return TA(A[0]);if(low(x)==="cond"&&A.length===3)return ["cond",...A];return null;}
+      return x;}
+    return null;};
+  const niveau=(suiv,ops)=>()=>{let a=suiv();while(a!==null&&ops.includes(low(nx()))){const o=low(T[p++]),b=suiv();a=b===null?null:[o,a,b];}return a;};
+  const mul=niveau(prim,["*","div","mod"]),add=niveau(mul,["+","-"]),cmp=niveau(add,["<","≤",">","≥","=","≠"]),et_=niveau(cmp,["et"]),ou=niveau(et_,["ou"]);
+  const e=ou();return e!==null&&p===T.length?e:null;}
+function lisLigneT(src){const t=propre(src).replace(/<-|:=/g,"←").replace(/;$/,"").trim();let m;
+  if((m=/^échanger\s+(.+?)\s+et\s+(.+)$/i.exec(t))){const a=lisExprT(m[1]),b=lisExprT(m[2]);return estT(a)&&estT(b)?{k:"ech",a,b}:null;}
+  if((m=/^pour\s+([A-Za-z])\s+de\s+(.+?)\s+(?:à|a)\s+(.+?)(\s+par\s+pas\s+de\s+-\s*1)?(?:\s+faire)?$/i.exec(t))){const a=lisExprT(m[2]),b=lisExprT(m[3]);return a===null||b===null?null:Object.assign({k:"pour",v:m[1],a,b},m[4]?{pas:-1}:{});}
+  if((m=/^tant\s*que\s+(.+?)(?:\s+faire)?$/i.exec(t))){const c=lisExprT(m[1]);return c===null?null:{k:"tq",cond:c};}
+  if((m=/^si\s+(.+?)(?:\s+alors)?$/i.exec(t))){const c=lisExprT(m[1]);return c===null?null:{k:"si",cond:c};}
+  if((m=/^renvoyer\s+(.+)$/i.exec(t))){const e=lisExprT(m[1]);return e===null?null:{k:"ret",e};}
+  if((m=/^(.+?)\s*←\s*(.+)$/.exec(t))){const v=lisExprT(m[1]),e=lisExprT(m[2]);return e!==null&&(typeof v==="string"&&/^[A-Za-z]+$/.test(v)||estT(v))?{k:"aff",v,e}:null;}
+  return null;}
+const ENT3={get der(){return this.dic;},lin:[[3,[]],[3,[3]],[5,[3]],[2,[1,2,2]],[4,[1,2,3]],[7,[7,1,7]],[1,[4,1]],[6,[2,6,4,6]]],dic:[[3,[]],[3,[3]],[1,[3]],[5,[3]],[3,[1,3,3,5,8]],[5,[1,3,3,5,8]],[4,[1,3,3,5,8]],[9,[1,3,3,5,8]],[0,[1,3,3,5,8]],[2,[2,2,2,2]],[6,[1,2,3,4,5,6]],[1,[1,2,3,4,5,6]]],
+  tri:[[[]],[[1]],[[2,1]],[[3,1,2]],[[1,2,3]],[[3,3,1]],[[5,2,4,1,3]],[[2,7,1,7,3,0,5]],[[6,5,4,3,2,1]]]};
+const PROGS3=[["lin",RECHLIN,"renvoyer le premier indice de T qui contient e, ou -1 si e n'est pas dans T"],["dic",()=>RECHDIC(false),"renvoyer le plus petit indice i tel que T[i] = e, ou -1 (T est trié)"],["der",()=>RECHDIC(true),"renvoyer le plus grand indice i tel que T[i] = e, ou -1 (T est trié)"],["tri",TRIBULLES,"trier T par ordre croissant"],["tri",TRISEL,"trier tab par ordre croissant"],["tri",TRIINS,"trier tab par ordre croissant"]];
+function resultats3(P,sorte){return ENT3[sorte].map(a=>{try{const X=joueT(P,a,{garde:4000});return sorte==="tri"?tabT(X.env[P.params[0]]):String(X.ret);}catch(e){return /hors/.test(e.message)?"une case qui n'existe pas est lue":"ne s'arrête pas";}});}
+/* toutes les retouches d'une ligne : un ± 1 en trop ou en moins, une comparaison changée, une valeur de départ changée */
+function retouches(s){const R=[],c=x=>JSON.parse(JSON.stringify(x));
+  const dans=(e,f)=>{if(!Array.isArray(e))return;if(e[0]==="+"&&e[2]===1){f(e,["x",e[1]]);f(e,["-",e[1],1]);}if(e[0]==="-"&&e[2]===1){f(e,["x",e[1]]);f(e,["+",e[1],1]);}if(e[0]==="="||e[0]==="≠")f(e,[e[0]==="="?"≠":"=",e[1],e[2]]);if(e[0]==="-"&&e[2]===2)f(e,["-",e[1],1]);
+    const CH={"<":["≤",">"],"≤":["<"],">":["≥","<"],"≥":[">"]};if(CH[e[0]])CH[e[0]].forEach(o=>f(e,[o,e[1],e[2]]));e.slice(1).forEach(x=>dans(x,f));};
+  const champs=s.k==="aff"?["e","v"]:s.k==="pour"?["a","b"]:s.k==="tq"||s.k==="si"?["cond"]:s.k==="ret"?["e"]:[];
+  champs.forEach(k=>{const essai=(cible,nouv)=>{const t=c(s),chemin=[];(function cherche(e,ch){if(e===cible){chemin.push(...ch);return true;}if(Array.isArray(e))return e.some((x,i)=>cherche(x,ch.concat([i])));return false;})(s[k],[]);
+      const remplace=(e,ch)=>{if(!ch.length)return nouv[0]==="x"?nouv[1]:nouv;const r=e.slice();r[ch[0]]=remplace(e[ch[0]],ch.slice(1));return r;};t[k]=remplace(s[k],chemin);R.push(t);};
+    dans(s[k],essai);});
+  if(s.k==="aff"&&typeof s.e==="number")[s.e+1,s.e-1].forEach(x=>{const t=c(s);t.e=x;R.push(t);});
+  if(s.k==="aff"&&typeof s.e==="string"&&s.e!=="a"){const t=c(s);t.e=0;R.push(t);}
+  if(s.k==="aff2")[0,1].forEach(i=>{if(typeof s.e[i]==="number"){const t=c(s);t.e[i]=s.e[i]+1;R.push(t);}});
+  return R;}
+function ligneFausse3(R,tri){for(;;){const [sorte,mk,dit]=tri?R.choix(PROGS3.slice(3)):R.choix(PROGS3.slice(0,3)),P0=mk(),bon=resultats3(P0,sorte),L0=lignesTn(P0.corps,1),F=[];
+  L0.forEach((l,i)=>{if(!l.n||l.n.k==="init")return;retouches(l.n).forEach(nv=>{const Q=JSON.parse(JSON.stringify(P0)),q=lignesTn(Q.corps,1)[i].n;Object.keys(q).forEach(k=>delete q[k]);Object.assign(q,nv);const r=resultats3(Q,sorte);if(r.some((x,j)=>x!==bon[j]))F.push({i,Q,r});});});
+  if(!F.length)continue;const f=R.choix(F),efface=R()<0.35,L1=lignesTn(f.Q.corps,1),num=f.i+1,j=bon.findIndex((x,k)=>x!==f.r[k]),entree=ENT3[sorte][j],sl=L0[f.i].n.k;
+  const montre=L1.map((l,i)=>String(i+1).padStart(2," ")+"  "+(efface&&i===f.i?l.t.replace(/\S.*$/,"…"):l.t)),texte=P0.entete.concat(["DÉBUT"],montre,["FIN"]).join("\n"),nom=P0.nom;
+  const cas=sorte==="tri"?`${fx(`${P0.params[0]} = ${tabT(entree[0])}`)}`:`${fx(`e = ${entree[0]}`)} et ${fx(`T = ${tabT(entree[1])}`)}`,attendu=sorte==="tri"?`le tableau doit devenir ${fx(bon[j])}`:`la fonction doit renvoyer ${bon[j]}`,obtenu=/case|arrête/.test(f.r[j])?(f.r[j]==="ne s'arrête pas"?"elle ne s'arrête jamais":"elle lit une case qui n'existe pas"):sorte==="tri"?`il devient ${fx(f.r[j])}`:`elle renvoie ${f.r[j]}`;
+  const E=[{w:efface?`La ligne ${num} doit être ${SORTE[sl]?SORTE[sl].replace(/, comme.*/,""):"une ligne « échanger »"}.`:`On essaie un petit cas : avec ${cas}, ${attendu}, mais ${obtenu}.`,why:efface?`On relit ce que doit faire l'algorithme du cours : ${dit}. Il manque une ligne de cette sorte à cet endroit.`:`Pour trouver une faute, on déroule l'algorithme sur un tout petit tableau, et on compare avec ce qu'il doit faire : ${dit}.`,pts:1},
+    {w:efface?`Sans elle, avec ${cas}, ${attendu}, mais ${obtenu}.`:`<b>La ligne fausse est la ligne ${num}</b> : « ${h(L1[f.i].t.trim())} ».`,why:"Une borne décalée d'une case, une comparaison stricte ou large, une valeur de départ : c'est ce qui change le résultat sur les petits cas, ou fait lire une case en dehors du tableau.",pts:1},
+    {w:`La ligne ${efface?"à écrire":"corrigée"} : <b>« ${h(L0[f.i].t.trim())} »</b>.`,why:`C'est la ligne de l'algorithme du cours. Avec elle, l'algorithme est juste sur tous les petits cas essayés.`,pts:1}];
+  function juge(rep){let k=f.i;
+    if(!efface){const x=nombre((rep.c||{})["ligne"]);if(!x||x.d!==1||x.n<1||x.n>L1.length)return {incomplet:`Donne d'abord le numéro de la ligne fausse : un entier entre 1 et ${L1.length}.`};k=x.n-1;
+      if(!L1[k].n||L1[k].n.k==="init")return {ok:false,faux:["ligne"],resume:`Pas tout à fait : la ligne ${k+1} ne peut pas être fausse.`,diag:{etape:1,type:"ligne fausse mal repérée",titre:"Où ça part : le numéro de la ligne.",msg:`La ligne ${k+1} ${L1[k].n?"prépare seulement le tableau":"ferme seulement un bloc"}. Cherche parmi les lignes qui calculent ou qui testent quelque chose.`}};}
+    if(!propre(rep.l))return {incomplet:`Écris aussi la ligne ${efface?"manquante":"corrigée"}, dans le pseudo-code du cours.`};
+    const lu=lisLigneT(rep.l),cible=L1[k].n;if(!lu)return {incomplet:"Je n'arrive pas à lire cette ligne. Écris-la comme dans le cours, par exemple « pour j de i+1 à n-1 faire », « si T[mil]<e alors » ou « deb ← mil+1 »."};
+    if(lu.k!==cible.k&&!(cible.k==="aff2"&&lu.k==="aff"))return {incomplet:`La ligne ${k+1} est ${SORTE[cible.k]?SORTE[cible.k].replace(/, comme.*/,""):"une ligne « échanger »"} : écris une ligne de la même sorte.`};
+    if(cible.k==="aff2")return {incomplet:"Cette ligne fait deux affectations : écris-la comme dans le cours, par exemple « deb, fin ← 0, taille(T)-1 »."};
+    const Q=JSON.parse(JSON.stringify(f.Q)),q=lignesTn(Q.corps,1)[k].n,garde={c:q.c,alors:q.alors,sinon:q.sinon};Object.keys(q).forEach(x=>delete q[x]);Object.assign(q,lu);["c","alors","sinon"].forEach(x=>{if(garde[x]!==undefined)q[x]=garde[x];});
+    const res=resultats3(Q,sorte);if(res.every((x,z)=>x===bon[z]))return {ok:true};const z=res.findIndex((x,y)=>x!==bon[y]),en=ENT3[sorte][z];
+    return {ok:false,faux:efface||k===f.i?["l"]:["ligne"],resume:"Pas tout à fait : avec cette ligne, l'algorithme ne fait pas ce qu'il faut.",diag:!efface&&k!==f.i?{etape:1,type:"ligne fausse mal repérée",titre:"Où ça part : le numéro de la ligne.",msg:`La ligne ${k+1} était juste. La faute est à la ligne ${num}.`}
+      :{etape:2,type:"ligne d'une recherche ou d'un tri",titre:"Où ça part : la ligne corrigée.",msg:`Avec ta ligne et ${sorte==="tri"?fx(`${P0.params[0]} = ${tabT(en[0])}`):`${fx(`e = ${en[0]}`)}, ${fx(`T = ${tabT(en[1])}`)}`}, on obtient « ${res[z]} » au lieu de « ${bon[z]} ».`}};}
+  const champs=(efface?[]:[{k:"cases",id:"c",noms:["ligne"]}]).concat([{k:"champ",id:"l",nom:"ligne",label:efface?`La ligne ${num} :`:"La ligne corrigée :",ex:"dans le pseudo-code du cours",apercu:false,sym:[["←"," ← "],["≤","≤"],["≥","≥"],["≠","≠"],["[","["],["]","]"],["div"," div "]]}]);
+  const bonL=L0[f.i].t.trim().replace(/−/g,"-");if(L0[f.i].n.k==="aff2")continue;
+  return {sig:"L3"+texte.replace(/\s+/g," ")+efface,q:efface?`Cet algorithme du cours a perdu sa ligne ${num}. Il doit ${dit}. Écris la ligne ${num}.`:`Une ligne de cet algorithme du cours est fausse. Il doit ${dit}. Donne le numéro de la ligne fausse, puis écris la ligne corrigée.`,
+    corps:code(texte),texte:`${nom} : ${efface?"ligne "+num+" effacée à écrire":"ligne fausse à trouver et à corriger"}`,champs,juge,etapes:E,bonne:`${efface?"":`ligne ${num} : `}« ${h(bonL)} »`,bonneTxt:`${efface?"":`ligne ${num} : `}${bonL}`,
+    repBonne:Object.assign(efface?{}:{c:{ligne:String(num)}},{l:bonL}),repFausse:Object.assign(efface?{}:{c:{ligne:String(num)}},{l:L1[f.i].t.trim().replace(/−/g,"-")}),nature:(efface?"effacée, ":"fausse, ")+nom,ens:{type:"l3",sorte,P0,P1:f.Q,num,efface}};}}
 const coursDic=()=>papierQ("QD","Questions de cours sur la recherche dichotomique (diapos 95 et 97).",`<ol type="a"><li>Prouve que RechDic s'arrête.</li><li>Donne sa complexité dans le pire cas, en expliquant le calcul.</li></ol>`,[
   ["a) fin − deb + 1 est un entier naturel ; il décroît strictement à chaque itération ; le tant que s'arrête lorsqu'il vaut 0 ou moins.","C'est la preuve de la diapo 95. fin − deb + 1 est le nombre de cases où on cherche encore : à chaque tour, on garde au plus la moitié.",1],
   ["Il y a donc un nombre fini d'itérations. Chaque itération se termine. Donc l'algorithme se termine.","Les trois phrases de conclusion du cours, à écrire telles quelles.",0.5],
@@ -21057,6 +21123,10 @@ G.add("algo",[
   paliers:[
    {t:"le tableau Cpt après le comptage",cc:3,gen:cptExo},
    {t:"les tours du tant que",cc:4,gen:tqVal}]},
+ {id:"AG14",t:"Trouver la ligne fausse d'une recherche ou d'un tri",tache:"ligne fausse d'une recherche ou d'un tri",th:"tris",ex:"cc3",pts:1,lecons:["a3-dicho","a3-tris"],apres:["AG9","AG11"],
+  paliers:[
+   {t:"la recherche linéaire ou dichotomique",cc:3,gen:R=>ligneFausse3(R,false),min:20},
+   {t:"le tri à bulles, par sélection ou par insertion",cc:4,gen:R=>ligneFausse3(R,true),min:30}]},
  {id:"AGQ4",t:"Question de cours : l'arrêt et la complexité de la recherche dichotomique",th:"dicho",ex:"cc3",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursDic}]},
  {id:"AGQ5",t:"Question de cours : complexités et propriétés des tris",th:"tris",ex:"cc3",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:5,gen:coursTris}]},
  {id:"AGQ6",t:"Question de cours : quel tri, quelles complexités possibles",th:"valeurs",ex:"cc3",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursQuelTri}]}
