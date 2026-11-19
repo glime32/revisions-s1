@@ -21177,13 +21177,355 @@ G.add("rai",[
 
 </script>
 <script>
-/* Générateurs de Géométrie. */
+/* Générateurs de Géométrie (CC2 : translations et homothéties, Pythagore, trigonométrie, aire, Al-Kashi, cercles). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils;
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nb,brut,propre}=O;
+const an=s=>`<span class="ang">${s}</span>`,ve=s=>`<span class="vec">${s}</span>`;
+const cosAn=s=>`<span class="en-nb">cos(${an(s)})</span>`,absAn=s=>`<span class="en-nb">|${an(s)}|</span>`;
+const fx=s=>s.replace(/[_{}^]/g,"").length>30?O.f(s):O.fx(s);
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+
+/* nombres exacts de la forme r√k : r rationnel, k entier sans facteur carré */
+function S(r,k){r=q(r);k=k||1;if(!r.n)return {r,k:1};let c=1;for(let d=2;d*d<=k;d++)while(k%(d*d)===0){k/=d*d;c*=d;}return {r:mul(r,c),k};}
+const sq=x=>x&&x.k?x:S(x);
+const val=x=>{x=sq(x);return x.r.n/x.r.d*Math.sqrt(x.k);};
+const fois=(a,b)=>{a=sq(a);b=sq(b);return S(mul(a.r,b.r),a.k*b.k);};
+const sur=(a,b)=>{a=sq(a);b=sq(b);return S(div(a.r,mul(b.r,b.k)),a.k*b.k);};
+const carre=a=>{a=sq(a);return mul(mul(a.r,a.r),a.k);};
+const racine=x=>{x=q(x);return S(Q(1,x.d),x.n*x.d);};
+const ecrit=x=>{x=sq(x);const n=Math.abs(x.r.n),d=x.r.d,s=x.r.n<0?"−":"";return x.k===1?s+n+(d===1?"":"/"+d):s+(n===1?"":n)+"√"+x.k+(d===1?"":"/"+d);};
+const tape=x=>ecrit(x).replace(/−/g,"-");
+const simple=x=>{x=sq(x);return x.k===1&&x.r.d===1&&x.r.n>=0;};
+const gr=x=>simple(x)?ecrit(x):"("+ecrit(x)+")";
+const c2=x=>gr(x)+"^{2}";
+/* « √20 = 2√5 », « √13 », « 5 » : la racine d'un rationnel, avec sa forme simplifiée */
+const racLigne=x=>{x=q(x);const s=racine(x),b="√"+(x.d===1?x.n:"("+nb(x)+")");return s.k===1||ecrit(s)===b?ecrit(s):b+" = "+ecrit(s);};
+const simplifie=x=>{x=q(x);const s=racine(x);if(x.d!==1||s.k===1||egal(s.r,1))return "";const c=s.r.n;return ` Pour simplifier : ${fx(`√${x.n} = √(${c*c} × ${s.k}) = ${c}√${s.k}`)}.`;};
+
+/* angles : une fraction de π */
+const angT=x=>{x=q(x);return !x.n?"0":(x.n===1?"":x.n)+"π"+(x.d===1?"":"/"+x.d);};
+const angV=x=>{x=q(x);return x.n/x.d*Math.PI;};
+const DEMI=Q(1,2);
+const TRIG={"0":[S(1),S(0)],"1/6":[S(DEMI,3),S(DEMI)],"1/4":[S(DEMI,2),S(DEMI,2)],"1/3":[S(DEMI),S(DEMI,3)],"1/2":[S(0),S(1)],"2/3":[S(Q(-1,2)),S(DEMI,3)],"3/4":[S(Q(-1,2),2),S(DEMI,2)],"5/6":[S(Q(-1,2),3),S(DEMI)],"1":[S(-1),S(0)]};
+const cosA=x=>TRIG[brut(x)][0],sinA=x=>TRIG[brut(x)][1];
+const NOMANG={"1/6":"30°","1/4":"45°","1/3":"60°","1/2":"90°","2/3":"120°","3/4":"135°","5/6":"150°"};
+/* pourquoi le cosinus ou le sinus a cette valeur */
+function pourquoiTrig(th,f){const k=brut(th),v=ecrit((f==="cos"?cosA:sinA)(th));
+  if(th.n===1)return `Valeur à connaître par cœur : ${angT(th)} radians, c'est ${NOMANG[k]}, et ${fx(`${f}(${angT(th)}) = ${v}`)}.`;
+  const s=Q(th.d-th.n,th.d);
+  return f==="cos"?`${fx(`${angT(th)} = π − ${angT(s)}`)} et ${fx("cos(π − x) = −cos(x)")} : le cosinus d'un angle obtus est négatif. Donc ${fx(`cos(${angT(th)}) = −cos(${angT(s)}) = ${v}`)}.`
+    :`${fx(`${angT(th)} = π − ${angT(s)}`)} et ${fx("sin(π − x) = sin(x)")} : le sinus d'un angle obtus reste positif. Donc ${fx(`sin(${angT(th)}) = sin(${angT(s)}) = ${v}`)}.`;}
+
+/* lecture d'une longueur ou d'un nombre exact, puis d'un angle */
+const pres=(a,b)=>a!==null&&Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b));
+const SYML=["√","/","(",")"],SYMA=["π","/","°"];
+const EXACT="C'est une valeur approchée. Au CC il faut la valeur exacte : garde la racine carrée ou la fraction, par exemple 2√5 ou 12√2/7.";
+function lisNombre(s,attendu,quoi){const t=propre(s);if(!t)return {inc:`Écris ${quoi||"ta réponse"}, par exemple 7, √13 ou 5√2/3.`};const v=O.calcule(t,{});
+  if(v===null||!isFinite(v))return {inc:"Je n'arrive pas à lire cette valeur. Écris par exemple 7, √13, 2√5 ou 5√2/3 : le bouton √ écrit la racine."};
+  const m=/\d[.,](\d+)/.exec(t);if(m&&!pres(v,attendu)&&Math.abs(v-attendu)<=0.6*Math.pow(10,-m[1].length))return {inc:EXACT};
+  return {v};}
+function lisAngle(s,attendu){const t=propre(s).toLowerCase().replace(/ /g,"");if(!t)return {inc:"Écris l'angle, par exemple π/3 : le bouton π écrit la lettre."};
+  const m=/^(.+?)(?:°|degr[ée]s?|deg)$/.exec(t),LIS="Je n'arrive pas à lire cet angle. Écris par exemple π/3 ou 2π/3, ou bien 60° avec le signe °.";
+  if(m){const d=O.calcule(m[1],{});return d===null?{inc:LIS}:{v:d*Math.PI/180};}
+  const v=O.calcule(t,{});if(v===null||!isFinite(v))return {inc:LIS};
+  if(!/π|pi/.test(t)&&v!==0&&pres(v*Math.PI/180,attendu))return {inc:`${t} quoi ? En radians, l'angle s'écrit avec π, par exemple π/3. En degrés, ajoute le signe °.`};
+  return {v};}
+
+/* figure à l'échelle : points en coordonnées mathématiques (y vers le haut), remis dans un cadre de 230 de large.
+   o : seg, tirets, droites [[P, Q]] ; cotes [[P, Q, texte]] ; angles [[P, sommet, Q, texte, rayon]] ; droits [[P, sommet, Q]] ;
+   marques [[P, Q, nombre de traits]] ; cercles [[centre, rayon]] ; points [noms] ; pos {nom: [dx, dy]} ; alt */
+function figure(P,o){const W=230,H=o.h||160,m=o.m||26,N=Object.keys(P);
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const eten=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  N.forEach(n=>eten(P[n][0],P[n][1]));(o.cercles||[]).forEach(c=>{const z=P[c[0]];eten(z[0]-c[1],z[1]-c[1]);eten(z[0]+c[1],z[1]+c[1]);});
+  const k=Math.min((W-2*m)/Math.max(x1-x0,1e-9),(H-2*m)/Math.max(y1-y0,1e-9)),ox=(W-k*(x1-x0))/2,oy=(H-k*(y1-y0))/2;
+  const p=n=>{const z=P[n];return [ox+k*(z[0]-x0),H-oy-k*(z[1]-y0)];},f=v=>(Math.round(v*10)/10).toFixed(1);
+  const c0=N.reduce((s,n)=>{const z=p(n);return [s[0]+z[0]/N.length,s[1]+z[1]/N.length];},[0,0]);
+  const un=(a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dx/l,dy/l];};
+  const trait=(a,b,w,d)=>`<path stroke-width="${w}"${d?` stroke-dasharray="${d}"`:""} d="M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}"/>`;
+  const txt=(x,y,s)=>`<text x="${f(x)}" y="${f(y)}" dy="3.8">${s}</text>`;
+  let L="",T="",D="";
+  (o.droites||[]).forEach(s=>{const a=p(s[0]),b=p(s[1]),u=un(a,b),e=s[2]||16;L+=trait([a[0]-e*u[0],a[1]-e*u[1]],[b[0]+e*u[0],b[1]+e*u[1]],1);});
+  (o.seg||[]).forEach(s=>{L+=trait(p(s[0]),p(s[1]),1.5);});
+  (o.tirets||[]).forEach(s=>{L+=trait(p(s[0]),p(s[1]),1.2,"5 3");});
+  (o.cercles||[]).forEach(c=>{const z=p(c[0]);L+=`<circle cx="${f(z[0])}" cy="${f(z[1])}" r="${f(k*c[1])}" stroke-width="1.2"/>`;});
+  (o.droits||[]).forEach(s=>{const v=p(s[1]),a=un(v,p(s[0])),b=un(v,p(s[2])),t=7;L+=`<path stroke-width="1" d="M${f(v[0]+t*a[0])} ${f(v[1]+t*a[1])}L${f(v[0]+t*(a[0]+b[0]))} ${f(v[1]+t*(a[1]+b[1]))}L${f(v[0]+t*b[0])} ${f(v[1]+t*b[1])}"/>`;});
+  (o.angles||[]).forEach(s=>{const v=p(s[1]),a=un(v,p(s[0])),b=un(v,p(s[2])),r=s[4]||15,sens=a[0]*b[1]-a[1]*b[0]>0?1:0;
+    L+=`<path stroke-width="1" d="M${f(v[0]+r*a[0])} ${f(v[1]+r*a[1])}A${r} ${r} 0 0 ${sens} ${f(v[0]+r*b[0])} ${f(v[1]+r*b[1])}"/>`;
+    if(s[3]){const bx=a[0]+b[0],by=a[1]+b[1],l=Math.hypot(bx,by)||1,d=r+7+2.2*String(s[3]).length;T+=txt(v[0]+d*bx/l,v[1]+d*by/l,s[3]);}});
+  (o.marques||[]).forEach(s=>{const a=p(s[0]),b=p(s[1]),u=un(a,b),n=[-u[1],u[0]];for(let i=0;i<s[2];i++){const t=(i-(s[2]-1)/2)*3.2,c=[(a[0]+b[0])/2+t*u[0],(a[1]+b[1])/2+t*u[1]];L+=trait([c[0]-4*n[0],c[1]-4*n[1]],[c[0]+4*n[0],c[1]+4*n[1]],1);}});
+  (o.cotes||[]).forEach(s=>{const a=p(s[0]),b=p(s[1]),mi=[(a[0]+b[0])/2,(a[1]+b[1])/2],u=un(a,b);let n=[-u[1],u[0]];
+    if(Math.hypot(mi[0]+n[0]-c0[0],mi[1]+n[1]-c0[1])<Math.hypot(mi[0]-n[0]-c0[0],mi[1]-n[1]-c0[1]))n=[-n[0],-n[1]];
+    const d=9+2.7*String(s[2]).length*Math.abs(n[0]);T+=txt(mi[0]+d*n[0],mi[1]+d*n[1],s[2]);});
+  (o.noms||N).forEach(n=>{const z=p(n),dp=(o.pos||{})[n],u=un(c0,z);T+=txt(z[0]+(dp?dp[0]:11*u[0]),z[1]+(dp?dp[1]:11*u[1]),n);});
+  (o.points||[]).forEach(n=>{const z=p(n);D+=`<circle cx="${f(z[0])}" cy="${f(z[1])}" r="2"/>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" style="max-width:300px;width:100%;height:auto;display:block;margin:6px 0" role="img" aria-label="${o.alt}"><g stroke="currentColor" fill="none">${L}</g><g fill="currentColor" stroke="none">${D}</g><g fill="currentColor" stroke="none" font-size="11" text-anchor="middle">${T}</g></svg>`;}
+/* pose un triangle sur son plus grand côté, le troisième sommet au-dessus (les autres points suivent) */
+function poser(P){const N=Object.keys(P).slice(0,3);let m=null;
+  for(let i=0;i<3;i++){const a=P[N[i]],b=P[N[(i+1)%3]],d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!m||d>m.d+1e-9)m={a,b,d,c:P[N[(i+2)%3]]};}
+  const ux=(m.b[0]-m.a[0])/m.d,uy=(m.b[1]-m.a[1])/m.d,t=z=>[(z[0]-m.a[0])*ux+(z[1]-m.a[1])*uy,(z[1]-m.a[1])*ux-(z[0]-m.a[0])*uy],s=t(m.c)[1]<0?-1:1,R={};
+  Object.keys(P).forEach(n=>{const z=t(P[n]);R[n]=[z[0],s*z[1]];});return R;}
+
+/* ---------- GE1 : Pythagore, Al-Kashi, aire ---------- */
+const TRI=["ABC","DEF","MNP","RST","EFG"],ABC=["A","B","C"];
+const cote=(L,i,j)=>i<j?L[i]+L[j]:L[j]+L[i];
+const angle=(L,s)=>{const u=(s+1)%3,v=(s+2)%3;return u<v?L[u]+L[s]+L[v]:L[v]+L[s]+L[u];};
+const TRIP=[[3,4],[6,8],[5,12],[8,15],[9,12],[12,16]];
+const faux=(d,resume)=>({ok:false,faux:d.f||["x"],resume:resume||"Ce n'est pas ça.",diag:{etape:d.etape,type:d.type,titre:d.titre,msg:d.msg}});
+const champL=(id,nom,label,ex)=>({k:"champ",id,nom,label,sym:SYML,ex:ex||"par exemple 7, √13 ou 5√2/3"});
+const champA=(id,nom,label)=>({k:"champ",id,nom,label,sym:SYMA,ex:"par exemple π/3"});
+/* le triangle de sommets L, angle th au sommet s entre les côtés de longueurs c (vers u) et b (vers v) */
+function sommets(L,s,c,b,th){const u=(s+1)%3,v=(s+2)%3,t=angV(th);return {[L[s]]:[0,0],[L[u]]:[val(c),0],[L[v]]:[val(b)*Math.cos(t),val(b)*Math.sin(t)]};}
+
+function pythagore(R){const L=R.choix(TRI).split(""),T=L.join(""),d=R.ent(0,2),i=(d+1)%3,j=(d+2)%3,k=R.choix(["hyp","hyp","cote","cote","cote","rec","rec"]);
+  if(k==="rec")return reciproque(R,L,d);
+  let p,qq,h;
+  for(;;){const r=R();
+    if(k==="hyp"||r<0.6){[p,qq]=R()<0.35?R.mel(R.choix(TRIP)):[R.ent(1,9),R.ent(1,9)];p=S(p);qq=S(qq);h=racine(add(carre(p),carre(qq)));if(k==="cote"&&r>=0.35&&h.k===1)continue;}
+    else{const hh=R.ent(3,12),pp=R.ent(1,hh-1);h=S(hh);p=S(pp);qq=racine(hh*hh-pp*pp);}
+    const t=val(p)/val(qq);if(t>=0.3&&t<=3.4)break;}
+  const hyp=k==="hyp",A1=cote(L,d,i),A2=cote(L,d,j),HY=cote(L,i,j),X=hyp?HY:A2,sol=hyp?h:qq,V=val(sol),x2=carre(sol),p2=carre(p),q2=carre(qq),h2=carre(h),sg=R()<0.5?-1:1;
+  const fig=figure({[L[d]]:[0,0],[L[i]]:[sg*val(p),0],[L[j]]:[0,val(qq)]},{seg:[[L[d],L[i]],[L[d],L[j]],[L[i],L[j]]],droits:[[L[i],L[d],L[j]]],cotes:[[L[d],L[i],ecrit(p)],[L[d],L[j],hyp?ecrit(qq):"?"],[L[i],L[j],hyp?"?":ecrit(h)]],alt:`Le triangle ${T}, rectangle en ${L[d]}`});
+  const E=hyp?[
+    {w:`Le triangle ${T} est rectangle en ${L[d]}. D'après le théorème de Pythagore : ${fx(`${HY}^{2} = ${A1}^{2} + ${A2}^{2}`)}.`,why:`L'hypoténuse est le côté en face de l'angle droit, ici [${HY}] : c'est son carré qui est seul d'un côté de l'égalité. Sur la copie, on écrit le nom du triangle, le sommet de l'angle droit et le nom du théorème.`,pts:1},
+    {w:fx(`${HY}^{2} = ${c2(p)} + ${c2(qq)} = ${nb(p2)} + ${nb(q2)} = ${nb(h2)}`),why:"On remplace les deux côtés de l'angle droit par leurs longueurs, et on calcule chaque carré avant d'additionner.",pts:1},
+    {w:`<b>${fx(`${HY} = ${racLigne(h2)}`)}</b>`,why:`${HY} est une longueur, donc un nombre positif : c'est la racine carrée de ${nb(h2)}.${simplifie(h2)}`,pts:1}]
+   :[
+    {w:`Le triangle ${T} est rectangle en ${L[d]}. D'après le théorème de Pythagore : ${fx(`${HY}^{2} = ${A1}^{2} + ${A2}^{2}`)}, donc ${fx(`${A2}^{2} = ${HY}^{2} − ${A1}^{2}`)}.`,why:`L'hypoténuse est le côté en face de l'angle droit, ici [${HY}], et elle est déjà connue. Le côté cherché, [${A2}], est un côté de l'angle droit : son carré s'obtient par une soustraction.`,pts:1},
+    {w:fx(`${A2}^{2} = ${c2(h)} − ${c2(p)} = ${nb(h2)} − ${nb(p2)} = ${nb(q2)}`),why:"On remplace par les longueurs de l'énoncé, et on calcule chaque carré avant de soustraire.",pts:1},
+    {w:`<b>${fx(`${A2} = ${racLigne(q2)}`)}</b>`,why:`${A2} est une longueur, donc un nombre positif : c'est la racine carrée de ${nb(q2)}.${simplifie(q2)}`,pts:1}];
+  function juge(rep){const r=lisNombre(rep.x,V,"la longueur "+X);if(r.inc)return {incomplet:r.inc};const v=r.v,vp=val(p),vq=val(qq),vh=val(h);if(pres(v,V))return {ok:true};
+    if(pres(v,V*V))return faux({etape:2,type:"carré donné à la place de la longueur",titre:"Où ça part : la dernière ligne.",msg:`${nb(x2)}, c'est ${fx(X+"^{2}")}, le carré de la longueur. Il reste à prendre la racine carrée : ${fx(`${X} = ${ecrit(sol)}`)}.`});
+    if(hyp&&pres(v,vp+vq))return faux({etape:0,type:"longueurs ajoutées sans les carrés",titre:"Où ça part : l'égalité de Pythagore.",msg:`Le théorème de Pythagore porte sur les carrés : ${fx(`${HY}^{2} = ${A1}^{2} + ${A2}^{2}`)}. On n'ajoute pas les longueurs elles-mêmes.`});
+    if(hyp&&vp!==vq&&pres(v,Math.sqrt(Math.abs(vp*vp-vq*vq))))return faux({etape:0,type:"différence des carrés à la place de la somme",titre:"Où ça part : l'égalité de Pythagore.",msg:`Le côté cherché, [${HY}], est l'hypoténuse : son carré est la somme des deux autres carrés, pas leur différence.`});
+    if(!hyp&&pres(v,Math.sqrt(vh*vh+vp*vp)))return faux({etape:0,type:"somme des carrés à la place de la différence",titre:"Où ça part : le choix de l'hypoténuse.",msg:`L'hypoténuse est [${HY}], en face de l'angle droit, et tu la connais déjà. Le côté cherché est un côté de l'angle droit : ${fx(`${A2}^{2} = ${HY}^{2} − ${A1}^{2}`)}.`});
+    return faux({etape:1,type:"calcul des carrés",titre:"Où ça part : le calcul.",msg:`${E[1].w}.`});}
+  return {sig:"PY"+JSON.stringify([T,d,k,ecrit(p),ecrit(qq),ecrit(h)]),q:`Soit ${T} un triangle rectangle en ${L[d]}, avec ${fx(`${A1} = ${ecrit(p)}`)} et ${hyp?fx(`${A2} = ${ecrit(qq)}`):fx(`${HY} = ${ecrit(h)}`)}. Calcule ${fx(X)} : donne la valeur exacte.`,
+    corps:`${fig}<p>Rappel : « rectangle en ${L[d]} » veut dire que l'angle au sommet ${L[d]} est droit. Le côté en face de l'angle droit, ici [${HY}], s'appelle l'hypoténuse.</p>`,
+    texte:`${T} rectangle en ${L[d]}, ${A1} = ${ecrit(p)}, ${hyp?`${A2} = ${ecrit(qq)}`:`${HY} = ${ecrit(h)}`} ; calculer ${X}`,champs:[champL("x",X,`$${X} =$`,"par exemple 5, √13 ou 2√5")],juge,etapes:E,bonne:fx(`${X} = ${ecrit(sol)}`),bonneTxt:`${X} = ${ecrit(sol)}`,
+    repBonne:{x:tape(sol)},repFausse:{x:hyp?tape(S(add(p.r,qq.r))):tape(racine(add(h2,p2)))},nature:hyp?"hypoténuse":"côté de l'angle droit",ens:{type:"pyth",hyp,p:val(p),q:val(qq),h:val(h)}};}
+
+function reciproque(R,L,d){const T=L.join(""),i=(d+1)%3,j=(d+2)%3,droit=R()<0.55;let a,b,c;
+  for(;;){a=R.ent(2,9);b=R.ent(2,9);
+    if(droit){if(R()<0.5)[a,b]=R.mel(R.choix(TRIP));c=racine(a*a+b*b);}
+    else if(R()<0.3){c=racine(a*a+b*b+R.choix([-2,-1,1,2]));if(c.k===1)continue;}
+    else{const h=Math.sqrt(a*a+b*b);let cc=R()<0.5?Math.floor(h):Math.ceil(h);if(cc*cc===a*a+b*b)cc+=R.choix([-1,1]);c=S(cc);}
+    if(val(c)>Math.max(a,b)+1e-9&&val(c)<a+b-1e-9)break;}
+  const N=[[cote(L,d,i),S(a)],[cote(L,d,j),S(b)],[cote(L,i,j),c]].sort((x,y)=>x[0]<y[0]?-1:1),HY=cote(L,i,j),A1=cote(L,d,i),A2=cote(L,d,j),s2=a*a+b*b,h2=carre(c),bon=droit?L[d]:"non";
+  const E=[{w:`Les carrés des trois côtés : ${et(N.map(x=>fx(`${x[0]}^{2} = ${nb(carre(x[1]))}`)))}. Le plus grand côté est [${HY}].`,why:`Le plus grand carré est celui du plus grand côté. Si le triangle est rectangle, ce côté est l'hypoténuse, et l'angle droit est en face : au sommet ${L[d]}. Il n'y a donc qu'une seule égalité à essayer.`,pts:1},
+    {w:`${fx(`${A1}^{2} + ${A2}^{2} = ${a*a} + ${b*b} = ${s2}`)} ${droit?`: c'est exactement ${fx(HY+"^{2}")}.`:`et ${fx(`${HY}^{2} = ${nb(h2)}`)} : les deux nombres sont différents.`}`,why:"On additionne les deux plus petits carrés, et on compare le résultat au plus grand.",pts:1},
+    droit?{w:`<b>${fx(`${HY}^{2} = ${A1}^{2} + ${A2}^{2}`)} : d'après la réciproque du théorème de Pythagore, ${T} est rectangle en ${L[d]}.</b>`,why:`C'est le sens « l'égalité entraîne l'angle droit » du théorème 4.1.1 : sur la copie, on écrit bien le mot « réciproque ». Le sommet de l'angle droit est celui qui n'est pas dans le nom de l'hypoténuse [${HY}].`,pts:1}
+     :{w:`<b>${fx(`${HY}^{2} ≠ ${A1}^{2} + ${A2}^{2}`)} : le triangle ${T} n'est pas rectangle.</b>`,why:`Si ${T} était rectangle, l'angle droit serait en ${L[d]}, en face du plus grand côté, et le théorème de Pythagore donnerait l'égalité. Elle est fausse, donc le triangle n'est pas rectangle.`,pts:1}];
+  function juge(rep){if(!rep.r)return {incomplet:"Choisis une des quatre réponses."};if(rep.r===bon)return {ok:true};
+    if(droit&&rep.r!=="non")return faux({f:[],etape:2,type:"sommet de l'angle droit mal placé",titre:"Où ça part : le sommet de l'angle droit.",msg:`Le triangle est bien rectangle, mais l'angle droit est en face de l'hypoténuse [${HY}] : au sommet ${L[d]}, celui qui n'est pas dans le nom ${HY}.`});
+    if(droit)return faux({f:[],etape:1,type:"égalité de Pythagore non vue",titre:"Où ça part : la comparaison des carrés.",msg:`${fx(`${A1}^{2} + ${A2}^{2} = ${s2}`)} et ${fx(`${HY}^{2} = ${nb(h2)}`)} : les deux nombres sont égaux, donc le triangle est rectangle.`});
+    return faux({f:[],etape:1,type:"triangle cru rectangle",titre:"Où ça part : la comparaison des carrés.",msg:`${fx(`${A1}^{2} + ${A2}^{2} = ${s2}`)}, alors que ${fx(`${HY}^{2} = ${nb(h2)}`)}. Les deux nombres sont différents : il n'y a pas d'angle droit.`});}
+  return {sig:"PR"+JSON.stringify([T,d,a,b,ecrit(c)]),q:`Soit ${T} un triangle tel que ${et(N.map(x=>fx(`${x[0]} = ${ecrit(x[1])}`)))}. Ce triangle est-il rectangle ? Si oui, en quel sommet ?`,corps:"",
+    texte:`${T} : ${N.map(x=>`${x[0]} = ${ecrit(x[1])}`).join(", ")} ; rectangle ? en quel sommet ?`,champs:[{k:"choix",id:"r",o:L.map(x=>[x,"Rectangle en "+x]).concat([["non","Pas rectangle"]])}],juge,etapes:E,
+    bonne:droit?`rectangle en ${L[d]}`:"il n'est pas rectangle",bonneTxt:droit?`rectangle en ${L[d]}`:"pas rectangle",repBonne:{r:bon},repFausse:{r:droit?"non":L[d]},nature:"réciproque",ens:{type:"rec",cotes:{[A1]:a,[A2]:b,[HY]:val(c)}}};}
+
+/* deux côtés et l'angle entre eux : th au sommet s, avec 2bc cos(th) rationnel */
+function deuxCotes(R,quoi){for(;;){const r=R();let th,b,c;
+    if(quoi==="demi"||r<0.62){th=R.choix([Q(1,3),Q(1,3),Q(2,3)]);if(R()<(quoi==="demi"?0.4:0.15))[b,c]=R.mel(R.choix(th.n===1?[[3,8],[5,8],[7,15],[8,15]]:[[3,5],[7,8],[5,16],[6,10]]));else{b=R.ent(1,9);c=R.ent(1,9);}b=S(b);c=S(c);}
+    else if(r<0.82){th=R.choix([Q(1,4),Q(3,4)]);b=S(R.ent(1,4),2);c=S(R.ent(1,8));if(R()<0.5)[b,c]=[c,b];}
+    else{th=R.choix([Q(1,6),Q(5,6)]);b=S(R.ent(1,3),3);c=S(R.ent(1,8));if(R()<0.5)[b,c]=[c,b];}
+    const pr=fois(fois(b,c),cosA(th)),t=val(b)/val(c);if(pr.k!==1||t<0.3||t>3.4||(brut(th)==="1/3"&&pres(val(b),val(c))))continue;
+    const a2=sub(add(carre(b),carre(c)),mul(2,pr.r));return {th,b,c,a2,a:racine(a2),pr:pr.r};}}
+const figTri=(L,s,D,inconnu,plus)=>{const u=(s+1)%3,v=(s+2)%3;return figure(poser(sommets(L,s,D.c,D.b,D.th)),Object.assign({seg:[[L[0],L[1]],[L[1],L[2]],[L[0],L[2]]],cotes:[[L[s],L[u],ecrit(D.c)],[L[s],L[v],ecrit(D.b)]].concat(inconnu?[[L[u],L[v],inconnu]]:[]),angles:[[L[u],L[s],L[v],angT(D.th)]],alt:`Le triangle ${L.join("")} et l'angle connu au sommet ${L[s]}`},plus||{}));};
+const donnees=(L,s,D)=>{const u=(s+1)%3,v=(s+2)%3,N=[[cote(L,s,u),D.c],[cote(L,s,v),D.b]].sort((x,y)=>x[0]<y[0]?-1:1);return `${fx(`${N[0][0]} = ${ecrit(N[0][1])}`)}, ${fx(`${N[1][0]} = ${ecrit(N[1][1])}`)} et ${absAn(angle(L,s))} ${fx("= "+angT(D.th))}`;};
+const donneesTxt=(L,s,D)=>{const u=(s+1)%3,v=(s+2)%3;return `${cote(L,s,u)} = ${ecrit(D.c)}, ${cote(L,s,v)} = ${ecrit(D.b)}, angle ${angle(L,s)} = ${angT(D.th)}`;};
+const rappelAngle=(L,s,th)=>`<p>Rappel : ${absAn(angle(L,s))} est l'angle du triangle au sommet ${L[s]}, entre les côtés [${cote(L,s,(s+1)%3)}] et [${cote(L,s,(s+2)%3)}]. Il est donné en radians : ${angT(th)}, c'est ${NOMANG[brut(th)]}.</p>`;
+/* les étapes d'Al-Kashi pour le côté en face du sommet s */
+function etapesAlKashi(L,s,D){const u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v),co=cosA(D.th),neg=co.r.n<0,c2b=carre(D.b),c2c=carre(D.c);
+  return [{w:`Le côté [${UV}] est en face de l'angle connu, celui du sommet ${L[s]}. D'après le théorème d'Al-Kashi dans le triangle ${L.join("")} : ${fx(`${UV}^{2} = ${SU}^{2} + ${SV}^{2} − 2 × ${SU} × ${SV} × cos(${angT(D.th)})`)}.`,why:"Al-Kashi donne le carré d'un côté à partir des deux autres côtés et de l'angle qu'ils forment, l'angle d'en face. C'est l'égalité de Pythagore avec un terme en plus, qui vaut 0 quand l'angle est droit.",pts:1},
+    {w:fx(`cos(${angT(D.th)}) = ${ecrit(co)}`),why:pourquoiTrig(D.th,"cos"),pts:0.5},
+    {w:fx(`${UV}^{2} = ${c2(D.c)} + ${c2(D.b)} − 2 × ${ecrit(D.c)} × ${ecrit(D.b)} × ${gr(co)} = ${nb(c2c)} + ${nb(c2b)} ${neg?"+":"−"} ${nb(Math.abs(2*D.pr.n/D.pr.d))} = ${nb(D.a2)}`),why:neg?"Le cosinus est négatif : « moins par moins donne plus », le dernier terme s'ajoute.":"On calcule d'abord le produit 2 × … × cos(…), puis on le retire de la somme des deux carrés.",pts:1},
+    {w:`<b>${fx(`${UV} = ${racLigne(D.a2)}`)}</b>`,why:`${UV} est une longueur, donc un nombre positif : c'est la racine carrée de ${nb(D.a2)}.${simplifie(D.a2)}`,pts:0.5}];}
+function erreurAlKashi(x,L,s,D,E){const u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v),A=val(D.a),B=val(D.b),C=val(D.c),co=val(cosA(D.th)),si=val(sinA(D.th)),car=y=>y>0?Math.sqrt(y):-1;
+  if(pres(x,A*A))return faux({etape:3,type:"carré donné à la place de la longueur",titre:"Où ça part : la dernière ligne.",msg:`${nb(D.a2)}, c'est ${fx(UV+"^{2}")}. Il reste à prendre la racine carrée : ${fx(`${UV} = ${ecrit(D.a)}`)}.`});
+  if(pres(x,car(B*B+C*C+2*B*C*co)))return faux({etape:co<0?2:0,type:"signe du terme en cosinus",titre:"Où ça part : le signe du dernier terme.",msg:co<0?`${fx(`cos(${angT(D.th)}) = ${ecrit(cosA(D.th))}`)} est négatif : « − 2 × … × (${ecrit(cosA(D.th))}) » devient un plus.`:`Dans Al-Kashi, le terme en cosinus est retiré : ${fx(`− 2 × ${SU} × ${SV} × cos(${angT(D.th)})`)}.`});
+  if(pres(x,car(B*B+C*C)))return faux({etape:0,type:"terme en cosinus oublié",titre:"Où ça part : la formule.",msg:`${fx(`${UV}^{2} = ${SU}^{2} + ${SV}^{2}`)} n'est vrai que si l'angle en ${L[s]} est droit : c'est Pythagore. Ici l'angle vaut ${angT(D.th)} : il faut le terme ${fx(`− 2 × ${SU} × ${SV} × cos(${angT(D.th)})`)}.`});
+  if(pres(x,car(B*B+C*C-B*C*co)))return faux({etape:0,type:"facteur 2 oublié devant le cosinus",titre:"Où ça part : la formule.",msg:`Il y a un 2 devant le produit : ${fx(`− 2 × ${SU} × ${SV} × cos(${angT(D.th)})`)}.`});
+  if(Math.abs(si-co)>1e-9&&pres(x,car(B*B+C*C-2*B*C*si)))return faux({etape:1,type:"sinus à la place du cosinus",titre:"Où ça part : la valeur du cosinus.",msg:`${fx(`cos(${angT(D.th)}) = ${ecrit(cosA(D.th))}`)}. La valeur ${ecrit(sinA(D.th))} est celle du sinus.`});
+  return faux({etape:2,type:"calcul d'Al-Kashi",titre:"Où ça part : le calcul.",msg:`${E[2].w}.`});}
+
+function alKashi(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,D=deuxCotes(R),UV=cote(L,u,v),E=etapesAlKashi(L,s,D),A=val(D.a);
+  function juge(rep){const r=lisNombre(rep.x,A,"la longueur "+UV);if(r.inc)return {incomplet:r.inc};return pres(r.v,A)?{ok:true}:erreurAlKashi(r.v,L,s,D,E);}
+  return {sig:"AK"+JSON.stringify([s,ecrit(D.b),ecrit(D.c),brut(D.th)]),q:`Soit ABC un triangle tel que ${donnees(L,s,D)}. Calcule ${fx(UV)} : donne la valeur exacte.`,
+    corps:figTri(L,s,D,"?")+rappelAngle(L,s,D.th),texte:`ABC : ${donneesTxt(L,s,D)} ; calculer ${UV}`,champs:[champL("x",UV,`$${UV} =$`)],juge,etapes:E,bonne:fx(`${UV} = ${ecrit(D.a)}`),bonneTxt:`${UV} = ${ecrit(D.a)}`,
+    repBonne:{x:tape(D.a)},repFausse:{x:tape(racine(add(carre(D.b),carre(D.c))))},nature:D.th.d===3?"angle de π/3 ou de 2π/3":"un côté avec une racine",ens:{type:"ak",b:val(D.b),c:val(D.c),th:angV(D.th)}};}
+
+/* trois côtés : le cosinus d'un angle, puis l'angle quand il est remarquable */
+function troisCotes(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v),AN=angle(L,s);let th=null,a,b,c;
+  for(;;){if(R()<0.68){th=R.choix([Q(1,3),Q(1,3),Q(2,3),Q(2,3),Q(1,2),Q(1,4),Q(3,4),Q(1,6),Q(5,6)]);
+      if(th.d===4){b=S(R.ent(1,4),2);c=S(R.ent(1,7));}else if(th.d===6){b=S(R.ent(1,3),3);c=S(R.ent(1,7));}else{b=S(R.ent(1,8));c=S(R.ent(1,8));}
+      if(R()<0.5)[b,c]=[c,b];const pr=fois(fois(b,c),cosA(th));if(pr.k!==1||(brut(th)==="1/3"&&pres(val(b),val(c))))continue;a=racine(sub(add(carre(b),carre(c)),mul(2,pr.r)));}
+    else{th=null;a=S(R.ent(2,9));b=S(R.ent(2,9));c=S(R.ent(2,9));const A=val(a),B=val(b),C=val(c),co=(B*B+C*C-A*A)/(2*B*C);if(A>=B+C||B>=A+C||C>=A+B||[0,0.5,-0.5].some(x=>pres(co,x))||Math.abs(co)>0.95)continue;}
+    const t=val(b)/val(c);if(t>=0.3&&t<=3.4)break;}
+  const a2=carre(a),b2=carre(b),c2c=carre(c),num=sub(add(b2,c2c),a2),den=fois(2,fois(b,c)),co=sur(num,den),CO=val(co),TH=th?angV(th):null,brutT=`${nb(num)}/${gr(den)}`,fin=brutT===ecrit(co)?brutT:brutT+" = "+ecrit(co);
+  const N=[[SU,c],[SV,b],[UV,a]].sort((x,y)=>x[0]<y[0]?-1:1),A=val(a),B=val(b),C=val(c),autres=[(C*C+A*A-B*B)/(2*C*A),(B*B+A*A-C*C)/(2*B*A)];
+  const E=[{w:`L'angle cherché est au sommet ${L[s]}, en face du côté [${UV}]. Al-Kashi : ${fx(`${UV}^{2} = ${SU}^{2} + ${SV}^{2} − 2 × ${SU} × ${SV} ×`)} ${cosAn(AN)}, donc ${cosAn(AN)} ${fx(`= (${SU}^{2} + ${SV}^{2} − ${UV}^{2})/(2 × ${SU} × ${SV})`)}.`,why:`On écrit Al-Kashi pour le côté d'en face, [${UV}], puis on isole le cosinus : au numérateur, c'est le carré du côté d'en face qui porte le signe moins.`,pts:1},
+    {w:`${cosAn(AN)} ${fx(`= (${nb(c2c)} + ${nb(b2)} − ${nb(a2)})/(2 × ${ecrit(c)} × ${ecrit(b)}) = ${fin}`)}`,why:`On remplace chaque côté par sa longueur, puis on simplifie la fraction.${den.k>1?` Pour ne pas laisser de racine au dénominateur, on multiplie en haut et en bas par √${den.k}.`:""}${th?"":" Ce n'est pas le cosinus d'un angle remarquable : on s'arrête au cosinus, comme dans l'exercice 8 de la feuille 4."}`,pts:1.5}];
+  if(th)E.push({w:`<b>${absAn(AN)} ${fx("= "+angT(th))}</b>`,why:`Un angle de triangle est compris entre 0 et π, et sur cet intervalle un seul angle a pour cosinus ${ecrit(co)} : c'est ${angT(th)} (${NOMANG[brut(th)]}).${co.r.n<0?" Un cosinus négatif veut dire que l'angle est obtus.":""}`,pts:1});
+  function juge(rep){const rc=lisNombre(rep.cos,CO,"le cosinus");if(rc.inc)return {incomplet:rc.inc};let ra=null;if(th){ra=lisAngle(rep.ang,TH);if(ra.inc)return {incomplet:ra.inc};}
+    const okC=pres(rc.v,CO),okA=!th||pres(ra.v,TH),F=[];if(!okC)F.push("cos");if(!okA)F.push("ang");if(!F.length)return {ok:true};
+    const res=`Pas tout à fait : ${!okC&&!okA?"le cosinus et l'angle sont faux":!okC?"le cosinus est faux":"le cosinus est juste, mais pas l'angle"}.`;
+    if(!okC){if(CO&&pres(rc.v,-CO))return faux({f:F,etape:0,type:"signe du cosinus : numérateur à l'envers",titre:"Où ça part : en isolant le cosinus.",msg:`C'est ${fx(UV+"^{2}")}, le carré du côté d'en face, qui porte le signe moins : ${fx(`(${SU}^{2} + ${SV}^{2} − ${UV}^{2})/(2 × ${SU} × ${SV})`)}.`},res);
+      if(autres.some(y=>!pres(y,CO)&&pres(rc.v,y)))return faux({f:F,etape:0,type:"cosinus d'un autre angle du triangle",titre:"Où ça part : le côté d'en face.",msg:`Tu as calculé le cosinus d'un autre angle. L'angle du sommet ${L[s]} est en face de [${UV}] : c'est ${fx(UV+"^{2}")} qui porte le signe moins.`},res);
+      if(CO&&pres(rc.v,2*CO))return faux({f:F,etape:0,type:"facteur 2 oublié au dénominateur",titre:"Où ça part : en isolant le cosinus.",msg:`On divise par ${fx(`2 × ${SU} × ${SV}`)}, pas seulement par ${fx(`${SU} × ${SV}`)}.`},res);
+      return faux({f:F,etape:1,type:"calcul du cosinus",titre:"Où ça part : le calcul.",msg:`${E[1].w}.`},res);}
+    if(pres(ra.v,Math.PI-TH))return faux({f:F,etape:2,type:"angle supplémentaire : signe du cosinus",titre:"Où ça part : le passage du cosinus à l'angle.",msg:`Le cosinus vaut ${ecrit(co)} : il est ${co.r.n<0?"négatif, donc l'angle est obtus (plus grand que π/2)":"positif, donc l'angle est aigu (plus petit que π/2)"}. C'est ${angT(th)}.`},res);
+    if(pres(ra.v,Math.PI/2-TH))return faux({f:F,etape:2,type:"π/3 et π/6 échangés",titre:"Où ça part : les valeurs à connaître.",msg:`${fx("cos(π/3) = 1/2")} et ${fx("cos(π/6) = √3/2")} : ne les échange pas. Ici le cosinus vaut ${ecrit(co)}, donc l'angle est ${angT(th)}.`},res);
+    return faux({f:F,etape:2,type:"angle à partir de son cosinus",titre:"Où ça part : le passage du cosinus à l'angle.",msg:`L'angle entre 0 et π dont le cosinus vaut ${ecrit(co)} est ${angT(th)} (${NOMANG[brut(th)]}).`},res);}
+  const repB={cos:tape(co)},repF={cos:CO?tape(S(mul(co.r,-1),co.k)):"1/2"};if(th){repB.ang=angT(th);repF.ang=angT(th);}
+  return {sig:"TC"+JSON.stringify([s,ecrit(a),ecrit(b),ecrit(c)]),q:`Soit ABC un triangle tel que ${et(N.map(x=>fx(`${x[0]} = ${ecrit(x[1])}`)))}. Calcule ${cosAn(AN)}${th?`, puis donne l'angle ${absAn(AN)} en radians`:""}.`,
+    corps:`<p>Rappel : ${an(AN)} est l'angle du triangle au sommet ${L[s]}. Le côté en face de lui est [${UV}].</p>`,texte:`ABC : ${N.map(x=>`${x[0]} = ${ecrit(x[1])}`).join(", ")} ; cos(${AN})${th?" puis l'angle":""}`,
+    champs:[champL("cos","cosinus",`${cosAn(AN)} =`,"par exemple 1/2 ou -√2/2")].concat(th?[champA("ang","angle",`${absAn(AN)} =`)]:[]),juge,etapes:E,
+    bonne:`<span class="en-nb">${cosAn(AN)} ${fx("= "+ecrit(co))}</span>${th?` et <span class="en-nb">${absAn(AN)} ${fx("= "+angT(th))}</span>`:""}`,bonneTxt:`cos(${AN}) = ${ecrit(co)}${th?` ; angle ${AN} = ${angT(th)}`:""}`,repBonne:repB,repFausse:repF,nature:th?"angle remarquable":"cosinus seul",
+    ens:{type:"tc",a:A,b:B,c:C,remarquable:!!th}};}
+
+/* l'aire ½ bc sin(Â), puis une hauteur */
+function aireHauteur(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,k=R.choix(["aire","aire","hauteur","hauteur","hauteur","troisieme","troisieme"]),SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v);let D;
+  for(;;){if(k==="troisieme"){D=deuxCotes(R,"demi");if(D.a.k!==1||D.a.r.d!==1)continue;}
+    else{const th=R.choix([Q(1,6),Q(1,4),Q(1,3),Q(2,3),Q(3,4),Q(5,6)]),b=S(R.ent(2,9)),c=S(R.ent(2,9)),t=val(b)/val(c);if(t<0.3||t>3.4)continue;D={th,b,c};}
+    break;}
+  const si=sinA(D.th),ar=fois(mul(mul(D.b.r,D.c.r),DEMI),si),AR=val(ar),B=val(D.b),C=val(D.c),SI=val(si),CO=val(cosA(D.th));
+  /* la hauteur : issue de u sur (SV), elle vaut SU × sin ; ou issue de s sur (UV) */
+  const de=k==="hauteur"?u:s,base=k==="hauteur"?SV:UV,baseL=k==="hauteur"?D.b:D.a,HN=L[de]+"H",h=k==="aire"?null:sur(fois(2,ar),baseL),HV=h?val(h):null;
+  const E=[{w:`D'après le théorème de l'aire, avec les deux côtés qui forment l'angle connu : ${fx(`Aire(ABC) = 1/2 × ${SU} × ${SV} × sin(${angT(D.th)})`)}.`,why:`L'aire d'un triangle est la moitié du produit de deux côtés par le sinus de l'angle qu'ils forment (théorème 4.2.6). L'angle doit être celui qui est entre les deux côtés : ici celui du sommet ${L[s]}.`,pts:1},
+    {w:fx(`sin(${angT(D.th)}) = ${ecrit(si)}`),why:pourquoiTrig(D.th,"sin"),pts:0.5},
+    {w:`<b>${fx(`Aire(ABC) = 1/2 × ${ecrit(D.c)} × ${ecrit(D.b)} × ${ecrit(si)} = ${ecrit(ar)}`)}</b>`,why:"On multiplie les nombres entre eux, puis on garde la racine telle quelle : c'est la valeur exacte.",pts:1}];
+  if(k==="troisieme")E.push({w:`Pour la hauteur issue de ${L[s]}, il faut la base [${UV}]. Al-Kashi : ${fx(`${UV}^{2} = ${c2(D.c)} + ${c2(D.b)} − 2 × ${ecrit(D.c)} × ${ecrit(D.b)} × ${gr(cosA(D.th))} = ${nb(D.a2)}`)}, donc ${fx(`${UV} = ${ecrit(D.a)}`)}.`,why:`La hauteur issue de ${L[s]} tombe sur le côté d'en face, [${UV}], qui n'est pas donné : on le calcule avec Al-Kashi, puisqu'on connaît les deux autres côtés et l'angle qu'ils forment.`,pts:1});
+  if(h)E.push({w:`H est le pied de la hauteur issue de ${L[de]} : ${fx(`Aire(ABC) = 1/2 × ${base} × ${HN}`)}. Donc <b>${fx(`${HN} = 2 × Aire(ABC)/${base} = ${ecrit(h)}`)}</b>.`,why:`L'aire est aussi « base × hauteur / 2 » (proposition 2.4.1), avec la base [${base}] et la hauteur qui lui est perpendiculaire. On connaît l'aire et la base : on isole la hauteur.${k==="hauteur"?` Autre chemin : dans le triangle rectangle formé par la hauteur, ${fx(`${HN} = ${SU} × sin(${angT(D.th)})`)}.`:""}`,pts:1});
+  function juge(rep){const ra=lisNombre(rep.aire,AR,"l'aire");if(ra.inc)return {incomplet:ra.inc};let rh=null;if(h){rh=lisNombre(rep.h,HV,"la longueur "+HN);if(rh.inc)return {incomplet:rh.inc};}
+    const okA=pres(ra.v,AR),okH=!h||pres(rh.v,HV),F=[];if(!okA)F.push("aire");if(!okH)F.push("h");if(!F.length)return {ok:true};
+    const res=`Pas tout à fait : ${!okA&&!okH?"l'aire et la hauteur sont fausses":!okA?"l'aire est fausse":"l'aire est juste, mais pas la hauteur"}.`,iH=E.length-1;
+    if(!okA){if(pres(ra.v,2*AR))return faux({f:F,etape:0,type:"moitié oubliée dans l'aire",titre:"Où ça part : la formule de l'aire.",msg:`Il y a un 1/2 devant : ${fx(`Aire(ABC) = 1/2 × ${SU} × ${SV} × sin(${angT(D.th)})`)}.`},res);
+      if(Math.abs(SI-CO)>1e-9&&pres(ra.v,B*C*CO/2))return faux({f:F,etape:1,type:"cosinus à la place du sinus",titre:"Où ça part : la valeur du sinus.",msg:`L'aire se calcule avec le sinus : ${fx(`sin(${angT(D.th)}) = ${ecrit(si)}`)}. La valeur ${ecrit(cosA(D.th))} est celle du cosinus.`},res);
+      if(pres(ra.v,B*C/2))return faux({f:F,etape:0,type:"sinus oublié dans l'aire",titre:"Où ça part : la formule de l'aire.",msg:`${fx(`1/2 × ${SU} × ${SV}`)} n'est l'aire que si l'angle en ${L[s]} est droit. Ici il faut multiplier par ${fx(`sin(${angT(D.th)}) = ${ecrit(si)}`)}.`},res);
+      return faux({f:F,etape:2,type:"calcul de l'aire",titre:"Où ça part : le calcul de l'aire.",msg:`${fx(`1/2 × ${ecrit(D.c)} × ${ecrit(D.b)} × ${ecrit(si)} = ${ecrit(ar)}`)}.`},res);}
+    if(pres(rh.v,HV/2))return faux({f:F,etape:iH,type:"facteur 2 oublié en isolant la hauteur",titre:"Où ça part : la hauteur.",msg:`${fx(`Aire(ABC) = 1/2 × ${base} × ${HN}`)} : en isolant, le 1/2 devient un 2. ${fx(`${HN} = 2 × Aire(ABC)/${base}`)}.`},res);
+    if(k==="hauteur"&&!pres(B,C)&&pres(rh.v,B*SI))return faux({f:F,etape:iH,type:"hauteur issue d'un autre sommet",titre:"Où ça part : la base.",msg:`La hauteur issue de ${L[de]} est perpendiculaire au côté d'en face, [${base}] : c'est par ${base} qu'on divise.`},res);
+    return faux({f:F,etape:iH,type:"calcul de la hauteur",titre:"Où ça part : la hauteur.",msg:`${fx(`${HN} = 2 × ${gr(ar)}/${gr(baseL)} = ${ecrit(h)}`)}.`},res);}
+  const repB={aire:tape(ar)},repF={aire:tape(fois(2,ar))};if(h){repB.h=tape(h);repF.h=tape(h);}
+  return {sig:"AH"+JSON.stringify([s,k,ecrit(D.b),ecrit(D.c),brut(D.th)]),q:`Soit ABC un triangle tel que ${donnees(L,s,D)}. ${h?`On note H le pied de la hauteur issue de ${L[de]}. Calcule l'aire du triangle ABC, puis la longueur ${fx(HN)}.`:"Calcule l'aire du triangle ABC."} Donne ${h?"les valeurs exactes":"la valeur exacte"}.`,
+    corps:figTri(L,s,D)+(h?`<p>Rappel : la hauteur issue de ${L[de]} est la droite qui passe par ${L[de]} et qui est perpendiculaire à (${base}). Son pied H est le point où elle coupe (${base}).</p>`:rappelAngle(L,s,D.th)),
+    texte:`ABC : ${donneesTxt(L,s,D)} ; aire${h?` puis hauteur ${HN} issue de ${L[de]}`:""}`,champs:[champL("aire","aire","$Aire(ABC) =$","par exemple 6√3 ou 15/2")].concat(h?[champL("h",HN,`$${HN} =$`)]:[]),juge,etapes:E,
+    bonne:`${fx(`Aire(ABC) = ${ecrit(ar)}`)}${h?` et ${fx(`${HN} = ${ecrit(h)}`)}`:""}`,bonneTxt:`aire = ${ecrit(ar)}${h?` ; ${HN} = ${ecrit(h)}`:""}`,repBonne:repB,repFausse:repF,nature:k==="aire"?"aire":k==="hauteur"?"aire et hauteur":"aire, troisième côté et hauteur",
+    ens:{type:"ah",k,b:B,c:C,th:angV(D.th)}};}
+
+/* comme au CC2 2025, exercice 3 : la longueur d'une bissectrice, par les aires */
+function bissectrice(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v),SD=L[s]+"D",T1=L[s]+L[u]+"D",T2=L[s]+L[v]+"D";let th,b,c;
+  for(;;){th=R.choix([Q(1,2),Q(1,2),Q(1,3),Q(2,3)]);b=R.ent(2,9);c=R.ent(2,9);const t=b/c;if(b===c||t<0.3||t>3.4||(th.d===2&&b+c===7&&b*c===12))continue;break;}
+  const D={th,b:S(b),c:S(c)},demi=Q(th.n,th.d*2),droit=th.d===2,hyp=droit?racine(b*b+c*c):null,ar=fois(Q(b*c,2),sinA(th)),sd=sinA(demi),coef=fois(Q(b+c,2),sd),AD=sur(ar,coef),V=val(AD);
+  const P=sommets(L,s,D.c,D.b,th),w=c/(b+c),U=P[L[u]],W=P[L[v]];P.D=[U[0]+w*(W[0]-U[0]),U[1]+w*(W[1]-U[1])];
+  const fig=figure(poser(P),{seg:[[L[0],L[1]],[L[1],L[2]],[L[0],L[2]]],tirets:[[L[s],"D"]],points:["D"],cotes:[[L[s],L[u],String(c)],[L[s],L[v],String(b)]],angles:[[L[u],L[s],"D"],[L[v],L[s],"D",null,19]],alt:`Le triangle ABC et la bissectrice issue de ${L[s]}, qui coupe [${UV}] en D`});
+  const a2=b*b+c*c-2*b*c*val(cosA(th)),M=Math.sqrt((2*b*b+2*c*c-a2)/4);
+  const E=[{w:`${fig}La bissectrice issue de ${L[s]} coupe l'angle du sommet ${L[s]} en deux angles égaux : |${an(angle([L[u],L[s],"D"],1))}| = |${an(angle(["D",L[s],L[v]],1))}| ${fx("= "+angT(demi))}.`,why:`La bissectrice partage l'angle en deux angles de même mesure : la moitié de ${angT(th)}.`,pts:0.5},
+    {w:droit?`${fx(`Aire(ABC) = 1/2 × ${SU} × ${SV} = 1/2 × ${c} × ${b} = ${ecrit(ar)}`)}, car ABC est rectangle en ${L[s]}.`:fx(`Aire(ABC) = 1/2 × ${SU} × ${SV} × sin(${angT(th)}) = 1/2 × ${c} × ${b} × ${ecrit(sinA(th))} = ${ecrit(ar)}`),why:droit?"Dans un triangle rectangle, les deux côtés de l'angle droit sont une base et la hauteur qui va avec.":`C'est le théorème de l'aire, avec les deux côtés qui forment l'angle connu. ${pourquoiTrig(th,"sin")}`,pts:1},
+    {w:`D est sur le segment [${UV}], donc ${fx(`Aire(ABC) = Aire(${T1}) + Aire(${T2})`)}.`,why:"Les deux petits triangles recouvrent le grand, sans se chevaucher : leurs aires s'ajoutent.",pts:0.5},
+    {w:`Par le théorème de l'aire dans chaque petit triangle : ${fx(`Aire(${T1}) = 1/2 × ${SU} × ${SD} × sin(${angT(demi)})`)} et ${fx(`Aire(${T2}) = 1/2 × ${SV} × ${SD} × sin(${angT(demi)})`)}.`,why:`Dans chaque petit triangle, on connaît un côté et l'angle au sommet ${L[s]} ; le deuxième côté de cet angle est la longueur cherchée, ${SD}.`,pts:1},
+    {w:fx(`${ecrit(ar)} = 1/2 × (${c} + ${b}) × ${SD} × ${ecrit(sd)} = ${gr(coef)} × ${SD}`),why:`On met ${fx(`1/2 × ${SD} × sin(${angT(demi)})`)} en facteur, avec ${fx(`sin(${angT(demi)}) = ${ecrit(sd)}`)}.`,pts:0.5},
+    {w:`<b>${fx(`${SD} = ${ecrit(AD)}`)}</b>`,why:`On divise les deux côtés par ${ecrit(coef)}.${droit?" Pour ne pas laisser de racine au dénominateur, on multiplie en haut et en bas par √2.":th.n===2?" Les √3 se simplifient.":""}`,pts:0.5}];
+  function juge(rep){const r=lisNombre(rep.x,V,"la longueur "+SD);if(r.inc)return {incomplet:r.inc};const x=r.v;if(pres(x,V))return {ok:true};
+    if(pres(x,M))return faux({etape:0,type:"bissectrice confondue avec la médiane",titre:"Où ça part : le point D.",msg:`D n'est pas le milieu de [${UV}] : la bissectrice coupe l'angle en deux, pas le côté d'en face. Ce que tu as calculé est la longueur de la médiane.`});
+    if(pres(x,2*val(ar)/Math.sqrt(a2)))return faux({etape:0,type:"bissectrice confondue avec la hauteur",titre:"Où ça part : le point D.",msg:`La bissectrice n'est pas perpendiculaire à (${UV}) : elle coupe l'angle du sommet ${L[s]} en deux angles égaux. Ce que tu as calculé est la hauteur.`});
+    if(th.n===1&&pres(x,b*c/(b+c)))return faux({etape:3,type:"angle entier dans les petits triangles",titre:"Où ça part : l'angle des petits triangles.",msg:`Dans les triangles ${T1} et ${T2}, l'angle au sommet ${L[s]} est la moitié de ${angT(th)} : ${angT(demi)}. Son sinus vaut ${ecrit(sd)}.`});
+    return faux({etape:4,type:"équation en "+SD,titre:"Où ça part : l'équation.",msg:`${E[4].w}, donc ${fx(`${SD} = ${ecrit(AD)}`)}.`});}
+  return {sig:"BI"+JSON.stringify([s,b,c,brut(th)]),q:`Soit ABC un triangle ${droit?`rectangle en ${L[s]} avec ${et([[SU,c],[SV,b]].sort((x,y)=>x[0]<y[0]?-1:1).map(x=>fx(`${x[0]} = ${x[1]}`)).concat(hyp.k===1?[fx(`${UV} = ${ecrit(hyp)}`)]:[]))}`:`tel que ${donnees(L,s,D)}`}. Soit D le point d'intersection de la bissectrice issue de ${L[s]} avec le segment [${UV}]. Détermine la longueur ${fx(SD)}.`,
+    corps:`<p>Rappel : la bissectrice issue de ${L[s]} est la demi-droite qui partage l'angle du sommet ${L[s]} en deux angles égaux. Fais un dessin sur ton brouillon avant de calculer.</p>`,
+    texte:`ABC ${droit?`rectangle en ${L[s]}, ${SU} = ${c}, ${SV} = ${b}`:donneesTxt(L,s,D)} ; D sur [${UV}] et sur la bissectrice issue de ${L[s]} ; calculer ${SD}`,champs:[champL("x",SD,`$${SD} =$`,"par exemple 12√2/7")],juge,etapes:E,bonne:fx(`${SD} = ${ecrit(AD)}`),bonneTxt:`${SD} = ${ecrit(AD)}`,
+    repBonne:{x:tape(AD)},repFausse:{x:tape(S(Q(b*c+1,b+c)))},nature:"bissectrice",ens:{type:"bis",b,c,th:angV(th)}};}
+/* comme la feuille 4, exercice 8 : un côté par Al-Kashi, puis le cosinus d'un autre angle */
+function deuxTemps(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v),AU=angle(L,u);let D;
+  for(;;){D=deuxCotes(R,"demi");if(!pres(val(D.b),val(D.c)))break;}
+  const E=etapesAlKashi(L,s,D),num=sub(add(carre(D.c),D.a2),carre(D.b)),den=fois(2,fois(D.c,D.a)),co=sur(num,den),CO=val(co),A=val(D.a),brutT=`${nb(num)}/${gr(den)}`,fin=brutT===ecrit(co)?brutT:brutT+" = "+ecrit(co);
+  E.push({w:`L'angle au sommet ${L[u]} est en face du côté [${SV}]. Al-Kashi pour ce côté : ${fx(`${SV}^{2} = ${SU}^{2} + ${UV}^{2} − 2 × ${SU} × ${UV} ×`)} ${cosAn(AU)}.`,why:"On recommence avec un autre côté : chaque côté a son égalité d'Al-Kashi, avec l'angle qui est en face de lui.",pts:1},
+    {w:`<b>${cosAn(AU)} ${fx(`= (${nb(carre(D.c))} + ${nb(D.a2)} − ${nb(carre(D.b))})/(2 × ${ecrit(D.c)} × ${ecrit(D.a)}) = ${fin}`)}</b>`,why:`On isole le cosinus : ${fx(`(${SU}^{2} + ${UV}^{2} − ${SV}^{2})/(2 × ${SU} × ${UV})`)}, puis on remplace. Le carré de ${UV} est déjà connu : ${nb(D.a2)}.${den.k>1?` Pour ne pas laisser de racine au dénominateur, on multiplie en haut et en bas par √${den.k}.`:""}`,pts:1.5});
+  function juge(rep){const r=lisNombre(rep.x,A,"la longueur "+UV);if(r.inc)return {incomplet:r.inc};const rc=lisNombre(rep.cos,CO,"le cosinus");if(rc.inc)return {incomplet:rc.inc};
+    const okX=pres(r.v,A),okC=pres(rc.v,CO);if(okX&&okC)return {ok:true};const res=`Pas tout à fait : ${!okX&&!okC?`${UV} et le cosinus sont faux`:!okX?`${UV} est faux`:`${UV} est juste, mais pas le cosinus`}.`;
+    if(!okX){const d=erreurAlKashi(r.v,L,s,D,E);d.faux=okC?["x"]:["x","cos"];d.resume=res;return d;}
+    if(CO&&pres(rc.v,-CO))return faux({f:["cos"],etape:5,type:"signe du cosinus : numérateur à l'envers",titre:"Où ça part : en isolant le cosinus.",msg:`C'est ${fx(SV+"^{2}")}, le carré du côté en face de l'angle, qui porte le signe moins.`},res);
+    if(pres(rc.v,val(cosA(D.th))))return faux({f:["cos"],etape:4,type:"cosinus de l'angle déjà donné",titre:"Où ça part : l'angle demandé.",msg:`On demande le cosinus de l'angle au sommet ${L[u]}, pas celui du sommet ${L[s]} qui est donné dans l'énoncé.`},res);
+    return faux({f:["cos"],etape:5,type:"calcul du deuxième cosinus",titre:"Où ça part : le deuxième cosinus.",msg:`${cosAn(AU)} ${fx("= "+fin)}.`},res);}
+  return {sig:"DT"+JSON.stringify([s,ecrit(D.b),ecrit(D.c),brut(D.th)]),q:`Soit ABC un triangle tel que ${donnees(L,s,D)}. Détermine ${fx(UV)}, puis ${cosAn(AU)}.`,corps:`<p>Fais un dessin sur ton brouillon avant de calculer.</p>`,
+    texte:`ABC : ${donneesTxt(L,s,D)} ; ${UV} puis cos(${AU})`,champs:[champL("x",UV,`$${UV} =$`),champL("cos","cosinus",`${cosAn(AU)} =`,"par exemple √7/14")],juge,etapes:E,
+    bonne:`${fx(`${UV} = ${ecrit(D.a)}`)} et <span class="en-nb">${cosAn(AU)} ${fx("= "+ecrit(co))}</span>`,bonneTxt:`${UV} = ${ecrit(D.a)} ; cos(${AU}) = ${ecrit(co)}`,repBonne:{x:tape(D.a),cos:tape(co)},repFausse:{x:tape(D.a),cos:CO?tape(S(mul(co.r,-1),co.k)):"1/2"},nature:"un côté puis un cosinus",
+    ens:{type:"dt",b:val(D.b),c:val(D.c),th:angV(D.th)}};}
+/* une médiane, par deux fois Al-Kashi (la méthode de la feuille 4, exercice 7, avec des nombres) */
+function mediane(R){const L=ABC,s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,SU=cote(L,s,u),SV=cote(L,s,v),UV=cote(L,u,v),SM=L[s]+"M",MU="M"+L[u],MV="M"+L[v],A1=L[s]+"M"+L[u],A2=L[s]+"M"+L[v];let a,b,c;
+  for(;;){a=R.ent(2,10);b=R.ent(2,9);c=R.ent(2,9);if(a<b+c&&b<a+c&&c<a+b&&b!==c&&Math.max(b,c)/Math.min(b,c)<=3)break;}
+  const m2=Q(2*b*b+2*c*c-a*a,4),sol=racine(m2),V=val(sol),dm=Q(a,2),dm2=nb(mul(2,mul(dm,dm))),N=[[SU,c],[SV,b],[UV,a]].sort((x,y)=>x[0]<y[0]?-1:1);
+  const t=Math.acos((b*b+c*c-a*a)/(2*b*c)),P={[L[s]]:[0,0],[L[u]]:[c,0],[L[v]]:[b*Math.cos(t),b*Math.sin(t)]};P.M=[(P[L[u]][0]+P[L[v]][0])/2,(P[L[u]][1]+P[L[v]][1])/2];
+  const fig=figure(poser(P),{seg:[[L[0],L[1]],[L[1],L[2]],[L[0],L[2]]],tirets:[[L[s],"M"]],points:["M"],marques:[[L[u],"M",2],["M",L[v],2]],cotes:[[L[s],L[u],String(c)],[L[s],L[v],String(b)]],alt:`Le triangle ABC et la médiane issue de ${L[s]}, qui coupe [${UV}] en son milieu M`});
+  const E=[{w:`${fig}M est le milieu de [${UV}] : ${fx(`${MU} = ${MV} = ${nb(dm)}`)}. Les angles ${an(A1)} et ${an(A2)} sont supplémentaires, donc cos(${an(A2)}) = −cos(${an(A1)}).`,why:`M est sur le segment [${UV}] : les deux angles au sommet M font ensemble un angle plat, π. Et ${fx("cos(π − x) = −cos(x)")}.`,pts:1},
+    {w:`Al-Kashi dans le triangle ${A1} : ${fx(`${SU}^{2} = ${SM}^{2} + ${MU}^{2} − 2 × ${SM} × ${MU} ×`)} cos(${an(A1)}).`,why:`Le côté [${SU}] est en face de l'angle du sommet M dans ce petit triangle.`,pts:0.5},
+    {w:`Al-Kashi dans le triangle ${A2} : ${fx(`${SV}^{2} = ${SM}^{2} + ${MV}^{2} + 2 × ${SM} × ${MU} ×`)} cos(${an(A1)}).`,why:`Même formule dans l'autre petit triangle. Le signe a changé parce que le cosinus de l'angle ${A2} est l'opposé de l'autre, et ${fx(`${MV} = ${MU}`)}.`,pts:0.5},
+    {w:`On additionne les deux égalités : ${fx(`${SU}^{2} + ${SV}^{2} = 2 × ${SM}^{2} + 2 × ${MU}^{2}`)}, c'est-à-dire ${fx(`${c*c} + ${b*b} = 2 × ${SM}^{2} + ${dm2}`)}.`,why:"Les deux termes en cosinus sont opposés : ils disparaissent dans l'addition. C'est l'idée de l'exercice 7 de la feuille 4 (théorème de la médiane).",pts:1},
+    {w:`<b>${fx(`${SM}^{2} = ${nb(m2)}`)}, donc ${fx(`${SM} = ${racLigne(m2)}`)}</b>`,why:`On isole le carré de ${SM}, puis on prend la racine carrée : une longueur est positive.`,pts:1}];
+  function juge(rep){const r=lisNombre(rep.x,V,"la longueur "+SM);if(r.inc)return {incomplet:r.inc};const x=r.v;if(pres(x,V))return {ok:true};
+    if(pres(x,m2.n/m2.d))return faux({etape:4,type:"carré donné à la place de la longueur",titre:"Où ça part : la dernière ligne.",msg:`${nb(m2)}, c'est ${fx(SM+"^{2}")}. Il reste à prendre la racine carrée.`});
+    if(pres(x,a/2))return faux({etape:0,type:"médiane crue égale à la moitié du côté",titre:"Où ça part : la longueur de la médiane.",msg:`${fx(`${SM} = ${UV}/2`)} n'est vrai que dans un triangle rectangle en ${L[s]}. Ici il faut calculer.`});
+    if(pres(x,Math.sqrt((b*b+c*c)/2)))return faux({etape:3,type:"terme en "+MU+" oublié",titre:"Où ça part : l'addition des deux égalités.",msg:`En additionnant, il reste aussi ${fx(`2 × ${MU}^{2} = ${dm2}`)} à droite.`});
+    return faux({etape:3,type:"calcul de la médiane",titre:"Où ça part : l'addition des deux égalités.",msg:`${fx(`${c*c} + ${b*b} = 2 × ${SM}^{2} + ${dm2}`)}, donc ${fx(`${SM}^{2} = ${nb(m2)}`)}.`});}
+  return {sig:"ME"+JSON.stringify([s,a,b,c]),q:`Soit ABC un triangle tel que ${et(N.map(x=>fx(`${x[0]} = ${x[1]}`)))}. Soit M le milieu du segment [${UV}]. Détermine la longueur ${fx(SM)}.`,corps:`<p>Fais un dessin sur ton brouillon avant de calculer. Indication de la feuille 4 : les angles ${an(A1)} et ${an(A2)} ont des cosinus opposés.</p>`,
+    texte:`ABC : ${N.map(x=>`${x[0]} = ${x[1]}`).join(", ")} ; M milieu de [${UV}] ; calculer ${SM}`,champs:[champL("x",SM,`$${SM} =$`)],juge,etapes:E,bonne:fx(`${SM} = ${ecrit(sol)}`),bonneTxt:`${SM} = ${ecrit(sol)}`,
+    repBonne:{x:tape(sol)},repFausse:{x:tape(S(dm))},nature:"médiane",ens:{type:"med",a,b,c}};}
+
+/* ---------- les démonstrations et les énoncés du cours : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
+const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\^\{2\}/g,"²").replace(/\$/g,"").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+  etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
+const RECITS=[
+ {id:"GC1",t:"Démonstration : le théorème de Pythagore, sens direct",th:"pythagore",cc:6,lecons:["g2-pythagore"],
+  q:"Question de cours du CC2 2024 (5 points avec la réciproque). Démontre l'implication directe du théorème de Pythagore : si un triangle ABC est rectangle en A, alors $BC^{2} = AB^{2} + AC^{2}$.",corps:"",
+  l:[["Supposons que le triangle ABC soit rectangle en A. Soit H le pied de la hauteur issue de A.","On part de l'hypothèse, et on introduit le point qui sert à toute la démonstration : H est le point de (BC) tel que (AH) est perpendiculaire à (BC).",0.5],
+   ["On note que H ∈ [BC], car les angles en B et C sont aigus. Cela assure $BH + HC = BC$.","Il faut que H soit entre B et C pour pouvoir additionner les deux longueurs à la dernière ligne.",0.5],
+   ["Les triangles ACB et HAB sont semblables, car ils ont tous deux un angle droit et partagent l'angle en B.","Deux angles égaux suffisent. L'ordre des lettres dit quels sommets se correspondent : A et H (les angles droits), C et A, B et B.",0.5],
+   ["Le théorème 2.6.2 implique alors $BC/BA = BA/BH$, d'où $AB^{2} = BC · BH$.","Dans deux triangles semblables, les côtés qui se correspondent sont proportionnels. On finit par un produit en croix.",0.5],
+   ["On montre de même que $AC^{2} = BC · HC$.","Même raisonnement avec les triangles ABC et HAC, qui ont un angle droit et partagent l'angle en C.",0.5],
+   ["On a donc $AB^{2} + AC^{2} = BC · (BH + HC) = BC^{2}$.","On additionne les deux égalités, on met BC en facteur, et on utilise BH + HC = BC de la deuxième ligne.",0.5]]},
+ {id:"GC2",t:"Démonstration : la réciproque du théorème de Pythagore",th:"pythagore",cc:6,lecons:["g2-pythagore"],
+  q:"Question de cours du CC2 2024 (5 points avec le sens direct). Démontre l'implication réciproque du théorème de Pythagore : si un triangle ABC satisfait $BC^{2} = AB^{2} + AC^{2}$, alors il est rectangle en A.",corps:"<p>Tu peux utiliser le sens direct, qui est déjà démontré.</p>",
+  l:[["Supposons $BC^{2} = AB^{2} + AC^{2}$. On considère un point C′ sur la perpendiculaire à (AB) passant par A, tel que $AC′ = AC$.","L'idée : fabriquer un deuxième triangle, ABC′, qui est rectangle en A par construction et qui a les mêmes côtés AB et AC.",1],
+   ["On a alors $BC^{2} = AB^{2} + AC^{2} = AB^{2} + AC′^{2} = BC′^{2}$, où la troisième égalité s'obtient par la première implication appliquée au triangle rectangle ABC′.","Le sens direct s'applique au triangle ABC′, puisqu'il est rectangle en A. Il faut le dire : c'est la justification que le correcteur cherche.",1],
+   ["Il s'ensuit que $BC′ = BC$.","Deux longueurs qui ont le même carré sont égales, puisqu'une longueur est positive.",0.5],
+   ["Les triangles ABC et ABC′ ayant de plus le côté [AB] en commun, ils sont donc isométriques.","Leurs trois côtés sont égaux deux à deux : AB est commun, AC = AC′ par construction, BC = BC′ par la ligne précédente.",0.5],
+   [`Leurs angles en A sont donc égaux : |${an("BAC")}| = |${an("BAC′")}| = π/2, ce qui prouve que ABC est rectangle en A.`,"Deux triangles isométriques ont les mêmes angles, et l'angle en A de ABC′ est droit par construction.",0.5]]},
+ {id:"GC3",t:"Démonstration : le théorème de l'aire",th:"aire",cc:4,lecons:["g2-aire-alkashi"],
+  q:"Question de cours du CC2 2025 (2 points). Soit ABC un triangle du plan. On note a = BC, b = AC et c = AB. Montre que Aire(ABC) = ½ ab sin(Ĉ).",corps:"",
+  l:[["Soit H le pied de la hauteur issue de A.","Toute la démonstration tient dans ce point : H est le point de (BC) tel que (AH) est perpendiculaire à (BC).",0.5],
+   ["Par définition, Aire(ABC) = ½ AH · BC.","C'est « base × hauteur / 2 », avec la base [BC] et la hauteur AH.",0.5],
+   ["Or AH = AC sin(|Ĉ|).","Dans le triangle AHC, rectangle en H, le sinus de l'angle en C est le côté opposé AH divisé par l'hypoténuse AC. Le poly n'écrit pas cette justification, mais elle rassure le correcteur.",0.5],
+   ["D'où Aire(ABC) = ½ BC · AC sin(|Ĉ|) = ½ ab sin(|Ĉ|).","On remplace AH, puis on écrit BC = a et AC = b.",0.5]]},
+ {id:"GC4",t:"Démonstration : le théorème de l'angle au centre",th:"centre",cc:8,lecons:["g2-angle-centre"],
+  q:`Question de cours du CC2 2025 (3 points). Soient C un cercle de centre O et A, B ∈ C deux points distincts. Soit M ∈ C ∖ {A, B}. Montre que ${an("AOB")} = 2${an("AMB")} [2π].`,corps:"<p>Les angles sont orientés, et les égalités sont vraies à 2π près.</p>",
+  l:[["On suppose que M ∈ C. Alors le triangle AMO est isocèle en O.","A et M sont sur le cercle de centre O : OA = OM, ce sont deux rayons.",0.5],
+   [`En considérant la somme de ses angles, on obtient ${an("AOM")} + 2${an("OMA")} = π, ou encore ${an("AOM")} = π − 2${an("OMA")}.`,"Dans un triangle isocèle en O, les deux angles à la base sont égaux : la somme des trois angles s'écrit avec deux fois le même.",0.5],
+   [`De même, comme BMO est isocèle en O, on a ${an("BOM")} = π − 2${an("OMB")}.`,"Même raisonnement avec B à la place de A.",0.5],
+   [`On en déduit ${an("AOB")} = ${an("AOM")} + ${an("MOB")} = ${an("AOM")} − ${an("BOM")}`,"Relation de Chasles pour les angles orientés, puis MOB = −BOM : changer le sens d'un angle orienté change son signe.",0.5],
+   [`= π − 2${an("OMA")} − (π − 2${an("OMB")}) = 2${an("AMO")} + 2${an("OMB")}`,"On remplace les deux angles par ce qu'on a trouvé. Les π disparaissent, et −OMA = AMO.",0.5],
+   [`= 2${an("AMB")}.`,"Relation de Chasles encore : AMO + OMB = AMB.",0.5]]},
+ {id:"GC5",t:"Énoncés à connaître : Al-Kashi, le théorème de l'aire, l'angle au centre",th:"aire",cc:5,lecons:["g2-aire-alkashi"],
+  q:"Questions de cours, comme la question (1) du CC2 2025 (1 point par énoncé). Écris de mémoire ces trois énoncés du poly.",corps:"<ol><li>Le théorème d'Al-Kashi.</li><li>Le théorème de l'aire.</li><li>Le théorème de l'angle au centre.</li></ol>",
+  l:[[`1. Soit ABC un triangle, alors BC² = AB² + AC² − 2 AC · AB cos(${an("BAC")}).`,"Théorème 4.3.1. Un énoncé commence par ses hypothèses : « Soit ABC un triangle ». Avec a = BC, b = AC, c = AB, c'est a² = b² + c² − 2bc cos(Â).",1],
+   ["2. Soit ABC un triangle du plan. On note a = BC, b = AC, c = AB. L'aire de ABC est donnée par Aire(ABC) = ½ ab sin(|Ĉ|) = ½ ac sin(|B̂|) = ½ bc sin(|Â|).","Théorème 4.2.6 : la moitié du produit de deux côtés par le sinus de l'angle qu'ils forment.",1],
+   [`3. Soient C un cercle de centre O et A, B ∈ C deux points distincts. Soit M ∈ P ∖ {A, B}. Alors M ∈ C si et seulement si ${an("AOB")} = 2${an("AMB")} [2π].`,"Théorème 5.2.1. C'est une équivalence : le « si et seulement si » fait partie de l'énoncé, et l'égalité est entre angles orientés, à 2π près.",1]]},
+ {id:"GC6",t:"Définitions à connaître : translation, homothétie, rotation, produit scalaire",th:"transfo",cc:6,lecons:["g2-transfo","g2-rotation-scalaire"],
+  q:"Questions de cours, comme la question (2) du CC2 2025 (1 point par définition). Écris de mémoire ces quatre définitions du poly.",corps:`<ol><li>La translation de vecteur ${ve("u")}.</li><li>L'homothétie de centre A et de rapport λ.</li><li>La rotation de centre Z et d'angle α.</li><li>Le produit scalaire de deux vecteurs ${ve("u")} et ${ve("v")}.</li></ol>`,
+  l:[[`1. La translation t de vecteur ${ve("u")} est l'application t : P → P où t(M) est l'unique point M′ ∈ P tel que ${ve("MM′")} = ${ve("u")}.`,"Définition 3.3.1. Une définition d'application dit d'où elle part, où elle arrive (de P dans P) et ce qu'elle fait d'un point M.",1],
+   [`2. Soit A ∈ P et λ ∈ ℝ. L'homothétie h de centre A et de rapport λ est l'application h : P → P qui à un point M du plan associe l'unique point h(M) tel que ${ve("Ah(M)")} = λ${ve("AM")}.`,"Définition 3.3.3. L'égalité est entre vecteurs : elle dit à la fois la direction, le sens (selon le signe de λ) et la longueur.",1],
+   [`3. Soit Z ∈ P et α ∈ ℝ/2πℤ. La rotation de centre Z et d'angle α est l'application r : P → P qui à tout point M associe l'unique point r(M) tel que ZM = Zr(M) et ${an("MZr(M)")} = α.`,"Définition 4.5.1. Deux conditions : la distance au centre ne change pas, et l'angle orienté de M vers son image vaut α. Pour M = Z, on a r(Z) = Z.",1],
+   [`4. Le produit scalaire entre deux vecteurs ${ve("u")} et ${ve("v")} est le nombre réel ⟨${ve("u")}, ${ve("v")}⟩ = ‖${ve("u")}‖ · ‖${ve("v")}‖ · cos(angle(${ve("u")}, ${ve("v")})).`,"Définition 4.6.2. C'est un nombre, pas un vecteur : le produit des deux normes par le cosinus de l'angle entre les vecteurs.",1]]}];
 
 G.add("geo",[
-]);
+ {id:"GE1",t:"Pythagore, Al-Kashi, aire ½ ab sin Ĉ",tache:"Pythagore, Al-Kashi et aire",th:"aire",pts:3,ex:"cc2",lecons:["g2-aire-alkashi","g2-pythagore"],
+  paliers:[
+   {t:"Pythagore et sa réciproque",cc:3,gen:pythagore},
+   {t:"Al-Kashi : un côté, avec deux côtés et l'angle entre eux",cc:4,gen:alKashi},
+   {t:"le cosinus d'un angle, puis l'angle, avec les trois côtés",cc:5,gen:troisCotes},
+   {t:"l'aire, puis une hauteur",cc:5,min:200,gen:aireHauteur},
+   {t:"comme au CC : une bissectrice, une médiane, deux étapes",cc:9,gen:R=>{const r=R();return r<0.5?bissectrice(R):r<0.75?deuxTemps(R):mediane(R);}}]}
+].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,ex:"cc2",fixe:true,seuil:1,pages:[],lecons:r.lecons,paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
 </script>
