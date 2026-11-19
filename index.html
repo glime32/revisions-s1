@@ -24466,8 +24466,9 @@ function primitive(R,sorte){const s=sorte||R.choix(["pow","log","exp","trig"]);l
   return exoX({prim:true,avecC:true,sig:"P"+fT,q:`Donne une primitive de ${fx(`f(x) = ${fT}`)}${s==="log"?" (là où elle est définie)":""}.`,corps:`<p class="muted">Une primitive F de f est une fonction dont la dérivée est f. Le site dérive ta réponse : n'importe quelle primitive est acceptée.</p>`,texte:`primitive de ${fT}`,ref:f,fT,ans,tape,etapes:E,nature:{pow:"u′uⁿ",log:"u′/u",exp:"u′eᵘ",trig:"cos et sin"}[s],
     pieges:pg.map(([g,ty])=>[g,{etape:1,type:ty,titre:"Où ça part : la constante.",msg:`En dérivant ta réponse, on trouve un multiple de f : la constante est fausse. Une primitive est ${fx(`F(x) = ${ans}`)}.`}]),ens:{f:fT}});}
 /* CA11 : intégration par parties. Une valeur exacte = somme de termes c × (1, e^m, π, π², ln 2, ln 3) */
-const KV={"1":[()=>"",()=>"1",()=>1],e:[m=>m===1?"e":`e^{${m<0?"−"+(-m):m}}`,m=>`e^(${m})`,m=>Math.exp(m)],pi:[()=>"π",()=>"pi",()=>Math.PI],pi2:[()=>"π²",()=>"pi^2",()=>Math.PI**2],ln2:[()=>"ln 2",()=>"ln(2)",()=>Math.LN2],ln3:[()=>"ln 3",()=>"ln(3)",()=>Math.log(3)]};
-function VX(T){const L=T.map(([c,k,m])=>[q(c),k,m]).filter(t=>!nul(t[0]));const tri={"e":0,pi2:1,pi:2,ln2:3,ln3:4,"1":5};L.sort((x,y)=>tri[x[1]]-tri[y[1]]||(y[2]||0)-(x[2]||0));
+const KV={"1":[()=>"",()=>"1",()=>1],e:[m=>m===1?"e":`e^{${m<0?"−"+(-m):m}}`,m=>`e^(${m})`,m=>Math.exp(m)],pi:[()=>"π",()=>"pi",()=>Math.PI],pi2:[()=>"π²",()=>"pi^2",()=>Math.PI**2],ln2:[()=>"ln 2",()=>"ln(2)",()=>Math.LN2],ln3:[()=>"ln 3",()=>"ln(3)",()=>Math.log(3)],
+  ln:[m=>"ln "+m,m=>`ln(${m})`,m=>Math.log(m)],lnq:[m=>`ln(${m})`,m=>`ln(${m})`,m=>{const [a,b]=m.split("/");return Math.log(a/b);}]};
+function VX(T){const L=T.map(([c,k,m])=>[q(c),k,m]).filter(t=>!nul(t[0]));const tri={"e":0,pi2:1,pi:2,ln2:3,ln3:4,ln:3,lnq:3.5,"1":5};L.sort((x,y)=>tri[x[1]]-tri[y[1]]||(y[2]||0)-(x[2]||0));
   const M=[];L.forEach(t=>{const o=M.find(x=>x[1]===t[1]&&x[2]===t[2]);if(o)o[0]=add(o[0],t[0]);else M.push(t);});const N=M.filter(t=>!nul(t[0]));
   return {T:S(N.map(([c,k,m])=>[c,KV[k][0](m)])),tp:N.length?N.map(([c,k,m])=>`(${brut(c)})*${KV[k][1](m)}`).join("+"):"0",v:N.reduce((t,[c,k,m])=>t+c.n/c.d*KV[k][2](m),0),L:N};}
 const negV=T=>T.map(([c,k,m])=>[mul(q(c),-1),k,m]);
@@ -24491,7 +24492,7 @@ function ippTire(R,fam){
     return {sig:`L${n},${a},${Bk}`,f:x=>a*Math.pow(x,n)*Math.log(x),A:1,B:Bk==="e"?Math.E:2,BT:Bk,fT:`${a===1?"":a}x${n===2?"²":""} ln x`,u:"ln x",du:"1/x",dv:`${a===1?"":a}x${n===2?"²":""}`,v:vT,vF:x=>a*Math.pow(x,N1)/N1,duV:null,
       cr,reste,I,crT:`[ln x × ${vT}]_{1}^{${Bk}}`,resteT:`∫_{1}^{${Bk}} (1/x) × ${vT} dx`,resteS:`∫_{1}^{${Bk}} ${coef(c1)}x${n===2?"²":""} dx`,resteP:"",why0:"On dérive ln x (sa dérivée 1/x se simplifie avec la puissance de x) et on primitive la puissance de x. Avec ln, on pose toujours u = ln x."};}
   if(fam==="lnx"){const a=R.ent(1,4),Bk=R.choix(["e","2","3","e2"]),crL={e:[[a,"e",1]],"2":[[2*a,"ln2"]],"3":[[3*a,"ln3"]],e2:[[2*a,"e",2]]}[Bk],resteL={e:[[a,"e",1],[-a,"1"]],"2":[[a,"1"]],"3":[[2*a,"1"]],e2:[[a,"e",2],[-a,"1"]]}[Bk];
-    const cr=VX(crL),reste=VX(resteL),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L))),BT={e:"e","2":"2","3":"3",e2:"e^{2}"}[Bk];
+    const cr=VX(crL),reste=VX(resteL),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L))),BT={e:"e","2":"2","3":"3",e2:"e²"}[Bk];
     return {sig:`N${a},${Bk}`,f:x=>a*Math.log(x),A:1,B:{e:Math.E,"2":2,"3":3,e2:Math.E**2}[Bk],BT,fT:`${a===1?"":a}ln x`,u:"ln x",du:"1/x",dv:String(a),v:`${a===1?"":a}x`,vF:x=>a*x,duV:null,
       cr,reste,I,crT:`[${a===1?"":a}x ln x]_{1}^{${BT}}`,resteT:`∫_{1}^{${BT}} (1/x) × ${a===1?"":a}x dx`,resteS:`∫_{1}^{${BT}} ${a} dx`,resteP:"",why0:"Astuce : ln x = 1 × ln x. On dérive ln x et on primitive 1 (v = x) : la dérivée 1/x se simplifie avec x."};}
   if(fam==="atan"){const a=R.ent(1,3),cr=VX([[Q(a,4),"pi"]]),reste=VX([[Q(a,2),"ln2"]]),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L)));
@@ -24531,6 +24532,200 @@ function exoIpp(R,fam,trous){const o=ippTire(R,fam),It=`∫_{${o.A}}^{${o.BT}} $
     champs:trous?[{k:"trous",ids:["du","v","cr","I"]},{k:"sym",id:"s",sym:["e^(","π","ln(","/","x"],aide:"Pour e², écris e^(2). Les boutons écrivent dans la case où tu es."}]:[{k:"champ",id:"I",nom:"valeur",label:"$I =$",ex:"une valeur exacte, par exemple e - 2",sym:["e","e^(","π","ln(","/"]}],
     indice:trous?false:undefined,juge,etapes:E,bonne:fx(`I = ${o.I.T}`),bonneTxt:`I = ${o.I.T}`,repBonne:trous?{du:String(o.duV),v:o.vTape,cr:o.cr.tp,I:o.I.tp}:{I:o.I.tp},
     repFausse:trous?{du:String(o.duV),v:o.vTape,cr:o.cr.tp,I:String(o.cr.v)}:{I:pieges.length?String(pieges[0][0]):`(${o.I.tp})+1`},nature:{exp:"polynôme fois exponentielle",trig:"x cos x, x sin x",ln:"xⁿ ln x",lnx:"ln x",atan:"arctan x",deux:"deux intégrations"}[fam],ens:{type:"ipp",A:o.A,B:o.B,f:o.f}};}
+/* ---------- CA12 : changement de variable ----------
+   Un cas : I = ∫ f(x) dx de A à B ; avec u = uT, I = K ∫ g(u) du de uA à uB = K [G]. */
+/* c × ln(p/d), écrit avec le plus petit entier possible : ln 4 = 2 ln 2, ln(1/3) = −ln 3 */
+function lnK(c,p,d){const r=Q(p,d||1);if(r.n===r.d)return [0,"1"];if(r.n<r.d)return lnK(mul(c,-1),r.d,r.n);
+  if(r.d===1){for(const b of [2,3,5,6,7,10])for(let k=2;k<7;k++)if(Math.pow(b,k)===r.n)return [mul(c,k),"ln",b];return [c,"ln",r.n];}
+  return [c,"lnq",r.n+"/"+r.d];}
+const eK=(c,m)=>m===0?[c,"1"]:[c,"e",m],eT=m=>m===0?"1":KV.e[0](m);
+/* la même valeur exacte que VX, en commençant par un terme positif quand il y en a un : « 2 − ln 3 » */
+function VP(T){const o=VX(T),i=o.L.findIndex(t=>t[0].n>0);if(i<=0)return o;const L=[o.L[i]].concat(o.L.filter((_,j)=>j!==i));
+  return {T:S(L.map(([c,k,m])=>[c,KV[k][0](m)])),tp:o.tp,v:o.v,L};}
+const bq=x=>{x=q(x);return {T:nb(x),tp:brut(x),v:x.n/x.d};},bt=(T,v,tp)=>({T,v,tp});
+const bE=m=>m===0?bq(1):bt(["","e","e²","e³"][m],Math.exp(m)),bL=m=>m===1?bq(0):bt("ln "+m,Math.log(m));
+const bA=(n,d)=>n===0?bq(0):bt((n===1?"":n)+"π"+(d===1?"":"/"+d),n*Math.PI/d,`${n}*pi/${d}`);
+const duK=K=>egal(K,1)?"du":K.n===1?"du/"+K.d:coef(K)+" du",inv1=u=>u===1?"1":"1/"+u,entre=(KT,t)=>KT?`${KT}(${t})`:t;
+const pw=(x,n)=>{let r=Q(1);for(let i=0;i<n;i++)r=mul(r,x);return r;},lnT=x=>{x=q(x);return x.d===1?"ln "+x.n:`ln(${nb(x)})`;};
+const croise=(X,Y,v)=>X.flatMap((x,i)=>Y.map((y,j)=>[x,y,i+j])).filter(t=>t[2]%2===v);
+function cvCas(o){o.KT=coef(o.K);o.newT=`${o.KT}∫_{${o.uA.T}}^{${o.uB.T}} ${o.gT} du`;o.crT=`${o.KT}[${o.GT}]_{${o.uA.T}}^{${o.uB.T}}`;o.It=`∫_{${o.A.T}}^{${o.B.T}} ${o.fT} dx`;return o;}
+/* palier 1 : u = ax + b */
+const affV=(a,b,x)=>`${a===1?"":a+" × "}${x}${b?(b<0?" − "+(-b):" + "+b):""} = ${nb(a*x+b)}`;
+function cvAff(o){const {a,b,B}=o;
+  return cvCas(Object.assign(o,{sig:`A${o.s}${a},${b},${B}`,nat:"u = ax + b",f:x=>o.g(a*x+b),A:bq(0),B:bq(B),uT:affT(a,b),uF:x=>a*x+b,du:a===1?"du = dx":`du = ${a} dx`,donc:a===1?"":`dx = du/${a}`,
+    why0:`u est une fonction affine : sa dérivée est le nombre ${a}, et ${fx("du = u′(x) dx")}.`,K:Q(1,a),uA:bq(b),uB:bq(a*B+b),uAc:affV(a,b,0),uBc:affV(a,b,B)}));}
+function cvAffine(R){const g=R.choix(["pow","inv","inv","inv2","rac","exp"]);
+  if(g==="pow"){let a,b,B,n;do{a=R.choix([2,3]);b=R.choix([-1,1,2]);B=R.choix([1,2]);n=R.choix([2,3]);}while(Math.abs(a*B+b)===Math.abs(b));const uB=a*B+b;
+    return cvAff({a,b,B,s:"p"+n,fT:`(${affT(a,b)})^{${n}}`,g:u=>Math.pow(u,n),gT:`u^{${n}}`,GT:`u^{${n+1}}/${n+1}`,G:u=>Math.pow(u,n+1)/(n+1),I:VP([[Q(Math.pow(uB,n+1)-Math.pow(b,n+1),a*(n+1)),"1"]]),
+      ev:`${coef(Q(1,a))} × (${par(uB)}^{${n+1}} − ${par(b)}^{${n+1}})/${n+1}`,whyG:`Une primitive de ${fx(`u^{${n}}`)} est ${fx(`u^{${n+1}}/${n+1}`)}.`});}
+  if(g==="inv"){let a,b,B;do{a=R.ent(1,4);b=R.ent(1,3);B=R.ent(1,3);}while((a*B)%b);const uB=a*B+b,K=Q(1,a);
+    return cvAff({a,b,B,s:"i",fT:`1/(${affT(a,b)})`,g:u=>1/u,gT:"1/u",GT:"ln u",G:Math.log,I:VP([lnK(K,uB,b)]),ev:entre(coef(K),`ln ${uB} − ln ${b}`),
+      whyG:`Une primitive de ${fx("1/u")} est ${fx("ln u")}, pour ${fx("u &gt; 0")}. ${b===1?fx("ln 1 = 0"):fx("ln a − ln b = ln(a/b)")}.`});}
+  if(g==="inv2"){const a=R.ent(1,3),b=R.ent(1,3),B=R.ent(1,3),uB=a*B+b,K=Q(1,a);
+    return cvAff({a,b,B,s:"j",fT:`1/(${affT(a,b)})²`,g:u=>1/(u*u),gT:"1/u²",GT:"−1/u",G:u=>-1/u,I:VP([[mul(K,sub(Q(1,b),Q(1,uB))),"1"]]),ev:entre(coef(K),`−1/${uB} + ${inv1(b)}`),
+      whyG:`Une primitive de ${fx("1/u²")} est ${fx("−1/u")} : on le vérifie en dérivant.`});}
+  if(g==="rac"){const [a,b,B]=R.choix([[3,1,1],[3,1,5],[5,4,1],[2,1,4],[4,1,2],[8,1,1],[3,4,4],[2,4,6],[3,1,8],[5,1,3],[7,9,1],[8,1,3],[4,9,4],[12,4,1]]),uB=a*B+b,al=Math.round(Math.sqrt(b)),be=Math.round(Math.sqrt(uB));
+    return cvAff({a,b,B,s:"r",fT:`√(${affT(a,b)})`,g:Math.sqrt,gT:"√u",GT:"(2/3)u√u",G:u=>2/3*u*Math.sqrt(u),I:VP([[mul(Q(2,3*a),be**3-al**3),"1"]]),ev:`${coef(Q(1,a))} × (2/3) × (${be**3} − ${al**3})`,
+      whyG:`${fx("√u = u^{1/2}")}, dont une primitive est ${fx("(2/3)u^{3/2} = (2/3)u√u")}. En ${uB} : ${fx(`${uB}√${uB} = ${be**3}`)}${b>1?` ; en ${b} : ${fx(`${b}√${b} = ${al**3}`)}`:""}.`});}
+  const a=R.choix([2,3,4]),b=R.ent(-2,1),B=a===2?R.choix([1,2]):1,uB=a*B+b,K=Q(1,a);
+  return cvAff({a,b,B,s:"e",fT:`e^{${affT(a,b)}}`,g:Math.exp,gT:"e^{u}",GT:"e^{u}",G:Math.exp,I:VP([eK(K,uB),eK(mul(K,-1),b)]),ev:`${coef(K)}(${eT(uB)} − ${eT(b)})`,
+    whyG:`Une primitive de ${fx("e^{u}")} est ${fx("e^{u}")}${b===0||uB===0?`, et ${fx("e^{0} = 1")}`:""}.`});}
+/* paliers 2 et 3 : u = x² + c, x², eˣ, ln x, √x, sin x, cos x. v (0 ou 1) prend une moitié des cas : u donné et u à trouver n'ont pas les mêmes intégrales */
+function cvPoly(R,v,fam){
+  if(fam==="xq"){const [[c,B],k]=R.choix(croise([[1,1],[1,2],[1,3],[2,2],[4,2],[4,4],[9,3],[2,4]],[1,2,3,4,6],v)),uB=B*B+c,K=Q(k,2);
+    return cvCas({sig:`q${c},${B},${k}`,nat:"u = x² + c",fT:`${k===1?"":k}x/(x² + ${c})`,f:x=>k*x/(x*x+c),A:bq(0),B:bq(B),uT:`x² + ${c}`,uF:x=>x*x+c,du:"du = 2x dx",donc:k===2?"":`${k===1?"":k}x dx = ${duK(K)}`,
+      why0:`La dérivée de ${fx(`x² + ${c}`)} est 2x, et il y a justement un x au numérateur.`,K,gT:"1/u",GT:"ln u",G:Math.log,uA:bq(c),uB:bq(uB),uBc:`${B}² + ${c} = ${uB}`,I:VP([lnK(K,uB,c)]),ev:entre(coef(K),`ln ${uB} − ln ${c}`),
+      whyG:`Une primitive de ${fx("1/u")} est ${fx("ln u")}, pour ${fx("u &gt; 0")}. ${c===1?fx("ln 1 = 0"):fx("ln a − ln b = ln(a/b)")}.`});}
+  if(fam==="xp"){const [[c,n],k]=R.choix(croise([[1,2],[1,3],[2,2],[2,3]],[1,2,4,6],v)),K=Q(k,2),KT=coef(K),uB=1+c;
+    return cvCas({sig:`p${c},${n},${k}`,nat:"u = x² + c",fT:`${k===1?"":k}x(x² + ${c})^{${n}}`,f:x=>k*x*Math.pow(x*x+c,n),A:bq(0),B:bq(1),uT:`x² + ${c}`,uF:x=>x*x+c,du:"du = 2x dx",donc:k===2?"":`${k===1?"":k}x dx = ${duK(K)}`,
+      why0:`La dérivée de ${fx(`x² + ${c}`)} est 2x, et il y a un x en facteur. Développer la puissance serait bien plus long.`,K,gT:`u^{${n}}`,GT:`u^{${n+1}}/${n+1}`,G:u=>Math.pow(u,n+1)/(n+1),uA:bq(c),uB:bq(uB),uBc:`1² + ${c} = ${uB}`,
+      I:VP([[mul(K,Q(Math.pow(uB,n+1)-Math.pow(c,n+1),n+1)),"1"]]),ev:`${KT?KT+" × ":""}(${uB}^{${n+1}} − ${c}^{${n+1}})/${n+1}`,whyG:`Une primitive de ${fx(`u^{${n}}`)} est ${fx(`u^{${n+1}}/${n+1}`)}.`});}
+  if(fam==="xr"){const [[c,BT,B2,al,be],k]=R.choix(croise([[1,"√3",3,1,2],[4,"√5",5,2,3],[9,"4",16,3,5],[16,"3",9,4,5],[1,"2√2",8,1,3],[4,"2√3",12,2,4],[9,"√7",7,3,4]],[1,3],v)),K=Q(k,2);
+    return cvCas({sig:`r${c},${B2},${k}`,nat:"u = x² + c",fT:`${k===1?"":k}x√(x² + ${c})`,f:x=>k*x*Math.sqrt(x*x+c),A:bq(0),B:bt(BT,Math.sqrt(B2)),uT:`x² + ${c}`,uF:x=>x*x+c,du:"du = 2x dx",donc:`${k===1?"":k}x dx = ${duK(K)}`,
+      why0:`Ce qui gêne est sous la racine. Sa dérivée 2x est là, à un nombre près : il y a un x en facteur.`,K,gT:"√u",GT:"(2/3)u√u",G:u=>2/3*u*Math.sqrt(u),uA:bq(c),uB:bq(B2+c),uBc:`${B2} + ${c} = ${B2+c}`,
+      I:VP([[mul(mul(K,Q(2,3)),be**3-al**3),"1"]]),ev:`${coef(K)} × (2/3) × (${be**3} − ${al**3})`,
+      whyG:`${fx("√u = u^{1/2}")}, dont une primitive est ${fx("(2/3)u^{3/2} = (2/3)u√u")}. En ${B2+c} : ${fx(`${B2+c}√${B2+c} = ${be**3}`)}${c>1?` ; en ${c} : ${fx(`${c}√${c} = ${al**3}`)}`:""}.`});}
+  const [[A,B],k]=R.choix(croise([[0,1],[0,2],[1,2]],[1,2,4,6],v)),K=Q(k,2),KT=coef(K);
+  return cvCas({sig:`e${A},${B},${k}`,nat:"u = x²",fT:`${k===1?"":k}xe^{x²}`,f:x=>k*x*Math.exp(x*x),A:bq(A),B:bq(B),uT:"x²",uF:x=>x*x,du:"du = 2x dx",donc:k===2?"":`${k===1?"":k}x dx = ${duK(K)}`,
+    why0:`${fx("x²")} est dans l'exposant, et sa dérivée 2x est là, à un nombre près : il y a un x en facteur.`,K,gT:"e^{u}",GT:"e^{u}",G:Math.exp,uA:bq(A*A),uB:bq(B*B),I:VP([eK(K,B*B),eK(mul(K,-1),A*A)]),
+    ev:KT?`${KT}(${eT(B*B)} − ${eT(A*A)})`:"",whyG:`Une primitive de ${fx("e^{u}")} est ${fx("e^{u}")}${A===0?`, et ${fx("e^{0} = 1")}`:""}.`});}
+function cvExp(R,v){const [[mA,mB],[c,car]]=R.choix(croise([[1,3],[1,5],[2,5],[2,3],[3,5],[1,2]],[[1,0],[2,0],[3,0],[1,1],[2,1]],v).filter(([m,p])=>!(m[1]===2&&p[0]===1&&p[1])));
+  return cvCas({sig:`x${mA},${mB},${c},${car}`,nat:"u = eˣ",fT:`e^{x}/(${c} + e^{x})${car?"²":""}`,f:x=>Math.exp(x)/Math.pow(c+Math.exp(x),car?2:1),A:bL(mA),B:bL(mB),uT:"e^{x}",uF:Math.exp,du:"du = e^{x} dx",donc:"",
+    why0:`${fx("e^{x}")} est au dénominateur, et sa dérivée ${fx("e^{x}")} est au numérateur : ${fx("e^{x} dx")} devient du.`,K:Q(1),gT:`1/(${c} + u)${car?"²":""}`,GT:car?`−1/(${c} + u)`:`ln(${c} + u)`,G:car?u=>-1/(c+u):u=>Math.log(c+u),
+    uA:bq(mA),uB:bq(mB),uAc:mA===1?"e^{0} = 1":`e^{ln ${mA}} = ${mA}`,uBc:`e^{ln ${mB}} = ${mB}`,I:VP([car?[sub(Q(1,c+mA),Q(1,c+mB)),"1"]:lnK(1,c+mB,c+mA)]),ev:car?`−1/${c+mB} + 1/${c+mA}`:`ln ${c+mB} − ln ${c+mA}`,
+    whyG:car?`Une primitive de ${fx(`1/(${c} + u)²`)} est ${fx(`−1/(${c} + u)`)} : on le vérifie en dérivant.`:`Une primitive de ${fx(`1/(${c} + u)`)} est ${fx(`ln(${c} + u)`)}. Puis ${fx("ln a − ln b = ln(a/b)")}.`});}
+const lnV=m=>m===0?"ln 1 = 0":m===1?"ln e = 1":`ln(e^{${m}}) = ${m}`;
+function cvLn(R,v){const L=[];
+  [1,2,3].forEach(n=>[1,2,3].forEach(k=>[[0,1],[0,2],[1,2],[1,3]].forEach(([A,B])=>{if(k>1||B>1)L.push(["p",n,k,A,B]);})));
+  [[0,1,2],[0,1,3],[0,2,3],[1,0,1],[1,0,2],[1,1,2],[1,0,3],[2,0,1],[2,0,2],[2,1,2]].forEach(t=>L.push(["i",0,...t]));
+  [[0,1,2],[0,1,3],[1,0,1],[1,0,2],[1,0,3],[1,1,2]].forEach(t=>L.push(["j",0,...t]));
+  const [s,n,p,A,B]=R.choix(L.filter((_,i)=>i%2===v)),k=s==="p"?p:1,c=s==="p"?0:p,K=Q(k),KT=coef(K);
+  const o={sig:`l${s}${n},${p},${A},${B}`,nat:"u = ln x",A:bE(A),B:bE(B),uT:"ln x",uF:Math.log,du:"du = dx/x",donc:"",why0:`${fx("ln x")} est accompagné de ${fx("1/x")}, qui est justement sa dérivée : ${fx("dx/x")} devient du.`,K,uA:bq(A),uB:bq(B),uAc:lnV(A),uBc:lnV(B)};
+  if(s==="p")return cvCas(Object.assign(o,{fT:`${k===1?"":k}(ln x)${n===1?"":`^{${n}}`}/x`,f:x=>k*Math.pow(Math.log(x),n)/x,gT:n===1?"u":`u^{${n}}`,GT:`u^{${n+1}}/${n+1}`,G:u=>Math.pow(u,n+1)/(n+1),
+    I:VP([[Q(k*(Math.pow(B,n+1)-Math.pow(A,n+1)),n+1),"1"]]),ev:`${KT?KT+" × ":""}(${B}^{${n+1}} − ${A}^{${n+1}})/${n+1}`,whyG:`Une primitive de ${fx(n===1?"u":`u^{${n}}`)} est ${fx(`u^{${n+1}}/${n+1}`)}.`}));
+  if(s==="i")return cvCas(Object.assign(o,{fT:c?`1/(x(${c} + ln x))`:"1/(x ln x)",f:x=>1/(x*(c+Math.log(x))),gT:c?`1/(${c} + u)`:"1/u",GT:c?`ln(${c} + u)`:"ln u",G:u=>Math.log(c+u),I:VP([lnK(1,c+B,c+A)]),ev:`ln ${c+B} − ln ${c+A}`,
+    whyG:`Une primitive de ${fx(c?`1/(${c} + u)`:"1/u")} est ${fx(c?`ln(${c} + u)`:"ln u")}. ${c+A===1?fx("ln 1 = 0"):fx("ln a − ln b = ln(a/b)")}.`}));
+  return cvCas(Object.assign(o,{fT:c?`1/(x(${c} + ln x)²)`:"1/(x(ln x)²)",f:x=>1/(x*Math.pow(c+Math.log(x),2)),gT:c?`1/(${c} + u)²`:"1/u²",GT:c?`−1/(${c} + u)`:"−1/u",G:u=>-1/(c+u),I:VP([[sub(Q(1,c+A),Q(1,c+B)),"1"]]),ev:`−1/${c+B} + ${inv1(c+A)}`,
+    whyG:`Une primitive de ${fx(c?`1/(${c} + u)²`:"1/u²")} est ${fx(c?`−1/(${c} + u)`:"−1/u")} : on le vérifie en dérivant.`}));}
+const SINQ={"0/1":Q(0),"1/6":Q(1,2),"1/2":Q(1),"1/1":Q(0),"3/2":Q(-1),"2/1":Q(0)},COSQ={"0/1":Q(1),"1/3":Q(1,2),"1/2":Q(0),"1/1":Q(-1),"3/2":Q(0),"2/1":Q(1)};
+const piCarre=(n,d)=>bt((n===1?"":n*n)+"π²"+(d===1?"":"/"+d*d),Math.pow(n*Math.PI/d,2));
+function cvRac(R,v){const L=[["l",1,9],["l",4,9],["l",1,16],["l",9,25],["l",4,16],["s",1,4],["s",1,9],["s",4,9],["s",1,16],["s",4,16],["e",1,4],["e",1,9],["e",4,9],
+    ["c",[1,2],[1,1]],["c",[1,6],[1,2]],["c",[1,6],[1,1]],["c",[1,2],[3,2]],["n",[1,2],[1,1]],["n",[1,3],[1,2]],["n",[1,3],[1,1]],["n",[1,1],[2,1]]];
+  const [s,a,b]=R.choix(L.filter((_,i)=>i%2===v)),tg=s==="c"||s==="n",al=tg?0:Math.round(Math.sqrt(a)),be=tg?0:Math.round(Math.sqrt(b)),K=Q(2);
+  const o={sig:`s${s}${a},${b}`,nat:"u = √x",A:tg?piCarre(...a):bq(a),B:tg?piCarre(...b):bq(b),uT:"√x",uF:Math.sqrt,du:"du = dx/(2√x)",donc:"dx/√x = 2 du",K,
+    why0:`${fx("√x")} revient, et ${fx("1/√x")} est là : c'est sa dérivée, à un facteur 2 près.`,uA:tg?bA(...a):bq(al),uB:tg?bA(...b):bq(be)};
+  o.uAc=tg?`√(${o.A.T}) = ${o.uA.T}`:`√${a} = ${al}`;o.uBc=tg?`√(${o.B.T}) = ${o.uB.T}`:`√${b} = ${be}`;
+  if(s==="l")return cvCas(Object.assign(o,{fT:"1/(√x(1 + √x))",f:x=>1/(Math.sqrt(x)*(1+Math.sqrt(x))),gT:"1/(1 + u)",GT:"ln(1 + u)",G:u=>Math.log(1+u),I:VP([lnK(2,1+be,1+al)]),ev:`2(ln ${1+be} − ln ${1+al})`,
+    whyG:`Une primitive de ${fx("1/(1 + u)")} est ${fx("ln(1 + u)")}. Puis ${fx("ln a − ln b = ln(a/b)")}.`}));
+  if(s==="s")return cvCas(Object.assign(o,{fT:"1/(√x(1 + √x)²)",f:x=>1/(Math.sqrt(x)*Math.pow(1+Math.sqrt(x),2)),gT:"1/(1 + u)²",GT:"−1/(1 + u)",G:u=>-1/(1+u),I:VP([[mul(2,sub(Q(1,1+al),Q(1,1+be))),"1"]]),ev:`2(−1/${1+be} + 1/${1+al})`,
+    whyG:`Une primitive de ${fx("1/(1 + u)²")} est ${fx("−1/(1 + u)")} : on le vérifie en dérivant.`}));
+  if(s==="e")return cvCas(Object.assign(o,{fT:"e^{√x}/√x",f:x=>Math.exp(Math.sqrt(x))/Math.sqrt(x),gT:"e^{u}",GT:"e^{u}",G:Math.exp,I:VP([eK(2,be),eK(-2,al)]),ev:`2(${eT(be)} − ${eT(al)})`,whyG:`Une primitive de ${fx("e^{u}")} est ${fx("e^{u}")}.`}));
+  const ka=a.join("/"),kb=b.join("/");
+  if(s==="c")return cvCas(Object.assign(o,{fT:"cos(√x)/√x",f:x=>Math.cos(Math.sqrt(x))/Math.sqrt(x),gT:"cos u",GT:"sin u",G:Math.sin,I:VP([[mul(2,sub(SINQ[kb],SINQ[ka])),"1"]]),ev:`2(${nb(SINQ[kb])} − ${par(SINQ[ka])})`,
+    whyG:`Une primitive de ${fx("cos u")} est ${fx("sin u")}. ${fx(`sin(${o.uB.T}) = ${nb(SINQ[kb])}`)} et ${fx(`sin(${o.uA.T}) = ${nb(SINQ[ka])}`)}.`}));
+  return cvCas(Object.assign(o,{fT:"sin(√x)/√x",f:x=>Math.sin(Math.sqrt(x))/Math.sqrt(x),gT:"sin u",GT:"−cos u",G:u=>-Math.cos(u),I:VP([[mul(2,sub(COSQ[ka],COSQ[kb])),"1"]]),ev:`2(${nb(mul(COSQ[kb],-1))} + ${par(COSQ[ka])})`,
+    whyG:`Une primitive de ${fx("sin u")} est ${fx("−cos u")}. ${fx(`cos(${o.uB.T}) = ${nb(COSQ[kb])}`)} et ${fx(`cos(${o.uA.T}) = ${nb(COSQ[ka])}`)}.`}));}
+function cvTrig(R,v){const L=[],P=[[[0,1],[1,2]],[[0,1],[1,6]],[[1,6],[1,2]]];
+  [1,2,3].forEach(n=>P.forEach(p=>L.push(["s",n,p])));P.forEach(p=>{L.push(["l",0,p]);L.push(["q",0,p]);});L.push(["e",0,P[0]]);
+  [2,3].forEach(n=>[[[0,1],[1,2]],[[0,1],[1,3]]].forEach(p=>L.push(["c",n,p])));L.push(["t",0,[[0,1],[1,3]]]);
+  const [s,n,[a,b]]=R.choix(L.filter((_,i)=>i%2===v)),co=s==="c"||s==="t",T=co?COSQ:SINQ,uA=T[a.join("/")],uB=T[b.join("/")],nom=co?"cos":"sin",ang=x=>x.T==="0"?" 0":`(${x.T})`;
+  const o={sig:`t${s}${n},${a},${b}`,nat:co?"u = cos x":"u = sin x",A:bA(...a),B:bA(...b),uT:nom+" x",uF:co?Math.cos:Math.sin,du:co?"du = −sin x dx":"du = cos x dx",donc:co?"sin x dx = −du":"",K:Q(co?-1:1),uA:bq(uA),uB:bq(uB),
+    why0:co?`La dérivée de ${fx("cos x")} est ${fx("−sin x")} : ${fx("sin x")} est en facteur, au signe près.`:`La dérivée de ${fx("sin x")} est ${fx("cos x")}, qui est en facteur : ${fx("cos x dx")} devient du.`};
+  o.uAc=`${nom}${ang(o.A)} = ${nb(uA)}`;o.uBc=`${nom}${ang(o.B)} = ${nb(uB)}`;
+  const ordre=" La borne du bas reste celle qui correspond à la borne du bas de x, même si elle est la plus grande : on ne remet pas les bornes dans l'ordre.";
+  if(s==="s"||s==="c"){const pA=div(pw(uA,n+1),n+1),pB=div(pw(uB,n+1),n+1);
+    return cvCas(Object.assign(o,{fT:co?`sin x (cos x)^{${n}}`:n===1?"sin x cos x":`cos x (sin x)^{${n}}`,f:co?x=>Math.sin(x)*Math.pow(Math.cos(x),n):x=>Math.cos(x)*Math.pow(Math.sin(x),n),gT:n===1?"u":`u^{${n}}`,GT:`u^{${n+1}}/${n+1}`,G:u=>Math.pow(u,n+1)/(n+1),
+      I:VP([[mul(o.K,sub(pB,pA)),"1"]]),ev:co?`−(${nb(pB)} − ${nb(pA)})`:`${nb(pB)} − ${nb(pA)}`,whyG:`Une primitive de ${fx(n===1?"u":`u^{${n}}`)} est ${fx(`u^{${n+1}}/${n+1}`)}.${co?ordre:""}`}));}
+  if(s==="l"){const r=div(add(1,uB),add(1,uA));
+    return cvCas(Object.assign(o,{fT:"(cos x)/(1 + sin x)",f:x=>Math.cos(x)/(1+Math.sin(x)),gT:"1/(1 + u)",GT:"ln(1 + u)",G:u=>Math.log(1+u),I:VP([lnK(1,r.n,r.d)]),ev:`${lnT(add(1,uB))} − ${lnT(add(1,uA))}`,
+      whyG:`Une primitive de ${fx("1/(1 + u)")} est ${fx("ln(1 + u)")}. ${egal(uA,0)?fx("ln 1 = 0"):fx("ln a − ln b = ln(a/b)")}.`}));}
+  if(s==="q")return cvCas(Object.assign(o,{fT:"(cos x)/(1 + sin x)²",f:x=>Math.cos(x)/Math.pow(1+Math.sin(x),2),gT:"1/(1 + u)²",GT:"−1/(1 + u)",G:u=>-1/(1+u),I:VP([[sub(div(1,add(1,uA)),div(1,add(1,uB))),"1"]]),
+    ev:`−${nb(div(1,add(1,uB)))} + ${nb(div(1,add(1,uA)))}`,whyG:`Une primitive de ${fx("1/(1 + u)²")} est ${fx("−1/(1 + u)")} : on le vérifie en dérivant.`}));
+  if(s==="e")return cvCas(Object.assign(o,{fT:"e^{sin x} cos x",f:x=>Math.exp(Math.sin(x))*Math.cos(x),gT:"e^{u}",GT:"e^{u}",G:Math.exp,I:VP([[1,"e",1],[-1,"1"]]),ev:"",whyG:`Une primitive de ${fx("e^{u}")} est ${fx("e^{u}")}, et ${fx("e^{0} = 1")}.`}));
+  return cvCas(Object.assign(o,{fT:"(sin x)/(cos x)",f:Math.tan,gT:"1/u",GT:"ln u",G:Math.log,I:VP([lnK(-1,uB.n,uB.d)]),ev:`−(${lnT(uB)} − ln 1)`,whyG:`Une primitive de ${fx("1/u")} est ${fx("ln u")}. ${fx("ln 1 = 0")} et ${fx("ln(1/2) = −ln 2")}.${ordre}`}));}
+function cvCarre(R,v){const L=[],SN=[0,1,0,-1,0],CS=[1,0,-1,0,1],XT=["0","√(π/2)","√π","√(3π/2)","√(2π)"];
+  [["c",0,1,0],["c",0,2,0],["c",1,2,0],["c",1,4,1],["c",1,3,0],["s",0,1,0],["s",0,2,0],["s",1,2,0],["s",2,4,0],["s",2,4,1]].forEach(t=>[1,2,4].forEach(k=>{if(!(t[0]==="c"&&t[3]&&k===2))L.push(t.concat([k]));}));
+  const [s,nA,nB,neg,k]=R.choix(L.filter((_,i)=>i%2===v)),K=Q(k,2),co=s==="c",vA=co?SN[nA]:CS[nA],vB=co?SN[nB]:CS[nB],nom=co?"sin":"cos";
+  const o={sig:`c${s}${nA},${nB},${neg},${k}`,nat:"u = x²",fT:`${k===1?"":k}x ${co?"cos":"sin"}(x²)`,f:x=>k*x*(co?Math.cos(x*x):Math.sin(x*x)),A:nA===0?bq(0):bt((neg?"−":"")+XT[nA],(neg?-1:1)*Math.sqrt(nA*Math.PI/2)),B:bt(XT[nB],Math.sqrt(nB*Math.PI/2)),
+    uT:"x²",uF:x=>x*x,du:"du = 2x dx",donc:k===2?"":`${k===1?"":k}x dx = ${duK(K)}`,why0:`${fx("x²")} est dans le ${co?"cosinus":"sinus"}, et sa dérivée 2x est en facteur, à un nombre près.`,K,uA:bA(nA,2),uB:bA(nB,2),
+    gT:co?"cos u":"sin u",GT:co?"sin u":"−cos u",G:co?Math.sin:u=>-Math.cos(u),I:VP([[mul(K,co?vB-vA:vA-vB),"1"]]),ev:entre(coef(K),co?`${nb(vB)} − ${par(vA)}`:`${nb(-vB)} + ${par(vA)}`)};
+  o.uA=nA===0?bq(0):nA===2?bA(1,1):nA===4?bA(2,1):bA(nA,2);o.uB=nB===2?bA(1,1):nB===4?bA(2,1):bA(nB,2);
+  o.uAc=nA===0?"":`(${o.A.T})² = ${o.uA.T}`;o.uBc=`(${o.B.T})² = ${o.uB.T}`;
+  o.whyG=`Une primitive de ${fx(o.gT)} est ${fx(o.GT)}. ${fx(`${nom}${nB===0?" 0":`(${o.uB.T})`} = ${nb(vB)}`)} et ${fx(`${nom}${nA===0?" 0":`(${o.uA.T})`} = ${nb(vA)}`)}.`;
+  return cvCas(o);}
+function cvForme(R,v){const fam=R.choix(["xq","xq","xp","xr","xe","ex","ex","ln","ln","ln","rx","rx","tr","tr","x2","x2"]);
+  return fam==="ex"?cvExp(R,v):fam==="ln"?cvLn(R,v):fam==="rx"?cvRac(R,v):fam==="tr"?cvTrig(R,v):fam==="x2"?cvCarre(R,v):cvPoly(R,v,fam);}
+/* palier 4 : la dérivée de u ne suffit plus, il faut écrire x (ou dx) avec u, comme au TD 1, exercice 5 (b), (d) et (g) */
+function cvTout(R){const fam=R.choix(["xs","xs","xn","xn","xi","e2","e2","rr"]);
+  if(fam==="xs"){const [c,A,B]=R.choix([[1,0,8],[1,3,8],[4,0,5],[4,-3,0],[4,-3,5],[1,3,15],[9,0,7],[9,-5,0],[9,-8,7],[1,0,15],[4,5,12]]),al=Math.round(Math.sqrt(A+c)),be=Math.round(Math.sqrt(B+c));
+    const pA=Q(2*al**3,3),pB=Q(2*be**3,3),qA=2*c*al,qB=2*c*be;
+    return cvCas({sig:`S${c},${A},${B}`,nat:"x/√(x + c)",fT:`x/√(${affT(1,c)})`,f:x=>x/Math.sqrt(x+c),A:bq(A),B:bq(B),uT:affT(1,c),uF:x=>x+c,du:"du = dx",et:`x = u − ${c}`,
+      why0:`Ce qui gêne est sous la racine. Sa dérivée vaut 1 : rien ne remplace le x du numérateur, il faut l'écrire avec u.`,K:Q(1),gT:`(u − ${c})/√u`,GT:`(2/3)u√u − ${2*c}√u`,G:u=>2/3*u*Math.sqrt(u)-2*c*Math.sqrt(u),uA:bq(A+c),uB:bq(B+c),
+      plus:[{w:`On sépare la fraction : ${fx(`(u − ${c})/√u = √u − ${c}/√u`)}.`,why:`${fx("u/√u = √u")} : diviser u par sa racine laisse une racine.`,pts:1}],
+      I:VP([[sub(sub(pB,qB),sub(pA,qA)),"1"]]),ev:`(${nb(pB)} − ${qB}) − (${nb(pA)} − ${qA})`,whyG:`Une primitive de ${fx("√u")} est ${fx("(2/3)u√u")}, et une primitive de ${fx("1/√u")} est ${fx("2√u")}.`});}
+  if(fam==="xn"){const [c,n,T]=R.choix([-2,-1,1,2].flatMap(c=>[3,4,5].map(n=>[c,n,1])).concat([[-1,3,2],[1,3,2]])),xu=S([[1,"u"],[-c,""]]);
+    return cvCas({sig:`N${c},${n},${T}`,nat:"x(x + c)ⁿ",fT:`x(${affT(1,c)})^{${n}}`,f:x=>x*Math.pow(x+c,n),A:bq(-c),B:bq(T-c),uT:affT(1,c),uF:x=>x+c,du:"du = dx",et:`x = ${xu}`,
+      why0:`Développer ${fx(`(${affT(1,c)})^{${n}}`)} serait long. Avec u, la puissance devient simple, et c'est x qui s'écrit ${fx(xu)}.`,K:Q(1),gT:`(${xu})u^{${n}}`,GT:S([[1,`u^{${n+2}}/${n+2}`],[-c,`u^{${n+1}}/${n+1}`]]),G:u=>Math.pow(u,n+2)/(n+2)-c*Math.pow(u,n+1)/(n+1),uA:bq(0),uB:bq(T),
+      plus:[{w:`On développe : ${fx(`(${xu})u^{${n}} = ${S([[1,`u^{${n+1}}`],[-c,`u^{${n}}`]])}`)}.`,why:"Un produit de puissances de u : on ajoute les exposants.",pts:1}],
+      I:VP([[add(Q(Math.pow(T,n+2),n+2),Q(-c*Math.pow(T,n+1),n+1)),"1"]]),ev:S([[Q(Math.pow(T,n+2),n+2),""],[Q(-c*Math.pow(T,n+1),n+1),""]]),whyG:"On prend une primitive de chaque terme. En u = 0, tout s'annule."});}
+  if(fam==="xi"){const [c,m]=R.choix([[1,2],[1,3],[1,5],[2,2],[2,3],[2,4],[3,2],[3,3]]);
+    return cvCas({sig:`I${c},${m}`,nat:"x/(x + c)²",fT:`x/(${affT(1,c)})²`,f:x=>x/Math.pow(x+c,2),A:bq(1-c),B:bq(m-c),uT:affT(1,c),uF:x=>x+c,du:"du = dx",et:`x = u − ${c}`,
+      why0:`Le carré du dénominateur gêne. Avec u, il devient u², et c'est x qui s'écrit ${fx(`u − ${c}`)}.`,K:Q(1),gT:`(u − ${c})/u²`,GT:`ln u + ${c}/u`,G:u=>Math.log(u)+c/u,uA:bq(1),uB:bq(m),
+      plus:[{w:`On sépare la fraction : ${fx(`(u − ${c})/u² = 1/u − ${c}/u²`)}.`,why:`${fx("u/u² = 1/u")}.`,pts:1}],
+      I:VP([lnK(1,m,1),[sub(Q(c,m),c),"1"]]),ev:`(ln ${m} + ${nb(Q(c,m))}) − (ln 1 + ${c})`,whyG:`Une primitive de ${fx("1/u")} est ${fx("ln u")}, et une primitive de ${fx(`−${c}/u²`)} est ${fx(`${c}/u`)}. ${fx("ln 1 = 0")}.`});}
+  if(fam==="e2"){const [mA,mB]=R.choix([[1,2],[1,3],[1,5],[2,5],[2,3],[3,5]]);
+    return cvCas({sig:`E${mA},${mB}`,nat:"e²ˣ/(1 + eˣ)",fT:"e^{2x}/(1 + e^{x})",f:x=>Math.exp(2*x)/(1+Math.exp(x)),A:bL(mA),B:bL(mB),uT:"e^{x}",uF:Math.exp,du:"du = e^{x} dx = u dx",donc:"dx = du/u",
+      why0:`${fx("e^{x}")} revient deux fois, car ${fx("e^{2x} = (e^{x})²")}. Sa dérivée n'est pas en facteur : on remplace dx par ${fx("du/u")}.`,K:Q(1),gT:"u/(1 + u)",GT:"u − ln(1 + u)",G:u=>u-Math.log(1+u),uA:bq(mA),uB:bq(mB),
+      uAc:mA===1?"e^{0} = 1":`e^{ln ${mA}} = ${mA}`,uBc:`e^{ln ${mB}} = ${mB}`,whyN:`${fx("e^{2x} = u²")} et ${fx("dx = du/u")} : ${fx("u²/(1 + u) × 1/u = u/(1 + u)")}.`,
+      plus:[{w:`${fx("u/(1 + u) = 1 − 1/(1 + u)")}.`,why:`On écrit le numérateur ${fx("u = (1 + u) − 1")}, puis on sépare la fraction.`,pts:1}],
+      I:VP([[mB-mA,"1"],lnK(-1,1+mB,1+mA)]),ev:`(${mB} − ln ${1+mB}) − (${mA} − ln ${1+mA})`,whyG:`Une primitive de 1 est u, et une primitive de ${fx("1/(1 + u)")} est ${fx("ln(1 + u)")}. Puis ${fx("ln a − ln b = ln(a/b)")}.`});}
+  const [s,a,b]=R.choix([["e",1,2],["e",1,3],["e",2,3],["e",0,1],["e",0,2],["s","h","p"],["s","0","p"],["s","0","h"],["s","p","d"],["c","h","p"],["c","0","p"],["c","0","h"]]),K=Q(2);
+  const base={nat:"puis par parties",uT:"√x",uF:Math.sqrt,du:"du = dx/(2√x)",donc:"dx = 2√x du = 2u du",K,whyN:`${fx("dx = 2u du")} : le 2 passe devant l'intégrale, et il reste un u en facteur.`,
+    whyG:"On calcule la primitive en la borne du haut, puis en la borne du bas, et on retranche."};
+  if(s==="e"){const t=u=>u===1?"0":u===0?"(−1)":(u===2?"":u-1)+eT(u);
+    return cvCas(Object.assign(base,{sig:`R${s}${a},${b}`,fT:"e^{√x}",f:x=>Math.exp(Math.sqrt(x)),A:bq(a*a),B:bq(b*b),uA:bq(a),uB:bq(b),uAc:`√${a*a} = ${a}`,uBc:`√${b*b} = ${b}`,gT:"ue^{u}",GT:"(u − 1)e^{u}",G:u=>(u-1)*Math.exp(u),
+      why0:`${fx("√x")} est dans l'exposant, et rien ne ressemble à sa dérivée : on écrit dx avec u.`,
+      plus:[{w:`Une intégration par parties : une primitive de ${fx("ue^{u}")} est ${fx("ue^{u} − e^{u} = (u − 1)e^{u}")}.`,why:`On dérive u et on primitive ${fx("e^{u}")} : ${fx("∫ ue^{u} du = ue^{u} − ∫ e^{u} du")}.`,pts:2}],
+      I:VP([eK(2*(b-1),b),eK(-2*(a-1),a)]),ev:`2(${t(b)} − ${t(a)})`}));}
+  const co=s==="c",AX={"0":[bq(0),bq(0)],h:[piCarre(1,2),bA(1,2)],p:[piCarre(1,1),bA(1,1)],d:[piCarre(2,1),bA(2,1)]},
+    TV=co?{"0":[[[1,"1"]],"1"],h:[[[Q(1,2),"pi"]],"π/2"],p:[[[-1,"1"]],"−1"],d:[[[1,"1"]],"1"]}:{"0":[[],"0"],h:[[[1,"1"]],"1"],p:[[[1,"pi"]],"π"],d:[[[-2,"pi"]],"−2π"]};
+  return cvCas(Object.assign(base,{sig:`R${s}${a},${b}`,fT:co?"cos(√x)":"sin(√x)",f:x=>co?Math.cos(Math.sqrt(x)):Math.sin(Math.sqrt(x)),A:AX[a][0],B:AX[b][0],uA:AX[a][1],uB:AX[b][1],uAc:a==="0"?"":`√(${AX[a][0].T}) = ${AX[a][1].T}`,uBc:`√(${AX[b][0].T}) = ${AX[b][1].T}`,
+    gT:co?"u cos u":"u sin u",GT:co?"u sin u + cos u":"sin u − u cos u",G:co?u=>u*Math.sin(u)+Math.cos(u):u=>Math.sin(u)-u*Math.cos(u),why0:`${fx("√x")} est dans le ${co?"cosinus":"sinus"}, et rien ne ressemble à sa dérivée : on écrit dx avec u.`,
+    plus:[{w:`Une intégration par parties : une primitive de ${fx(co?"u cos u":"u sin u")} est ${fx(co?"u sin u + cos u":"sin u − u cos u")}.`,why:co?`On dérive u et on primitive ${fx("cos u")} : ${fx("∫ u cos u du = u sin u − ∫ sin u du")}.`:`On dérive u et on primitive ${fx("sin u")} : ${fx("∫ u sin u du = −u cos u + ∫ cos u du")}.`,pts:2}],
+    I:VP(TV[b][0].map(([c,k])=>[mul(c,2),k]).concat(TV[a][0].map(([c,k])=>[mul(c,-2),k]))),ev:`2(${TV[b][1]} − ${TV[a][1][0]==="−"?"("+TV[a][1]+")":TV[a][1]})`}));}
+function cvEtapes(o){
+  return [{w:`On pose ${fx(`u = ${o.uT}`)}. Alors ${fx(o.du)}${o.donc?`, donc ${fx(o.donc)}`:o.et?`, et ${fx(o.et)}`:""}.`,why:o.why0,pts:1},
+    {w:`Les bornes : lorsque ${fx(`x = ${o.A.T}`)}, ${fx(`u = ${o.uAc||o.uA.T}`)} ; lorsque ${fx(`x = ${o.B.T}`)}, ${fx(`u = ${o.uBc||o.uB.T}`)}.`,why:"Les bornes de départ sont des valeurs de x. La nouvelle intégrale est écrite avec u : il lui faut des valeurs de u.",pts:1},
+    {w:`L'intégrale devient ${fx(`I = ${o.newT}`)}.`,why:o.whyN||"On a remplacé la fonction, dx et les deux bornes : il ne reste plus aucun x.",pts:1}].concat(o.plus||[],
+    [{w:`${fx(`I = ${o.crT}${o.ev&&o.ev!==o.I.T?" = "+o.ev:""} = ${o.I.T}`)}.`,why:o.whyG,pts:1}]);}
+/* mode 1 : u, du et la nouvelle intégrale donnés ; 2 et 4 : u donné ; 3 : u à trouver, seule la valeur est demandée */
+function exoCv(o,mode){const E=cvEtapes(o),dern=E.length-1,bornes=mode!==3,Kv=o.K.n/o.K.d;
+  const dAnc={etape:1,type:"anciennes bornes gardées",titre:"Où ça part : les bornes.",msg:`Les bornes de départ valent pour x. Avec u, elles deviennent ${fx(o.uA.T)} et ${fx(o.uB.T)}.`};
+  const pieges=[[Kv*(o.G(o.B.v)-o.G(o.A.v)),dAnc],
+    [o.I.v/Kv,{etape:0,type:"nombre oublié en passant de dx à du",titre:"Où ça part : de dx à du.",msg:`${fx(o.du)}${o.donc?`, donc ${fx(o.donc)}`:""} : il reste le facteur ${fx(nb(o.K))} devant l'intégrale.`}],
+    [-o.I.v,{etape:dern,type:"signe",titre:"Où ça part : le signe.",msg:`On calcule la primitive en la borne du haut, puis on retranche sa valeur en la borne du bas : ${fx(`I = ${o.I.T}`)}.`}]].filter(p=>Number.isFinite(p[0])&&!pres(p[0],o.I.v));
+  const lire=t=>{const A=lisReel(t);return A.vide?{vide:1}:A.avecI||A.illisible||A.neg?{bad:1}:A;},proche=(A,v)=>A.dec&&!pres(A.v,v)&&Math.abs(A.v-v)<0.02;
+  function juge(rep){const Iv=lire(rep.I),F=[];let d=null;
+    if(bornes){const a=lire(rep.bas),b=lire(rep.haut);if(a.vide||b.vide||Iv.vide)return {incomplet:"Remplis les trois cases."};
+      if(a.bad||b.bad||Iv.bad)return {incomplet:"Je n'arrive pas à lire une des cases. Écris par exemple 5, 1/2, pi/2, ln(2) ou e^(2) - 1."};
+      if(proche(a,o.uA.v)||proche(b,o.uB.v))return {incomplet:"Écris les bornes exactes (avec π ou une fraction), pas des valeurs approchées."};
+      const okA=pres(a.v,o.uA.v),okB=pres(b.v,o.uB.v);if(!okA)F.push("bas");if(!okB)F.push("haut");
+      if(F.length)d=pres(a.v,o.A.v)&&pres(b.v,o.B.v)?dAnc
+        :pres(a.v,o.uB.v)&&pres(b.v,o.uA.v)?{etape:1,type:"bornes échangées",titre:"Où ça part : l'ordre des bornes.",msg:`La borne du bas est la valeur de u pour ${fx(`x = ${o.A.T}`)} : ${fx(o.uA.T)}. Celle du haut est la valeur de u pour ${fx(`x = ${o.B.T}`)} : ${fx(o.uB.T)}.`}
+        :{etape:1,type:"calcul des nouvelles bornes",titre:"Où ça part : les bornes.",msg:`On remplace x par chaque borne dans ${fx(`u = ${o.uT}`)} : on trouve ${fx(o.uA.T)} puis ${fx(o.uB.T)}.`};}
+    else{if(Iv.vide)return {incomplet:"Écris la valeur de l'intégrale."};if(Iv.bad)return {incomplet:"Je n'arrive pas à lire ce nombre. Écris par exemple 7/3, ln(2) - 1/2 ou e^(2) - 1."};}
+    if(proche(Iv,o.I.v))return {incomplet:"Écris la valeur exacte (avec ln, e, π ou une fraction), pas une valeur approchée."};
+    if(!pres(Iv.v,o.I.v))F.push("I");if(!F.length)return {ok:true};
+    if(!d){const pg=pieges.find(p=>pres(Iv.v,p[0]));d=pg?pg[1]:{etape:dern,type:"calcul de la nouvelle intégrale",titre:"Où ça part : le calcul avec u.",msg:`${fx(`I = ${o.newT}`)}, et on trouve ${fx(`I = ${o.I.T}`)}.`};}
+    return {ok:false,faux:F,resume:bornes?`Pas tout à fait : ${F.length} case${F.length>1?"s sont":" est"} à revoir.`:"Pas tout à fait : ce n'est pas la bonne valeur.",diag:d};}
+  const loin=pieges.find(p=>Math.abs(p[0]-o.I.v)>0.05),I0=fx(`I = ${o.It}`),lignes=`<p>Lorsque ${fx(`x = ${o.A.T}`)}, ${fx("u =")} ${O.trou("bas")} ; lorsque ${fx(`x = ${o.B.T}`)}, ${fx("u =")} ${O.trou("haut")}.</p>`;
+  const corps=mode===1?`<p>Alors ${fx(o.du)}${o.donc?`, donc ${fx(o.donc)}`:""}.</p>${lignes}<p>L'intégrale devient ${fx(`I = ${o.KT}∫ ${o.gT} du`)} entre ces deux bornes. On trouve ${fx("I =")} ${O.trou("I",1)}.</p>`:bornes?`${lignes}<p>Après le calcul avec u : ${fx("I =")} ${O.trou("I",1)}.</p>`:"";
+  return {sig:mode+o.sig,q:bornes?`Calcule ${I0} avec le changement de variable ${fx(`u = ${o.uT}`)}${mode===1?", en complétant":""}.`:`Calcule ${I0} par un changement de variable : à toi de trouver lequel.`,qNeutre:bornes?undefined:`Calcule ${I0}.`,corps,
+    corpsPapier:bornes?`<p>Sur ta feuille, rédige le calcul en entier : « On pose u = … Alors du = … », les nouvelles bornes, la nouvelle intégrale écrite avec u, puis le résultat.</p>`:undefined,texte:`changement de variable : ${o.It}`,
+    champs:bornes?[{k:"trous",ids:["bas","haut","I"]},{k:"sym",id:"s",sym:["π","√","ln(","e^(","/"],aide:"Pour π/2, écris pi/2 ; pour e², écris e^(2). Les boutons écrivent dans la case où tu es."}]
+      :[{k:"champ",id:"I",nom:"valeur",label:"$I =$",ex:"une valeur exacte, par exemple ln(2) - 1/2",sym:["ln(","e","e^(","π","√","/"]}],
+    indice:mode===1?false:undefined,juge,etapes:E,bonne:bornes?`${fx(`u = ${o.uA.T}`)} puis ${fx(`u = ${o.uB.T}`)}, et ${fx(`I = ${o.I.T}`)}`:fx(`I = ${o.I.T}`),bonneTxt:(bornes?`bornes ${o.uA.T} et ${o.uB.T}, `:"")+`I = ${o.I.T}`,
+    repBonne:bornes?{bas:o.uA.tp,haut:o.uB.tp,I:o.I.tp}:{I:o.I.tp},repFausse:bornes?{bas:o.uA.tp,haut:o.uB.tp,I:`(${o.I.tp})+1`}:{I:loin?String(loin[0]):`(${o.I.tp})+1`},nature:o.nat,ens:{type:"cv",A:o.A.v,B:o.B.v,f:o.f,u:o.uF}};}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -24597,7 +24792,13 @@ G.add("calc",[
    {t:"(ax + b)eᵏˣ, en entier",cc:5,min:200,gen:R=>exoIpp(R,"exp",false)},
    {t:"x cos x, x sin x, xⁿ ln x, avec des bornes",cc:6,min:110,gen:R=>exoIpp(R,R()<0.55?"trig":"ln",false)},
    {t:"ln x et arctan x : u = ln x ou arctan x, v′ = 1",cc:6,min:12,gen:R=>exoIpp(R,R()<0.75?"lnx":"atan",false)},
-   {t:"deux intégrations par parties de suite",cc:9,min:10,gen:R=>exoIpp(R,"deux",false)}]}
+   {t:"deux intégrations par parties de suite",cc:9,min:10,gen:R=>exoIpp(R,"deux",false)}]},
+ {id:"CA12",t:"Changement de variable",tache:"changement de variable",th:"integrales",pts:1.5,lecons:["c-integrales"],pages:["m-chgt"],apres:["CA10"],
+  paliers:[
+   {t:"u = ax + b : les nouvelles bornes, puis la valeur",cc:3,min:70,gen:R=>exoCv(cvAffine(R),1)},
+   {t:"u donné par l'énoncé : x² + c, eˣ, ln x, √x, sin x",cc:4,min:60,gen:R=>exoCv(cvForme(R,0),2)},
+   {t:"u à trouver",cc:5,min:60,gen:R=>exoCv(cvForme(R,1),3)},
+   {t:"tout changer : x, dx et les bornes, comme au TD 1 (exercice 5)",cc:8,min:35,gen:R=>exoCv(cvTout(R),4)}]}
 ]);
 })();
 
