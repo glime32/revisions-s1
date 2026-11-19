@@ -21231,7 +21231,7 @@ function recRedaction(R){const t=R.ent(0,6),consigne=`<p>Rédige sur ta feuille 
 
 /* ---------- RA6 : composition ---------- */
 const RAPPELC=`Rappel : ${fx("(g ∘ f)(x) = g(f(x))")}. On applique d'abord f, puis g.`;
-const EXPO="⁰¹²³⁴";
+const EXPO="⁰¹²³⁴⁵";
 const polX=c=>{let t="";for(let i=c.length-1;i>=0;i--){const a=c[i];if(!a)continue;const m=i===0?String(Math.abs(a)):cf(Math.abs(a),i===1?"x":"x"+EXPO[i]);t+=t?` ${a>0?"+":"−"} ${m}`:(a<0?"−":"")+m;}return t||"0";};
 const polV=(c,x)=>c.reduce((t,a,i)=>t+a*Math.pow(x,i),0);
 const polMul=(p,q)=>{const r=Array(p.length+q.length-1).fill(0);p.forEach((a,i)=>q.forEach((b,j)=>{r[i+j]+=a*b;}));return r;};
@@ -21427,7 +21427,127 @@ function tvQcm(R){for(;;){const B=R.choix(BASESQ),perm=R.mel(["A","B","C"]),s={}
   if(L.length<4||L.every(l=>l.v)||!L.some(l=>l.v))continue;
   return cocheVraies({brut:true,sig:"TQ"+tx+"|"+L.map(l=>l.txt).sort().join("|"),q:`${et(vs)} sont des propositions. Parmi les propositions suivantes, coche toutes celles qui sont logiquement équivalentes à ${tx}.`,rappel:"Comme au QCM du CC : il peut y avoir une ou plusieurs bonnes réponses. Deux propositions sont équivalentes quand elles ont la même table de vérité.",texte:`équivalentes à ${tx}`,L,nature:ecrisW(B),ens:{type:"tq",X,L:L.map(l=>l.txt)}});}}
 
-G.rai={DEDUIRE,appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
+/* ---------- RA7 : contraposée, réciproque, négation, absurde et disjonction de cas ---------- */
+const IMPL=[["ℕ","n² n'est pas un multiple de 3","n² est un multiple de 3","n n'est pas un multiple de 3","n est un multiple de 3"],["ℤ","n² est pair","n² est impair","n est pair","n est impair"],
+ ["ℤ","n² − 1 n'est pas divisible par 8","n² − 1 est divisible par 8","n est pair","n est impair"],["ℝ","x > 2","x ≤ 2","x² > 4","x² ≤ 4"],["ℝ","x² ≤ 1","x² > 1","x ≤ 1","x > 1"],
+ ["ℕ","n est un multiple de 6","n n'est pas un multiple de 6","n est pair","n est impair"],["ℤ","n est impair","n est pair","n² est impair","n² est pair"],["ℝ","x ≠ 0","x = 0","x² > 0","x² ≤ 0"],
+ ["ℤ","3n + 1 est pair","3n + 1 est impair","n est impair","n est pair"],["ℕ","n ≥ 5","n < 5","2ⁿ > n²","2ⁿ ≤ n²"],["ℝ","x³ > 8","x³ ≤ 8","x > 2","x ≤ 2"],["ℤ","n est un multiple de 4","n n'est pas un multiple de 4","n² est un multiple de 8","n² n'est pas un multiple de 8"]];
+const morceaux=I=>({tout:`Pour tout ${I[0]==="ℝ"?"x":"n"} ∈ ${I[0]},`,ex:`Il existe ${I[0]==="ℝ"?"x":"n"} ∈ ${I[0]} tel que`,A:I[1],nA:I[2],B:I[3],nB:I[4]});
+const SORTES={impl:m=>`${m.tout} si ${m.A}, alors ${m.B}.`,contra:m=>`${m.tout} si ${m.nB}, alors ${m.nA}.`,recip:m=>`${m.tout} si ${m.B}, alors ${m.A}.`,nega:m=>`${m.ex} ${m.A} et ${m.nB}.`,
+ inverse:m=>`${m.tout} si ${m.nA}, alors ${m.nB}.`,toutEt:m=>`${m.tout} ${m.A} et ${m.nB}.`,exSi:m=>`${m.ex} si ${m.A}, alors ${m.nB}.`};
+const NOMRC={c:"la contraposée",r:"la réciproque",n:"la négation",a:"aucune des trois"},RCDE={contra:"c",recip:"r",nega:"n",inverse:"a",toutEt:"a",exSi:"a"};
+const POURQ={contra:"On a échangé les deux côtés et on les a niés, en gardant le « pour tout » : c'est la contraposée. Elle a la même valeur de vérité que la phrase de départ.",recip:"On a échangé les deux côtés sans les nier : c'est la réciproque. Elle peut être fausse quand la phrase de départ est vraie.",
+ nega:"La négation de « pour tout …, si A, alors B » est « il existe … tel que A et non B » : le « pour tout » devient « il existe », et la négation d'une implication est « A et non B ».",
+ inverse:"On a nié les deux côtés sans les échanger. Ce n'est ni la contraposée (il faut aussi échanger), ni la réciproque, ni la négation.",toutEt:"Ce n'est pas la négation : le « pour tout » aurait dû devenir « il existe ».",exSi:"Ce n'est pas la négation : la négation d'une implication n'est pas une implication, c'est « A et non B »."};
+const CHRC=[["c","contraposée"],["r","réciproque"],["n","négation"],["a","aucune des trois"]];
+function reconnaitre(R){for(;;){const i=R.ent(0,IMPL.length-1),m=morceaux(IMPL[i]),K=R.mel(["contra","recip","nega","inverse","toutEt","exSi"]).slice(0,4);if(K.filter(k=>RCDE[k]!=="a").length<2)continue;
+  const ids=K.map((_,j)=>"p"+j),bon={};K.forEach((k,j)=>{bon[ids[j]]=RCDE[k];});
+  function juge(rep){if(ids.some(x=>!rep[x]))return {incomplet:"Choisis une réponse pour chacune des quatre phrases."};const F=ids.filter((x,j)=>rep[x]!==bon[x]);if(!F.length)return {ok:true};const j=ids.indexOf(F[0]),k=K[j];
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?F.length+" phrases sont mal classées":"la phrase "+(j+1)+" est mal classée"}.`,diag:{etape:j,type:`${NOMRC[RCDE[k]]==="aucune des trois"?"phrase qui n'est ni contraposée, ni réciproque, ni négation":NOMRC[RCDE[k]]+" non reconnue"}`,titre:`Où ça part : la phrase ${j+1}.`,msg:`C'est ${NOMRC[RCDE[k]]}. ${POURQ[k]}`}};}
+  return {sig:"RC"+i+K.join(),q:`On considère l'assertion : « ${h(SORTES.impl(m))} » Pour chaque phrase ci-dessous, dis si c'est sa contraposée, sa réciproque, sa négation, ou aucune des trois.`,corps:`<p class="muted">Rappel : la contraposée de « si A, alors B » est « si non B, alors non A ». La réciproque est « si B, alors A ».</p>`,
+    texte:`${SORTES.impl(m)} ; ${K.map(k=>SORTES[k](m)).join(" | ")}`,champs:K.map((k,j)=>({k:"choix",id:ids[j],titre:`Phrase ${j+1} : « ${h(SORTES[k](m))} »`,o:CHRC})),juge,
+    etapes:K.map((k,j)=>({w:`Phrase ${j+1} : <b>${NOMRC[RCDE[k]]}</b>.`,why:POURQ[k],pts:1})),bonne:K.map((k,j)=>`phrase ${j+1} : ${NOMRC[RCDE[k]]}`).join(" ; "),bonneTxt:K.map((k,j)=>`${j+1} ${NOMRC[RCDE[k]]}`).join(", "),
+    repBonne:bon,repFausse:Object.fromEntries(ids.map((x,j)=>[x,bon[x]==="c"?"r":"c"])),nature:"reconnaître",ens:{type:"rc",i,K}};}}
+function assembler(R){const i=R.ent(0,IMPL.length-1),I=IMPL[i],m=morceaux(I),neg=R()<0.5,AT=R.mel(["A","nA","B","nB"]),attendu=neg?["e","et","A","nB"]:["t","si","nB","nA"];
+  const Q2=[["q","Début",[["t",m.tout],["e",m.ex]]],["f","Forme",[["si","si … , alors …"],["et","… et …"]]],["a","Premier morceau",AT.map(x=>[x,m[x]])],["b","Second morceau",AT.map(x=>[x,m[x]])]];
+  const phrase=r=>r.f==="si"?`${r.q==="t"?m.tout:m.ex} si ${m[r.a]}, alors ${m[r.b]}.`:`${r.q==="t"?m.tout:m.ex} ${m[r.a]} et ${m[r.b]}.`,bonR={q:attendu[0],f:attendu[1],a:attendu[2],b:attendu[3]},but=phrase(bonR);
+  const conn={[["t","si","B","A"]]:"réciproque au lieu de la contraposée",[["t","si","nA","nB"]]:"les deux côtés niés sans les échanger",[["t","et","A","nB"]]:"« pour tout » gardé dans la négation",[["e","si","A","nB"]]:"négation écrite comme une implication",[["e","et","nA","B"]]:"mauvais côté nié",[["t","si","A","nB"]]:"négation écrite comme une implication"};
+  function juge(rep){if(["q","f","a","b"].some(x=>!rep[x]))return {incomplet:"Choisis le début, la forme et les deux morceaux."};if(rep.a===rep.b)return {incomplet:"Les deux morceaux doivent être différents."};
+    const r=[rep.q,rep.f,rep.a,rep.b],ok=r.join()===attendu.join()||(neg&&r.join()===["e","et","nB","A"].join());if(ok)return {ok:true};
+    const F=["q","f"].filter((x,k)=>r[k]!==attendu[k]);if(!F.length)F.push("a","b");const typ=conn[r]||(neg?"négation d'une implication":"contraposée");
+    return {ok:false,faux:F,resume:`Pas tout à fait : tu as écrit « ${h(phrase(rep))} »`,diag:{etape:0,type:typ,titre:"Où ça part : la forme de la phrase.",msg:neg?POURQ.nega:POURQ.contra}};}
+  return {sig:"AS"+i+neg,q:`On considère l'assertion (∗) : « ${h(SORTES.impl(m))} » Écris ${neg?"la négation":"la contraposée"} de (∗), en choisissant ses morceaux.`,corps:`<p class="muted">Comme au CC1 2022-2023, exercice 1.</p>`,texte:`${neg?"négation":"contraposée"} de : ${SORTES.impl(m)}`,
+    champs:Q2.map(([id,t,o])=>({k:"choix",id,titre:t+" :",o:o.map(x=>[x[0],h(x[1])])})),juge,
+    etapes:[{w:`<b>${h(but)}</b>`,why:neg?POURQ.nega:POURQ.contra,pts:2},{w:neg?`Le contraire de « ${h(m.B)} » est « ${h(m.nB)} ».`:`Le contraire de « ${h(m.B)} » est « ${h(m.nB)} », celui de « ${h(m.A)} » est « ${h(m.nA)} ».`,why:"Nier une phrase simple : « pair » devient « impair », « > » devient « ≤ », « est un multiple » devient « n'est pas un multiple ».",pts:1}],
+    bonne:h(but),bonneTxt:but,repBonne:bonR,repFausse:neg?{q:"t",f:"et",a:"A",b:"nB"}:{q:"t",f:"si",a:"B",b:"A"},nature:neg?"négation":"contraposée",ens:{type:"as",i,neg}};}
+/* lecture d'une formule tapée en P, Q, R : ¬ ∧ ∨ ⇒ ⇔ ou leurs écritures au clavier */
+function lisFormule(src){const s=String(src||"").replace(/\s+/g," ").trim();if(!s)return null;const T=[];let i=0;
+  const SYM=[["<=>","eq"],["<->","eq"],["⇔","eq"],["=>","imp"],["->","imp"],["⇒","imp"],["∧","et"],["&","et"],["∨","ou"],["|","ou"],["¬","non"],["!","non"],["~","non"],["(","("],[")",")"]];
+  while(i<s.length){if(s[i]===" "){i++;continue;}const y=SYM.find(x=>s.startsWith(x[0],i));if(y){T.push(y[1]);i+=y[0].length;continue;}const w=/^(non|et|ou)/i.exec(s.slice(i));if(w){T.push(w[1].toLowerCase());i+=w[1].length;continue;}
+    if(/[pqr]/i.test(s[i])){T.push(s[i].toUpperCase());i++;continue;}return {err:`Je ne sais pas lire « ${s[i]} ». Écris avec P, Q, R, ¬, ∧, ∨, ⇒ et des parenthèses.`};}
+  let k=0;const voit=t=>T[k]===t,err=m=>{throw new Error(m);};
+  const un=()=>{if(voit("non")){k++;return ["non",un()];}if(voit("(")){k++;const f=eq();if(!voit(")"))err("Une parenthèse n'est pas fermée.");k++;return f;}if(/^[PQR]$/.test(T[k]||"")){return T[k++];}err("Il manque une lettre ou une parenthèse.");};
+  const chaine=()=>{let f=un();const vus=new Set();while(voit("et")||voit("ou")){const op=T[k++];vus.add(op);f=[op,f,un()];}if(vus.size>1)err("Mets des parenthèses : avec ∧ et ∨ côte à côte, la formule peut se lire de deux façons.");return f;};
+  const imp=()=>{const f=chaine();if(voit("imp")){k++;const g=chaine();if(voit("imp"))err("Mets des parenthèses : avec deux ⇒ à la suite, la formule peut se lire de deux façons.");return ["imp",f,g];}return f;};
+  const eq=()=>{const f=imp();if(voit("eq")){k++;return ["eq",f,imp()];}return f;};
+  try{const f=eq();if(k<T.length)err("La formule ne se lit pas jusqu'au bout : vérifie les parenthèses.");return {f};}catch(x){return {err:x.message};}}
+const contient=(f,op)=>Array.isArray(f)&&(f[0]===op||f.slice(1).some(g=>contient(g,op)));
+const negLettres=f=>typeof f==="string"||(f[0]==="non"?typeof f[1]==="string":f.slice(1).every(negLettres));
+const PQR=["P","Q","R"],eqv=(f,g)=>memeL(f,g,PQR);
+function formulesContra(R){const ordre=R()<0.7?PQR:R.mel(PQR),lit=x=>R()<0.4?["non",x]:x,op=R.choix(["et","ou"]),S1=R()<0.6,deux=R()<0.5?"neg":"sansImp";
+  const H=S1?[op,lit(ordre[0]),lit(ordre[1])]:lit(ordre[0]),C=S1?lit(ordre[2]):[op,lit(ordre[1]),lit(ordre[2])],A=["imp",H,C],interdit=OPL[op];
+  const contra=["imp",nie(C),nie(H)],nega=["et",H,nie(C)],sansI=["ou",nie(H),C],rep2=deux==="neg"?nega:sansI;
+  function j1(t){const r=lisFormule(t);if(!r)return {vide:true};if(r.err)return {err:r.err};const f=r.f;
+    if(f[0]==="imp"&&eqv(f[1],nie(C))&&eqv(f[2],nie(H))&&!contient(f,op))return {ok:true};
+    if(contient(f,op)&&f[0]==="imp"&&eqv(f[1],nie(C))&&eqv(f[2],nie(H)))return {type:"opérateur interdit utilisé",msg:`Ta contraposée est juste, mais l'énoncé interdit ${interdit}. Pour nier ${fx(ecrisL(S1?H:C))}, utilise les lois de De Morgan : on obtient ${fx(ecrisL(S1?nie(H):nie(C)))}.`};
+    if(f[0]!=="imp")return {type:"la contraposée n'est pas une implication",msg:"La contraposée d'une implication est encore une implication : « non(conclusion) ⇒ non(hypothèse) »."};
+    if(eqv(f[1],C)&&eqv(f[2],H))return {type:"réciproque au lieu de la contraposée",msg:"Tu as échangé les deux côtés sans les nier : c'est la réciproque."};
+    if(eqv(f[1],nie(H))&&eqv(f[2],nie(C)))return {type:"les deux côtés niés sans les échanger",msg:"Il faut aussi échanger : la contraposée de « H ⇒ C » est « ¬C ⇒ ¬H »."};
+    if(eqv(f[1],nie(C)))return {type:"négation de l'hypothèse fausse (lois de De Morgan)",msg:`À droite, il faut la négation de ${fx(ecrisL(H))}, c'est-à-dire ${fx(ecrisL(nie(H)))}.`};
+    return {type:"négation de la conclusion fausse",msg:`À gauche, il faut la négation de ${fx(ecrisL(C))}, c'est-à-dire ${fx(ecrisL(nie(C)))}.`};}
+  function j2(t){const r=lisFormule(t);if(!r)return {vide:true};if(r.err)return {err:r.err};const f=r.f;
+    if(deux==="neg"){if(contient(f,"imp")||contient(f,"eq"))return {type:"négation écrite comme une implication",msg:"La négation d'une implication n'est pas une implication : la négation de « H ⇒ C » est « H ∧ ¬C »."};
+      if(!eqv(f,["non",A]))return {type:eqv(f,["et",H,C])?"conclusion non niée":"négation d'une implication",msg:`La négation de « H ⇒ C » est « H ∧ ¬C », ici ${fx(ecrisL(nega))}.`};
+      if(!negLettres(f))return {type:"négation pas poussée jusqu'aux lettres",msg:`Ta formule a la bonne valeur, mais il faut un ¬ seulement devant les lettres : ${fx(ecrisL(nega))}.`};return {ok:true};}
+    if(contient(f,"imp")||contient(f,"eq"))return {type:"⇒ utilisé alors qu'il est interdit",msg:"L'énoncé n'autorise que ∧, ∨ et ¬. On utilise : « H ⇒ C » a la même table que « ¬H ∨ C »."};
+    if(!eqv(f,A))return {type:"implication réécrite avec ∧, ∨ et ¬",msg:`« H ⇒ C » a la même table que « ¬H ∨ C », ici ${fx(ecrisL(sansI))}.`};return {ok:true};}
+  function juge(rep){const a=j1(rep.a),b=j2(rep.b);if(a.vide||b.vide)return {incomplet:"Écris les deux formules."};if(a.err||b.err)return {incomplet:a.err||b.err};if(a.ok&&b.ok)return {ok:true};
+    const F=[a.ok?null:"a",b.ok?null:"b"].filter(Boolean),d=a.ok?b:a;return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux formules sont à revoir":F[0]==="a"?"la contraposée est à revoir":"la seconde formule est à revoir"}.`,diag:{etape:a.ok?2:0,type:d.type,titre:`Où ça part : ${a.ok?"la seconde formule":"la contraposée"}.`,msg:d.msg}};}
+  const dm=f=>simpleL(f)?"":` Pour nier ${fx(ecrisL(f))}, on utilise les lois de De Morgan : ${fx(ecrisL(nie(f)))}.`,SY=[["¬","¬"],["∧","∧"],["∨","∨"],["⇒","⇒"],["(","("],[")",")"],["P","P"],["Q","Q"],["R","R"]];
+  const E=[{w:`Contraposée : ${fx(ecrisL(["imp",["non",C],["non",H]]))}.`,why:"La contraposée de « H ⇒ C » est « ¬C ⇒ ¬H » : on échange les deux côtés et on les nie.",pts:1},{w:`<b>${fx(ecrisL(contra))}</b>`,why:`On simplifie les négations.${dm(C)}${dm(H)} Il n'y a plus de ${interdit}.`,pts:1},
+    deux==="neg"?{w:`<b>${fx(ecrisL(nega))}</b>`,why:`La négation de « H ⇒ C » est « H ∧ ¬C ».${dm(C)}`,pts:2}:{w:`<b>${fx(ecrisL(sansI))}</b>`,why:`« H ⇒ C » a la même table de vérité que « ¬H ∨ C ».${dm(H)}`,pts:2}];
+  const q2=deux==="neg"?"Écris la négation de (Ass), sans ⇒, avec un ¬ seulement devant les lettres.":"Écris une assertion équivalente à (Ass) en utilisant uniquement P, Q, R et ∧, ∨, ¬.";
+  return {sig:"FC"+ecrisL(A)+deux,q:`P, Q et R sont trois propositions. On considère l'assertion (Ass) : ${fx(ecrisL(A))}. (a) Écris la contraposée de (Ass), sans utiliser ${interdit}. (b) ${q2}`,corps:`<p class="muted">Comme au CC1 2023-2024, exercice 1. Au clavier : ! ou « non » pour ¬, & ou « et » pour ∧, | ou « ou » pour ∨, => pour ⇒.</p>`,
+    texte:`(Ass) : ${ecrisL(A)} ; contraposée sans ${interdit} ; ${deux==="neg"?"négation":"équivalente sans ⇒"}`,champs:[{k:"champ",id:"a",nom:"contraposée",label:"(a)",ex:"la contraposée",sym:SY,apercu:false},{k:"champ",id:"b",nom:deux==="neg"?"négation":"sans ⇒",label:"(b)",ex:deux==="neg"?"la négation":"avec ∧, ∨, ¬",sym:SY,apercu:false}],juge,etapes:E,
+    bonne:`(a) ${fx(ecrisL(contra))} ; (b) ${fx(ecrisL(rep2))}`,bonneTxt:`(a) ${ecrisL(contra)} ; (b) ${ecrisL(rep2)}`,repBonne:{a:ecrisL(contra),b:ecrisL(rep2)},repFausse:{a:ecrisL(["imp",C,H]),b:ecrisL(rep2)},nature:(S1?"hypothèse ":"conclusion ")+op,ens:{type:"fo",deux,interdit}};}
+/* une équation polynomiale : la parité du membre de gauche quand x est pair, puis impair */
+function polyParite(R,veut){for(;;){const deg=R.mel([5,4,3,2]).slice(0,R.ent(2,3)).sort((a,b)=>b-a).concat(R()<0.6?[1]:[]),c=deg.map(()=>R.nz(-12,12)),c0=R.nz(-9,9),pair=((c0%2)+2)%2,imp=((c.reduce((s,a)=>s+a,0)+c0)%2+2)%2;
+  if(veut!==undefined&&(pair===1&&imp===1)!==veut)continue;const T=[];deg.forEach((d,j)=>T.push([c[j],d]));T.push([c0,0]);
+  const txt=T.map(([a,d],j)=>{const m=d===0?String(Math.abs(a)):cf(Math.abs(a),d===1?"x":"x"+EXPO[d]);return j?` ${a>0?"+":"−"} ${m}`:(a<0?"−":"")+m;}).join("");return {T,txt,pair,imp};}}
+const PAR=b=>b?"impair":"pair";
+function terme(a,d){return d===0?String(Math.abs(a)):cf(Math.abs(a),d===1?"x":"x"+EXPO[d]);}
+const PARf=b=>b?"impaire":"paire";
+function casTxt(P){const lp=P.T.filter(t=>t[1]>0).map(t=>terme(t[0],t[1])),c=Math.abs(P.T[P.T.length-1][0]),li=P.T.map(t=>`${terme(t[0],t[1])} est ${PAR(Math.abs(t[0])%2)}`),n=P.T.filter(t=>Math.abs(t[0])%2).length;
+  return [`${et(lp)} ${lp.length>1?"sont pairs":"est pair"} : un multiple d'un nombre pair est pair. Il reste la constante ${c}, qui est ${PARf(P.pair)} : le membre de gauche est ${PAR(P.pair)}.`,
+    `Une puissance d'un nombre impair est impaire, donc chaque terme a la parité de son coefficient (le signe ne compte pas) : ${li.join(", ")}. ${n===0?"Aucun terme impair":n===1?"Un seul terme impair":n+" termes impairs"} : la somme est ${PARf(P.imp)}.`];}
+function parCas(R){const P=polyParite(R,R()<0.6),ok=P.pair===1&&P.imp===1,eqn=`${P.txt} = 0`;
+  const [wp,wi]=casTxt(P);
+  const E=[{w:`Si x est pair : le membre de gauche est <b>${PAR(P.pair)}</b>.`,why:wp,pts:1},
+    {w:`Si x est impair : le membre de gauche est <b>${PAR(P.imp)}</b>.`,why:wi,pts:1},
+    {w:`<b>${ok?"La parité prouve qu'il n'y a pas de solution entière.":"La parité ne permet pas de conclure."}</b>`,why:ok?"Dans les deux cas, le membre de gauche est impair, donc il ne vaut jamais 0, qui est pair. C'est un raisonnement par l'absurde et par disjonction de cas, comme au CC2 2025-2026.":`Dans le cas où le membre de gauche est pair, il pourrait valoir 0 : on ne peut rien dire.`,pts:1}];
+  const ids=["p","i","c"],bon={p:PAR(P.pair),i:PAR(P.imp),c:ok?"non":"?"};
+  function juge(rep){if(ids.some(x=>!rep[x]))return {incomplet:"Réponds aux trois questions."};const F=ids.filter(x=>rep[x]!==bon[x]);if(!F.length)return {ok:true};const k=ids.indexOf(F[0]);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"plusieurs réponses sont à revoir":"une réponse est à revoir"}.`,diag:{etape:k,type:["parité quand x est pair","parité quand x est impair","conclusion d'une disjonction de cas"][k],titre:`Où ça part : ${["le cas x pair","le cas x impair","la conclusion"][k]}.`,msg:E[k].why}};}
+  const PI=[["pair","pair"],["impair","impair"]];
+  return {sig:"PC"+P.txt,q:`On se demande si l'équation ${fx(eqn)} peut avoir une solution entière x. Raisonne sur la parité de x.`,corps:`<p class="muted">Rappel : pair × entier = pair ; impair × impair = impair ; une somme est impaire quand elle a un nombre impair de termes impairs.</p>`,texte:`parité de ${eqn}`,
+    champs:[{k:"choix",id:"p",titre:"Si x est pair, le membre de gauche est :",o:PI},{k:"choix",id:"i",titre:"Si x est impair, le membre de gauche est :",o:PI},{k:"choix",id:"c",titre:"Donc :",o:[["non","la parité prouve qu'il n'y a pas de solution entière"],["?","la parité ne permet pas de conclure"]]}],juge,etapes:E,
+    bonne:`x pair : ${bon.p} ; x impair : ${bon.i} ; ${ok?"pas de solution entière":"on ne peut pas conclure"}`,bonneTxt:`${bon.p}, ${bon.i}, ${ok?"pas de solution":"pas de conclusion"}`,repBonne:bon,repFausse:{p:bon.p==="pair"?"impair":"pair",i:bon.i,c:bon.c},nature:ok?"conclut":"ne conclut pas",ens:{type:"pc",T:P.T}};}
+const polK=(c,v)=>polX(c).replace(/x/g,v);
+function redactionContra(R){const t=R.ent(0,2);
+  if(t===0){const b=2*R.ent(0,3),c=R.ent(-5,5),pn=R.ent(0,1),p=1-pn,E=[c,b,1],Et=polK(E,"n"),r=((p+b*p+c)%2+2)%2,ph=1-r;
+    const k2=[p*p+b*p+c,4*p+2*b,4],m=(k2[0]-r)/2,Q2=[m,2*p+b,2],nE=p?"2k + 1":"2k",sub=Et.replace(/n/g,`(${nE})`);
+    const S=`Pour tout n ∈ ℤ, si ${Et} est ${PAR(ph)}, alors n est ${PAR(pn)}.`;
+    return papierQ("CP"+S,`Démontre par contraposée : « ${h(S)} »`,`<p>Rédige sur ta feuille : la contraposée, puis sa preuve, puis la conclusion.</p>`,[
+      [`Contraposée : pour tout n ∈ ℤ, si n est ${PAR(p)}, alors ${fx(Et)} est ${PAR(r)}.`,"On échange les deux côtés et on les nie : « pair » devient « impair », et inversement.",1],
+      [`Soit n ∈ ℤ ${PAR(p)} : il existe k ∈ ℤ tel que ${fx(`n = ${nE}`)}.`,`C'est la définition d'un entier ${PAR(p)}.`,1],
+      [`${fx(`${Et} = ${sub} = ${polK(k2,"k")}`)}`,"On remplace n et on développe.",1],
+      [`${fx(`= 2(${polK(Q2,"k")})${r?" + 1":""}`)}, et ${fx(polK(Q2,"k"))} est un entier : ${fx(Et)} est ${PAR(r)}.`,"On met 2 en facteur pour faire apparaître la parité.",1.5],
+      ["La contraposée est vraie, donc l'énoncé de départ est vrai aussi.","Une implication et sa contraposée ont la même valeur de vérité : la phrase de conclusion est attendue.",0.5]],{type:"cp",b,c,p,r,ph,pn},"parité");}
+  if(t===1){const d=R.choix([3,5,7]),a=R.choix([1,2,4].filter(x=>x%d)),b=R()<0.4?0:R.ent(1,5),Et=poly(a,b,0),S=`Pour tout n ∈ ℕ, si ${Et} n'est pas un multiple de ${d}, alors n n'est pas un multiple de ${d}.`,Q2=poly(a*d,b,0).replace(/n/g,"k");
+    return papierQ("CM"+S,`Démontre par contraposée : « ${h(S)} »`,`<p>Rédige sur ta feuille : la contraposée, puis sa preuve, puis la conclusion.</p>`,[
+      [`Contraposée : pour tout n ∈ ℕ, si n est un multiple de ${d}, alors ${fx(Et)} est un multiple de ${d}.`,"On échange les deux côtés et on les nie : « n'est pas un multiple » devient « est un multiple ».",1],
+      [`Soit n ∈ ℕ un multiple de ${d} : il existe k ∈ ℕ tel que ${fx(`n = ${d}k`)}.`,`C'est la définition d'un multiple de ${d}.`,1],
+      [`${fx(`${Et} = ${Et.replace(/n/g,`(${d}k)`)} = ${d}(${Q2})`)}`,`On remplace n par ${d}k et on met ${d} en facteur.`,1.5],
+      [`${fx(Q2)} est un entier, donc ${fx(Et)} est un multiple de ${d}.`,"Il faut dire que le facteur est un entier.",1],
+      ["La contraposée est vraie, donc l'énoncé de départ est vrai aussi.","Une implication et sa contraposée ont la même valeur de vérité.",0.5]],{type:"cm",a,b,d},"multiples");}
+  const P=polyParite(R,true),eqn=`${P.txt} = 0`,[wp,wi]=casTxt(P);
+  return papierQ("CA"+P.txt,`Démontre que l'équation ${fx(eqn)} n'admet pas de solution entière.`,`<p>Indication, comme au CC2 2025-2026 : raisonne par l'absurde, sur la parité d'une telle solution.</p>`,[
+    [`Supposons qu'un entier x vérifie ${fx(eqn)}.`,"Par l'absurde : on suppose le contraire de ce qu'on veut montrer.",1],
+    [`Si x est pair : ${wp}`,"On sépare en deux cas qui couvrent tous les entiers : c'est la disjonction de cas.",1.5],
+    [`Si x est impair : ${wi}`,"Impair × impair = impair ; une somme est impaire quand elle a un nombre impair de termes impairs.",1.5],
+    ["Dans les deux cas, le membre de gauche est impair, donc il ne vaut pas 0 : contradiction. L'équation n'a pas de solution entière.","0 est pair : un nombre impair ne peut pas lui être égal.",1]],{type:"ca",T:P.T},"absurde");}
+
+G.rai={IMPL,DEDUIRE,appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
   paliers:[
@@ -21475,7 +21595,14 @@ G.add("rai",[
    {t:"une formule de P et Q, colonne par colonne",cc:3,gen:tvDeux},
    {t:"trois propositions P, Q, R",cc:4,gen:tvTrois,min:100},
    {t:"une seule valeur connue : peut-on conclure ?",cc:2,gen:tvConnue,min:100},
-   {t:"comme au QCM : lesquelles sont équivalentes ?",cc:3,gen:tvQcm}]}
+   {t:"comme au QCM : lesquelles sont équivalentes ?",cc:3,gen:tvQcm}]},
+ {id:"RA7",t:"Contraposée, réciproque, négation, absurde",tache:"contraposée et absurde",th:"raisonnements",pts:1.5,lecons:["r-contraposee"],apres:["RA8"],
+  paliers:[
+   {t:"reconnaître contraposée, réciproque, négation",cc:3,gen:reconnaitre},
+   {t:"écrire la contraposée ou la négation d'une phrase",cc:2,gen:assembler,min:20},
+   {t:"avec P, Q, R : contraposée et négation",cc:4,gen:formulesContra,min:100},
+   {t:"disjonction de cas : la parité d'une équation",cc:3,gen:parCas},
+   {t:"rédaction sur papier : contraposée ou absurde",cc:8,gen:redactionContra,min:150}]}
 ]);
 })();
 
