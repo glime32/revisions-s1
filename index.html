@@ -23202,6 +23202,185 @@ function droitesPar(R){const pap=R()<0.45,phi=R.choix([40,50,55,60,65,70])*Math.
     bonne:`${pap?"rapport":fx("λ_{1}")} ${fx("= "+nb(V))} et ${fx(`${nomW} = ${nb(W)}`)}`,bonneTxt:`rapport = ${nb(V)} ; ${nomW} = ${nb(W)}`,repBonne:{x:brut(V),y:brut(W)},repFausse:{x:brut(mul(V,-1)),y:brut(W)},nature:pap?"deux homothéties, comme au CC2 2025":"homothétie et parallèles (feuille 3, exercice 2)",
     ens:{k:pap?"pap":"par",P,u,v}};}
 
+/* ---------- GE7 : triangles isométriques (les droites du triangle, le cas, les deux bons triangles, puis sur papier) ---------- */
+const champC=(id,titre,o)=>({k:"choix",id,titre,o});
+const maj=s=>s.charAt(0).toUpperCase()+s.slice(1),nu=s=>String(s).replace(/<[^>]+>/g,"").replace(/\$/g,"");
+/* des questions à choix, et parfois une case : B donne la bonne valeur de chaque champ, tort(champ, valeur) dit où ça part */
+function jugeQ(B,tort,libre){libre=libre||{};return rep=>{const ids=Object.keys(B);
+  if(ids.some(k=>!propre(rep[k])))return {incomplet:ids.length>1?"Réponds à chaque question avant de valider.":"Choisis une réponse avant de valider."};
+  for(const k of ids)if(libre[k]){const r=libre[k](rep[k]);if(r.inc)return {incomplet:r.inc};}
+  const F=ids.filter(k=>libre[k]?!libre[k](rep[k]).ok:rep[k]!==B[k]);if(!F.length)return {ok:true};
+  const d=tort(F[0],rep[F[0]]);return faux({f:F,etape:d[0],type:d[1],titre:d[2],msg:d[3]});};}
+const NOMD={med:X=>`la médiane issue de ${X}`,hau:X=>`la hauteur issue de ${X}`,bis:X=>`la bissectrice de l'angle en ${X}`,mtr:(X,UV)=>`la médiatrice de [${UV}]`};
+const MOTD={med:"médiane",hau:"hauteur",bis:"bissectrice",mtr:"médiatrice"};
+const DEFD={med:(X,UV)=>`La médiane issue de ${X} est la droite qui passe par ${X} et par le milieu de [${UV}] (poly, exercice 2.7).`,
+  hau:(X,UV)=>`La hauteur issue de ${X} est l'unique droite perpendiculaire à (${UV}) passant par ${X} (poly, § 2.4).`,
+  bis:X=>`La bissectrice de l'angle en ${X} est la demi-droite d'origine ${X} qui partage cet angle en deux angles égaux (poly, § 1.3).`,
+  mtr:(X,UV)=>`La médiatrice de [${UV}] est l'unique droite perpendiculaire à (${UV}) qui passe par le milieu de [${UV}] (définition 1.3.3). C'est aussi l'ensemble des points à égale distance de ${UV[0]} et de ${UV[1]} (TD 1.6).`};
+const D4=["med","hau","bis","mtr"];
+
+function nomDroite(R,T,X,U,V,UV){const k=R.choix(D4),w=R.ent(0,1),aU=absAn(U+X+"K"),aV=absAn("K"+X+V);
+  const D={med:[`passe par ${X} et par le milieu de [${UV}]`,`passe par ${X} et coupe [${UV}] en un point K tel que ${fx(`${U}K = K${V}`)}`],
+    hau:[`passe par ${X} et elle est perpendiculaire à (${UV})`,`passe par ${X} et coupe (${UV}) en un point K tel que ${fx(`(${X}K) ⊥ (${UV})`)}`],
+    bis:[`part de ${X} et partage l'angle en ${X} en deux angles égaux`,`part de ${X} et coupe [${UV}] en un point K tel que ${aU} ${fx("=")} ${aV}`],
+    mtr:[`est perpendiculaire à (${UV}) et passe par le milieu de [${UV}]`,`est formée de tous les points du plan qui sont à la même distance de ${U} et de ${V}`]}[k][w];
+  const F={med:["sommet","milieu"],hau:["sommet","perp"],bis:["sommet","angle"],mtr:w?["equi"]:["perp","milieu"]}[k];
+  const o=R.mel(D4).map(c=>[c,maj(NOMD[c](X,UV))]),autre=R.choix(D4.filter(c=>c!==k));
+  const E=[{w:`Ce que dit l'énoncé : d ${D}.`,why:"Pour nommer une droite d'un triangle, on regarde deux choses : par quel point elle passe, et ce qu'elle fait au côté d'en face ou à l'angle.",pts:1},
+    {w:`<b>d est ${NOMD[k](X,UV)}.</b>`,why:DEFD[k](X,UV)+(k==="mtr"?` Elle ne passe par ${X} que si ${fx(`${X}${U} = ${X}${V}`)}.`:""),pts:1}];
+  return {sig:"ND"+JSON.stringify([T,X,k,w]),q:`Dans le triangle ${T}, ${k==="bis"?"une demi-droite":"une droite"} d ${D}. Quel est le nom de d ?`,corps:"",texte:`triangle ${T} : d ${nu(D)} ; nommer d`,nature:"nommer une droite",
+    champs:[champC("x",null,o)],juge:jugeQ({x:k},(id,val)=>[1,`${MOTD[k]} prise pour une ${MOTD[val]||"autre droite"}`,"Où ça part : le nom de la droite.",`${DEFD[val]?DEFD[val](X,UV)+" ":""}L'énoncé dit autre chose : d ${D}.`]),
+    etapes:E,bonne:maj(NOMD[k](X,UV)),bonneTxt:NOMD[k](X,UV),repBonne:{x:k},repFausse:{x:autre},ens:{sorte:"nom",bon:k,faits:F}};}
+
+function saitDroite(R,T,X,U,V,UV){const k=R.choix(D4),aU=absAn(U+X+"K"),aV=absAn("K"+X+V);
+  const intro={med:`la médiane issue de ${X} coupe [${UV}] en K`,hau:`la hauteur issue de ${X} coupe (${UV}) en K`,bis:`la bissectrice de l'angle en ${X} coupe [${UV}] en K`,mtr:`K est un point de la médiatrice de [${UV}] qui n'est pas sur la droite (${UV})`}[k];
+  const A={mil:`K est le milieu de [${UV}]`,perp:`(${X}K) est perpendiculaire à (${UV})`,ang:`${aU} ${fx("=")} ${aV}`,iso:fx(`${X}${U} = ${X}${V}`),equi:fx(`K${U} = K${V}`)};
+  const bon={med:"mil",hau:"perp",bis:"ang",mtr:"equi"}[k],ids=k==="mtr"?["equi","mil","perp","iso"]:["mil","perp","ang","iso"];
+  const PROP={mil:`Arriver au milieu de [${UV}], c'est ce que fait la médiane issue de ${X}.`,perp:`Être perpendiculaire à (${UV}), c'est ce qui définit la hauteur issue de ${X}.`,ang:`Partager l'angle en ${X} en deux angles égaux, c'est ce que fait la bissectrice.`,
+    iso:`${X}${U} = ${X}${V} voudrait dire que le triangle est isocèle en ${X} : l'énoncé ne le dit pas.`,equi:`Être à la même distance de ${U} et de ${V}, c'est la propriété des points de la médiatrice de [${UV}].`};
+  const E=[{w:DEFD[k](X,UV),why:"On revient à la définition : c'est elle, et elle seule, qui dit ce qui est sûr.",pts:1},
+    {w:`<b>Ce qui est sûr : ${A[bon]}.</b>`,why:k==="mtr"?`K n'est pas sur (${UV}) : ce n'est donc pas le milieu de [${UV}]. Et rien ne relie K au sommet ${X} : l'énoncé ne dit ni que (${X}K) est perpendiculaire à (${UV}), ni que le triangle est isocèle en ${X}.`:`Les autres affirmations ne sont vraies que dans des cas particuliers. Par exemple, quand le triangle est isocèle en ${X}, la médiane, la hauteur et la bissectrice issues de ${X} sont confondues (TD 1.7).`,pts:1}];
+  return {sig:"SD"+JSON.stringify([T,X,k]),q:`Dans le triangle ${T}, ${intro}. Sans autre hypothèse, laquelle de ces affirmations est sûre ?`,corps:"",texte:`triangle ${T} : ${intro} ; dire ce qui est sûr`,nature:"ce que donne une droite",
+    champs:[champC("x",null,R.mel(ids).map(c=>[c,A[c]]))],juge:jugeQ({x:bon},(id,val)=>[0,`propriété de la ${MOTD[k]} confondue avec une autre`,"Où ça part : la définition.",`${PROP[val]||""} Ce n'est pas ce que dit la définition de ${NOMD[k](X,UV)}.`]),
+    etapes:E,bonne:A[bon],bonneTxt:nu(A[bon]),repBonne:{x:bon},repFausse:{x:ids.find(c=>c!==bon)},ens:{sorte:"sait",ligne:k,opts:ids,bon}};}
+
+function isoDroite(R,T,X,U,V,UV,XU,XV){
+  const C=[["X","med","perp",`la médiane issue de ${X} est perpendiculaire à (${UV})`],["X","med","ang",`la médiane issue de ${X} partage l'angle en ${X} en deux angles égaux`],["X","hau","mil",`la hauteur issue de ${X} passe par le milieu de [${UV}]`],["X","mtr","passe",`la médiatrice de [${UV}] passe par ${X}`],
+    ["U","med","perp",`la médiane issue de ${U} est perpendiculaire à (${XV})`,U],["U","bis","mil",`la bissectrice de l'angle en ${U} passe par le milieu de [${XV}]`,U],["U","hau","mil",`la hauteur issue de ${U} passe par le milieu de [${XV}]`,U],["U","mtr","passe",`la médiatrice de [${XU}] passe par ${V}`,V]];
+  const n=R.ent(0,7),c=C[n],vrai=c[0]==="X",bon=vrai?"oui":"non",Z=c[4];
+  const E=vrai?[{w:`Dans un triangle isocèle en ${X}, la médiane, la hauteur et la bissectrice issues de ${X} et la médiatrice de [${UV}] sont une seule et même droite (TD 1.7).`,why:`${X} est le sommet où se rejoignent les deux côtés égaux. Avec I le milieu de [${UV}], les triangles ${X}${U}I et ${X}${V}I sont isométriques (CCC) : cela donne deux angles égaux en ${X} et un angle droit en I.`,pts:1},
+      {w:`<b>Oui : ${c[3]}.</b>`,why:"La droite dont parle la question est une de ces quatre droites confondues : elle a donc les propriétés des trois autres.",pts:1}]
+    :[{w:`Le triangle est isocèle en ${X} : les droites confondues sont celles qui partent de ${X}, avec la médiatrice du côté d'en face [${UV}] (TD 1.7). Rien de tel pour les autres sommets.`,why:`Les deux côtés égaux sont [${XU}] et [${XV}], qui se rejoignent en ${X}. Rien ne dit que les deux côtés qui se rejoignent en ${Z} sont égaux.`,pts:1},
+      {w:`<b>Non, pas en général.</b> Ce serait vrai seulement si le triangle était aussi isocèle en ${Z}.`,why:`Exemple : avec ${XU} = ${XV} = 5 et ${UV} = 2, le triangle est isocèle en ${X} seulement, et la propriété est fausse.`,pts:1}];
+  return {sig:"ID"+JSON.stringify([T,X,n]),q:`Le triangle ${T} est isocèle en ${X}, c'est-à-dire ${fx(`${XU} = ${XV}`)}. Est-il sûr que ${c[3]} ?`,corps:"",texte:`triangle ${T} isocèle en ${X} : est-il sûr que ${c[3]} ?`,nature:"triangle isocèle",
+    champs:[champC("x",null,[["oui","Oui, toujours"],["non","Non, pas en général"]])],
+    juge:jugeQ({x:bon},()=>vrai?[0,"triangle isocèle : droites confondues au sommet principal oubliées","Où ça part : le résultat du TD 1.7.",`Dans un triangle isocèle en ${X}, la médiane, la hauteur et la bissectrice issues de ${X} sont confondues avec la médiatrice de [${UV}].`]
+      :[0,"triangle isocèle : propriété du sommet principal donnée à un autre sommet","Où ça part : le sommet.",`Le triangle est isocèle en ${X}, pas en ${Z}. Ce qui est vrai pour les droites issues de ${X} ne l'est pas pour les autres sommets.`]),
+    etapes:E,bonne:vrai?"Oui, toujours":"Non, pas en général",bonneTxt:vrai?"oui, toujours":"non, pas en général",repBonne:{x:bon},repFausse:{x:vrai?"non":"oui"},ens:{sorte:"iso",de:c[0],ligne:c[1],prop:c[2],bon}};}
+
+function droitesTri(R){const L=R.choix(TRI).split(""),s=R.ent(0,2),u=(s+1)%3,v=(s+2)%3,r=R(),a=[R,L.join(""),L[s],L[u],L[v],cote(L,u,v)];
+  return r<0.42?nomDroite(...a):r<0.66?saitDroite(...a):isoDroite(...a,cote(L,s,u),cote(L,s,v));}
+
+const PAIRES=[["ABC","DEF"],["ABC","MNP"],["DEF","RST"],["MNP","RST"],["EFG","ABC"],["RST","ABC"],["MNP","DEF"]];
+const CASN={ccc:"CCC",cac:"CAC",aca:"ACA"},CAS3=[["ccc","CCC"],["cac","CAC"],["aca","ACA"]];
+const combien=(n,s)=>n===0?`aucun ${s}`:n===1?`un ${s}`:(n===2?"deux ":"trois ")+s+"s";
+const lettres=s=>propre(s).toUpperCase().replace(/[^A-Z]/g,""),tri2=s=>s.split("").sort().join("");
+function casIso(R){const [t1,t2]=R.choix(PAIRES),A=t1.split(""),B=R.mel(t2.split("")),ded=R()<0.45;
+  const k=R.choix(ded?["ccc","cac","cac","aca","aca","aac"]:["ccc","cac","cac","aca","aac","cca","cca","cca","aaa"]),i=R.ent(0,2),j=(i+1)%3,l=(i+2)%3;
+  const dons={ccc:[["c",0,1],["c",1,2],["c",0,2]],cac:[["c",i,j],["c",i,l],["a",i]],aca:[["c",i,j],["a",i],["a",j]],aac:[["c",i,j],["a",i],["a",l]],cca:[["c",i,j],["c",i,l],["a",j]],aaa:[["a",0],["a",1],["a",2]]}[k];
+  const an3=(Z,p)=>{const o=[0,1,2].filter(x=>x!==p),r=R()<0.5;return Z[o[r?0:1]]+Z[p]+Z[o[r?1:0]];},sg=(Z,p,q2)=>R()<0.5?Z[p]+Z[q2]:Z[q2]+Z[p];
+  const items=R.mel(dons).map(d=>d[0]==="c"?fx(`${sg(A,d[1],d[2])} = ${sg(B,d[1],d[2])}`):`${absAn(an3(A,d[1]))} ${fx("=")} ${absAn(an3(B,d[1]))}`);
+  const bon={ccc:"ccc",cac:"cac",aca:"aca",aac:"aca",cca:"non",aaa:"non"}[k],nC=dons.filter(d=>d[0]==="c").length,compte=`${combien(nC,"côté")} et ${combien(3-nC,"angle")}`;
+  const cA=(p,q2)=>`[${A[p]}${A[q2]}]`,cB=(p,q2)=>`[${B[p]}${B[q2]}]`,corr=`${A[0]} correspond à ${B[0]}, ${A[1]} à ${B[1]} et ${A[2]} à ${B[2]}`;
+  const place={ccc:[`Les trois côtés de ${t1} sont égaux aux trois côtés de ${t2}. C'est le cas CCC.`,"Avec trois côtés égaux deux à deux, aucun angle n'est nécessaire."],
+    cac:[`Dans ${t1}, les deux côtés donnés, ${cA(i,j)} et ${cA(i,l)}, se rejoignent en ${A[i]}, et l'angle donné est justement l'angle en ${A[i]} : il est entre les deux côtés. Même chose dans ${t2} au sommet ${B[i]}. C'est le cas CAC.`,"C'est la condition du cas CAC : l'angle doit être celui que forment les deux côtés égaux."],
+    aca:[`Le côté donné, ${cA(i,j)}, joint ${A[i]} et ${A[j]}, et les deux angles donnés sont les angles en ${A[i]} et en ${A[j]} : ils sont aux deux bouts du côté. Même chose dans ${t2}. C'est le cas ACA.`,"C'est exactement le cas ACA de l'axiome V : un côté, et les deux angles à ses extrémités."],
+    aac:[`Le côté donné est ${cA(i,j)} ; les angles donnés sont ceux en ${A[i]} et en ${A[l]}. L'angle en ${A[l]} n'est pas à un bout de ce côté. Mais la somme des angles d'un triangle vaut π : les angles en ${A[j]} et en ${B[j]} sont donc égaux aussi, et on retrouve le cas ACA.`,"C'est le corollaire 2.4.3 du poly : un côté et deux angles égaux suffisent, même quand les angles ne sont pas aux deux bouts du côté."],
+    cca:[`Dans ${t1}, les deux côtés donnés, ${cA(i,j)} et ${cA(i,l)}, se rejoignent en ${A[i]}. Or l'angle donné est l'angle en ${A[j]} : il n'est pas entre les deux côtés.`,"Pour CAC, il faut l'angle que forment les deux côtés égaux. Avec un autre angle, deux triangles différents sont possibles : c'est le contre-exemple du TD 1.7, question (1)(e)."],
+    aaa:["Aucun côté n'est donné : seulement les trois angles.","Deux triangles qui ont les mêmes angles ont la même forme, pas forcément la même taille : ils sont semblables (poly, § 2.6). Un agrandissement d'un triangle garde ses trois angles."]}[k];
+  const E=[{w:`On compte ce qui est donné : ${compte}.`,why:"L'axiome V a trois cas : CCC (trois côtés), CAC (deux côtés et un angle), ACA (un côté et deux angles). Le compte dit lequel essayer.",pts:0.5},{w:place[0],why:place[1],pts:1}];
+  const tortX=val=>bon==="non"?(k==="cca"?[1,"cas d'isométrie cité alors que l'angle n'est pas entre les deux côtés","Où ça part : la place de l'angle.",`L'angle donné est en ${A[j]}, alors que les deux côtés donnés se rejoignent en ${A[i]}. Pour CAC, il faut l'angle entre les deux côtés.`]
+      :[1,"trois angles pris pour un cas d'isométrie","Où ça part : il manque un côté.","Trois angles égaux donnent deux triangles de même forme, pas forcément de même taille. Aucun des trois cas ne se passe d'un côté."])
+    :val==="non"?(k==="aac"?[1,"corollaire 2.4.3 oublié : un côté et deux angles suffisent","Où ça part : le troisième angle.",`La somme des angles vaut π dans chaque triangle : les angles en ${A[j]} et en ${B[j]} sont donc égaux aussi, et on retrouve le cas ACA (corollaire 2.4.3).`]
+      :[1,"cas d'isométrie non reconnu","Où ça part : la vérification du cas.",`Les égalités données sont exactement celles du cas ${CASN[bon]}.`])
+    :[0,`${CASN[val]||"un autre cas"} cité au lieu de ${CASN[bon]}`,"Où ça part : le compte des côtés et des angles.",`L'énoncé donne ${compte} : c'est le cas ${CASN[bon]}${CASN[val]?", pas "+CASN[val]:""}.`];
+  const debut=`${t1} et ${t2} sont deux triangles non dégénérés tels que ${et(items)}.`,rappel="<p>Rappel : un angle écrit entre barres est un angle non orienté, et la lettre du milieu est son sommet.</p>";
+  const ens={A:t1,B:t2,dons:dons.map(d=>d[0]==="c"?{t:"c",a:A[d[1]]+A[d[2]],b:B[d[1]]+B[d[2]]}:{t:"a",a:A[d[1]],b:B[d[1]]}),bon};
+  if(!ded){E.push(bon==="non"?{w:"<b>On ne peut pas conclure : ces égalités ne suffisent pas.</b>",why:k==="cca"?"Il faudrait l'angle entre les deux côtés, ou bien le troisième côté.":"Il faudrait au moins un côté égal, pour fixer la taille des triangles.",pts:0.5}
+      :{w:`<b>Les triangles ${t1} et ${t2} sont isométriques, par ${CASN[bon]}.</b>`,why:`Dans cette isométrie, ${corr} : les côtés et les angles qui se correspondent sont égaux.`,pts:0.5});
+    const o=CAS3.map(c=>[c[0],"Oui, par "+c[1]]).concat([["non","On ne peut pas conclure"]]);
+    return {sig:"CI"+JSON.stringify([t1,B.join(""),k,i]),q:`${debut} Sont-ils forcément isométriques ?`,corps:rappel,texte:`${t1} et ${t2} : ${nu(et(items))} ; isométriques ?`,nature:"reconnaître le cas",
+      champs:[champC("x",null,o)],juge:jugeQ({x:bon},(id,val)=>tortX(val)),etapes:E,bonne:o.find(c=>c[0]===bon)[1],bonneTxt:o.find(c=>c[0]===bon)[1],repBonne:{x:bon},repFausse:{x:bon==="non"?"cac":"non"},ens:Object.assign(ens,{sorte:"cas"})};}
+  /* ce qu'on en déduit : un côté ou un angle qui n'était pas donné */
+  const libresC=[[0,1],[1,2],[0,2]].filter(c=>!dons.some(d=>d[0]==="c"&&tri2(""+d[1]+d[2])===tri2(""+c[0]+c[1]))),libresA=[0,1,2].filter(p=>!dons.some(d=>d[0]==="a"&&d[1]===p));
+  const cote3=libresC.length&&(R()<0.6||!libresA.length),c=cote3?R.choix(libresC):null,p=cote3?null:R.choix(libresA),autres=p===null?null:[0,1,2].filter(x=>x!==p);
+  const lis=cote3?t=>{const z=lettres(t);return z.length!==2?{inc:`Écris le côté avec ses deux lettres, par exemple ${t2.slice(0,2)}.`}:{ok:tri2(z)===tri2(B[c[0]]+B[c[1]])};}
+    :t=>{const z=lettres(t);return z.length===1?{ok:z===B[p]}:z.length!==3?{inc:`Écris l'angle avec ses trois lettres, le sommet au milieu, par exemple ${t2}.`}:{ok:z[1]===B[p]&&tri2(z[0]+z[2])===tri2(B[autres[0]]+B[autres[1]])};};
+  const nomA=cote3?cA(c[0],c[1]):absAn(A[autres[0]]+A[p]+A[autres[1]]),rep=cote3?B[c[0]]+B[c[1]]:B[autres[0]]+B[p]+B[autres[1]],mauvais=cote3?B[c[0]]+B[[0,1,2].find(x=>!c.includes(x))]:B[p]+B[autres[0]]+B[autres[1]];
+  E.push({w:`Les sommets se correspondent : ${corr}.`,why:"Chaque égalité donnée associe un côté ou un angle du premier triangle à un côté ou un angle du second. Un angle donne tout de suite deux sommets qui se correspondent ; un côté en donne deux à la fois, que les autres égalités départagent.",pts:1},
+    {w:cote3?`<b>Le côté ${nomA} correspond au côté ${cB(c[0],c[1])} : ${fx(`${A[c[0]]}${A[c[1]]} = ${rep}`)}.</b>`:`<b>L'angle ${nomA} correspond à l'angle ${absAn(rep)} : ils sont égaux.</b>`,why:"Deux triangles isométriques ont tous leurs côtés et tous leurs angles égaux deux à deux, à condition de respecter la correspondance des sommets.",pts:1});
+  return {sig:"CD"+JSON.stringify([t1,B.join(""),k,i,cote3?c:p]),q:`${debut} Ils sont donc isométriques.`,corps:rappel,texte:`${t1} et ${t2} : ${nu(et(items))} ; le cas, puis ${cote3?"le côté égal à "+nu(nomA):"l'angle égal à l'angle "+nu(nomA)}`,nature:"déduire une égalité",
+    champs:[champC("x","Par quel cas ?",CAS3),{k:"champ",id:"y",nom:cote3?"côté":"angle",label:cote3?`Dans ${t2}, le côté de même longueur que ${nomA} :`:`Dans ${t2}, l'angle égal à ${nomA} :`,sym:[],ex:cote3?`deux lettres, par exemple ${t2.slice(0,2)}`:`trois lettres, le sommet au milieu, par exemple ${t2}`}],
+    juge:jugeQ({x:bon,y:rep},(id,val)=>id==="x"?tortX(val):[2,"correspondance des sommets fausse","Où ça part : quel sommet correspond à quel sommet.",`Dans cette isométrie, ${corr}. ${cote3?`Le côté ${nomA} correspond donc à ${cB(c[0],c[1])}.`:`L'angle en ${A[p]} correspond donc à l'angle en ${B[p]}.`}`],{y:lis}),
+    etapes:E,bonne:`${CASN[bon]} ; ${cote3?fx(rep):absAn(rep)}`,bonneTxt:`${CASN[bon]} ; ${rep}`,repBonne:{x:bon,y:rep},repFausse:{x:bon,y:mauvais},ens:Object.assign(ens,{sorte:"ded",cible:cote3?{t:"c",a:A[c[0]]+A[c[1]]}:{t:"a",a:A[p]}})};}
+
+function bonsTriangles(R){const L=R.choix(TRI).split(""),s=R.ent(0,2),X=L[s],U=L[(s+1)%3],V=L[(s+2)%3],T=L.join(""),f=R.choix(["med","hau","bis","mtr","som","cv"]),h=R.choix([1.7,2,2.3]);
+  const P={[X]:[0,h],[U]:[-1,0],[V]:[1,0]},mi=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2],XU=X+U,XV=X+V,UV=U+V,iso=`${T} est un triangle isocèle en ${X}, c'est-à-dire ${fx(`${XU} = ${XV}`)}.`,tr=[[X,U],[U,V],[X,V]];
+  let hyp,but,cible,ok,f1,f2,cas,eg,o,dit3;
+  if(f==="med"){P.I=mi(P[X],P[U]);P.J=mi(P[X],P[V]);hyp=`${iso} I est le milieu de [${XU}] et J est le milieu de [${XV}].`;but=fx(`${U}J = ${V}I`);cible=[["c",V+"I"],["c",U+"J"]];ok=[X+"I"+V,X+"J"+U];f1=[X+"IJ",X+U+V];f2=[X+"I"+V,X+U+V];cas="cac";
+    eg=[["a",X,X],["c",XV,XU],["c",X+"I",X+"J"]];dit3=[`l'angle en ${X} est commun aux deux triangles`,`${fx(`${XV} = ${XU}`)}, car le triangle est isocèle en ${X}`,`${fx(`${X}I = ${X}J`)}, car ce sont les moitiés de deux côtés égaux`];o={seg:tr,tirets:[[U,"J"],[V,"I"]],points:["I","J"]};}
+  else if(f==="hau"){P.H=pied(P[U],P[X],P[V]);P.K=pied(P[V],P[X],P[U]);hyp=`${iso} H est le pied de la hauteur issue de ${U} (H est sur (${XV})), et K est le pied de la hauteur issue de ${V} (K est sur (${XU})).`;but=fx(`${U}H = ${V}K`);cible=[["c",U+"H"],["c",V+"K"]];ok=[X+U+"H",X+V+"K"];f1=[X+"HK",X+U+V];f2=[X+U+"H",X+U+V];cas="aca";
+    eg=[["a",X,X],["a","H","K"],["c",XU,XV]];dit3=[`l'angle en ${X} est commun aux deux triangles`,"les angles en H et en K sont droits, donc égaux",`${fx(`${XU} = ${XV}`)}, car le triangle est isocèle en ${X}`];o={seg:tr,tirets:[[U,"H"],[V,"K"]],droits:[[U,"H",X],[V,"K",X]],points:["H","K"]};}
+  else if(f==="bis"){const a=lgr(P[X],P[U]),b=lgr(P[U],P[V]);P.I=bary(P[X],P[V],a/(a+b));P.J=bary(P[X],P[U],a/(a+b));hyp=`${iso} La bissectrice de l'angle en ${U} coupe [${XV}] en I, et la bissectrice de l'angle en ${V} coupe [${XU}] en J.`;but=fx(`${U}I = ${V}J`);cible=[["c",U+"I"],["c",V+"J"]];ok=[U+"I"+V,V+"J"+U];f1=[X+"IJ",X+U+V];f2=[U+"I"+V,X+U+V];cas="aca";
+    eg=[["c",UV,UV],["a",V,U],["a",U,V]];dit3=[`[${UV}] est commun aux deux triangles`,`les angles en ${V} et en ${U} du triangle ${T} sont égaux, car il est isocèle en ${X} (TD 1.7)`,`l'angle en ${U} de ${ok[0]} et l'angle en ${V} de ${ok[1]} sont les moitiés de ces deux angles égaux`];o={seg:tr,tirets:[[U,"I"],[V,"J"]],points:["I","J"]};}
+  else if(f==="mtr"){P.K=[0,0];hyp=`K est le milieu du segment [${UV}], et ${X} est un point de la médiatrice de [${UV}], différent de K.`;but=fx(`${XU} = ${XV}`);cible=[["c",XU],["c",XV]];ok=[X+"K"+U,X+"K"+V];f1=[X+U+V,X+"K"+U];f2=[X+U+V,X+"K"+V];cas="cac";
+    eg=[["c",X+"K",X+"K"],["c","K"+U,"K"+V],["a","K","K"]];dit3=[`[${X}K] est commun aux deux triangles`,`${fx(`K${U} = K${V}`)}, car K est le milieu de [${UV}]`,`les angles en K sont droits, car la médiatrice est perpendiculaire à (${UV})`];o={seg:tr,tirets:[[X,"K"]],droits:[[X,"K",V]],marques:[[U,"K",1],["K",V,1]],points:["K"]};}
+  else if(f==="som"){P.K=[0,0];hyp=`${iso} La bissectrice de l'angle en ${X} coupe [${UV}] en K.`;but=fx(`K${U} = K${V}`);cible=[["c","K"+U],["c","K"+V]];ok=[X+"K"+U,X+"K"+V];f1=[X+U+V,X+"K"+U];f2=[X+U+V,X+"K"+V];cas="cac";
+    eg=[["c",X+"K",X+"K"],["c",XU,XV],["a",X,X]];dit3=[`[${X}K] est commun aux deux triangles`,`${fx(`${XU} = ${XV}`)}, car le triangle est isocèle en ${X}`,`les angles en ${X} des deux triangles sont égaux, car [${X}K) est la bissectrice`];o={seg:tr,tirets:[[X,"K"]],marques:[[X,U,1],[X,V,1]],points:["K"]};}
+  else{P.K=[0,-0.9];hyp=`${X}, ${U}, ${V} et K sont quatre points du plan tels que ${fx(`${XU} = ${XV}`)} et ${fx(`K${U} = K${V}`)}. Les points ${U} et ${V} ne sont pas sur la droite (${X}K).`;but=`${absAn(U+X+"K")} ${fx("=")} ${absAn(V+X+"K")}`;cible=[["a",U+X+"K"],["a",V+X+"K"]];ok=[X+U+"K",X+V+"K"];f1=[X+U+V,"K"+U+V];f2=[X+U+"K",X+U+V];cas="ccc";
+    eg=[["c",XU,XV],["c","K"+U,"K"+V],["c",X+"K",X+"K"]];dit3=[`${fx(`${XU} = ${XV}`)}, par hypothèse`,`${fx(`K${U} = K${V}`)}, par hypothèse`,`[${X}K] est commun aux deux triangles`];o={seg:[[X,U],[X,V],["K",U],["K",V]],tirets:[[X,"K"]],marques:[[X,U,1],[X,V,1],["K",U,2],["K",V,2]],points:["K"]};}
+  const nomC=c=>c[0]==="c"?`[${c[1]}]`:`l'angle ${absAn(c[1])}`,paire=t=>`${t[0]} et ${t[1]}`,O={ok,f1,f2};
+  const dans=(t,c)=>c[1].split("").every(z=>t.includes(z)),manque=t=>!((dans(t[0],cible[0])&&dans(t[1],cible[1]))||(dans(t[0],cible[1])&&dans(t[1],cible[0])));
+  o.alt=`La figure de l'énoncé : les points ${Object.keys(P).join(", ")}`;o.points=(o.points||[]).concat([X,U,V]);
+  const E=[{w:`Il faut montrer ${but}. On cherche deux triangles : l'un doit contenir ${nomC(cible[0])}, l'autre ${nomC(cible[1])}.`,why:"Deux triangles isométriques ont leurs côtés et leurs angles égaux deux à deux. Encore faut-il que ce qu'on veut comparer soit dans ces deux triangles.",pts:1},
+    {w:`On choisit les triangles ${paire(ok)}.`,why:`${maj(nomC(cible[0]))} est dans ${ok[0]}, et ${nomC(cible[1])} est dans ${ok[1]}. Ces deux triangles jouent le même rôle, un de chaque côté de la figure. Les deux autres propositions comparent des triangles qui ne sont pas isométriques.`,pts:1},
+    {w:`Trois égalités : ${dit3[0]} ; ${dit3[1]} ; ${dit3[2]}.`,why:"Chaque égalité vient d'une hypothèse de l'énoncé ou d'un élément commun aux deux triangles. Aucune ne doit être l'égalité qu'on cherche à montrer.",pts:1.5},
+    {w:`<b>Les triangles ${paire(ok)} sont isométriques (${CASN[cas]}), donc ${but}.</b>`,why:cas==="ccc"?"Trois côtés égaux deux à deux : c'est le cas CCC.":cas==="cac"?"Deux côtés égaux deux à deux, et l'angle entre eux : c'est le cas CAC.":f==="hau"?"Un côté et deux angles égaux deux à deux : c'est le cas ACA, avec le corollaire 2.4.3, car l'angle droit n'est pas à un bout du côté.":"Un côté, et les deux angles à ses extrémités : c'est le cas ACA.",pts:0.5}];
+  const tort=(id,val)=>id==="t"?[1,"triangles choisis qui ne contiennent pas ce qu'on compare","Où ça part : le choix des triangles.",!O[val]||manque(O[val])?`Dans les triangles ${O[val]?paire(O[val]):"choisis"}, on ne trouve pas à la fois ${nomC(cible[0])} et ${nomC(cible[1])} : ils ne peuvent rien dire de l'égalité demandée.`:`Les triangles ${paire(O[val])} ne sont pas isométriques : l'un est une partie de l'autre. Il faut deux triangles qui jouent le même rôle, un de chaque côté de la figure.`]
+    :[3,`${CASN[val]||"un autre cas"} cité au lieu de ${CASN[cas]}`,"Où ça part : le nom du cas.",`Les trois égalités sont : ${dit3[0]} ; ${dit3[1]} ; ${dit3[2]}. C'est le cas ${CASN[cas]}.`];
+  return {sig:"BT"+JSON.stringify([T,X,f]),q:`${hyp} On veut montrer que ${but}.`,corps:figure(P,o),texte:`${nu(hyp)} Montrer ${nu(but)} : quels triangles, quel cas`,nature:{med:"deux médianes",hau:"deux hauteurs",bis:"deux bissectrices",mtr:"un point de la médiatrice",som:"la bissectrice au sommet",cv:"deux triangles isocèles"}[f],
+    champs:[champC("t","Quels triangles faut-il comparer ?",R.mel(["ok","f1","f2"]).map(c=>[c,paire(O[c])])),champC("c","Par quel cas sont-ils isométriques ?",CAS3)],juge:jugeQ({t:"ok",c:cas},tort),
+    etapes:E,bonne:`${paire(ok)}, par ${CASN[cas]}`,bonneTxt:`${paire(ok)}, par ${CASN[cas]}`,repBonne:{t:"ok",c:cas},repFausse:{t:"f1",c:cas},ens:{sorte:"tri",P,cible,opts:O,cas,eg}};}
+
+const OFF="<p><i>Corrigé officiel, découpé en lignes par moi ; les « pourquoi » sont de moi.</i></p>",MOI="<p><i>Corrigé et barème écrits par moi.</i></p>",SITE="<p><i>Corrigé du site, déjà dans les exercices de TD ; barème de moi.</i></p>";
+const BANQUE_TRI=[
+ ["P1","CC1 du 10 novembre 2026, exercice 1 (4 points). Soit ABC un triangle non dégénéré isocèle en A, c'est-à-dire tel que $AB = AC$. Montrer que les médianes issues de B et C sont de même longueur.",OFF,
+  [["Notons I le milieu de [AB] et J celui de [AC]. Il faut montrer $IC = BJ$.","La médiane issue de C joint C au milieu I de [AB], celle issue de B joint B au milieu J de [AC]. Sans nom pour les milieux, l'égalité à montrer ne peut pas s'écrire.",1],
+   ["On compare les triangles AIC et AJB.","[IC] est un côté de AIC et [BJ] est un côté de AJB : ce sont les deux longueurs à comparer.",0.5],
+   ["Ils partagent l'angle en A.","I est sur [AB] et J est sur [AC] : dans les deux triangles, l'angle en A est celui du triangle ABC.",0.5],
+   ["$AC = AB$.","C'est l'hypothèse de l'énoncé : le triangle ABC est isocèle en A.",0.5],
+   ["$AI = AB/2 = AC/2 = AJ$.","I est le milieu de [AB], J celui de [AC], et $AB = AC$ par hypothèse.",1],
+   ["Les triangles AIC et AJB sont donc isométriques (CAC). On en déduit $IC = BJ$.","Deux côtés égaux et l'angle entre eux. Dans cette isométrie, I correspond à J et C à B : le côté [IC] correspond au côté [JB].",0.5]]],
+ ["P2","CC1 du 10 novembre 2026, exercice 2 (5 points). Soit ABC un triangle équilatéral. Soit M un point de [BC]. Déterminer l'angle entre les bissectrices des angles {[AB), [AM)} et {[AM), [AC)}.",OFF,
+  [[`Soit D un point sur la bissectrice de {[AB), [AM)} et E un point sur la bissectrice de {[AM), [AC)}. On cherche ${absAn("DAE")}.`,"Nommer un point sur chaque bissectrice permet d'écrire l'angle cherché avec trois lettres.",0.5],
+   [`Par définition des bissectrices : ${absAn("BAD")} = ${absAn("DAM")} = ½ ${absAn("BAM")} et ${absAn("MAE")} = ${absAn("EAC")} = ½ ${absAn("MAC")}.`,"Une bissectrice partage son angle en deux angles égaux : chacun vaut la moitié de l'angle de départ.",1],
+   [`Le triangle est équilatéral : ses trois angles sont égaux, et leur somme vaut π. Donc ${absAn("BAC")} = π/3.`,"C'est ici que sert le mot « équilatéral ». Le corrigé officiel accepte aussi qu'on l'admette (exercice 1.13 du TD).",1],
+   [`${absAn("DAE")} = ${absAn("DAM")} + ${absAn("MAE")}`,"M est dans le secteur délimité par [AD) et [AE). Le corrigé officiel dit que cet argument de position n'était pas exigé.",1],
+   [`= ½ ${absAn("BAM")} + ½ ${absAn("MAC")} = ½ (${absAn("BAM")} + ${absAn("MAC")}) = ½ ${absAn("BAC")}`,"On remplace par les demi-angles, on met ½ en facteur, et M est entre B et C : les deux angles s'ajoutent pour donner l'angle en A.",1],
+   ["= ½ × π/3 = π/6.","« Déterminer » demande une valeur : s'arrêter à la moitié de l'angle en A ne répond pas à la question.",0.5]]],
+ ["P3","CC1 2025, exercice 1 (3 points). Soient O, A, B et C quatre points distincts du plan, tels que O ∈ [AB] et C ∉ (AB). Montrer que les bissectrices des angles {[OA), [OC)} et {[OB), [OC)} sont perpendiculaires.","<p><i>Corrigé du prof, réécrit ; découpage et barème par ligne de moi.</i></p>",
+  [[`Soit [OE) la bissectrice de {[OA), [OC)} et [OF) celle de {[OB), [OC)}. Par définition, ${absAn("AOE")} = ${absAn("EOC")} = ½ ${absAn("AOC")} et ${absAn("COF")} = ${absAn("FOB")} = ½ ${absAn("COB")}.`,"On nomme les deux bissectrices, puis on écrit ce que leur définition donne : deux demi-angles de chaque côté.",1],
+   [`O ∈ ]AB[, car les points sont distincts : les demi-droites [OA) et [OB) sont opposées, donc ${absAn("AOB")} = π. Et ${absAn("AOC")} + ${absAn("COB")} = ${absAn("AOB")} = π.`,"C'est l'axiome IV (c) pour l'angle plat, et la remarque du § 1.3 pour l'addition : [OC) est entre [OA) et [OB).",1],
+   [`${absAn("EOF")} = ${absAn("EOC")} + ${absAn("COF")} = ½ (${absAn("AOC")} + ${absAn("COB")}) = π/2.`,"On additionne les deux demi-angles qui touchent [OC), puis on remplace la somme par π.",0.5],
+   ["Donc (OE) ⊥ (OF) : les deux bissectrices sont perpendiculaires.","Deux droites sont perpendiculaires quand elles forment un angle droit : c'est la définition du § 1.3.",0.5]]],
+ ["P4","CC1 2025, exercice 2 (2 points). Soit ABC un triangle non dégénéré. On note H<sub>B</sub> (resp. H<sub>C</sub>) le pied de la hauteur issue de B (resp. C). On suppose que BH<sub>B</sub> = CH<sub>C</sub>. Montrer que ABC est isocèle en A. (On pourra utiliser l'aire du triangle ABC.)","<p><i>Corrigé du prof, réécrit ; découpage et barème par ligne de moi.</i></p>",
+  [["Par la formule de l'aire (proposition 2.4.1), avec la hauteur issue de B puis celle issue de C : 𝒜(ABC) = ½ BH<sub>B</sub> × AC = ½ CH<sub>C</sub> × AB.","L'aire d'un triangle vaut la moitié d'une base par la hauteur correspondante, et elle ne dépend pas de la base choisie.",1],
+   ["BH<sub>B</sub> = CH<sub>C</sub>, et cette longueur n'est pas nulle : sinon B serait sur (AC), et le triangle serait dégénéré.","Pour simplifier une égalité par un nombre, il faut dire que ce nombre n'est pas nul.",0.5],
+   ["On simplifie : AC = AB. Donc ABC est isocèle en A.","On divise les deux membres par la longueur commune des deux hauteurs, puis on conclut avec la définition d'un triangle isocèle.",0.5]]],
+ ["P5","CC2 2025, exercice 1 (4 points). Soit ABC un triangle non dégénéré. On note H<sub>A</sub> (resp. H<sub>B</sub>, H<sub>C</sub>) le pied de la hauteur issue de A (resp. B, C), et H le point de concours des trois hauteurs. (On admettra qu'elles sont concourantes.) On suppose que BH = CH. Montrer que ABC est isocèle en A.",OFF,
+  [["Par Pythagore dans le triangle BHH<sub>A</sub>, rectangle en H<sub>A</sub> : BH<sub>A</sub>² = BH² − HH<sub>A</sub>².","H est sur la hauteur issue de A, qui est perpendiculaire à (BC) : le triangle BHH<sub>A</sub> a un angle droit en H<sub>A</sub>.",1],
+   ["= CH² − HH<sub>A</sub>², car BH = CH.","C'est l'hypothèse de l'énoncé : on remplace BH par CH dans l'égalité précédente.",0.5],
+   ["= CH<sub>A</sub>², par Pythagore dans CHH<sub>A</sub>. D'où BH<sub>A</sub> = CH<sub>A</sub>.","Le triangle CHH<sub>A</sub> est rectangle en H<sub>A</sub> lui aussi. Deux longueurs qui ont le même carré sont égales.",0.5],
+   ["La droite (AH<sub>A</sub>) est orthogonale à (BC) et passe par le milieu de [BC] : c'est la médiatrice de [BC].","H<sub>A</sub> est sur (BC) à égale distance de B et de C : c'est le milieu de [BC]. Une droite perpendiculaire à (BC) en son milieu est sa médiatrice.",1],
+   ["Donc AB = AC : le triangle ABC est isocèle en A.","A est sur la médiatrice de [BC], et tout point de la médiatrice est à égale distance de B et de C (TD 1.6).",1]]],
+ ["P6","Feuille 1, exercice 1.7, question (2)(a). Un triangle ABC est isocèle en A si $AB = AC$. Soit ABC un triangle quelconque. On suppose que la médiane issue de A est perpendiculaire à (BC). Montrer que ABC est isocèle en A.",SITE,
+  [["Soit I le milieu de [BC]. La médiane issue de A est (AI), et par hypothèse (AI) ⊥ (BC).","On donne un nom au milieu, puis on traduit l'hypothèse avec ce nom : c'est ce qui permet d'écrire des égalités.",1],
+   ["On compare les triangles ABI et ACI.","Il faut montrer $AB = AC$ : [AB] est un côté de ABI, [AC] est un côté de ACI.",0.5],
+   ["$BI = CI$ ; [AI] est commun ; les angles en I des deux triangles valent π/2.","I est le milieu de [BC], et (AI) est perpendiculaire à (BC) : les deux angles en I sont droits.",1.5],
+   ["Par CAC, ABI et ACI sont isométriques, donc $AB = AC$.","Deux côtés égaux et l'angle entre eux : l'angle en I est bien entre [IA] et [IB], et entre [IA] et [IC].",1]]],
+ ["P7","Feuille 1, exercice 1.7, questions (1)(b) et (1)(c). Soit ABC un triangle isocèle en A, c'est-à-dire $AB = AC$. (b) Montrer que la bissectrice et la médiane issues de A sont confondues. (c) Montrer que la bissectrice issue de A est perpendiculaire à (BC).",SITE,
+  [["Soit I le milieu de [BC]. On compare les triangles ABI et ACI.","La médiane issue de A est (AI). Ces deux triangles contiennent les deux angles en A, et les deux angles en I, qu'on veut comparer.",1],
+   ["$AB = AC$, $BI = CI$ et [AI] est commun : par CCC, ils sont isométriques.","Trois côtés égaux deux à deux : l'hypothèse, la définition du milieu, et un côté commun.",1],
+   [`Donc ${absAn("BAI")} = ${absAn("CAI")}. Comme I ∈ [BC], la demi-droite [AI) est entre [AB) et [AC) : ${absAn("BAI")} = ½ ${absAn("BAC")}, donc [AI) est la bissectrice. Et (AI) est aussi la médiane.`,"Les angles en A se correspondent dans l'isométrie. Il faut encore dire que [AI) est entre les deux côtés pour parler de moitié.",1],
+   [`(c) La même isométrie donne ${absAn("AIB")} = ${absAn("AIC")}. Ces deux angles ont pour somme π, car [IB) et [IC) sont opposées : ils valent π/2.`,"Deux angles égaux dont la somme est un angle plat sont deux angles droits. La bissectrice (AI) est donc perpendiculaire à (BC).",1]]],
+ ["P8","Feuille 1, exercice 1.6. Soient A et B deux points distincts du plan. On appelle médiatrice du segment [AB] l'unique droite perpendiculaire à (AB) passant par le milieu I de [AB]. On note Δ la médiatrice de [AB]. Soit M un point du plan. Montrer que M ∈ Δ si et seulement si $AM = MB$.",SITE,
+  [[`(⇒) Soit M ∈ Δ. Si M = I, alors $AM = MB$. Sinon (MI) = Δ ⊥ (AB), donc ${absAn("AIM")} = ${absAn("BIM")} = π/2.`,"On traite à part le cas M = I, où il n'y a pas de triangle. Sinon, la médiatrice donne deux angles droits en I.",1],
+   ["Dans AIM et BIM : $IA = IB$, [IM] est commun, et les angles en I sont égaux. Par CAC, ils sont isométriques, donc $AM = BM$.","L'angle droit en I est entre les deux côtés égaux : c'est bien le cas CAC.",1],
+   ["(⇐) Supposons $AM = BM$. Si M ∈ (AB) : A, M, B sont alignés avec $MA = MB$, donc M est le milieu de [AB], c'est-à-dire M = I ∈ Δ.","Par l'axiome III (d), un point aligné avec A et B et à égale distance des deux est entre eux : c'est le milieu.",1],
+   [`Sinon, AIM et BIM sont non dégénérés avec $IA = IB$, $AM = BM$ et [IM] commun : par CCC, ${absAn("AIM")} = ${absAn("BIM")}. Leur somme vaut π, donc chacun vaut π/2.`,"I est entre A et B : les demi-droites [IA) et [IB) sont opposées, et les deux angles en I s'ajoutent pour faire un angle plat.",1],
+   ["(IM) est la perpendiculaire à (AB) passant par I : c'est Δ (corollaire 2.3.2). Donc M ∈ Δ.","Par un point passe une seule perpendiculaire à une droite donnée : (IM) et Δ sont la même droite.",1]]]];
+function papierTri(R){const b=R.choix(BANQUE_TRI),e=recit("TP"+b[0],b[1],b[2],b[3])();e.ens={sorte:"papier",pts:b[3].reduce((t,l)=>t+l[2],0)};return e;}
+
 /* ---------- les démonstrations et les énoncés du cours : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
 const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\^\{2\}/g,"²").replace(/\$/g,"").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
   etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
@@ -23279,7 +23458,13 @@ G.add("geo",[
    {t:"la somme des angles d'un triangle",cc:2,gen:somme},
    {t:"le triangle isocèle",cc:3,gen:isocele},
    {t:"parallèles et angles alternes-internes",cc:3,min:200,gen:paralleles},
-   {t:"comme au CC : une figure à plusieurs triangles",cc:5,min:200,gen:plusieurs}]}
+   {t:"comme au CC : une figure à plusieurs triangles",cc:5,min:200,gen:plusieurs}]},
+ {id:"GE7",t:"Triangles isométriques : les bons triangles, le bon cas",tache:"triangles isométriques",th:"triangles",ex:"cc2",lecons:["g2-bases"],
+  paliers:[
+   {t:"médiane, médiatrice, hauteur, bissectrice",cc:1,min:150,gen:droitesTri},
+   {t:"le cas d'isométrie, et ce qu'on en déduit",cc:2,gen:casIso},
+   {t:"choisir les deux triangles",cc:3,min:70,gen:bonsTriangles},
+   {t:"comme au CC : la démonstration, sur papier",cc:8,min:8,gen:papierTri}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,ex:"cc2",fixe:true,seuil:1,pages:[],lecons:r.lecons,paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
