@@ -22031,12 +22031,397 @@ G.add("geo",[
 
 </script>
 <script>
-/* Générateurs de Calculus. */
+/* Générateurs de Calculus. CC2 : nombres complexes (TD 3), équations différentielles d'ordre 2 (TD 2, ex. 3 à 5). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils;
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nul,nb,brut,propre}=O;
+const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
+
+/* ---------- lire une formule tapée ----------
+   lis(texte, variables) rend un arbre ou null ; val(arbre, valeurs) rend [partie réelle, partie imaginaire].
+   Une lettre qui n'est pas une variable est une constante libre (C1, C2, A, B, λ…). e, i et π sont des nombres. */
+const SUP={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁻":"-","⁺":"+","ⁿ":"n","ˣ":"x","ᵏ":"k"};
+const SUB={"₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9","ₖ":"k","ₚ":"p"};
+function norm(s){s=String(s==null?"":s);
+  s=s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿˣᵏ]+/g,m=>"^("+[...m].map(c=>SUP[c]).join("")+")").replace(/[₀₁₂₃₄₅₆₇₈₉ₖₚ]+/g,m=>[...m].map(c=>SUB[c]).join(""));
+  return s.normalize("NFKC").replace(/[−–—]/g,"-").replace(/[×·∙]/g,"*").replace(/÷/g,"/").replace(/\*\*/g,"^").replace(/[{]/g,"(").replace(/[}]/g,")").replace(/\s+/g,"");}
+const FN=["arctan","atan","sqrt","racine","rac","exp","ln","log","cos","sin","tan","abs"],ALIAS={atan:"arctan",racine:"sqrt",rac:"sqrt",log:"ln"};
+function lis(src,vars){const s=norm(src),V=vars||[];let p=0,barres=0;
+  const nom=()=>{const r=s.slice(p).toLowerCase();for(const f of FN)if(r.startsWith(f))return f;return r.startsWith("pi")?"pi":null;};
+  const estFn=()=>{const n=nom();return !!n&&n!=="pi";};
+  function atome(){const c=s[p];if(c===undefined)return null;
+    const m=/^\d+(?:[.,]\d+)?/.exec(s.slice(p));if(m){p+=m[0].length;return {t:"n",v:+m[0].replace(",","."),dec:/[.,]/.test(m[0])};}
+    if(c==="π"){p++;return {t:"pi"};}
+    if(nom()==="pi"){p+=2;return {t:"pi"};}
+    if(/[A-Za-zα-ωΑ-Ω]/.test(c)){if(estFn())return null;p++;
+      if(c==="i")return {t:"i"};
+      if(c==="e")return {t:"e"};
+      if(V.includes(c))return {t:"v",n:c};
+      const d=/^\d+/.exec(s.slice(p));let n=c;if(d){n+=d[0];p+=d[0].length;}
+      return {t:"c",n};}
+    return null;}
+  const suite=stop=>{const L=[];for(;;){if(L.length&&(estFn()||(s[p]==="e"&&s[p+1]==="^")))break;const q0=p,a=atome();if(!a){p=q0;break;}if(stop&&L.length&&(a.t==="n"||L.length>=2)){p=q0;break;}L.push(a);}
+    return L.length?L.reduce((x,y)=>({t:"*",l:x,r:y})):null;};
+  /* un exposant sans parenthèses : un signe, un nombre, puis une ou deux lettres (e^2x, e^-3x, x^2) */
+  function expo(){if(s[p]==="("){p++;const a=expr();if(!a||s[p]!==")")return null;p++;return a;}
+    let neg=false;if(s[p]==="-"){neg=true;p++;}else if(s[p]==="+")p++;
+    const a=suite(true);return a&&(neg?{t:"-u",a}:a);}
+  function argFn(){if(s[p]==="("){p++;const a=expr();if(!a||s[p]!==")")return null;p++;return a;}
+    let neg=false;if(s[p]==="-"){neg=true;p++;}const a=suite(false);return a&&(neg?{t:"-u",a}:a);}
+  function prim(){const c=s[p];if(c===undefined)return null;
+    if(c==="("){p++;const a=expr();if(!a||s[p]!==")")return null;p++;return a;}
+    if(c==="|"){p++;barres++;const a=expr();barres--;if(!a||s[p]!=="|")return null;p++;return {t:"f",f:"abs",a};}
+    if(c==="√"){p++;const a=s[p]==="("?prim():atome();return a&&{t:"f",f:"sqrt",a};}
+    const f=estFn()&&nom();
+    if(f){p+=f.length;const F=ALIAS[f]||f;let ex=null;
+      if(s[p]==="^"&&F!=="sqrt"){p++;ex=expo();if(!ex)return null;}
+      const a=F==="sqrt"&&s[p]!=="("?atome():argFn();if(!a)return null;const r={t:"f",f:F,a};return ex?{t:"^",l:r,r:ex}:r;}
+    return atome();}
+  function puis(){const a=prim();if(!a)return null;if(s[p]==="^"){p++;const e=expo();return e&&{t:"^",l:a,r:e};}return a;}
+  function unaire(){if(s[p]==="-"){p++;const a=unaire();return a&&{t:"-u",a};}if(s[p]==="+"){p++;return unaire();}return puis();}
+  function terme(){let a=unaire();
+    while(a){const c=s[p];
+      if(c==="*"||c==="/"){p++;const b=unaire();a=b&&{t:c,l:a,r:b};}
+      else if(c!==undefined&&/[(√|0-9A-Za-zα-ωΑ-Ωπ]/.test(c)&&!(c==="|"&&barres>0)){const b=puis();a=b&&{t:"*",l:a,r:b};}
+      else break;}
+    return a;}
+  function expr(){let a=terme();while(a){const c=s[p];if(c!=="+"&&c!=="-")break;p++;const b=terme();a=b&&{t:c,l:a,r:b};}return a;}
+  if(!s)return null;const a=expr();return a&&p===s.length?a:null;}
+/* calcul en nombres complexes flottants */
+const cm=(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]];
+const cd=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1];if(d<1e-300)throw {zero:1};return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];};
+const cexp=a=>{const r=Math.exp(a[0]);return [r*Math.cos(a[1]),r*Math.sin(a[1])];};
+const reelV=(a,f)=>{if(Math.abs(a[1])>1e-9*Math.max(1,Math.abs(a[0])))throw {complexe:f};return a[0];};
+function val(A,env){const E=env||{};
+  const go=a=>{switch(a.t){
+    case "n":return [a.v,0];case "pi":return [Math.PI,0];case "e":return [Math.E,0];case "i":return [0,1];
+    case "v":case "c":{const v=E[a.n];if(v===undefined)throw {lettre:a.n};return typeof v==="number"?[v,0]:v;}
+    case "-u":{const v=go(a.a);return [-v[0],-v[1]];}
+    case "+":{const x=go(a.l),y=go(a.r);return [x[0]+y[0],x[1]+y[1]];}
+    case "-":{const x=go(a.l),y=go(a.r);return [x[0]-y[0],x[1]-y[1]];}
+    case "*":return cm(go(a.l),go(a.r));
+    case "/":return cd(go(a.l),go(a.r));
+    case "^":{const y=go(a.r);if(a.l.t==="e")return cexp(y);const x=go(a.l);
+      if(Math.abs(y[1])<1e-12&&Math.abs(y[0]-Math.round(y[0]))<1e-12&&Math.abs(y[0])<=64){const n=Math.round(y[0]),b=n<0?cd([1,0],x):x;let r=[1,0];for(let k=0;k<Math.abs(n);k++)r=cm(r,b);return r;}
+      const b=reelV(x,"^"),e=reelV(y,"^");if(b<0)throw {neg:"^"};return [Math.pow(b,e),0];}
+    case "f":{const x=go(a.a);switch(a.f){
+      case "exp":return cexp(x);
+      case "ln":{const v=reelV(x,"ln");if(v<=0)throw {neg:"ln"};return [Math.log(v),0];}
+      case "sqrt":{const v=reelV(x,"√");if(v<-1e-12)throw {neg:"√"};return [Math.sqrt(Math.max(0,v)),0];}
+      case "cos":return [Math.cos(x[0])*Math.cosh(x[1]),-Math.sin(x[0])*Math.sinh(x[1])];
+      case "sin":return [Math.sin(x[0])*Math.cosh(x[1]),Math.cos(x[0])*Math.sinh(x[1])];
+      case "tan":return [Math.tan(reelV(x,"tan")),0];
+      case "arctan":return [Math.atan(reelV(x,"arctan")),0];
+      case "abs":return [Math.hypot(x[0],x[1]),0];}}}
+    throw {inconnu:a.t};};
+  return go(A);}
+const lettres=(A,o)=>{o=o||new Set();if(!A)return o;if(A.t==="c")o.add(A.n);["a","l","r"].forEach(k=>A[k]&&lettres(A[k],o));return o;};
+const aDec=A=>!!A&&(A.dec||["a","l","r"].some(k=>A[k]&&aDec(A[k])));
+const pres=(u,v)=>Math.abs(u-v)<=1e-9*Math.max(1,Math.abs(v));
+const presC=(u,v)=>Math.hypot(u[0]-v[0],u[1]-v[1])<=1e-9*Math.max(1,Math.hypot(v[0],v[1]));
+/* un nombre réel tapé dans une case */
+function lisReel(t){if(!propre(t))return {vide:1};const A=lis(t,[]);if(!A||lettres(A).size)return {illisible:1};
+  let v;try{v=val(A,{});}catch(e){return e.neg?{neg:1}:{illisible:1};}
+  if(!Number.isFinite(v[0])||!Number.isFinite(v[1]))return {illisible:1};
+  if(Math.abs(v[1])>1e-9)return {avecI:1};return {v:v[0],dec:aDec(A)};}
+/* un nombre complexe tapé */
+function lisCx(t){if(!propre(t))return {vide:1};const A=lis(t,[]);if(!A||lettres(A).size)return {illisible:1};
+  let v;try{v=val(A,{});}catch(e){return e.neg?{neg:e.neg}:{illisible:1};}
+  if(!Number.isFinite(v[0])||!Number.isFinite(v[1]))return {illisible:1};return {v,dec:aDec(A)};}
+
+/* ---------- complexes exacts : parties réelle et imaginaire en fractions ---------- */
+const Z=(a,b)=>({a:q(a),b:q(b||0)});
+const zadd=(z,w)=>Z(add(z.a,w.a),add(z.b,w.b)),zsub=(z,w)=>Z(sub(z.a,w.a),sub(z.b,w.b));
+const zmul=(z,w)=>Z(sub(mul(z.a,w.a),mul(z.b,w.b)),add(mul(z.a,w.b),mul(z.b,w.a)));
+const zconj=z=>Z(z.a,mul(z.b,-1)),zn2=z=>add(mul(z.a,z.a),mul(z.b,z.b));
+const zdiv=(z,w)=>{const d=zn2(w),p=zmul(z,zconj(w));return Z(div(p.a,d),div(p.b,d));};
+const zpow=(z,n)=>{let r=Z(1,0);for(let k=0;k<n;k++)r=zmul(r,z);return r;};
+const zeq=(z,w)=>egal(z.a,w.a)&&egal(z.b,w.b);
+const zf=z=>[z.a.n/z.a.d,z.b.n/z.b.d];
+const absQ=x=>{x=q(x);return Q(Math.abs(x.n),x.d);};
+const coefI=(x,suf)=>{const A=absQ(x);return (egal(A,1)?"":A.d===1?nb(A):"("+nb(A)+")")+suf;};
+const bi=b=>(q(b).n<0?"−":"")+coefI(b,"i");
+function zt(z){const a=q(z.a),b=q(z.b);if(nul(b))return nb(a);if(nul(a))return bi(b);return nb(a)+(b.n<0?" − ":" + ")+coefI(b,"i");}
+const zp=z=>nul(z.b)?(z.a.n<0?"("+zt(z)+")":zt(z)):nul(z.a)&&z.b.n>0?zt(z):"("+zt(z)+")";
+/* « + 3 », « − 2i », « + (2 − 3i) » : un complexe ajouté (ou retranché, avec moins) après un premier terme */
+const plusZ=(z,moins)=>{const s=moins?-1:1;if(nul(z.b)||nul(z.a)){const c=nul(z.b)?z.a:z.b,neg=(q(c).n<0)!==(s<0);return (neg?" − ":" + ")+(nul(z.b)?nb(absQ(c)):coefI(c,"i"));}return (moins?" − ":" + ")+"("+zt(z)+")";};
+/* un facteur devant une lettre : « 2 », « − » (−1), « 3i », « (1 + 2i) » ; facS : le même après un premier terme */
+const fac=p=>nul(p.b)?(egal(p.a,1)?"":egal(p.a,-1)?"−":nb(p.a)):nul(p.a)?bi(p.b):"("+zt(p)+")";
+const facS=p=>nul(p.b)?(egal(p.a,1)?" + ":egal(p.a,-1)?" − ":(p.a.n<0?" − ":" + ")+nb(absQ(p.a))):nul(p.a)?(p.b.n<0?" − ":" + ")+coefI(p.b,"i"):" + ("+zt(p)+")";
+/* une somme de termes [coefficient, suffixe] : « 2 − 6i + i − 3i² » */
+function S(T){let s="";T.forEach(([c,suf])=>{c=q(c);if(nul(c))return;const A=absQ(c),co=suf&&egal(A,1)?"":A.d===1||!suf?nb(A):"("+nb(A)+")";
+  s+=(s?(c.n<0?" − ":" + "):(c.n<0?"−":""))+co+suf;});return s||"0";}
+
+/* ---------- CA1 : forme algébrique ---------- */
+const RAPPEL_I=`<p class="muted">Rappel : i est le nombre complexe dont le carré vaut −1 (${fx("i² = −1")}). La forme algébrique d'un complexe est ${fx("a + ib")}, avec a et b réels : a est la partie réelle, b la partie imaginaire.</p>`;
+const IDEUX=`${fx("i² = −1")} : un terme en i² devient un nombre réel, de signe contraire.`;
+const AB=z=>`${fx(`a = ${nb(z.a)}`)} et ${fx(`b = ${nb(z.b)}`)}`;
+const LIRE_AB="a est la partie réelle (le nombre sans i), b la partie imaginaire (le nombre devant i).";
+const casesZ=titre=>({k:"cases",id:"z",noms:["a","b"],titre:`Écris ${titre||"le résultat"} sous la forme $a + ib$, avec $a$ et $b$ réels :`,sym:["/","√"],aide:"Dans la case b, écris seulement le nombre devant i : pour 2 − 3i, a = 2 et b = −3. Pour une fraction, écris 3/2."});
+/* o : sig, q, corps, z (le résultat exact), etapes, pieges [[complexe faux, diagnostic]], nature, texte, ens */
+function exoZ(o){const z=o.z,dern=o.etapes.length-1,
+    pieges=(o.pieges||[]).concat([[Z(z.b,z.a),{etape:dern,type:"partie réelle et partie imaginaire échangées",titre:"Où ça part : lire a et b.",msg:`${LIRE_AB} Ici ${AB(z)}.`}]]).filter(p=>!zeq(p[0],z));
+  function juge(rep){const R=rep.z||{},A=lisReel(R.a),B=lisReel(R.b);
+    if(A.vide||B.vide)return {incomplet:"Remplis les deux cases a et b."};
+    if(A.avecI||B.avecI)return {incomplet:"Dans chaque case, écris un nombre réel, sans i : pour 2 − 3i, a = 2 et b = −3."};
+    if(A.illisible||A.neg||B.illisible||B.neg)return {incomplet:"Je n'arrive pas à lire une des cases. Écris un nombre, par exemple −3 ou 5/2."};
+    const [za,zb]=zf(z),okA=pres(A.v,za),okB=pres(B.v,zb);
+    if(okA&&okB)return {ok:true};
+    if((!okA&&A.dec&&Math.abs(A.v-za)<0.02)||(!okB&&B.dec&&Math.abs(B.v-zb)<0.02))return {incomplet:"Écris la valeur exacte, avec une fraction (par exemple 1/3), pas une valeur approchée."};
+    const F=[];if(!okA)F.push("a");if(!okB)F.push("b");
+    const pg=pieges.find(p=>pres(A.v,zf(p[0])[0])&&pres(B.v,zf(p[0])[1]));
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux cases sont à revoir":"la case "+F[0]+" est à revoir"}.`,
+      diag:pg?pg[1]:{etape:o.fin==null?dern:o.fin,type:o.type||"calcul",titre:"Où ça part : le calcul.",msg:`Refais le calcul étape par étape : on trouve ${fx(`z = ${zt(z)}`)}.`}};}
+  const f0=pieges.length?pieges[0][0]:zadd(z,Z(1,0));
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[casesZ(o.titre)],juge,etapes:o.etapes,
+    bonne:fx(`z = ${zt(z)}`),bonneTxt:`z = ${zt(z)}`,repBonne:{z:{a:brut(z.a),b:brut(z.b)}},repFausse:{z:{a:brut(f0.a),b:brut(f0.b)}},nature:o.nature,ens:Object.assign({z:zf(z)},o.ens)};}
+const zr=(R,lo,hi,nz)=>Z(nz?R.nz(lo,hi):R.ent(lo,hi),R.nz(lo,hi));
+
+function produit(R){const t=R();
+  if(t<0.2){/* k(a + ib) − i(c + id) */const k=R.choix([2,3,4,-2,-3]),u=zr(R,-6,6,true),v=zr(R,-6,6,true),ku=zmul(Z(k),u),iv=zmul(Z(0,1),v),z=zsub(ku,iv);
+    return exoZ({sig:"K"+k+zt(u)+"|"+zt(v),z,nature:"i fois un complexe",texte:`forme algébrique de ${k}(${zt(u)}) − i(${zt(v)})`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = ${k}(${zt(u)}) − i(${zt(v)})`)}.`,corps:RAPPEL_I,
+      etapes:[{w:`On développe chaque morceau : ${fx(`${k}(${zt(u)}) = ${zt(ku)}`)} et ${fx(`i(${zt(v)}) = ${S([[v.a,"i"],[v.b,"i²"]])} = ${zt(iv)}`)}.`,why:`On distribue le nombre devant la parenthèse sur chaque terme. ${IDEUX}`,pts:1},
+        {w:`On retranche, partie réelle avec partie réelle, partie imaginaire avec partie imaginaire : ${fx(`z = ${zt(ku)}${plusZ(iv,true)} = ${zt(z)}`)}.`,why:`Le signe − devant la seconde parenthèse change le signe de ses deux parties.`,pts:1},
+        {w:`Donc ${AB(z)}.`,why:LIRE_AB,pts:0.5}],
+      pieges:[[zsub(ku,Z(v.b,v.a)),{etape:0,type:"i × i compté comme +1",titre:"Où ça part : i × i.",msg:`${fx(`i × ${bi(v.b)} = ${S([[v.b,"i²"]])}`)}, et ${fx("i² = −1")} : ce terme vaut ${fx(nb(mul(v.b,-1)))}, pas ${fx(nb(v.b))}.`}]],ens:{type:"k",k,u:zf(u),v:zf(v)}});}
+  if(t<0.4){/* (a + ib)² */const u=zr(R,-7,7,true),z=zmul(u,u),a2=mul(u.a,u.a),b2=mul(u.b,u.b);
+    return exoZ({sig:"C"+zt(u),z,nature:"carré",texte:`forme algébrique de (${zt(u)})²`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = (${zt(u)})²`)}.`,corps:RAPPEL_I,
+      etapes:[{w:`On développe avec ${fx("(x + y)² = x² + 2xy + y²")} : ${fx(`z = ${S([[a2,""],[mul(2,mul(u.a,u.b)),"i"],[b2,"i²"]])}`)}.`,why:`Ici x est la partie réelle ${fx(nb(u.a))} et y le terme ${fx(bi(u.b))}. Le carré de ${fx(bi(u.b))} est ${fx(`${nb(b2)}i²`)}.`,pts:1},
+        {w:`Comme ${fx("i² = −1")}, ${fx(`${nb(b2)}i² = ${nb(mul(b2,-1))}`)}. On regroupe : ${fx(`z = ${zt(z)}`)}.`,why:IDEUX,pts:1},
+        {w:`Donc ${AB(z)}.`,why:LIRE_AB,pts:0.5}],
+      pieges:[[Z(add(a2,b2),z.b),{etape:1,type:"i² compté comme +1",titre:"Où ça part : i².",msg:`${fx("i² = −1")} : le terme ${fx(`${nb(b2)}i²`)} vaut ${fx(nb(mul(b2,-1)))}. La partie réelle est ${fx(`${nb(a2)} − ${nb(b2)} = ${nb(z.a)}`)}.`}],
+        [Z(sub(a2,b2),0),{etape:0,type:"double produit oublié",titre:"Où ça part : le double produit.",msg:`${fx("(x + y)²")} n'est pas ${fx("x² + y²")} : il manque ${fx("2xy")}, qui donne ici la partie imaginaire ${fx(bi(z.b))}.`}]],ens:{type:"carre",u:zf(u)}});}
+  /* (a + ib)(c + id) */
+  let u,v;do{u=zr(R,-6,6,R()<0.85);v=zr(R,-6,6,R()<0.85);}while(nul(u.a)&&nul(v.a));
+  const z=zmul(u,v),bd=mul(u.b,v.b),T=[[mul(u.a,v.a),""],[mul(u.a,v.b),"i"],[mul(u.b,v.a),"i"],[bd,"i²"]];
+  return exoZ({sig:"P"+zt(u)+"|"+zt(v),z,nature:"produit",texte:`forme algébrique de (${zt(u)})(${zt(v)})`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = ${zp(u)}${zp(v)}`)}.`,corps:RAPPEL_I,
+    etapes:[{w:`On développe : ${fx(`z = ${S(T)}`)}.`,why:`Chaque terme de la première parenthèse multiplie chaque terme de la seconde, comme pour ${fx("(x + y)(u + v)")}.`,pts:1},
+      {w:`Comme ${fx("i² = −1")}, ${fx(`${S([[bd,"i²"]])} = ${nb(mul(bd,-1))}`)}. On regroupe les nombres sans i, puis les termes en i : ${fx(`z = ${zt(z)}`)}.`,why:`${IDEUX} Partie réelle : ${fx(`${S([[mul(u.a,v.a),""],[mul(bd,-1),""]])} = ${nb(z.a)}`)}. Partie imaginaire : ${fx(`${S([[mul(u.a,v.b),""],[mul(u.b,v.a),""]])} = ${nb(z.b)}`)}.`,pts:1},
+      {w:`Donc ${AB(z)}.`,why:LIRE_AB,pts:0.5}],
+    pieges:[[Z(add(mul(u.a,v.a),bd),z.b),{etape:1,type:"i² compté comme +1",titre:"Où ça part : i².",msg:`${fx("i² = −1")} : le terme ${fx(S([[bd,"i²"]]))} vaut ${fx(nb(mul(bd,-1)))}. La partie réelle est donc ${fx(nb(z.a))}.`}],
+      [Z(mul(u.a,v.a),bd),{etape:0,type:"produit des parties seulement",titre:"Où ça part : le développement.",msg:"On ne multiplie pas seulement les parties réelles entre elles et les parties imaginaires entre elles : il y a quatre produits."}]],ens:{type:"prod",u:zf(u),v:zf(v)}});}
+
+function quotient(R){let N,D;const t=R();
+  do D=Z(R.ent(-4,4),R.nz(-4,4));while(zn2(D).n>25);
+  if(t<0.4){let z0;do z0=Z(R.ent(-5,5),R.ent(-5,5));while(nul(z0.a)&&nul(z0.b));N=zmul(z0,D);}
+  else if(t<0.8){do N=Z(R.ent(-6,6),R.ent(-6,6));while(nul(N.a)&&nul(N.b));}
+  else N=R.choix([Z(1),Z(R.choix([2,3,5,-2,-1])),Z(0,1),Z(0,-2)]);
+  const z=zdiv(N,D),Dc=zconj(D),n2=zn2(D),num=zmul(N,Dc),c2d2=sub(mul(D.a,D.a),mul(D.b,D.b));
+  const Tn=[[mul(N.a,Dc.a),""],[mul(N.a,Dc.b),"i"],[mul(N.b,Dc.a),"i"],[mul(N.b,Dc.b),"i²"]];
+  const Nt=nul(N.b)&&N.a.n>0?zt(N):"("+zt(N)+")",Dt=zp(D);
+  const E=[{w:`On multiplie le numérateur et le dénominateur par le conjugué du dénominateur, ${fx(zt(Dc))} : ${fx(`z = ${zp(N)}(${zt(Dc)}) / ((${zt(D)})(${zt(Dc)}))`)}.`,why:`Le conjugué de ${fx("c + id")} est ${fx("c − id")}. Le produit ${fx("(c + id)(c − id) = c² + d²")} est un réel : le i disparaît du dénominateur. Multiplier en haut et en bas par le même nombre ne change pas le quotient.`,pts:1},
+    {w:`Au dénominateur : ${fx(`(${zt(D)})(${zt(Dc)}) = ${nul(D.a)?S([[mul(D.b,Dc.b),"i²"]]):`${nb(mul(D.a,D.a))} + ${nb(mul(D.b,D.b))}`} = ${nb(n2)}`)}.`,why:`${fx("(c + id)(c − id) = c² − (id)² = c² − d²i² = c² + d²")}.`,pts:1},
+    {w:`Au numérateur : ${fx(`${zp(N)}(${zt(Dc)}) = ${S(Tn)} = ${zt(num)}`)}.`,why:IDEUX,pts:1},
+    egal(n2,1)?{w:`Le dénominateur vaut 1 : ${fx(`z = ${zt(z)}`)}, donc ${AB(z)}.`,why:LIRE_AB,pts:1}:{w:`${fx(`z = (${zt(num)})/${nb(n2)} = ${zt(z)}`)}, donc ${AB(z)}.`,why:`On divise la partie réelle et la partie imaginaire par ${fx(nb(n2))}, et on simplifie les fractions.`,pts:1}];
+  return exoZ({sig:"Q"+zt(N)+"|"+zt(D),z,nature:nul(N.b)&&egal(N.a,1)?"inverse":"quotient",texte:`forme algébrique de ${Nt}/${Dt}`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = ${Nt}/${Dt}`)}.`,corps:RAPPEL_I+`<p class="muted">Le conjugué de ${fx("c + id")} est ${fx("c − id")} : on change le signe de la partie imaginaire.</p>`,etapes:E,
+    pieges:[[num,{etape:1,type:"dénominateur oublié",titre:"Où ça part : le dénominateur.",msg:`Le dénominateur a été multiplié lui aussi : il vaut ${fx(nb(n2))}. Il faut diviser ${fx(zt(num))} par ${fx(nb(n2))}.`}],
+      ...(nul(c2d2)?[]:[[Z(div(num.a,c2d2),div(num.b,c2d2)),{etape:1,type:"c² − d² au dénominateur",titre:"Où ça part : le dénominateur.",msg:`${fx(`(${zt(D)})(${zt(Dc)})`)} vaut ${fx("c² + d²")}, pas ${fx("c² − d²")} : ${fx("−(id)² = −d²i² = +d²")}. Ici c'est ${fx(nb(n2))}.`}]]),
+      [Z(div(add(mul(N.a,Dc.a),mul(N.b,Dc.b)),n2),div(add(mul(N.a,Dc.b),mul(N.b,Dc.a)),n2)),{etape:2,type:"i² compté comme +1",titre:"Où ça part : le numérateur.",msg:`${fx("i² = −1")} : dans le numérateur, ${fx(S([[mul(N.b,Dc.b),"i²"]]))} vaut ${fx(nb(mul(mul(N.b,Dc.b),-1)))}. Le numérateur est ${fx(zt(num))}.`}],
+      [zdiv(zmul(N,D),Z(n2)),{etape:0,type:"multiplié par le dénominateur au lieu de son conjugué",titre:"Où ça part : le conjugué.",msg:`On multiplie par le conjugué ${fx(zt(Dc))}, pas par ${fx(zt(D))} lui-même : c'est le conjugué qui rend le dénominateur réel.`}]],
+    ens:{type:"quot",N:zf(N),D:zf(D)}});}
+
+const IPUIS=`${fx("i² = −1")}, ${fx("i³ = i² × i = −i")} et ${fx("i⁴ = (i²)² = 1")} : les puissances de i reviennent tous les 4 (1, i, −1, −i).`;
+const ipow=n=>[Z(1),Z(0,1),Z(-1),Z(0,-1)][((n%4)+4)%4];
+function puissances(R){const t=R();
+  if(t<0.45){const n=R.ent(5,199),m=t<0.25?null:R.ent(5,99),sg=R()<0.5?1:-1,un=ipow(n),de=m?ipow(m):null,z=m?(sg>0?zadd(un,de):zsub(un,de)):un;
+    const ligne=k=>{const qq=Math.floor(k/4),r=k%4;return `${fx(`${k} = 4 × ${qq}${r?" + "+r:""}`)}, donc ${fx(`i^{${k}} = (i⁴)^{${qq}}${r?` × i^{${r}}`:""} = ${zt(ipow(k))}`)}`;};
+    const ex=m?`i^{${n}} ${sg>0?"+":"−"} i^{${m}}`:`i^{${n}}`;
+    const E=[{w:IPUIS,why:"On n'a jamais besoin de multiplier i par lui-même des dizaines de fois : il suffit du reste de la division de l'exposant par 4.",pts:1},
+      {w:`${ligne(n)}${m?` ; ${ligne(m)}`:""}.`,why:`${fx("i⁴ = 1")}, et 1 à n'importe quelle puissance vaut 1 : il ne reste que i à la puissance du reste.`,pts:1},
+      {w:m?`${fx(`z = ${zt(un)}${plusZ(de,sg<0)} = ${zt(z)}`)}, donc ${AB(z)}.`:`Donc ${AB(z)}.`,why:LIRE_AB,pts:0.5}];
+    return exoZ({sig:"I"+n+"|"+m+"|"+sg,z,nature:"puissance de i",texte:`forme algébrique de ${ex.replace(/[{}]/g,"").replace(/\^/g,"^")}`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = ${ex}`)}.`,corps:"",etapes:E,
+      pieges:[[m?(sg>0?zadd(ipow(n+2),ipow(m+2)):zsub(ipow(n+2),ipow(m+2))):ipow(n+2),{etape:0,type:"puissances de i",titre:"Où ça part : les puissances de i.",msg:`${IPUIS} Ici le reste de ${n} par 4 est ${n%4}${m?`, celui de ${m} est ${m%4}`:""}.`}]],ens:{type:"ipuis",n,m,sg}});}
+  if(t<0.8){const u=Z(R.choix([1,-1]),R.choix([1,-1])),n=R.ent(3,16),u2=zmul(u,u),k=Math.floor(n/2),impair=n%2===1,v=zpow(u2,k),z=impair?zmul(v,u):v,c=u2.b.n<0?-2:2;
+    const E=[{w:`${fx(`(${zt(u)})² = ${S([[1,""],[mul(2,mul(u.a,u.b)),"i"],[1,"i²"]])} = ${zt(u2)}`)}.`,why:`${fx("(x + y)² = x² + 2xy + y²")}, puis ${fx("i² = −1")} : le 1 et le ${fx("i²")} s'annulent.`,pts:1},
+      {w:`${fx(`(${zt(u)})^{${n}} = ((${zt(u)})²)^{${k}}${impair?` × (${zt(u)})`:""}`)}.`,why:`${fx("a^{m} × a^{p} = a^{m + p}")} et ${fx("(a²)^{k} = a^{2k}")} : on regroupe les facteurs deux par deux${impair?", et il en reste un":""}.`,pts:1},
+      {w:`${fx(`(${zt(u2)})^{${k}} = (${nb(c)})^{${k}} × i^{${k}} = ${zt(v)}`)}.`,why:`${fx("(ci)^{k} = c^{k} × i^{k}")}. ${IPUIS}`,pts:1},
+      {w:impair?`${fx(`z = ${zp(v)}(${zt(u)}) = ${zt(z)}`)}, donc ${AB(z)}.`:`Donc ${AB(z)}.`,why:impair?`On développe ce dernier produit, avec ${fx("i² = −1")}.`:LIRE_AB,pts:impair?1:0.5}];
+    return exoZ({sig:"U"+zt(u)+"|"+n,z,nature:"(1 + i) puissance n",texte:`forme algébrique de (${zt(u)})^${n}`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = (${zt(u)})^{${n}}`)}.`,corps:`<p class="muted">Commence par calculer ${fx(`(${zt(u)})²`)}.</p>`,etapes:E,
+      pieges:[[impair?zmul(zpow(Z(0,c<0?-1:1),k),u):zpow(Z(0,c<0?-1:1),k),{etape:2,type:"puissance de 2 oubliée",titre:"Où ça part : la puissance de 2.",msg:`${fx(`(${zt(u2)})^{${k}}`)} vaut ${fx(`(${nb(c)})^{${k}} × i^{${k}}`)} : le ${Math.abs(c)} est aussi élevé à la puissance ${k}.`}]],ens:{type:"upuis",u:zf(u),n}});}
+  const u=zr(R,-4,4,true),z=zpow(u,3),a=u.a,b=u.b;
+  const E=[{w:`On développe avec ${fx("(x + y)³ = x³ + 3x²y + 3xy² + y³")}, où ${fx(`x = ${nb(a)}`)} et ${fx(`y = ${bi(b)}`)} : ${fx(`z = ${S([[mul(a,mul(a,a)),""],[mul(3,mul(mul(a,a),b)),"i"],[mul(3,mul(a,mul(b,b))),"i²"],[mul(b,mul(b,b)),"i³"]])}`)}.`,why:`${fx("y² = b²i²")} et ${fx("y³ = b³i³")}, où b est la partie imaginaire.`,pts:1},
+    {w:`Avec ${fx("i² = −1")} et ${fx("i³ = −i")} : ${fx(`z = ${S([[mul(a,mul(a,a)),""],[mul(3,mul(mul(a,a),b)),"i"],[mul(-3,mul(a,mul(b,b))),""],[mul(-1,mul(b,mul(b,b))),"i"]])} = ${zt(z)}`)}.`,why:`${fx("i³ = i² × i = −i")}. On regroupe les nombres sans i, puis les termes en i.`,pts:1},
+    {w:`Donc ${AB(z)}.`,why:LIRE_AB,pts:0.5}];
+  return exoZ({sig:"T"+zt(u),z,nature:"cube",texte:`forme algébrique de (${zt(u)})³`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = (${zt(u)})³`)}.`,corps:"",etapes:E,
+    pieges:[[Z(add(mul(a,mul(a,a)),mul(3,mul(a,mul(b,b)))),add(mul(3,mul(mul(a,a),b)),mul(b,mul(b,b)))),{etape:1,type:"i² et i³ comptés comme 1 et i",titre:"Où ça part : i² et i³.",msg:`${fx("i² = −1")} et ${fx("i³ = −i")} : les termes en ${fx("i²")} et en ${fx("i³")} changent de signe.`}]],ens:{type:"cube",u:zf(u)}});}
+
+function equation(R){const t=R();let z0;do z0=Z(R.ent(-6,6),R.ent(-6,6));while(nul(z0.a)||nul(z0.b));
+  if(t<0.35){/* (c + id) z + β = γ */const al=Z(R.nz(-4,4),R.nz(-4,4)),be=Z(R.ent(-6,6),R.ent(-6,6)),ga=zadd(zmul(al,z0),be),dr=zsub(ga,be),sans=nul(be.a)&&nul(be.b);
+    const alc=zconj(al),n2=zn2(al),eq=`(${zt(al)})z${sans?"":plusZ(be)} = ${zt(ga)}`;
+    const E=[{w:sans?`On divise par le nombre devant z : ${fx(`z = (${zt(ga)})/(${zt(al)})`)}.`:`On isole z : ${fx(`(${zt(al)})z = ${zt(ga)}${plusZ(be,true)} = ${zt(dr)}`)}, donc ${fx(`z = (${zt(dr)})/(${zt(al)})`)}.`,why:"Comme pour une équation du premier degré dans ℝ : on enlève ce qui est ajouté, puis on divise par le nombre devant z.",pts:1},
+      {w:`On multiplie en haut et en bas par le conjugué ${fx(zt(alc))} : le dénominateur devient ${fx(`${nb(mul(al.a,al.a))} + ${nb(mul(al.b,al.b))} = ${nb(n2)}`)}.`,why:`${fx("(c + id)(c − id) = c² + d²")} est un réel.`,pts:1},
+      {w:`Le numérateur : ${fx(`(${zt(dr)})(${zt(alc)}) = ${zt(zmul(dr,alc))}`)}.`,why:IDEUX,pts:1},
+      {w:`${fx(`z = (${zt(zmul(dr,alc))})/${nb(n2)} = ${zt(z0)}`)}.`,why:`On divise chaque partie par ${fx(nb(n2))}. Vérification : ${fx(`(${zt(al)})(${zt(z0)}) = ${zt(zmul(al,z0))}`)}.`,pts:1}];
+    return exoZ({sig:"L"+zt(al)+"|"+zt(be)+"|"+zt(z0),z:z0,titre:"la solution",nature:"équation du premier degré",texte:`résoudre ${eq}`,q:`Résous dans ℂ l'équation ${fx(eq)}.`,corps:"",etapes:E,
+      pieges:sans?[]:[[zdiv(ga,al),{etape:0,type:"terme constant oublié",titre:"Où ça part : isoler z.",msg:`Il faut d'abord retrancher ${fx(zt(be))} des deux côtés, puis diviser.`}]],ens:{type:"lin",al:zf(al),be:zf(be),ga:zf(ga)}});}
+  /* p z + q z̄ = w */
+  let p,qq;do{p=Z(R.ent(-3,3),R.ent(-3,3));qq=Z(R.ent(-3,3),R.ent(-3,3));}while(nul(zn2(p))||nul(zn2(qq))||egal(zn2(p),zn2(qq))||(nul(p.b)&&nul(qq.b)));
+  const w=zadd(zmul(p,z0),zmul(qq,zconj(z0)));
+  const re=[add(p.a,qq.a),sub(qq.b,p.b)],im=[add(p.b,qq.b),sub(p.a,qq.a)];
+  const eq=`${fac(p)}z${facS(qq)}z̄ = ${zt(w)}`,sysH=O.sys([re,im],[w.a,w.b],["x","y"]);
+  const E=[{w:`On pose ${fx("z = x + iy")}, avec x et y réels. Alors ${fx("z̄ = x − iy")}, et l'équation devient ${fx(`${fac(p)}(x + iy)${facS(qq)}(x − iy) = ${zt(w)}`)}.`,why:"z̄ est le conjugué de z : même partie réelle, partie imaginaire de signe contraire. Quand z et z̄ apparaissent tous les deux, on revient aux deux réels x et y.",pts:1},
+    {w:`On développe et on regroupe : ${fx(`(${S([[re[0],"x"],[re[1],"y"]])}) + i(${S([[im[0],"x"],[im[1],"y"]])}) = ${zt(w)}`)}.`,why:IDEUX,pts:1},
+    {w:`Deux nombres complexes sont égaux quand ils ont la même partie réelle et la même partie imaginaire : ${sysH}`,why:"C'est ce qui transforme une équation dans ℂ en deux équations dans ℝ.",pts:1},
+    {w:`On résout ce système : ${fx(`x = ${nb(z0.a)}`)} et ${fx(`y = ${nb(z0.b)}`)}.`,why:"Par combinaison ou par substitution. En remplaçant x et y dans les deux équations, on retrouve bien les seconds membres.",pts:1},
+    {w:`${fx(`z = ${zt(z0)}`)}, donc ${AB(z0)}.`,why:"La solution est z = x + iy.",pts:0.5}];
+  const s=zadd(p,qq);
+  return exoZ({sig:"B"+zt(p)+"|"+zt(qq)+"|"+zt(z0),z:z0,titre:"la solution",nature:"z et son conjugué",texte:`résoudre ${eq}`,q:`Résous dans ℂ l'équation ${fx(eq)}, où ${fx("z̄")} est le conjugué de z.`,corps:`<p class="muted">Pose ${fx("z = x + iy")} avec x et y réels.</p>`,etapes:E,
+    pieges:nul(zn2(s))?[]:[[zdiv(w,s),{etape:0,type:"z̄ traité comme z",titre:"Où ça part : le conjugué.",msg:`${fx("z̄ = x − iy")} n'est pas z : on ne peut pas mettre z en facteur. On pose ${fx("z = x + iy")} et on sépare partie réelle et partie imaginaire.`}]],ens:{type:"conj",p:zf(p),q:zf(qq),w:zf(w)}});}
+
+/* ---------- CA2 : module, argument, forme exponentielle ----------
+   Un nombre « c√s » : c fraction, s entier sans carré (1, 2, 3, 6). Les angles sont des fractions de π. */
+function simpR(c,s){c=q(c);for(const p of [2,3,5,7])while(s%(p*p)===0){s/=p*p;c=mul(c,p);}if(nul(c))s=1;return {c,s};}
+const Rd=(c,s)=>simpR(c,s||1),rmul=(x,y)=>simpR(mul(x.c,y.c),x.s*y.s),rinv=x=>simpR(div(1,mul(x.c,x.s)),x.s);
+const rpow=(x,n)=>{let r=Rd(1);for(let k=0;k<n;k++)r=rmul(r,x);return r;};
+const rF=x=>x.c.n/x.c.d*Math.sqrt(x.s),r2Q=x=>mul(mul(x.c,x.c),x.s),rRac=N=>{N=q(N);return simpR(Q(1,N.d),N.n*N.d);};
+const rT=x=>{const c=x.c;if(nul(c))return "0";const A=absQ(c);return (c.n<0?"−":"")+(x.s>1?(A.n===1?"":A.n)+"√"+x.s:A.n)+(A.d>1?"/"+A.d:"");};
+const rI=x=>{const c=x.c,A=absQ(c);return (c.n<0?"−":"")+(A.n===1?"":A.n)+"i"+(x.s>1?"√"+x.s:"")+(A.d>1?"/"+A.d:"");};
+const rTape=x=>{const c=x.c;return nul(c)?"0":(c.n<0?"-":"")+Math.abs(c.n)+(x.s>1?"*sqrt("+x.s+")":"")+(c.d>1?"/"+c.d:"");};
+const zR=(a,b)=>nul(b.c)?rT(a):nul(a.c)?rI(b):rT(a)+(b.c.n<0?" − ":" + ")+rI({c:absQ(b.c),s:b.s});
+const zRp=(a,b)=>nul(b.c)&&a.c.n>0||nul(a.c)&&b.c.n>0?zR(a,b):"("+zR(a,b)+")";
+const angP=t=>{t=q(t);while(t.n>t.d)t=sub(t,2);while(t.n<=-t.d)t=add(t,2);return t;};
+const angT=t=>{t=q(t);if(nul(t))return "0";const A=absQ(t);return (t.n<0?"−":"")+(A.n===1?"":A.n)+"π"+(A.d>1?"/"+A.d:"");};
+const angE=t=>{t=q(t);const A=absQ(t);return (t.n<0?"−":"")+(A.n===1?"":A.n)+"iπ"+(A.d>1?"/"+A.d:"");};
+const angTape=t=>{t=q(t);return nul(t)?"0":(t.n<0?"-":"")+Math.abs(t.n)+"*pi"+(t.d>1?"/"+t.d:"");};
+const angF=t=>q(t).n/q(t).d*Math.PI;
+const expT=(r,t)=>nul(q(t))?rT(r):`${rT(r)==="1"?"":rT(r)}e^{${angE(t)}}`;
+/* cos et sin exacts des multiples de π/4 et de π/6 */
+const TRIG=(()=>{const T={},h=Q(1,2),mh=Q(-1,2),set=(m,c,s)=>{T[m]={c,s};};
+  set(0,Rd(1),Rd(0));set(6,Rd(0),Rd(1));set(12,Rd(-1),Rd(0));set(18,Rd(0),Rd(-1));
+  set(3,Rd(h,2),Rd(h,2));set(9,Rd(mh,2),Rd(h,2));set(15,Rd(mh,2),Rd(mh,2));set(21,Rd(h,2),Rd(mh,2));
+  set(2,Rd(h,3),Rd(h));set(4,Rd(h),Rd(h,3));set(8,Rd(mh),Rd(h,3));set(10,Rd(mh,3),Rd(h));
+  set(14,Rd(mh,3),Rd(mh));set(16,Rd(mh),Rd(mh,3));set(20,Rd(h),Rd(mh,3));set(22,Rd(h,3),Rd(mh));return T;})();
+const trig=t=>{const m=mul(q(t),12);if(m.d!==1)return null;return TRIG[((m.n%24)+24)%24]||null;};
+/* où est le point, et l'angle connu qui a ces cosinus et sinus */
+function quadrant(t){t=angP(t);const v=t.n/t.d,T=trig(t),ref=angT(Q(Math.min(Math.abs(t.n*12/t.d)%12,12-Math.abs(t.n*12/t.d)%12),12));
+  if(v===0)return "Le point est sur l'axe des réels, à droite de O : l'argument est 0.";
+  if(v===1)return "Le point est sur l'axe des réels, à gauche de O : l'argument principal est π (et pas −π, qui n'est pas dans ]−π, π]).";
+  if(Math.abs(v)===0.5)return `Le point est sur l'axe des imaginaires, ${v>0?"en haut : l'argument est π/2":"en bas : l'argument est −π/2"}.`;
+  const c=rF(T.c)>0,s=rF(T.s)>0;
+  return `${c?"cos θ > 0":"cos θ < 0"} et ${s?"sin θ > 0":"sin θ < 0"} : le point est ${s?"en haut":"en bas"} ${c?"à droite":"à gauche"}, θ est entre ${s?(c?"0 et π/2":"π/2 et π"):(c?"−π/2 et 0":"−π et −π/2")}. L'angle connu dont le cosinus et le sinus valent ${fx(rT({c:absQ(T.c.c),s:T.c.s}))} et ${fx(rT({c:absQ(T.s.c),s:T.s.s}))} est ${fx(ref)}.`;}
+const casesRT=()=>({k:"cases",id:"p",noms:["r","θ"],titre:"Écris le module $r$, puis l'argument principal $θ$, dans $]−π, π]$ :",sym:["√","π","/"],aide:"Par exemple r = 2√2 (ou 2sqrt(2)) et θ = −3π/4 (ou -3pi/4)."});
+const memeAngle=(u,v)=>{const d=(u-v)/(2*Math.PI);return Math.abs(d-Math.round(d))<1e-9;};
+/* o : r (c√s), t (argument principal, fraction de π), etapes, eR et eT (étapes du module et de l'argument), rFaux [[valeur, diag]] */
+function exoRT(o){const r=rF(o.r),t=angF(o.t),eR=o.eR||0,eT=o.eT==null?o.etapes.length-2:o.eT;
+  const dT=(type,msg)=>({etape:eT,type,titre:"Où ça part : l'argument.",msg});
+  function juge(rep){const P=rep.p||{},A=lisReel(P.r),T=lisReel(P["θ"]);
+    if(A.vide||T.vide)return {incomplet:"Remplis les deux cases : r, puis θ."};
+    if(A.avecI||T.avecI)return {incomplet:"Écris des nombres réels, sans i : le module r et l'angle θ."};
+    if(A.illisible||A.neg||T.illisible||T.neg)return {incomplet:"Je n'arrive pas à lire une des cases. Par exemple r = 2√2 et θ = −3π/4."};
+    const okR=pres(A.v,r),okT=pres(T.v,t);
+    if(okR&&okT)return {ok:true};
+    if(!okR&&A.dec&&Math.abs(A.v-r)<0.02)return {incomplet:"Écris la valeur exacte du module (avec √ si besoin), pas une valeur approchée."};
+    if(!okT&&T.dec&&Math.abs(T.v-t)<0.02)return {incomplet:"Écris la valeur exacte de l'angle, avec π (par exemple 2π/3), pas une valeur approchée."};
+    if(!okT&&Math.abs(T.v)>6.5&&memeAngle(T.v*Math.PI/180,t))return {incomplet:"Écris l'angle en radians, avec π : par exemple 45° s'écrit π/4, et 120° s'écrit 2π/3."};
+    const F=[];if(!okR)F.push("r");if(!okT)F.push("θ");
+    let d=null;
+    if(!okR){const pg=(o.rFaux||[]).find(x=>pres(A.v,x[0]));d=pg?pg[1]:A.v<=0?{etape:eR,type:"module négatif",titre:"Où ça part : le module.",msg:"Un module est une distance : il est toujours positif."}:{etape:eR,type:"calcul du module",titre:"Où ça part : le module.",msg:`Le module vaut ${fx(rT(o.r))}.`};}
+    else if(memeAngle(T.v,t))d=dT("argument juste à 2π près, mais pas principal",`${fx(`θ = ${(T.v/Math.PI).toFixed(3).replace(".",",")}π`)} est bien un argument de z, mais l'argument principal est celui de ]−π, π] : on ajoute ou on retranche 2π jusqu'à y tomber. Ici ${fx(angT(o.t))}.`);
+    else if(memeAngle(T.v,-t))d=dT("signe de l'argument",`Tu as l'angle du conjugué. Le signe de sin θ décide : ${rF(o.r)&&Math.sin(t)>0?"sin θ > 0, le point est en haut, θ est positif":"sin θ < 0, le point est en bas, θ est négatif"}. L'argument principal est ${fx(angT(o.t))}.`);
+    else if(memeAngle(T.v,Math.PI-t))d=dT("cos θ et le quadrant",`${Math.cos(t)>0?"cos θ > 0 : le point est à droite de l'axe des imaginaires":"cos θ < 0 : le point est à gauche de l'axe des imaginaires"}. Place le point : l'argument principal est ${fx(angT(o.t))}.`);
+    else if(memeAngle(T.v,t+Math.PI))d=dT("argument décalé de π",`Ton angle donne le point opposé (−z). Rappel : ${fx("−1 = e^{iπ}")}, et l'argument principal ici est ${fx(angT(o.t))}.`);
+    else d=dT("calcul de l'argument",`L'argument principal est ${fx(angT(o.t))}.`);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux cases sont à revoir":F[0]==="r"?"le module est à revoir":"l'argument est à revoir"}.`,diag:d};}
+  const ff=nul(o.t)||egal(o.t,1)?{r:rTape(o.r)+"+1",θ:angTape(o.t)}:{r:rTape(o.r),θ:angTape(mul(o.t,-1))};
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[casesRT()],juge,etapes:o.etapes,
+    bonne:`${fx(`r = ${rT(o.r)}`)} et ${fx(`θ = ${angT(o.t)}`)}, donc ${fx(`z = ${expT(o.r,o.t)}`)}`,bonneTxt:`r = ${rT(o.r)}, θ = ${angT(o.t)}`,repBonne:{p:{r:rTape(o.r),θ:angTape(o.t)}},repFausse:{p:ff},nature:o.nature,ens:Object.assign({r,t},o.ens)};}
+/* z donné par son module et son argument (multiple de π/4 ou de π/6) : ses parties réelle et imaginaire exactes */
+const algDe=(r,t)=>{const T=trig(t);return {a:rmul(r,T.c),b:rmul(r,T.s)};};
+const RACINE_MOD="Le module de a + ib est la distance du point (a ; b) à l'origine : par Pythagore, c'est √(a² + b²).";
+function etapesPolaire(r,t,a,b,deb){const T=trig(t),r2=r2Q(r),un=rT(r)==="1";
+  const cs=(x,y)=>un?rT(x):`${rT(x).includes("/")||rT(x)[0]==="−"?"("+rT(x)+")":rT(x)}/${rT(r).includes("√")||rT(r).includes("/")?"("+rT(r)+")":rT(r)} = ${rT(y)}`;
+  const a2=r2Q(a),b2=r2Q(b),rac=`√${r2.d===1?nb(r2):"("+nb(r2)+")"}`;
+  return [{w:`${deb||"Le module"} : ${fx(`|z| = √(${nb(a2)} + ${nb(b2)}) = ${rac}${rac===rT(r)?"":" = "+rT(r)}`)}.`,why:`${RACINE_MOD} Ici ${fx(`a² = ${nb(a2)}`)} et ${fx(`b² = ${nb(b2)}`)}.`,pts:1},
+    {w:`${fx(`cos θ = a/r${un?"":" = "+cs(a,T.c)}`)}${un?" = "+fx(rT(T.c)):""} et ${fx(`sin θ = b/r${un?"":" = "+cs(b,T.s)}`)}${un?" = "+fx(rT(T.s)):""}.`,why:"Le point (a ; b) est sur le cercle de centre O et de rayon r : ses coordonnées sont (r cos θ ; r sin θ).",pts:1},
+    {w:`${fx(`θ = ${angT(t)}`)}.`,why:quadrant(t),pts:1},
+    {w:`${fx(`z = ${expT(r,t)}`)}.`,why:`C'est la forme exponentielle : ${fx("z = r(cos θ + i sin θ) = r e^{iθ}")}.`,pts:0.5}];}
+function pointRT(R,axe){let t,r;
+  if(axe){t=Q(R.choix([0,3,6,9,12,-3,-6,-9]),12);const m=mul(t,12).n;r=Math.abs(m)%6===0?Rd(R.ent(1,9)):R()<0.8?Rd(R.ent(1,6),2):Rd(R.ent(1,3));}
+  else{t=Q(R.choix([2,4,8,10,-2,-4,-8,-10]),12);const u=R();r=u<0.55?Rd(2*R.ent(1,5)):u<0.8?Rd(R.ent(1,4)):Rd(2*R.ent(1,3),2);}
+  return {r,t};}
+function versPolaire(R,axe){const {r,t}=pointRT(R,axe),{a,b}=algDe(r,t),zs=zR(a,b),E=etapesPolaire(r,t,a,b);
+  return exoRT({sig:"V"+zs,r,t,etapes:E,eR:0,eT:2,nature:axe?"axe ou diagonale":"angle π/6 ou π/3",texte:`module et argument de ${zs}`,
+    q:`On pose ${fx(`z = ${zs}`)}. Donne son module r et son argument principal θ, puis écris z sous forme exponentielle.`,corps:axe?`<p class="muted">Le module de ${fx("a + ib")} est ${fx("|z| = √(a² + b²)")}. Un argument θ vérifie ${fx("cos θ = a/r")} et ${fx("sin θ = b/r")} ; l'argument principal est celui qui est dans ]−π, π].</p>`:"",
+    rFaux:[[rF(r)*rF(r),{etape:0,type:"racine carrée oubliée",titre:"Où ça part : le module.",msg:`${fx("a² + b²")} est le carré du module : il faut encore prendre la racine carrée. ${fx(`|z| = ${rT(r)}`)}.`}],[Math.abs(rF(a))+Math.abs(rF(b)),{etape:0,type:"module pris comme |a| + |b|",titre:"Où ça part : le module.",msg:`Le module n'est pas ${fx("|a| + |b|")} : c'est ${fx("√(a² + b²)")}, la distance à l'origine.`}]],ens:{type:"pol",a:rF(a),b:rF(b)}});}
+
+/* produits, quotients, puissances, opposé : modules multipliés, arguments ajoutés */
+const ANG=[1,2,3,4,6,8,9,10].flatMap(m=>[Q(m,12),Q(-m,12)]);
+const ANG_TORDUS=[Q(1,5),Q(2,5),Q(3,5),Q(1,7),Q(2,7),Q(3,7),Q(5,7),Q(1,8),Q(3,8),Q(1,9),Q(4,9)];
+function operation(R){const t=R();
+  if(t<0.15){/* l'opposé, comme au TD 3 : −2e^{iπ/7} */const r=Rd(R.ent(2,6)),t1=mul(R.choix(ANG_TORDUS),R()<0.5?1:-1),tt=angP(add(t1,1));
+    const zs=`−${expT(r,t1)}`;
+    const E=[{w:`Le module : ${fx(`|z| = ${rT(r)}`)}. Le signe − n'est pas dans le module : ${fx(`z = ${rT(r)} × (−e^{${angE(t1)}})`)}.`,why:"Un module est une distance, il est toujours positif : on ne peut pas prendre −2 comme module.",pts:1},
+      {w:`Comme ${fx("−1 = e^{iπ}")}, ${fx(`z = ${rT(r)}e^{iπ}e^{${angE(t1)}} = ${rT(r)}e^{i(${angT(t1)} + π)}`)}.`,why:`${fx("e^{iπ} = cos π + i sin π = −1")}. Multiplier deux exponentielles, c'est ajouter les angles.`,pts:1},
+      {w:`${fx(`${angT(t1)} + π = ${angT(add(t1,1))}`)}${egal(tt,add(t1,1))?" : il est déjà dans ]−π, π].":` : il dépasse π, on retranche 2π : ${fx(`θ = ${angT(tt)}`)}.`}`,why:"L'argument principal est l'unique argument qui est dans ]−π, π] ; deux arguments d'un même nombre diffèrent d'un multiple de 2π.",pts:1},
+      {w:`${fx(`z = ${expT(r,tt)}`)}.`,why:"Le module et l'argument principal donnent la forme exponentielle.",pts:0.5}];
+    return exoRT({sig:"O"+zs,r,t:tt,etapes:E,eR:0,eT:2,nature:"opposé",texte:`module et argument de ${zs}`,q:`On pose ${fx(`z = ${zs}`)}. Donne son module r et son argument principal θ.`,
+      rFaux:[[-rF(r),{etape:0,type:"module négatif",titre:"Où ça part : le module.",msg:`Un module est toujours positif : ${fx(`|z| = ${rT(r)}`)}, et le signe − passe dans l'argument.`}]],ens:{type:"opp",r1:rF(r),t1:angF(t1)}});}
+  const r1=Rd(R.ent(1,5)),t1=R.choix(ANG),op=t<0.5?"x":t<0.8?"/":"^";
+  if(op==="^"){const n=R.ent(2,r1.c.n>2?4:8),rr=rpow(r1,n),brut=mul(t1,n),tt=angP(brut);
+    const E=[{w:`Le module : ${fx(`|z| = ${rT(r1)}^{${n}} = ${rT(rr)}`)}.`,why:`${fx("(r e^{iθ})ⁿ = rⁿ e^{inθ}")} : le module est élevé à la puissance n.`,pts:1},
+      {w:`Un argument : ${fx(`${n} × ${angT(t1)} = ${angT(brut)}`)}.`,why:"Les arguments sont multipliés par n (formule de Moivre).",pts:1},
+      {w:egal(brut,tt)?`${fx(angT(brut))} est déjà dans ]−π, π] : ${fx(`θ = ${angT(tt)}`)}.`:`On ajoute ou on retranche 2π jusqu'à tomber dans ]−π, π] : ${fx(`θ = ${angT(tt)}`)}.`,why:`Deux arguments d'un même nombre diffèrent d'un multiple de 2π. ${egal(brut,tt)?"":fx(`${angT(brut)} − (${angT(tt)}) = ${angT(sub(brut,tt))}`)+", un multiple de 2π."}`,pts:1},
+      {w:`${fx(`z = ${expT(rr,tt)}`)}.`,why:"Le module et l'argument principal donnent la forme exponentielle.",pts:0.5}];
+    const z1=expT(r1,t1);
+    return exoRT({sig:"N"+z1+"|"+n,r:rr,t:tt,etapes:E,eR:0,eT:2,nature:"puissance",texte:`module et argument de (${z1})^${n}`,q:`On pose ${fx(`z₁ = ${z1}`)} et ${fx(`z = z₁^{${n}}`)}. Donne le module r et l'argument principal θ de z.`,
+      rFaux:[[rF(r1)*n,{etape:0,type:"module multiplié par n au lieu d'élevé à la puissance n",titre:"Où ça part : le module.",msg:`${fx(`|z₁^{${n}}| = |z₁|^{${n}} = ${rT(rr)}`)} : le module est élevé à la puissance ${n}, pas multiplié par ${n}.`}]],ens:{type:"pow",r1:rF(r1),t1:angF(t1),n}});}
+  /* z₂ donné en exponentielle, ou en forme algébrique (il faut d'abord le convertir) */
+  const alg=R()<0.35;let r2,t2,a2=null,b2=null;
+  if(alg){const P=pointRT(R,R()<0.5);r2=P.r;t2=P.t;({a:a2,b:b2}=algDe(r2,t2));}else{r2=Rd(R.ent(1,5));t2=R.choix(ANG);}
+  const rr=op==="x"?rmul(r1,r2):rmul(r1,rinv(r2)),brut=op==="x"?add(t1,t2):sub(t1,t2),tt=angP(brut);
+  const z1=expT(r1,t1),z2=alg?zR(a2,b2):expT(r2,t2),E=[];
+  if(alg)E.push({w:`D'abord ${fx("z₂")} en forme exponentielle : ${fx(`|z₂| = ${rT(r2)}`)} et ${fx(`arg z₂ = ${angT(t2)}`)}, donc ${fx(`z₂ = ${expT(r2,t2)}`)}.`,why:`${RACINE_MOD} Puis ${fx(`cos θ₂ = ${rT(trig(t2).c)}`)} et ${fx(`sin θ₂ = ${rT(trig(t2).s)}`)}.`,pts:1});
+  E.push({w:rT(r2)==="1"?`Le module : ${fx("|z₂| = 1")}, donc ${fx(`|z| = ${rT(rr)}`)}.`:`Le module : ${fx(`|z| = ${op==="x"?`${rT(r1)} × ${rT(r2)}`:`${rT(r1)}/${rT(r2).length>1?"("+rT(r2)+")":rT(r2)}`} = ${rT(rr)}`)}.`,why:op==="x"?"Le module d'un produit est le produit des modules.":"Le module d'un quotient est le quotient des modules.",pts:1},
+    {w:`Un argument : ${fx(`${angT(t1)} ${op==="x"?"+":"−"} ${t2.n<0?"("+angT(t2)+")":angT(t2)} = ${angT(brut)}`)}.`,why:op==="x"?`${fx("e^{ia} × e^{ib} = e^{i(a + b)}")} : les arguments s'ajoutent.`:`${fx("e^{ia}/e^{ib} = e^{i(a − b)}")} : les arguments se retranchent.`,pts:1},
+    {w:egal(brut,tt)?`${fx(angT(brut))} est déjà dans ]−π, π] : ${fx(`θ = ${angT(tt)}`)}.`:`${fx(angT(brut))} n'est pas dans ]−π, π] : ${fx(`θ = ${angT(brut)} ${q(brut).n>0?"− 2π":"+ 2π"} = ${angT(tt)}`)}.`,why:"Deux arguments d'un même nombre diffèrent d'un multiple de 2π ; l'argument principal est celui de ]−π, π].",pts:1},
+    {w:`${fx(`z = ${expT(rr,tt)}`)}.`,why:"Le module et l'argument principal donnent la forme exponentielle.",pts:0.5});
+  const nomOp=op==="x"?"z₁z₂":"z₁/z₂",pre=alg?1:0;
+  return exoRT({sig:"M"+z1+"|"+z2+"|"+op,r:rr,t:tt,etapes:E,eR:pre,eT:pre+2,nature:(op==="x"?"produit":"quotient")+(alg?" avec une forme algébrique":""),texte:`module et argument de ${nomOp}, z₁ = ${z1}, z₂ = ${z2}`,
+    q:`On pose ${fx(`z₁ = ${z1}`)} et ${fx(`z₂ = ${z2}`)}. Donne le module r et l'argument principal θ de ${fx(`z = ${nomOp}`)}.`,
+    rFaux:[[op==="x"?rF(r1)+rF(r2):rF(r1)*rF(r2),{etape:pre,type:op==="x"?"modules ajoutés":"modules multipliés au lieu de divisés",titre:"Où ça part : le module.",msg:op==="x"?"Le module d'un produit est le produit des modules, pas leur somme.":"Le module d'un quotient est le quotient des modules."}]],ens:{type:"op",op,r1:rF(r1),t1:angF(t1),z2:alg?[rF(a2),rF(b2)]:null,r2:rF(r2),t2:angF(t2)}});}
+
+/* (a + ib)ⁿ en forme algébrique, par la forme exponentielle */
+const BASES=[[Rd(1,2),3],[Rd(1,2),-3],[Rd(1,2),9],[Rd(1,2),-9],[Rd(2),2],[Rd(2),-2],[Rd(2),10],[Rd(2),-10],[Rd(2),4],[Rd(2),-4],[Rd(2),8],[Rd(2),-8],[Rd(1),2],[Rd(1),-4]];
+function exoAB(o){const v=o.v,dern=o.etapes.length-1;
+  function juge(rep){const P=rep.z||{},A=lisReel(P.a),B=lisReel(P.b);
+    if(A.vide||B.vide)return {incomplet:"Remplis les deux cases a et b."};
+    if(A.avecI||B.avecI)return {incomplet:"Dans chaque case, écris un nombre réel, sans i : pour 2 − 3i, a = 2 et b = −3."};
+    if(A.illisible||A.neg||B.illisible||B.neg)return {incomplet:"Je n'arrive pas à lire une des cases. Écris un nombre, par exemple −8 ou 4√3."};
+    const okA=pres(A.v,v[0]),okB=pres(B.v,v[1]);if(okA&&okB)return {ok:true};
+    if((!okA&&A.dec&&Math.abs(A.v-v[0])<0.02)||(!okB&&B.dec&&Math.abs(B.v-v[1])<0.02))return {incomplet:"Écris la valeur exacte (avec √ si besoin), pas une valeur approchée."};
+    const F=[];if(!okA)F.push("a");if(!okB)F.push("b");const pg=(o.pieges||[]).find(p=>pres(A.v,p[0][0])&&pres(B.v,p[0][1]));
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux cases sont à revoir":"la case "+F[0]+" est à revoir"}.`,diag:pg?pg[1]:pres(A.v,v[1])&&pres(B.v,v[0])?{etape:dern,type:"partie réelle et partie imaginaire échangées",titre:"Où ça part : lire a et b.",msg:LIRE_AB}:{etape:o.fin==null?dern:o.fin,type:"calcul",titre:"Où ça part : le calcul.",msg:`On trouve ${fx(`z = ${o.zs}`)}.`}};}
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[casesZ()],juge,etapes:o.etapes,bonne:fx(`z = ${o.zs}`),bonneTxt:`z = ${o.zs}`,repBonne:{z:o.rep},repFausse:{z:o.faux},nature:o.nature,ens:Object.assign({v},o.ens)};}
+const cis=(r,T)=>{const f=rT(r)==="1"?"":rT(r);if(nul(T.s.c))return f?`${f} × ${rF(T.c)<0?"("+rT(T.c)+")":rT(T.c)}`:rT(T.c);
+  if(nul(T.c.c))return f?`${f} × ${rF(T.s)<0?"("+rI(T.s)+")":rI(T.s)}`:rI(T.s);return `${f}(${zR(T.c,T.s)})`;};
+function puissanceAlg(R){const [r0,m0]=R.choix(BASES),t0=Q(m0,12),{a:a0,b:b0}=algDe(r0,t0),n=R.ent(3,r0.s===2?14:rT(r0)==="1"?16:9);
+  const rn=rpow(r0,n),brut=mul(t0,n),tt=angP(brut),{a,b}=algDe(rn,tt),T=trig(tt),base=zR(a0,b0),zs=zR(a,b);
+  const E=[{w:`La base en forme exponentielle : ${fx(`|${base}| = ${rT(r0)}`)} et son argument est ${fx(angT(t0))}, donc ${fx(`${base} = ${expT(r0,t0)}`)}.`,why:`${RACINE_MOD} Puis cos θ et sin θ valent ${fx(rT(trig(t0).c))} et ${fx(rT(trig(t0).s))}.`,pts:1},
+    {w:`Par la formule de Moivre : ${fx(`z = ${rT(r0)==="1"?"":(rT(r0)==="√2"?"(√2)":rT(r0))+`^{${n}} `}e^{i × ${n} × ${t0.n<0?"("+angT(t0)+")":angT(t0)}} = ${expT(rn,brut)}`)}.`,why:`${fx("(r e^{iθ})ⁿ = rⁿ e^{inθ}")}.${r0.s===2?` Et ${fx(`(√2)^{${n}} = ${rT(rn)}`)} : ${fx("(√2)² = 2")}.`:""}`,pts:1},
+    {w:egal(brut,tt)?`${fx(angT(brut))} est déjà dans ]−π, π].`:`On enlève des tours complets : ${fx(`${angT(brut)} = ${angT(tt)} ${q(sub(brut,tt)).n<0?"−":"+"} ${angT(absQ(sub(brut,tt)))}`)}, et ${fx(`e^{${angE(sub(brut,tt))}} = 1`)} : l'angle est ${fx(angT(tt))}.`,why:"Un tour complet, 2π, ne change pas le point : on garde le reste.",pts:1},
+    {w:`On revient à la forme algébrique : ${fx(`z = ${cis(rn,T)} = ${zs}`)}.`,why:`${fx("r e^{iθ} = r(cos θ + i sin θ)")}, avec ${fx(`cos(${angT(tt)}) = ${rT(T.c)}`)} et ${fx(`sin(${angT(tt)}) = ${rT(T.s)}`)}.`,pts:1},
+    {w:`Donc ${fx(`a = ${rT(a)}`)} et ${fx(`b = ${rT(b)}`)}.`,why:LIRE_AB,pts:0.5}];
+  const v=[rF(a),rF(b)],f=algDe(rn,angP(mul(tt,-1)));
+  return exoAB({sig:"A"+base+"|"+n,v,zs,etapes:E,nature:r0.s===2?"base de module √2":"base de module 2",texte:`forme algébrique de (${base})^${n}`,q:`Donne la forme algébrique du nombre complexe ${fx(`z = ${zRp(a0,b0)}^{${n}}`)}.`,corps:`<p class="muted">Développer à la main serait très long : passe par la forme exponentielle de ${fx(base)}.</p>`,
+    rep:{a:rTape(a),b:rTape(b)},faux:pres(rF(f.b),v[1])?{a:rTape(a)+"+1",b:rTape(b)}:{a:rTape(f.a),b:rTape(f.b)},
+    pieges:[[[rF(f.a),rF(f.b)],{etape:2,type:"signe de l'angle",titre:"Où ça part : l'angle.",msg:`L'angle de ${fx("z")} est ${fx(angT(tt))} : regarde le signe de l'argument de ${fx(base)}, puis multiplie-le par ${n}.`}],
+      [[rF(algDe(r0,tt).a),rF(algDe(r0,tt).b)],{etape:1,type:"module pas élevé à la puissance n",titre:"Où ça part : le module.",msg:`Le module de z est ${fx(`${rT(r0)}^{${n}} = ${rT(rn)}`)}.`}]],ens:{type:"puisAlg",base:[rF(a0),rF(b0)],n}});}
+/* les exports servent aux contrôles (tools/verif/calc.js) */
+G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
 G.add("calc",[
+ {id:"CA1",t:"Complexes : la forme algébrique a + ib",tache:"complexes, la forme algébrique",th:"cxalg",pts:2.5,ex:"cc2",lecons:["c2-cx-alg"],
+  paliers:[
+   {t:"un produit ou un carré",cc:2,gen:produit},
+   {t:"un quotient : le conjugué du dénominateur",cc:3,gen:quotient},
+   {t:"les puissances de i, (1 + i)ⁿ, un cube",cc:3,min:160,gen:puissances},
+   {t:"une équation avec z, ou avec z et son conjugué",cc:5,gen:equation}]},
+ {id:"CA2",t:"Complexes : module, argument, forme exponentielle",tache:"complexes, module et argument",th:"cxalg",pts:2.5,ex:"cc2",lecons:["c2-cx-exp"],apres:["CA1"],
+  paliers:[
+   {t:"un point sur un axe ou sur une diagonale",cc:2,min:60,gen:R=>versPolaire(R,true)},
+   {t:"les angles π/6 et π/3",cc:3,min:70,gen:R=>versPolaire(R,false)},
+   {t:"produit, quotient, puissance, opposé",cc:3,gen:operation},
+   {t:"une puissance en forme algébrique, par la forme exponentielle",cc:5,min:100,gen:puissanceAlg}]}
 ]);
 })();
 
