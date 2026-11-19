@@ -20982,7 +20982,7 @@ function cocheVraies(o){const vraies=o.L.map((l,i)=>l.v?String(i):null).filter(B
   function juge(rep){const S=(rep.v||[]).slice().sort();if(!S.length)return {incomplet:"Coche toutes les phrases vraies. Il y en a au moins une."};if(S.join()===vraies.join())return {ok:true};
     const i=o.L.findIndex((l,k)=>S.includes(String(k))!==l.v),l=o.L[i];
     return {ok:false,faux:["v"],resume:"Pas tout à fait : au moins une phrase est mal classée.",diag:{etape:i,type:l.type,titre:`Où ça part : la phrase ${i+1}.`,msg:`« ${l.txt} » est ${l.v?"vraie":"fausse"}. ${l.why}`}};}
-  return {sig:o.sig,q:o.q,corps:`<p class="muted">${RAPPELQ} ${o.rappel||""}</p><ol>${o.L.map(l=>`<li>${O.f(h(l.txt))}</li>`).join("")}</ol>`,texte:o.texte+" ; vraies parmi : "+o.L.map(l=>l.txt).join(" | "),champs:[{k:"multi",id:"v",o:o.L.map((l,i)=>[String(i),`Phrase ${i+1}`])}],juge,
+  return {sig:o.sig,q:o.q,corps:`<p class="muted">${o.brut?"":RAPPELQ+" "}${o.rappel||""}</p><ol>${o.L.map(l=>`<li>${o.brut?l.html||l.txt:O.f(h(l.txt))}</li>`).join("")}</ol>`,texte:o.texte+" ; vraies parmi : "+o.L.map(l=>l.txt).join(" | "),champs:[{k:"multi",id:"v",o:o.L.map((l,i)=>[String(i),`Phrase ${i+1}`])}],juge,
     etapes:o.L.map((l,i)=>({w:`Phrase ${i+1} : <b>${l.v?"vraie":"fausse"}</b>.`,why:l.why,pts:1})),bonne:"vraies : "+vraies.map(i=>`phrase ${+i+1}`).join(", "),bonneTxt:"vraies : "+vraies.map(i=>o.L[+i].txt).join(" | "),
     repBonne:{v:vraies},repFausse:{v:o.L.map((l,i)=>l.v?null:String(i)).filter(Boolean)},nature:o.nature,ens:o.ens};}
 function vraiFauxFini(R){for(;;){const A=partie(R,[0,1,2,3,4,5,6,7],3,4),B=partie(R,[-3,-2,-1,1,2,3,4],3,3),S={x:A,y:B},k=R.ent(2,7),par=v=>v<0?`(${ent(v)})`:String(v),nomS={x:"A",y:"B"};
@@ -21137,7 +21137,97 @@ function recRedaction(R){const t=R.ent(0,6),consigne=`<p>Rédige sur ta feuille 
     [`${fx(`${a}^(n + 1) = ${a} × ${a}ⁿ ≥ ${a}(1 + ${X}n) = ${a} + ${a*x}n`)}.`,`On multiplie les deux membres de l'hypothèse de récurrence par ${a}, qui est positif : l'inégalité garde son sens.`,1.5],
     [`${fx(`${a} + ${a*x}n ≥ ${a} + ${X}n = 1 + ${X}(n + 1)`)}. Donc P(n + 1) est vraie.`,`${fx(`${a*x}n ≥ ${X}n`)} car n est positif ou nul. Et ${fx(`${a} + ${X}n = 1 + ${x} + ${X}n`)}, qui est bien ${fx(`1 + ${X}(n + 1)`)}.`,1],fin(0)],{type:"papier",B:a},"inégalité");}
 
-G.rai={appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
+/* ---------- RA6 : composition ---------- */
+const RAPPELC=`Rappel : ${fx("(g ∘ f)(x) = g(f(x))")}. On applique d'abord f, puis g.`;
+const EXPO="⁰¹²³⁴";
+const polX=c=>{let t="";for(let i=c.length-1;i>=0;i--){const a=c[i];if(!a)continue;const m=i===0?String(Math.abs(a)):cf(Math.abs(a),i===1?"x":"x"+EXPO[i]);t+=t?` ${a>0?"+":"−"} ${m}`:(a<0?"−":"")+m;}return t||"0";};
+const polV=(c,x)=>c.reduce((t,a,i)=>t+a*Math.pow(x,i),0);
+const polMul=(p,q)=>{const r=Array(p.length+q.length-1).fill(0);p.forEach((a,i)=>q.forEach((b,j)=>{r[i+j]+=a*b;}));return r;};
+const polComp=(p,q)=>{const r=[];let pw=[1];p.forEach(a=>{pw.forEach((b,j)=>{r[j]=(r[j]||0)+a*b;});pw=polMul(pw,q);});return r;};
+const polSub=(c,u)=>{let t="";for(let i=c.length-1;i>=0;i--){const a=c[i];if(!a)continue;const m=i===0?String(Math.abs(a)):cf(Math.abs(a),`(${u})`+(i>1?EXPO[i]:""));t+=t?` ${a>0?"+":"−"} ${m}`:(a<0?"−":"")+m;}return t||"0";};
+const tapeX=x=>tape(x).replace(/³/g,"^3").replace(/⁴/g,"^4");
+function deuxFonctions(R){for(;;){const une=d=>{const t=d?R.ent(0,2):0;return t===0?[R.nz(-5,5),R.nz(-3,3)]:t===1?[R.ent(-4,4),0,1]:[0,R.ent(0,1),R.choix([1,2,-1])];},qf=R()<0.5,f=une(qf),g=une(!qf&&R()<0.8);
+  const gf=polComp(g,f),fg=polComp(f,g);if(polX(gf)===polX(fg)||polX(f)===polX(g)||polX(f)==="x"||polX(g)==="x")continue;return {f,g,gf,fg,fT:polX(f),gT:polX(g)};}}
+function composeNombre(R){for(;;){const D=deuxFonctions(R),a=R.ent(-3,3),A=nb(a),fa=polV(D.f,a),ga=polV(D.g,a),gf=polV(D.g,fa),fg=polV(D.f,ga),ids=[`(g ∘ f)(${A})`,`(f ∘ g)(${A})`];if(gf===fg||Math.abs(gf)>200||Math.abs(fg)>200)continue;
+  const E=[{w:`<b>${fx(`(g ∘ f)(${A}) = g(f(${A})) = g(${nb(fa)}) = ${nb(gf)}`)}</b>`,why:`On applique f d'abord : ${fx(`f(${A}) = ${nb(fa)}`)}. Puis on applique g à ce résultat.`,pts:1.5},{w:`<b>${fx(`(f ∘ g)(${A}) = f(g(${A})) = f(${nb(ga)}) = ${nb(fg)}`)}</b>`,why:`Cette fois, on applique g d'abord : ${fx(`g(${A}) = ${nb(ga)}`)}. Puis on applique f à ce résultat.`,pts:1.5}];
+  function juge(rep){const c=rep.c||{},u=nombre(c[ids[0]]),v=nombre(c[ids[1]]);if(!u||!v)return {incomplet:"Remplis les deux cases avec des nombres."};const x=u.n/u.d,y=v.n/v.d,F=[];if(x!==gf)F.push(ids[0]);if(y!==fg)F.push(ids[1]);if(!F.length)return {ok:true};
+    const d=x===fg&&y===gf?{etape:0,type:"ordre de la composition inversé",titre:"Où ça part : l'ordre.",msg:`Tu as échangé les deux. Dans ${fx("g ∘ f")}, c'est f qu'on applique en premier, celle qui est écrite à droite, près du x.`}
+      :x===fa*ga||y===fa*ga?{etape:F[0]===ids[0]?0:1,type:"composition confondue avec le produit",titre:"Où ça part : composer n'est pas multiplier.",msg:`Tu as multiplié ${fx(`f(${A})`)} par ${fx(`g(${A})`)}. Composer, c'est appliquer une application au résultat de l'autre.`}
+      :{etape:F[0]===ids[0]?0:1,type:"calcul d'une composée en un point",titre:`Où ça part : ${F[0]}.`,msg:F[0]===ids[0]?`${fx(`f(${A}) = ${nb(fa)}`)}, puis ${fx(`g(${nb(fa)}) = ${nb(gf)}`)}.`:`${fx(`g(${A}) = ${nb(ga)}`)}, puis ${fx(`f(${nb(ga)}) = ${nb(fg)}`)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux résultats sont à revoir":F[0]+" est à revoir"}.`,diag:d};}
+  return {sig:"CN"+D.fT+"|"+D.gT+"|"+a,q:`On pose ${fx(`f(x) = ${D.fT}`)} et ${fx(`g(x) = ${D.gT}`)}, deux applications de ℝ dans ℝ. Calcule ${fx(ids[0])} et ${fx(ids[1])}.`,corps:`<p class="muted">${RAPPELC}</p>`,texte:`f(x) = ${D.fT}, g(x) = ${D.gT} ; ${ids.join(" et ")}`,champs:[{k:"cases",id:"c",noms:ids}],juge,etapes:E,
+    bonne:`${fx(`${ids[0]} = ${nb(gf)}`)} ; ${fx(`${ids[1]} = ${nb(fg)}`)}`,bonneTxt:`${ids[0]} = ${nb(gf)} ; ${ids[1]} = ${nb(fg)}`,repBonne:{c:{[ids[0]]:String(gf),[ids[1]]:String(fg)}},repFausse:{c:{[ids[0]]:String(fg),[ids[1]]:String(gf)}},nature:D.f.length>2||D.g.length>2?"avec un carré":"deux affines",ens:{type:"cn",f:D.f,g:D.g,a,fT:D.fT,gT:D.gT}};}}
+function composeFormule(R){const D=deuxFonctions(R),XS=[-2,-1,0,1,2,3],gfT=polX(D.gf),fgT=polX(D.fg),s1=polSub(D.g,D.fT),s2=polSub(D.f,D.gT),SY=[["x","x"],["x²","x²"],["^","^"],["(","("],[")",")"]];
+  const E=[{w:fx(`(g ∘ f)(x) = g(f(x)) = ${s1}`),why:"Dans la formule de g, on remplace chaque x par f(x), entre parenthèses.",pts:1},{w:`<b>${fx(`(g ∘ f)(x) = ${gfT}`)}</b>`,why:"On développe et on réduit. Une réponse non développée est acceptée aussi.",pts:0.5},
+    {w:fx(`(f ∘ g)(x) = f(g(x)) = ${s2}`),why:"Dans la formule de f, on remplace chaque x par g(x), entre parenthèses.",pts:1},{w:`<b>${fx(`(f ∘ g)(x) = ${fgT}`)}</b>`,why:"Les deux composées sont différentes : l'ordre compte.",pts:0.5}];
+  function juge(rep){if(!propre(rep.gf)||!propre(rep.fg))return {incomplet:"Écris les deux formules, avec la lettre x."};const U=XS.map(x=>O.calcule(tapeX(rep.gf),{x})),V=XS.map(x=>O.calcule(tapeX(rep.fg),{x}));
+    if(U.some(v=>v===null)||V.some(v=>v===null))return {incomplet:"Je n'arrive pas à lire une des formules. Écris-les avec la lettre x, par exemple 2(x² + 1) − 3."};
+    const meme=(W,c)=>XS.every((x,i)=>proche(W[i],polV(c,x))),ok1=meme(U,D.gf),ok2=meme(V,D.fg),F=[];if(!ok1)F.push("gf");if(!ok2)F.push("fg");if(!F.length)return {ok:true};const pr=polMul(D.f,D.g);
+    const d=meme(U,D.fg)&&meme(V,D.gf)?{etape:0,type:"ordre de la composition inversé",titre:"Où ça part : l'ordre.",msg:`Tu as échangé les deux. ${fx("(g ∘ f)(x) = g(f(x))")} : on remplace x par f(x) dans la formule de g.`}
+      :(!ok1&&meme(U,pr))||(!ok2&&meme(V,pr))?{etape:ok1?2:0,type:"composition confondue avec le produit",titre:"Où ça part : composer n'est pas multiplier.",msg:`Tu as multiplié f(x) par g(x). Composer, c'est remplacer x par l'autre formule : ${fx(`(g ∘ f)(x) = ${s1}`)}.`}
+      :!ok1?{etape:0,type:"formule d'une composée",titre:"Où ça part : g ∘ f.",msg:`Dans ${fx(`g(x) = ${D.gT}`)}, on remplace chaque x par ${fx(`(${D.fT})`)} : ${fx(s1)}. Attention aux parenthèses.`}
+      :{etape:2,type:"formule d'une composée",titre:"Où ça part : f ∘ g.",msg:`Dans ${fx(`f(x) = ${D.fT}`)}, on remplace chaque x par ${fx(`(${D.gT})`)} : ${fx(s2)}. Attention aux parenthèses.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux formules sont à revoir":F[0]==="gf"?"g ∘ f est à revoir":"f ∘ g est à revoir"}.`,diag:d};}
+  return {sig:"CF"+D.fT+"|"+D.gT,q:`On pose ${fx(`f(x) = ${D.fT}`)} et ${fx(`g(x) = ${D.gT}`)}, deux applications de ℝ dans ℝ. Donne les formules de ${fx("(g ∘ f)(x)")} et de ${fx("(f ∘ g)(x)")}.`,corps:`<p class="muted">${RAPPELC}</p>`,texte:`f(x) = ${D.fT}, g(x) = ${D.gT} ; formules de g ∘ f et de f ∘ g`,
+    champs:[{k:"champ",id:"gf",nom:"(g ∘ f)(x)",label:"$(g ∘ f)(x) =$",ex:"une formule avec x",sym:SY},{k:"champ",id:"fg",nom:"(f ∘ g)(x)",label:"$(f ∘ g)(x) =$",ex:"une formule avec x",sym:SY}],juge,etapes:E,
+    bonne:`${fx(`(g ∘ f)(x) = ${gfT}`)} ; ${fx(`(f ∘ g)(x) = ${fgT}`)}`,bonneTxt:`(g ∘ f)(x) = ${gfT} ; (f ∘ g)(x) = ${fgT}`,repBonne:{gf:tapeX(gfT),fg:tapeX(fgT)},repFausse:{gf:tapeX(fgT),fg:tapeX(gfT)},nature:D.f.length>2||D.g.length>2?"avec un carré":"deux affines",ens:{type:"cf",f:D.f,g:D.g,fT:D.fT,gT:D.gT}};}
+function composeTable(R){const cible=R.ent(0,3),nE=cible===2?4:3,nG=cible===1?4:3,nF=4,suite=n=>[...Array(n)].map((_,i)=>i+1),E=suite(nE),F=suite(nF),G=suite(nG);
+  for(;;){const f={},g={};E.forEach(x=>{f[x]=R.choix(F);});F.forEach(y=>{g[y]=R.choix(G);});const H=E.map(x=>g[f[x]]),inj=new Set(H).size===nE,surj=G.every(z=>H.includes(z));if((inj?0:2)+(surj?0:1)!==[0,1,2,3][cible])continue;
+    const ids=E.map(x=>`(g ∘ f)(${x})`),fInj=new Set(E.map(x=>f[x])).size===nE,gSurj=G.every(z=>F.some(y=>g[y]===z)),dbl=G.find(z=>H.filter(v=>v===z).length>1),seul=G.find(z=>!H.includes(z)),dF=E.map(x=>`f(${x}) = ${f[x]}`).join(", "),dG=F.map(y=>`g(${y}) = ${g[y]}`).join(", ");
+    const pi=inj?`Les images ${H.join(", ")} sont toutes différentes.`:`${E.filter(x=>g[f[x]]===dbl).map(x=>`(g ∘ f)(${x})`).join(" = ")} = ${dbl} : deux éléments différents ont la même image.`,ps=surj?`Chaque élément de G est atteint : ${G.map(z=>`${z} = (g ∘ f)(${E.find(x=>g[f[x]]===z)})`).join(", ")}.`:`${seul} n'est l'image de personne par g ∘ f.`;
+    const Et=[{w:E.map(x=>fx(`(g ∘ f)(${x}) = g(${f[x]}) = ${g[f[x]]}`)).join(" ; ")+".",why:"Pour chaque x, on lit f(x) dans la première liste, puis l'image de ce résultat par g dans la seconde.",pts:1.5},
+      {w:`<b>g ∘ f ${inj?"est":"n'est pas"} injective.</b>`,why:pi+(inj?` Le cours dit alors que f est forcément injective : on le vérifie, ${E.map(x=>f[x]).join(", ")} sont différents.`:""),pts:0.75},{w:`<b>g ∘ f ${surj?"est":"n'est pas"} surjective.</b>`,why:ps+(surj?" Le cours dit alors que g est forcément surjective : tout élément de G est une image par g.":""),pts:0.75}];
+    function juge(rep){const c=rep.c||{},V=ids.map(k=>nombre(c[k]));if(V.some(v=>!v||v.d!==1))return {incomplet:"Remplis toutes les cases avec des entiers."};if(!rep.i||!rep.s)return {incomplet:"Réponds aussi aux deux questions : injective, puis surjective."};
+      const FV=ids.filter((k,i)=>V[i].n!==H[i]),okI=(rep.i==="oui")===inj,okS=(rep.s==="oui")===surj,Fx=FV.concat(okI?[]:["i"],okS?[]:["s"]);if(!Fx.length)return {ok:true};
+      const j=ids.indexOf(FV[0]),x=E[j],d=FV.length?{etape:0,type:E.every((x,i)=>V[i].n===g[x])?"f oubliée dans la composée":"lecture d'une composée dans deux tableaux",titre:`Où ça part : ${FV[0]}.`,msg:`${fx(`f(${x}) = ${f[x]}`)}, puis ${fx(`g(${f[x]}) = ${g[f[x]]}`)}. On n'applique pas g à ${x}, mais à f(${x}).`}
+        :!okI?{etape:1,type:inj?"application injective non reconnue":"application crue injective",titre:"Où ça part : injective ou pas.",msg:pi}:{etape:2,type:surj?"application surjective non reconnue":"application crue surjective : l'ensemble d'arrivée compte",titre:"Où ça part : surjective ou pas.",msg:ps+` L'ensemble d'arrivée de g ∘ f est G = ${ensF(G)}.`};
+      return {ok:false,faux:Fx,resume:`Pas tout à fait : ${FV.length?"des valeurs de g ∘ f sont à revoir":!okI&&!okS?"les deux dernières réponses sont à revoir":!okI?"l'injectivité est à revoir":"la surjectivité est à revoir"}.`,diag:d};}
+    const bon={},mauvais={};ids.forEach((k,i)=>{bon[k]=String(H[i]);mauvais[k]=String(H[i]);});
+    return {sig:"CT"+dF+"|"+dG,q:`f va de ${fx(`E = ${ensF(E)}`)} dans ${fx(`F = ${ensF(F)}`)}, et g va de F dans ${fx(`G = ${ensF(G)}`)}. On donne ${fx(dF)} et ${fx(dG)}. Calcule les valeurs de ${fx("g ∘ f")}, puis dis si ${fx("g ∘ f")} est injective et si elle est surjective.`,
+      corps:`<p class="muted">${RAPPELC} ${fx("g ∘ f")} va de E dans G.</p>`,texte:`${dF} ; ${dG} ; G = ${ensF(G)} ; valeurs de g ∘ f, injective ? surjective ?`,champs:[{k:"cases",id:"c",noms:ids},{k:"choix",id:"i",o:OUINON("Injective")},{k:"choix",id:"s",o:OUINON("Surjective")}],juge,etapes:Et,
+      bonne:`${H.join(", ")} ; ${inj?"injective":"pas injective"}, ${surj?"surjective":"pas surjective"}`,bonneTxt:`g ∘ f : ${H.join(", ")} ; ${inj?"injective":"pas injective"}, ${surj?"surjective":"pas surjective"}`,repBonne:{c:bon,i:inj?"oui":"non",s:surj?"oui":"non"},repFausse:{c:mauvais,i:inj?"non":"oui",s:surj?"oui":"non"},nature:"tableaux",ens:{type:"ct",f,g,E,F,G}};}}
+const NOMS={N:"ℕ",Z:"ℤ",R:"ℝ",P:"[0, +∞[",E:"ℝ*",C:"ℤ × ℤ"},INCL={N:"NZRP",Z:"ZR",R:"R",P:"PR",E:"ER",C:"C"},DANS={N:x=>Number.isInteger(x)&&x>=0,Z:x=>Number.isInteger(x),R:x=>typeof x==="number",P:x=>typeof x==="number"&&x>=0,E:x=>typeof x==="number"&&x!==0,C:x=>Array.isArray(x)};
+/* d, a : ensembles de départ et d'arrivée ; img : les ensembles qui contiennent toutes les images ; v : quelques images [entrée, image écrite, valeur], pour montrer un résultat que l'autre application ne peut pas prendre */
+const APPLIS=[{d:"R",a:"R",t:"x ↦ x − 3",img:"R",v:[["0","−3",-3],["1/2","−5/2",-2.5],["3","0",0]]},{d:"P",a:"R",t:"x ↦ √x",img:"PR",v:[["2","√2",Math.SQRT2],["0","0",0]]},{d:"R",a:"P",t:"x ↦ x²",img:"PR",v:[["1/2","1/4",0.25],["0","0",0]]},
+ {d:"C",a:"Z",t:"(a, b) ↦ a + b",img:"ZR",v:[["(1, −3)","−2",-2],["(1, −1)","0",0]]},{d:"Z",a:"Z",t:"n ↦ 2n",img:"ZR",v:[["−1","−2",-2],["0","0",0]]},{d:"N",a:"N",t:"n ↦ n + 1",img:"NZRPE",v:[["0","1",1]]},{d:"Z",a:"N",t:"n ↦ |n|",img:"NZRP",v:[["0","0",0],["−2","2",2]]},
+ {d:"E",a:"R",t:"x ↦ 1/x",img:"ER",v:[["−1","−1",-1],["2","1/2",0.5]]},{d:"R",a:"E",t:"x ↦ eˣ",img:"EPR",v:[["1","e",Math.E],["0","1",1]]},{d:"N",a:"R",t:"n ↦ √n",img:"PR",v:[["2","√2",Math.SQRT2],["0","0",0]]},{d:"Z",a:"C",t:"n ↦ (n, −n)",img:"C",v:[["1","(1, −1)",[1,-1]]]},
+ {d:"R",a:"Z",t:"x ↦ E(x)",n:"E(x) est la partie entière de x : le plus grand entier inférieur ou égal à x.",img:"ZR",v:[["−1/2","−1",-1],["0","0",0]]},{d:"Z",a:"R",t:"n ↦ n/2",img:"R",v:[["1","1/2",0.5],["−2","−1",-1],["0","0",0]]},{d:"N",a:"Z",t:"n ↦ n − 5",img:"ZR",v:[["0","−5",-5],["5","0",0]]},
+ {d:"C",a:"C",t:"(a, b) ↦ (b, a)",img:"C",v:[["(1, 2)","(2, 1)",[2,1]]]},{d:"R",a:"R",t:"x ↦ 2x + 1",img:"R",v:[["−1","−1",-1],["−1/4","1/2",0.5],["−1/2","0",0]]},{d:"E",a:"E",t:"x ↦ 1/x",img:"ER",v:[["−1","−1",-1],["2","1/2",0.5]]},{d:"P",a:"P",t:"x ↦ √x",img:"PR",v:[["2","√2",Math.SQRT2],["0","0",0]]},
+ {d:"N",a:"P",t:"n ↦ n²",img:"NZRP",v:[["0","0",0]]},{d:"Z",a:"E",t:"n ↦ 2n + 1",img:"ZRE",v:[["−1","−1",-1],["0","1",1]]}];
+/* g ∘ f existe quand l'arrivée de f est le départ de g ou y est incluse (leçon r-composition). On écarte les paires où l'arrivée n'est pas incluse alors que toutes les images le sont (eˣ puis √) : la réponse y dépendrait de la définition du cours. */
+const temoinC=(u,v,nu)=>{const w=u.v.find(w=>!DANS[v.d](w[2]));if(!w)return null;const ent=w[0][0]==="("?nu+w[0]:`${nu}(${w[0]})`;
+  return v.d==="C"?`${ent} = ${w[1]} est un nombre, pas un couple d'entiers`:Array.isArray(w[2])?`${ent} = ${w[1]} est un couple, pas un élément de ${NOMS[v.d]}`:`${ent} = ${w[1]} n'est pas dans ${NOMS[v.d]}`;};
+function composeExiste(R){for(;;){const [i,j]=R.mel([...APPLIS.keys()]).slice(0,2),f=APPLIS[i],g=APPLIS[j],ex=(u,v)=>INCL[u.a].includes(v.d),e1=ex(f,g),e2=ex(g,f);if(f.t===g.t)continue;
+  if((!e1&&(f.img.includes(g.d)||!temoinC(f,g,"f")))||(!e2&&(g.img.includes(f.d)||!temoinC(g,f,"g"))))continue;
+  const pq=(u,v,nu,nv,ok)=>`On applique ${nu} d'abord : elle arrive dans ${fx(NOMS[u.a])}. Puis ${nv} part de ${fx(NOMS[v.d])}. ${ok?(u.a===v.d?"C'est le même ensemble : on peut toujours continuer.":`Tout élément de ${NOMS[u.a]} est dans ${NOMS[v.d]} : on peut toujours continuer.`):`Or ${temoinC(u,v,nu)} : on ne peut pas appliquer ${nv} à ce résultat.`}`;
+  const E=[{w:`<b>${fx("g ∘ f")} ${e1?`existe : elle va de ${NOMS[f.d]} dans ${NOMS[g.a]}`:"n'existe pas"}.</b>`,why:pq(f,g,"f","g",e1),pts:1.5},{w:`<b>${fx("f ∘ g")} ${e2?`existe : elle va de ${NOMS[g.d]} dans ${NOMS[f.a]}`:"n'existe pas"}.</b>`,why:pq(g,f,"g","f",e2),pts:1.5}];
+  function juge(rep){if(!rep.a||!rep.b)return {incomplet:"Réponds aux deux questions."};const o1=(rep.a==="oui")===e1,o2=(rep.b==="oui")===e2;if(o1&&o2)return {ok:true};
+    return {ok:false,faux:[o1?null:"a",o2?null:"b"].filter(Boolean),resume:`Pas tout à fait : ${!o1&&!o2?"les deux réponses sont à revoir":!o1?"g ∘ f est à revoir":"f ∘ g est à revoir"}.`,diag:{etape:o1?1:0,type:"existence d'une composée : arrivée de la première, départ de la seconde",titre:`Où ça part : ${o1?"f ∘ g":"g ∘ f"}.`,msg:o1?pq(g,f,"g","f",e2):pq(f,g,"f","g",e1)}};}
+  const note=[f.n,g.n].filter(Boolean).join(" "),ef=`f : ${NOMS[f.d]} → ${NOMS[f.a]}, ${f.t}`,eg=`g : ${NOMS[g.d]} → ${NOMS[g.a]}, ${g.t}`;
+  return {sig:"CE"+[i,j],q:`On considère ${fx(ef)} et ${fx(eg)}. La composée ${fx("g ∘ f")} existe-t-elle ? Et ${fx("f ∘ g")} ?`,corps:`<p class="muted">${RAPPELC} Pour que ${fx("g ∘ f")} existe, il faut que l'ensemble d'arrivée de f soit l'ensemble de départ de g, ou y soit inclus.${note?" "+note:""}</p>`,
+    texte:`${ef} ; ${eg} ; g ∘ f existe ? f ∘ g existe ?`,champs:[{k:"choix",id:"a",o:[["oui","g ∘ f existe"],["non","g ∘ f n'existe pas"]]},{k:"choix",id:"b",o:[["oui","f ∘ g existe"],["non","f ∘ g n'existe pas"]]}],juge,etapes:E,
+    bonne:`g ∘ f ${e1?"existe":"n'existe pas"} ; f ∘ g ${e2?"existe":"n'existe pas"}`,bonneTxt:`g ∘ f ${e1?"existe":"n'existe pas"} ; f ∘ g ${e2?"existe":"n'existe pas"}`,repBonne:{a:e1?"oui":"non",b:e2?"oui":"non"},repFausse:{a:e1?"non":"oui",b:e2?"oui":"non"},nature:(e1?"o":"n")+(e2?"o":"n"),ens:{type:"ce",f:[f.d,f.a],g:[g.d,g.a],fImg:f.img,gImg:g.img,fv:f.v,gv:g.v}};}}
+/* ce qu'on peut déduire : I = {fi, fs, gi, gs, hi, hs} (f, g, h = g ∘ f : injective ? surjective ?) */
+const DEDUIRE=[
+ ["Si g ∘ f est injective, alors f est injective.",true,"Si f(x) = f(x′), alors g(f(x)) = g(f(x′)), donc x = x′ puisque g ∘ f est injective. C'est la première appliquée, f, qui hérite de l'injectivité.",I=>I.hi,I=>I.fi],
+ ["Si g ∘ f est injective, alors g est injective.",false,"Contre-exemple : E = {1}, F = {1, 2}, G = {1}, avec f(1) = 1 et g(1) = g(2) = 1. g ∘ f est injective (E n'a qu'un élément), mais g ne l'est pas.",I=>I.hi,I=>I.gi],
+ ["Si g ∘ f est surjective, alors g est surjective.",true,"Tout z de G s'écrit g(f(x)) : c'est l'image par g de l'élément y = f(x). C'est la dernière appliquée, g, qui hérite de la surjectivité.",I=>I.hs,I=>I.gs],
+ ["Si g ∘ f est surjective, alors f est surjective.",false,"Contre-exemple : E = {1}, F = {1, 2}, G = {1}, avec f(1) = 1 et g(1) = g(2) = 1. g ∘ f est surjective, mais 2 n'a pas d'antécédent par f.",I=>I.hs,I=>I.fs],
+ ["Si f et g sont injectives, alors g ∘ f est injective.",true,"Si g(f(x)) = g(f(x′)), alors f(x) = f(x′) car g est injective, puis x = x′ car f est injective.",I=>I.fi&&I.gi,I=>I.hi],
+ ["Si f et g sont surjectives, alors g ∘ f est surjective.",true,"Soit z dans G. Il a un antécédent y par g, et y a un antécédent x par f : alors g(f(x)) = z.",I=>I.fs&&I.gs,I=>I.hs],
+ ["Si g ∘ f est bijective, alors f est injective et g est surjective.",true,"g ∘ f est injective, donc f l'est. g ∘ f est surjective, donc g l'est. Ce sont les deux résultats du cours.",I=>I.hi&&I.hs,I=>I.fi&&I.gs],
+ ["Si g ∘ f est bijective, alors f et g sont bijectives.",false,"Contre-exemple : E = {1}, F = {1, 2}, G = {1}, avec f(1) = 1 et g(1) = g(2) = 1. g ∘ f est bijective, mais f n'est pas surjective et g n'est pas injective.",I=>I.hi&&I.hs,I=>I.fi&&I.fs&&I.gi&&I.gs],
+ ["Si f est injective, alors g ∘ f est injective.",false,"Contre-exemple : E = F = {1, 2}, G = {1}, avec f(1) = 1, f(2) = 2 et g(1) = g(2) = 1. f est injective, mais (g ∘ f)(1) = (g ∘ f)(2).",I=>I.fi,I=>I.hi],
+ ["Si g est surjective, alors g ∘ f est surjective.",false,"Contre-exemple : E = {1}, F = G = {1, 2}, avec f(1) = 1 et g(1) = 1, g(2) = 2. g est surjective, mais g ∘ f n'atteint que 1.",I=>I.gs,I=>I.hs],
+ ["Si f et g sont bijectives, alors g ∘ f est bijective.",true,"La composée de deux injectives est injective, et la composée de deux surjectives est surjective.",I=>I.fi&&I.fs&&I.gi&&I.gs,I=>I.hi&&I.hs],
+ ["Si g ∘ f est injective et f est surjective, alors g est injective.",true,"Si g(y) = g(y′), on écrit y = f(x) et y′ = f(x′), ce qui est possible car f est surjective. Alors g(f(x)) = g(f(x′)), donc x = x′, donc y = y′.",I=>I.hi&&I.fs,I=>I.gi],
+ ["Si g ∘ f est surjective et g est injective, alors f est surjective.",true,"Soit y dans F. g(y) est dans G, donc g(y) = g(f(x)) pour un certain x, car g ∘ f est surjective. Comme g est injective, y = f(x).",I=>I.hs&&I.gi,I=>I.fs],
+ ["Si g est injective, alors g ∘ f est injective.",false,"Contre-exemple : E = {1, 2}, F = G = {1}, avec f(1) = f(2) = 1 et g(1) = 1. g est injective, mais (g ∘ f)(1) = (g ∘ f)(2).",I=>I.gi,I=>I.hi],
+ ["Si f est surjective, alors g ∘ f est surjective.",false,"Contre-exemple : E = F = {1}, G = {1, 2}, avec f(1) = 1 et g(1) = 1. f est surjective, mais 2 n'est pas atteint par g ∘ f.",I=>I.fs,I=>I.hs]];
+function composeDeduire(R){for(;;){const K=R.mel([...DEDUIRE.keys()]).slice(0,4),L=K.map(k=>({txt:DEDUIRE[k][0],v:DEDUIRE[k][1],why:DEDUIRE[k][2],type:/surjective/.test(DEDUIRE[k][0].split(", alors")[1])?"ce que la composée dit de f et de g : surjectivité":"ce que la composée dit de f et de g : injectivité",k}));if(L.every(l=>l.v)||!L.some(l=>l.v))continue;
+  return cocheVraies({brut:true,sig:"CD"+K.slice().sort((a,b)=>a-b),q:`Soit f une application de E dans F, et g une application de F dans G. Parmi les quatre affirmations suivantes, coche toutes celles qui sont vraies pour toutes les applications f et g.`,rappel:"Une affirmation est fausse dès qu'on peut trouver un contre-exemple, même tout petit.",texte:"f : E → F, g : F → G",L,nature:"déduire",ens:{type:"cd",K}});}}
+
+G.rai={DEDUIRE,appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
   paliers:[
@@ -21171,7 +21261,14 @@ G.add("rai",[
    {t:"une démonstration à compléter (somme)",cc:4,gen:recCompleter,min:25},
    {t:"divisibilité : faire apparaître le rang n",cc:5,gen:recDivisible,min:20},
    {t:"inégalité : à partir de quel rang ?",cc:4,gen:recRang,min:15},
-   {t:"rédaction complète, sur papier",cc:10,gen:recRedaction,min:30}]}
+   {t:"rédaction complète, sur papier",cc:10,gen:recRedaction,min:30}]},
+ {id:"RA6",t:"Composer deux applications",tache:"composition",th:"composition",pts:2,lecons:["r-composition"],apres:["RA1"],
+  paliers:[
+   {t:"calculer (g ∘ f)(a) et (f ∘ g)(a)",cc:2,gen:composeNombre},
+   {t:"les formules de g ∘ f et de f ∘ g",cc:4,gen:composeFormule},
+   {t:"avec deux tableaux de valeurs : injective, surjective",cc:4,gen:composeTable},
+   {t:"la composée existe-t-elle ?",cc:2,gen:composeExiste,min:100},
+   {t:"ce qu'on peut en déduire sur f et sur g",cc:4,gen:composeDeduire,min:100}]}
 ]);
 })();
 
