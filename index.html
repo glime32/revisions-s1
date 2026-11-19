@@ -25080,6 +25080,59 @@ function tireTrois(R,k){for(;;){const T=R.choix(Object.values(TROIS))(R);
   e.etapes[2].w+=`<br>Les trois façons d'écrire ${c(T.nom)}&nbsp;:${bloc(autres)}`;e.ens.trois=vers.map(L=>L.join("\n"));
   const n0=e.ens.ocaml.length;vers.forEach((L,j)=>{if(j!==k)e.ens.essais.forEach((x,m)=>e.ens.ocaml.push({code:L.join("\n")+" in "+x,attendu:e.ens.ocaml[m].attendu}));});e.nature=["récursive","terminale","itérateur"][k]+" · "+F.roles[e.ens.ligne][0];return e;}}
 
+/* ---------- PF7 : exceptions ---------- */
+const POURQUOIEXC=x=>/^Failure/.test(x)?`${c("failwith s")} lève l'exception ${c("Failure s")}, avec le même message.`:/^Division_by_zero/.test(x)?`Une division ou un ${c("mod")} par 0 lève ${c("Division_by_zero")}.`
+  :/^Not_found/.test(x)?`${c("Not_found")} est l'exception prévue par OCaml pour « pas trouvé ».`:`${c("raise e")} lève l'exception e.`;
+/* def : la fonction (avec ses déclarations d'exception) ; appel : l'expression ; essai : [inner, branches] pour un try … with */
+function exoExc(def,appel,o){o=o||{};const S=ML.session();if(S.lis(def).some(x=>x.faute))throw new Error("définition fausse : "+def);
+  const r=S.lis(appel)[0];if(r.faute)return null;const exc=r.exc?r.ecritExc:null,type=r.type,ecrit=r.ecrit;
+  if(!exc&&(/'/.test(type)||ecrit.length>40))return null;
+  const fin=exc?{w:`Donc ${c(appel)} <b>lève l'exception ${c(exc)}</b>`,why:"Une exception arrête le calcul : il n'y a pas de valeur.",pts:0.5}:{w:`Donc ${c(appel)} vaut <b>${c(ecrit)}</b>`,why:`Son type est ${c(type)}.`,pts:0.5};
+  let E;
+  if(o.try){const [inner,B]=o.try,ri=S.lis(inner)[0],S2=ML.session();S2.lis(def);const d=S2.deroule(inner);
+    const calc=bloc(d.lignes.map((l,i)=>coupe((i?"= ":"  ")+finLigne(l),"    ")).concat(d.exc?["= exception "+d.exc]:[]).join("\n"));
+    let w2,why2;
+    if(!ri.exc){w2="Pas d'exception : la partie « with » ne sert pas.";why2=`${c("try e with …")} vaut la valeur de e quand e se calcule sans exception.`;}
+    else{const k=B.findIndex(b=>{const t=S.lis(`try ${inner} with ${b}`)[0];return !(t.exc&&t.ecritExc===ri.ecritExc);});
+      if(k<0){w2=`Aucune branche du « with » ne correspond à ${c(ri.ecritExc)} : l'exception n'est pas rattrapée, elle continue.`;why2="Chaque branche du with ne rattrape que l'exception écrite dans son motif.";}
+      else{const S3=ML.session();S3.lis(def);const b=B[k],m=/^(.*?) -> (.*)$/.exec(b),v=S.lis(`try ${inner} with ${b}`)[0];
+        w2=`L'exception ${c(ri.ecritExc)} correspond à la branche ${c(b)}`+(m[2].trim()===(v.ecrit||"")?` : elle vaut ${c(v.ecrit)}.`:` : on calcule ${c(m[2])}${/\b[a-z]\b/.test(m[1].replace(/^\w+/,""))?`, avec ${c(m[1])} = ${c(ri.ecritExc)}`:""}, ce qui donne ${c(v.ecrit||v.ecritExc)}.`);
+        why2="Le with essaie ses branches dans l'ordre, comme un match, sur l'exception levée.";}}
+    E=[{w:`On calcule d'abord ce qui est entre ${c("try")} et ${c("with")}&nbsp;:${calc}`,why:ri.exc?POURQUOIEXC(ri.ecritExc):"Rien ne lève d'exception dans ce calcul.",pts:1},{w:w2,why:why2,pts:1.5},fin];}
+  else{const S2=ML.session();S2.lis(def);const d=S2.deroule(appel);if(d.lignes.length<2)return null;
+    E=[{w:`Le calcul&nbsp;:${bloc(d.lignes.map((l,i)=>coupe((i?"= ":"  ")+finLigne(l),"    ")).concat(d.exc?["= exception "+d.exc]:[]).join("\n"))}`,why:exc?POURQUOIEXC(exc):"On remplace les paramètres par les valeurs de l'appel, puis on calcule.",pts:2},fin];}
+  const S0=ML.session();S0.lis(def);
+  function juge(rep){const faux=(etape,sorte,titre,msg)=>({ok:false,faux:[rep.ok==="exc"?"e":"v"],resume:"Pas tout à fait.",diag:{etape,type:sorte,titre,msg}});
+    if(rep.ok!=="val"&&rep.ok!=="exc")return {incomplet:"Dis d'abord si le calcul donne une valeur ou lève une exception."};
+    if(rep.ok==="val"){const lv=lisValeurRep(S0,rep.v);if(lv.vide)return {incomplet:"Écris la valeur."};if(lv.pb)return {incomplet:lv.pb};
+      if(exc)return faux(E.length-2,"exception non vue","Où ça part : il y a une exception.",`Le calcul lève ${c(exc)} : il n'a pas de valeur.`);
+      if(lv.fun||!ML.convient(lv.t,r.t))return faux(E.length-1,"type de la valeur","Où ça part : le type de la valeur.",`La valeur est ${un(type)}.`);
+      return lv.ecrit===ecrit?{ok:true}:faux(E.length-2,"valeur après une exception rattrapée","Où ça part : le calcul.","Reprends le calcul : quelle branche s'applique, et ce qu'elle calcule.");}
+    let t=normalise(rep.e||"").trim().replace(/^exception\s*:?\s*/i,"").replace(/\.$/,"");if(!t)return {incomplet:"Écris l'exception levée, par exemple Failure \"vide\"."};
+    const x=S0.lis(t)[0];if(x.faute)return {incomplet:"Je n'arrive pas à lire cette exception. "+x.msg};if(x.type!=="exn")return {incomplet:`Écris une exception (comme ${c("Not_found")} ou ${c('Failure "vide"')}), pas une valeur.`};
+    if(!exc)return faux(E.length-2,"exception imaginée","Où ça part : il n'y a pas d'exception.",o.try?"L'exception est rattrapée par le with : le calcul continue avec la branche qui lui correspond.":"Rien ne lève d'exception dans ce calcul.");
+    if(x.ecrit===exc)return {ok:true};
+    return faux(0,"exception levée","Où ça part : ce n'est pas cette exception.",x.ecrit.split(" ")[0]===exc.split(" ")[0]?"C'est la bonne exception, mais pas avec le bon argument.":"Regarde quelle exception est levée en premier.");}
+  return {sig:"X"+def.replace(/\s+/g," ")+"|"+appel,code:def,q:`Que donne ${c(appel)} ? Une valeur, ou une exception ?`,corps:bloc(def),texte:finLigne(def)+" — "+appel,
+    champs:[{k:"choix",id:"ok",o:[["val","Une valeur"],["exc","Une exception"]]},{k:"champ",id:"v",nom:"valeur",label:"La valeur :",ex:"comme OCaml l'écrit",si:{ok:"val"},apercu:false,sym:symDe(SYMV,["[","]",";",'"',"true","false"])},
+      {k:"champ",id:"e",nom:"exception",label:"L'exception :",ex:'par exemple Failure "vide"',si:{ok:"exc"},apercu:false,sym:[['"','"'],["Failure","Failure "],["Not_found","Not_found"],["Division_by_zero","Division_by_zero"]]}],juge,etapes:E,
+    bonne:exc?`l'exception ${c(exc)}`:c(ecrit),bonneTxt:exc?"exception "+exc:ecrit,repBonne:exc?{ok:"exc",e:exc}:{ok:"val",v:ecrit},repFausse:exc?{ok:"val",v:"0"}:{ok:"exc",e:"Not_found"},
+    nature:(o.try?"try":"raise")+" · "+(exc?"exception":"valeur"),ens:{code:def,appel,exc,ecrit,ocaml:[{code:def.replace(/\n(let )/,"\n;;\n$1")+" in "+appel,attendu:exc?"EXC:"+exc.split(" ")[0]:"T:"+type+"|V:"+ecrit}]}};}
+const EXCF={
+ negatif:R=>{const n=R.choix([-R.ent(1,9),R.ent(0,9)]),k=R.ent(2,3);return ["exception Negatif\nlet f : int -> int = function n ->\n  if n < 0 then raise Negatif\n  else n * "+k,`f ${n<0?"("+n+")":n}`,`f (${-R.ent(1,9)})`,["Negatif -> 0","Negatif -> -1"]];},
+ borne:R=>{const n=R.ent(5,15),m=R.ent(5,15);return ["exception Trop_grand of int\nlet borne : int -> int = function n ->\n  if n > 10 then raise (Trop_grand n)\n  else n",`borne ${n}`,`borne ${m}`,["Trop_grand k -> k - 10"]];},
+ tete:R=>{const L=R()<0.5?"[]":lst(petiteListe(R,1,9,1,3)),m=R.choix(["vide","rien","liste vide"]);return [`let tete : int list -> int = function\n  | [] -> failwith "${m}"\n  | x :: _ -> x`,`tete ${L}`,"tete []",["Failure s -> String.length s","Failure _ -> 0"]];},
+ div:R=>{const a=R.ent(5,20),b=R.choix([0,0,R.ent(2,5)]);return [`let div : int -> int -> int = fun a b ->\n  if b = 0 then failwith "division"\n  else a / b`,`div ${a} ${b}`,`div ${a} 0`,["Failure _ -> 0","Division_by_zero -> 1"]];},
+ moyenne:R=>{const s=R.ent(5,20),n=R.choix([0,R.ent(2,4)]);return ["let moyenne : int -> int -> int =\n  fun s n -> s / n",`moyenne ${s} ${n}`,`moyenne ${s} 0`,["Division_by_zero -> 0","Failure _ -> 1"]];},
+ premier:R=>{const L=R()<0.5?"[]":lst(petiteListe(R,1,9,1,3));return ["let premier : int list -> int =\n  function li -> List.hd li + 1",`premier ${L}`,"premier []",["Failure _ -> 0","Not_found -> 1"]];},
+ position:R=>{const L=petiteListe(R,1,9,2,3),x=R()<0.5?R.choix(L):R.ent(1,9);return ["let rec position :\n  int -> int list -> int =\n  fun x li -> match li with\n  | [] -> raise Not_found\n  | y :: r ->\n    if x = y then 0\n    else 1 + position x r",`position ${x} ${lst(L)}`,`position ${x} ${lst(L)}`,["Not_found -> -1"]];},
+ inverse:R=>{const p=R.choix([0,R.ent(1,9)]),q=R.ent(2,9);return [`${TY.nombre}\nlet inverse : nombre -> nombre =\n  function\n  | Ent 0 -> failwith "zero"\n  | Ent n -> Rat (1, n)\n  | Rat (p, q) ->\n    if p = 0 then failwith "zero"\n    else Rat (q, p)`,R()<0.5?`inverse (Rat (${p}, ${q}))`:`inverse (Ent ${p})`,`inverse (Ent 0)`,["Failure _ -> Ent 0"]];}};
+function tireExc(R,t){for(;;){const [def,a1,a2,B]=R.choix(Object.values(EXCF))(R);let e;
+  if(!t)e=exoExc(def,a1);
+  else{const inner=R()<0.6?a2:a1,b=R.choix(B),B2=R()<0.3?[b,R.choix(["Not_found -> 7","Failure _ -> 7","Division_by_zero -> 7"])]:[b];const h=B2.join(" | ");
+    e=exoExc(def,`try ${inner} with ${h}`,{try:[inner,B2]});}
+  if(e)return e;}}
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
@@ -25115,7 +25168,11 @@ G.add("pf",[
   paliers:[
    {t:"la version récursive",cc:3,min:20,gen:R=>tireTrois(R,0)},
    {t:"la version terminale, avec un accumulateur",cc:3,min:20,gen:R=>tireTrois(R,1)},
-   {t:"la version avec un itérateur",cc:3,min:15,gen:R=>tireTrois(R,2)}]}
+   {t:"la version avec un itérateur",cc:3,min:15,gen:R=>tireTrois(R,2)}]},
+ {id:"PF7",t:"Exceptions : la valeur, ou l'exception levée",tache:"exceptions",th:"exceptions",ex:"ct",pts:1,lecons:["p2-exc"],apres:["PF2"],
+  paliers:[
+   {t:"raise et failwith",cc:2,min:40,gen:R=>tireExc(R,0)},
+   {t:"try … with",cc:2,min:40,gen:R=>tireExc(R,1)}]}
 ]);
 })();
 
