@@ -23928,6 +23928,72 @@ function primitive(R,sorte){const s=sorte||R.choix(["pow","log","exp","trig"]);l
     pg=[[x=>-c*(cosi?Math.cos(k*x):Math.sin(k*x)),"signe"]];}
   return exoX({prim:true,avecC:true,sig:"P"+fT,q:`Donne une primitive de ${fx(`f(x) = ${fT}`)}${s==="log"?" (là où elle est définie)":""}.`,corps:`<p class="muted">Une primitive F de f est une fonction dont la dérivée est f. Le site dérive ta réponse : n'importe quelle primitive est acceptée.</p>`,texte:`primitive de ${fT}`,ref:f,fT,ans,tape,etapes:E,nature:{pow:"u′uⁿ",log:"u′/u",exp:"u′eᵘ",trig:"cos et sin"}[s],
     pieges:pg.map(([g,ty])=>[g,{etape:1,type:ty,titre:"Où ça part : la constante.",msg:`En dérivant ta réponse, on trouve un multiple de f : la constante est fausse. Une primitive est ${fx(`F(x) = ${ans}`)}.`}]),ens:{f:fT}});}
+/* CA11 : intégration par parties. Une valeur exacte = somme de termes c × (1, e^m, π, π², ln 2, ln 3) */
+const KV={"1":[()=>"",()=>"1",()=>1],e:[m=>m===1?"e":`e^{${m<0?"−"+(-m):m}}`,m=>`e^(${m})`,m=>Math.exp(m)],pi:[()=>"π",()=>"pi",()=>Math.PI],pi2:[()=>"π²",()=>"pi^2",()=>Math.PI**2],ln2:[()=>"ln 2",()=>"ln(2)",()=>Math.LN2],ln3:[()=>"ln 3",()=>"ln(3)",()=>Math.log(3)]};
+function VX(T){const L=T.map(([c,k,m])=>[q(c),k,m]).filter(t=>!nul(t[0]));const tri={"e":0,pi2:1,pi:2,ln2:3,ln3:4,"1":5};L.sort((x,y)=>tri[x[1]]-tri[y[1]]||(y[2]||0)-(x[2]||0));
+  const M=[];L.forEach(t=>{const o=M.find(x=>x[1]===t[1]&&x[2]===t[2]);if(o)o[0]=add(o[0],t[0]);else M.push(t);});const N=M.filter(t=>!nul(t[0]));
+  return {T:S(N.map(([c,k,m])=>[c,KV[k][0](m)])),tp:N.length?N.map(([c,k,m])=>`(${brut(c)})*${KV[k][1](m)}`).join("+"):"0",v:N.reduce((t,[c,k,m])=>t+c.n/c.d*KV[k][2](m),0),L:N};}
+const negV=T=>T.map(([c,k,m])=>[mul(q(c),-1),k,m]);
+const vP=t=>t[0]==="−"?"("+t+")":t,moinsT=t=>t[0]==="−"?"+ "+t.slice(1):"− "+t;
+const bornT=b=>b.k==="pi"?(b.m===1?"π/2":b.m===2?"π":b.m+"π/2"):b.k==="e"?(b.m===1?"e":`e^{${b.m}}`):String(b.v);
+/* une intégrale par parties tirée : famille, intégrande, primitive, valeur, étapes */
+function ippTire(R,fam){
+  if(fam==="exp"){const a=R.nz(-4,4),b=R.ent(-4,4),k=R.choix([1,2,-1,3]),B=R.choix([1,2]),K=Q(1,k),K2=Q(1,k*k);
+    const vT=`${coef(K)}e^{${ex1(k)}}`,uB=Q(a*B+b),cr=VX([[mul(uB,K),"e",k*B],[mul(Q(-b),K),"1"]]),reste=VX([[mul(a,K2),"e",k*B],[mul(-a,K2),"1"]]),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L)));
+    return {sig:`E${a},${b},${k},${B}`,vTape:`e^(${k}*x)/(${k})`,f:x=>(a*x+b)*Math.exp(k*x),A:0,B,BT:String(B),fT:`(${affT(a,b)})e^{${ex1(k)}}`,u:affT(a,b),du:nb(a),dv:`e^{${ex1(k)}}`,v:vT,vF:x=>Math.exp(k*x)/k,duV:a,
+      cr,reste,I,crT:`[(${affT(a,b)}) × ${vP(vT)}]_{0}^{${B}}`,resteT:`${a===1?"":a===-1?"−":nb(a)}∫_{0}^{${B}} ${vP(vT)} dx`,resteP:`${coef(mul(a,K2))}[e^{${ex1(k)}}]_{0}^{${B}}`,why0:"On dérive le polynôme (il devient un nombre) et on primitive l'exponentielle (elle reste une exponentielle)."};}
+  if(fam==="trig"){const a=R.nz(-3,3),b=R.ent(-2,2),k=R.choix([1,1,2]),m=R.choix([1,2]),cosi=R()<0.5,B=Q(m,2),kB=k*m,S1=[0,1,0,-1][kB%4],C1=[1,0,-1,0][kB%4],K=Q(1,k),K2=Q(1,k*k);
+    const g=cosi?"cos":"sin",vT=cosi?`${coef(K)}sin(${ex1(k)})`:`${coef(mul(K,-1))}cos(${ex1(k)})`,vF=cosi?x=>Math.sin(k*x)/k:x=>-Math.cos(k*x)/k;
+    /* [uv] = u(β)v(β) − u(0)v(0) ; ∫u′v = a∫v */
+    const cr=cosi?VX([[mul(mul(a,B),mul(K,S1)),"pi"],[mul(b,mul(K,S1)),"1"]]):VX([[mul(mul(a,B),mul(K,-C1)),"pi"],[mul(b,mul(K,-C1)),"1"],[mul(b,K),"1"]]);
+    const reste=cosi?VX([[mul(a,mul(K2,-C1)),"1"],[mul(a,K2),"1"]]):VX([[mul(-a,mul(K2,S1)),"1"]]),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L)));
+    return {sig:`T${a},${b},${k},${m},${g}`,f:x=>(a*x+b)*(cosi?Math.cos(k*x):Math.sin(k*x)),A:0,B:Math.PI*m/2,BT:m===1?"π/2":"π",fT:`${affP(a,b)}${g}(${ex1(k)})`,u:affT(a,b),du:nb(a),dv:`${g}(${ex1(k)})`,v:vT,vF,duV:a,
+      cr,reste,I,crT:`[${affP(a,b)} × ${vP(vT)}]_{0}^{${m===1?"π/2":"π"}}`,resteT:`${a===1?"":a===-1?"−":nb(a)}∫_{0}^{${m===1?"π/2":"π"}} ${vP(vT)} dx`,resteP:"",why0:`On dérive le polynôme et on primitive ${fx(`${g}(${ex1(k)})`)} : ${cosi?fx("∫ cos(kx) dx = sin(kx)/k"):fx("∫ sin(kx) dx = −cos(kx)/k")}.`};}
+  if(fam==="ln"){const n=R.choix([1,2]),a=R.ent(1,4),Bk=R.choix(["e","2"]),N1=n+1,c1=Q(a,N1),c2=Q(a,N1*N1);
+    const vT=`${coef(c1)}x^{${N1}}`,cr=Bk==="e"?VX([[c1,"e",N1]]):VX([[mul(c1,Math.pow(2,N1)),"ln2"]]),reste=Bk==="e"?VX([[c2,"e",N1],[mul(c2,-1),"1"]]):VX([[mul(c2,Math.pow(2,N1)),"1"],[mul(c2,-1),"1"]]),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L)));
+    return {sig:`L${n},${a},${Bk}`,f:x=>a*Math.pow(x,n)*Math.log(x),A:1,B:Bk==="e"?Math.E:2,BT:Bk,fT:`${a===1?"":a}x${n===2?"²":""} ln x`,u:"ln x",du:"1/x",dv:`${a===1?"":a}x${n===2?"²":""}`,v:vT,vF:x=>a*Math.pow(x,N1)/N1,duV:null,
+      cr,reste,I,crT:`[ln x × ${vT}]_{1}^{${Bk}}`,resteT:`∫_{1}^{${Bk}} (1/x) × ${vT} dx`,resteS:`∫_{1}^{${Bk}} ${coef(c1)}x${n===2?"²":""} dx`,resteP:"",why0:"On dérive ln x (sa dérivée 1/x se simplifie avec la puissance de x) et on primitive la puissance de x. Avec ln, on pose toujours u = ln x."};}
+  if(fam==="lnx"){const a=R.ent(1,4),Bk=R.choix(["e","2","3","e2"]),crL={e:[[a,"e",1]],"2":[[2*a,"ln2"]],"3":[[3*a,"ln3"]],e2:[[2*a,"e",2]]}[Bk],resteL={e:[[a,"e",1],[-a,"1"]],"2":[[a,"1"]],"3":[[2*a,"1"]],e2:[[a,"e",2],[-a,"1"]]}[Bk];
+    const cr=VX(crL),reste=VX(resteL),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L))),BT={e:"e","2":"2","3":"3",e2:"e^{2}"}[Bk];
+    return {sig:`N${a},${Bk}`,f:x=>a*Math.log(x),A:1,B:{e:Math.E,"2":2,"3":3,e2:Math.E**2}[Bk],BT,fT:`${a===1?"":a}ln x`,u:"ln x",du:"1/x",dv:String(a),v:`${a===1?"":a}x`,vF:x=>a*x,duV:null,
+      cr,reste,I,crT:`[${a===1?"":a}x ln x]_{1}^{${BT}}`,resteT:`∫_{1}^{${BT}} (1/x) × ${a===1?"":a}x dx`,resteS:`∫_{1}^{${BT}} ${a} dx`,resteP:"",why0:"Astuce : ln x = 1 × ln x. On dérive ln x et on primitive 1 (v = x) : la dérivée 1/x se simplifie avec x."};}
+  if(fam==="atan"){const a=R.ent(1,3),cr=VX([[Q(a,4),"pi"]]),reste=VX([[Q(a,2),"ln2"]]),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L)));
+    return {sig:`A${a}`,f:x=>a*Math.atan(x),A:0,B:1,BT:"1",fT:`${a===1?"":a}arctan x`,u:"arctan x",du:"1/(1 + x²)",dv:String(a),v:`${a===1?"":a}x`,vF:x=>a*x,duV:null,
+      cr,reste,I,crT:`[${a===1?"":a}x arctan x]_{0}^{1}`,resteT:`∫_{0}^{1} ${a===1?"":a}x/(1 + x²) dx`,resteS:`${coef(Q(a,2))}[ln(1 + x²)]_{0}^{1}`,resteP:"",why0:`Astuce : arctan x = 1 × arctan x. ${fx("(arctan x)′ = 1/(1 + x²)")}, puis ${fx("x/(1 + x²)")} est de la forme ${fx("(1/2) × u′/u")}.`};}
+  /* deux intégrations par parties */const t=R();
+  if(t<0.6){const k=R.choix([1,-1,2]),a=R.ent(1,3),K=Q(1,k),F=x=>[mul(a,K),mul(-2*a,mul(K,K)),mul(2*a,mul(K,mul(K,K)))],[c2,c1,c0]=F();
+    const I=VX([[add(add(c2,c1),c0),"e",k],[mul(c0,-1),"1"]]);
+    return {sig:`X${k},${a}`,f:x=>a*x*x*Math.exp(k*x),A:0,B:1,BT:"1",fT:`${a===1?"":a}x²e^{${ex1(k)}}`,deux:true,I,prim:`e^{${ex1(k)}}(${S([[c2,"x²"],[c1,"x"],[c0,""]])})`,why0:"Le polynôme est de degré 2 : il faut le dériver deux fois, donc deux intégrations par parties."};}
+  const cosi=R()<0.5,I=cosi?VX([[Q(1,4),"pi2"],[-2,"1"]]):VX([[1,"pi2"],[-4,"1"]]);
+  return {sig:`Y${cosi}`,f:x=>x*x*(cosi?Math.cos(x):Math.sin(x)),A:0,B:cosi?Math.PI/2:Math.PI,BT:cosi?"π/2":"π",fT:`x²${cosi?"cos":"sin"} x`,deux:true,I,prim:cosi?"x² sin x + 2x cos x − 2 sin x":"−x² cos x + 2x sin x + 2 cos x",why0:"Le polynôme est de degré 2 : deux intégrations par parties, la seconde sur un x cos x ou un x sin x."};}
+function ippEtapes(o){const It=`∫_{${o.A}}^{${o.BT}} ${o.fT} dx`;
+  if(o.deux)return [{w:`Première intégration par parties : ${fx(`u = x²`)} et ${fx(`v′ = ${o.fT.replace(/^\d*x²/,"")}`)}${/^\d/.test(o.fT)?" (la constante "+o.fT.match(/^\d+/)[0]+" se met devant l'intégrale)":""}.`,why:o.why0,pts:1.5},{w:"La nouvelle intégrale a un x au lieu de x² : seconde intégration par parties, avec u = x.",why:"Chaque intégration par parties fait baisser le degré du polynôme de 1.",pts:1.5},{w:`Une primitive : ${fx(o.prim)}.`,why:"On regroupe les deux résultats ; on peut vérifier en dérivant.",pts:1},{w:`${fx(`I = ${o.I.T}`)}.`,why:"On calcule la primitive en la borne du haut, moins en la borne du bas.",pts:1}];
+  return [{w:`On pose ${fx(`u(x) = ${o.u}`)} et ${fx(`v′(x) = ${o.dv}`)} : ${fx(`u′(x) = ${o.du}`)} et ${fx(`v(x) = ${o.v}`)}.`,why:o.why0,pts:1},
+    {w:`${fx(`∫_{a}^{b} uv′ = [uv]_{a}^{b} − ∫_{a}^{b} u′v`)} : ${fx(`I = ${o.crT}`)} ${fx(moinsT(o.resteT))}.`,why:"C'est la formule d'intégration par parties.",pts:1},
+    {w:`Le crochet : ${fx(`${o.crT} = ${o.cr.T}`)}.`,why:"On remplace x par la borne du haut, puis par la borne du bas, et on retranche.",pts:1},
+    {w:`L'intégrale qui reste : ${fx(`${o.resteT}${o.resteS?" = "+o.resteS:""} = ${o.reste.T}`)}.`,why:"Elle est plus simple que celle de départ : c'est le but de l'intégration par parties.",pts:1},
+    {w:`${fx(`I = ${o.cr.T} ${moinsT(o.reste.L.length===1?o.reste.T:"("+o.reste.T+")")} = ${o.I.T}`)}.`,why:"On retranche l'intégrale qui reste du crochet.",pts:1}];}
+function exoIpp(R,fam,trous){const o=ippTire(R,fam),It=`∫_{${o.A}}^{${o.BT}} ${o.fT} dx`,E=ippEtapes(o),dern=E.length-1;
+  const pieges=(o.deux?[]:[[o.cr.v,{etape:1,type:"l'intégrale qui reste oubliée",titre:"Où ça part : la formule.",msg:`Il reste ${fx(moinsT(o.resteT))} à calculer après le crochet.`}],[o.cr.v+o.reste.v,{etape:1,type:"signe de l'intégrale qui reste",titre:"Où ça part : la formule.",msg:"La formule est [uv] − ∫u′v : on retranche l'intégrale qui reste."}]]).filter(p=>!pres(p[0],o.I.v));
+  const lireV=(t)=>{const A=lisReel(t);return A.vide?{vide:1}:A.avecI||A.illisible||A.neg?{bad:1}:A;};
+  function juge(rep){
+    if(trous){const D=lireV(rep.du),C=lireV(rep.cr),Iv=lireV(rep.I),Vs=String(rep.v==null?"":rep.v);if(D.vide||C.vide||Iv.vide||!propre(Vs))return {incomplet:"Remplis les quatre cases."};
+      if(D.bad||C.bad||Iv.bad)return {incomplet:"Je n'arrive pas à lire une des cases. Écris par exemple 2, e - 2 ou e^(2) + 1."};
+      const AV=lis(Vs.replace(/^[^=]*=/,""),["x"]);if(!AV||lettres(AV).size)return {incomplet:"Écris v(x) avec la lettre x, par exemple e^(2x)/2."};
+      let okV;try{okV=XP.every(x=>Math.abs(val(AV,{x})[0]-o.vF(x))<1e-9*Math.max(1,Math.abs(o.vF(x))));}catch(e){okV=false;}
+      const okD=pres(D.v,o.duV),okC=pres(C.v,o.cr.v),okI=pres(Iv.v,o.I.v),F=[];if((!okC&&C.dec&&Math.abs(C.v-o.cr.v)<0.02)||(!okI&&Iv.dec&&Math.abs(Iv.v-o.I.v)<0.02))return {incomplet:"Écris les valeurs exactes (avec e), pas des valeurs approchées."};if(!okD)F.push("du");if(!okV)F.push("v");if(!okC)F.push("cr");if(!okI)F.push("I");if(!F.length)return {ok:true};
+      const d=!okD||!okV?{etape:0,type:!okD?"dérivée de u":"primitive de v′",titre:"Où ça part : u′ et v.",msg:`${fx(`u′(x) = ${o.du}`)} et ${fx(`v(x) = ${o.v}`)}.`}:!okC?{etape:2,type:"calcul du crochet",titre:"Où ça part : le crochet.",msg:`${fx(`${o.crT} = ${o.cr.T}`)}.`}:{etape:4,type:pieges.find(p=>pres(Iv.v,p[0]))?pieges.find(p=>pres(Iv.v,p[0]))[1].type:"conclusion",titre:"Où ça part : la fin.",msg:`${fx(`I = ${o.cr.T} ${moinsT(o.reste.L.length===1?o.reste.T:"("+o.reste.T+")")} = ${o.I.T}`)}.`};
+      return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length} case${F.length>1?"s sont":" est"} à revoir.`,diag:d};}
+    const A=lisReel(rep.I);if(A.vide)return {incomplet:"Écris la valeur de l'intégrale."};if(A.avecI||A.illisible||A.neg)return {incomplet:"Je n'arrive pas à lire ce nombre. Écris par exemple e - 2, pi/2 - 1 ou 2ln(2) - 1."};
+    if(pres(A.v,o.I.v))return {ok:true};if(A.dec&&Math.abs(A.v-o.I.v)<0.02)return {incomplet:"Écris la valeur exacte (avec e, π ou ln), pas une valeur approchée."};
+    const pg=pieges.find(p=>pres(A.v,p[0]));
+    return {ok:false,faux:["I"],resume:"Pas tout à fait : ce n'est pas la bonne valeur.",diag:pg?pg[1]:{etape:dern,type:"calcul",titre:"Où ça part : le calcul.",msg:`${fx(`I = ${o.I.T}`)}. Vérifie le signe de l'intégrale : ${o.I.v>0?"elle est positive":"elle est négative"} (environ ${dec(o.I.v)}).`}};}
+  const q=`Calcule ${fx(`I = ${It}`)}${trous?", en complétant les étapes":" par une intégration par parties"}.`;
+  const corps=trous?`<p>On pose ${fx(`u(x) = ${o.u}`)} et ${fx(`v′(x) = ${o.dv}`)}. Alors ${fx("u′(x) =")} ${O.trou("du")} et ${fx("v(x) =")} ${O.trou("v",1)}.</p><p>Avec ${fx("∫_{a}^{b} uv′ = [uv]_{a}^{b} − ∫_{a}^{b} u′v")}, le crochet vaut ${fx(`${o.crT} =`)} ${O.trou("cr",1)}.</p><p>Finalement ${fx("I =")} ${O.trou("I",1)}.</p>`:o.deux?`<p class="muted">Indication : deux intégrations par parties de suite.</p>`:"";
+  return {sig:(trous?"C":"I")+o.sig,q,corps,corpsPapier:trous?`<p>Sur ta feuille, rédige le calcul en entier : u, v′, u′, v, la formule, le crochet, l'intégrale qui reste, le résultat.</p>`:undefined,texte:`IPP : ${It}`,
+    champs:trous?[{k:"trous",ids:["du","v","cr","I"]},{k:"sym",id:"s",sym:["e^(","π","ln(","/","x"],aide:"Pour e², écris e^(2). Les boutons écrivent dans la case où tu es."}]:[{k:"champ",id:"I",nom:"valeur",label:"$I =$",ex:"une valeur exacte, par exemple e - 2",sym:["e","e^(","π","ln(","/"]}],
+    indice:trous?false:undefined,juge,etapes:E,bonne:fx(`I = ${o.I.T}`),bonneTxt:`I = ${o.I.T}`,repBonne:trous?{du:String(o.duV),v:o.vTape,cr:o.cr.tp,I:o.I.tp}:{I:o.I.tp},
+    repFausse:trous?{du:String(o.duV),v:o.vTape,cr:o.cr.tp,I:String(o.cr.v)}:{I:pieges.length?String(pieges[0][0]):`(${o.I.tp})+1`},nature:{exp:"polynôme fois exponentielle",trig:"x cos x, x sin x",ln:"xⁿ ln x",lnx:"ln x",atan:"arctan x",deux:"deux intégrations"}[fam],ens:{type:"ipp",A:o.A,B:o.B,f:o.f}};}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -23987,7 +24053,14 @@ G.add("calc",[
    {t:"u′uⁿ",cc:2,min:150,gen:R=>primitive(R,"pow")},
    {t:"u′/u",cc:2,min:150,gen:R=>primitive(R,"log")},
    {t:"u′eᵘ, cos et sin",cc:2,min:100,gen:R=>primitive(R,R()<0.6?"exp":"trig")},
-   {t:"tout mélangé",cc:2,min:190,gen:R=>primitive(R)}]}
+   {t:"tout mélangé",cc:2,min:190,gen:R=>primitive(R)}]},
+ {id:"CA11",t:"Intégration par parties",tache:"intégration par parties",th:"ipp",pts:5,lecons:["c-ipp"],pages:["m-ipp"],
+  paliers:[
+   {t:"un exemple à compléter : (ax + b)eᵏˣ",cc:5,min:200,gen:R=>exoIpp(R,"exp",true)},
+   {t:"(ax + b)eᵏˣ, en entier",cc:5,min:200,gen:R=>exoIpp(R,"exp",false)},
+   {t:"x cos x, x sin x, xⁿ ln x, avec des bornes",cc:6,min:110,gen:R=>exoIpp(R,R()<0.55?"trig":"ln",false)},
+   {t:"ln x et arctan x : u = ln x ou arctan x, v′ = 1",cc:6,min:12,gen:R=>exoIpp(R,R()<0.75?"lnx":"atan",false)},
+   {t:"deux intégrations par parties de suite",cc:9,min:10,gen:R=>exoIpp(R,"deux",false)}]}
 ]);
 })();
 
