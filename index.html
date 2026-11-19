@@ -24405,13 +24405,14 @@ function exoRenvoie(def,appel,o){o=o||{};
   def=def.replace(/^(let (?:rec )?\w+ : [^\n]*? =) ((?:fun|function)\b[^\n]*)/,(m,a,b)=>m.length>40?a+"\n  "+b:m);
   const avant=def;def=coupe(def);
   const nom=/^let (?:rec )?([a-z_]+)/.exec(def)[1],rec=/^let rec /.test(def);
-  const S=ML.session(),suivi={nom},R=S.lis(def+"\n;;\n"+appel,{suivi}),r=R[R.length-1];
+  const pre=o.pre||"",S=ML.session(),suivi={nom};if(pre&&S.lis(pre).some(x=>x.faute))throw new Error("prélude faux : "+pre);
+  const R=S.lis(def+"\n;;\n"+appel,{suivi}),r=R[R.length-1];
   if(R.some(x=>x.faute)||!r||r.sorte!=="expr"||r.exc)return null;
   const type=r.type,ecrit=r.ecrit,T=r.t;
   if(/'|_weak|<fun>|<poly>/.test(type+ecrit)||ecrit.length>40)return null;
   let E,inter=[],base=null,aRebours=null;
   const fin=pourquoi=>({w:`Donc ${c(appel)} vaut <b>${c(ecrit)}</b>`,why:pourquoi+` Son type est ${c(type)} : c'est ce qu'annonce la fin de la signature de ${c(nom)}.`,pts:0.5});
-  if(rec){const d=S.deplie(suivi);if(!d||d.arbre||d.lignes.length<2||d.lignes.length>7)return null;
+  if(rec){const d=S.deplie(suivi);if(!d||(d.arbre&&!o.arbre)||d.lignes.length<2||d.lignes.length>7)return null;
     const val=l=>l.parts[l.parts.length-1];inter=d.lignes.map(val);base=val(d.lignes[0]);const dernier=d.ordre[d.ordre.length-1];
     if(d.terminale){
       E=[{w:`Les appels, du premier au dernier&nbsp;:${bloc(coupe(d.ordre.join("\n= ")+"\n= "+ecrit,"    "))}`,why:`Chaque appel se contente de rappeler ${c(nom)} avec de nouveaux arguments : le calcul se fait dans les arguments, au fil de la descente. Il ne reste rien à faire en remontant.`,pts:2},
@@ -24421,7 +24422,7 @@ function exoRenvoie(def,appel,o){o=o||{};
       E=[{w:`Les appels s'enchaînent jusqu'au cas de base : ${d.ordre.map(c).join(" → ")}.`,why:`Chaque appel attend le résultat de l'appel suivant. ${c(dernier)} répond sans rappeler ${c(nom)} : c'est le cas de base.`,pts:1},
         {w:`On remonte, du cas de base vers le premier appel&nbsp;:${bloc(d.lignes.map(l=>coupe(l.parts.join(" = "),"    ")).join("\n"))}`,why:"Chaque ligne remplace l'appel récursif par sa valeur, trouvée juste au-dessus, puis fait le calcul.",pts:1.5},
         fin("C'est la dernière ligne de la remontée : la valeur du premier appel.")];}}
-  else{const S2=ML.session();S2.lis(def);const d=S2.deroule(appel);
+  else{const S2=ML.session();if(pre)S2.lis(pre);S2.lis(def);const d=S2.deroule(appel);
     if(!d.fini||d.exc||d.lignes[d.lignes.length-1]!==ecrit)throw new Error("calcul montré différent de la valeur : "+appel+" → "+d.lignes.join(" = "));
     if(d.lignes.length<3)return null;
     const sub=bloc(coupe(d.lignes[0]+"\n= "+finLigne(d.lignes[1]),"    "));
@@ -24440,7 +24441,7 @@ function exoRenvoie(def,appel,o){o=o||{};
       E=[{w:`On remplace les paramètres par les valeurs de l'appel&nbsp;:${sub}`,why:"Pour appliquer une fonction, on remplace chaque paramètre par l'argument qui est à sa place, dans le corps de la fonction (ce qui suit la flèche).",pts:1},
         reste.length>2?{w:`Puis on calcule&nbsp;:${montreCalcul({lignes:reste})}`,why:re||"On calcule d'abord ce qui est entre parenthèses, puis les opérations dans l'ordre des priorités.",pts:1.5}:null,
         fin("C'est la dernière ligne du calcul.")].filter(Boolean);}}
-  const iFin=E.length-1,S0=ML.session();
+  const iFin=E.length-1,S0=ML.session();if(pre)S0.lis(pre);
   function juge(rep){const lv=lisValeurRep(S0,rep.v);if(lv.vide)return {incomplet:`Écris la valeur de ${appel}, comme OCaml l'affiche.`};if(lv.pb)return {incomplet:lv.pb};
     const faux=(etape,sorte,titre,msg)=>({ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la valeur renvoyée.",diag:{etape,type:sorte,titre,msg}});
     if(lv.fun)return faux(iFin,"valeur d'un appel complet","Où ça part : l'appel a tous ses arguments.",`${c(appel)} donne à ${c(nom)} tous ses arguments : le calcul va jusqu'au bout, et sa valeur est ${un(type)}.`);
@@ -24456,10 +24457,10 @@ function exoRenvoie(def,appel,o){o=o||{};
   const fausse=voisine(type,ecrit,inter.filter(x=>{const t=ML.calcule(x);return !t.faute&&!t.exc&&t.type===type;}));
   return {sig:"R"+def.replace(/\s+/g," ")+"|"+appel,code:def,
     q:`Voici une fonction${rec?" récursive":""} OCaml. Que renvoie ${c(appel)} ? Écris la valeur comme OCaml l'affiche.`,
-    corps:bloc(def),texte:finLigne(def)+" — valeur de "+appel,
+    corps:bloc((pre?pre+"\n\n":"")+def),texte:finLigne((pre?pre+" ":"")+def)+" — valeur de "+appel,
     champs:[{k:"champ",id:"v",nom:"valeur",label:`Valeur de ${esc(appel)} :`,ex:"comme OCaml l'écrit",apercu:false,sym:o.sym?symDe(SYMR,o.sym):SYMR}],juge,etapes:E,
     bonne:c(ecrit),bonneTxt:ecrit,repBonne:{v:ecrit},repFausse:{v:fausse},nature:o.nat||"valeur",
-    ens:{code:def,appel,type,ecrit,coupe:(r=>coupe(r)!==r)(avant.split("\n").slice(1).join("\n")),ocaml:[{code:def+" in "+appel,attendu:"T:"+type+"|V:"+ecrit}]}};}
+    ens:{code:def,appel,type,ecrit,coupe:(r=>coupe(r)!==r)(avant.split("\n").slice(1).join("\n")),ocaml:[{code:(pre?pre+"\n;;\n":"")+def+" in "+appel,attendu:"T:"+type+"|V:"+ecrit}]}};}
 /* une famille rend [définition, appel] ou [définition, appel, itérateur] */
 const tireRenvoie=(R,F,nat,sym)=>{for(;;){const x=R.choix(F)(R);if(!x)continue;const e=exoRenvoie(x[0],x[1],{it:x[2],nat,sym});if(e)return e;}};
 const nf=R=>R.choix(NOMSF),nc=R=>R.choix(["f","g","h"]),sig=(f,t)=>`let ${f} : ${t} =`;
@@ -24572,7 +24573,7 @@ function exoLigne(F,i,o){o=o||{};const L=F.L.slice(),bonne=L[i].trim(),ind=/^\s*
     corps:bloc(montre),texte:finLigne(montre)+" — ligne "+num+" à écrire",
     champs:[{k:"champ",id:"l",nom:"ligne",label:`La ligne ${num} :`,ex:"sans les espaces du début",apercu:false,sym:o.sym?symDe(SYMV.concat(SYML),o.sym):SYML}],juge,etapes:E,
     bonne:c(bonne),bonneTxt:bonne,repBonne:{l:bonne},repFausse:{l:fausse},nature:F.roles[i][0],
-    ens:{code:def,ligne:i,essais,att,ocaml:essais.map((x,k)=>({code:def+" in "+x,attendu:"T:"+S.lis(x)[0].type+"|V:"+att[k]}))}};}
+    ens:{code:def,ligne:i,essais,att,ocaml:essais.map((x,k)=>({code:def.replace(/\n(let )/,"\n;;\n$1")+" in "+x,attendu:"T:"+S.lis(x)[0].type+"|V:"+att[k]}))}};}
 const SYML=[["::"," :: "],["->"," -> "],["|","| "],["List.hd","List.hd "],["List.tl","List.tl "],["mod"," mod "],["fun","fun "],["[]","[]"],["&&"," && "],["||"," || "]];
 /* une fonction écrite comme dans le cours, avec le rôle de chaque ligne à effacer : [rôle, la ligne expliquée, pourquoi ce rôle] */
 const entiers=(R,n)=>[0,7,R.ent(10,99),R.ent(100,999),R.ent(1000,9999),R.ent(100,999)].slice(0,n||6);
@@ -24709,6 +24710,89 @@ function exoFausse(F,i,sorte,o){o=o||{};const L=F.L.slice(),bonne=L[i].trim(),in
 function tireFausse(R,T,sorte,sym){for(;;){const F=R.choix(Object.values(T))(R),I=Object.keys(F.roles).map(Number);if(!I.length)continue;
   const e=exoFausse(F,R.choix(I),sorte,{R,sym});if(e)return e;}}
 
+/* ---------- PF5 : types somme, types récursifs, arbres ---------- */
+const TY={nombre:"type nombre =\n  | Ent of int\n  | Rat of (int * int)",chaine:"type my_string =\n  | Empty\n  | Cons of char * my_string",ens:"type 'a set =\n  | Empty\n  | Add of 'a * 'a set",
+  arbre:"type 'a tree =\n  | Empty\n  | Node of 'a * 'a tree * 'a tree",number:"type number =\n  | Int of int\n  | Float of float",couleur:"type couleur =\n  | Trefle | Carreau | Coeur | Pique"};
+const CTOR={nombre:`${c("Ent")} contient un int ; ${c("Rat")} contient un couple d'int (numérateur, dénominateur), écrit entre parenthèses.`,
+  chaine:`${c("Empty")} est la chaîne vide ; ${c("Cons (c, r)")} est le caractère c suivi de la chaîne r. Un caractère s'écrit entre apostrophes : ${c("'a'")}.`,
+  ens:`${c("Empty")} est l'ensemble vide ; ${c("Add (x, e)")} est l'ensemble e auquel on ajoute x.`,
+  arbre:`${c("Empty")} est l'arbre vide ; ${c("Node (x, g, d)")} est un nœud qui porte x, avec un sous-arbre gauche g et un sous-arbre droit d.`,
+  number:`${c("Int")} contient un int ; ${c("Float")} contient un float, écrit avec un point.`};
+const ch=s=>s.split("").reduceRight((r,x)=>`Cons ('${x}', ${r})`,"Empty");
+const ensDe=L=>L.reduceRight((r,x)=>`Add (${x}, ${r})`,"Empty");
+/* un petit arbre d'int : [x, gauche, droite] ou null */
+const arbreML=a=>a?`Node (${a[0]}, ${arbreML(a[1])}, ${arbreML(a[2])})`:"Empty";
+function arbreDessin(a){const lignes=[];if(!a)return "(arbre vide)";const pos=(a,p)=>a?[...pos(a[1],p*2),[a[0],p],...pos(a[2],p*2+1)]:[];
+  const P=pos(a,1),prof=p=>Math.floor(Math.log2(p)),hmax=Math.max(...P.map(x=>prof(x[1])));const larg=4*2**hmax;
+  for(let h=0;h<=hmax;h++){let l=" ".repeat(larg),b=" ".repeat(larg);
+    P.filter(x=>prof(x[1])===h).forEach(([v,p])=>{const k=p-2**h,pas=larg/2**h,c0=Math.floor(pas*k+pas/2)-1;l=l.slice(0,c0)+String(v).padEnd(2)+l.slice(c0+2);
+      if(h<hmax){const g=P.some(y=>y[1]===2*p),d=P.some(y=>y[1]===2*p+1);if(g)b=b.slice(0,c0-1)+"╱"+b.slice(c0);if(d)b=b.slice(0,c0+1)+"╲"+b.slice(c0+2);}});
+    lignes.push(l.replace(/\s+$/,""));if(h<hmax)lignes.push(b.replace(/\s+$/,""));}
+  return lignes.join("\n");}
+const tireArbre=(R,n)=>{const V=R.mel([1,2,3,4,5,6,7,8,9]);let a=null,k=0;const ins=(t,x,p)=>!t?[x,null,null]:p()?[t[0],ins(t[1],x,p),t[2]]:[t[0],t[1],ins(t[2],x,p)];
+  for(;k<n;k++)a=ins(a,V[k],()=>R()<0.5);return a;};
+/* palier 1 : écrire une valeur du type */
+function exoValeur(ty,dit,val,expl,dessin){const pre=TY[ty],S=ML.session();if(S.lis(pre).some(x=>x.faute))throw new Error("type faux "+pre);
+  const r=S.lis(val)[0];if(r.faute||r.exc)throw new Error("valeur fausse : "+val);const type=r.type,T=r.t,ecrit=r.ecrit;
+  const E=[{w:"Les constructeurs du type&nbsp;:",why:CTOR[ty],pts:1},{w:expl,why:"On construit la valeur de l'intérieur vers l'extérieur : chaque constructeur reçoit ce qu'annonce sa déclaration, après « of ».",pts:1.5},
+    {w:`La valeur : <b>${c(ecrit)}</b>`,why:`Son type est ${c(type)}.`,pts:0.5}];
+  function juge(rep){const t=normalise(rep.v||"").trim();if(!t)return {incomplet:"Écris la valeur, avec ses constructeurs."};
+    const S2=ML.session();S2.lis(pre);const x=S2.lis(t)[0],faux=(type,titre,msg)=>({ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la valeur demandée.",diag:{etape:1,type,titre,msg}});
+    if(x.faute==="syntaxe")return {incomplet:"Je n'arrive pas à lire cette valeur. "+x.msg};
+    if(x.faute==="type")return faux("valeur mal construite (erreur de type)","Où ça part : un constructeur reçoit autre chose que prévu.",`${x.extrait?`À cet endroit, ${c(x.extrait)} : `:""}${esc(x.msg)}`);
+    if(x.faute||x.exc||!x.t)return {incomplet:"Écris une valeur, pas un calcul."};
+    if(!ML.convient(x.t,T))return faux("type de la valeur construite","Où ça part : le type.",`Ta valeur est de type ${c(x.type)} ; on attend ${c(type)}.`);
+    if(x.ecrit===ecrit)return {ok:true};
+    return faux("valeur d'un type somme","Où ça part : la construction.",`Ta valeur ${c(x.ecrit)} n'est pas celle demandée. Reprends ${dit} morceau par morceau.`);}
+  const fausse=ecrit.replace(/\d+/,m=>String(+m+1)).replace(/'([a-z])'/,(m,x)=>x==="z"?"'y'":"'z'");
+  return {sig:"V"+ty+ecrit,code:pre,q:`Avec ce type, écris la valeur qui représente ${dit}.`,corps:bloc(pre)+(dessin?`<p>L'arbre&nbsp;:</p>`+bloc(dessin):""),texte:finLigne(pre)+" — valeur de "+dit,
+    champs:[{k:"champ",id:"v",nom:"valeur",label:"La valeur :",ex:"avec ses constructeurs",apercu:false,sym:symDe(SYMV,["(",")","[","]",";","."]).concat([["'","'"]])}],juge,etapes:E,
+    bonne:c(ecrit),bonneTxt:ecrit,repBonne:{v:ecrit},repFausse:{v:fausse===ecrit?"Empty":fausse},nature:ty,
+    ens:{code:pre,valeur:ecrit,type,ocaml:[{code:pre+"\n;;\n"+ecrit,attendu:"T:"+type+"|V:"+ecrit}]}};}
+const VALEURS=[
+ R=>{const p=R.ent(1,9),q=R.ent(2,9);return exoValeur("nombre",`la fraction ${p}/${q}`,`Rat (${p}, ${q})`,`Une fraction se range dans ${c("Rat")}, avec le couple ${c(`(${p}, ${q})`)}.`);},
+ R=>{const n=R.ent(-9,20);return exoValeur("nombre",`l'entier ${n}`,`Ent (${n})`.replace(/\((\d+)\)/,"$1"),`Un entier se range dans ${c("Ent")}.${n<0?` Un nombre négatif s'écrit entre parenthèses après un constructeur : ${c(`Ent (${n})`)}.`:""}`);},
+ R=>{const a=R.ent(1,9),p=R.ent(1,5),q=R.ent(2,7);return exoValeur("nombre",`la liste qui contient l'entier ${a}, puis la fraction ${p}/${q}`,`[Ent ${a}; Rat (${p}, ${q})]`,`Une liste de nombre : chaque élément est construit avec ${c("Ent")} ou ${c("Rat")}, et les éléments sont séparés par des points-virgules.`);},
+ R=>{const m=R.choix(["ab","oc","ou","ami","ok","rue","bus","go"]);return exoValeur("chaine",`la chaîne « ${m} »`,ch(m),`Le premier caractère d'abord : ${c(`Cons ('${m[0]}', …)`)}, où … est la chaîne « ${m.slice(1)} ». La chaîne se termine par ${c("Empty")}.`);},
+ R=>{const L=R.mel([1,2,3,4,5,6,7,8,9]).slice(0,R.ent(2,3));return exoValeur("ens",`l'ensemble obtenu en ajoutant ${et(L.slice().reverse().map(String))} à l'ensemble vide, dans cet ordre`,ensDe(L),`Le dernier ajouté est le plus à l'extérieur : on part de ${c("Empty")}, puis chaque ${c("Add")} entoure ce qui est déjà construit.`);},
+ R=>{const a=tireArbre(R,R.ent(2,3)),v=arbreML(a);if(v.length>60)return null;return exoValeur("arbre","l'arbre dessiné ci-dessous (un sous-arbre absent est vide)",v,`La racine ${c(String(a[0]))} est le nœud le plus à l'extérieur : ${c(`Node (${a[0]}, gauche, droite)`)}. Un sous-arbre absent s'écrit ${c("Empty")}, une feuille ${c("Node (x, Empty, Empty)")}.`,arbreDessin(a));},
+ R=>{const a=R.ent(1,9),f=R.ent(1,9);return exoValeur("number",`la liste qui contient l'entier ${a}, puis le flottant ${f}.5`,`[Int ${a}; Float ${f}.5]`,`${c("Int")} pour l'entier, ${c("Float")} pour le flottant, avec son point.`);}];
+const tireValeur=R=>{for(;;){const e=R.choix(VALEURS)(R);if(e)return e;}};
+/* palier 2 : ce que renvoie une fonction sur le type */
+const SOMMEF=[
+ R=>{const m=R.choix(["ab","oca","ami","rue","bus"]);return ["chaine",`let rec my_length : my_string -> int =\n  function\n  | Empty -> 0\n  | Cons (_, r) -> 1 + my_length r`,`my_length (${ch(m)})`];},
+ R=>{const m=R.choix(["aba","oca","bab","ana","rue","ici"]),x=R.choix(m.split(""));return ["chaine",`let rec compte :\n  char -> my_string -> int =\n  fun x s -> match s with\n  | Empty -> 0\n  | Cons (y, r) ->\n    if y = x then 1 + compte x r\n    else compte x r`,`compte '${x}' (${ch(m)})`];},
+ R=>{const p=R.ent(1,9),q=R.ent(2,9),k=R.ent(1,9);return ["nombre",`let inverse : nombre -> nombre = function\n  | Ent n -> Rat (1, n)\n  | Rat (p, q) -> Rat (q, p)`,R()<0.5?`inverse (Rat (${p}, ${q}))`:`inverse (Ent ${k})`];},
+ R=>{const p=R.ent(1,9),q=R.ent(2,9),k=R.ent(1,9);return ["nombre",`let entier : nombre -> bool = function\n  | Ent _ -> true\n  | Rat (p, q) -> p mod q = 0`,R.choix([`entier (Rat (${p*q}, ${q}))`,`entier (Rat (${p}, ${q}))`,`entier (Ent ${k})`])];},
+ R=>{const a=R.ent(1,9),b=R.ent(1,9),p=R.ent(1,9),q=R.ent(2,5);return ["nombre",`let ajoute : nombre -> nombre -> nombre =\n  fun x y -> match x, y with\n  | Ent a, Ent b -> Ent (a + b)\n  | Ent a, Rat (p, q)\n  | Rat (p, q), Ent a ->\n    Rat (a * q + p, q)\n  | Rat (p, q), Rat (r, s) ->\n    Rat (p * s + r * q, q * s)`,R.choix([`ajoute (Ent ${a}) (Ent ${b})`,`ajoute (Ent ${a}) (Rat (${p}, ${q}))`,`ajoute (Rat (${p}, ${q})) (Rat (1, 2))`])];},
+ R=>{const L=R.mel([1,2,3,4,5,6]).slice(0,3),x=R()<0.5?R.choix(L):R.ent(1,9);return ["ens",`let rec mem : int -> int set -> bool =\n  fun x e -> match e with\n  | Empty -> false\n  | Add (y, r) -> x = y || mem x r`,`mem ${x} (${ensDe(L)})`];},
+ R=>{const L=R.mel([1,2,3,4,5,6]).slice(0,R.ent(2,3));return ["ens",`let rec somme : int set -> int = function\n  | Empty -> 0\n  | Add (x, r) -> x + somme r`,`somme (${ensDe(L)})`];},
+ R=>{const a=tireArbre(R,R.ent(2,3));return ["arbre",`let rec taille : int tree -> int = function\n  | Empty -> 0\n  | Node (_, g, d) ->\n    1 + taille g + taille d`,`taille a`,a];},
+ R=>{const a=tireArbre(R,R.ent(2,3));return ["arbre",`let rec somme : int tree -> int = function\n  | Empty -> 0\n  | Node (x, g, d) ->\n    x + somme g + somme d`,`somme a`,a];},
+ R=>{const a=tireArbre(R,R.ent(2,3));return ["arbre",`let rec hauteur : int tree -> int = function\n  | Empty -> 0\n  | Node (_, g, d) ->\n    1 + max (hauteur g) (hauteur d)`,`hauteur a`,a];},
+ R=>{const L=[R.ent(1,9),R.ent(1,9)];return ["number",`let rec total : number list -> float =\n  function\n  | [] -> 0.\n  | Int n :: r ->\n    float_of_int n +. total r\n  | Float x :: r -> x +. total r`,`total [Int ${L[0]}; Float ${L[1]}.5]`];},
+ R=>{const c0=R.choix(["Trefle","Carreau","Coeur","Pique"]);return ["couleur",`let rouge : couleur -> bool = function\n  | Carreau | Coeur -> true\n  | _ -> false`,`rouge ${c0}`];}];
+const tireSomme=R=>{for(;;){const x=R.choix(SOMMEF)(R);if(!x)continue;const [ty,def,appel,a]=x;
+  const pre=TY[ty]+(a?`\nlet a =\n  ${coupe(arbreML(a),"    ")}`:"");
+  const e=exoRenvoie(def,appel,{pre,arbre:true,nat:ty,sym:["(",")","[","]",";",".","true","false"]});if(!e)continue;
+  if(a)e.corps=bloc(TY[ty])+`<p>L'arbre ${c("a")}&nbsp;:</p>`+bloc(arbreDessin(a)+"\n\nlet a =\n  "+coupe(arbreML(a),"    "))+bloc(def);
+  return e;}};
+/* palier 3 : la branche manquante, sur un type somme */
+const tyL=ty=>TY[ty].split("\n");
+const FS={
+ my_length:R=>({nom:"my_length",dit:"le nombre de caractères de la chaîne",L:[...tyL("chaine"),"let rec my_length : my_string -> int =","  function","  | Empty -> 0","  | Cons (_, r) -> 1 + my_length r"],roles:{5:["branche","La chaîne vide n'a aucun caractère."],6:["branche","Un caractère, plus ceux de r : comme pour la longueur d'une liste."]},args:["Empty","(Cons ('a', Empty))",`(${ch("oui")})`,`(${ch("ab")})`,`(${ch("rue")})`]}),
+ inverse:R=>({nom:"inverse",dit:"l'inverse 1/x du nombre x (x non nul)",L:[...tyL("nombre"),"let inverse : nombre -> nombre =","  function","  | Ent n -> Rat (1, n)","  | Rat (p, q) -> Rat (q, p)"],roles:{5:["branche","L'inverse de l'entier n est la fraction 1/n."],6:["branche","L'inverse de p/q est q/p : on échange les deux nombres du couple."]},args:["(Ent 4)","(Ent 1)","(Rat (2, 3))","(Rat (5, 7))","(Rat (1, 9))"]}),
+ mem:R=>({nom:"mem",dit:"true si x est dans l'ensemble",L:[...tyL("ens"),"let rec mem : int -> int set -> bool =","  fun x e -> match e with","  | Empty -> false","  | Add (y, r) -> x = y || mem x r"],roles:{5:["branche","L'ensemble vide ne contient rien."],6:["branche","x est dans l'ensemble s'il vaut y, ou s'il est dans le reste r."]},args:["3 Empty",`3 (${ensDe([3])})`,`3 (${ensDe([1,3])})`,`4 (${ensDe([1,2,5])})`,`2 (${ensDe([2,6])})`]}),
+ card:R=>({nom:"card",dit:"le nombre d'éléments de l'ensemble (sans doublon)",L:[...tyL("ens"),"let rec card : int set -> int = function","  | Empty -> 0","  | Add (_, r) -> 1 + card r"],roles:{4:["branche","L'ensemble vide a 0 élément."],5:["branche","Un élément de plus que r."]},args:["Empty",`(${ensDe([4])})`,`(${ensDe([1,3])})`,`(${ensDe([1,2,5])})`,`(${ensDe([2,6,7,9])})`]}),
+ taille:R=>({nom:"taille",dit:"le nombre de nœuds de l'arbre",L:[...tyL("arbre"),"let rec taille : int tree -> int =","  function","  | Empty -> 0","  | Node (_, g, d) ->","    1 + taille g + taille d"],roles:{5:["branche","L'arbre vide n'a aucun nœud."],7:["rec","Le nœud lui-même, plus les nœuds de ses deux sous-arbres."]},args:["Empty","(Node (1, Empty, Empty))",`(${arbreML([5,[3,null,null],null])})`,`(${arbreML([5,[3,null,null],[8,null,null]])})`,`(${arbreML([2,null,[4,[1,null,null],null]])})`]}),
+ somArbre:R=>({nom:"somme",dit:"la somme des nombres portés par l'arbre",L:[...tyL("arbre"),"let rec somme : int tree -> int =","  function","  | Empty -> 0","  | Node (x, g, d) ->","    x + somme g + somme d"],roles:{5:["branche","L'arbre vide ne porte rien."],7:["rec","Le nombre du nœud, plus la somme de chaque sous-arbre."]},args:["Empty","(Node (4, Empty, Empty))",`(${arbreML([5,[3,null,null],null])})`,`(${arbreML([5,[3,null,null],[8,null,null]])})`,`(${arbreML([2,null,[4,[1,null,null],null]])})`]}),
+ hauteur:R=>({nom:"hauteur",dit:"la hauteur de l'arbre (l'arbre vide a une hauteur 0)",L:[...tyL("arbre"),"let rec hauteur : int tree -> int =","  function","  | Empty -> 0","  | Node (_, g, d) ->","    1 + max (hauteur g) (hauteur d)"],roles:{5:["branche","L'arbre vide a une hauteur 0."],7:["rec","Un étage pour le nœud, plus la hauteur du plus haut des deux sous-arbres."]},args:["Empty","(Node (4, Empty, Empty))",`(${arbreML([5,[3,null,null],null])})`,`(${arbreML([5,[3,[1,null,null],null],[8,null,null]])})`,`(${arbreML([2,null,[4,[1,null,null],null]])})`]}),
+ entier:R=>({nom:"entier",dit:"true si le nombre est un entier",L:[...tyL("nombre"),"let entier : nombre -> bool = function","  | Ent _ -> true","  | Rat (p, q) -> p mod q = 0"],roles:{4:["branche","Un Ent est toujours un entier."],5:["branche","p/q est un entier quand q divise p : le reste de p par q vaut 0."]},args:["(Ent 3)","(Rat (4, 2))","(Rat (3, 2))","(Rat (9, 3))","(Rat (5, 4))"]}),
+ somEns:R=>({nom:"somme",dit:"la somme des éléments de l'ensemble",L:[...tyL("ens"),"let rec somme : int set -> int =","  function","  | Empty -> 0","  | Add (x, r) -> x + somme r"],roles:{5:["branche","L'ensemble vide : la somme vaut 0."],6:["branche","x plus la somme des éléments de r."]},args:["Empty",`(${ensDe([4])})`,`(${ensDe([1,3])})`,`(${ensDe([1,2,5])})`,`(${ensDe([2,6,7])})`]}),
+ total:R=>({nom:"total",dit:"la somme, en float, des nombres de la liste",L:[...tyL("number"),"let rec total : number list -> float =","  function","  | [] -> 0.","  | Int n :: r ->","    float_of_int n +. total r","  | Float x :: r -> x +. total r"],roles:{5:["branche","La liste vide : la somme vaut 0. (un float)."],7:["rec","Un Int doit être converti en float avant d'être ajouté avec +."],8:["branche","Un Float s'ajoute directement avec +."]},args:["[]","[Int 2]","[Float 1.5]","[Int 1; Float 2.5]","[Float 0.5; Int 3; Int 1]"]}),
+ feuilles:R=>({nom:"feuilles",dit:"le nombre de feuilles de l'arbre (nœuds sans enfant)",L:[...tyL("arbre"),"let rec feuilles : int tree -> int =","  function","  | Empty -> 0","  | Node (_, Empty, Empty) -> 1","  | Node (_, g, d) ->","    feuilles g + feuilles d"],roles:{5:["branche","L'arbre vide n'a aucune feuille."],6:["branche","Un nœud sans enfant est une feuille. Cette branche doit venir avant la suivante, plus générale."],8:["rec","Les feuilles sont dans les deux sous-arbres."]},args:["Empty","(Node (1, Empty, Empty))",`(${arbreML([5,[3,null,null],null])})`,`(${arbreML([5,[3,null,null],[8,null,null]])})`,`(${arbreML([2,[7,null,null],[4,[1,null,null],[6,null,null]]])})`]}),
+ rouge:R=>({nom:"rouge",dit:"true pour Carreau et Coeur, false sinon",L:[...tyL("couleur"),"let rouge : couleur -> bool = function","  | Carreau | Coeur -> true","  | Trefle | Pique -> false"],roles:{3:["branche","Les deux couleurs rouges, réunies dans une seule branche avec |."],4:["branche","Les deux couleurs noires."]},args:["Trefle","Carreau","Coeur","Pique"]})};
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
@@ -24734,7 +24818,12 @@ G.add("pf",[
   paliers:[
    {t:"une erreur de type",cc:3,min:30,gen:R=>tireFausse(R,Object.assign({},FL,FI),"type",["List.hd","List.tl","::","[]"])},
    {t:"une erreur de logique",cc:3,min:30,gen:R=>tireFausse(R,Object.assign({},FL,FM,FI),"logique",["List.hd","List.tl","::","[]","&&","||"])},
-   {t:"un cas oublié dans un match",cc:3,min:20,gen:R=>tireFausse(R,FM,"match")}]}
+   {t:"un cas oublié dans un match",cc:3,min:20,gen:R=>tireFausse(R,FM,"match")}]},
+ {id:"PF5",t:"Types somme, types récursifs, arbres",tache:"types somme et arbres",th:"somme",ex:"ct",pts:5.5,lecons:["p2-somme","p2-rectype"],apres:["PF2"],
+  paliers:[
+   {t:"écrire une valeur du type",cc:2,min:40,gen:tireValeur},
+   {t:"ce que renvoie une fonction sur le type",cc:3,min:40,gen:tireSomme},
+   {t:"écrire la branche manquante",cc:3,min:18,gen:R=>tireLigne(R,FS,["branche","rec"],["|","->","(",")","Empty"])}]}
 ]);
 })();
 
