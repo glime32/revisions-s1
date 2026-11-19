@@ -22072,7 +22072,7 @@ G.add("geo",[
 /* Générateurs de Calculus. CC2 : nombres complexes (TD 3), équations différentielles d'ordre 2 (TD 2, ex. 3 à 5). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nul,nb,brut,propre}=O;
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nul,nb,brut,par,propre}=O;
 const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
 
 /* ---------- lire une formule tapée ----------
@@ -22444,6 +22444,122 @@ function puissanceAlg(R){const [r0,m0]=R.choix(BASES),t0=Q(m0,12),{a:a0,b:b0}=al
     rep:{a:rTape(a),b:rTape(b)},faux:pres(rF(f.b),v[1])?{a:rTape(a)+"+1",b:rTape(b)}:{a:rTape(f.a),b:rTape(f.b)},
     pieges:[[[rF(f.a),rF(f.b)],{etape:2,type:"signe de l'angle",titre:"Où ça part : l'angle.",msg:`L'angle de ${fx("z")} est ${fx(angT(tt))} : regarde le signe de l'argument de ${fx(base)}, puis multiplie-le par ${n}.`}],
       [[rF(algDe(r0,tt).a),rF(algDe(r0,tt).b)],{etape:1,type:"module pas élevé à la puissance n",titre:"Où ça part : le module.",msg:`Le module de z est ${fx(`${rT(r0)}^{${n}} = ${rT(rn)}`)}.`}]],ens:{type:"puisAlg",base:[rF(a0),rF(b0)],n}});}
+/* ---------- CA6 : y″ + ay′ + by = 0 ----------
+   Une solution tapée avec des constantes est jugée par le calcul : pour plusieurs valeurs des constantes,
+   ses valeurs en 8 points doivent être une combinaison des deux solutions de base (moindres carrés),
+   et deux constantes doivent suffire à les obtenir toutes. */
+const XS=[-1,-0.7,-0.4,-0.1,0.2,0.5,0.8,1.1];
+const dot=(u,v)=>u.reduce((t,x,i)=>t+x*v[i],0),nrm=u=>Math.sqrt(dot(u,u));
+function ajuste(Y,B){const n=B.length,M=B.map(f=>B.map(g=>dot(f,g))),b=B.map(f=>dot(f,Y)),c=resout(M,b);if(!c)return null;
+  const res=Y.map((y,i)=>y-B.reduce((t,f,k)=>t+c[k]*f[i],0)),ech=B.reduce((t,f)=>t+nrm(f),0);return {c,ok:nrm(res)<=1e-7*Math.max(nrm(Y),ech*1e-3)};}
+function resout(M,b){const n=b.length,A=M.map((r,i)=>r.concat([b[i]]));
+  for(let j=0;j<n;j++){let p=j;for(let i=j;i<n;i++)if(Math.abs(A[i][j])>Math.abs(A[p][j]))p=i;if(Math.abs(A[p][j])<1e-14)return null;[A[j],A[p]]=[A[p],A[j]];
+    for(let i=0;i<n;i++)if(i!==j){const k=A[i][j]/A[j][j];for(let t=j;t<=n;t++)A[i][t]-=k*A[j][t];}}
+  return A.map((r,i)=>r[n]/r[i]);}
+const rang2=V=>{if(!V.length)return 0;const m=V.reduce((t,v)=>Math.max(t,nrm(v)),0);if(m<1e-9)return 0;
+  for(let i=0;i<V.length;i++)for(let j=i+1;j<V.length;j++)if(Math.abs(V[i][0]*V[j][1]-V[i][1]*V[j][0])>1e-6*nrm(V[i])*nrm(V[j]))return 2;return 1;};
+/* lit « y = … » : l'arbre et ses constantes */
+function lisY(t){const s=String(t==null?"":t),k=s.lastIndexOf("="),src=k>=0?s.slice(k+1):s;if(!propre(src))return {vide:1};
+  const A=lis(src,["x"]);if(!A)return {illisible:1};return {A,cst:[...lettres(A)]};}
+/* les valeurs aux points XS pour des valeurs des constantes ; null si un calcul échoue */
+function valeurs(A,env){try{const V=XS.map(x=>val(A,Object.assign({x},env)));if(V.some(v=>!Number.isFinite(v[0])||!Number.isFinite(v[1])))return null;return V;}catch(e){return null;}}
+/* « toutes les solutions » : rend ok, ou la raison */
+function famille(Y,B){const cst=Y.cst;if(cst.length<2)return {pb:cst.length?"une":"aucune"};
+  const env=v=>Object.fromEntries(cst.map((c,i)=>[c,v[i]])),z=cst.map(()=>0),Fb=B.map(f=>XS.map(f));
+  const Vs=[z].concat(cst.map((c,i)=>cst.map((d,j)=>i===j?1:0)),[cst.map((c,i)=>0.7-1.3*i)]).map(v=>valeurs(Y.A,env(v)));
+  if(Vs.some(v=>!v))return {pb:"calcul"};
+  if(Vs.some(V=>V.some(v=>Math.abs(v[1])>1e-7*Math.max(1,Math.abs(v[0])))))return {pb:"complexe"};
+  const R=Vs.map(V=>V.map(v=>v[0])),fits=R.map(Y0=>ajuste(Y0,Fb));
+  if(fits.some(f=>!f||!f.ok))return {pb:"pasSolution",R};
+  const base=fits[0].c,dir=fits.slice(1,1+cst.length).map(f=>f.c.map((x,k)=>x-base[k])),combo=cst.map((c,i)=>0.7-1.3*i);
+  const pred=base.map((x,k)=>x+dir.reduce((t,d,i)=>t+combo[i]*d[k],0)),last=fits[fits.length-1].c;
+  if(pred.some((x,k)=>Math.abs(x-last[k])>1e-6*Math.max(1,Math.abs(x))))return {pb:"nonlineaire"};
+  if(rang2(dir)<2)return {pb:"rang"};
+  return {ok:true};}
+/* les nombres tapés dans un champ, séparés par « ; » ou « et » */
+function lisListe(t){const s=String(t==null?"":t).replace(/^[^=]*=/,"");if(!propre(s))return {vide:1};
+  const L=s.split(/;| et /).map(x=>x.trim()).filter(Boolean).map(lisCx);if(L.some(x=>x.vide||x.illisible))return {illisible:1};if(L.some(x=>x.neg))return {neg:1};return {L:L.map(x=>x.v)};}
+function memeListe(L,att){if(L.length!==att.length)return false;const reste=att.slice();for(const v of L){const k=reste.findIndex(w=>presC(v,w));if(k<0)return false;reste.splice(k,1);}return true;}
+const rx=r=>{r=q(r);const A=absQ(r),s=r.n<0?"−":"";return A.d===1?s+(A.n===1?"":A.n)+"x":s+(A.n===1?"":A.n)+"x/"+A.d;};
+const ex=r=>`e^{${rx(r)}}`,exT=r=>`e^(${brut(r)}*x)`;
+const bx=b=>b===1?"x":b+"x",trigT=(f,b)=>`${f}(${bx(b)})`;
+const yEq=(k,p,c)=>`${S([[k,"y″"],[mul(k,p),"y′"],[mul(k,c),"y"]])} = 0`,carEq=(k,p,c)=>`${S([[k,"r²"],[mul(k,p),"r"],[mul(k,c),""]])} = 0`;
+/* une équation tirée selon le cas : racines r1, r2 réelles distinctes, double, ou α ± iβ */
+function tireED(R,cas){const k=R()<0.65?1:R.choix([2,3,-1,4]);let o;
+  if(cas==="2"){let r1,r2;do{r1=R.nz(-5,5);r2=R.nz(-5,5);}while(r1===r2);o={cas,r1:Q(Math.min(r1,r2)),r2:Q(Math.max(r1,r2)),p:Q(-(r1+r2)),c:Q(r1*r2)};}
+  else if(cas==="1"){const demi=R()<0.2,r=demi?Q(R.choix([1,3,5,-1,-3]),2):Q(R.nz(-6,6));o={cas,r,p:mul(r,-2),c:mul(r,r)};}
+  else{const al=R.ent(-3,3),be=R.ent(1,4);o={cas,al:Q(al),be,p:Q(-2*al),c:Q(al*al+be*be)};}
+  o.k=o.cas==="1"&&o.r.d===2?4:k;return o;}
+function baseED(o){if(o.cas==="2"){const a=o.r1.n/o.r1.d,b=o.r2.n/o.r2.d;return [x=>Math.exp(a*x),x=>Math.exp(b*x)];}
+  if(o.cas==="1"){const a=o.r.n/o.r.d;return [x=>Math.exp(a*x),x=>x*Math.exp(a*x)];}
+  const a=o.al.n/o.al.d,b=o.be;return [x=>Math.exp(a*x)*Math.cos(b*x),x=>Math.exp(a*x)*Math.sin(b*x)];}
+const racines=o=>o.cas==="2"?[[o.r1.n/o.r1.d,0],[o.r2.n/o.r2.d,0]]:o.cas==="1"?[[o.r.n/o.r.d,0],[o.r.n/o.r.d,0]]:[[o.al.n,o.be],[o.al.n,-o.be]];
+const racT=o=>o.cas==="2"?`r₁ = ${nb(o.r1)} et r₂ = ${nb(o.r2)}`:o.cas==="1"?`r = ${nb(o.r)}, racine double`:`r = ${zt(Z(o.al,o.be))} et r = ${zt(Z(o.al,-o.be))}`;
+const racTape=o=>o.cas==="2"?brut(o.r1)+";"+brut(o.r2):o.cas==="1"?brut(o.r):`${brut(o.al)}+${o.be}*i;${brut(o.al)}-${o.be}*i`.replace(/^0\+/,"").replace(/;0-/,";-");
+function genT(o,C){const[c1,c2]=C||["C₁","C₂"];if(o.cas==="2")return `${c1}${ex(o.r1)} + ${c2}${ex(o.r2)}`;if(o.cas==="1")return `(${c1} + ${c2}x)${ex(o.r)}`;
+  const tr=`${c1}cos(${bx(o.be)}) + ${c2}sin(${bx(o.be)})`;return nul(o.al)?tr:`${ex(o.al)}(${tr})`;}
+function genTape(o){if(o.cas==="2")return `C1*${exT(o.r1)}+C2*${exT(o.r2)}`;if(o.cas==="1")return `(C1+C2*x)*${exT(o.r)}`;
+  const tr=`C1*cos(${o.be}*x)+C2*sin(${o.be}*x)`;return nul(o.al)?tr:`${exT(o.al)}*(${tr})`;}
+const fr2=r=>`(r ${q(r).n<0?"+":"−"} ${nb(absQ(r))})`;
+const DELTA=o=>sub(mul(o.p,o.p),mul(4,o.c));
+function etapesCar(o){const d=DELTA(o),E=[{w:`On cherche des solutions de la forme ${fx("y = e^{rx}")}. L'équation caractéristique est ${fx(carEq(o.k,o.p,o.c))}${o.k!==1?`, c'est-à-dire ${fx(carEq(1,o.p,o.c))} après division par ${nb(o.k)}`:""}.`,why:`Avec ${fx("y = e^{rx}")}, ${fx("y′ = re^{rx}")} et ${fx("y″ = r²e^{rx}")} : on remplace y″ par r², y′ par r et y par 1, puis on simplifie par ${fx("e^{rx}")}, qui ne s'annule jamais.`,pts:1}];
+  if(o.cas==="2")E.push({w:`${fx(`Δ = ${nb(mul(o.p,o.p))} − ${nb(mul(4,o.c)).replace(/^−/,"(−")+(mul(4,o.c).n<0?")":"")} = ${nb(d)}`)} &gt; 0 : deux racines réelles, ${fx(racT(o))}.`,why:`${fx("r = (−a ± √Δ)/2")}. Vérification : ${fx(`${fr2(o.r1)}${fr2(o.r2)} = ${carEq(1,o.p,o.c).replace(" = 0","")}`)}.`,pts:1});
+  else if(o.cas==="1")E.push({w:`${fx(`Δ = ${nb(mul(o.p,o.p))} − ${nb(mul(4,o.c))} = 0`)} : une racine double, ${fx(`r = ${nb(o.r)}`)}.`,why:`${fx("r = −a/2")} quand Δ = 0. Vérification : ${fx(`(r ${o.r.n<0?"+":"−"} ${nb(absQ(o.r))})² = ${carEq(1,o.p,o.c).replace(" = 0","")}`)}.`,pts:1});
+  else E.push({w:`${fx(`Δ = ${nb(mul(o.p,o.p))} − ${nb(mul(4,o.c))} = ${nb(d)}`)} &lt; 0 : deux racines complexes conjuguées, ${fx(racT(o))}, c'est-à-dire ${fx(`α = ${nb(o.al)}`)} et ${fx(`β = ${o.be}`)}.`,why:`${fx("r = (−a ± i√(−Δ))/2")}, avec ${fx(`√(${nb(mul(d,-1))}) = ${2*o.be}`)}.`,pts:1});
+  E.push({w:`Toutes les solutions : ${fx(`y = ${genT(o)}`)}, où ${fx("C₁")} et ${fx("C₂")} sont deux constantes réelles.`,why:o.cas==="2"?"Deux racines réelles distinctes : une exponentielle pour chacune.":o.cas==="1"?`Racine double : ${fx(ex(o.r))} est solution, et ${fx(`x${ex(o.r)}`)} aussi. Sans le x, il manquerait des solutions.`:`Racines ${fx("α ± iβ")} : ${fx("y = e^{αx}(C₁cos(βx) + C₂sin(βx))")}${nul(o.al)?" ; ici α = 0, donc pas d'exponentielle":""}.`,pts:1});
+  return E;}
+const RAP_ED=`<p class="muted">Rappel : y″ + ay′ + by = 0 se résout avec l'équation caractéristique r² + ar + b = 0. Écris la solution avec x et deux constantes, par exemple C1*e^(2x) + C2*e^(-x).</p>`;
+const SYM_Y=["e^(","x","C1","C2","cos(","sin(","^"];
+function diagFamille(o,Y,f,E){const d=(type,msg)=>({etape:E,type,titre:"Où ça part : les solutions.",msg});
+  if(f.pb==="aucune"||f.pb==="une")return d("constantes manquantes",`Une équation d'ordre 2 a deux constantes : ${fx(`y = ${genT(o)}`)}.`);
+  if(f.pb==="complexe")return d("forme complexe au lieu de la forme réelle",`On attend des solutions réelles : avec des racines ${fx("α ± iβ")}, on écrit ${fx("e^{αx}(C₁cos(βx) + C₂sin(βx))")}.`);
+  if(f.pb==="rang"||f.pb==="nonlineaire")return d(o.cas==="1"?"racine double sans le x":"deux constantes qui n'en font qu'une",o.cas==="1"?`Avec une racine double, ${fx(ex(o.r))} ne suffit pas : ${fx(`y = (C₁ + C₂x)${ex(o.r)}`)}.`:`Les deux constantes doivent multiplier deux fonctions différentes : ${fx(`y = ${genT(o)}`)}.`);
+  return d(o.cas==="1"?"forme de la racine double":o.cas==="3"?"forme des racines complexes":"solution qui ne vérifie pas l'équation",`Ta formule ne vérifie pas l'équation pour toutes les valeurs des constantes. Avec ${fx(racT(o))} : ${fx(`y = ${genT(o)}`)}.`);}
+function generaleED(R,cas){const o=tireED(R,cas),eq=yEq(o.k,o.p,o.c),E=etapesCar(o),att=racines(o),B=baseED(o);
+  function juge(rep){const L=lisListe(rep.rac),Y=lisY(rep.y);
+    if(L.vide||Y.vide)return {incomplet:"Remplis les deux champs : les racines, puis y."};
+    if(L.neg)return {incomplet:"La racine carrée d'un nombre négatif n'existe pas dans ℝ : écris les racines complexes avec i, par exemple −1 + 2i ; −1 − 2i."};
+    if(L.illisible)return {incomplet:"Je n'arrive pas à lire les racines. Sépare-les par « ; », par exemple 1 ; −3, ou 2 + i ; 2 − i."};
+    if(Y.illisible)return {incomplet:"Je n'arrive pas à lire y. Écris par exemple C1*e^(2x) + C2*e^(-x), avec des parenthèses après e^."};
+    const okR=memeListe(L.L,att)||(o.cas==="1"&&L.L.length===1&&presC(L.L[0],att[0])),f=famille(Y,B);
+    if(f.pb==="calcul")return {incomplet:"Je n'arrive pas à calculer ta formule pour toutes les valeurs de x : vérifie les parenthèses."};
+    if(okR&&f.ok)return {ok:true};
+    const F=[];if(!okR)F.push("rac");if(!f.ok)F.push("y");
+    const opp=memeListe(L.L.map(v=>[-v[0],-v[1]]),att)||(o.cas==="1"&&L.L.length===1&&presC([-L.L[0][0],-L.L[0][1]],att[0]));
+    const d=!okR?(opp?{etape:0,type:"signes de l'équation caractéristique",titre:"Où ça part : l'équation caractéristique.",msg:`Tes racines ont le mauvais signe. On remplace y″ par r², y′ par r, y par 1, sans changer les signes : ${fx(carEq(1,o.p,o.c))}.`}
+      :{etape:1,type:"racines de l'équation caractéristique",titre:"Où ça part : les racines.",msg:`Les racines de ${fx(carEq(1,o.p,o.c))} sont ${fx(racT(o))}.`}):diagFamille(o,Y,f,2);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les racines et la solution sont à revoir":F[0]==="rac"?"les racines sont à revoir":"la solution y est à revoir"}.`,diag:d};}
+  const neg={cas:o.cas,k:o.k,p:mul(o.p,-1),c:o.c,r1:o.r1&&mul(o.r2,-1),r2:o.r1&&mul(o.r1,-1),r:o.r&&mul(o.r,-1),al:o.al&&mul(o.al,-1),be:o.be};
+  return {sig:"H"+eq,q:`Résous l'équation différentielle ${fx(eq)} : donne les racines de son équation caractéristique, puis toutes ses solutions.`,corps:cas==="2"?RAP_ED:"",texte:`racines et solutions de ${eq}`,
+    champs:[{k:"champ",id:"rac",nom:"racines",label:"Les racines :",ex:"séparées par ; par exemple 1 ; -3",sym:["i","√","/"],apercu:false},{k:"champ",id:"y",nom:"solutions",label:"$y =$",ex:"avec x et deux constantes C1 et C2",sym:SYM_Y,aide:"Écris e^(2x) avec des parenthèses. Les constantes peuvent s'appeler C1 et C2, ou A et B."}],
+    juge,etapes:E,bonne:`${fx(racT(o))} ; ${fx(`y = ${genT(o)}`)}`,bonneTxt:`${racT(o)} ; y = ${genT(o)}`,repBonne:{rac:racTape(o),y:genTape(o)},repFausse:o.cas==="3"&&nul(o.al)?{rac:racTape(o),y:`C1*cos(${o.be}*x)`}:o.cas==="2"&&egal(o.r1,mul(o.r2,-1))?{rac:racTape(o),y:`C1*${exT(o.r1)}`}:{rac:racTape(neg),y:genTape(neg)},
+    nature:{"2":"deux racines réelles","1":"racine double","3":"racines complexes"}[cas],ens:{type:"gen",k:o.k,p:o.p.n/o.p.d,c:o.c.n/o.c.d,rac:att}};}
+/* avec y(0) et y′(0) : les deux constantes */
+function conditionsED(R){const cas=R.choix(["2","2","1","3"]),o=tireED(R,cas),eq=yEq(o.k,o.p,o.c),E=etapesCar(o);let y0,y1;do{y0=R.ent(-3,3);y1=R.ent(-4,4);}while(!y0&&!y1);
+  let C1,C2,dT,sysT,f1T,f2T;
+  if(cas==="2"){C2=div(sub(y1,mul(o.r1,y0)),sub(o.r2,o.r1));C1=sub(y0,C2);dT=S([[o.r1,"C₁"+ex(o.r1)],[o.r2,"C₂"+ex(o.r2)]]);sysT=O.sys([[1,1],[o.r1,o.r2]],[y0,y1],["C₁","C₂"]);}
+  else if(cas==="1"){C1=Q(y0);C2=sub(y1,mul(o.r,y0));dT=`(${S([[1,"C₂"],[o.r,"C₁"],[o.r,"C₂x"]])})${ex(o.r)}`;sysT=O.sys([[1,0],[o.r,1]],[y0,y1],["C₁","C₂"]);}
+  else{C1=Q(y0);C2=div(sub(y1,mul(o.al,y0)),o.be);const cb=`cos(${bx(o.be)})`,sb=`sin(${bx(o.be)})`;
+    dT=nul(o.al)?S([[-o.be,"C₁"+sb],[o.be,"C₂"+cb]]):`${ex(o.al)}((${S([[o.al,"C₁"],[o.be,"C₂"]])})${cb} + (${S([[o.al,"C₂"],[-o.be,"C₁"]])})${sb})`;sysT=O.sys([[1,0],[o.al,o.be]],[y0,y1],["C₁","C₂"]);}
+  const B=baseED(o),yf=x=>(C1.n/C1.d)*B[0](x)+(C2.n/C2.d)*B[1](x);
+  const solT=cas==="2"?S([[C1,ex(o.r1)],[C2,ex(o.r2)]]):cas==="1"?(nul(C2)?S([[C1,ex(o.r)]]):nul(C1)?S([[C2,"x"+ex(o.r)]]):`(${S([[C1,""],[C2,"x"]])})${ex(o.r)}`):(()=>{const tr=S([[C1,`cos(${bx(o.be)})`],[C2,`sin(${bx(o.be)})`]]);return nul(o.al)?tr:`${ex(o.al)}(${tr})`;})();
+  const B1=cas==="2"?[exT(o.r1),exT(o.r2)]:cas==="1"?[exT(o.r),`x*${exT(o.r)}`]:[`${nul(o.al)?"":exT(o.al)+"*"}cos(${o.be}*x)`,`${nul(o.al)?"":exT(o.al)+"*"}sin(${o.be}*x)`];
+  const solTape=`(${brut(C1)})*${B1[0]}+(${brut(C2)})*${B1[1]}`;
+  E.push({w:`On dérive : ${fx(`y′ = ${dT}`)}.`,why:"Les conditions portent sur y et sur y′ : on calcule y′ avant de remplacer x par 0.",pts:1},
+    {w:`${fx(`y(0) = ${nb(y0)}`)} et ${fx(`y′(0) = ${nb(y1)}`)} donnent le système ${sysT} Donc ${fx(`C₁ = ${nb(C1)}`)} et ${fx(`C₂ = ${nb(C2)}`)}.`,why:`En x = 0 : ${fx("e^{0} = 1")}, ${fx("cos 0 = 1")} et ${fx("sin 0 = 0")}.`,pts:1},
+    {w:`${fx(`y = ${solT}`)}.`,why:"On remplace C₁ et C₂ dans la solution générale. Vérification : en x = 0, on retrouve y(0) et y′(0).",pts:1});
+  function juge(rep){const Y=lisY(rep.y);if(Y.vide)return {incomplet:"Écris la solution y."};if(Y.illisible)return {incomplet:"Je n'arrive pas à lire y. Écris par exemple 2*e^(2x) - e^(3x), avec des parenthèses après e^."};
+    if(Y.cst.length)return {incomplet:`Il reste ${Y.cst.length>1?"des constantes":"une constante"} (${Y.cst.join(", ")}) : utilise y(0) = ${nb(y0)} et y′(0) = ${nb(y1)} pour les calculer.`};
+    const V=valeurs(Y.A,{});if(!V)return {incomplet:"Je n'arrive pas à calculer ta formule pour toutes les valeurs de x : vérifie les parenthèses."};
+    if(V.every((v,i)=>Math.abs(v[1])<1e-9&&Math.abs(v[0]-yf(XS[i]))<=1e-7*Math.max(1,Math.abs(yf(XS[i])))))return {ok:true};
+    const dans=ajuste(V.map(v=>v[0]),B.map(f=>XS.map(f)));let d;
+    if(dans&&dans.ok){const c=dans.c,a0=c[0]*B[0](0)+c[1]*B[1](0);d=Math.abs(a0-y0)>1e-7?{etape:4,type:"condition y(0)",titre:"Où ça part : les constantes.",msg:`Ta fonction est bien solution de l'équation, mais elle ne vaut pas ${nb(y0)} en 0 : refais le système en C₁ et C₂.`}
+      :{etape:3,type:"condition y′(0)",titre:"Où ça part : la dérivée.",msg:`Ta fonction vaut bien ${nb(y0)} en 0, mais sa dérivée en 0 n'est pas ${nb(y1)} : dérive la solution complète avant de remplacer x par 0.`};}
+    else d={etape:2,type:"solution générale",titre:"Où ça part : les solutions.",msg:`Ta fonction ne vérifie pas l'équation. Les solutions sont ${fx(`y = ${genT(o)}`)}.`};
+    return {ok:false,faux:["y"],resume:"Pas tout à fait : cette fonction n'est pas la bonne.",diag:d};}
+  return {sig:"I"+eq+"|"+y0+"|"+y1,q:`Résous l'équation différentielle ${fx(eq)} avec les conditions initiales ${fx(`y(0) = ${nb(y0)}`)} et ${fx(`y′(0) = ${nb(y1)}`)}.`,corps:"",texte:`${eq}, y(0) = ${nb(y0)}, y′(0) = ${nb(y1)}`,
+    champs:[{k:"champ",id:"y",nom:"solution",label:"$y =$",ex:"une fonction de x, sans constante",sym:SYM_Y.slice(0,2).concat(["cos(","sin(","/"]),aide:"Écris e^(2x) avec des parenthèses, et les fractions avec /."}],juge,etapes:E,
+    bonne:fx(`y = ${solT}`),bonneTxt:`y = ${solT}`,repBonne:{y:solTape},repFausse:{y:`(${brut(C1)})*${B1[0]}+(${brut(add(C2,1))})*${B1[1]}`},nature:{"2":"deux racines réelles","1":"racine double","3":"racines complexes"}[cas],ens:{type:"ci",k:o.k,p:o.p.n/o.p.d,c:o.c.n/o.c.d,y0,y1}};}
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -22459,7 +22575,13 @@ G.add("calc",[
    {t:"un point sur un axe ou sur une diagonale",cc:2,min:60,gen:R=>versPolaire(R,true)},
    {t:"les angles π/6 et π/3",cc:3,min:70,gen:R=>versPolaire(R,false)},
    {t:"produit, quotient, puissance, opposé",cc:3,gen:operation},
-   {t:"une puissance en forme algébrique, par la forme exponentielle",cc:5,min:100,gen:puissanceAlg}]}
+   {t:"une puissance en forme algébrique, par la forme exponentielle",cc:5,min:100,gen:puissanceAlg}]},
+ {id:"CA6",t:"Équation différentielle d'ordre 2 sans second membre",tache:"ordre 2, l'équation caractéristique",th:"ed2",pts:4,ex:"cc2",lecons:["c2-ed2"],
+  paliers:[
+   {t:"deux racines réelles",cc:3,min:100,gen:R=>generaleED(R,"2")},
+   {t:"une racine double",cc:3,min:45,gen:R=>generaleED(R,"1")},
+   {t:"des racines complexes",cc:3,min:60,gen:R=>generaleED(R,"3")},
+   {t:"avec y(0) et y′(0), comme au TD 2",cc:7,gen:conditionsED}]}
 ]);
 })();
 
