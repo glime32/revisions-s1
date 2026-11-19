@@ -24813,7 +24813,7 @@ const G=window.GEN,O=G.outils;
 const a_=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const vide=()=>Object.create(null);
 
-const MOTS=new Set("let rec and in if then else fun function match with type of exception try true false mod begin end".split(" "));
+const MOTS=new Set("let rec and in if then else fun function match with type of exception try true false mod begin end when as".split(" "));
 const OPS=["->","::",";;","<>","<=",">=","&&","||","+.","-.","*.","/.","**","==","!=","(",")","[","]","{","}","|",";",",","=","<",">","+","-","*","/","^","@",":","."];
 const normalise=s=>String(s==null?"":s).replace(/[−–—]/g,"-").replace(/→/g,"->").replace(/[’‘`´]/g,"'").replace(/[“”«»]/g,'"').replace(/×/g,"*").replace(/≤/g,"<=").replace(/≥/g,">=").replace(/≠/g,"<>").replace(/[\u00a0\u202f]/g," ");
 
@@ -24862,7 +24862,9 @@ function analyse(texte,quoi){const src=normalise(texte),T=jetons(src);let i=0;
     return t;}
 
   const debutMotif=d=>["_","id","int","float","str","char","true","false","cons","[","("].includes(T[i+(d||0)].k);
-  function motif(){const p=T[i].p,a=motifCons();if(!vu(","))return a;const L=[a];while(vu(",")){av();L.push(motifCons());}return N({k:"ptuple",L},p);}
+  const nomme=(m,p)=>{while(vu("as")){av();const t=veut("id","Après as, il faut un nom");m=N({k:"pas",pat:m,n:t.v},p);}return m;};
+  function motif(){const p=T[i].p;return nomme(motifTuple(),p);}
+  function motifTuple(){const p=T[i].p,a=motifCons();if(!vu(","))return a;const L=[a];while(vu(",")){av();L.push(motifCons());}return N({k:"ptuple",L},p);}
   function motifCons(){const p=T[i].p,a=motifApp();if(vu("::")){av();return N({k:"pcons",h:a,t:motifCons()},p);}return a;}
   function motifApp(){const p=T[i].p;if(vu("cons")){const c=av();return N({k:"pctor",n:c.v,arg:debutMotif()?motifAtome():null},p);}return motifAtome();}
   function motifAtome(){const p=T[i].p,t=T[i];
@@ -24873,7 +24875,9 @@ function analyse(texte,quoi){const src=normalise(texte),T=jetons(src);let i=0;
     if(vu("-")||vu("-.")){av();const x=T[i];if(!vu("int")&&!vu("float"))pb("Après ce signe moins, il faut un nombre.");av();return N({k:"plit",t:x.k,v:-x.v},p);}
     if(vu("cons")){av();return N({k:"pctor",n:t.v,arg:null},p);}
     if(vu("[")){av();const L=[];while(!vu("]")){L.push(motif());if(vu(";"))av();else break;}veut("]","Il manque le crochet fermant");return N({k:"plist",L},p);}
-    if(vu("(")){av();if(vu(")")){av();return N({k:"plit",t:"unit"},p);}let m=motif();if(vu(":")){av();m=N({k:"pannot",pat:m,ty:type()},p);}veut(")","Il manque une parenthèse fermante");return m;}
+    if(vu("(")){av();if(vu(")")){av();return N({k:"plit",t:"unit"},p);}let m=motifTuple();
+      if(vu("|")){const L=[m];while(vu("|")){av();L.push(motifTuple());}m=N({k:"por",L},p);}
+      m=nomme(m,p);if(vu(":")){av();m=N({k:"pannot",pat:m,ty:type()},p);}veut(")","Il manque une parenthèse fermante");return m;}
     pb(`Ici, il faut un paramètre ou un motif : un nom, _, [] ou x :: reste (je lis ${lu(t)}).`);}
 
   const debutAtome=()=>["int","float","str","char","id","cons","true","false","(","[","begin","{"].includes(T[i].k);
@@ -24905,7 +24909,8 @@ function analyse(texte,quoi){const src=normalise(texte),T=jetons(src);let i=0;
     return e;}
   const branche=()=>OUVRE.includes(T[i].k)?ouverte():niveau(0);
   function cas(){const C=[];if(vu("|"))av();for(;;){const p=T[i].p,pats=[motif()];while(vu("|")){av();pats.push(motif());}
-      veut("->","Après un motif, il faut « -> »");C.push(N({pats,e:expr()},p));if(vu("|"))av();else break;}return C;}
+      let garde=null;if(vu("when")){av();garde=niveau(0);}
+      veut("->",garde?"Après la condition du when, il faut « -> »":"Après un motif, il faut « -> »");C.push(N(garde?{pats,garde,e:expr()}:{pats,e:expr()},p));if(vu("|"))av();else break;}return C;}
   function liaisons(){const rec=vu("rec")?(av(),true):false,B=[liaison()];while(vu("and")){av();B.push(liaison());}return {rec,B};}
   function liaison(){const p=T[i].p;
     if(vu("id")&&debutMotif(1)){const f=av(),P=[];while(debutMotif())P.push(motifAtome());let ty=null;if(vu(":")){av();ty=type();}
@@ -25066,6 +25071,12 @@ function session(){
       case "ptuple":return {k:"c",n:"*",a:m.L.map(x=>typeMotif(x,L,V))};
       case "plist":{const t=tvar(niv);m.L.forEach(x=>attend(x,typeMotif(x,L,V),t,(a,b)=>`Dans ce motif de liste, « ${morceau(x)} » est ${dit(a)}, alors que les autres éléments sont ${dit(b)}.`));return tliste(t);}
       case "pcons":{const t=typeMotif(m.h,L,V),r=typeMotif(m.t,L,V);attend(m.t,r,tliste(t),()=>"À droite de :: dans un motif, il faut une liste.");return r;}
+      case "pas":{const t=typeMotif(m.pat,L,V);if(L[m.n])ft(`Le nom ${m.n} apparaît deux fois dans le même motif.`,m);L[m.n]=t;m.T=t;return t;}
+      case "por":{const avant=Object.keys(L),t=typeMotif(m.L[0],L,V),noms=Object.keys(L).filter(n=>!avant.includes(n));
+        m.L.slice(1).forEach(x=>{const Lj=vide();attend(x,typeMotif(x,Lj,V),t,(a,b)=>`Les motifs séparés par | doivent avoir le même type : « ${morceau(x)} » est ${dit(a)}, pas ${dit(b)}.`);
+          if(Object.keys(Lj).length!==noms.length||noms.some(n=>!Lj[n]))ft("Les motifs séparés par | doivent utiliser les mêmes noms.",x);
+          noms.forEach(n=>attend(x,Lj[n],L[n],()=>`Le nom ${n} n'a pas le même type dans les deux motifs.`));});
+        return t;}
       case "pannot":{const t=typeMotif(m.pat,L,V),v=versType(m.ty,V,true);attend(m.pat,t,v,(a,b,sa,sb)=>`« ${morceau(m.pat)} » est annoncé de type ${sb}, ce qui ne colle pas avec ${sa}.`);return v;}
       default:{const c=CTORS[m.n];if(!c)ft(`Le constructeur ${m.n} n'existe pas.`,m);const M=new Map(),res=inst(c.res,niv,M);
         if(c.arg&&!m.arg)ft(`Le constructeur ${m.n} porte une valeur : écris ${m.n} x, ou ${m.n} _ si elle ne sert pas.`,m);
@@ -25079,6 +25090,7 @@ function session(){
         attend(m,t,sujet,(a,b)=>`Le motif « ${morceau(m)} » correspond à ${dit(a)}, alors que ${quoi} est ${dit(b)}.`);
         if(j)Object.keys(L).forEach(n=>{if(!Lj[n])ft("Les motifs séparés par | doivent utiliser les mêmes noms.",m);attend(m,Lj[n],L[n],()=>`Le nom ${n} n'a pas le même type dans les deux motifs.`);});});
       const env2=Object.create(env);Object.keys(L).forEach(n=>{env2[n]=L[n];});
+      if(c.garde)attend(c.garde,infere(c.garde,env2,V),BOOL,a=>`Après when, il faut une condition, donc un bool. Ici, « ${morceau(c.garde)} » est ${dit(a)}.`);
       attend(c.e,infere(c.e,env2,V),res,(a,b)=>k?`Toutes les branches rendent le même type. Cette branche rend ${dit(a)}, alors que les précédentes rendent ${dit(b)}.`:`Cette branche rend ${dit(a)}, alors qu'on attend ${dit(b)}.`);});}
   function typeLet(rec,B,env,V){const env2=Object.create(env);niv++;let LS;
     try{const pre=B.map(b=>{if(!rec)return null;if(b.pat.k!=="pvar")ft("Après let rec, il faut le nom d'une fonction.",b.pat);const t=tvar(niv);env2[b.pat.n]=t;return t;});
@@ -25144,9 +25156,12 @@ function session(){
       case "plist":return v.length===m.L.length&&m.L.every((x,i)=>filtre(x,v[i],L));
       case "pcons":return v.length>0&&filtre(m.h,v[0],L)&&filtre(m.t,v.slice(1),L);
       case "pannot":return filtre(m.pat,v,L);
+      case "pas":if(!filtre(m.pat,v,L))return false;L[m.n]=v;return true;
+      case "por":for(const x of m.L){const L2=vide();if(filtre(x,v,L2)){Object.assign(L,L2);return true;}}return false;
       default:return v.c===m.n&&(!m.arg||filtre(m.arg,v.a,L));}}
   const rate=()=>exn("Match_failure",{tu:["//toplevel//",0,0]});
-  function choisit(C,v,env){for(const c of C)for(const m of c.pats){const L=vide();if(filtre(m,v,L)){const env2=Object.create(env);Object.assign(env2,L);return evalue(c.e,env2);}}throw rate();}
+  function choisit(C,v,env){for(const c of C)for(const m of c.pats){const L=vide();if(filtre(m,v,L)){const env2=Object.create(env);Object.assign(env2,L);
+      if(c.garde&&evalue(c.garde,env2)!==true)continue;return evalue(c.e,env2);}}throw rate();}
   const applique=(f,a)=>{if(++prof>400)throw {faute:"exec",boucle:true,msg:SANSFIN};try{return f(a);}finally{prof--;}};
   /* note chaque appel complet de la fonction suivie : ses arguments, son résultat, et l'appel qui l'a lancé */
   function espion(f,S){const garde=(g,args)=>a=>{const A=args.concat([a]);
@@ -25173,7 +25188,8 @@ function session(){
       case "fun":{const va=(k,env2)=>a=>{const L=vide();if(!filtre(e.P[k],a,L))throw rate();const env3=Object.create(env2);Object.assign(env3,L);return k+1<e.P.length?va(k+1,env3):evalue(e.e,env3);};return va(0,env);}
       case "function":return a=>choisit(e.C,a,env);
       case "match":return choisit(e.C,evalue(e.e,env),env);
-      case "try":{try{return evalue(e.e,env);}catch(x){if(!x.exn)throw x;for(const c of e.C)for(const m of c.pats){const L=vide();if(filtre(m,x.exn,L)){const env2=Object.create(env);Object.assign(env2,L);return evalue(c.e,env2);}}throw x;}}
+      case "try":{try{return evalue(e.e,env);}catch(x){if(!x.exn)throw x;for(const c of e.C)for(const m of c.pats){const L=vide();if(filtre(m,x.exn,L)){const env2=Object.create(env);Object.assign(env2,L);
+        if(c.garde&&evalue(c.garde,env2)!==true)continue;return evalue(c.e,env2);}}throw x;}}
       case "annot":return evalue(e.e,env);
       case "enr":{const o={};CHAMPS[e.F[0][0]].tous.forEach(n=>{o[n]=evalue(e.F.find(f=>f[0]===n)[1],env);});return {en:o};}
       case "champ":return evalue(e.e,env).en[e.n];
@@ -26144,6 +26160,371 @@ function tireExc(R,t){for(;;){const [def,a1,a2,B]=R.choix(Object.values(EXCF))(R
     e=exoExc(def,`try ${inner} with ${h}`,{try:[inner,B2]});}
   if(e)return e;}}
 
+/* ---------- PF8 : écrire une fonction entière, exécutée sur des dizaines d'entrées ---------- */
+const parcours=(x,f)=>{if(!x||typeof x!=="object")return;if(Array.isArray(x)){x.forEach(y=>parcours(y,f));return;}f(x);for(const k in x)if(k!=="T"&&k!=="ty")parcours(x[k],f);};
+const recursif=A=>{let r=false;parcours(A,x=>{if((x.k==="def"||x.k==="let")&&x.rec){const N=x.B.map(b=>b.nom).filter(Boolean);x.B.forEach(b=>parcours(b.e,y=>{if(y.k==="var"&&N.includes(y.n))r=true;}));}});return r;};
+const modList=A=>{const L=[];parcours(A,x=>{if(x.k==="var"&&/^List\.(?!hd$|tl$)/.test(x.n)&&!L.includes(x.n))L.push(x.n);});return L;};
+const emploie=(A,ops)=>{let r=null;parcours(A,x=>{if(r)return;if(x.k==="op"&&ops.includes(x.o))r=x.o;else if(x.k==="var"&&x.n[0]==="("&&ops.includes(x.n.replace(/[() ]/g,"")))r=x.n.replace(/[() ]/g,"");});return r;};
+/* la signature est-elle écrite ? null si la fonction n'est pas définie */
+function signee(A,nom){let b=null;A.forEach(d=>{if(d.k==="def")d.B.forEach(x=>{if(x.nom===nom)b=x;});});if(!b)return null;
+  const e=b.e;return e.k==="annot"||(e.k==="fun"&&e.P.length>0&&e.P.every(p=>p.k==="pannot")&&e.e.k==="annot");}
+const ROLE8={base:["Le cas de base",1,"valeur du cas de base"],rec:["Le cas général",1.5,"cas général d'une fonction récursive"],calc:["Le calcul",2,"résultat faux"]};
+const SYMF=[["->"," -> "],["mod"," mod "],["&&"," && "],["||"," || "],["<>"," <> "],["let rec","let rec "],["[]","[]"],["::"," :: "],["|","| "],["List.hd","List.hd "],["List.tl","List.tl "],["match","match "],["with"," with"]];
+const mut8=(l,nom)=>mutations(l).concat([[" > "," < "],[" >= "," <= "],[" <= "," >= "],[" - "," + "],[" *. "," +. "],[" +. "," -. "],[" / "," * "],["then -n","then n"],["max ","min "],["min ","max "],[nom+" (List.tl li)","List.hd (List.tl li)"],["then []","then [0]"],["-> l2","-> []"],["then a","then b"],["then List.hd li","then 0"]]
+  .filter(([a])=>l.includes(a)).map(([a,b])=>l.replace(a,b)));
+function exoFonction(F){
+  const rec=F.rec?"rec ":"",mot=/ /.test(F.prm)&&F.prm[0]!=="("?"fun":"function",l0=`let ${rec}${F.nom} : ${F.sig} =`;
+  const tete=l0.length>40?[`let ${rec}${F.nom} :`,`  ${F.sig} =`]:[l0],H=tete.concat([`  ${mot} ${F.prm} ->`]),L=H.concat(F.corps),def=L.join("\n");
+  const S=ML.session();if(S.lis(def).some(x=>x.faute))throw new Error("définition fausse : "+def);
+  if(ecrisType(S.type(F.nom))!==F.sig)throw new Error("signature annoncée fausse : "+def);
+  const estBase=F.base||(()=>false),args=[...new Set(F.tests)],tests=args.filter(estBase).concat(args.filter(a=>!estBase(a))),nb=args.filter(estBase).length;
+  const essais=tests.map(a=>F.nom+" "+a),res=essais.map(x=>{const r=S.lis(x)[0];if(r.faute||r.exc)throw new Error("essai impossible : "+x);return r;}),att=res.map(r=>r.ecrit);
+  const autres=(F.alt||[]).map(a=>tete.join("\n")+"\n"+a);
+  autres.forEach(a=>{if(!essaieCode(a,essais,att).ok)throw new Error("autre écriture fausse : "+a);});
+  const n0=H.length,pas=F.pas.map(([role,[a,b],why,label,pts])=>({role,a:a+n0,b:b+n0,why,label:label||ROLE8[role][0],pts:pts||ROLE8[role][1]}));
+  const E=[{w:`Le début, avec la signature&nbsp;:${bloc(H.join("\n"))}`,why:`${F.pq}${F.rec?` Le mot ${c("rec")} est obligatoire : la fonction s'appelle elle-même.`:""} Puis ${c(mot+" "+F.prm+" ->")} nomme ${mot==="fun"?"les paramètres":/^\(/.test(F.prm)?"les deux éléments du couple":"le paramètre"}.`,pts:1}]
+    .concat(pas.map(p=>({w:p.b>p.a?`${p.label}&nbsp;:${bloc(L.slice(p.a,p.b+1).map(l=>l.slice(2)).join("\n"))}`:`${p.label}&nbsp;: <b>${c(L[p.a].trim())}</b>`,why:p.why,pts:p.pts})));
+  const etapeDe=role=>{const k=pas.findIndex(p=>p.role===role);return 1+(k<0?0:k);},iBase=etapeDe("base"),iGen=F.rec?etapeDe("rec"):etapeDe("calc");
+  const lieu=(t,f)=>f.p==null?"":`${/\n/.test(t)?`Ligne ${t.slice(0,f.p).split("\n").length}, à `:"À "}${c(f.extrait||"la fin")}&nbsp;: `;
+  function juge(rep){const t=normalise(rep.f||"").trim();
+    if(!t)return {incomplet:`Écris la fonction ${c(F.nom)} en entier, avec sa signature.`};
+    const faux=(etape,type,titre,msg,resume)=>({ok:false,faux:["f"],resume:resume||"Pas tout à fait : ta fonction ne fait pas ce que demande l'énoncé.",diag:etape==null?{type,titre,msg}:{etape,type,titre,msg}});
+    const S2=ML.session(),D=S2.lis(t),f=D.find(x=>x.faute);
+    if(f&&f.faute==="syntaxe"){if(/^(==|!=)$/.test(f.extrait||""))return {incomplet:esc(f.msg)};
+      return faux(null,"fonction mal écrite (syntaxe)","Où ça part : OCaml ne peut pas lire ta fonction.",lieu(t,f)+esc(f.msg),"Pas tout à fait : telle qu'elle est écrite, OCaml ne peut pas lire ta fonction.");}
+    if(f&&f.faute==="type")return faux(null,/let rec/.test(f.msg)?"rec oublié":"erreur de type dans la fonction écrite","Où ça part : une erreur de type.",lieu(t,f)+esc(f.msg),"Pas tout à fait : OCaml refuse ta fonction, à cause d'une erreur de type.");
+    if(f)return faux(null,"erreur à l'exécution","Où ça part : une erreur dès la définition.",esc(f.msg));
+    const A=ML.analyse(t,"prog").arbre,signe=signee(A,F.nom);
+    if(signe===null)return {incomplet:`Ta réponse doit définir une fonction nommée ${c(F.nom)}, comme dans l'énoncé.`};
+    if(!signe)return {incomplet:`Il manque la signature de ${c(F.nom)}, que l'énoncé demande. Elle s'écrit dans la définition, juste après le nom : ${c(`let ${rec}${F.nom} : … = …`)}, avec le type à la place des premiers points.`};
+    if(F.sans){const o=emploie(A,F.sans);if(o)return {incomplet:`L'énoncé demande d'écrire ${c(F.nom)} sans l'opérateur ${c(o)}.`};}
+    if(F.rec){const M=modList(A);
+      if(M.length)return {incomplet:`L'énoncé demande d'écrire la récursivité toi-même, sans ${et(M.map(c))}. Du module List, seules ${c("List.hd")} et ${c("List.tl")} sont permises ; le filtrage aussi.`};
+      if(!recursif(A))return {incomplet:`L'énoncé demande une fonction <b>récursive</b> : ${c(F.nom)} doit s'appeler elle-même, avec ${c("let rec")}.`};}
+    const typeMoi=ecrisType(S2.type(F.nom)),signature=x=>faux(0,"signature fausse","Où ça part : la signature.",`Ta fonction a le type ${c(typeMoi)}, alors que l'énoncé demande ${c(F.sig)}. Du coup, ${c(x)} ne donne pas une valeur du bon type.`);
+    let premier=null,justes=0;
+    for(let k=0;k<essais.length;k++){const x=essais[k],r=S2.lis(x)[0];
+      if(r.faute&&!r.exc&&!r.boucle&&!/s'arrête pas/.test(r.msg))return signature(x);
+      const v=r.faute&&!r.exc?"boucle":r.exc?"exception "+r.ecritExc:r.ecrit;
+      if(v===att[k]){justes++;continue;}
+      if(v!=="boucle"&&!r.exc&&r.type!==res[k].type)return signature(x);
+      if(!premier)premier={k,x,v};}
+    if(!premier)return {ok:true};
+    const {k,x,v}=premier,i=k<nb?iBase:iGen,bilan=justes?` Sur les ${essais.length} entrées essayées, ${justes>1?justes+" donnent":"une seule donne"} le bon résultat.`:` Aucune des ${essais.length} entrées essayées ne donne le bon résultat.`;
+    if(v==="boucle")return faux(F.rec?etapeDe("rec"):i,"appel récursif qui ne raccourcit pas l'entrée","Où ça part : la fonction ne s'arrête pas.",`Sur ${c(x)}, le calcul ne s'arrête pas. Soit le cas de base manque ou n'est jamais atteint, soit l'appel récursif ne se fait pas sur une entrée plus petite.`);
+    if(/^exception/.test(v))return faux(i,"exception levée par la fonction écrite","Où ça part : une exception.",`Sur ${c(x)}, ta version lève ${c(v.slice(10).replace(/^Match_failure.*/,"Match_failure"))}.${/Match_failure/.test(v)?" Ton filtrage ne prévoit pas ce cas : il manque une branche.":/Division_by_zero/.test(v)?" Une division ou un mod par 0 n'a pas de sens : regarde ce que vaut le diviseur sur cette entrée.":/"(hd|tl)"/.test(v)?` ${c("List.hd")} et ${c("List.tl")} n'ont pas de sens sur la liste vide : le test du cas de base doit passer avant.`:""}`);
+    return faux(i,ROLE8[k<nb&&F.rec?"base":F.rec?"rec":"calc"][2],"Où ça part : une valeur fausse.",`Sur ${c(x)}, ta version renvoie ${c(v)} au lieu de ${c(att[k])}.${bilan}`);}
+  let fausse=null;
+  for(const p of pas.slice().reverse()){for(let i=p.b;i>=p.a&&!fausse;i--)for(const m of mut8(L[i],F.nom)){const L2=L.slice();L2[i]=m;const j=juge({f:L2.join("\n")});
+      if(j.ok===false&&j.diag&&j.diag.etape>=0&&/renvoie/.test(j.diag.msg)){fausse=L2.join("\n");break;}}if(fausse)break;}
+  if(!fausse)return null;
+  const exemples=(F.ex||(nb?[nb,nb+1,0]:[0,1,2])).map(a=>{const i=typeof a==="string"?tests.indexOf(a):a;if(!(i>=0)||!essais[i])throw new Error("exemple absent des essais : "+F.nom+" "+a);return [essais[i],att[i]];});
+  const ocaml=[def].concat(autres).flatMap(code=>essais.map((x,k)=>({code:code+" in "+x,attendu:"T:"+res[k].type+"|V:"+att[k]})));
+  return {sig:"F"+def.replace(/\s+/g," "),code:def,
+    q:`Définis en OCaml la fonction ${F.rec?"<b>récursive</b> ":""}${c(F.nom)}, ${F.dit}. Exemples : ${exemples.map(([x,v])=>`${c(x)} vaut ${c(v)}`).join(" ; ")}. Écris sa signature dans la définition.${F.liste?` Du module List, tu peux utiliser ${c("List.hd")} et ${c("List.tl")}, et aucune autre fonction ; le filtrage est permis.`:""}`,
+    corps:"",texte:`Écrire la fonction ${F.nom} : ${F.sig}, ${F.dit}`,
+    champs:[{k:"code",id:"f",nom:"fonction",label:`La fonction ${c(F.nom)}, avec sa signature&nbsp;:`,lignes:Math.max(6,L.length+2),sym:symDe(SYMF,F.sym||[])}],juge,etapes:E,
+    bonne:bloc(def),bonneTxt:finLigne(def),repBonne:{f:def},repFausse:{f:fausse},nature:F.nature,
+    ens:{code:def,nom:F.nom,type:F.sig,rec:!!F.rec,essais,att,nb,exemples,autres,ocaml}};}
+const PAIRES=[["4","6"],["3","7"],["4","3"],["0","0"],["0","1"],["1","0"],["1","1"],["7","2"],["10","10"],["9","12"],["12","9"],["5","5"],["8","2"],["2","3"],["13","1"],["6","7"],["20","40"],["15","16"],["100","1"],["33","77"],["2","10"],["9","3"],["12","4"],["7","7"]];
+const DEUX=PAIRES.map(x=>x.join(" ")),COUPLES=PAIRES.map(x=>`(${x.join(", ")})`);
+const DIVIS=["12 4","12 5","0 3","7 7","7 1","9 3","10 4","100 10","15 5","14 7","1 2","2 1","36 6","36 8","45 9","45 7","8 8","64 16","30 12","21 3","5 10","6 4"];
+const TRIPLES=["1 2 3","3 2 1","2 3 1","5 5 5","4 4 1","1 4 4","4 1 4","0 0 7","9 0 0","0 9 0","10 20 15","20 10 15","15 20 10","7 7 8","8 7 7","7 8 7","100 99 98","3 9 6","6 3 9","9 6 3","2 2 1","1 2 2","0 0 0","7 7 7"];
+const RELATIFS=["(-5)","0","3","(-1)","1","12","(-12)","7","(-7)","100","(-100)","25","(-25)","9","(-9)","48","(-48)","2","(-2)","60","(-60)"];
+const NATURELS=["0","1","2","3","5","6","7","9","10","12","14","15","18","20","21","25","27","30","35","45","49","63","100","105"];
+const NB=["123","9999","7","0","3","10","12","99","100","111","405","999","1000","1011","2026","5008","7777","12345","70707","31","58","301","864","1111"];
+const P=(role,a,b,why,label,pts)=>[role,[a,b],why,label,pts];
+const sigCouple=(nom,ex,t,res)=>`Les exemples écrivent ${c(nom+" "+ex)}, avec une virgule entre parenthèses : la fonction reçoit un seul argument, un couple, de type ${c(t)}. Elle rend ${res}.`;
+const sigSuite=(nom,ex,n,res)=>`Les exemples écrivent ${c(nom+" "+ex)}, sans virgule : la fonction reçoit ${n} arguments l'un après l'autre, d'où ${n} flèches avant le résultat. Elle rend ${res}.`;
+const SANS1=[
+ R=>{const meme=R()<0.5,cp=R()<0.5,nom=meme?"memeParite":"pariteOpposee",op=meme?"=":"<>";
+  return {nom,sig:cp?"int * int -> bool":"int -> int -> bool",prm:cp?"(a, b)":"a b",nature:"test",
+   dit:`qui teste si deux entiers naturels${cp?", donnés dans un couple,":""} ${meme?"ont la même parité, c'est-à-dire s'ils sont tous les deux pairs ou tous les deux impairs":"sont de parités opposées, c'est-à-dire si l'un est pair et l'autre impair"}`,
+   pq:cp?sigCouple(nom,"(4, 6)","int * int","un bool"):sigSuite(nom,"4 6","deux","un bool"),corps:[`  a mod 2 ${op} b mod 2`],
+   pas:[P("calc",0,0,`${c("a mod 2")} est le reste de a dans la division par 2 : 0 si a est pair, 1 sinon. Deux entiers ${meme?"ont la même parité quand ces deux restes sont égaux":"sont de parités opposées quand ces deux restes sont différents"}. La comparaison donne déjà un bool : pas besoin de ${c("if")}.`)],
+   tests:cp?COUPLES:DEUX,alt:[`  ${cp?"function (a, b)":"fun a b"} ->\n  (a + b) mod 2 ${op} 0`]};},
+ R=>R()<0.5?{nom:"estMultiple",sig:"int -> int -> bool",prm:"a b",nature:"test",dit:"qui teste si l'entier naturel a est un multiple de l'entier naturel b (b n'est pas nul)",pq:sigSuite("estMultiple","12 4","deux","un bool"),corps:["  a mod b = 0"],
+   pas:[P("calc",0,0,`a est un multiple de b quand la division de a par b tombe juste : le reste ${c("a mod b")} vaut 0.`)],tests:DIVIS,alt:["  fun a b ->\n  if a mod b = 0 then true else false"]}
+  :{nom:"divise",sig:"int -> int -> bool",prm:"d n",nature:"test",dit:"qui teste si l'entier naturel d (qui n'est pas nul) divise l'entier naturel n",pq:sigSuite("divise","4 12","deux","un bool"),corps:["  n mod d = 0"],
+   pas:[P("calc",0,0,`d divise n quand la division de n par d tombe juste : le reste ${c("n mod d")} vaut 0. Attention à l'ordre : c'est n qu'on divise par d.`)],tests:DIVIS.map(x=>x.split(" ").reverse().join(" ")),alt:["  fun d n ->\n  if n mod d = 0 then true else false"]},
+ R=>{const k=R.choix([3,5,7,9]),nom="multipleDe"+k;return {nom,sig:"int -> bool",prm:"n",nature:"test",dit:`qui teste si un entier naturel est un multiple de ${k}`,pq:"Un entier en entrée, un bool en sortie.",corps:[`  n mod ${k} = 0`],
+   pas:[P("calc",0,0,`n est un multiple de ${k} quand le reste de sa division par ${k} vaut 0. La comparaison donne déjà un bool.`)],tests:NATURELS,ex:[String(k*3),k===5?"12":"10","0"]};},
+ R=>{const grand=R()<0.5,nom=grand?"maxi":"mini";return {nom,sig:"int -> int -> int",prm:"a b",nature:"si-sinon",dit:`qui rend le plus ${grand?"grand":"petit"} de deux entiers`,pq:sigSuite(nom,"4 6","deux","un int"),corps:[`  if a ${grand?">":"<"} b then a else b`],
+   pas:[P("calc",0,0,`On compare les deux entiers et on rend ${grand?"le plus grand":"le plus petit"}. Quand ils sont égaux, on rend b, qui a la même valeur.`)],tests:DEUX,alt:[`  fun a b -> ${grand?"max":"min"} a b`]};},
+ R=>{const grand=R()<0.5,nom=grand?"maxi3":"mini3",o=grand?">=":"<=";return {nom,sig:"int -> int -> int -> int",prm:"a b c",nature:"si-sinon",dit:`qui rend le plus ${grand?"grand":"petit"} de trois entiers`,pq:sigSuite(nom,"1 2 3","trois","un int"),
+   corps:[`  if a ${o} b && a ${o} c then a`,`  else if b ${o} c then b`,"  else c"],
+   pas:[P("calc",0,2,`D'abord a : c'est lui si rien ne le dépasse. Sinon a est éliminé, et il reste à comparer b et c.`)],tests:TRIPLES,ex:["1 2 3","4 4 1","10 20 15"],alt:[`  fun a b c -> ${grand?"max":"min"} a (${grand?"max":"min"} b c)`]};},
+ R=>R()<0.5?{nom:"valAbs",sig:"int -> int",prm:"n",nature:"si-sinon",dit:"qui calcule la valeur absolue d'un entier relatif : l'entier lui-même s'il est positif ou nul, son opposé sinon",pq:"Un entier en entrée, un entier en sortie.",corps:["  if n < 0 then -n else n"],
+   pas:[P("calc",0,0,`Pour un entier négatif, l'opposé ${c("-n")} est positif. Sinon, on rend n tel quel.`)],tests:RELATIFS,alt:["  function n -> abs n"]}
+  :{nom:"ecart",sig:"int -> int -> int",prm:"a b",nature:"si-sinon",dit:"qui calcule l'écart entre deux entiers naturels, c'est-à-dire le plus grand moins le plus petit",pq:sigSuite("ecart","4 6","deux","un int"),corps:["  if a > b then a - b else b - a"],
+   pas:[P("calc",0,0,"On soustrait toujours le plus petit au plus grand : le résultat n'est jamais négatif.")],tests:DEUX,alt:["  fun a b -> abs (a - b)","  fun a b -> max a b - min a b"]},
+ R=>({nom:"signe",sig:"int -> int",prm:"n",nature:"si-sinon",dit:"qui rend le signe d'un entier relatif : 1 s'il est strictement positif, −1 s'il est strictement négatif, 0 s'il est nul",pq:"Un entier en entrée, un entier en sortie.",
+   corps:["  if n > 0 then 1","  else if n < 0 then -1","  else 0"],pas:[P("calc",0,2,`Trois cas, donc deux tests : le dernier ${c("else")} récupère le seul cas qui reste, n = 0.`)],tests:RELATIFS,ex:["(-5)","3","0"]}),
+ R=>{const large=R()<0.5,o=large?"<=":"<";return {nom:large?"entre":"strictEntre",sig:"int -> int -> int -> bool",prm:"a b x",nature:"test",
+   dit:`qui teste si l'entier x est compris entre les entiers a et b, ${large?"au sens large (a ≤ x et x ≤ b)":"au sens strict (a < x et x < b)"}`,pq:sigSuite(large?"entre":"strictEntre","1 5 3","trois","un bool"),corps:[`  a ${o} x && x ${o} b`],
+   pas:[P("calc",0,0,`Il faut deux comparaisons reliées par ${c("&&")}. Écrire ${c(`a ${o} x ${o} b`)} ne marche pas en OCaml : ${c(`a ${o} x`)} est un bool, qu'on ne peut pas comparer à l'entier b.`)],
+   tests:["1 5 3","1 5 1","1 5 5","1 5 0","1 5 6","0 0 0","2 9 9","2 9 10","2 9 2","2 9 1","10 20 15","10 20 25","10 20 5","10 20 10","10 20 20","3 4 3","3 4 4","3 4 5","0 100 50","0 100 101","7 7 7","7 7 8"],ex:["1 5 3","1 5 5","1 5 6"]};},
+ R=>{const k=R.ent(0,2),nom=["unites","dizaines","centaines"][k];return {nom,sig:"int -> int",prm:"n",nature:"calcul",dit:`qui rend le chiffre des ${["unités","dizaines","centaines"][k]} d'un entier naturel`,pq:"Un entier en entrée, un entier (un chiffre) en sortie.",
+   corps:[["  n mod 10","  n / 10 mod 10","  n / 100 mod 10"][k]],
+   pas:[P("calc",0,0,k?`${c("n / "+10**k)} enlève ${k>1?"les deux derniers chiffres":"le dernier chiffre"} (division entière), puis ${c("mod 10")} garde le dernier chiffre de ce qui reste.`:`Le reste de la division par 10 est le dernier chiffre.`)],
+   tests:NB,ex:["2026","405","7"],alt:k?[`  function n -> (n / ${10**k}) mod 10`]:["  function n -> n - 10 * (n / 10)"]};},
+ R=>({nom:"bissextile",sig:"int -> bool",prm:"a",nature:"test",dit:"qui teste si une année est bissextile : elle est divisible par 4 mais pas par 100, ou bien elle est divisible par 400",pq:"Une année (un entier) en entrée, un bool en sortie.",
+   corps:["  (a mod 4 = 0 && a mod 100 <> 0)","  || a mod 400 = 0"],pas:[P("calc",0,1,`On traduit la phrase mot à mot : « et » devient ${c("&&")}, « ou » devient ${c("||")}, « n'est pas divisible par 100 » devient ${c("a mod 100 <> 0")}.`)],
+   tests:["2024","2025","1900","2000","2026","2028","2100","2400","1996","1999","2004","2023","1600","1700","1800","2200","2020","2012","2019","2001","1904","2096"],ex:["2024","1900","2000"]}),
+ R=>{const k=R.ent(0,2);return [
+   {nom:"moyenne",nature:"calcul",sig:"float -> float -> float",prm:"a b",dit:"qui calcule la moyenne de deux nombres réels",pq:sigSuite("moyenne","1. 2.","deux","un float : avec des nombres à virgule, tout est en float"),corps:["  (a +. b) /. 2."],
+    pas:[P("calc",0,0,`Sur les float, les opérateurs prennent un point : ${c("+.")} et ${c("/.")}. Et le nombre 2 s'écrit ${c("2.")}, sinon OCaml refuse le mélange d'un int et d'un float.`)],
+    tests:["1. 2.","3. 3.","0. 0.","10. 20.","1.5 2.5","12. 8.","0.5 0.25","7. 8.","2.5 3.","100. 50.","4. 0.","9. 1.","0.25 0.75","15. 12.","6.5 6.5","20. 19.","3. 4.","11. 14.","8. 8.5","1. 0."]},
+   {nom:"aire",nature:"calcul",sig:"float * float -> float",prm:"(l, h)",dit:"qui calcule l'aire d'un rectangle dont la longueur et la largeur, deux nombres réels, sont données dans un couple",pq:sigCouple("aire","(2., 3.)","float * float","un float"),corps:["  l *. h"],
+    pas:[P("calc",0,0,`L'aire est le produit des deux côtés. Sur les float, la multiplication s'écrit ${c("*.")}, avec un point.`)],
+    tests:["(2., 3.)","(1.5, 2.)","(0., 5.)","(4., 4.)","(10., 0.5)","(2.5, 2.5)","(1., 1.)","(8., 0.25)","(3., 7.)","(6., 1.5)","(12., 10.)","(0.5, 0.5)","(9., 2.)","(5., 5.)","(7., 0.)","(20., 3.)","(1.25, 4.)","(16., 0.75)","(3.5, 2.)","(11., 11.)"]},
+   {nom:"perimetre",nature:"calcul",sig:"float * float -> float",prm:"(l, h)",dit:"qui calcule le périmètre d'un rectangle dont la longueur et la largeur, deux nombres réels, sont données dans un couple",pq:sigCouple("perimetre","(2., 3.)","float * float","un float"),corps:["  2. *. (l +. h)"],
+    pas:[P("calc",0,0,`Le périmètre vaut deux fois la somme des côtés. Sur les float : ${c("*.")} et ${c("+.")}, et 2 s'écrit ${c("2.")}.`)],
+    tests:["(2., 3.)","(1.5, 2.)","(0., 5.)","(4., 4.)","(10., 0.5)","(2.5, 2.5)","(1., 1.)","(8., 0.25)","(3., 7.)","(6., 1.5)","(12., 10.)","(0.5, 0.5)","(9., 2.)","(5., 5.)","(7., 0.)","(20., 3.)","(1.25, 4.)","(16., 0.75)","(3.5, 2.)","(11., 11.)"],alt:["  function (l, h) -> l +. h +. l +. h"]}][k];},
+ R=>{const [A,B]=R.choix([[6,18],[4,12],[8,16]]),[p1,p2]=R.choix([[5,9],[4,7]]);return {nom:"tarif",sig:"int -> int",prm:"age",nature:"si-sinon",
+   dit:`qui calcule le prix d'une entrée, en euros, selon l'âge de la personne : gratuit avant ${A} ans, ${p1} euros de ${A} à ${B-1} ans, ${p2} euros à partir de ${B} ans`,pq:"Un âge (un entier) en entrée, un prix (un entier) en sortie.",
+   corps:[`  if age < ${A} then 0`,`  else if age < ${B} then ${p1}`,`  else ${p2}`],
+   pas:[P("calc",0,2,`Les tests se suivent du plus jeune au plus âgé. Quand on arrive au deuxième test, on sait déjà que l'âge vaut au moins ${A} : inutile de le redire.`)],
+   tests:["0","3","4","5","6","7","8","10","11","12","13","15","16","17","18","19","25","40","65","1","9","14"],ex:[String(A-1),String(A),String(B)]};},
+ R=>{const k=R.ent(0,2);return [
+   {nom:"ordonne",sig:"int * int -> int * int",prm:"(a, b)",nature:"si-sinon",dit:"qui, étant donné un couple d'entiers, rend le couple des deux mêmes entiers rangés dans l'ordre croissant",pq:sigCouple("ordonne","(4, 3)","int * int","aussi un couple d'entiers"),corps:["  if a <= b then (a, b) else (b, a)"],
+    pas:[P("calc",0,0,"Si les deux entiers sont déjà dans l'ordre, on rend le couple tel quel ; sinon, on les échange.")],tests:COUPLES,ex:["(4, 3)","(3, 7)","(5, 5)"],alt:["  function (a, b) -> (min a b, max a b)"]},
+   {nom:"sommeProduit",sig:"int -> int -> int * int",prm:"a b",nature:"calcul",dit:"qui, étant donnés deux entiers, rend le couple formé de leur somme et de leur produit",pq:sigSuite("sommeProduit","4 6","deux","un couple d'entiers, de type "+c("int * int")),corps:["  (a + b, a * b)"],
+    pas:[P("calc",0,0,"Un couple s'écrit entre parenthèses, avec une virgule : la somme d'abord, le produit ensuite, comme le demande l'énoncé.")],tests:DEUX},
+   {nom:"division",sig:"int -> int -> int * int",prm:"a b",nature:"calcul",dit:"qui, étant donnés deux entiers naturels a et b (b n'est pas nul), rend le couple formé du quotient et du reste de la division de a par b",pq:sigSuite("division","12 5","deux","un couple d'entiers, de type "+c("int * int")),corps:["  (a / b, a mod b)"],
+    pas:[P("calc",0,0,`Sur les int, ${c("/")} donne le quotient de la division entière et ${c("mod")} son reste.`)],tests:DIVIS,ex:["12 5","45 7","5 10"]}][k];},
+ R=>({nom:"estTriangle",sig:"int -> int -> int -> bool",prm:"a b c",nature:"test",dit:"qui teste si trois longueurs entières peuvent être les côtés d'un triangle : chacune doit être strictement plus petite que la somme des deux autres",pq:sigSuite("estTriangle","3 4 5","trois","un bool"),
+   corps:["  a < b + c && b < a + c","  && c < a + b"],pas:[P("calc",0,1,`Trois conditions, une par côté, reliées par ${c("&&")} : il les faut toutes.`)],
+   tests:["3 4 5","1 2 3","5 5 9","1 1 1","2 3 1","3 1 2","5 5 10","5 10 5","10 5 5","2 2 3","7 3 3","3 7 3","3 3 7","6 8 10","1 1 2","4 4 7","9 2 8","2 9 8","8 2 9","10 1 1","0 0 0","5 12 13"]}),
+ R=>({nom:"tousEgaux",sig:"int -> int -> int -> bool",prm:"a b c",nature:"test",dit:"qui teste si trois entiers sont tous égaux",pq:sigSuite("tousEgaux","5 5 5","trois","un bool"),corps:["  a = b && b = c"],
+   pas:[P("calc",0,0,`Deux comparaisons reliées par ${c("&&")}. Écrire ${c("a = b = c")} ne marche pas : ${c("a = b")} est un bool, qu'on ne peut pas comparer à l'entier c.`)],tests:TRIPLES,ex:["5 5 5","4 4 1","1 2 3"]}),
+ R=>({nom:"secondes",sig:"int -> int -> int -> int",prm:"h m s",nature:"calcul",dit:"qui convertit en secondes une durée donnée par trois entiers naturels : des heures, des minutes et des secondes",pq:sigSuite("secondes","1 1 1","trois","un int"),corps:["  h * 3600 + m * 60 + s"],
+   pas:[P("calc",0,0,"Une heure fait 3600 secondes et une minute 60. La multiplication passe avant l'addition : pas besoin de parenthèses.")],
+   tests:["1 1 1","2 30 0","0 0 59","0 0 0","0 1 0","1 0 0","0 45 15","10 0 0","23 59 59","3 5 7","0 10 30","5 0 5","1 30 30","12 12 12","0 59 59","7 0 0","0 2 2","4 20 0","6 6 6","8 15 45"]})
+];
+const u1=a=>/^\d$/.test(a);
+const RECENT8=[
+ R=>({nom:"sommeChiffres",sig:"int -> int",prm:"n",nature:"chiffres",dit:"qui calcule la somme des chiffres de l'écriture décimale d'un entier naturel",pq:"Un entier en entrée, un entier en sortie.",
+   corps:["  if n < 10 then n","  else n mod 10 + sommeChiffres (n / 10)"],base:u1,
+   pas:[P("base",0,0,"Un nombre à un seul chiffre : la somme de ses chiffres, c'est lui-même."),P("rec",1,1,`${c("n mod 10")} est le dernier chiffre, et ${c("n / 10")} est le nombre sans son dernier chiffre : on ajoute le dernier chiffre à la somme des chiffres du reste.`)],
+   tests:NB,ex:["123","9999","7"],alt:["  function n ->\n  if n = 0 then 0\n  else n mod 10 + sommeChiffres (n / 10)"]}),
+ R=>({nom:"nbChiffres",sig:"int -> int",prm:"n",nature:"chiffres",dit:"qui calcule le nombre de chiffres de l'écriture décimale d'un entier naturel",pq:"Un entier en entrée, un entier en sortie.",
+   corps:["  if n < 10 then 1","  else 1 + nbChiffres (n / 10)"],base:u1,
+   pas:[P("base",0,0,"En dessous de 10, le nombre s'écrit avec un seul chiffre (0 aussi)."),P("rec",1,1,`${c("n / 10")} est le nombre sans son dernier chiffre : il a un chiffre de moins que n. On compte donc 1 de plus que lui.`)],
+   tests:NB,ex:["123","9999","7"],alt:["  function n ->\n  if n / 10 = 0 then 1\n  else 1 + nbChiffres (n / 10)"]}),
+ R=>{const k=R.choix([1,2,3,5,7,9]),a=k%9+1,nom=k===1?"queDesUn":"queDes"+k;return {nom,sig:"int -> bool",prm:"n",nature:"chiffres",dit:`qui teste si l'écriture décimale d'un entier naturel n'est composée que du chiffre ${k}`,pq:"Un entier en entrée, un bool en sortie.",
+   corps:[`  if n < 10 then n = ${k}`,`  else n mod 10 = ${k}`,`    && ${nom} (n / 10)`],base:u1,
+   pas:[P("base",0,0,`Un seul chiffre : il doit valoir ${k}. La comparaison donne directement le bool.`),P("rec",1,2,`Le dernier chiffre (${c("n mod 10")}) doit valoir ${k}, et le reste du nombre (${c("n / 10")}) ne doit avoir que des ${k} lui aussi.`)],
+   tests:[`${k}${k}${k}${k}`,`${k}${k}0`,`${k}`,"0",`${a}`,"8",`${k}${k}`,`${k}${k}${k}`,`${k}0`,`${a}${k}`,`${k}${a}`,`${k}${k}${a}${k}`,`${k}0${k}`,"10","99","123","1000","42",`${k}${k}${k}${k}${k}`,`${a}${k}${k}${k}`,`${k}${k}${k}${a}`,"606"],ex:[`${k}${k}${k}${k}`,`${k}`,`${k}${k}0`],alt:[`  function n ->\n  if n < 10 then n = ${k}\n  else if n mod 10 = ${k} then ${nom} (n / 10)\n  else false`]};},
+ R=>{const k=R.choix([3,5,7,9]),a=k%9+1,nom="contient"+k;return {nom,sig:"int -> bool",prm:"n",nature:"chiffres",dit:`qui teste si le chiffre ${k} apparaît dans l'écriture décimale d'un entier naturel`,pq:"Un entier en entrée, un bool en sortie.",
+   corps:[`  if n < 10 then n = ${k}`,`  else n mod 10 = ${k}`,`    || ${nom} (n / 10)`],base:u1,
+   pas:[P("base",0,0,`Un seul chiffre : la réponse est oui quand c'est ${k}.`),P("rec",1,2,`Le chiffre ${k} apparaît s'il est le dernier chiffre (${c("n mod 10")}), ou s'il apparaît dans le reste du nombre (${c("n / 10")}).`)],
+   tests:[`1${k}2`,"1024",`${k}`,"0",`${a}`,"8",`${k}${k}`,`${k}0`,`${a}${k}`,`${k}${a}`,"10","246","1000","42",`20${k}6`,`${k}000`,`111${k}`,"1111","8642","60",`${a}${a}${k}${a}`,"2468"],ex:[`1${k}2`,"1024",`${k}`],alt:[`  function n ->\n  if n mod 10 = ${k} then true\n  else if n < 10 then false\n  else ${nom} (n / 10)`]};},
+ R=>({nom:"maxChiffre",sig:"int -> int",prm:"n",nature:"chiffres",dit:"qui rend le plus grand chiffre de l'écriture décimale d'un entier naturel",pq:"Un entier en entrée, un entier (un chiffre) en sortie.",
+   corps:["  if n < 10 then n","  else max (n mod 10)","    (maxChiffre (n / 10))"],base:u1,
+   pas:[P("base",0,0,"Un seul chiffre : c'est lui le plus grand."),P("rec",1,2,`Le plus grand chiffre est soit le dernier (${c("n mod 10")}), soit le plus grand chiffre du reste du nombre : ${c("max")} garde le plus grand des deux.`)],
+   tests:NB,ex:["405","2026","7"],alt:["  function n ->\n  if n < 10 then n\n  else if n mod 10 > maxChiffre (n / 10) then n mod 10\n  else maxChiffre (n / 10)"]}),
+ R=>({nom:"factorielle",sig:"int -> int",prm:"n",nature:"compte à rebours",dit:"qui calcule la factorielle d'un entier naturel n, c'est-à-dire le produit 1 × 2 × … × n (elle vaut 1 pour n = 0)",pq:"Un entier en entrée, un entier en sortie.",
+   corps:["  if n = 0 then 1","  else n * factorielle (n - 1)"],base:a=>a==="0",
+   pas:[P("base",0,0,"La factorielle de 0 vaut 1 : 1 ne change pas un produit."),P("rec",1,1,"Le produit 1 × 2 × … × n, c'est n fois le produit 1 × 2 × … × (n − 1). L'appel récursif se fait sur n − 1, qui se rapproche de 0.")],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15","16","17","18"]),ex:["4","6","0"],alt:["  function\n  | 0 -> 1\n  | n -> n * factorielle (n - 1)"]}),
+ R=>{const carre=R()<0.5,nom=carre?"sommeCarres":"sommeEntiers";return {nom,sig:"int -> int",prm:"n",nature:"compte à rebours",
+   dit:carre?"qui calcule la somme des carrés des entiers de 0 à n, c'est-à-dire 0² + 1² + 2² + … + n², pour un entier naturel n":"qui calcule la somme des entiers de 0 à n, c'est-à-dire 0 + 1 + 2 + … + n, pour un entier naturel n",pq:"Un entier en entrée, un entier en sortie.",
+   corps:["  if n = 0 then 0",`  else ${carre?"n * n":"n"} + ${nom} (n - 1)`],base:a=>a==="0",
+   pas:[P("base",0,0,"Pour n = 0, la somme n'a qu'un terme, 0."),P("rec",1,1,`La somme jusqu'à n, c'est ${carre?"n²":"n"} plus la somme jusqu'à n − 1. L'appel récursif se fait sur n − 1, qui se rapproche de 0.`)],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15","16","17","18","19","20","50","100"]),ex:["4","10","0"],alt:[`  function\n  | 0 -> 0\n  | n -> ${carre?"n * n":"n"} + ${nom} (n - 1)`]};},
+ R=>{const k=R.choix([0,2,3]);return k?{nom:"puissance"+k,sig:"int -> int",prm:"n",nature:"compte à rebours",dit:`qui calcule ${k} à la puissance n, pour un entier naturel n (${k} à la puissance 0 vaut 1)`,pq:"Un entier en entrée, un entier en sortie.",
+   corps:["  if n = 0 then 1",`  else ${k} * puissance${k} (n - 1)`],base:a=>a==="0",
+   pas:[P("base",0,0,"Un nombre à la puissance 0 vaut 1."),P("rec",1,1,`${k} à la puissance n, c'est ${k} fois ${k} à la puissance n − 1.`)],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15","16","17","18","19","20"]),ex:["3","10","0"],alt:[`  function\n  | 0 -> 1\n  | n -> ${k} * puissance${k} (n - 1)`]}
+  :{nom:"puissance",sig:"int -> int -> int",prm:"x n",nature:"compte à rebours",dit:"qui calcule x à la puissance n, pour deux entiers naturels x et n (x à la puissance 0 vaut 1)",pq:sigSuite("puissance","2 10","deux","un int"),
+   corps:["  if n = 0 then 1","  else x * puissance x (n - 1)"],base:a=>/ 0$/.test(a),
+   pas:[P("base",0,0,"Un nombre à la puissance 0 vaut 1."),P("rec",1,1,"x à la puissance n, c'est x fois x à la puissance n − 1. Seul n diminue : x est redonné tel quel à l'appel récursif.")],
+   tests:["2 10","3 4","2 0","3 0","9 0","0 0","2 1","5 3","10 6","1 20","0 5","7 2","2 16","4 5","6 1","3 10","2 20","11 2","12 3","5 5"],ex:["2 10","3 4","2 0"],alt:["  fun x n ->\n  match n with\n  | 0 -> 1\n  | _ -> x * puissance x (n - 1)"]};},
+ R=>({nom:"mult",sig:"int -> int -> int",prm:"a b",nature:"compte à rebours",dit:"qui calcule le produit de deux entiers naturels a et b avec des additions seulement, sans utiliser l'opérateur de multiplication",pq:sigSuite("mult","4 6","deux","un int"),sans:["*"],
+   corps:["  if b = 0 then 0","  else a + mult a (b - 1)"],base:a=>/ 0$/.test(a),
+   pas:[P("base",0,0,"a fois 0 vaut 0."),P("rec",1,1,"a × b, c'est a + a × (b − 1) : on ajoute a une fois, et il reste b − 1 additions à faire. Seul b diminue.")],
+   tests:DEUX,ex:["4 6","7 2","0 0"],alt:["  fun a b ->\n  if a = 0 then 0\n  else b + mult (a - 1) b"]}),
+ R=>{const k=R.ent(0,2),nom=["sommeDiv","nbDiv","prodDiv"][k],quoi=["la somme","le nombre","le produit"][k],plus=["i +","1 +","i *"][k];return {nom,sig:"int -> int -> int",prm:"n i",nature:"diviseurs",
+   dit:`qui, étant donnés deux entiers naturels non nuls n et i, calcule ${quoi} des diviseurs de n inférieurs ou égaux à i`,pq:sigSuite(nom,"12 5","deux","un int"),
+   corps:[`  if i = 0 then ${k===2?1:0}`,"  else if n mod i = 0",`  then ${plus} ${nom} n (i - 1)`,`  else ${nom} n (i - 1)`],base:a=>/ 1$/.test(a),
+   pas:[P("base",0,0,k===2?"Plus aucun candidat à essayer : le produit de rien du tout vaut 1, qui ne change pas un produit.":`Plus aucun candidat à essayer : ${k?"on a compté 0 diviseur":"la somme vaut 0"}. On peut aussi s'arrêter à i = 1, qui divise toujours n.`),
+    P("rec",1,2,`i divise n (le reste ${c("n mod i")} est nul) : on ${k===1?"compte 1 pour lui":k?"multiplie par i":"ajoute i"}, puis on continue avec les candidats jusqu'à i − 1.`,"Le cas général, quand i divise n"),
+    P("rec",3,3,"i ne divise pas n : on ne fait rien pour lui, et on continue avec i − 1. Dans les deux cas, seul i diminue.","Le cas général, sinon",1)],
+   tests:["12 5","45 7","12 1","1 1","12 12","7 7","7 6","10 10","10 4","36 36","36 6","30 15","9 3","9 9","16 8","16 16","28 14","28 28","100 10","13 13","6 2","20 20"],ex:["12 5","45 7","12 1"],alt:[`  fun n i ->\n  if i = 1 then 1\n  else if n mod i = 0 then ${plus} ${nom} n (i - 1)\n  else ${nom} n (i - 1)`]};},
+ R=>({nom:"pgcd",sig:"int -> int -> int",prm:"a b",nature:"diviseurs",dit:"qui calcule le plus grand diviseur commun de deux entiers naturels a et b par l'algorithme d'Euclide : le pgcd de a et de 0 est a ; sinon, le pgcd de a et de b est le pgcd de b et du reste de la division de a par b",pq:sigSuite("pgcd","12 8","deux","un int"),
+   corps:["  if b = 0 then a","  else pgcd b (a mod b)"],base:a=>/ 0$/.test(a),
+   pas:[P("base",0,0,"C'est la première règle de l'énoncé : le pgcd de a et de 0 est a."),P("rec",1,1,`La deuxième règle, mot à mot : on recommence avec b, et le reste ${c("a mod b")}. Ce reste est plus petit que b, donc le deuxième argument diminue jusqu'à 0.`)],
+   tests:["12 8","100 75","7 0","0 7","25 0","8 12","17 5","9 3","3 9","1 1","48 36","36 48","13 13","21 14","14 21","1000 10","35 64","81 27","6 4","30 12","45 10","2 2"],ex:["12 8","100 75","7 0"],alt:["  fun a b ->\n  match b with\n  | 0 -> a\n  | _ -> pgcd b (a mod b)"]}),
+ R=>{const k=R.choix([2,3]),nom="puissanceDe"+k;return {nom,sig:"int -> bool",prm:"n",nature:"diviseurs",dit:`qui teste si un entier naturel non nul est une puissance de ${k}, c'est-à-dire un des nombres 1, ${k}, ${k*k}, ${k**3}, ${k**4}, et ainsi de suite`,pq:"Un entier en entrée, un bool en sortie.",
+   corps:["  if n = 1 then true",`  else n mod ${k} = 0`,`    && ${nom} (n / ${k})`],base:a=>a==="1",
+   pas:[P("base",0,0,`1 est une puissance de ${k} : c'est ${k} à la puissance 0.`),P("rec",1,2,`Un nombre plus grand que 1 est une puissance de ${k} quand il est divisible par ${k} et que son quotient par ${k} est encore une puissance de ${k}. Quand il n'est pas divisible, ${c("&&")} s'arrête tout de suite sur false.`)],
+   tests:[String(k**4),String(k**4+k),"1","2","3","4","5","6","7","8","9","10","12","16","18","24","27","32","64","81","100","243","1024"],ex:[String(k**4),String(k**4+k),"1"],alt:[`  function n ->\n  if n = 1 then true\n  else if n mod ${k} <> 0 then false\n  else ${nom} (n / ${k})`]};},
+ R=>{const [a,k,b]=R.choix([[2,3,1],[1,2,3],[0,2,1],[3,2,5],[1,3,2],[5,2,1]]);return {nom:"u",sig:"int -> int",prm:"n",nature:"compte à rebours",
+   dit:`qui calcule le terme de rang n de la suite définie par u₀ = ${a} et, pour tout entier n ≥ 1, uₙ = ${k} × uₙ₋₁ + ${b}`,pq:"Un rang (un entier) en entrée, un terme (un entier) en sortie.",
+   corps:[`  if n = 0 then ${a}`,`  else ${k} * u (n - 1) + ${b}`],base:x=>x==="0",
+   pas:[P("base",0,0,`C'est le premier terme, donné par l'énoncé : u₀ = ${a}.`),P("rec",1,1,`La formule de l'énoncé, mot à mot : le terme précédent est ${c("u (n - 1)")}, avec des parenthèses autour de n − 1.`)],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15"]),ex:["1","3","0"],alt:[`  function\n  | 0 -> ${a}\n  | n -> ${k} * u (n - 1) + ${b}`]};},
+ R=>({nom:"fibo",sig:"int -> int",prm:"n",nature:"compte à rebours",dit:"qui calcule le terme de rang n de la suite de Fibonacci : les deux premiers termes, de rangs 0 et 1, valent 0 et 1, puis chaque terme est la somme des deux précédents",pq:"Un rang (un entier) en entrée, un terme (un entier) en sortie.",
+   corps:["  if n < 2 then n","  else fibo (n - 1) + fibo (n - 2)"],base:a=>a==="0"||a==="1",
+   pas:[P("base",0,0,"Deux cas de base en un seul test : le terme de rang 0 vaut 0 et celui de rang 1 vaut 1, donc le terme vaut n."),P("rec",1,1,"La somme des deux termes précédents : deux appels récursifs, sur n − 1 et sur n − 2. Il faut donc deux cas de base.")],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15"]),ex:["6","10","1"],alt:["  function\n  | 0 -> 0\n  | 1 -> 1\n  | n -> fibo (n - 1) + fibo (n - 2)"]})
+];
+const LB=["[6; 9; 5]","[5]","[]","[0]","[2; 4]","[1; 3]","[3; 3]","[1; 2; 3]","[4; 0; 7]","[2; 2; 2]","[7; 2; 9; 4]","[1; 2; 3; 4; 5]","[9; 8; 7; 6]","[2; 3; 2; 4]","[10; 20; 30]","[0; 1; 0; 1]","[5; 5; 1; 5]","[8; 1; 6; 3; 2]","[3; 1; 4; 1; 5; 9]","[12; 7; 15]","[1; 1; 2; 3; 5; 8]","[4; 4; 9; 9; 4]","[11; 2; 13; 4; 6]","[100; 1]"];
+const LF=["[1.5; 2.; 0.5]","[4.]","[]","[0.]","[2.; 2.]","[10.; 0.25]","[1.; 2.; 3.; 4.]","[0.5; 0.5; 0.5; 0.5]","[12.; 7.5]","[3.; 0.; 3.]","[8.; 4.; 2.; 1.; 0.5]","[100.; 0.75]","[6.5]","[1.25; 1.25]","[9.; 9.; 9.]","[20.; 15.5; 4.5]","[0.; 0.]","[7.; 1.; 0.5]","[2.5; 2.5; 5.]","[16.; 8.]"];
+const vide8=a=>a==="[]",seul=a=>!/;/.test(a);
+const tete8=t=>t.replace(/x/g,"List.hd li");
+const compte8=(nom,dit,test,si,sinon,ex)=>({nom,ex,sig:"int list -> int",prm:"li",nature:"compter",dit,pq:"Une liste d'entiers en entrée, un entier en sortie.",
+  corps:["  if li = [] then 0",`  else if ${tete8(test)}`,`  then 1 + ${nom} (List.tl li)`,`  else ${nom} (List.tl li)`],base:vide8,
+  pas:[P("base",0,0,"La liste vide n'a aucun élément, donc aucun à compter."),P("rec",1,2,si+" On compte 1, plus ceux de la queue.","Le cas général, quand la tête compte"),P("rec",3,3,sinon+" On ne compte rien pour elle, et on continue avec la queue.","Le cas général, sinon",1)],
+  tests:LB,alt:[`  function\n  | [] -> 0\n  | x :: r ->\n    if ${test} then 1 + ${nom} r\n    else ${nom} r`]});
+const filtre8=(nom,dit,test,si,ex)=>({nom,ex,sig:"int list -> int list",prm:"li",nature:"filtrer",dit,pq:"Une liste d'entiers en entrée, une liste d'entiers en sortie.",
+  corps:["  if li = [] then []",`  else if ${tete8(test)}`,"  then List.hd li",`    :: ${nom} (List.tl li)`,`  else ${nom} (List.tl li)`],base:vide8,
+  pas:[P("base",0,0,"Rien à garder dans la liste vide : le résultat est la liste vide."),P("rec",1,3,si+` On la garde : elle passe devant le résultat de l'appel sur la queue, avec ${c("::")}.`,"Le cas général, quand on garde la tête"),P("rec",4,4,"Sinon, la tête n'est pas gardée : le résultat est celui de la queue, tout seul.","Le cas général, sinon",1)],
+  tests:LB,alt:[`  function\n  | [] -> []\n  | x :: r ->\n    if ${test} then x :: ${nom} r\n    else ${nom} r`]});
+const transforme8=(nom,dit,calcul,why)=>({nom,sig:"int list -> int list",prm:"li",nature:"transformer",dit,pq:"Une liste d'entiers en entrée, une liste d'entiers en sortie.",
+  corps:["  if li = [] then []",`  else (${tete8(calcul)})`,`    :: ${nom} (List.tl li)`],base:vide8,
+  pas:[P("base",0,0,"Rien à transformer : la liste vide donne la liste vide."),P("rec",1,2,why+` Le nouvel élément passe devant le résultat de l'appel sur la queue, avec ${c("::")}.`)],
+  tests:LB,alt:[`  function\n  | [] -> []\n  | x :: r -> (${calcul}) :: ${nom} r`]});
+const tous8=(nom,dit,test,tous,why,ex)=>({nom,ex,sig:"int list -> bool",prm:"li",nature:"tester",dit,pq:"Une liste d'entiers en entrée, un bool en sortie.",
+  corps:[`  if li = [] then ${tous}`,`  else ${tete8(test)}`,`    ${tous?"&&":"||"} ${nom} (List.tl li)`],base:vide8,
+  pas:[P("base",0,0,tous?"Dans la liste vide, aucun élément ne contredit la propriété : la réponse est true.":"Dans la liste vide, il n'y a aucun élément : la réponse est false."),P("rec",1,2,why)],
+  tests:LB,alt:[`  function\n  | [] -> ${tous}\n  | x :: r -> ${test} ${tous?"&&":"||"} ${nom} r`]});
+const LISTE8=[
+ R=>({nom:"somElem",sig:"int list -> int",prm:"li",nature:"accumuler",dit:"qui calcule la somme des éléments d'une liste d'entiers",pq:"Une liste d'entiers en entrée, un entier en sortie.",
+   corps:["  if li = [] then 0","  else List.hd li + somElem (List.tl li)"],base:vide8,
+   pas:[P("base",0,0,"La somme d'une liste vide vaut 0 : 0 ne change pas une somme."),P("rec",1,1,`La somme, c'est le premier élément (${c("List.hd li")}) plus la somme des autres. L'appel récursif se fait sur la queue, ${c("List.tl li")}, qui est plus courte.`)],
+   tests:LB,alt:["  function\n  | [] -> 0\n  | x :: r -> x + somElem r","  fun li ->\n  match li with\n  | [] -> 0\n  | x :: r -> x + somElem r"]}),
+ R=>({nom:"longueur",sig:"int list -> int",prm:"li",nature:"accumuler",dit:"qui calcule le nombre d'éléments d'une liste d'entiers",pq:"Une liste d'entiers en entrée, un entier en sortie.",
+   corps:["  if li = [] then 0","  else 1 + longueur (List.tl li)"],base:vide8,
+   pas:[P("base",0,0,"La liste vide n'a aucun élément."),P("rec",1,1,"Un élément de plus que la queue : on compte 1 pour la tête, sans regarder sa valeur.")],
+   tests:LB,alt:["  function\n  | [] -> 0\n  | _ :: r -> 1 + longueur r"]}),
+ R=>({nom:"produit",sig:"int list -> int",prm:"li",nature:"accumuler",dit:"qui calcule le produit des éléments d'une liste d'entiers (le produit de la liste vide vaut 1)",pq:"Une liste d'entiers en entrée, un entier en sortie.",
+   corps:["  if li = [] then 1","  else List.hd li * produit (List.tl li)"],base:vide8,
+   pas:[P("base",0,0,"Le produit d'une liste vide vaut 1 : 1 ne change pas un produit. Avec 0, tous les produits vaudraient 0."),P("rec",1,1,"Le produit, c'est le premier élément fois le produit des autres.")],
+   tests:LB,alt:["  function\n  | [] -> 1\n  | x :: r -> x * produit r"]}),
+ R=>{const k=R.ent(0,4);return [
+   compte8("nbPairs","qui calcule le nombre d'éléments pairs d'une liste d'entiers","x mod 2 = 0","La tête est paire : son reste dans la division par 2 est nul.","La tête est impaire."),
+   compte8("nbImpairs","qui calcule le nombre d'éléments impairs d'une liste d'entiers naturels","x mod 2 = 1","La tête est impaire : son reste dans la division par 2 vaut 1.","La tête est paire."),
+   compte8("nbMultiples3","qui calcule le nombre d'éléments d'une liste d'entiers qui sont des multiples de 3","x mod 3 = 0","La tête est un multiple de 3 : son reste dans la division par 3 est nul.","La tête n'est pas un multiple de 3."),
+   compte8("nbGrands","qui calcule le nombre d'éléments d'une liste d'entiers qui sont strictement supérieurs à 4","x > 4","La tête est strictement supérieure à 4.","La tête vaut 4 ou moins."),
+   compte8("nbZeros","qui calcule le nombre d'éléments nuls d'une liste d'entiers","x = 0","La tête vaut 0.","La tête n'est pas nulle.",["[0; 1; 0; 1]","[4; 0; 7]","[]"])][k];},
+ R=>{const pair=R()<0.5,nom=pair?"somPairs":"somImpairs";return {nom,sig:"int list -> int",prm:"li",nature:"accumuler",dit:`qui calcule la somme des éléments ${pair?"pairs":"impairs"} d'une liste d'entiers naturels`,pq:"Une liste d'entiers en entrée, un entier en sortie.",
+   corps:["  if li = [] then 0",`  else if List.hd li mod 2 = ${pair?0:1}`,"  then List.hd li",`    + ${nom} (List.tl li)`,`  else ${nom} (List.tl li)`],base:vide8,
+   pas:[P("base",0,0,"Rien à ajouter dans la liste vide : la somme vaut 0."),P("rec",1,3,`La tête est ${pair?"paire":"impaire"} : on l'ajoute à la somme calculée sur la queue.`,"Le cas général, quand la tête compte"),P("rec",4,4,`La tête est ${pair?"impaire":"paire"} : on ne l'ajoute pas, la somme est celle de la queue.`,"Le cas général, sinon",1)],
+   tests:LB,alt:[`  function\n  | [] -> 0\n  | x :: r ->\n    if x mod 2 = ${pair?0:1} then x + ${nom} r\n    else ${nom} r`]};},
+ R=>{const grand=R()<0.5,nom=grand?"maxListe":"minListe",f=grand?"max":"min";return {nom,sig:"int list -> int",prm:"li",nature:"accumuler",dit:`qui rend le plus ${grand?"grand":"petit"} élément d'une liste d'entiers non vide`,pq:"Une liste d'entiers en entrée, un entier en sortie.",
+   corps:["  if List.tl li = [] then List.hd li",`  else ${f} (List.hd li)`,`    (${nom} (List.tl li))`],base:seul,
+   pas:[P("base",0,0,`La fonction n'est pas définie sur la liste vide : le cas de base est la liste à un seul élément, celle dont la queue est vide. Son plus ${grand?"grand":"petit"} élément, c'est lui.`),P("rec",1,2,`Le plus ${grand?"grand":"petit"} élément est soit la tête, soit le plus ${grand?"grand":"petit"} de la queue : ${c(f)} garde le bon des deux.`)],
+   tests:LB.filter(a=>a!=="[]"),ex:["[6; 9; 5]","[7; 2; 9; 4]","[5]"],alt:[`  function\n  | [x] -> x\n  | x :: r -> ${f} x (${nom} r)\n  | [] -> failwith "liste vide"`,`  function li ->\n  if List.tl li = [] then List.hd li\n  else if List.hd li ${grand?">":"<"} ${nom} (List.tl li) then List.hd li\n  else ${nom} (List.tl li)`]};},
+ R=>{const k=R.ent(0,3);return [
+   filtre8("pairs","qui rend la liste des éléments pairs d'une liste d'entiers, dans le même ordre","x mod 2 = 0","La tête est paire."),
+   filtre8("impairs","qui rend la liste des éléments impairs d'une liste d'entiers naturels, dans le même ordre","x mod 2 = 1","La tête est impaire."),
+   filtre8("grands","qui rend la liste des éléments strictement supérieurs à 3 d'une liste d'entiers, dans le même ordre","x > 3","La tête est strictement supérieure à 3.",["[1; 2; 3; 4; 5]","[7; 2; 9; 4]","[]"]),
+   filtre8("nonNuls","qui rend la liste des éléments non nuls d'une liste d'entiers, dans le même ordre","x <> 0","La tête n'est pas nulle.",["[4; 0; 7]","[0; 1; 0; 1]","[]"])][k];},
+ R=>{const k=R.ent(0,4);return [
+   transforme8("ajout1","qui rend la liste où 1 est ajouté à chaque élément d'une liste d'entiers","x + 1","On ajoute 1 à la tête."),
+   transforme8("ajout5","qui rend la liste où 5 est ajouté à chaque élément d'une liste d'entiers","x + 5","On ajoute 5 à la tête."),
+   transforme8("doubles","qui rend la liste des doubles des éléments d'une liste d'entiers","2 * x","On multiplie la tête par 2."),
+   transforme8("carres","qui rend la liste des carrés des éléments d'une liste d'entiers","x * x","Le carré de la tête, c'est la tête fois elle-même."),
+   transforme8("restes","qui rend la liste des restes dans la division par 3 des éléments d'une liste d'entiers naturels","x mod 3",`Le reste de la tête dans la division par 3 s'écrit avec ${c("mod")}.`)][k];},
+ R=>{const k=R.ent(0,3);return [
+   tous8("tousPairs","qui teste si tous les éléments d'une liste d'entiers sont pairs (c'est vrai pour la liste vide)","x mod 2 = 0",true,`Tous les éléments sont pairs quand la tête est paire et que tous ceux de la queue le sont aussi : ${c("&&")}.`,["[2; 4]","[6; 9; 5]","[]"]),
+   tous8("tousNonNuls","qui teste si aucun élément d'une liste d'entiers n'est nul (c'est vrai pour la liste vide)","x <> 0",true,`Aucun élément n'est nul quand la tête n'est pas nulle et qu'aucun de la queue ne l'est : ${c("&&")}.`,["[6; 9; 5]","[4; 0; 7]","[]"]),
+   tous8("existePair","qui teste si une liste d'entiers contient au moins un élément pair","x mod 2 = 0",false,`Il y a un élément pair quand la tête est paire, ou qu'il y en a un dans la queue : ${c("||")}.`,["[6; 9; 5]","[1; 3]","[]"]),
+   tous8("existeNul","qui teste si une liste d'entiers contient au moins un élément nul","x = 0",false,`Il y a un élément nul quand la tête vaut 0, ou qu'il y en a un dans la queue : ${c("||")}.`,["[4; 0; 7]","[6; 9; 5]","[]"])][k];},
+ R=>({nom:"dernier",sig:"int list -> int",prm:"li",nature:"parcourir",dit:"qui rend le dernier élément d'une liste d'entiers non vide",pq:"Une liste d'entiers en entrée, un entier en sortie.",
+   corps:["  if List.tl li = [] then List.hd li","  else dernier (List.tl li)"],base:seul,
+   pas:[P("base",0,0,"Une liste à un seul élément (sa queue est vide) : cet élément est le dernier."),P("rec",1,1,"Sinon, le dernier élément de la liste est le dernier de sa queue : la tête ne sert pas.")],
+   tests:LB.filter(a=>a!=="[]"),ex:["[6; 9; 5]","[7; 2; 9; 4]","[5]"],alt:['  function\n  | [x] -> x\n  | _ :: r -> dernier r\n  | [] -> failwith "liste vide"']}),
+ R=>({nom:"total",sig:"float list -> float",prm:"li",nature:"accumuler",dit:"qui calcule la somme des éléments d'une liste de nombres réels (de type float list)",pq:"Une liste de float en entrée, un float en sortie.",
+   corps:["  if li = [] then 0.","  else List.hd li +. total (List.tl li)"],base:vide8,
+   pas:[P("base",0,0,`La somme d'une liste vide vaut zéro, mais le résultat est un float : il s'écrit ${c("0.")}, avec le point.`),P("rec",1,1,`La tête plus la somme de la queue. Sur les float, l'addition s'écrit ${c("+.")}.`)],
+   tests:LF,alt:["  function\n  | [] -> 0.\n  | x :: r -> x +. total r"]}),
+ R=>({nom:"miroir",sig:"int list -> int list",prm:"li",nature:"transformer",dit:"qui rend la liste des éléments d'une liste d'entiers dans l'ordre inverse",pq:"Une liste d'entiers en entrée, une liste d'entiers en sortie.",
+   corps:["  if li = [] then []","  else miroir (List.tl li)","    @ [List.hd li]"],base:vide8,
+   pas:[P("base",0,0,"La liste vide à l'envers reste la liste vide."),P("rec",1,2,`On retourne la queue, puis on met la tête tout au bout. ${c("@")} colle deux listes : la tête doit donc être mise dans une liste à un élément, ${c("[List.hd li]")}.`)],
+   tests:LB,ex:["[6; 9; 5]","[1; 2; 3; 4; 5]","[]"],alt:["  function\n  | [] -> []\n  | x :: r -> miroir r @ [x]"]})
+];
+const LN=["[3; 2; 4] 0","[3; 2; 4] 2","[3; 2; 4] 5","[3; 2; 4] 1","[3; 2; 4] 3","[] 0","[] 3","[7] 0","[7] 1","[7] 2","[1; 2; 3; 4; 5] 2","[1; 2; 3; 4; 5] 4","[1; 2; 3; 4; 5] 5","[1; 2; 3; 4; 5] 9","[9; 9] 1","[9; 9] 2","[0; 1] 1","[5; 6; 7; 8] 3","[5; 6; 7; 8] 0","[5; 6; 7; 8] 4","[2; 4; 6; 8; 10; 12] 3","[2; 4; 6; 8; 10; 12] 6"];
+const XL=["2 [2; 3; 2; 4]","5 [1; 3; 5; 7]","2 []","2 [2]","2 [3]","2 [2; 2; 2]","1 [1; 3; 5; 7]","7 [1; 3; 5; 7]","4 [1; 3; 5; 7]","0 [0; 1; 0; 1]","1 [0; 1; 0; 1]","9 [9; 8; 9]","8 [9; 8; 9]","3 [3; 3; 4; 3; 3]","4 [3; 3; 4; 3; 3]","6 [5; 6]","5 [5; 6]","2 [1; 2; 3; 2; 1; 2]","1 [1; 2; 3; 2; 1; 2]","3 [1; 2; 3; 2; 1; 2]"];
+const L2=["[1; 2; 3] [10; 20; 30]","[5] [7]","[] []","[0; 0] [4; 9]","[1; 1; 1; 1] [1; 1; 1; 1]","[2; 4] [6; 8]","[9; 8; 7] [1; 2; 3]","[3] [0]","[10; 20] [30; 40]","[1; 2; 3; 4; 5] [5; 4; 3; 2; 1]","[7; 7] [7; 7]","[0] [0]","[6; 1; 6] [1; 6; 1]","[12; 13] [8; 7]","[2; 2; 2] [3; 3; 3]","[4; 5; 6; 7] [0; 1; 0; 1]","[100] [1]","[8; 6; 4; 2] [1; 3; 5; 7]","[15; 25] [5; 5]","[1; 0; 1; 0; 1] [0; 1; 0; 1; 0]"];
+const CC8=[
+ R=>({nom:"prefLong",sig:"int list -> int -> int list",prm:"li n",nature:"deux arguments",liste:true,dit:"qui, étant donnés une liste d'entiers li et un entier naturel n, calcule le préfixe de longueur n de li, c'est-à-dire la liste de ses n premiers éléments ; quand li a moins de n éléments, le résultat est li",pq:sigSuite("prefLong","[3; 2; 4] 2","deux","une liste d'entiers"),
+   corps:["  match li with","  | [] -> []","  | x :: r ->","    if n = 0 then []","    else x :: prefLong r (n - 1)"],base:a=>/^\[\] | 0$/.test(a),
+   pas:[P("base",0,1,"La liste est finie : il n'y a plus rien à prendre, quel que soit n."),P("rec",2,4,"Deuxième cas de base : si n vaut 0, on a pris assez d'éléments. Sinon on garde la tête x, et il reste n − 1 éléments à prendre dans la queue : les deux arguments diminuent ensemble.","Le cas général (liste non vide)",2)],
+   tests:LN,ex:["[3; 2; 4] 2","[3; 2; 4] 5","[3; 2; 4] 0"],alt:["  fun li n ->\n  if li = [] || n = 0 then []\n  else List.hd li :: prefLong (List.tl li) (n - 1)"]}),
+ R=>({nom:"oterPremiers",sig:"int list -> int -> int list",prm:"li n",nature:"deux arguments",liste:true,dit:"qui, étant donnés une liste d'entiers li et un entier naturel n, calcule la liste li privée de ses n premiers éléments ; quand li a moins de n éléments, le résultat est la liste vide",pq:sigSuite("oterPremiers","[3; 2; 4] 2","deux","une liste d'entiers"),
+   corps:["  match li with","  | [] -> []","  | _ :: r ->","    if n = 0 then li","    else oterPremiers r (n - 1)"],base:a=>/^\[\] | 0$/.test(a),
+   pas:[P("base",0,1,"La liste est finie : il ne reste rien, même s'il fallait encore enlever des éléments."),P("rec",2,4,"Deuxième cas de base : si n vaut 0, il n'y a plus rien à enlever, on rend la liste entière. Sinon on enlève la tête (elle ne sert pas, d'où _) et il reste n − 1 éléments à enlever dans la queue.","Le cas général (liste non vide)",2)],
+   tests:LN,ex:["[3; 2; 4] 2","[3; 2; 4] 5","[3; 2; 4] 0"],alt:["  fun li n ->\n  if li = [] || n = 0 then li\n  else oterPremiers (List.tl li) (n - 1)"]}),
+ R=>({nom:"supprimer_elem",sig:"int -> int list -> int list",prm:"e li",nature:"deux arguments",liste:true,dit:"qui, étant donnés un entier e et une liste d'entiers li, calcule la liste li où toutes les occurrences de e ont été supprimées",pq:sigSuite("supprimer_elem","2 [2; 3; 2; 4]","deux","une liste d'entiers"),
+   corps:["  match li with","  | [] -> []","  | x :: r ->","    if x = e then supprimer_elem e r","    else x :: supprimer_elem e r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"Rien à supprimer dans la liste vide."),P("rec",2,4,"Si la tête vaut e, on ne la remet pas devant : le résultat est celui de la queue. Sinon on la garde devant. Dans les deux cas, e est redonné tel quel à l'appel récursif.","Le cas général (liste non vide)",2)],
+   tests:XL,alt:["  fun e li ->\n  if li = [] then []\n  else if List.hd li = e then supprimer_elem e (List.tl li)\n  else List.hd li :: supprimer_elem e (List.tl li)","  fun e -> function\n  | [] -> []\n  | x :: r when x = e -> supprimer_elem e r\n  | x :: r -> x :: supprimer_elem e r"]}),
+ R=>({nom:"incr_list",sig:"int list -> bool list -> int list",prm:"li lb",nature:"deux listes",liste:true,dit:"qui, étant données une liste d'entiers li et une liste de booléens lb de mêmes longueurs, rend la liste li où l'élément d'indice k est augmenté de 1 quand l'élément d'indice k de lb vaut true, et reste inchangé sinon",pq:sigSuite("incr_list","[1; 2] [true; false]","deux","une liste d'entiers"),
+   corps:["  match li, lb with","  | x :: r, b :: s ->","    (if b then x + 1 else x)","    :: incr_list r s","  | _ -> []"],base:a=>/^\[\] /.test(a),
+   pas:[P("rec",0,3,`On avance dans les deux listes en même temps : x va avec b, et l'appel récursif reçoit les deux queues. Le ${c("if")} entre parenthèses choisit la valeur à mettre devant.`,"Le cas général (deux listes non vides)",2),P("base",4,4,"Les deux listes ont la même longueur : quand l'une est vide, l'autre aussi, et le résultat est la liste vide.")],
+   tests:["[1; 2; 3; 4; 5] [true; false; false; true; true]","[1; 2] [true; false]","[] []","[7] [true]","[7] [false]","[1; 2] [true; true]","[1; 2] [false; false]","[1; 2] [false; true]","[0; 0; 0] [true; false; true]","[9; 8; 7] [false; true; false]","[5; 5; 5; 5] [true; true; true; true]","[5; 5; 5; 5] [false; false; false; false]","[3; 1; 4] [true; true; false]","[10; 20] [false; true]","[2; 4; 6; 8] [true; false; true; false]","[2; 4; 6; 8] [false; true; false; true]","[1] [true]","[6; 5; 4; 3; 2; 1] [true; true; false; false; true; false]","[99] [true]","[0] [false]"],
+   alt:["  fun li lb ->\n  if li = [] then []\n  else (if List.hd lb then List.hd li + 1 else List.hd li)\n    :: incr_list (List.tl li) (List.tl lb)"]}),
+ R=>({nom:"appartient",sig:"int -> int list -> bool",prm:"x li",nature:"deux arguments",liste:true,dit:"qui teste si un entier x est un élément d'une liste d'entiers li",pq:sigSuite("appartient","5 [1; 3; 5; 7]","deux","un bool"),
+   corps:["  match li with","  | [] -> false","  | y :: r -> y = x || appartient x r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"Rien n'appartient à la liste vide."),P("rec",2,2,`x est dans la liste s'il est égal à la tête, ou s'il est dans la queue. Quand la tête convient, ${c("||")} ne regarde même pas la suite.`)],
+   tests:XL,ex:["5 [1; 3; 5; 7]","4 [1; 3; 5; 7]","2 []"],alt:["  fun x li ->\n  if li = [] then false\n  else List.hd li = x || appartient x (List.tl li)","  fun x li ->\n  match li with\n  | [] -> false\n  | t :: _ when t = x -> true\n  | _ :: q -> appartient x q"]}),
+ R=>({nom:"nbOcc",sig:"int -> int list -> int",prm:"x li",nature:"deux arguments",liste:true,dit:"qui calcule le nombre d'occurrences d'un entier x dans une liste d'entiers li, c'est-à-dire le nombre de fois où x apparaît dans li",pq:sigSuite("nbOcc","2 [2; 3; 2; 4]","deux","un int"),
+   corps:["  match li with","  | [] -> 0","  | y :: r ->","    if y = x then 1 + nbOcc x r","    else nbOcc x r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"x n'apparaît jamais dans la liste vide."),P("rec",2,4,"Si la tête vaut x, on compte 1, plus les apparitions dans la queue. Sinon, on ne compte rien pour elle.","Le cas général (liste non vide)",2)],
+   tests:XL,alt:["  fun x li ->\n  if li = [] then 0\n  else if List.hd li = x then 1 + nbOcc x (List.tl li)\n  else nbOcc x (List.tl li)"]}),
+ R=>({nom:"nieme",sig:"int list -> int -> int",prm:"li n",nature:"deux arguments",liste:true,dit:"qui rend l'élément d'indice n d'une liste d'entiers li, le premier élément ayant l'indice 0 ; on suppose que la liste a plus de n éléments",pq:sigSuite("nieme","[5; 6; 7] 2","deux","un int"),
+   corps:["  if n = 0 then List.hd li","  else nieme (List.tl li) (n - 1)"],base:a=>/ 0$/.test(a),
+   pas:[P("base",0,0,"L'élément d'indice 0, c'est la tête."),P("rec",1,1,"L'élément d'indice n de la liste est l'élément d'indice n − 1 de sa queue : les deux arguments diminuent ensemble.")],
+   tests:["[5; 6; 7] 2","[5; 6; 7] 1","[5; 6; 7] 0","[4] 0","[1; 2] 0","[1; 2] 1","[9; 8; 7; 6; 5] 0","[9; 8; 7; 6; 5] 2","[9; 8; 7; 6; 5] 4","[0; 0; 1] 2","[0; 0; 1] 1","[3; 1; 4; 1; 5; 9] 5","[3; 1; 4; 1; 5; 9] 3","[3; 1; 4; 1; 5; 9] 1","[10; 20; 30; 40] 3","[10; 20; 30; 40] 2","[10; 20; 30; 40] 0","[2; 2] 1","[7; 8; 9] 1","[6; 5] 0"],ex:["[5; 6; 7] 2","[5; 6; 7] 1","[5; 6; 7] 0"],
+   alt:['  fun li n ->\n  match li with\n  | [] -> failwith "trop court"\n  | x :: r -> if n = 0 then x else nieme r (n - 1)']}),
+ R=>({nom:"insere",sig:"int -> int list -> int list",prm:"x li",nature:"deux arguments",liste:true,dit:"qui insère un entier x à sa place dans une liste d'entiers li triée dans l'ordre croissant : le résultat contient x et tous les éléments de li, et il est encore trié",pq:sigSuite("insere","3 [1; 2; 4; 5]","deux","une liste d'entiers"),
+   corps:["  match li with","  | [] -> [x]","  | y :: r ->","    if x <= y then x :: li","    else y :: insere x r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"Dans la liste vide, x est tout seul : le résultat est la liste à un élément [x]."),P("rec",2,4,"Si x est plus petit que la tête (ou égal), sa place est tout devant : on le met devant la liste entière, et c'est fini. Sinon la tête reste devant, et x s'insère dans la queue.","Le cas général (liste non vide)",2)],
+   tests:["3 [1; 2; 4; 5]","0 [1; 2; 4; 5]","1 []","9 [1; 2; 4; 5]","5 [5]","4 [5]","6 [5]","2 [1; 3]","2 [2; 2]","7 [1; 3; 5; 7; 9]","8 [1; 3; 5; 7; 9]","10 [1; 3; 5; 7; 9]","1 [1; 3; 5; 7; 9]","0 [0; 0]","5 [1; 9]","3 [3; 3; 3]","4 [1; 2; 3]","2 [1; 2; 3]","6 [2; 4; 6; 8]","5 [2; 4; 6; 8]"],
+   alt:["  fun x li ->\n  if li = [] then [x]\n  else if x <= List.hd li then x :: li\n  else List.hd li :: insere x (List.tl li)"]}),
+ R=>({nom:"remplace",sig:"int -> int -> int list -> int list",prm:"a b li",nature:"deux arguments",liste:true,dit:"qui, étant donnés deux entiers a et b et une liste d'entiers li, rend la liste li où chaque élément égal à a est remplacé par b",pq:sigSuite("remplace","1 9 [1; 2; 1; 3]","trois","une liste d'entiers"),
+   corps:["  match li with","  | [] -> []","  | x :: r ->","    (if x = a then b else x)","    :: remplace a b r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"Rien à remplacer dans la liste vide."),P("rec",2,4,`Le ${c("if")} entre parenthèses choisit l'élément à mettre devant : b quand la tête vaut a, la tête elle-même sinon. Puis on continue sur la queue, avec les mêmes a et b.`,"Le cas général (liste non vide)",2)],
+   tests:["1 9 [1; 2; 1; 3]","2 0 [1; 2; 1; 3]","1 9 []","5 7 [1; 2; 1; 3]","4 4 [4; 5]","4 5 [4; 5]","5 4 [4; 5]","0 1 [0; 0; 0]","3 8 [3]","3 8 [2]","7 1 [7; 6; 7; 6; 7]","6 1 [7; 6; 7; 6; 7]","2 3 [1; 2; 3; 2; 1]","9 0 [1; 2; 3]","1 2 [1; 1; 2; 2]","2 1 [1; 1; 2; 2]","5 5 [5; 5]","8 3 [8; 9; 10]","10 3 [8; 9; 10]","0 6 [6; 0; 6]"],
+   alt:["  fun a b li ->\n  if li = [] then []\n  else (if List.hd li = a then b else List.hd li)\n    :: remplace a b (List.tl li)"]}),
+ R=>({nom:"somme2",sig:"int list -> int list -> int list",prm:"l1 l2",nature:"deux listes",liste:true,dit:"qui, étant données deux listes d'entiers l1 et l2 de même longueur, rend la liste des sommes terme à terme : le premier élément de l1 plus le premier de l2, puis le deuxième de l1 plus le deuxième de l2, et ainsi de suite",pq:sigSuite("somme2","[1; 2; 3] [10; 20; 30]","deux","une liste d'entiers"),
+   corps:["  match l1, l2 with","  | x :: r, y :: s ->","    (x + y) :: somme2 r s","  | _ -> []"],base:a=>/^\[\] /.test(a),
+   pas:[P("rec",0,2,"On avance dans les deux listes en même temps : la somme des deux têtes passe devant, et l'appel récursif reçoit les deux queues.","Le cas général (deux listes non vides)",2),P("base",3,3,"Les deux listes ont la même longueur : quand l'une est vide, l'autre aussi, et le résultat est la liste vide.")],
+   tests:L2,alt:["  fun l1 l2 ->\n  if l1 = [] then []\n  else (List.hd l1 + List.hd l2)\n    :: somme2 (List.tl l1) (List.tl l2)"]}),
+ R=>({nom:"conc",sig:"int list -> int list -> int list",prm:"l1 l2",nature:"deux listes",liste:true,sans:["@"],dit:"qui met bout à bout deux listes d'entiers l1 et l2 (les éléments de l1, puis ceux de l2), sans utiliser l'opérateur @",pq:sigSuite("conc","[1; 2; 3] [10; 20; 30]","deux","une liste d'entiers"),
+   corps:["  match l1 with","  | [] -> l2","  | x :: r -> x :: conc r l2"],base:a=>/^\[\] /.test(a),
+   pas:[P("base",0,1,"Quand l1 est vide, il ne reste que l2."),P("rec",2,2,"La tête de l1 reste devant, suivie de la queue de l1 mise bout à bout avec l2. Seule l1 diminue : l2 est redonnée telle quelle.")],
+   tests:L2.concat(["[] [4; 5]","[4; 5] []","[1] [2; 3; 4]"]),ex:["[1; 2; 3] [10; 20; 30]","[5] [7]","[] [4; 5]"],alt:["  fun l1 l2 ->\n  if l1 = [] then l2\n  else List.hd l1 :: conc (List.tl l1) l2"]}),
+ R=>({nom:"repete",sig:"int -> int -> int list",prm:"x n",nature:"construire",dit:"qui, étant donnés un entier x et un entier naturel n, rend la liste formée de n fois l'entier x",pq:sigSuite("repete","7 3","deux","une liste d'entiers"),
+   corps:["  if n = 0 then []","  else x :: repete x (n - 1)"],base:a=>/ 0$/.test(a),
+   pas:[P("base",0,0,"Zéro fois x : la liste vide."),P("rec",1,1,"Un x devant, puis la liste de n − 1 fois x. Ici la récursivité se fait sur l'entier n, pas sur une liste.")],
+   tests:["7 3","0 4","7 0","5 0","0 0","3 0","7 1","1 5","9 2","4 6","2 1","3 3","8 4","6 2","1 1","12 3","10 5","11 1","2 7","9 8"],alt:["  fun x n ->\n  match n with\n  | 0 -> []\n  | _ -> x :: repete x (n - 1)"]}),
+ R=>R()<0.5?{nom:"rebours",sig:"int -> int list",prm:"n",nature:"construire",dit:"qui rend la liste des entiers de n à 1, dans l'ordre décroissant, pour un entier naturel n (la liste vide pour n = 0)",pq:"Un entier en entrée, une liste d'entiers en sortie.",
+   corps:["  if n = 0 then []","  else n :: rebours (n - 1)"],base:a=>a==="0",
+   pas:[P("base",0,0,"Pour n = 0, il n'y a aucun entier à mettre dans la liste."),P("rec",1,1,"n est le plus grand : il passe devant la liste des entiers de n − 1 à 1.")],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15","16","17","18","19","25"]),ex:["4","1","0"],alt:["  function\n  | 0 -> []\n  | n -> n :: rebours (n - 1)"]}
+  :{nom:"croissant",sig:"int -> int list",prm:"n",nature:"construire",dit:"qui rend la liste des entiers de 1 à n, dans l'ordre croissant, pour un entier naturel n (la liste vide pour n = 0)",pq:"Un entier en entrée, une liste d'entiers en sortie.",
+   corps:["  if n = 0 then []","  else croissant (n - 1) @ [n]"],base:a=>a==="0",
+   pas:[P("base",0,0,"Pour n = 0, il n'y a aucun entier à mettre dans la liste."),P("rec",1,1,`n est le plus grand : il va tout au bout, après la liste des entiers de 1 à n − 1. ${c("@")} colle deux listes, d'où ${c("[n]")} entre crochets. Avec ${c("::")}, n se retrouverait devant.`)],
+   tests:[..."0123456789"].concat(["10","11","12","13","14","15","16","17","18","19","25"]),ex:["4","1","0"],alt:["  function n ->\n  let rec aux i =\n    if i > n then [] else i :: aux (i + 1)\n  in aux 1"]},
+ R=>({nom:"estTriee",sig:"int list -> bool",prm:"li",nature:"deux par deux",liste:true,dit:"qui teste si une liste d'entiers est triée dans l'ordre croissant au sens large, c'est-à-dire si chaque élément est inférieur ou égal au suivant (la liste vide et les listes à un seul élément sont triées)",pq:"Une liste d'entiers en entrée, un bool en sortie.",
+   corps:["  match li with","  | x :: y :: r ->","    x <= y && estTriee (y :: r)","  | _ -> true"],base:a=>!/;/.test(a),
+   pas:[P("rec",0,2,"Au moins deux éléments : les deux premiers doivent être dans l'ordre, et la liste privée de sa tête doit être triée. L'appel récursif garde y : il sera comparé à l'élément d'après.","Le cas général (au moins deux éléments)",2),P("base",3,3,"Toutes les autres listes, c'est-à-dire la liste vide et celles à un élément : elles sont triées.")],
+   tests:LB,ex:["[1; 2; 3; 4; 5]","[6; 9; 5]","[5]"],alt:["  function li ->\n  if li = [] || List.tl li = [] then true\n  else List.hd li <= List.hd (List.tl li)\n    && estTriee (List.tl li)"]}),
+ R=>({nom:"multiplie",sig:"int -> int list -> int list",prm:"k li",nature:"deux arguments",liste:true,dit:"qui, étant donnés un entier k et une liste d'entiers li, rend la liste où chaque élément de li est multiplié par k",pq:sigSuite("multiplie","2 [2; 3; 2; 4]","deux","une liste d'entiers"),
+   corps:["  match li with","  | [] -> []","  | x :: r -> (k * x) :: multiplie k r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"Rien à multiplier dans la liste vide."),P("rec",2,2,"La tête multipliée par k passe devant le résultat de l'appel sur la queue. k est redonné tel quel à l'appel récursif.")],
+   tests:XL,alt:["  fun k li ->\n  if li = [] then []\n  else (k * List.hd li) :: multiplie k (List.tl li)"]}),
+ R=>({nom:"plusGrands",sig:"int -> int list -> int list",prm:"k li",nature:"deux arguments",liste:true,dit:"qui, étant donnés un entier k et une liste d'entiers li, rend la liste des éléments de li strictement supérieurs à k, dans le même ordre",pq:sigSuite("plusGrands","2 [2; 3; 2; 4]","deux","une liste d'entiers"),
+   corps:["  match li with","  | [] -> []","  | x :: r ->","    if x > k then x :: plusGrands k r","    else plusGrands k r"],base:a=>/\[\]$/.test(a),
+   pas:[P("base",0,1,"Rien à garder dans la liste vide."),P("rec",2,4,"Si la tête dépasse k, on la garde devant le résultat de la queue. Sinon, le résultat est celui de la queue, tout seul.","Le cas général (liste non vide)",2)],
+   tests:XL,alt:["  fun k li ->\n  if li = [] then []\n  else if List.hd li > k then List.hd li :: plusGrands k (List.tl li)\n  else plusGrands k (List.tl li)"]})
+];
+const tireFonction=(R,B,sym,o)=>{for(;;){const e=exoFonction(Object.assign(R.choix(B)(R),{sym},o));if(e)return e;}};
+
 G.add("pf",[
  {id:"PF1",t:"Type et valeur d'une expression",tache:"type et valeur d'une expression",th:"types",pts:3,lecons:["p-types","p-iflet"],
   paliers:[
@@ -26170,6 +26551,12 @@ G.add("pf",[
    {t:"une erreur de type",cc:3,min:30,gen:R=>tireFausse(R,Object.assign({},FL,FI),"type",["List.hd","List.tl","::","[]"])},
    {t:"une erreur de logique",cc:3,min:30,gen:R=>tireFausse(R,Object.assign({},FL,FM,FI),"logique",["List.hd","List.tl","::","[]","&&","||"])},
    {t:"un cas oublié dans un match",cc:3,min:20,gen:R=>tireFausse(R,FM,"match")}]},
+ {id:"PF8",t:"Écrire une fonction entière",tache:"écrire une fonction entière",th:"fonctions",pts:3,lecons:["p-fonctions","p-rec","p-listes","p-schema"],apres:["PF3"],
+  paliers:[
+   {t:"sans récursivité : un test ou un calcul",cc:4,min:30,gen:R=>tireFonction(R,SANS1,["->","mod","&&","||","<>"])},
+   {t:"récursive sur un entier",cc:6,min:28,gen:R=>tireFonction(R,RECENT8,["let rec","->","mod","&&","||"],{rec:true})},
+   {t:"récursive sur une liste",cc:6,min:22,gen:R=>tireFonction(R,LISTE8,["let rec","->","[]","::","List.hd","List.tl","|"],{rec:true,liste:true})},
+   {t:"comme au CC : une liste et un autre argument",cc:8,min:14,gen:R=>tireFonction(R,CC8,["let rec","->","[]","::","|","match","with","List.hd","List.tl"],{rec:true})}]},
  {id:"PF5",t:"Types somme, types récursifs, arbres",tache:"types somme et arbres",th:"somme",ex:"ct",pts:5.5,lecons:["p2-somme","p2-rectype"],apres:["PF2"],
   paliers:[
    {t:"écrire une valeur du type",cc:2,min:40,gen:tireValeur},
