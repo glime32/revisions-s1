@@ -24806,6 +24806,212 @@ function exoCv(o,mode){const E=cvEtapes(o),dern=E.length-1,bornes=mode!==3,Kv=o.
       :[{k:"champ",id:"I",nom:"valeur",label:"$I =$",ex:"une valeur exacte, par exemple ln(2) - 1/2",sym:["ln(","e","e^(","π","√","/"]}],
     indice:mode===1?false:undefined,juge,etapes:E,bonne:bornes?`${fx(`u = ${o.uA.T}`)} puis ${fx(`u = ${o.uB.T}`)}, et ${fx(`I = ${o.I.T}`)}`:fx(`I = ${o.I.T}`),bonneTxt:(bornes?`bornes ${o.uA.T} et ${o.uB.T}, `:"")+`I = ${o.I.T}`,
     repBonne:bornes?{bas:o.uA.tp,haut:o.uB.tp,I:o.I.tp}:{I:o.I.tp},repFausse:bornes?{bas:o.uA.tp,haut:o.uB.tp,I:`(${o.I.tp})+1`}:{I:loin?String(loin[0]):`(${o.I.tp})+1`},nature:o.nat,ens:{type:"cv",A:o.A.v,B:o.B.v,f:o.f,u:o.uF}};}
+/* ---------- CA13 : équations différentielles d'ordre 1, y′ + a(x)y = b(x) ----------
+   Les solutions sont yₚ + C e^{−A(x)}, et e^{−A(x)} ne s'annule jamais. Une réponse tapée est donc jugée par le calcul :
+   (y − yₚ)/e^{−A} doit être le même nombre aux six points XD. Pour « toutes les solutions », ce nombre doit suivre la constante tapée,
+   et la suivre comme une fonction affine (C², e^C ou 1/C ne donnent pas toutes les solutions). */
+const XD=[0.3,0.6,0.9,1.2,1.5,1.8];
+const d1F=tp=>{const A=lis(tp,["x"]);return x=>val(A,{x})[0];},d1V=tp=>XD.map(d1F(tp));
+const d1Pw=n=>n===0?"":n===1?"x":"x"+"⁰¹²³⁴⁵⁶"[n];
+const d1Mon=(K,xN)=>{K=q(K);const A=absQ(K);return (K.n<0?"−":"")+(A.n===1?"":A.n)+xN+(A.d===1?"":"/"+A.d);};
+const d1Plus=(a,b)=>!a?b:b[0]==="−"?a+" − "+b.slice(1):a+" + "+b;
+const d1Par=t=>/ /.test(t)?"("+t+")":t;
+const d1Val=(A,env)=>{try{const V=XD.map(x=>val(A,Object.assign({x},env)));return V.some(v=>!Number.isFinite(v[0])||!(Math.abs(v[1])<=1e-9*Math.max(1,Math.abs(v[0]))))?null:V.map(v=>v[0]);}catch(e){return null;}};
+/* le nombre k tel que V = ref + k × den aux six points, ou null */
+const d1Rap=(V,ref,den)=>{const r=V.map((v,i)=>(v-ref[i])/den[i]);return r.every(x=>Math.abs(x-r[0])<=1e-7*Math.max(1,Math.abs(r[0])))?r[0]:null;};
+/* la partie sans second membre : a constant, puis les a(x) du TD 2 (exercice 1) */
+function d1Cst(a){a=q(a);const m=mul(a,-1);
+  return {fam:"cst",k:a,dom:"ℝ",x0:0,lhs:S([[1,"y′"],[a,"y"]]),aT:nb(a),aTp:`(${brut(a)})`,AT:rx(a),ATp:`(${brut(a)})*x`,y0T:ex(m),y0Tp:exT(m),eAT:ex(a),mulT:c=>nb(c),
+    whyA:`Une primitive de la constante ${nb(a)} est ${fx(rx(a))}.`};}
+function d1Var(R,fam,P){
+  if(fam==="pow"){const n=P&&P.n||R.choix([1,1,2,2,3]),k=P&&P.k||R.nz(-6,6),K=Q(k,n+1),xn=d1Pw(n),xN=d1Pw(n+1);
+    return {fam,k,dom:"ℝ",x0:0,lhs:S([[1,"y′"],[k,xn+"y"]]),aT:S([[k,xn]]),aTp:`(${k})*x^${n}`,AT:d1Mon(K,xN),ATp:`(${brut(K)})*x^${n+1}`,
+      y0T:`e^{${d1Mon(mul(K,-1),xN)}}`,y0Tp:`e^((${brut(mul(K,-1))})*x^${n+1})`,eAT:`e^{${d1Mon(K,xN)}}`,mulT:c=>S([[c,xn]]),der:n>1?`e^((${-k*n})*x^${n-1})`:null,
+      whyA:`Une primitive de ${fx(xn)} est ${fx(xN+"/"+(n+1))}${k===1?"":`, qu'on multiplie par ${nb(k)}`}.`};}
+  if(fam==="expx"){const k=R.choix([1,1,-1,2,-2,3]);
+    return {fam,k,dom:"ℝ",x0:0,e0:k,expT:[[-k,"eˣ"]],lhs:S([[1,"y′"],[k,"eˣy"]]),aT:S([[k,"eˣ"]]),aTp:`(${k})*e^x`,AT:S([[k,"eˣ"]]),ATp:`(${k})*e^x`,
+      y0T:`e^{${S([[-k,"eˣ"]])}}`,y0Tp:`e^((${-k})*e^x)`,eAT:`e^{${S([[k,"eˣ"]])}}`,mulT:c=>S([[c,"eˣ"]]),whyA:`${fx("eˣ")} est sa propre primitive.`};}
+  if(fam==="invx"){const k=P&&P.k||R.nz(-3,3),K=Math.abs(k),pos=k>0,pw=d1Pw(K);
+    return {fam,k,dom:"]0, +∞[",x0:1,lhs:`y′ ${pos?"+":"−"} ${K===1?"":K}y/x`,aT:`${pos?"":"−"}${K}/x`,aTp:`(${k})/x`,AT:S([[k,"ln x"]]),ATp:`(${k})*ln(x)`,
+      y0T:pos?"1/"+pw:pw,den:pos?pw:null,y0Tp:`x^(${-k})`,eAT:pos?pw:"1/"+pw,mulT:c=>`${nb(c)}/x`,
+      whyA:`Sur ]0, +∞[, une primitive de ${fx("1/x")} est ${fx("ln x")}.`,why0:` Et ${fx(`e^{${S([[-k,"ln x"]])}} = ${pos?"1/"+pw:pw}`)}, car ${fx("e^{n ln x} = xⁿ")}.`};}
+  if(fam==="rat"){const k=R.choix([2,-2,1,-1]),K=Math.abs(k),pos=k>0,D=K===2?"(1 + x²)":"√(1 + x²)",nu=K===2?"1 + x²":D;
+    return {fam,k,dom:"ℝ",x0:0,lhs:`y′ ${pos?"+":"−"} ${K===1?"":K}xy/(1 + x²)`,aT:`${pos?"":"−"}${K===1?"":K}x/(1 + x²)`,aTp:`(${k})*x/(1+x^2)`,
+      AT:`${pos?"":"−"}${K===2?"":"(1/2)"}ln(1 + x²)`,ATp:`(${k}/2)*ln(1+x^2)`,y0T:pos?"1/"+D:nu,den:pos?D:null,y0F:pos?null:D,y0Tp:`(1+x^2)^(${-k}/2)`,eAT:pos?nu:"1/"+D,
+      whyA:`${fx("2x/(1 + x²)")} est de la forme ${fx("u′/u")} avec ${fx("u = 1 + x²")} : une primitive est ${fx("ln(1 + x²)")}${K===2?"":". Ici il n'y a pas le 2 : on multiplie par 1/2"}.`,
+      why0:` Et ${fx("e^{n ln u} = uⁿ")} : ${fx(`e^{−A(x)} = ${pos?"1/"+D:nu}`)}${K===1?" (la puissance 1/2 est la racine carrée)":""}.`};}
+  if(fam==="trig"){const k=R.choix([1,-1,2,-2,3]),cosi=P&&P.cosi!==undefined?P.cosi:R()<0.5,f=cosi?"cos x":"sin x",F=cosi?"sin x":"cos x",kA=cosi?k:-k,tf=cosi?"cos(x)":"sin(x)",tF=cosi?"sin(x)":"cos(x)";
+    return {fam,k,dom:"ℝ",x0:0,e0:cosi?0:-k,expT:[[-kA,F]],lhs:S([[1,"y′"],[k,"y "+f]]),aT:S([[k,f]]),aTp:`(${k})*${tf}`,AT:S([[kA,F]]),ATp:`(${kA})*${tF}`,
+      y0T:`e^{${S([[-kA,F]])}}`,y0Tp:`e^((${-kA})*${tF})`,eAT:`e^{${S([[kA,F]])}}`,mulT:c=>S([[c,f]]),
+      whyA:cosi?`Une primitive de ${fx("cos x")} est ${fx("sin x")}.`:`Une primitive de ${fx("sin x")} est ${fx("−cos x")} : attention au signe.`};}
+  const p=R.choix([1,-1]),c=R.nz(-3,3);
+  return {fam:"aff",dom:"ℝ",x0:0,lhs:`y′ + (${affT(2*p,c)})y`,aT:affT(2*p,c),aTp:`(${2*p}*x+(${c}))`,AT:S([[p,"x²"],[c,"x"]]),ATp:`(${p})*x^2+(${c})*x`,
+    y0T:`e^{${S([[-p,"x²"],[-c,"x"]])}}`,y0Tp:`e^((${-p})*x^2+(${-c})*x)`,eAT:`e^{${S([[p,"x²"],[c,"x"]])}}`,
+    whyA:`Une primitive de ${fx("x")} est ${fx("x²/2")}, et une primitive d'une constante k est kx.`};}
+/* un second membre : solution particulière évidente (cc, ax, poly) ou variation de la constante (res, exp, pol, invx, gauss) */
+function d1Sm(R,kind,ci){let o;
+  if(kind==="cc"){const a=R.nz(-5,5),m=R.nz(-5,5);o=d1Cst(a);
+    Object.assign(o,{bT:nb(a*m),bTp:`(${a*m})`,ypT:nb(m),ypTp:`(${m})`,ypx0:Q(m),ind:"cherche une solution particulière constante.",
+      whyP:`On essaie une fonction constante : sa dérivée est 0, donc il faut ${fx(`${nb(a)} × yₚ = ${nb(a*m)}`)}, c'est-à-dire ${fx(`yₚ = ${nb(m)}`)}.`});}
+  else if(kind==="ax"){const m=R.nz(-4,4),f=R.choix(ci?["pow","pow","trig","invx"]:["pow","pow","trig","expx","invx"]);
+    o=d1Var(R,f,{n:R.choix([1,1,2]),k:f==="pow"?R.nz(-3,3):0,cosi:ci?true:undefined});const bT=o.mulT(m*o.k);
+    Object.assign(o,{bT,bTp:`(${m})*(${o.aTp})`,ypT:nb(m),ypTp:`(${m})`,ypx0:Q(m),ind:"cherche une solution particulière constante.",
+      whyP:`On essaie une fonction constante k : sa dérivée est 0, donc il faut ${fx(`k × ${vP(o.aT)} = ${bT}`)} pour tout x. ${fx(`k = ${nb(m)}`)} convient.`});}
+  else if(kind==="poly"){const a=R.nz(-4,4),p=R.nz(-3,3),c=R.ent(-3,3),b0=p+a*c;o=d1Cst(a);
+    Object.assign(o,{bT:affT(a*p,b0),bTp:`(${a*p})*x+(${b0})`,ypT:affT(p,c),ypTp:`(${p})*x+(${c})`,ypx0:Q(c),ind:`cherche une solution particulière de la forme ${fx("y = αx + β")}.`,
+      whyP:`Le second membre est un polynôme de degré 1 et a est une constante : on cherche ${fx("yₚ(x) = αx + β")}. Alors ${fx("yₚ′(x) = α")}, et ${fx(`yₚ′ ${a<0?"−":"+"} ${coefK(Math.abs(a))}yₚ = ${S([[a,"αx"],[1,"α"],[a,"β"]])}`)}. On identifie avec ${fx(affT(a*p,b0))} : ${fx(`${coefK(a)}α = ${nb(a*p)}`)} et ${fx(`${S([[1,"α"],[a,"β"]])} = ${nb(b0)}`)}, donc ${fx(`α = ${nb(p)}`)} et ${fx(`β = ${nb(c)}`)}.`});}
+  else if(kind==="exp"){let a,m;do{a=R.nz(-4,4);m=R.nz(-3,3);}while(a+m===0);const s=a+m,t=R.nz(-3,3),k=s*t;o=d1Cst(a);
+    Object.assign(o,{bT:S([[k,ex(m)]]),bTp:`(${k})*${exT(m)}`,beT:S([[k,ex(s)]]),beTp:`(${k})*${exT(s)}`,cT:S([[t,ex(s)]]),cTp:`(${t})*${exT(s)}`,ypT:S([[t,ex(m)]]),ypTp:`(${t})*${exT(m)}`,ypx0:Q(t),
+      whyBe:`${fx(`${ex(m)} × ${ex(a)} = ${ex(s)}`)} : les exposants s'ajoutent.`,
+      whyC:s===1?`${fx("eˣ")} est sa propre primitive.`:`Une primitive de ${fx("e^{kx}")} est ${fx("e^{kx}/k")}, ici avec ${fx(`k = ${nb(s)}`)} : ${fx(`${nb(k)}/${vP(nb(s))} = ${nb(t)}`)}.`});}
+  else if(kind==="invx"){const [k,n,L]=R.choix([[1,1,[3,-3,6]],[2,1,[4,-4,8]],[-1,1,[1,2,-2,3,-3,4]],[-1,2,[2,-2,4,6]],[-2,1,[1,2,-1,3]],[-1,0,[1,2,-2,3]],[1,0,[2,-2,4,6]],[2,0,[3,-3,6]],[-3,2,[1,2,-1]]]),p=R.choix(L),e=n+k,ln=e===-1,c=ln?Q(p):Q(p,e+1);
+    o=d1Var(R,"invx",{k});
+    Object.assign(o,{bT:n?S([[p,d1Pw(n)]]):nb(p),bTp:`(${p})*x^${n}`,beT:ln?`${nb(p)}/x`:e?S([[p,d1Pw(e)]]):nb(p),beTp:`(${p})*x^(${e})`,
+      cT:ln?S([[p,"ln x"]]):S([[c,d1Pw(e+1)]]),cTp:ln?`(${p})*ln(x)`:`(${brut(c)})*x^${e+1}`,ypT:ln?S([[p,d1Pw(-k)+" ln x"]]):S([[c,d1Pw(n+1)]]),ypTp:ln?`(${p})*x^(${-k})*ln(x)`:`(${brut(c)})*x^${n+1}`,ypx0:ln?Q(0):c,
+      whyBe:`Ici ${fx(`e^{A(x)} = ${o.eAT}`)}.`,
+      whyC:ln?`Sur ]0, +∞[, une primitive de ${fx("1/x")} est ${fx("ln x")}.`:e?`Une primitive de ${fx(d1Pw(e))} est ${fx(d1Pw(e+1)+"/"+(e+1))}.`:`Une primitive de la constante ${nb(p)} est ${fx(S([[p,"x"]]))}.`});}
+  else{
+    if(kind==="gauss"){const s=R.choix([1,-1]),t=R.nz(-3,3);o=d1Var(R,"pow",{n:1,k:2*s});
+      Object.assign(o,{bT:S([[2*t,"x"]])+o.y0T,bTp:`(${2*t})*x*${o.y0Tp}`,beT:S([[2*t,"x"]]),beTp:`(${2*t})*x`,cT:S([[t,"x²"]]),cTp:`(${t})*x^2`,facT:[[t,"x²"]],whyC:`Une primitive de ${fx("x")} est ${fx("x²/2")}.`});}
+    else if(kind==="res"){const k=R.nz(-5,5);o=d1Cst(R.nz(-4,4));
+      Object.assign(o,{bT:S([[k,o.y0T]]),bTp:`(${k})*${o.y0Tp}`,beT:nb(k),beTp:`(${k})`,cT:S([[k,"x"]]),cTp:`(${k})*x`,facT:[[k,"x"]],whyC:`Une primitive de la constante ${nb(k)} est ${fx(S([[k,"x"]]))}.`});}
+    else{const p=R.nz(-3,3),c=R.ent(-4,4);o=d1Cst(R.nz(-4,4));
+      Object.assign(o,{bT:affP(2*p,c)+o.y0T,bTp:`(${2*p}*x+(${c}))*${o.y0Tp}`,beT:affT(2*p,c),beTp:`${2*p}*x+(${c})`,cT:S([[p,"x²"],[c,"x"]]),cTp:`(${p})*x^2+(${c})*x`,facT:[[p,"x²"],[c,"x"]],
+        whyC:`Une primitive de ${fx("x")} est ${fx("x²/2")}${c?", et une primitive d'une constante k est kx":""}.`});}
+    Object.assign(o,{ypT:d1Par(o.cT)+o.y0T,ypTp:`(${o.cTp})*${o.y0Tp}`,ypx0:Q(0),whyBe:`${fx(`${o.y0T} × ${o.eAT} = 1`)} : les exposants s'ajoutent et donnent 0.`});}
+  o.kind=kind;return o;}
+/* les valeurs aux points XD, les textes de la solution générale, et les erreurs types sur la partie sans second membre */
+function d1Num(o){const z=XD.map(()=>0);o.N={y0:d1V(o.y0Tp),yp:o.ypTp?d1V(o.ypTp):z,zero:z};o.N.eA=o.N.y0.map(v=>1/v);
+  o.cy=c=>o.den?`${c}/${o.den}`:c+(o.y0F||o.y0T);
+  o.cyQ=c=>{c=q(c);const A=absQ(c),s=c.n<0?"−":"";return o.den?(A.d===1?`${s}${A.n}/${o.den}`:`${s}${A.n}/(${A.d}${o.den})`):S([[c,o.y0F||o.y0T]]);};
+  o.genT=o.facT?`(${S(o.facT)} + C)${o.y0T}`:d1Plus(o.ypT,o.cy("C"));o.genTp=`(${o.ypTp||"0"})+C*(${o.y0Tp})`;
+  if(o.cT)o.beW=`${o.bT} × ${/\//.test(o.eAT)?"("+o.eAT+")":o.eAT}`;
+  const cyC=fx(`y = ${o.cy("C")}`);
+  o.tw=[[o.N.eA,"signe de l'exposant",`Le signe est inversé : les solutions de ${fx(o.lhs+" = 0")} sont les fonctions ${fx("C e^{−A(x)}")}, avec un moins devant ${fx(`A(x) = ${o.AT}`)}. On trouve ${cyC}.`,"so"]];
+  if(o.fam!=="cst"&&o.fam!=="expx")o.tw.push([d1V(`e^(-(${o.aTp}))`),"a(x) au lieu d'une primitive",`Dans l'exposant, il faut une primitive de a, pas a lui-même : ${fx(`A(x) = ${o.AT}`)}, donc ${cyC}.`,"pr"]);
+  if(o.der)o.tw.push([d1V(o.der),"dérivée au lieu d'une primitive",`Tu as dérivé a au lieu d'en chercher une primitive : ${fx(`A(x) = ${o.AT}`)}, donc ${cyC}.`,"pr"]);
+  if(o.nd)o.tw.push([d1V(`e^(-(${o.nd[1]})*x)`),"y′ n'est pas seul",`Divise d'abord par ${o.nd[0]} : ${fx(o.lhs+" = 0")}, donc ${fx(`a(x) = ${o.aT}`)} et ${cyC}.`,"la"]);
+  o.twP=o.cTp?[[d1V(o.cTp),"c(x) pris pour la solution particulière",`c(x) n'est pas encore la solution particulière : ${fx(`yₚ(x) = c(x) × e^{−A(x)} = ${o.ypT}`)}.`]]
+    :o.bTp?[[d1V(o.bTp),"second membre pris pour une solution",`Le second membre ${fx(o.bT)} n'est pas une solution de (E). ${o.whyP}`]]:[];
+  return o;}
+function d1Etapes(o){const E=[],cyC=fx(`y = ${o.cy("C")}`),sur=o.dom==="ℝ"?"":` sur ${o.dom}`;
+  if(!o.ypT){E.push({w:o.e0w||`L'équation est déjà sous la forme ${fx("y′ + a(x)y = 0")}, avec ${fx(`a(x) = ${o.aT}`)}.`,why:o.e0why||"a(x) est ce qui multiplie y, signe compris.",pts:1},
+      {w:`Une primitive de a : ${fx(`A(x) = ${o.AT}`)}.`,why:o.whyA,pts:1},
+      {w:`Toutes les solutions${sur} : ${cyC}, où C est une constante réelle.`,why:`Le cours (proposition 4.1) : les solutions de ${fx("y′ + a(x)y = 0")} sont les fonctions ${fx("C e^{−A(x)}")}, avec un moins devant A(x).${o.why0||""}`,pts:1});
+    o.iE={la:0,pr:1,so:2,g:2,ci:3};return E;}
+  E.push({w:`L'équation sans second membre (E₀) : ${fx(o.lhs+" = 0")}. Ici ${fx(`a(x) = ${o.aT}`)}, une primitive est ${fx(`A(x) = ${o.AT}`)}, donc les solutions de (E₀) sont ${cyC}.`,
+    why:`Proposition 4.1 : les solutions de (E₀) sont les fonctions ${fx("C e^{−A(x)}")}, avec un moins devant A(x). ${o.whyA}${o.why0||""}`,pts:1});
+  if(o.cT){E.push({w:`Variation de la constante : ${fx(`b(x) × e^{A(x)} = ${o.beW} = ${o.beT}`)}.`,why:`On cherche ${fx("yₚ(x) = c(x) × e^{−A(x)}")} : il faut que c soit une primitive de ${fx("b(x) × e^{A(x)}")}, avec l'exposant +A. ${o.whyBe}`,pts:1},
+      {w:`Une primitive : ${fx(`c(x) = ${o.cT}`)}. Donc ${fx(`yₚ(x) = c(x) × e^{−A(x)} = ${o.ypT}`)}.`,why:`${o.whyC} Puis on multiplie par ${fx(`e^{−A(x)} = ${o.y0T}`)}, avec l'exposant −A cette fois.`,pts:1});
+    o.iE={la:0,pr:0,so:0,be:1,yp:2,g:3,ci:4};}
+  else{E.push({w:`Une solution particulière de (E) : ${fx(`yₚ(x) = ${o.ypT}`)}.`,why:o.whyP,pts:1});o.iE={la:0,pr:0,so:0,yp:1,g:2,ci:3};}
+  E.push({w:`Toutes les solutions de (E)${sur} : ${fx(`y = ${o.genT}`)}, où C est une constante réelle.`,why:"Proposition 4.3 : une solution particulière de (E), plus toutes les solutions de (E₀).",pts:1});
+  return E;}
+/* « toutes les solutions » : f est la partie sans constante, g celle qui suit chaque constante */
+function d1Fam(o,Y){const cst=Y.cst,un=cst.map(()=>1),env=v=>Object.fromEntries(cst.map((c,i)=>[c,v[i]])),N=o.N,V1=d1Val(Y.A,env(un));
+  if(!V1)return {pb:"calcul"};
+  if(!cst.length)return {pb:d1Rap(V1,N.yp,N.y0)!==null?"sansC":"faux"};
+  const co=cst.map((c,i)=>-0.6-1.3*i),G=cst.map((c,i)=>d1Val(Y.A,env(un.map((u,j)=>i===j?2:1)))),Vc=d1Val(Y.A,env(co));
+  if(!Vc||G.some(v=>!v))return {pb:"calcul"};
+  const g=G.map(v=>v.map((y,j)=>y-V1[j])),f=V1.map((y,j)=>y-g.reduce((t,u)=>t+u[j],0));
+  if(Vc.some((y,j)=>{const p=V1[j]+g.reduce((t,u,i)=>t+(co[i]-1)*u[j],0);return Math.abs(p-y)>1e-7*Math.max(1,Math.abs(y),Math.abs(p));}))return {pb:"constante"};
+  const d=g.map(u=>d1Rap(u,N.zero,N.y0)),k=d.indexOf(null);
+  if(k>=0)return {pb:"homog",tw:o.tw.find(t=>d1Rap(g[k],N.zero,t[0])!==null)};
+  if(d.every(x=>Math.abs(x)<1e-9))return {pb:"constante"};
+  if(d1Rap(f,N.yp,N.y0)===null)return {pb:"part",nul:f.every(y=>Math.abs(y)<1e-9),f};
+  return {ok:true};}
+function d1Diag(o,r){const E=o.iE,d=(etape,type,msg,titre)=>({etape,type,titre:"Où ça part : "+titre,msg}),gen=fx(`y = ${o.genT}`),cyC=fx(o.cy("C"));
+  if(r.pb==="sansC")return d(E.g,"constante oubliée",`Ta fonction est bien une solution, mais on demande toutes les solutions : ${gen}, avec une constante C.`,"la constante.");
+  if(r.pb==="faux")return d(E.so,"solution qui ne vérifie pas l'équation",`Ta fonction ne vérifie pas l'équation, et il manque la constante C. Toutes les solutions : ${gen}.`,"les solutions.");
+  if(r.pb==="constante")return d(E.g,"constante mal placée",`La constante doit seulement multiplier ${fx(o.y0T)} : ${gen}. Dans un exposant, au carré ou au dénominateur, elle ne donne pas toutes les solutions.`,"la constante.");
+  if(r.pb==="homog")return r.tw?d(E[r.tw[3]],r.tw[1],r.tw[2],"l'équation sans second membre.")
+    :d(E.so,"solutions de l'équation sans second membre",`La partie qui porte la constante doit être ${cyC} : ${fx(`A(x) = ${o.AT}`)} est une primitive de ${fx(`a(x) = ${o.aT}`)}, et les solutions de ${fx(o.lhs+" = 0")} sont les fonctions ${fx("C e^{−A(x)}")}.`,"l'équation sans second membre.");
+  if(!o.ypT)return d(E.g,"terme en trop",`Cette équation n'a pas de second membre : il n'y a rien à ajouter à ${cyC}.`,"les solutions.");
+  if(r.nul)return d(E.yp,"solution particulière oubliée",`${cyC} donne les solutions de l'équation sans second membre. Il manque une solution particulière de (E) : ${fx(`yₚ(x) = ${o.ypT}`)}, donc ${gen}.`,"la solution particulière.");
+  const t=o.twP.find(t=>d1Rap(r.f,t[0],o.N.y0)!==null);
+  return t?d(E.yp,t[1],t[2],"la solution particulière."):d(E.yp,"solution particulière",`La partie sans constante doit être une solution de (E), et la tienne ne l'est pas. ${fx(`yₚ(x) = ${o.ypT}`)} convient : ${gen}.`,"la solution particulière.");}
+const D1_ILL="Je n'arrive pas à lire ta formule. Écris par exemple C*e^(-2x) + 3, avec des parenthèses après e^.",D1_CALC="Je n'arrive pas à calculer ta formule pour toutes les valeurs de x : vérifie les parenthèses.",D1_AIDE="Écris e^(-2x) avec des parenthèses après e^, et x^2 pour x².";
+const D1_RAP=`<p class="muted">Rappel : les solutions de ${fx("y′ + a(x)y = 0")} sont les fonctions ${fx("y = C e^{−A(x)}")}, où A est une primitive de a. Écris ta réponse avec x et une constante C, par exemple C*e^(2x).</p>`;
+const d1Sym=o=>["e^(","x","C","^","/"].concat(o.fam==="trig"?["cos(","sin("]:o.fam==="rat"?["√","("]:o.fam==="invx"?["ln("]:[]);
+const D1_NAT={cst:"a constant",pow:"a(x) = kxⁿ",expx:"a(x) = keˣ",invx:"a(x) = k/x",rat:"a(x) = kx/(1 + x²)",trig:"a(x) = k cos x ou k sin x",aff:"a(x) = 2x + k",cc:"second membre constant",ax:"second membre proportionnel à a(x)",poly:"second membre polynôme",
+  res:"second membre : l'exponentielle de l'équation sans second membre",exp:"second membre : une autre exponentielle",pol:"second membre : polynôme fois exponentielle",gauss:"a(x) = 2x ou −2x"};
+/* un exercice « toutes les solutions », à un champ */
+function d1ExoFam(o,eq,P){const E=d1Etapes(o),hom=!o.ypT,yp=o.ypTp||"0",y0=`(${o.y0Tp})`;
+  const pg=[[`(${yp})+C/${y0}`,"signe"],[`(${yp})+${y0}`,"constante oubliée"],[`(${yp})+C^2*${y0}`,"constante mal placée"]];
+  if(!hom)pg.push([`C*${y0}`,"particulière oubliée"]);
+  if(o.fam!=="cst"&&o.fam!=="expx")pg.push([`(${yp})+C*e^(-(${o.aTp}))`,"au lieu d'une primitive"]);
+  if(o.nd)pg.push([`C*e^(-(${o.nd[1]})*x)`,"seul"]);
+  function juge(rep){const Y=lisY(rep.y);if(Y.vide)return {incomplet:"Écris les solutions y."};if(Y.illisible)return {incomplet:D1_ILL};
+    const r=d1Fam(o,Y);if(r.pb==="calcul")return {incomplet:D1_CALC};if(r.ok)return {ok:true};
+    return {ok:false,faux:["y"],resume:r.pb==="sansC"?"Pas tout à fait : il manque la constante.":"Pas tout à fait : ce ne sont pas les solutions de l'équation.",diag:d1Diag(o,r)};}
+  return {sig:"D1"+P.s+eq,q:`Résous sur ${o.dom} l'équation différentielle ${hom?"":"(E) : "}${fx(eq)}. Donne toutes ses solutions.`,corps:P.corps||"",texte:`toutes les solutions de ${eq}`,
+    champs:[{k:"champ",id:"y",nom:"solutions",label:"$y =$",ex:"avec x et une constante C",sym:d1Sym(o),aide:D1_AIDE+" La constante s'écrit C."}],juge,etapes:E,
+    bonne:fx(`y = ${o.genT}`),bonneTxt:`y = ${o.genT}`,repBonne:{y:o.genTp},repFausse:{y:pg[hom?0:3][0]},nature:D1_NAT[o.kind||o.fam],ens:{eq,aff:`y = ${o.genT}`,pieges:pg}};}
+function d1Homog(R,cst){let o,eq;
+  if(cst){const t=R();
+    if(t<0.5){o=d1Cst(R.nz(-6,6));eq=o.lhs+" = 0";}
+    else if(t<0.72){const k=R.nz(-6,6);o=d1Cst(-k);eq=`y′ = ${coefK(k)}y`;o.e0w=`On passe tout du même côté : ${fx(o.lhs+" = 0")}. Donc ${fx(`a(x) = ${o.aT}`)}.`;o.e0why=`La formule du cours part de la forme ${fx("y′ + a(x)y = 0")} : un terme change de signe quand il traverse le signe égal.`;}
+    else{const m=R.choix([2,3,4]),n=R.nz(-6,6);o=d1Cst(Q(n,m));eq=S([[m,"y′"],[n,"y"]])+" = 0";o.nd=[m,n];o.e0w=`On divise par ${m} pour que y′ soit seul : ${fx(o.lhs+" = 0")}. Donc ${fx(`a(x) = ${o.aT}`)}.`;o.e0why=`La formule du cours part de la forme ${fx("y′ + a(x)y = 0")}, avec le coefficient 1 devant y′.`;}}
+  else{o=d1Var(R,R.choix(["pow","pow","pow","expx","invx","invx","rat","trig","trig","aff","aff"]));eq=o.lhs+" = 0";}
+  return d1ExoFam(d1Num(o),eq,{s:"h",corps:cst?D1_RAP:""});}
+function d1Evidente(R){const t=R(),o=d1Num(d1Sm(R,t<0.35?"cc":t<0.7?"ax":"poly"));
+  return d1ExoFam(o,`${o.lhs} = ${o.bT}`,{s:"e",corps:`<p class="muted">Indication : ${o.ind}</p>`});}
+/* la variation de la constante : un exemple à cinq cases, ou en entier */
+function d1Variation(R,trous){const t=R(),o=d1Num(d1Sm(R,trous?(t<0.35?"res":t<0.7?"exp":"pol"):t<0.2?"res":t<0.42?"exp":t<0.6?"pol":t<0.85?"invx":"gauss")),eq=`${o.lhs} = ${o.bT}`;
+  if(!trous)return d1ExoFam(o,eq,{s:"v",corps:`<p class="muted">Pour la solution particulière : la variation de la constante.</p>`});
+  const E=d1Etapes(o),h=1e-5,K=["A","be","c","yp"],a=d1F(o.aTp),Ar=d1F(o.ATp),b=d1F(o.bTp),be=d1F(o.beTp),txt=v=>String(v==null?"":v);
+  function juge(rep){const T={};if(K.concat(["y"]).some(k=>!propre(txt(rep[k]))))return {incomplet:"Remplis les cinq cases."};
+    for(const k of K){const A=lis(txt(rep[k]).replace(/^[^=]*=/,""),["x"]);
+      if(!A)return {incomplet:"Je n'arrive pas à lire une des cases. Écris par exemple 2x*e^(-3x), avec des parenthèses après e^."};
+      if(lettres(A).size)return {incomplet:"Les quatre premières cases s'écrivent avec x seulement. La constante C n'arrive qu'à la dernière ligne : pour c(x), une seule primitive suffit."};
+      T[k]=x=>{try{const v=val(A,{x});return Math.abs(v[1])<1e-9?v[0]:NaN;}catch(e){return NaN;}};}
+    const Y=lisY(rep.y);if(Y.vide||Y.illisible)return {incomplet:D1_ILL};
+    if(K.some(k=>XD.some(x=>!Number.isFinite(T[k](x)))))return {incomplet:D1_CALC};
+    const dr=f=>x=>(f(x+h)-f(x-h))/(2*h),tous=(f,g,tol)=>XD.every(x=>Math.abs(f(x)-g(x))<=tol*Math.max(1,Math.abs(g(x))));
+    const okA=tous(dr(T.A),a,1e-5),ek=okA?Math.exp(T.A(XD[0])-Ar(XD[0])):1,be2=x=>be(x)*ek,okB=tous(T.be,be2,1e-8),okC=tous(dr(T.c),be2,1e-5),okP=d1Rap(XD.map(T.yp),o.N.yp,o.N.y0)!==null,r=d1Fam(o,Y);
+    if(r.pb==="calcul")return {incomplet:D1_CALC};
+    const F=[];if(!okA)F.push("A");if(!okB)F.push("be");if(!okC)F.push("c");if(!okP)F.push("yp");if(!r.ok)F.push("y");if(!F.length)return {ok:true};
+    const d=(etape,type,msg,titre)=>({etape,type,titre:"Où ça part : "+titre,msg});
+    const dg=!okA?d(0,"primitive de a",`En dérivant A(x), on doit retrouver ${fx(`a(x) = ${o.aT}`)} : ${fx(`A(x) = ${o.AT}`)}.`,"la primitive A.")
+      :!okB?d(1,tous(T.be,x=>b(x)*Math.exp(-T.A(x)),1e-8)?"exposant −A au lieu de +A":"produit de b(x) par l'exponentielle de A(x)",`Ici l'exposant est +A(x) : ${fx(`b(x) × e^{A(x)} = ${o.beW} = ${o.beT}`)}.`,"le produit de b(x) par l'exponentielle.")
+      :!okC?d(2,tous(T.c,be2,1e-8)?"c(x) pas encore primitivé":"primitive c",`c est une primitive de ${fx(o.beT)} : ${fx(`c(x) = ${o.cT}`)}. ${o.whyC}`,"la primitive c.")
+      :!okP?d(2,tous(T.yp,T.c,1e-8)?"c(x) pris pour la solution particulière":"solution particulière",`${fx(`yₚ(x) = c(x) × e^{−A(x)} = ${o.ypT}`)}, avec l'exposant −A.`,"la solution particulière."):d1Diag(o,r);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length} case${F.length>1?"s sont":" est"} à revoir.`,diag:dg};}
+  const B={A:o.ATp,be:o.beTp,c:o.cTp,yp:o.ypTp,y:o.genTp};
+  return {sig:"D1t"+eq,q:`Résous sur ℝ l'équation différentielle (E) : ${fx(eq)}, en complétant les étapes.`,
+    corps:`<p>Ici ${fx(`a(x) = ${o.aT}`)} et ${fx(`b(x) = ${o.bT}`)}.</p><p><b>1.</b> Une primitive de a : ${fx("A(x) =")} ${O.trou("A")}. Les solutions de (E₀) : ${fx(o.lhs+" = 0")} sont donc les fonctions ${fx("C e^{−A(x)}")}.</p><p><b>2.</b> Variation de la constante : on simplifie ${fx("b(x) × e^{A(x)} =")} ${O.trou("be",1)}, puis on en cherche une primitive, ${fx("c(x) =")} ${O.trou("c",1)}.</p><p><b>3.</b> Une solution particulière : ${fx("yₚ(x) = c(x) × e^{−A(x)} =")} ${O.trou("yp",1)}.</p><p><b>4.</b> Toutes les solutions de (E) : ${fx("y =")} ${O.trou("y",1)}.</p>`,
+    corpsPapier:`<p>Sur ta feuille, rédige la résolution en entier : (E₀) et ses solutions, le produit de b par l'exponentielle de A, la primitive c, la solution particulière, puis toutes les solutions.</p>`,texte:`variation de la constante : ${eq}`,
+    champs:[{k:"trous",ids:K.concat(["y"])},{k:"sym",id:"s",sym:["e^(","x","C","^","/"],aide:D1_AIDE+" Les boutons écrivent dans la case où tu es."}],indice:false,juge,etapes:E,
+    bonne:`${fx(`A(x) = ${o.AT}`)} ; ${fx(`c(x) = ${o.cT}`)} ; ${fx(`yₚ(x) = ${o.ypT}`)} ; ${fx(`y = ${o.genT}`)}`,bonneTxt:`A(x) = ${o.AT} ; c(x) = ${o.cT} ; yₚ(x) = ${o.ypT} ; y = ${o.genT}`,
+    repBonne:B,repFausse:Object.assign({},B,{be:`(${o.bTp})*(${o.y0Tp})`}),nature:D1_NAT[o.kind],ens:{eq,aff:`y = ${o.genT}`}};}
+/* avec une condition initiale : une seule solution, sans constante */
+function d1Initiale(R){const t=R();let o;
+  if(t<0.18){const f=R.choix(["cst","pow","pow","rat","trig","expx","aff","invx"]);o=f==="cst"?d1Cst(R.nz(-6,6)):d1Var(R,f);}
+  else o=d1Sm(R,t<0.42?"poly":t<0.52?"cc":t<0.64?"ax":R.choix(["res","exp","pol","invx","gauss"]),true);
+  d1Num(o);const hom=!o.ypT,eq=`${o.lhs} = ${hom?"0":o.bT}`,E=d1Etapes(o),x0=o.x0,P=o.ypx0||Q(0),e0=o.e0||0,N=o.N;let y1;do y1=R.ent(-3,3);while(hom?!y1:egal(Q(y1),P));
+  const Cs=sub(y1,P),c0=e0?Q(y1):Cs,CT=e0?S([[y1,eT(e0)]]):nb(Cs),lhsC=e0?`C × ${eT(-e0)}`:nul(P)?"C":d1Plus(nb(P),"C"),Cv=(y1-P.n/P.d)*Math.exp(e0),Ch=y1*Math.exp(e0);
+  const solT=e0?`${coefK(y1)}e^{${S([[e0,""]].concat(o.expT).sort((u,v)=>(v[0]>0)-(u[0]>0)))}}`:o.facT?d1Par(S(o.facT.concat([[Cs,""]])))+o.y0T:hom?o.cyQ(Cs):d1Plus(o.ypT,o.cyQ(Cs));
+  const tp=c=>e0?`(${brut(c)})*e^(${e0})*(${o.y0Tp})`:`(${o.ypTp||"0"})+(${brut(c)})*(${o.y0Tp})`,ciT=`y(${x0}) = ${nb(y1)}`;
+  const ciW=`En ${fx(`x = ${x0}`)}, la solution vaut ${fx(`y(${x0}) = ${lhsC}`)}. Or ${fx(ciT)}, donc ${fx(`C = ${CT}`)}.`;
+  E.push({w:`La condition initiale. ${ciW}`,why:e0?`En 0, ${fx(o.y0T)} vaut ${fx(eT(-e0))}, pas 1 : c'est l'exposant qu'on calcule en 0.`:`En ${x0}, ${fx(o.y0T)} vaut 1.${hom?" La condition choisit une seule solution parmi toutes.":" La condition se pose sur la solution complète, jamais sur celle de l'équation sans second membre."}`,pts:1},
+    {w:`L'unique solution : ${fx(`y = ${solT}`)}.`,why:`On remplace C par sa valeur. Vérification : en x = ${x0}, on retrouve bien ${nb(y1)}.`,pts:1});
+  const pg=hom?[[`(${y1})/(${o.y0Tp})`,"signe"]]:[[`(${y1})*(${o.y0Tp})`,"particulière oubliée"]];if(!hom&&!nul(P))pg.push([`(${o.ypTp})+(${y1})*(${o.y0Tp})`,"posée sur"]);
+  function juge(rep){const Y=lisY(rep.y);if(Y.vide)return {incomplet:"Écris la solution y."};if(Y.illisible)return {incomplet:D1_ILL};
+    if(Y.cst.length)return {incomplet:`Il reste ${Y.cst.length>1?"des constantes":"une constante"} (${Y.cst.join(", ")}) : utilise ${ciT} pour ${Y.cst.length>1?"les":"la"} calculer.`};
+    const V=d1Val(Y.A,{});if(!V)return {incomplet:D1_CALC};
+    const r=d1Rap(V,N.yp,N.y0),I=o.iE,d=(etape,type,msg,titre)=>({etape,type,titre:"Où ça part : "+titre,msg}),pr=(u,v)=>Math.abs(u-v)<=1e-7*Math.max(1,Math.abs(v));
+    if(r!==null&&pr(r,Cv))return {ok:true};
+    let dg;
+    if(r!==null)dg=!hom&&pr(r,Ch)?d(I.ci,"condition initiale posée sur la solution de (E₀)",`Tu as calculé C avec ${fx(o.cy("C"))} seulement. La condition se pose sur la solution complète ${fx(`y = ${o.genT}`)}. ${ciW}`,"la condition initiale.")
+      :d(I.ci,"calcul de la constante",`Ta fonction vérifie bien l'équation, mais pas la condition ${fx(ciT)}. ${ciW}`,"la condition initiale.");
+    else if(!hom&&d1Rap(V,N.zero,N.y0)!==null)dg=d(I.yp,"solution particulière oubliée",`Ta fonction est une solution de l'équation sans second membre. Il manque une solution particulière de (E) : ${fx(`yₚ(x) = ${o.ypT}`)}.`,"la solution particulière.");
+    else{const w=o.tw.find(w=>d1Rap(V,N.zero,w[0])!==null);
+      dg=w?d(I[w[3]],w[1],w[2],"l'équation sans second membre."):d(I.so,"solution qui ne vérifie pas l'équation",`Ta fonction ne vérifie pas l'équation. Toutes les solutions : ${fx(`y = ${o.genT}`)}. Ensuite, la condition ${fx(ciT)} donne C.`,"les solutions.");}
+    return {ok:false,faux:["y"],resume:"Pas tout à fait : cette fonction n'est pas la bonne.",diag:dg};}
+  return {sig:"D1i"+eq+"|"+y1,q:`Résous${o.dom==="ℝ"?"":` sur ${o.dom}`} l'équation différentielle ${hom?"":"(E) : "}${fx(eq)} avec la condition initiale ${fx(ciT)}.`,corps:"",texte:`${eq}, ${ciT}`,
+    champs:[{k:"champ",id:"y",nom:"solution",label:"$y =$",ex:"une fonction de x, sans constante",sym:d1Sym(o).filter(s=>s!=="C"),aide:D1_AIDE}],juge,etapes:E,
+    bonne:fx(`y = ${solT}`),bonneTxt:`y = ${solT}`,repBonne:{y:tp(c0)},repFausse:{y:tp(add(c0,1))},nature:hom?"sans second membre":o.cT?"variation de la constante":"solution particulière évidente",ens:{eq,x0,y1,gen:o.genTp,aff:`y = ${solT}`,pieges:pg}};}
+
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -24878,7 +25084,15 @@ G.add("calc",[
    {t:"u = ax + b : les nouvelles bornes, puis la valeur",cc:3,min:70,gen:R=>exoCv(cvAffine(R),1)},
    {t:"u donné par l'énoncé : x² + c, eˣ, ln x, √x, sin x",cc:4,min:60,gen:R=>exoCv(cvForme(R,0),2)},
    {t:"u à trouver",cc:5,min:60,gen:R=>exoCv(cvForme(R,1),3)},
-   {t:"tout changer : x, dx et les bornes, comme au TD 1 (exercice 5)",cc:8,min:35,gen:R=>exoCv(cvTout(R),4)}]}
+   {t:"tout changer : x, dx et les bornes, comme au TD 1 (exercice 5)",cc:8,min:35,gen:R=>exoCv(cvTout(R),4)}]},
+ {id:"CA13",t:"Équation différentielle d'ordre 1, variation de la constante",tache:"équation différentielle d'ordre 1",th:"ed1",pts:2,lecons:["c-ed0","c-ed1"],pages:["m-varcst"],apres:["CA10"],
+  paliers:[
+   {t:"y′ + ay = 0",cc:2,min:48,gen:R=>d1Homog(R,true)},
+   {t:"y′ + a(x)y = 0",cc:3,min:55,gen:R=>d1Homog(R,false)},
+   {t:"une solution particulière évidente",cc:4,min:200,gen:d1Evidente},
+   {t:"la variation de la constante : un exemple à compléter",cc:6,min:190,gen:R=>d1Variation(R,true)},
+   {t:"la variation de la constante, en entier",cc:7,min:170,gen:R=>d1Variation(R,false)},
+   {t:"avec une condition initiale, comme au CC 2023 (exercice 2)",cc:9,gen:d1Initiale}]}
 ]);
 })();
 
