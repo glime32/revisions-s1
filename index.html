@@ -20921,7 +20921,7 @@ function lignesNum(P){const L=[];const va=(C,niv)=>{const I="    ".repeat(niv);C
   else L.push({t:`${I}Renvoyer ${ecrit(s.e)}`,n:s});});};va(P.corps,1);return L;}
 /* une expression tapée → le même arbre que le mini-langage ; null si elle ne se lit pas */
 function lisExpr(src){const T=[];let m;const re=/\s*(\d+|[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_]*|≤|≥|≠|[-+*()<>=,])/y;re.lastIndex=0;
-  const t=src.replace(/<=|=</g,"≤").replace(/>=|=>/g,"≥").replace(/!=|<>/g,"≠").replace(/[×·]/g,"*").replace(/[−–]/g,"-").trim();
+  const t=src.replace(/<=|=</g,"≤").replace(/>=|=>/g,"≥").replace(/!=|<>/g,"≠").replace(/[×·]/g,"*").replace(/[−–]/g,"-").replace(/&&|\band\b/gi," et ").replace(/\|\||\bor\b/gi," ou ").replace(/(^|[^\w\]])(\d+)([A-Za-z(])/g,"$1$2 * $3").trim();
   while(re.lastIndex<t.length){m=re.exec(t);if(!m)return null;T.push(m[1]);}
   let p=0;const nx=()=>T[p],low=x=>x===undefined?x:x.toLowerCase();
   const prim=()=>{const x=nx();if(x===undefined)return null;
@@ -20935,10 +20935,10 @@ function lisExpr(src){const T=[];let m;const re=/\s*(\d+|[A-Za-zÀ-ÿ_][A-Za-zÀ
   const e=ou();return e!==null&&p===T.length?e:null;}
 /* une ligne tapée → {k, …} comme une instruction, ou null */
 function lisLigne(src){const t=propre(src).replace(/<-|:=/g,"←").replace(/;$/,"").trim();let m;
-  if((m=/^pour\s+([A-Za-z])\s+de\s+(.+?)\s+(?:à|a)\s+(.+?)(?:\s+faire)?$/i.exec(t))){const a=lisExpr(m[2]),b=lisExpr(m[3]);return a===null||b===null?null:{k:"pour",v:m[1],a,b};}
+  if((m=/^pour\s+([A-Za-z])\s+(?:allant\s+)?de\s+(.+?)\s+(?:à|a)\s+(.+?)(?:\s+faire)?$/i.exec(t))){const a=lisExpr(m[2]),b=lisExpr(m[3]);return a===null||b===null?null:{k:"pour",v:m[1],a,b};}
   if((m=/^tant\s*que\s+(.+?)(?:\s+faire)?$/i.exec(t))){const c=lisExpr(m[1]);return c===null?null:{k:"tq",cond:c};}
   if((m=/^si\s+(.+?)(?:\s+alors)?$/i.exec(t))){const c=lisExpr(m[1]);return c===null?null:{k:"si",cond:c};}
-  if((m=/^renvoyer\s+(.+)$/i.exec(t))){const e=lisExpr(m[1]);return e===null?null:{k:"ret",e};}
+  if((m=/^(?:renvoyer|retourner)\s+(.+)$/i.exec(t))){const e=lisExpr(m[1]);return e===null?null:{k:"ret",e};}
   if((m=/^([A-Za-z])\s*←\s*(.+)$/.exec(t))){const e=lisExpr(m[2]);return e===null?null:{k:"aff",v:m[1],e};}
   return null;}
 const SORTE={aff:"une affectation, comme « s ← s + i »",pour:"un début de boucle « pour … de … à … faire »",tq:"un début de boucle « tant que … faire »",si:"un test « si … alors »",ret:"une ligne « Renvoyer … »"};
@@ -21305,7 +21305,7 @@ function tqVal(R){const {p,n,T}=tirageVal(R),X=joueT(TRIVAL(),[T,p]),tours=X.tou
 /* ---------- questions de cours du CC3, sur papier ---------- */
 /* ---------- AG14 : la ligne fausse d'une recherche ou d'un tri ---------- */
 function lisExprT(src){const T=[];const re=/\s*(\d+|[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_]*|≤|≥|≠|[-+*()<>=,\[\]])/y;
-  const t=src.replace(/<=|=</g,"≤").replace(/>=|=>/g,"≥").replace(/!=|<>/g,"≠").replace(/[×·]/g,"*").replace(/[−–]/g,"-").trim();let m;
+  const t=src.replace(/<=|=</g,"≤").replace(/>=|=>/g,"≥").replace(/!=|<>/g,"≠").replace(/[×·]/g,"*").replace(/[−–]/g,"-").replace(/&&|\band\b/gi," et ").replace(/\|\||\bor\b/gi," ou ").replace(/(^|[^\w\]])(\d+)([A-Za-z(])/g,"$1$2 * $3").trim();let m;
   while(re.lastIndex<t.length){m=re.exec(t);if(!m)return null;T.push(m[1]);}
   let p=0;const nx=()=>T[p],low=x=>x===undefined?x:x.toLowerCase();
   const prim=()=>{const x=nx();if(x===undefined)return null;
@@ -21323,10 +21323,10 @@ function lisExprT(src){const T=[];const re=/\s*(\d+|[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-
   const e=ou();return e!==null&&p===T.length?e:null;}
 function lisLigneT(src){const t=propre(src).replace(/<-|:=/g,"←").replace(/;$/,"").trim();let m;
   if((m=/^échanger\s+(.+?)\s+et\s+(.+)$/i.exec(t))){const a=lisExprT(m[1]),b=lisExprT(m[2]);return estT(a)&&estT(b)?{k:"ech",a,b}:null;}
-  if((m=/^pour\s+([A-Za-z])\s+de\s+(.+?)\s+(?:à|a)\s+(.+?)(\s+par\s+pas\s+de\s+-\s*1)?(?:\s+faire)?$/i.exec(t))){const a=lisExprT(m[2]),b=lisExprT(m[3]);return a===null||b===null?null:Object.assign({k:"pour",v:m[1],a,b},m[4]?{pas:-1}:{});}
+  if((m=/^pour\s+([A-Za-z])\s+(?:allant\s+)?de\s+(.+?)\s+(?:à|a)\s+(.+?)(\s+par\s+pas\s+de\s+-\s*1)?(?:\s+faire)?$/i.exec(t))){const a=lisExprT(m[2]),b=lisExprT(m[3]);return a===null||b===null?null:Object.assign({k:"pour",v:m[1],a,b},m[4]?{pas:-1}:{});}
   if((m=/^tant\s*que\s+(.+?)(?:\s+faire)?$/i.exec(t))){const c=lisExprT(m[1]);return c===null?null:{k:"tq",cond:c};}
   if((m=/^si\s+(.+?)(?:\s+alors)?$/i.exec(t))){const c=lisExprT(m[1]);return c===null?null:{k:"si",cond:c};}
-  if((m=/^renvoyer\s+(.+)$/i.exec(t))){const e=lisExprT(m[1]);return e===null?null:{k:"ret",e};}
+  if((m=/^(?:renvoyer|retourner)\s+(.+)$/i.exec(t))){const e=lisExprT(m[1]);return e===null?null:{k:"ret",e};}
   if((m=/^(.+?)\s*←\s*(.+)$/.exec(t))){const v=lisExprT(m[1]),e=lisExprT(m[2]);return e!==null&&(typeof v==="string"&&/^[A-Za-z]+$/.test(v)||estT(v))?{k:"aff",v,e}:null;}
   return null;}
 const ENT3={get der(){return this.dic;},lin:[[3,[]],[3,[3]],[5,[3]],[2,[1,2,2]],[4,[1,2,3]],[7,[7,1,7]],[1,[4,1]],[6,[2,6,4,6]]],dic:[[3,[]],[3,[3]],[1,[3]],[5,[3]],[3,[1,3,3,5,8]],[5,[1,3,3,5,8]],[4,[1,3,3,5,8]],[9,[1,3,3,5,8]],[0,[1,3,3,5,8]],[2,[2,2,2,2]],[6,[1,2,3,4,5,6]],[1,[1,2,3,4,5,6]]],
