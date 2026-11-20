@@ -25027,6 +25027,220 @@ function d1Initiale(R){const t=R();let o;
     champs:[{k:"champ",id:"y",nom:"solution",label:"$y =$",ex:"une fonction de x, sans constante",sym:d1Sym(o).filter(s=>s!=="C"),aide:D1_AIDE}],juge,etapes:E,
     bonne:fx(`y = ${solT}`),bonneTxt:`y = ${solT}`,repBonne:{y:tp(c0)},repFausse:{y:tp(add(c0,1))},nature:hom?"sans second membre":o.cT?"variation de la constante":"solution particulière évidente",ens:{eq,x0,y1,gen:o.genTp,aff:`y = ${solT}`,pieges:pg}};}
 
+/* ---------- CA14 : calculer une limite (TD 1, exercices 1 et 2) ----------
+   La réponse est un nombre exact, +∞ ou −∞. Dans une formule, le haut et le bas d'une fraction sont mis entre parenthèses dès qu'ils portent
+   un exposant ou une espace (lmF) : le site les empile alors en entier. Le contrôle relit ens.expr et le calcule près du point. */
+const LM_SYM=[["+∞","+∞"],["−∞","-∞"],["/","/"],["√","√("]],LMP=["","x","x²","x³","x⁴","x⁵"];
+const lmInf=s=>s>0?"+∞":"−∞",lmT=L=>L.inf?lmInf(L.inf):nb(L.v),lmTp=L=>L.inf?(L.inf>0?"+∞":"-∞"):brut(L.v),lmSg=v=>v>0?"positif":"négatif",lmSi=s=>s<0?"−":"+";
+const lmG=t=>/^(\d+|[A-Za-z])$/.test(t)?t:`(${t})`,lmF=(n,d)=>`${lmG(String(n))}/${lmG(String(d))}`;
+const lmM=(c,n)=>(n&&Math.abs(c)===1?(c<0?"−":""):nb(c))+LMP[n],lmE=k=>k===1?"eˣ":`e^{${ex1(k)}}`;
+function lmPoly(c){let s="";for(let i=c.length-1;i>=0;i--){const v=c[i];if(!v)continue;s+=(s?(v<0?" − ":" + "):(v<0?"−":""))+lmM(Math.abs(v),i);}return s||"0";}
+/* le polynôme divisé par x^k : 3 + 5/x − 2/(x²) */
+function lmDiv(c,k){let s="";for(let i=c.length-1;i>=0;i--){const v=c[i];if(!v)continue;const a=Math.abs(v);s+=(s?(v<0?" − ":" + "):(v<0?"−":""))+(k===i?a:lmF(a,LMP[k-i]));}return s;}
+const lmPt=P=>P.inf?lmInf(P.inf):nb(P.a)+(P.c?(P.c>0?"⁺":"⁻"):"");
+const lmOu=P=>P.inf?`quand x tend vers ${fx(lmInf(P.inf))}`:`quand x tend vers ${fx(nb(P.a))}`+(P.c?` par la ${P.c>0?"droite":"gauche"} (x reste plus ${P.c>0?"grand":"petit"} que ${fx(nb(P.a))})`:"");
+const lmFin=(P,L)=>`<b>${fx(`lim_{x → ${lmPt(P)}} f(x) = ${lmT(L)}`)}</b>`,lmD=(etape,type,titre,msg)=>({etape,type,titre:"Où ça part : "+titre,msg});
+function lmLis(s){const t=propre(s).toLowerCase().replace(/ /g,"");if(!t)return null;
+  if(/^(pasdelimite|aucune(limite)?|non|n['’]?existepas)$/.test(t))return {sans:1};
+  const m=/^([+-]?)(∞|inf|infini|oo)$/.exec(t);if(m)return {inf:m[1]==="-"?-1:1};
+  const r=lisReel(s);return r.v===undefined?null:{v:r.v,dec:r.dec};}
+function lmExo(o){const L=o.lim,P=o.pt,E=o.etapes,dern=E.length-1,Lv=L.inf?0:L.v.n/L.v.d,pt=lmPt(P);
+  function juge(rep){const lu=lmLis(rep.lim);
+    if(!lu)return {incomplet:"Écris un nombre exact (3, -1/2), +∞ ou −∞."};
+    if(L.inf?lu.inf===L.inf:lu.v!==undefined&&pres(lu.v,Lv))return {ok:true};
+    if(lu.dec&&!L.inf&&Math.abs(lu.v-Lv)<0.01)return {incomplet:"Donne la valeur exacte : une fraction, pas un nombre à virgule arrondi."};
+    const d=lu.sans?lmD(dern,"limite déclarée inexistante","la conclusion.",`Cette limite existe : elle vaut ${fx(lmT(L))}.`)
+      :(o.diag&&o.diag(lu))||(L.inf&&lu.inf?lmD(o.etSigne==null?dern:o.etSigne,"signe de l'infini","le signe.",`La fonction tend bien vers l'infini, mais c'est vers ${fx(lmT(L))} : reprends le signe de chaque morceau.`)
+      :lmD(dern,o.type,"le calcul.",`La limite est ${fx(lmT(L))}.`));
+    return {ok:false,faux:["lim"],resume:"Pas tout à fait : ce n'est pas la bonne limite.",diag:d};}
+  return {sig:"LM"+o.sig,q:`Calcule la limite de ${fx(`f(x) = ${o.expr}`)} ${lmOu(P)}. Réponds par un nombre exact, ${fx("+∞")} ou ${fx("−∞")}.`,corps:"",texte:`limite de ${o.expr} en ${pt}`,
+    champs:[{k:"champ",id:"lim",nom:"limite",label:`$lim_{x → ${pt}} f(x) =$`,ex:"un nombre, +∞ ou −∞",sym:LM_SYM}],juge,etapes:E,
+    bonne:fx(`lim_{x → ${pt}} f(x) = ${lmT(L)}`),bonneTxt:lmT(L),repBonne:{lim:lmTp(L)},repFausse:{lim:o.faux||(L.inf?lmTp({inf:-L.inf}):L.v.n===0?"1":"0")},nature:o.nature,
+    ens:{expr:o.expr,pt:P.inf?P.inf*Infinity:P.a,cote:P.c||0,lim:L.inf?L.inf*Infinity:Lv,aff:lmT(L),pieges:o.pieges||[]}};}
+/* palier 1 : en +∞ ou −∞, un polynôme ou un quotient de polynômes */
+function lmQuot(R){for(;;){const s=R()<0.5?1:-1,P={inf:s},seul=R()<0.25,p=seul?R.ent(2,4):R.ent(1,3),qd=seul?0:R.ent(1,3),
+    mk=g=>{const c=[];for(let i=0;i<=g;i++)c.push(i===g?R.nz(-5,5):R()<0.6?R.ent(-9,9):0);return c;},N=mk(p),D=seul?[1]:mk(qd),nN=N.filter(Boolean).length,nD=D.filter(Boolean).length;
+  if(seul?nN<2:nN+nD<3)continue;
+  const a=N[p],c=D[qd],d=p-qd,sx=s<0&&d%2?-1:1,r=Q(a,c),L=d===0?{v:r}:d<0?{v:Q(0)}:{inf:Math.sign(a*c)*sx},inf=fx(lmInf(s)),fin=lmFin(P,L),
+    zero=`Les morceaux ${fx("1/x")}, ${fx("1/(x²)")}… tendent vers 0 quand x tend vers ${inf}`,
+    par=s>0?"":d%2?" (une puissance impaire garde le signe moins de x)":" (une puissance paire est toujours positive)",garde=v=>v>0?"positif : le signe est gardé":"négatif : le signe change";
+  if(seul)return lmExo({sig:"P"+s+N.join(","),expr:lmPoly(N),pt:P,lim:L,nature:"polynôme",type:"limite d'un polynôme",pieges:[["0","polynôme"]],
+    etapes:[{w:`On met en facteur le terme de plus haut degré : ${fx(`f(x) = ${LMP[p]}(${lmDiv(N,p)})`)}.`,why:`En ${inf}, c'est la plus grande puissance de x qui décide. La mettre en facteur le montre : dans la parenthèse, il ne reste à côté de ${fx(nb(a))} que des morceaux qui tendent vers 0.`,pts:1},
+      {w:`La parenthèse tend vers ${fx(nb(a))}, et ${fx(LMP[p])} tend vers ${fx(lmInf(sx))}.`,why:`${zero}.${s<0?` Et ${fx(LMP[p])} tend vers ${fx(lmInf(sx))}${par}.`:""}`,pts:1},
+      {w:fin,why:`On multiplie une quantité qui tend vers ${fx(lmInf(sx))} par un nombre proche de ${fx(nb(a))}, qui est ${garde(a)}.`,pts:1}],
+    diag:lu=>lu.inf?null:lmD(0,"limite d'un polynôme en l'infini","le terme le plus fort.",lu.v===0?"« ∞ − ∞ » ne vaut pas 0 : c'est une forme indéterminée. Mets la plus grande puissance de x en facteur.":"Un polynôme qui n'est pas constant tend toujours vers l'infini quand x tend vers l'infini : mets la plus grande puissance de x en facteur.")});
+  const tN=lmPoly(N),tD=lmPoly(D),rN=nN>1?lmDiv(N,p):nb(a),rD=nD>1?lmDiv(D,qd):nb(c),reste=lmF(rN,rD),pw=d>0?LMP[d]:d<0?"1/"+lmG(LMP[-d]):"1",forme=d===0?reste:d>0?`${LMP[d]} × ${reste}`:`(${pw}) × ${reste}`,
+    hautS=nN>1?`En haut : ${fx(`${tN} = ${LMP[p]}(${rN})`)}.`:`En haut, ${fx(tN)} est déjà un seul terme.`,basS=nD>1?`En bas : ${fx(`${tD} = ${LMP[qd]}(${rD})`)}.`:`En bas, ${fx(tD)} est déjà un seul terme.`;
+  return lmExo({sig:"Q"+s+N.join(",")+"|"+D.join(","),expr:lmF(tN,tD),pt:P,lim:L,nature:d===0?"même degré":d<0?"vers 0":"infini",type:"limite d'un quotient de polynômes",
+    pieges:d===0?[["+∞","pris pour l'infini"],["0","pris pour 0"]].concat(a===c?[]:[["1","pris pour 1"]]):d<0?[["+∞","degré du bas"],["1","degré du bas"]]:[["0","degré du haut"],[lmTp({inf:-L.inf}),"signe de l'infini"]],
+    etapes:[{w:`On met en facteur la plus grande puissance de x, en haut et en bas. ${hautS} ${basS}`,why:`En ${inf}, le haut et le bas tendent tous les deux vers l'infini : c'est une forme indéterminée « ∞/∞ », on ne peut pas conclure tout de suite. Mettre la plus grande puissance en facteur fait apparaître des morceaux qui tendent vers 0.`,pts:1},
+      {w:`On simplifie les puissances de x : ${fx(`f(x) = ${forme}`)}. La fraction qui reste tend vers ${fx(nb(r))}.`,why:`${fx(`${lmF(LMP[p],LMP[qd])} = ${pw}`)}. ${zero} : il reste ${fx(nb(a))} en haut et ${fx(nb(c))} en bas.`,pts:1},
+      {w:fin,why:d===0?`Il ne reste que cette fraction : la limite est le quotient des coefficients des plus grandes puissances, ${fx(nb(a))} divisé par ${fx(nb(c))}.`:d<0?`${fx(pw)} tend vers 0, et 0 multiplié par un nombre proche de ${fx(nb(r))} donne 0.`:`${fx(LMP[d])} tend vers ${fx(lmInf(sx))}${par}. On le multiplie par un nombre proche de ${fx(nb(r))}, qui est ${garde(a*c)}.`,pts:1}],
+    diag:lu=>d===0?(lu.inf?lmD(0,"« ∞/∞ » pris pour l'infini","la forme indéterminée.","Le haut tend vers l'infini, mais le bas aussi : « ∞/∞ » est une forme indéterminée. Ici le haut et le bas ont le même degré : la limite est un nombre.")
+        :lu.v===0?lmD(1,"même degré pris pour 0","la comparaison des degrés.",`Le haut et le bas ont le même degré : aucun des deux ne l'emporte. La limite est le quotient des coefficients des plus grandes puissances, ${fx(nb(a))} et ${fx(nb(c))}.`)
+        :lu.v===1?lmD(0,"« ∞/∞ » pris pour 1","la forme indéterminée.",`« ∞/∞ » ne vaut pas 1 : c'est une forme indéterminée. Il faut garder les coefficients des plus grandes puissances, ${fx(nb(a))} et ${fx(nb(c))}.`)
+        :pres(lu.v,c/a)?lmD(2,"quotient inversé","la conclusion.",`C'est le coefficient du haut divisé par celui du bas : ${fx(nb(a))} divisé par ${fx(nb(c))}.`):null)
+      :d<0?lmD(1,"degré du bas plus grand","la comparaison des degrés.","Le bas a le plus grand degré : il grandit plus vite que le haut, et le quotient tend vers 0.")
+      :lu.inf?lmD(2,"signe de l'infini","le signe.",`${fx(LMP[d])} tend vers ${fx(lmInf(sx))}${par}, et on le multiplie par un nombre proche de ${fx(nb(r))}.`)
+      :lmD(1,"degré du haut plus grand","la comparaison des degrés.","Le haut a le plus grand degré : il grandit plus vite que le bas, et le quotient tend vers l'infini.")});}}
+/* palier 2 : en un nombre a. « 0/0 » : on simplifie par (x − a). Bas qui tend vers 0 tout seul : l'infini, avec son signe */
+function lmZero(R){const a=R.ent(-3,3),P={a,c:0},v=R(),k=R()<0.3?R.choix([2,3,-1,-2]):1,m=R.choix([1,1,2,3]);let r1,r2;do{r1=R.ent(-4,4);r2=R.ent(-4,4);}while(r1===a||r2===a||r1===r2);
+  const X=t=>t===0?"x":`(x ${lmSi(-t)} ${Math.abs(t)})`,X1=a===0?"x":`x ${lmSi(-a)} ${Math.abs(a)}`,hautQ=v<0.8,basQ=v<0.6||!hautQ,fac=(kk,r)=>coefK(kk)+(r===undefined?X(a):r===0?"x"+X(a):X(a)+X(r)),
+    N=hautQ?[k*a*r1,-k*(a+r1),k]:[-k*a,k],D=basQ?[a*r2,-(a+r2),1]:[-m*a,m],tN=lmPoly(N),tD=lmPoly(D),fN=hautQ?fac(k,r1):k===1?X1:fac(k),fD=basQ?fac(1,r2):m===1?X1:fac(m),
+    rN=lmPoly(hautQ?[-k*r1,k]:[k]),nv=hautQ?k*(a-r1):k,dv=basQ?a-r2:m,frac=basQ||m!==1,forme=frac?lmF(rN,basQ?lmPoly([-r2,1]):m):rN,L={v:Q(nv,dv)},A=fx(nb(a)),
+    egalites=[[tN,fN],[tD,fD]].filter(x=>x[0]!==x[1]).map(x=>fx(`${x[0]} = ${x[1]}`)).join(" et "),fi=(nom,suite)=>lmD(0,`« 0/0 » pris pour ${nom}`,"la forme indéterminée.",`${suite} Simplifie d'abord par ${fx(X1)}.`);
+  return lmExo({sig:"Z"+a+"|"+N.join(",")+"|"+D.join(","),expr:lmF(tN,tD),pt:P,lim:L,nature:"0/0",type:"simplification par (x − a)",pieges:[["+∞","pris pour l'infini"],["0","pris pour 0"]].concat(nv===dv?[]:[["1","pris pour 1"]]),
+    etapes:[{w:`Quand x tend vers ${A}, le haut et le bas tendent tous les deux vers 0 : c'est une forme indéterminée « 0/0 ». On factorise par ${fx(X1)} : ${egalites}.`,why:a===0?"Le haut et le bas valent 0 quand x vaut 0 : chacun a x en facteur.":`Remplace x par ${A} : le haut et le bas valent 0. Un polynôme qui vaut 0 en ${A} se factorise par ${fx(X1)}. L'autre facteur se trouve avec l'autre racine (le discriminant), et se vérifie en développant.`,pts:1},
+      {w:`Pour x différent de ${A}, on simplifie par ${fx(X1)} : ${fx(`f(x) = ${forme}`)}.`,why:`Dans une limite en ${A}, x s'approche de ${A} sans jamais valoir ${A} : ${fx(X1)} n'est pas nul, on a le droit de simplifier.`,pts:1},
+      {w:lmFin(P,L),why:`Il n'y a plus de forme indéterminée : on remplace x par ${A}. ${frac?`Le haut vaut ${fx(nb(nv))} et le bas vaut ${fx(nb(dv))}.`:`On trouve ${fx(nb(nv))}.`}`,pts:1}],
+    diag:lu=>lu.inf?fi("l'infini","Le bas tend vers 0, mais le haut aussi : « 0/0 » est une forme indéterminée, pas l'infini."):lu.v===0?fi("0","« 0/0 » ne vaut pas 0 : c'est une forme indéterminée."):lu.v===1?fi("1","« 0/0 » ne vaut pas 1 : c'est une forme indéterminée."):null});}
+function lmInterdit(R){const a=R.ent(-3,3),g=R.choix(["lin","lin","quad","carre"]),c=g==="carre"?0:R()<0.5?1:-1,P={a,c},m=g!=="lin"?1:a===0?R.choix([1,2]):R.choix([1,1,-1,2]);let al,be,r=a;
+  do{al=R.ent(-3,3);be=R.ent(-5,5);}while(al*a+be===0);if(g==="quad")do r=R.ent(-4,4);while(r===a);
+  const X=t=>t===0?"x":`(x ${lmSi(-t)} ${Math.abs(t)})`,X1=a===0?"x":`x ${lmSi(-a)} ${Math.abs(a)}`,A=fx(nb(a)),nv=al*a+be,num=lmPoly([be,al]),
+    den=g==="carre"?(a===0?"x²":X(a)+"²"):lmPoly(g==="lin"?[-m*a,m]:[a*r,-(a+r),1]),sd=g==="carre"?1:g==="lin"?c*Math.sign(m):c*Math.sign(a-r),L={inf:Math.sign(nv)*sd},
+    cote=`x est plus ${c>0?"grand":"petit"} que ${A}, donc ${fx(X1)} est ${lmSg(c)}`,note=`Le bas tend vers 0 en restant ${lmSg(sd)} : on note ${fx(sd>0?"0⁺":"0⁻")}.`,fm=coefK(m)+X(a),
+    signe=g==="carre"?`Le bas est un carré : il est positif des deux côtés de ${A}. Il tend vers 0 en restant positif : on note ${fx("0⁺")}.`
+      :g==="lin"?`Ici ${cote}${m===1?"":`, et le bas ${fx(den===fm?den:`${den} = ${fm}`)} est ${lmSg(sd)}`}. ${note}`
+      :`Le bas se factorise : ${fx(`${den} = ${r===0?"x"+X(a):X(a)+X(r)}`)}. Ici ${cote}, et ${fx(r===0?"x":`x ${lmSi(-r)} ${Math.abs(r)}`)} tend vers ${fx(nb(a-r))}, qui est ${lmSg(a-r)}. ${note}`;
+  return lmExo({sig:"I"+[a,c,g,al,be,m,r],expr:lmF(num,den),pt:P,lim:L,nature:"valeur interdite : "+g,type:"signe de l'infini",pieges:[["0","dénominateur qui tend vers 0"],[lmTp({inf:-L.inf}),"signe du dénominateur"]],
+    etapes:[{w:`Quand x tend vers ${A}, le haut ${al?"tend vers":"vaut"} ${fx(nb(nv))} et le bas tend vers 0.`,why:`Le haut ne tend pas vers 0 : ce n'est pas une forme indéterminée. Un nombre non nul divisé par un nombre de plus en plus proche de 0 devient immense : la limite est ${fx("+∞")} ou ${fx("−∞")}, il reste à trouver le signe.`,pts:1},
+      {w:signe,why:"Le signe du quotient vient du signe du haut et du signe du bas : il faut savoir si le bas s'approche de 0 par des nombres positifs ou par des nombres négatifs.",pts:1},
+      {w:lmFin(P,L),why:`Le haut est proche de ${fx(nb(nv))}, qui est ${lmSg(nv)}. On le divise par un très petit nombre ${lmSg(sd)} : le résultat est immense, et ${lmSg(L.inf)} par la règle des signes.`,pts:1}],
+    diag:lu=>lu.inf?lmD(1,"signe du dénominateur","le signe du bas.",`Regarde de quel côté de 0 le bas arrive : ici il reste ${lmSg(sd)}, et le haut est proche de ${fx(nb(nv))}.`)
+      :lmD(0,"dénominateur qui tend vers 0","le type de limite.",`Le bas tend vers 0 et le haut tend vers ${fx(nb(nv))}, pas vers 0 : le quotient devient immense, il tend vers l'infini. Il reste à trouver le signe.`)});}
+const lmEnA=R=>R()<0.5?lmZero(R):lmInterdit(R);
+/* palier 3 : croissances comparées, et le terme le plus fort (TD 1, exercice 2 g et h) */
+function lmCroiss(R){const t=R(),n=R.ent(1,3),k=R.choix([1,1,2,3]),c=R.choix([1,1,1,2,3,-1,-2]),PI={inf:1},PM={inf:-1},P0={a:0,c:1},pi=fx("+∞"),mi=fx("−∞"),xn=LMP[n],
+    cours=`Croissances comparées (cours) : en ${pi}, l'exponentielle l'emporte sur toutes les puissances de x, et les puissances de x l'emportent sur ${fx("ln x")}.`,
+    ii=`En ${pi}, le haut et le bas tendent tous les deux vers l'infini : c'est une forme indéterminée « ∞/∞ ».`,iiW="On ne peut pas conclure en regardant le haut et le bas séparément : il faut savoir lequel grandit le plus vite.",
+    qui=msg=>lmD(1,"croissances comparées : qui l'emporte","le plus fort des deux.",msg),un=lmD(0,"« ∞/∞ » pris pour 1","la forme indéterminée.","« ∞/∞ » ne vaut pas 1 : c'est une forme indéterminée. Il faut savoir qui grandit le plus vite."),
+    mult=L=>c===1?"":` Le coefficient ${fx(nb(c))} ${L.inf?(c>0?"ne change pas le signe":"change le signe"):"ne change rien : un nombre multiplié par une quantité qui tend vers 0 tend vers 0"}.`,
+    E3=(P,L,w0,why0,w1,why1,why2)=>[{w:w0,why:why0,pts:1},{w:w1,why:why1,pts:1},{w:lmFin(P,L),why:why2,pts:1}];
+  if(t<0.2){const prod=R()<0.5,top=lmM(c,n),q0=lmF(top,lmE(k)),L={v:Q(0)};
+    return lmExo({sig:"C1"+[n,k,c,+prod],expr:prod?top+lmE(-k):q0,pt:PI,lim:L,nature:"puissance sur exponentielle",type:"croissances comparées",pieges:[["+∞","qui l'emporte"],["1","pris pour 1"]],
+      etapes:E3(PI,L,prod?`On écrit le produit comme un quotient : ${fx(`f(x) = ${q0}`)}. Le haut et le bas tendent tous les deux vers l'infini : c'est une forme indéterminée « ∞/∞ ».`:ii,prod?`${fx("e^{−u} = 1/(eᵘ)")} : multiplier par ${fx(lmE(-k))}, c'est diviser par ${fx(lmE(k))}.`:iiW,
+        `L'exponentielle l'emporte sur la puissance : ${fx(lmF(xn,lmE(k)))} tend vers 0.`,cours,`Le plus fort est en bas : le quotient tend vers 0.${mult(L)}`),
+      diag:lu=>lu.inf?qui(`En ${pi}, l'exponentielle l'emporte sur ${fx(xn)}. Elle est en bas : le quotient tend vers 0.`):lu.v===1?un:null});}
+  if(t<0.32){const L={inf:Math.sign(c)};
+    return lmExo({sig:"C2"+[n,k,c],expr:lmF(coefK(c)+lmE(k),xn),pt:PI,lim:L,nature:"exponentielle sur puissance",type:"croissances comparées",pieges:[["0","qui l'emporte"]],
+      etapes:E3(PI,L,ii,iiW,`L'exponentielle l'emporte sur la puissance : ${fx(lmF(lmE(k),xn))} tend vers ${pi}.`,cours,`Le plus fort est en haut : le quotient tend vers l'infini.${mult(L)}`),
+      diag:lu=>lu.inf?null:lu.v===1?un:qui(`En ${pi}, l'exponentielle l'emporte sur ${fx(xn)}. Elle est en haut : le quotient tend vers l'infini.`)});}
+  if(t<0.47){const haut=R()<0.5,cl=(c===1?"":c===-1?"−":c+" ")+"ln x",L=haut?{v:Q(0)}:{inf:Math.sign(c)},ou=haut?"bas : le quotient tend vers 0":"haut : le quotient tend vers l'infini";
+    return lmExo({sig:"C3"+[n,c,+haut],expr:haut?lmF(cl,xn):lmF(lmM(c,n),"ln x"),pt:PI,lim:L,nature:haut?"ln sur puissance":"puissance sur ln",type:"croissances comparées",pieges:[[haut?"+∞":"0","qui l'emporte"]],
+      etapes:E3(PI,L,ii,iiW,`La puissance l'emporte sur le logarithme : ${fx(haut?lmF("ln x",xn):lmF(xn,"ln x"))} tend vers ${haut?"0":pi}.`,cours,`Le plus fort est en ${ou}.${mult(L)}`),
+      diag:lu=>(haut?lu.inf:!lu.inf&&lu.v!==1)?qui(`En ${pi}, ${fx(xn)} l'emporte sur ${fx("ln x")}, et il est en ${ou}.`):lu.v===1?un:null});}
+  if(t<0.6){const L={v:Q(0)};
+    return lmExo({sig:"C4"+[n,c],expr:lmM(c,n)+" ln x",pt:P0,lim:L,nature:"en 0⁺",type:"croissances comparées en 0",pieges:[["-∞","qui l'emporte"],["+∞","qui l'emporte"]],
+      etapes:E3(P0,L,`Quand x tend vers 0 par la droite, ${fx(xn)} tend vers 0 et ${fx("ln x")} tend vers ${mi} : c'est une forme indéterminée « 0 × ∞ ».`,"« 0 × ∞ » ne se calcule pas directement : tout dépend de qui est le plus fort, la puissance qui écrase ou le logarithme qui grandit.",
+        `Croissances comparées : en 0 aussi, la puissance l'emporte sur le logarithme. ${fx(xn+" ln x")} tend vers 0.`,`C'est une limite du cours : ${fx("x ln x")} tend vers 0 quand x tend vers 0 par la droite, et de même ${fx("x² ln x")}, ${fx("x³ ln x")}…`,`Le produit tend vers 0.${mult(L)}`),
+      diag:lu=>lu.inf?qui(`En 0, la puissance ${fx(xn)} l'emporte sur ${fx("ln x")} : le produit tend vers 0, pas vers l'infini.`):null});}
+  if(t<0.72){const fi=R()<0.5,sn=n%2?-1:1,top=lmM(c,n);
+    if(!fi){const L={inf:Math.sign(c)*sn};
+      return lmExo({sig:"C5"+[n,k,c],expr:top+lmE(-k),pt:PM,lim:L,nature:"en −∞, sans forme indéterminée",type:"limite d'un produit",etSigne:1,pieges:[["0","à tort"]],
+        etapes:E3(PM,L,`Quand x tend vers ${mi}, l'exposant ${fx(ex1(-k))} tend vers ${pi} : ${fx(lmE(-k))} tend vers ${pi}.`,`Regarde toujours vers quoi tend l'exposant : ${fx("eᵘ")} tend vers ${pi} quand u tend vers ${pi}, et vers 0 quand u tend vers ${mi}.`,
+          `${fx(top)} tend vers ${fx(lmInf(L.inf))}.`,`${n===1?"C'est x lui-même, qui":`${n%2?"Une puissance impaire garde le signe moins de x":"Une puissance paire est toujours positive"} : ${fx(xn)}`} tend vers ${fx(lmInf(sn))}.${c===1?"":` Le coefficient ${fx(nb(c))} ${c>0?"ne change pas le signe":"change le signe"}.`}`,
+          "Ce n'est pas une forme indéterminée : les deux facteurs tendent vers l'infini, leur produit aussi, avec le signe donné par la règle des signes."),
+        diag:lu=>lu.inf?lmD(1,"signe d'une puissance en −∞","le signe.",`${fx(top)} tend vers ${fx(lmInf(L.inf))}, et l'exponentielle tend vers ${pi}.`)
+          :lmD(0,"croissances comparées appliquées à tort","la limite de l'exponentielle.",`En ${mi}, ${fx(lmE(-k))} ne tend pas vers 0 : son exposant ${fx(ex1(-k))} tend vers ${pi}. Il n'y a pas de forme indéterminée ici.`)});}
+    const L={v:Q(0)};
+    return lmExo({sig:"C6"+[n,k,c],expr:top+lmE(k),pt:PM,lim:L,nature:"en −∞",type:"croissances comparées",pieges:[["-∞","qui l'emporte"],["+∞","qui l'emporte"]],
+      etapes:E3(PM,L,`Quand x tend vers ${mi}, ${fx(xn)} tend vers ${fx(lmInf(sn))} et ${fx(lmE(k))} tend vers 0 : c'est une forme indéterminée « ∞ × 0 ».`,`L'exposant ${fx(ex1(k))} tend vers ${mi}, donc l'exponentielle tend vers 0.`,
+        `L'exponentielle l'emporte encore sur la puissance : ${fx(xn+lmE(k))} tend vers 0.`,`Pose ${fx("X = −x")}, qui tend vers ${pi}. Au signe près, ${fx(xn+lmE(k))} vaut ${fx(lmF(xn.replace("x","X"),`e^{${k===1?"":k}X}`))} : une puissance divisée par une exponentielle, qui tend vers 0 par croissances comparées.`,`Le produit tend vers 0.${mult(L)}`),
+      diag:lu=>lu.inf?qui(`L'exponentielle l'emporte sur la puissance, en ${mi} aussi : ${fx(xn+lmE(k))} tend vers 0.`):null});}
+  const u=R();
+  if(u<0.4){const k2=R.choix([1,2]),a=R.nz(-4,4),cq=R.nz(-4,4),b=R.nz(-5,5),dd=R.nz(-5,5),m=R.ent(1,3),ek=lmE(k2),em=lmE(-k2),L={v:Q(a,cq)},
+      ligne=(a1,b1,n1)=>`${coefK(a1)}${ek} ${lmSi(b1)} ${lmM(Math.abs(b1),n1)}`,dans=(a1,b1,n1)=>`${nb(a1)} ${lmSi(b1)} ${lmM(Math.abs(b1),n1)}${em}`,top=ligne(a,b,n),bot=ligne(cq,dd,m),autre=b*cq!==a*dd;
+    return lmExo({sig:"C7"+[k2,a,b,n,cq,dd,m],expr:lmF(top,bot),pt:PI,lim:L,nature:"terme le plus fort, quotient",type:"terme le plus fort",pieges:[["+∞","pris pour l'infini"]].concat(autre?[[brut(Q(b,dd)),"mal choisi"]]:[]),
+      etapes:E3(PI,L,`On met en facteur le terme le plus fort, ${fx(ek)}, en haut et en bas. En haut : ${fx(`${top} = ${ek}(${dans(a,b,n)})`)}. En bas : ${fx(`${bot} = ${ek}(${dans(cq,dd,m)})`)}.`,
+        `Le haut et le bas tendent vers l'infini : c'est une forme indéterminée « ∞/∞ ». En ${pi}, l'exponentielle l'emporte sur les puissances de x : c'est elle, le terme le plus fort. Et diviser par ${fx(ek)}, c'est multiplier par ${fx(em)}.`,
+        `On simplifie par ${fx(ek)} : ${fx(`f(x) = ${lmF(dans(a,b,n),dans(cq,dd,m))}`)}. Les morceaux en ${fx(em)} tendent vers 0.`,`${fx(`${xn}${em} = ${lmF(xn,ek)}`)} est une puissance divisée par une exponentielle : elle tend vers 0 par croissances comparées${m!==n?`, et ${fx(LMP[m]+em)} aussi`:""}.`,
+        `Il reste ${fx(nb(a))} en haut et ${fx(nb(cq))} en bas.`),
+      diag:lu=>lu.inf?lmD(0,"« ∞/∞ » pris pour l'infini","la forme indéterminée.","Le haut tend vers l'infini, mais le bas aussi : « ∞/∞ » est une forme indéterminée. Mets le terme le plus fort en facteur.")
+        :autre&&pres(lu.v,b/dd)?lmD(0,"terme le plus fort mal choisi","le terme le plus fort.",`Ce sont les exponentielles qui décident, pas les puissances de x : garde les coefficients de ${fx(ek)}, ${fx(nb(a))} en haut et ${fx(nb(cq))} en bas.`):lu.v===1?un:null});}
+  if(u<0.75){const ex=R()<0.5,a=R.choix([1,1,2,-1,-2]),b=-Math.sign(a)*R.ent(1,5),n1=ex?n:R.choix([1,1,2]),fort=ex?lmE(k):LMP[n1],bl=(Math.abs(b)===1?"":Math.abs(b)+" ")+"ln x",petit=ex?xn+lmE(-k):lmF("ln x",fort),
+      expr=ex?`${coefK(a)}${fort} ${lmSi(b)} ${lmM(Math.abs(b),n)}`:`${lmM(a,n1)} ${lmSi(b)} ${bl}`,dans=`${nb(a)} ${lmSi(b)} ${ex?lmM(Math.abs(b),n)+lmE(-k):lmF(bl,fort)}`,L={inf:Math.sign(a)};
+    return lmExo({sig:"C8"+[+ex,a,b,n,k,n1],expr,pt:PI,lim:L,nature:"terme le plus fort, différence",type:"terme le plus fort",pieges:[["0","pris pour un nombre"],[lmTp({inf:-L.inf}),"mal choisi"]],
+      etapes:E3(PI,L,`On met en facteur le terme le plus fort, ${fx(fort)} : ${fx(`f(x) = ${fort}(${dans})`)}.`,`Les deux termes tendent vers l'infini avec des signes contraires : c'est une forme indéterminée « ∞ − ∞ ». ${cours}`,
+        `La parenthèse tend vers ${fx(nb(a))}, car ${fx(petit)} tend vers 0.`,ex?`${fx(`${xn}${lmE(-k)} = ${lmF(xn,lmE(k))}`)} : une puissance divisée par une exponentielle tend vers 0, par croissances comparées.`:"Un logarithme divisé par une puissance de x tend vers 0, par croissances comparées.",
+        `${fx(fort)} tend vers ${pi}, et on le multiplie par un nombre proche de ${fx(nb(a))}, qui est ${a>0?"positif : la limite est "+pi:"négatif : la limite est "+mi}.`),
+      diag:lu=>lu.inf?lmD(0,"terme le plus fort mal choisi","le terme le plus fort.",`C'est ${fx(fort)} qui l'emporte, et son coefficient est ${lmSg(a)}.`)
+        :lmD(0,"« ∞ − ∞ » pris pour un nombre","la forme indéterminée.","« ∞ − ∞ » ne vaut pas 0 : c'est une forme indéterminée. Mets le terme le plus fort en facteur.")});}
+  const n2=R.choix([1,2]),be=R.nz(-4,4),al=R.ent(-3,3),num=lmPoly([be,al]),den=LMP[n2]+" ln x",L={inf:-Math.sign(be)};
+  return lmExo({sig:"C9"+[n2,al,be],expr:lmF(num,den),pt:P0,lim:L,nature:"en 0⁺, comme au TD",type:"limite d'un quotient",pieges:[["0","dénominateur qui tend vers 0"],[lmTp({inf:-L.inf}),"signe de ln x"]],
+    etapes:E3(P0,L,`Quand x tend vers 0 par la droite, le haut ${al?"tend vers":"vaut"} ${fx(nb(be))}.`,al?`On remplace x par 0 dans ${fx(num)}.`:"Le haut ne dépend pas de x.",
+      `Le bas ${fx(den)} tend vers 0 en restant négatif : on note ${fx("0⁻")}.`,`Croissances comparées : ${fx(den)} tend vers 0 quand x tend vers 0 par la droite (la puissance l'emporte sur le logarithme). Et près de 0, ${fx("ln x")} est négatif alors que ${fx(LMP[n2])} est positif.`,
+      `Le haut est proche de ${fx(nb(be))}, qui est ${lmSg(be)}. On le divise par un très petit nombre négatif : le résultat est immense, et ${lmSg(L.inf)} par la règle des signes.`),
+    diag:lu=>lu.inf?lmD(1,"signe de ln x près de 0","le signe du bas.",`Près de 0, ${fx("ln x")} est négatif : le bas tend vers 0 en restant négatif.`)
+      :lmD(1,"dénominateur qui tend vers 0","la limite du bas.",`Le bas tend vers 0 (croissances comparées) et le haut tend vers ${fx(nb(be))} : le quotient devient immense, il tend vers l'infini.`)});}
+/* palier 4 : un taux d'accroissement (f(x) − f(a))/(x − a), qui tend vers f′(a) */
+const LM_G={
+ sin:a=>({top:`sin(${ex1(a)})`,f:`sin(${ex1(a)})`,f0:"0",d:`${coefK(a)}cos(${ex1(a)})`,d0:a,r:`${fx("(sin(kx))′ = k cos(kx)")}, et ${fx("cos 0 = 1")}`}),
+ exp:a=>({top:`${lmE(a)} − 1`,f:lmE(a),f0:"1",d:coefK(a)+lmE(a),d0:a,r:`${fx("(e^{kx})′ = ke^{kx}")}, et ${fx("e⁰ = 1")}`}),
+ ln:a=>{const u=`1 ${lmSi(a)} ${lmM(Math.abs(a),1)}`;return {top:`ln(${u})`,f:`ln(${u})`,f0:"0",d:lmF(nb(a),u),d0:a,r:`${fx("(ln u)′ = u′/u")}, et en 0 le bas vaut 1`};},
+ cos:a=>({top:`cos(${ex1(a)}) − 1`,f:`cos(${ex1(a)})`,f0:"1",d:`${coefK(-a)}sin(${ex1(a)})`,d0:0,r:`${fx("(cos(kx))′ = −k sin(kx)")}, et ${fx("sin 0 = 0")}`})};
+function lmTaux(R){const t=R(),P0={a:0,c:0},defi=`Le taux d'accroissement de f en a est ${fx("(f(x) − f(a))/(x − a)")}. Quand x tend vers a, il tend vers le nombre dérivé ${fx("f′(a)")} : c'est la définition de la dérivée.`,
+    zi=X=>lmD(0,"« 0/0 » pris pour l'infini","la forme indéterminée.",`Le bas tend vers 0, mais le haut aussi : « 0/0 » est une forme indéterminée, pas l'infini. ${X}`),zz=X=>lmD(0,"« 0/0 » pris pour 0","la forme indéterminée.",`« 0/0 » ne vaut pas 0 : c'est une forme indéterminée. ${X}`),
+    tire=g=>LM_G[g](g==="sin"||g==="cos"?R.ent(1,5):R()<0.7?R.ent(1,4):-R.ent(1,3));
+  if(t<0.5){const g=R.choix(["sin","sin","exp","exp","ln","cos"]),o=tire(g),b=R.choix([1,1,2,3,4,5]),L={v:Q(o.d0,b)},tx=lmF(o.top,"x"),rec="Reconnais un taux d'accroissement en 0.";
+    return lmExo({sig:"T1"+[o.top,b],expr:lmF(o.top,lmM(b,1)),pt:P0,lim:L,nature:"en 0 : "+g,type:"taux d'accroissement",faux:o.d0?"0":"1",
+      pieges:[["+∞","pris pour l'infini"]].concat(o.d0?[["0","pris pour 0"]]:[["1","dérivée en 0"]],o.d0&&o.d0!==b?[["1","coefficient"]]:[],o.d0&&Math.abs(o.d0)!==b?[[brut(Q(b,o.d0)),"inversé"]]:[]),
+      etapes:[{w:`Quand x tend vers 0, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». On reconnaît un taux d'accroissement : avec ${fx(`f(x) = ${o.f}`)}, on a ${fx(`f(0) = ${o.f0}`)}, donc le haut est ${fx("f(x) − f(0)")}.`,why:`${defi} Ici a = 0.`,pts:1},
+        {w:`${fx(`f′(x) = ${o.d}`)}, donc ${fx(`f′(0) = ${nb(o.d0)}`)} : ${fx(tx)} tend vers ${fx(nb(o.d0))}.`,why:`${o.r}.`,pts:1},
+        {w:lmFin(P0,L),why:b===1?"C'est exactement ce taux d'accroissement.":`${fx(`f(x) = (1/${b}) × ${tx}`)} : on divise la limite du taux d'accroissement par ${b}.`,pts:1}],
+      diag:lu=>lu.inf?zi(rec):!o.d0?(lu.v===1?lmD(1,"dérivée en 0 mal calculée","la dérivée.",`${o.r} : le taux d'accroissement tend vers 0, pas vers 1.`):null):lu.v===0?zz(rec)
+        :lu.v===1?lmD(1,"coefficient de x oublié","la dérivée.",`${fx("(sin x)/x")} et ${fx("(eˣ − 1)/x")} tendent vers 1, mais ici x a un coefficient : la dérivée en 0 vaut ${fx(nb(o.d0))}${b===1?"":`, et on divise par ${b}`}.`)
+        :Math.abs(o.d0)!==b&&pres(lu.v,b/o.d0)?lmD(2,"quotient inversé","la conclusion.",`La dérivée en 0 vaut ${fx(nb(o.d0))}, et c'est elle qu'on divise par ${b}.`):null});}
+  if(t<0.75){const a=R.choix([1,1,1,2,-1,3]),n=R.ent(2,a===3?3:a===2?4:5),an=a**n,d0=n*a**(n-1),inv=R()<0.4,P={a,c:0},A=fx(nb(a)),haut=`${LMP[n]} ${lmSi(-an)} ${Math.abs(an)}`,bas=`x ${lmSi(-a)} ${Math.abs(a)}`,tx=lmF(haut,bas),L={v:inv?Q(1,d0):Q(d0)},
+      calc=a===1?`f′(1) = ${n}`:`f′(${nb(a)}) = ${n} × ${a<0?"(−1)":a}${n>2?"⁰¹²³⁴"[n-1]:""} = ${nb(d0)}`,rec=`Reconnais le taux d'accroissement de ${fx(LMP[n])} en ${A}.`;
+    return lmExo({sig:"T2"+[a,n,+inv],expr:inv?lmF(bas,haut):tx,pt:P,lim:L,nature:inv?"xⁿ, inverse":"xⁿ",type:"taux d'accroissement",pieges:[["+∞","pris pour l'infini"],["0","pris pour 0"],["1","pris pour 1"],[brut(inv?Q(d0):Q(1,d0)),"invers"]],
+      etapes:[{w:`Quand x tend vers ${A}, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». Avec ${fx(`f(x) = ${LMP[n]}`)}, on a ${fx(`f(${nb(a)}) = ${nb(an)}`)} : ${fx(tx)} est le taux d'accroissement de f en ${A}.${inv?" Notre fonction est son inverse.":""}`,why:defi,pts:1},
+        {w:`${fx(`f′(x) = ${n}${LMP[n-1]}`)}, donc ${fx(calc)} : le taux d'accroissement tend vers ${fx(nb(d0))}.`,why:`${fx("(xⁿ)′ = nxⁿ⁻¹")}.`,pts:1},
+        {w:lmFin(P,L),why:inv?`L'inverse d'une quantité qui tend vers ${fx(nb(d0))} (pas vers 0) tend vers ${fx(nb(Q(1,d0)))}.`:"C'est exactement ce taux d'accroissement.",pts:1}],
+      diag:lu=>lu.inf?zi(rec):lu.v===0?zz(rec):lu.v===1?lmD(0,"« 0/0 » pris pour 1","la forme indéterminée.",`« 0/0 » ne vaut pas 1 : c'est une forme indéterminée. ${rec}`)
+        :pres(lu.v,inv?d0:1/d0)?lmD(2,inv?"inverse oublié":"quotient inversé","la conclusion.",inv?`${fx(nb(d0))} est la limite de ${fx(tx)}. Notre fonction est son inverse : sa limite est ${fx(nb(Q(1,d0)))}.`:`Le taux d'accroissement est ${fx(tx)} : il tend vers ${fx(`f′(${nb(a)}) = ${nb(d0)}`)}.`):null});}
+  let o1,o2;do{o1=tire(R.choix(["sin","exp","ln"]));o2=tire(R.choix(["sin","sin","exp","ln"]));}while(o1.d0===o2.d0);
+  const L={v:Q(o1.d0,o2.d0)},t1=lmF(o1.top,"x"),t2=lmF(o2.top,"x"),rec="Divise le haut et le bas par x : deux taux d'accroissement apparaissent.",inverse=Math.abs(o1.d0)!==Math.abs(o2.d0);
+  return lmExo({sig:"T3"+[o1.top,o2.top],expr:lmF(o1.top,o2.top),pt:P0,lim:L,nature:"deux taux d'accroissement",type:"taux d'accroissement",pieges:[["+∞","pris pour l'infini"],["0","pris pour 0"],["1","coefficients"]].concat(inverse?[[brut(Q(o2.d0,o1.d0)),"inversé"]]:[]),
+    etapes:[{w:`Quand x tend vers 0, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». On divise le haut et le bas par x : le quotient ne change pas, et deux taux d'accroissement en 0 apparaissent, ${fx(t1)} en haut et ${fx(t2)} en bas.`,why:`${defi} Ici a = 0, avec ${fx(o1.f)} en haut et ${fx(o2.f)} en bas.`,pts:1},
+      {w:`${fx(t1)} tend vers ${fx(nb(o1.d0))}, et ${fx(t2)} tend vers ${fx(nb(o2.d0))}.`,why:`Chaque taux d'accroissement tend vers la dérivée en 0. ${o1.r===o2.r?`En haut comme en bas : ${o1.r}`:`En haut : ${o1.r}. En bas : ${o2.r}`}.`,pts:1},
+      {w:lmFin(P0,L),why:`Le haut tend vers ${fx(nb(o1.d0))} et le bas vers ${fx(nb(o2.d0))}, qui n'est pas 0 : la limite est le quotient des deux.`,pts:1}],
+    diag:lu=>lu.inf?zi(rec):lu.v===0?zz(rec):lu.v===1?lmD(1,"coefficients de x oubliés","les dérivées.",`Les deux taux d'accroissement ne tendent pas vers 1 : en haut la dérivée en 0 vaut ${fx(nb(o1.d0))}, en bas ${fx(nb(o2.d0))}.`)
+      :inverse&&pres(lu.v,o2.d0/o1.d0)?lmD(2,"quotient inversé","la conclusion.",`C'est la limite du haut divisée par celle du bas : ${fx(nb(o1.d0))} divisé par ${fx(nb(o2.d0))}.`):null});}
+/* palier 5 : des racines, la quantité conjuguée (TD 1, exercice 2 d) */
+function lmConj(R){const t=R(),PI={inf:1},pi=fx("+∞"),rac=(p,a)=>`√(${p} ${lmSi(a)} ${lmM(Math.abs(a),1)})`,conj=`${fx("(A − B)(A + B) = A² − B²")} : les racines du haut disparaissent, car le carré d'une racine redonne ce qu'il y a dessous.`,
+    zz=lmD(0,"« 0/0 » pris pour 0","la forme indéterminée.","« 0/0 » ne vaut pas 0 : c'est une forme indéterminée. Avec des racines, multiplie en haut et en bas par la quantité conjuguée."),
+    zi=lmD(0,"« 0/0 » pris pour l'infini","la forme indéterminée.","Le bas tend vers 0, mais le haut aussi : « 0/0 » est une forme indéterminée, pas l'infini. Multiplie en haut et en bas par la quantité conjuguée."),
+    nonLevee=lmD(0,"forme indéterminée non levée","la forme indéterminée.","Les deux termes tendent vers l'infini, mais leur différence reste bornée : il faut la quantité conjuguée pour le voir."),
+    deux=(v,quoi)=>lmD(2,"somme des deux termes du bas","la limite du bas.",`Le bas est une somme de deux ${quoi} qui tendent chacun vers ${v} : il tend vers ${2*v}, pas vers ${v}.`);
+  if(t<0.3){const rp=R.choix([1,1,2,3]),p=rp*rp,c=R.choix([1,1,2,3]),a=R.nz(-4,4);let b;do b=R.nz(-4,4);while(b===a);
+    const A=rac(p,a),B=rac(p,b),cx=lmM(c,1),P={a:0,c:0},L={v:Q(a-b,2*c*rp)},dx=lmM(a-b,1),som=`${A} + ${B}`,bas=c===1?som:`${c}(${som})`;
+    return lmExo({sig:"R1"+[p,a,b,c],expr:lmF(`${A} − ${B}`,cx),pt:P,lim:L,nature:"en 0, deux racines",type:"quantité conjuguée",pieges:[["0","pris pour 0"],["+∞","pris pour l'infini"],[brut(Q(a-b,c*rp)),"somme des deux"]],
+      etapes:[{w:`Quand x tend vers 0, le haut tend vers ${fx(`${rp} − ${rp} = 0`)} et le bas aussi : c'est une forme indéterminée « 0/0 », avec des racines. On multiplie en haut et en bas par la quantité conjuguée ${fx(som)}.`,why:conj,pts:1},
+        {w:`En haut, il reste ${fx(`(${p} ${lmSi(a)} ${lmM(Math.abs(a),1)}) − (${p} ${lmSi(b)} ${lmM(Math.abs(b),1)}) = ${dx}`)}. On simplifie par x : ${fx(`f(x) = ${lmF(nb(a-b),bas)}`)}.`,why:`Avant de simplifier, ${fx(`f(x) = ${lmF(dx,`${cx}(${som})`)}`)}. Et x n'est pas nul quand il tend vers 0 : on a le droit de simplifier.`,pts:1},
+        {w:lmFin(P,L),why:`Il n'y a plus de forme indéterminée : on remplace x par 0. Chaque racine tend vers ${fx(`√${p} = ${rp}`)}, donc le bas tend vers ${fx(`${c===1?"":c+" × "}(${rp} + ${rp}) = ${2*c*rp}`)}.`,pts:1}],
+      diag:lu=>lu.inf?zi:lu.v===0?zz:pres(lu.v,(a-b)/(c*rp))?deux(rp,"racines"):null});}
+  if(t<0.5){const rp=R.choix([1,2,2,3]),x0=R.ent(-2,5),s=rp*rp-x0,c=R.choix([1,1,2]),dedans=s?`x ${lmSi(s)} ${Math.abs(s)}`:"x",A=s?`√(${dedans})`:"√x",P={a:x0,c:0},X1=x0?`x ${lmSi(-x0)} ${Math.abs(x0)}`:"x",L={v:Q(1,2*c*rp)},som=`${A} + ${rp}`,X0=fx(nb(x0));
+    return lmExo({sig:"R2"+[rp,x0,c],expr:lmF(`${A} − ${rp}`,lmPoly([-c*x0,c])),pt:P,lim:L,nature:"en un nombre, une racine",type:"quantité conjuguée",pieges:[["0","pris pour 0"],["+∞","pris pour l'infini"],[brut(Q(1,c*rp)),"somme des deux"]],
+      etapes:[{w:`Quand x tend vers ${X0}, le haut tend vers ${fx(`√${rp*rp} − ${rp} = 0`)} et le bas aussi : c'est une forme indéterminée « 0/0 », avec une racine. On multiplie en haut et en bas par la quantité conjuguée ${fx(som)}.`,why:conj,pts:1},
+        {w:`En haut, il reste ${fx(`${s?`(${dedans})`:"x"} − ${rp*rp} = ${X1}`)}. On simplifie par ${fx(X1)} : ${fx(`f(x) = ${lmF(1,c===1?som:`${c}(${som})`)}`)}.`,why:`Avant de simplifier, ${fx(`f(x) = ${lmF(X1,`${c===1?"":c}${x0?`(${X1})`:"x"}(${som})`)}`)}. Et ${fx(X1)} n'est pas nul quand x tend vers ${X0} sans l'atteindre : on a le droit de simplifier.`,pts:1},
+        {w:lmFin(P,L),why:`Il n'y a plus de forme indéterminée : on remplace x par ${X0}. La racine tend vers ${rp}, donc le bas tend vers ${fx(`${c===1?"":c+" × "}(${rp} + ${rp}) = ${2*c*rp}`)}.`,pts:1}],
+      diag:lu=>lu.inf?zi:lu.v===0?zz:pres(lu.v,1/(c*rp))?deux(rp,"termes"):null});}
+  if(t<0.8){const k=R.choix([1,1,2,3]),a=R.nz(-6,6),b=R()<0.5?0:R.ent(1,5),ins=lmPoly([b,a,k*k]),A=`√(${ins})`,kx=lmM(k,1),L={v:Q(a,2*k)},num=lmPoly([b,a]),som=`${A} + ${kx}`;
+    return lmExo({sig:"R3"+[k,a,b],expr:`${A} − ${kx}`,pt:PI,lim:L,nature:"en +∞, une racine moins kx",type:"quantité conjuguée",pieges:[["0","pris pour 0"],["+∞","non levée"],[brut(Q(a,k)),"somme des deux"]],
+      etapes:[{w:`En ${pi}, les deux termes tendent vers ${pi} : c'est une forme indéterminée « ∞ − ∞ ». On multiplie et on divise par la quantité conjuguée ${fx(som)} : ${fx(`f(x) = ${lmF(num,som)}`)}.`,why:`${fx("(A − B)(A + B) = A² − B²")} : en haut, ${fx(`(${ins}) − ${lmM(k*k,2)} = ${num}`)}. La racine a disparu du haut.`,pts:1},
+        {w:`On divise le haut et le bas par x : ${fx(`f(x) = ${lmF(lmDiv([b,a],1),`√(${lmDiv([b,a,k*k],2)}) + ${k}`)}`)}.`,why:`Pour x positif, ${fx("x = √(x²)")} : diviser une racine par x, c'est diviser par ${fx("x²")} ce qu'il y a dessous.`,pts:1},
+        {w:lmFin(PI,L),why:`${b?`Les morceaux ${fx("1/x")} et ${fx("1/(x²)")} tendent`:`${fx("1/x")} tend`} vers 0 : le haut ${b?"tend vers":"vaut"} ${fx(nb(a))}, le bas vers ${fx(`√${k*k} + ${k} = ${2*k}`)}.`,pts:1}],
+      diag:lu=>lu.inf?nonLevee:lu.v===0?lmD(0,"« ∞ − ∞ » pris pour 0","la forme indéterminée.","Deux quantités qui tendent vers l'infini ne s'annulent pas forcément : « ∞ − ∞ » est une forme indéterminée. Il faut la quantité conjuguée.")
+        :pres(lu.v,a/k)?deux(k,"termes"):null});}
+  const kk=R.choix([1,1,2,4]),a=R.ent(0,9),L={v:Q(0)};let b;do b=R.ent(0,9);while(b===a);
+  const iA=lmPoly([a,kk]),iB=lmPoly([b,kk]),rc=i=>/ /.test(i)||i.length>1?`√(${i})`:"√"+i,A=rc(iA),B=rc(iB),som=`${A} + ${B}`;
+  return lmExo({sig:"R4"+[kk,a,b],expr:`${A} − ${B}`,pt:PI,lim:L,nature:"en +∞, deux racines",type:"quantité conjuguée",faux:"+∞",pieges:[["+∞","non levée"],[brut(Q(a-b)),"dénominateur oublié"]],
+    etapes:[{w:`En ${pi}, les deux racines tendent vers ${pi} : c'est une forme indéterminée « ∞ − ∞ ». On multiplie et on divise par la quantité conjuguée ${fx(som)} : ${fx(`f(x) = ${lmF(nb(a-b),som)}`)}.`,why:`${fx("(A − B)(A + B) = A² − B²")} : en haut, ${fx(`(${iA}) − ${/ /.test(iB)?`(${iB})`:iB} = ${nb(a-b)}`.replace(/^\(([^ ]+)\)/,"$1"))}. Les x ont disparu.`,pts:1},
+      {w:`Le haut vaut ${fx(nb(a-b))}, et le bas tend vers ${pi}.`,why:`Le bas est une somme de deux racines qui tendent vers ${pi}.`,pts:1},
+      {w:lmFin(PI,L),why:"Un nombre fixe divisé par une quantité de plus en plus grande tend vers 0.",pts:1}],
+    diag:lu=>lu.inf?nonLevee:pres(lu.v,a-b)?lmD(1,"dénominateur oublié","la limite du bas.",`${fx(nb(a-b))} est seulement le haut : il est divisé par ${fx(som)}, qui tend vers l'infini.`):null});}
+const lmMix=R=>R.choix([lmQuot,lmEnA,lmCroiss,lmTaux,lmConj])(R);
+
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -25107,7 +25321,15 @@ G.add("calc",[
    {t:"une solution particulière évidente",cc:4,min:200,gen:d1Evidente},
    {t:"la variation de la constante : un exemple à compléter",cc:6,min:190,gen:R=>d1Variation(R,true)},
    {t:"la variation de la constante, en entier",cc:7,min:170,gen:R=>d1Variation(R,false)},
-   {t:"avec une condition initiale, comme au CC 2023 (exercice 2)",cc:9,gen:d1Initiale}]}
+   {t:"avec une condition initiale, comme au CC 2023 (exercice 2)",cc:9,gen:d1Initiale}]},
+ {id:"CA14",t:"Calculer une limite",tache:"calculer une limite",th:"limites",pts:3,lecons:["c-limites"],
+  paliers:[
+   {t:"en +∞ ou −∞ : un polynôme, un quotient de polynômes",cc:2,gen:lmQuot},
+   {t:"en un nombre : simplifier « 0/0 », ou trouver le signe de l'infini",cc:3,gen:lmEnA},
+   {t:"croissances comparées : exponentielle, puissances, logarithme",cc:2,min:150,gen:lmCroiss},
+   {t:"un taux d'accroissement, comme sin(x)/x",cc:3,min:120,gen:lmTaux},
+   {t:"des racines : la quantité conjuguée",cc:4,min:170,gen:lmConj},
+   {t:"tout mélangé, comme au TD 1 (exercices 1 et 2)",cc:3,gen:lmMix}]}
 ]);
 })();
 
