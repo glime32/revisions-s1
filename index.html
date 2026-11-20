@@ -28628,7 +28628,7 @@ function exoTube(R,p){const [fam,gen]=R.choix(PAR[p]),v=R.ent(0,2),vers=[0,1,2].
       {w:`La commande : <b>${cr(ref)}</b>`,why:`${ici}, elle affiche : ${montre(att)}${it.alt?` On peut aussi écrire ${cr(it.alt[0])}.`:""}`,pts:0.5}];
   const fin=E.length-1,faux=(ch,resume)=>(etape,type,titre,msg)=>({ok:false,faux:[ch],resume,diag:{etape,type,titre,msg}});
   const juge=lire?rep=>{const L0=String(rep.s==null?"":rep.s).split("\n").map(propre).filter(Boolean),non=faux("s","Pas tout à fait : ce n'est pas ce que la commande affiche.");
-      if(!L0.length)return {incomplet:"Écris ce que la commande affiche, une ligne par ligne."};
+      if(!L0.length)return {incomplet:"Écris ce que la commande affiche, ligne par ligne."};
       const L=L0.length===1&&att.length>1&&att.every(x=>!/[ ,;]/.test(x))?L0[0].split(/[ ,;]+/).filter(Boolean):L0;
       if(pareil(L,attP)||pareil(norme(L),bon[0]))return {ok:true};
       const m=mut.find(m=>pareil(L,m.O[0].map(propre)));if(m)return non(m.k+d,m.type,"Où ça part : "+m.type+".",m.l);
@@ -28644,11 +28644,582 @@ function exoTube(R,p){const [fam,gen]=R.choix(PAR[p]),v=R.ent(0,2),vers=[0,1,2].
   const cas=(x,cmd)=>{const r=lanceTube(cmd,x.T,x.V);return {arbo:x.T,cmd:(x.V?Object.entries(x.V).map(([k,y])=>`${k}='${y}'; `).join(""):"")+cmd,abs:r.sortie||null,brut:true,ordre:true};};
   const banc=BANC[fam.type]||BANC[fam.nom],bash=[...vers.map(x=>cas(x,ref)),...alt.map(a=>cas(ver,a)),...mut.map(m=>cas(ver,m.cmd)),...[0,1].map(()=>cas(ver,R.choix(banc).replace(/@/g,fam.nom)))];
   return {sig:lire?"T0"+ref+"|"+ver.L.join("|"):"T"+p+brut(q),q,corps,texte:brut(q)+(lire?" — "+ref+" — "+ver.L.join(" | "):""),
-    champs:lire?[{k:"code",id:"s",nom:"affichage",label:"Ce que la commande affiche, une ligne par ligne&nbsp;:",lignes:4}]
+    champs:lire?[{k:"code",id:"s",nom:"affichage",label:"Ce que la commande affiche, ligne par ligne&nbsp;:",lignes:4}]
       :[{k:"champ",id:"c",nom:"commande",label:"La commande :",ex:"… | …",apercu:false,sym:SYMT,aide:fam.type==="var"?"Ta commande est essayée avec cette valeur, et avec d'autres.":`Ta commande est essayée sur ce ${fam.type==="ls"?"dossier":"fichier"}, et sur d'autres de la même forme.`}],
     juge,etapes:E,bonne:lire?pave(att):cr(ref),bonneTxt:lire?att.join(" ⏎ "):ref,repBonne:lire?{s:att.join("\n")}:{c:ref},repFausse:lire?{s:fausse.O[0].join("\n")}:{c:mut[0].cmd},nature:fam.type,
     ens:{lire,ref,alt,pieges:mut.map(m=>({type:m.type,cmd:m.cmd,sortie:m.O[0]})),bash}};}
 const tireTube=p=>R=>{for(;;){const e=exoTube(R,p);if(e)return e;}};
+
+/* ---------- US7 : un petit bash qui joue un script entier : variables, paramètres, $(( )), $( ), if, for, while, [[ ]], [ ], read, et mv, rm, cp, touch, mkdir ---------- */
+const PAS7=3000;
+/* s[i] est le $ de $( ou de $(( : rend l'indice juste après la parenthèse fermante, ou -1 */
+function ferme(s,i){let p=s[i+2]==="("?2:1,j=i+p+1;
+  for(;j<s.length;j++){const x=s[j];
+    if(x==="\\"){j++;continue;}
+    if(x==="'"){const k=s.indexOf("'",j+1);if(k<0)return -1;j=k;continue;}
+    if(x==='"'){let k=j+1;for(;k<s.length&&s[k]!=='"';k++)if(s[k]==="\\")k++;if(k>=s.length)return -1;j=k;continue;}
+    if(x==="(")p++;else if(x===")"&&--p===0)return j+1;}
+  return -1;}
+function lexe(src){const T=[],n=src.length;let i=0,l=1,w=null,wl=1;
+  const fin=()=>{if(w!==null){T.push({w,l:wl});w=null;}},op=o=>{fin();T.push({op:o,l});},aj=s=>{if(w===null){w="";wl=l;}w+=s;l+=s.split("\n").length-1;};
+  while(i<n){const x=src[i],d=src[i+1];
+    if(x==="\n"){op("\n");l++;i++;}
+    else if(x===" "||x==="\t"||x==="\r"){fin();i++;}
+    else if(x==="#"&&w===null){while(i<n&&src[i]!=="\n")i++;}
+    else if(x==="\\"){if(d==="\n"){l++;i+=2;}else{aj(x+(d||""));i+=2;}}
+    else if(x==="'"){const k=src.indexOf("'",i+1);if(k<0)throw {err:`Ligne ${l} : un guillemet ' n'est pas refermé.`};aj(src.slice(i,k+1));i=k+1;}
+    else if(x==='"'){let k=i+1;for(;k<n&&src[k]!=='"';k++){if(src[k]==="\\")k++;else if(src[k]==="$"&&src[k+1]==="("){const f=ferme(src,k);if(f<0){k=n;break;}k=f-1;}}
+      if(k>=n)throw {err:`Ligne ${l} : un guillemet " n'est pas refermé.`};aj(src.slice(i,k+1));i=k+1;}
+    else if(x==="$"&&d==="("){const f=ferme(src,i);if(f<0)throw {err:`Ligne ${l} : la parenthèse de ${src[i+2]==="("?"$(( … ))":"$( … )"} n'est pas refermée.`};aj(src.slice(i,f));i=f;}
+    else if(x==="$"&&d==="{"){const k=src.indexOf("}",i);if(k<0)throw {err:`Ligne ${l} : l'accolade de \${ n'est pas refermée.`};aj(src.slice(i,k+1));i=k+1;}
+    else if(x==="|"){op(d==="|"?"||":"|");i+=d==="|"?2:1;}
+    else if(x==="&"){if(d!=="&")throw {inconnu:"Le site ne connaît pas & seul : écris les commandes l'une après l'autre."};op("&&");i+=2;}
+    else if(x===";"){if(d===";")throw {inconnu:"Le site ne connaît pas case … esac : écris des if."};op(";");i++;}
+    else if(x==="<"){if(d==="<")throw {inconnu:"Le site ne connaît pas << : mets les lignes dans un fichier."};op("<");i++;}
+    else if(x===">"){if(w==="2"){w=null;op("2>");}else op(d===">"?">>":">");i+=d===">"?2:1;}
+    else if(x==="`")throw {inconnu:"Écris le résultat d'une commande avec $( … ), pas entre accents graves."};
+    else if(x==="("||x===")")throw {inconnu:x==="("&&d==="("?"Le site ne connaît pas (( … )) : écris un test avec [[ … ]], et un calcul avec $(( … )).":w!==null&&d===")"?"Le site ne connaît pas les fonctions bash : écris le script sans fonction.":"Le site ne connaît pas les parenthèses seules : écris le script sans sous-shell."};
+    else{aj(x);i++;}}
+  fin();return T;}
+function analyse(T){let i=0;
+  const lg=()=>(T[i]||T[T.length-1]||{l:1}).l,mot=w=>T[i]&&T[i].w===w,sep=()=>T[i]&&(T[i].op===";"||T[i].op==="\n"),saute=()=>{while(sep())i++;};
+  const ici=()=>!T[i]?"la fin du script":T[i].w!==undefined?`« ${T[i].w} »`:T[i].op==="\n"?"la fin de la ligne":`« ${T[i].op} »`;
+  const attend=(w,pq)=>{if(!mot(w))throw {err:`Ligne ${lg()} : il manque ${w} ${pq} (bash trouve ${ici()} à la place).`};i++;};
+  function liste(stop){const L=[];saute();
+    while(i<T.length&&!stop.includes(T[i].w)){L.push(etou());if(i<T.length&&!sep()&&!stop.includes(T[i].w))throw {err:`Ligne ${lg()} : bash ne s'attend pas à ${ici()} ici.`};saute();}
+    return L;}
+  const bloc=(stop,quoi)=>{const L=liste(stop);if(!L.length)throw {err:`Ligne ${lg()} : ${quoi} est vide : bash veut au moins une commande.`};return L;};
+  function etou(){const P=[tube()];while(T[i]&&(T[i].op==="&&"||T[i].op==="||")){P.push(T[i++].op);while(T[i]&&T[i].op==="\n")i++;P.push(tube());}return P;}
+  function tube(){const C=[cmd()];while(T[i]&&T[i].op==="|"){i++;while(T[i]&&T[i].op==="\n")i++;C.push(cmd());}
+    if(C.length>1&&C.some(c=>!c.simple||(c.W&&c.W[0]==="read")))throw {inconnu:"Le site ne connaît pas un tube vers une boucle ou vers read : écris la boucle avec done < fichier."};return C;}
+  function cmd(){const t=T[i];if(!t)throw {err:`Ligne ${lg()} : il manque une commande à la fin.`};
+    if(t.op)throw {err:`Ligne ${t.l} : bash ne s'attend pas à ${ici()} ici.`};const w=t.w;
+    if(w==="if"){i++;const B=[];let c=bloc(["then"],"la condition du if");attend("then","après la condition du if");B.push([c,bloc(["elif","else","fi"],"le bloc du then")]);
+      while(mot("elif")){i++;c=bloc(["then"],"la condition du elif");attend("then","après la condition du elif");B.push([c,bloc(["elif","else","fi"],"le bloc du then")]);}
+      let sinon=null;if(mot("else")){i++;sinon=bloc(["fi"],"le bloc du else");}attend("fi","pour fermer le if");return {si:B,sinon};}
+    if(w==="for"){i++;const v=T[i]&&T[i].w;
+      if(v===undefined||!/^[A-Za-z_]\w*$/.test(v))throw v!==undefined&&/^\(\(/.test(v)?{inconnu:"Le site ne connaît pas for (( … )) : écris for i in $(seq 1 n), ou une boucle while."}:{err:`Ligne ${t.l} : après for, il faut le nom de la variable, sans $ : for f in …`};
+      i++;let M=null;if(mot("in")){i++;M=[];while(T[i]&&T[i].w!==undefined)M.push(T[i++].w);}
+      if(!sep()&&!mot("do"))throw {err:`Ligne ${lg()} : bash ne s'attend pas à ${ici()} après la liste du for.`};saute();attend("do","après la ligne du for");
+      const corps=bloc(["done"],"le corps de la boucle");attend("done","pour fermer la boucle for");return {pour:v,M,corps};}
+    if(w==="while"||w==="until"){i++;const c=bloc(["do"],`la condition du ${w}`);attend("do",`après la condition du ${w}`);const corps=bloc(["done"],"le corps de la boucle");attend("done",`pour fermer la boucle ${w}`);
+      let lit=null;if(T[i]&&T[i].op==="<"){i++;if(!T[i]||T[i].w===undefined)throw {err:`Ligne ${lg()} : après <, il faut le nom d'un fichier.`};lit=T[i++].w;}
+      return {tant:w==="while",c,corps,lit};}
+    if(/^(then|do|done|fi|elif|else|in)$/.test(w))throw {err:`Ligne ${t.l} : ${w} arrive au mauvais endroit${/^(then|fi|elif|else)$/.test(w)?", sans if ouvert avant":/^(do|done)$/.test(w)?", sans boucle ouverte avant":""}.`};
+    if(/^(case|esac|function|select|\{|\})$/.test(w))throw {inconnu:`Le site ne connaît pas ${w} : écris le script avec if, for et while.`};
+    if(w==="[["){i++;const X=[];while(T[i]&&T[i].w!=="]]"&&T[i].op!=="\n"&&T[i].op!==";")X.push(T[i++]);
+      if(!mot("]]"))throw {err:`Ligne ${t.l} : il manque ]] pour fermer le test${X.some(x=>/\]\]$/.test(x.w||""))?" : ici ]] est collé au mot d'avant, il faut une espace entre les deux":", avec une espace avant"}.`};i++;return {simple:true,test:X};}
+    const W=[],red=[];
+    while(T[i]&&(T[i].w!==undefined||/^(<|>|>>|2>)$/.test(T[i].op))){if(T[i].op){const o=T[i++].op;if(!T[i]||T[i].w===undefined)throw {err:`Ligne ${t.l} : après ${o}, il faut le nom d'un fichier.`};red.push([o,T[i++].w]);}else W.push(T[i++].w);}
+    return {simple:true,W,red,l:t.l};}
+  return liste([]);}
+const clone7=t=>JSON.parse(JSON.stringify(t)),ech7=s=>s.replace(/[*?[\]\\]/g,"\\$&");
+function param(nm,X){if(nm==="#")return String(X.A.length);if(nm==="?")return String(X.st);if(nm==="0")return X.nom;if(/^\d+$/.test(nm))return X.A[+nm-1]||"";return X.V[nm]!==undefined?X.V[nm]:nm==="HOME"?ACCUEIL:"";}
+/* un mot en morceaux : {s, q: entre guillemets, v: vient d'un $} ou {at: les paramètres de $@ et $*} */
+function morceaux(w,X){const P=[],n=w.length;let i=0;
+  const dollar=(j,q)=>{const d=w[j+1];
+    if(d==="("){const f=ferme(w,j),ar=w[j+2]==="(",dedans=w.slice(j+(ar?3:2),f-(ar?2:1));P.push({s:ar?String(arith(dedans,X)):sous(dedans,X),q,v:1});return f;}
+    if(d==="{"){const k=w.indexOf("}",j),e=w.slice(j+2,k);let m;
+      if((m=/^#([A-Za-z_]\w*|\d)$/.exec(e)))P.push({s:String(param(m[1],X).length),q,v:1});
+      else if(e==="@"||e==="*")P.push({at:X.A.slice(),q,etoile:e==="*"});
+      else if(/^([A-Za-z_]\w*|\d+|[#?])$/.test(e))P.push({s:param(e,X),q,v:1});
+      else throw {inconnu:`Le site ne connaît pas \${${e}} : écris \${nom} ou $nom.`};
+      return k+1;}
+    if(d==="@"||d==="*"){P.push({at:X.A.slice(),q,etoile:d==="*"});return j+2;}
+    const m=/^([A-Za-z_]\w*|[0-9#?])/.exec(w.slice(j+1));if(!m){P.push({s:"$",q:true});return j+1;}
+    P.push({s:param(m[1],X),q,v:1});return j+1+m[1].length;};
+  while(i<n){const x=w[i];
+    if(x==="'"){const k=w.indexOf("'",i+1);P.push({s:w.slice(i+1,k),q:true});i=k+1;}
+    else if(x==='"'){const avant=P.length;let j=i+1,b="";const vide=()=>{if(b){P.push({s:b,q:true});b="";}};
+      while(j<n&&w[j]!=='"'){if(w[j]==="\\"&&'$`"\\'.includes(w[j+1])){b+=w[j+1];j+=2;}else if(w[j]==="$"){vide();j=dollar(j,true);}else b+=w[j++];}
+      vide();if(P.length===avant)P.push({s:"",q:true});i=j+1;}
+    else if(x==="\\"){P.push({s:w[i+1]||"",q:true});i+=2;}
+    else if(x==="$")i=dollar(i,false);
+    else if(x==="~"&&i===0&&(n===1||w[1]==="/")){P.push({s:ACCUEIL,q:true});i++;}
+    else{P.push({s:x,q:false});i++;}}
+  return P;}
+/* les mots que reçoit la commande : découpe aux espaces de ce qui vient d'un $ hors guillemets, puis motifs * ? [ ] */
+function champs7(P){const F=[];let c=null;const cur=()=>c||(c={s:"",p:"",g:false}),pousse=()=>{if(c){F.push(c);c=null;}};
+  const libre=s=>s.split(/[ \t\n]+/).forEach((m,j)=>{if(j)pousse();if(m){const y=cur();y.s+=m;y.p+=m;if(/[*?[]/.test(m))y.g=true;}});
+  for(const x of P){
+    if(x.at){if(x.q&&!x.etoile)x.at.forEach((a,j)=>{if(j)pousse();const y=cur();y.s+=a;y.p+=ech7(a);});else if(x.q){const y=cur(),s=x.at.join(" ");y.s+=s;y.p+=ech7(s);}else libre(x.at.join(" "));}
+    else if(x.q){const y=cur();y.s+=x.s;y.p+=ech7(x.s);}
+    else if(x.v)libre(x.s);
+    else{const y=cur();y.s+=x.s;y.p+=x.s;if(/[*?[]/.test(x.s))y.g=true;}}
+  pousse();return F;}
+function glob7(c,X){if(!c.g)return [c.s];const p=c.p,k=p.lastIndexOf("/"),dir=k<0?"":p.slice(0,k),base=p.slice(k+1);
+  if(/(^|[^\\])[*?[]/.test(dir))throw {inconnu:"Le site ne développe *, ? et [ ] que dans le dernier morceau d'un chemin, comme dans dossier/*.txt."};
+  const dl=dir.replace(/\\(.)/g,"$1"),x=noeud(X.T,absolu(k<0?".":dl||"/"));if(!x||!x.d||!base)return [c.s];
+  let re;try{re=motifRe(base);}catch(e){return [c.s];}
+  const L=x.d.map(y=>y.n).filter(m=>(m[0]!=="."||base[0]===".")&&re.test(m)).sort();
+  return L.length?L.map(m=>(k<0?"":dl+"/")+m):[c.s];}
+const dev7=(w,X)=>champs7(morceaux(w,X)).flatMap(c=>glob7(c,X));
+const un7=(w,X)=>morceaux(w,X).map(x=>x.at?x.at.join(" "):x.s).join("");
+const motif7=(w,X)=>morceaux(w,X).map(x=>x.at?ech7(x.at.join(" ")):x.q?ech7(x.s):x.s).join("");
+function sous(t,X){const Y=Object.assign({},X,{V:Object.assign({},X.V),out:[],entree:null});
+  try{jouer(analyse(lexe(t)),Y);}catch(e){if(!e||!e.fin)throw e;}
+  X.pas=Y.pas;X.st=Y.st;return Y.out.join("\n").replace(/\n+$/,"");}
+/* $(( )) : entiers, variables, + - * / % **, comparaisons, && || !, et la virgule */
+function arith(src,X,prof){prof=prof||0;const dit=`Dans $(( ${src.trim()} ))`;
+  if(prof>20)throw {err:`${dit}, une variable se calcule à partir d'elle-même, sans fin.`};
+  if(/\$\(/.test(src))throw {inconnu:"Le site ne connaît pas $( ) à l'intérieur de $(( )) : range d'abord le résultat dans une variable."};
+  const s=src.replace(/\$\{?([A-Za-z_]\w*|[0-9#?])\}?/g,(m,nm)=>param(nm,X)),re=/\s*(\d+|[A-Za-z_]\w*|\*\*|<=|>=|==|!=|&&|\|\||[-+*\/%()<>!,])/y,T=[];let k=0;
+  while(k<s.length){if(/^\s*$/.test(s.slice(k)))break;re.lastIndex=k;const m=re.exec(s);
+    if(!m)throw {err:`${dit}, bash ne sait pas lire « ${s.slice(k).trim()} » : on n'y écrit que des nombres entiers, des noms de variables et des opérations.`};T.push(m[1]);k=re.lastIndex;}
+  if(!T.length)return 0;let i=0;
+  const calc=(o,a,b)=>{if((o==="/"||o==="%")&&b===0)throw {err:`${dit}, il y a une division par 0.`};
+    return {"*":a*b,"/":Math.trunc(a/b),"%":a%b,"+":a+b,"-":a-b,"<":+(a<b),"<=":+(a<=b),">":+(a>b),">=":+(a>=b),"==":+(a===b),"!=":+(a!==b),"&&":+(!!a&&!!b),"||":+(!!a||!!b),",":b}[o];};
+  const prim=()=>{const t=T[i++];if(t===undefined)throw {err:`${dit}, le calcul s'arrête trop tôt : il manque un nombre.`};
+    if(t==="("){const v=virg();if(T[i++]!==")")throw {err:`${dit}, une parenthèse n'est pas refermée.`};return v;}
+    if(t==="-")return -prim();if(t==="+")return prim();if(t==="!")return prim()?0:1;
+    if(/^\d/.test(t))return parseInt(t,10);
+    if(/^[A-Za-z_]/.test(t)){const v=X.V[t]!==undefined?X.V[t]:"";return v.trim()===""?0:arith(v,X,prof+1);}
+    throw {err:`${dit}, bash ne s'attend pas à « ${t} » ici.`};};
+  const niv=(ops,sous2)=>()=>{let v=sous2();while(ops.includes(T[i])){const o=T[i++];v=calc(o,v,sous2());}return v;};
+  const pow=()=>{const b=prim();if(T[i]==="**"){i++;return Math.pow(b,pow());}return b;};
+  const mul=niv(["*","/","%"],pow),add=niv(["+","-"],mul),cmp=niv(["<","<=",">",">="],add),eq=niv(["==","!="],cmp),et2=niv(["&&"],eq),ou=niv(["||"],et2),virg=niv([","],ou);
+  const v=virg();if(i<T.length)throw {err:`${dit}, bash ne s'attend pas à « ${T[i]} » ici.`};return v;}
+function unaire(o,s,X){const x=s===""?null:noeud(X.T,absolu(s));
+  return {"-f":!!x&&!x.d,"-d":!!x&&!!x.d,"-e":!!x,"-s":!!x&&!x.d&&!!x.c,"-r":!!x,"-w":!!x,"-x":!!x&&!!x.d,"-z":s==="","-n":s!==""}[o];}
+function test7(L,X){let i=0;const W=k=>L[k]&&L[k].w;
+  const ou=()=>{let v=et2();while(L[i]&&L[i].op==="||"){i++;const b=et2();v=v||b;}return v;},et2=()=>{let v=non();while(L[i]&&L[i].op==="&&"){i++;const b=non();v=v&&b;}return v;};
+  const non=()=>{if(W(i)==="!"){i++;return !non();}return prim();};
+  const prim=()=>{const a=W(i);if(a===undefined)throw {err:"Le test [[ … ]] est vide ou mal écrit."};
+    const b=L[i+1],o=!b?null:b.op==="<"||b.op===">"?b.op:/^(==|=|!=|-eq|-ne|-lt|-le|-gt|-ge|=~)$/.test(b.w||"")?b.w:null;
+    if(o&&W(i+2)!==undefined){const y=W(i+2),x=un7(a,X);i+=3;
+      if(o==="=~")throw {inconnu:"Le site ne connaît pas =~ : compare avec == et un motif, comme [[ $f == *.txt ]]."};
+      if(o==="=="||o==="="||o==="!="){const ok=motifRe(motif7(y,X)).test(x);return o==="!="?!ok:ok;}
+      if(o==="<"||o===">"){const z=un7(y,X);return o==="<"?x<z:x>z;}
+      const p=arith(x,X),q=arith(un7(y,X),X);return {"-eq":p===q,"-ne":p!==q,"-lt":p<q,"-le":p<=q,"-gt":p>q,"-ge":p>=q}[o];}
+    if(/^-[a-zA-Z]$/.test(a)&&W(i+1)!==undefined){const r=unaire(a,un7(W(i+1),X),X);if(r===undefined)throw {inconnu:`Le site ne connaît pas le test ${a}.`};i+=2;return r;}
+    i++;return un7(a,X)!=="";};
+  const v=ou();if(i<L.length)throw {err:`Le test [[ … ]] est mal écrit près de « ${L[i].w||L[i].op} »${/^-/.test(L[i].w||"")?" : il manque peut-être une valeur, ou un $":""}.`};return v;}
+/* [ … ] et test, sur les mots déjà développés, avec les règles de bash selon le nombre de mots */
+function posix(A,X){const n=A.length,ent=s=>{if(!/^\s*-?\d+\s*$/.test(s))throw {avert:`[ : ${s||"(vide)"} : il faut un nombre entier (integer expression expected)`};return parseInt(s,10);};
+  const bin=(a,o,b)=>o==="="||o==="=="?a===b:o==="!="?a!==b:o==="-a"?a!==""&&b!=="":o==="-o"?a!==""||b!=="":/^-(eq|ne|lt|le|gt|ge)$/.test(o)?(([p,q])=>({"-eq":p===q,"-ne":p!==q,"-lt":p<q,"-le":p<=q,"-gt":p>q,"-ge":p>=q})[o])([ent(a),ent(b)]):undefined;
+  if(!n)return false;if(n===1)return A[0]!=="";
+  if(n===2){if(A[0]==="!")return A[1]==="";const r=unaire(A[0],A[1],X);if(r===undefined)throw {avert:`[ : ${A[0]} : il faut un test comme -f ou -d (unary operator expected)`};return r;}
+  if(n===3){const r=bin(A[0],A[1],A[2]);if(r!==undefined)return r;if(A[0]==="!")return !posix(A.slice(1),X);throw {avert:`[ : ${A[1]} : il faut un opérateur comme = ou -eq (binary operator expected)`};}
+  const k=A.lastIndexOf("-o");if(k>0)return posix(A.slice(0,k),X)||posix(A.slice(k+1),X);const j=A.lastIndexOf("-a");if(j>0)return posix(A.slice(0,j),X)&&posix(A.slice(j+1),X);
+  if(A[0]==="!")return !posix(A.slice(1),X);throw {avert:"[ : trop de mots dans le test (too many arguments)"};}
+const echec=(X,m,st)=>{X.avert.push(m);return {L:[],st:st||1};};
+function fichiers7(nom,A,X){const O=A.filter(a=>/^-./.test(a)).join("").replace(/-/g,""),F=A.filter(a=>!/^-./.test(a)),T=X.T;
+  if((nom==="rm"&&/[^rRf]/.test(O))||(nom==="mkdir"&&/[^p]/.test(O))||(O&&!/^(rm|mkdir)$/.test(nom)))throw {inconnu:`Le site ne connaît pas l'option -${O} de ${nom}.`};
+  const ou=p=>{const a=absolu(p),k=a.lastIndexOf("/"),par=noeud(T,a.slice(0,k)||"/");return {a,n:a.slice(k+1),par:par&&par.d?par:null,x:noeud(T,a)};};
+  const ote=o=>o.par.d.splice(o.par.d.indexOf(o.x),1);let st=0;const pb=m=>{X.avert.push(`${nom} : ${m}`);st=1;};
+  if(!F.length)return echec(X,`${nom} : il manque le nom du fichier.`);
+  if(nom==="touch")for(const f of F){const o=ou(f);if(!o.x){if(o.par)o.par.d.push({n:o.n,c:""});else pb(`${f} : le dossier n'existe pas`);}}
+  if(nom==="mkdir")for(const f of F){const o=ou(f);if(o.x){if(!O)pb(`${f} existe déjà`);continue;}
+    if(o.par)o.par.d.push({n:o.n,d:[]});
+    else if(O){let t=T;for(const s of o.a.split("/").filter(Boolean)){let y=t.d.find(z=>z.n===s);if(!y){y={n:s,d:[]};t.d.push(y);}if(!y.d){pb(`${f} : ${s} n'est pas un dossier`);break;}t=y;}}
+    else pb(`${f} : le dossier parent n'existe pas`);}
+  if(nom==="rm")for(const f of F){const o=ou(f);if(!o.x){if(!/f/.test(O))pb(`${f} : aucun fichier de ce nom`);continue;}
+    if(o.x.d&&!/[rR]/.test(O)){pb(`${f} est un dossier`);continue;}if(o.a===COURANT||COURANT.startsWith(o.a+"/")||!o.par){pb(`${f} : refusé`);continue;}ote(o);}
+  if(nom==="mv"||nom==="cp"){if(F.length<2)return echec(X,`${nom} : il manque la destination.`);const D=ou(F[F.length-1]),dans=!!(D.x&&D.x.d);
+    if(F.length>2&&!dans)return echec(X,`${nom} : ${F[F.length-1]} n'est pas un dossier`);
+    for(const f of F.slice(0,-1)){const S=ou(f);if(!S.x){pb(`${f} : aucun fichier de ce nom`);continue;}if(nom==="cp"&&S.x.d){pb(`${f} est un dossier (il faudrait -r)`);continue;}
+      const par=dans?D.x:D.par,n=dans?S.n:D.n;if(!par){pb(`${F[F.length-1]} : le dossier n'existe pas`);continue;}if(par===S.x){pb(`${f} : un dossier ne va pas dans lui-même`);continue;}
+      const vieux=par.d.find(z=>z.n===n);if(vieux===S.x)continue;if(vieux&&vieux.d){pb(`${n} est un dossier`);continue;}
+      if(vieux)par.d.splice(par.d.indexOf(vieux),1);const y=nom==="cp"?clone7(S.x):S.x;if(nom==="mv")ote(S);y.n=n;par.d.push(y);}}
+  return {L:[],st};}
+const CMD7=new Set(["echo","read","exit","shift","let","true","false","test","seq","basename","dirname","mv","cp","rm","touch","mkdir","cd"]);
+function commande7(W,E,X){const nom=W[0],A=W.slice(1);
+  if(nom==="echo"){if(/^-[neE]+$/.test(A[0]||""))throw {inconnu:"Écris echo sans option : le site ne connaît pas echo -n ni echo -e."};return {L:A.join(" ").split("\n"),st:0};}
+  if(nom==="read"){const N=A.filter(a=>a!=="-r"),mal=N.find(a=>!/^[A-Za-z_]\w*$/.test(a));if(mal!==undefined)throw {err:`read : « ${mal} » n'est pas un nom de variable. On écrit read ligne, sans $.`};
+    const src=E?{L:E,k:0}:X.entree;if(!src||src.k>=src.L.length){N.forEach(a=>{X.V[a]="";});return {L:[],st:1};}
+    let s=src.L[src.k++];const ifs=X.V.IFS!==undefined?X.V.IFS:" \t\n",bl=/^[ \t\n]+$/.test(ifs),noms=N.length?N:["REPLY"];
+    noms.forEach((a,j)=>{if(bl)s=s.replace(/^[ \t]+/,"");if(j===noms.length-1){X.V[a]=bl?s.replace(/[ \t]+$/,""):s;return;}
+      let k=0;while(k<s.length&&!ifs.includes(s[k]))k++;X.V[a]=s.slice(0,k);s=s.slice(k+1);});
+    return {L:[],st:0};}
+  if(nom==="exit")throw {fin:true,st:+A[0]||0};
+  if(nom==="shift"){X.A=X.A.slice(A.length?+A[0]:1);return {L:[],st:0};}
+  if(nom==="let"){let v=0;for(const a of A){const m=/^([A-Za-z_]\w*)\s*=(.*)$/.exec(a);if(m){v=arith(m[2],X);X.V[m[1]]=String(v);}else v=arith(a,X);}return {L:[],st:v?0:1};}
+  if(nom==="true")return {L:[],st:0};if(nom==="false")return {L:[],st:1};
+  if(nom==="test"||nom==="["){if(nom==="["&&A[A.length-1]!=="]")throw {err:`Il manque ] à la fin du test [ … ], avec une espace avant${A.some(a=>/\]$/.test(a))?" : ici ] est collé au mot d'avant":""}.`};
+    try{return {L:[],st:posix(nom==="["?A.slice(0,-1):A,X)?0:1};}catch(e){if(e&&e.avert){X.avert.push(e.avert);return {L:[],st:2};}throw e;}}
+  if(nom==="seq"){const N=A.map(Number);if(!A.length||A.length>3||N.some(x=>!Number.isInteger(x)))throw {inconnu:"Écris seq n, ou seq début fin, avec des nombres entiers."};
+    const [a,p,b]=A.length===1?[1,1,N[0]]:A.length===2?[N[0],1,N[1]]:N,L=[];if(p===0)throw {err:"seq : le pas ne peut pas être 0."};for(let x=a;p>0?x<=b:x>=b;x+=p){L.push(String(x));if(L.length>PAS7)break;}return {L,st:0};}
+  if(nom==="basename"||nom==="dirname"){if(!A.length)return echec(X,`${nom} : il manque le chemin.`);let s=A[0].replace(/(.)\/+$/,"$1");
+    if(nom==="basename"){s=s.split("/").pop()||"/";if(A[1]&&s!==A[1]&&s.endsWith(A[1]))s=s.slice(0,-A[1].length);}
+    else{const k=s.lastIndexOf("/");s=k<0?".":k===0?"/":s.slice(0,k).replace(/\/+$/,"")||"/";}
+    return {L:[s],st:0};}
+  if(/^(mv|cp|rm|touch|mkdir)$/.test(nom))return fichiers7(nom,A,X);
+  if(nom==="cd")throw {inconnu:"Le site ne connaît pas cd dans un script : écris les chemins en entier, par exemple $1/$f."};
+  if(Object.prototype.hasOwnProperty.call(SHT,nom)&&!/^(more|less|tee)$/.test(nom)){const r=SHT[nom](A,E,X.T,nom);if(r.L)return {L:r.L,st:nom==="grep"&&(!r.L.length||r.L[0]==="0")?1:0};if(r.err)return echec(X,r.err);throw {inconnu:r.inconnu};}
+  return null;}
+function ecrit7(X,o,f,L){if(f==="/dev/null")return 0;const a=absolu(f),k=a.lastIndexOf("/"),par=noeud(X.T,a.slice(0,k)||"/");
+  if(!par||!par.d){X.avert.push(`${f} : aucun dossier de ce nom`);return 1;}let x=par.d.find(y=>y.n===a.slice(k+1));if(x&&x.d){X.avert.push(`${f} est un dossier`);return 1;}
+  if(!x){x={n:a.slice(k+1),c:""};par.d.push(x);}const s=L.map(l=>l+"\n").join("");x.c=o===">>"?(x.c||"")+s:s;return 0;}
+const compte=X=>{if(++X.pas>PAS7)throw {err:`Le script ne s'arrête pas : après ${PAS7} commandes, il tourne encore. Regarde ce qui change à chaque tour, et quand la condition devient fausse.`};};
+function simple7(c,E,X){compte(X);
+  if(c.test)return {L:[],st:test7(c.test,X)?0:1};
+  const W0=c.W;let k=0;while(k<W0.length&&/^[A-Za-z_]\w*=/.test(W0[k]))k++;
+  const aff=W0.slice(0,k).map(a=>{const j=a.indexOf("=");return [a.slice(0,j),a.slice(j+1)];});
+  if(k===W0.length){X.st=0;for(const [n,v] of aff)X.V[n]=un7(v,X);return {L:[],st:X.st};}
+  const b=W0[k];
+  if(aff.length&&aff[aff.length-1][1]===""&&b!=="read")throw {err:`Ligne ${c.l} : « ${W0[k-1]} ${b} » : il y a une espace après le signe =. Une affectation s'écrit collée : ${W0[k-1]}${b}.`};
+  if(/^\$[A-Za-z_]\w*=/.test(b))throw {err:`Ligne ${c.l} : « ${b} » : pour changer une variable, on écrit son nom sans $ devant : ${b.slice(1)}.`};
+  if(/^[A-Za-z_]\w*$/.test(b)&&/^=/.test(W0[k+1]||"")&&!SHT[b]&&!CMD7.has(b))throw {err:`Ligne ${c.l} : « ${b} ${W0[k+1]} » : bash lit ${b} comme le nom d'une commande. Une affectation s'écrit sans espace autour du signe = : ${b}${W0[k+1]==="="?"="+(W0[k+2]||"…"):W0[k+1]}.`};
+  if(/^\[\[?./.test(b)&&!/^\[\[?$/.test(b))throw {err:`Ligne ${c.l} : « ${b} » : il faut une espace après ${b[1]==="["?"[[":"["}.`};
+  const sauve=aff.map(([n])=>[n,X.V[n]]),remet=()=>{for(const [n,v] of sauve)if(v===undefined)delete X.V[n];else X.V[n]=v;};
+  for(const [n,v] of aff)X.V[n]=un7(v,X);
+  const W=[];for(const w of W0.slice(k))W.push(...dev7(w,X));
+  let ent=E,vers=null;
+  for(const [o,f0] of c.red){const f=un7(f0,X);
+    if(o==="2>"){if(f!=="/dev/null")throw {inconnu:"Le site ne connaît que 2>/dev/null pour les messages d'erreur."};continue;}
+    if(o==="<"){const x=noeud(X.T,absolu(f));if(!x||x.d){remet();return echec(X,`${f} : aucun fichier de ce nom`);}ent=contenu(x);}else vers=[o,f];}
+  let r=W.length?commande7(W,ent,X):{L:[],st:0};remet();
+  if(r===null)throw {err:`Ligne ${c.l} : ${W[0]} : commande introuvable (command not found).${/\.sh$/.test(W[0])?" Le site ne lance pas d'autre script.":""}`};
+  if(vers)r={L:[],st:ecrit7(X,vers[0],vers[1],r.L)||r.st};
+  return r;}
+function jouer(L,X){for(const P of L){tube7(P[0],X);for(let k=1;k<P.length;k+=2)if((P[k]==="&&")===(X.st===0))tube7(P[k+1],X);}}
+function tube7(C,X){if(!C[0].simple)return compose(C[0],X);let E=null,r=null;for(const c of C){r=simple7(c,E,X);E=r.L;}X.out.push(...E);X.st=r.st;}
+function compose(c,X){
+  if(c.si){for(const [cond,corps] of c.si){jouer(cond,X);if(X.st===0)return jouer(corps,X);}if(c.sinon)jouer(c.sinon,X);else X.st=0;return;}
+  if(c.pour){const M=c.M===null?X.A.slice():c.M.flatMap(w=>dev7(w,X));X.st=0;for(const v of M){compte(X);X.V[c.pour]=v;jouer(c.corps,X);}return;}
+  const avant=X.entree;if(c.lit!==null){const f=un7(c.lit,X),x=noeud(X.T,absolu(f));if(!x||x.d){echec(X,`${f} : aucun fichier de ce nom`);X.st=1;return;}X.entree={L:contenu(x),k:0};}
+  let st=0;for(;;){jouer(c.c,X);if((X.st===0)!==c.tant)break;compte(X);jouer(c.corps,X);st=X.st;}X.st=st;X.entree=avant;}
+/* rend {sortie: lignes affichées, T: l'arborescence après le script, avert: messages d'erreur de bash}, ou {err}, ou {inconnu} */
+function lanceScript(src,T0,A,nom){const X={V:{},A:(A||[]).slice(),nom:"./"+nom,T:clone7(T0),out:[],st:0,pas:0,avert:[],entree:null};
+  try{jouer(analyse(lexe(String(src).replace(/\r/g,""))),X);}
+  catch(e){if(!(e&&e.fin)){if(e&&(e.err||e.inconnu))return {err:e.err,inconnu:e.inconnu};if(e instanceof RangeError)return {err:"Le script se rappelle sans fin."};throw e;}}
+  return {sortie:X.out,T:X.T,avert:X.avert};}
+G.usi.lanceScript=lanceScript;
+const etat7=T=>{const L=[];(function va(x,p){for(const y of x.d||[]){const q=p+y.n;if(y.d){L.push(q+"/");va(y,q+"/");}else L.push(q);}})(noeud(T,COURANT),"");return L.sort();};
+
+/* les exercices : chaque modèle rend le script de la correction en étapes [code, pourquoi, points], les essais, les autres écritures justes et les pièges [nom, morceau, remplacé par, explication] */
+const MOTS7=PRENOMS.split(" "),PROD7="stylo cahier gomme regle classeur trousse agenda crayon feutre colle".split(" ");
+const NB7=(R,n,a,b)=>{const S=new Set();while(S.size<n)S.add(R.ent(a,b));return [...S];};
+const fx7=x=>typeof x==="string"?{n:x,c:""}:x.d?{n:x.n,d:x.d.map(fx7)}:x,arbo7=L=>arboDe(L.map(fx7)),dos7=(n,L)=>({n,d:L});
+const BASES7="notes cours tp1 tp2 calcul main util pile rapport photo data todo essai jeu memo image td3 liste bilan agenda".split(" "),EXTS7=[".txt",".py",".c",".pdf",".jpg",".csv",".sh"];
+const noms7=(R,ext,k,j)=>{const B=R.mel(BASES7);return R.mel(B.slice(0,k).map(b=>b+ext).concat(B.slice(k,k+j).map(b=>b+R.choix(EXTS7.filter(e=>e!==ext)))));};
+const SHEB=["#!/bin/bash","La première ligne dit quel programme lit le script : bash. Elle n'affiche rien.",0.5];
+const BOUCLE7=[[/^(?![\s\S]*\b(for|while|until)\b)/,"L'énoncé demande une boucle : écris-la avec for ou while."]];
+const S7=[
+[0,"paramètres",R=>{const A=R.mel(MOTS7).slice(0,R.ent(2,4)),n=A.length,k=R.ent(1,n);
+  return {nom:"params.sh",A,pas:[SHEB,...R.mel([
+    [`echo "$# paramètres"`,`${cr("$#")} est le nombre de paramètres : ${n}. Le nom du script ne compte pas.`],
+    [`echo "Le numéro ${k} : $${k}"`,`${cr("$"+k)} est le ${ORD(k)} paramètre, ${cr(A[k-1])}.`],
+    [`echo "Lancé par $0"`,`${cr("$0")} est le nom du script, tel qu'on l'a tapé : ${cr("./params.sh")}.`]]).slice(0,R.ent(2,3))],
+   mut:[["nom du script compté avec les paramètres",`"$# paramètres"`,`"$(($#+1)) paramètres"`,`${cr("$#")} compte seulement les paramètres : le nom du script, ${cr("$0")}, n'en fait pas partie.`],
+    ["paramètres comptés à partir de 0",`: $${k}"`,`: $${k+1}"`,`Les paramètres se comptent à partir de 1 : ${cr("$1")} est le premier mot après le nom du script.`],
+    ["nom du script lu comme le premier paramètre",`par $0"`,`par $1"`,`${cr("$0")} est le nom du script lui-même, pas son premier paramètre.`]],
+   fin:`Les paramètres sont les mots tapés après le nom du script : ${et(A.map(cr))}.`};}],
+[0,"guillemets",R=>{const x=R.choix(["nom","prenom","ami","qui"]),v=R.choix(MOTS7),m=R.choix(["Bonjour","Salut","Coucou"]);
+  return {nom:"salut.sh",A:[],pas:[SHEB,[`${x}=${v}`,`Une affectation, sans espace autour de ${cr("=")} : la variable ${cr(x)} contient ${cr(v)}. Rien ne s'affiche.`],...R.mel([
+    [`echo "${m} $${x}"`,`Entre guillemets, ${cr("$"+x)} est remplacé par sa valeur : ${cr(m+" "+v)}.`],
+    [`echo '${m} $${x}'`,`Entre apostrophes, rien n'est remplacé : la ligne s'affiche telle quelle, avec le ${cr("$")}.`],
+    [`echo ${m} ${x}`,`Sans ${cr("$")} devant, ${cr(x)} est un mot comme un autre : il s'affiche tel quel.`]]).slice(0,R.ent(2,3))],
+   mut:[["apostrophes lues comme des guillemets",`'${m} $${x}'`,`"${m} $${x}"`,`Entre apostrophes, bash ne remplace rien : ${cr("$"+x)} reste écrit tel quel.`],
+    ["guillemets lus comme des apostrophes",`"${m} $${x}"`,`'${m} $${x}'`,`Entre guillemets, bash remplace ${cr("$"+x)} par la valeur de la variable.`],
+    ["mot lu comme une variable",`echo ${m} ${x}`,`echo ${m} $${x}`,`Sans ${cr("$")}, ${cr(x)} n'est pas une variable : c'est un simple mot.`]]};}],
+[0,"calcul",R=>{const a=R.ent(5,19),b=R.ent(2,6),o=R.choix(["+","-","*","/","%"]),val=o==="+"?a+b:o==="-"?a-b:o==="*"?a*b:o==="/"?Math.trunc(a/b):a%b;
+  return {nom:"calcul.sh",A:[],pas:[SHEB,[`a=${a}\nb=${b}`,`Deux affectations : ${cr("a")} contient ${a} et ${cr("b")} contient ${b}. Rien ne s'affiche.`],...R.mel([
+    [`echo $a+$b`,`Sans ${cr("$(( ))")}, bash ne calcule rien : il remplace ${cr("$a")} et ${cr("$b")} par leurs valeurs et garde le signe, ce qui donne ${cr(a+"+"+b)}.`],
+    [`echo $((a ${o} b))`,`${cr("$(( ))")} calcule sur des entiers : ${cr(a+" "+o+" "+b)} vaut ${val}.${o==="/"?" La division est entière : ce qui est après la virgule est jeté.":o==="%"?` ${cr("%")} donne le reste de la division.`:""}`]]),
+    [`c=$((a + b))\necho "c vaut $c"`,`${cr("c")} reçoit ${a+b}, puis, entre guillemets, ${cr("$c")} est remplacé par sa valeur.`]],
+   mut:[["calcul sans les doubles parenthèses",`echo $a+$b`,`echo $((a+b))`,`Sans ${cr("$(( ))")}, ${cr("$a+$b")} n'est pas un calcul : bash colle les valeurs et le signe, comme du texte.`],
+    ["opération affichée au lieu du résultat",`echo $((a ${o} b))`,`echo "$a ${o} $b"`,`${cr("$(( ))")} fait le calcul : on voit le résultat, pas l'opération.`],
+    ...(o==="/"&&a%b?[["division avec virgule",`echo $((a ${o} b))`,`echo ${Math.round(a/b*100)/100}`,`Dans ${cr("$(( ))")}, la division est entière : ${cr(a+" / "+b)} donne ${val}, on jette ce qui est après la virgule.`]]:[])]};}],
+[0,"boucle for",R=>{const A=R.mel(MOTS7).slice(0,R.ent(2,4)),d=R.ent(0,1),apres=R.ent(0,1),n=A.length,inc="    n=$((n+1))",aff=`    echo "$n : $p"`,corps=apres?[aff,inc]:[inc,aff];
+  return {nom:"liste.sh",A,pas:[SHEB,[`n=${d}`,`Le compteur ${cr("n")} part de ${d}.`],
+    [`for p in "$@"\ndo\n${corps.join("\n")}\ndone`,`${cr('"$@"')} donne les paramètres un par un : la boucle fait ${n} tours. ${Maj(A.map((p,j)=>`au tour ${j+1}, ${cr("p")} vaut ${cr(p)} et ${cr("n")} vaut ${d+j+(apres?0:1)} au moment de l'affichage`).join(" ; "))}.`],
+    [`echo "total : $n"`,`Après la boucle, ${cr("n")} vaut ${d+n}.`]],
+   mut:[["compteur augmenté à l'autre moment",corps.join("\n"),corps.slice().reverse().join("\n"),`Les lignes d'une boucle se font dans l'ordre, à chaque tour : ici, ${apres?"l'affichage vient avant l'augmentation du compteur":"le compteur augmente avant l'affichage"}.`],
+    ["nom du script compté dans la boucle",`for p in "$@"`,`for p in "$0" "$@"`,`${cr('"$@"')} donne seulement les paramètres, pas le nom du script.`],
+    ["un seul tour pour tous les paramètres",`for p in "$@"`,`for p in "$*"`,`${cr('"$@"')} donne un mot par paramètre, donc un tour par paramètre.`]]};}],
+[0,"test",R=>{const a=R.ent(3,9),A=R.mel([a,R.ent(10,Math.min(99,a*10-1))]).map(String),o=R.choix(["-lt","-gt","<",">"]),[x,y]=A.map(Number);
+  const vrai=o==="-lt"?x<y:o==="-gt"?x>y:o==="<"?A[0]<A[1]:A[0]>A[1],num=o[0]==="-",dit={"-lt":"plus petit que","-gt":"plus grand que","<":"avant","> ":"après",">":"après"}[o],bloc2=`le bloc du ${vrai?"then":"else"}`;
+  return {nom:"compare.sh",A,pas:[SHEB,[`if [[ $1 ${o} $2 ]]\nthen\n    echo "oui"\nelse\n    echo "non"\nfi`,num?`${cr(o)} compare des nombres : ${x} est-il ${dit} ${y} ? ${vrai?"Oui":"Non"}, donc bash fait ${bloc2}.`
+      :`Dans ${cr("[[ ]]")}, ${cr(o)} compare des textes, caractère par caractère comme dans un dictionnaire : ${cr(A[0])} vient-il ${dit} ${cr(A[1])} ? On compare d'abord les caractères ${cr(A[0][0])} et ${cr(A[1][0])} : ${vrai?"oui":"non"}, donc bash fait ${bloc2}.`],
+    [`echo "fin"`,"Après le fi, le script continue : cette ligne s'affiche dans tous les cas."]],
+   mut:num?[["test à l'envers",`$1 ${o} $2`,`$1 ${o==="-lt"?"-gt":"-lt"} $2`,`${cr("-lt")} veut dire plus petit, ${cr("-gt")} plus grand.`],
+       ["nombres comparés comme des textes",`$1 ${o} $2`,`$1 ${o==="-lt"?"<":">"} $2`,`${cr(o)} compare des nombres : ${x} est ${x<y?"plus petit":"plus grand"} que ${y}, même si les caractères ${cr(String(x)[0])} et ${cr(String(y)[0])} ne sont pas dans cet ordre.`]]
+     :[["textes comparés comme des nombres",`$1 ${o} $2`,`$1 ${o==="<"?"-lt":"-gt"} $2`,`Dans ${cr("[[ ]]")}, ${cr(o)} compare des textes, caractère par caractère : ${cr("10")} vient avant ${cr("9")}, parce que le caractère 1 est avant le caractère 9. Pour des nombres, il faut ${cr("-lt")} ou ${cr("-gt")}.`],
+       ["test à l'envers",`$1 ${o} $2`,`$1 ${o==="<"?">":"<"} $2`,`${cr("<")} veut dire avant, ${cr(">")} après.`]],
+   fin:"Un seul des deux blocs, then ou else, est fait."};}],
+[0,"while",R=>{const d=R.ent(1,3),mult=R.ent(0,1),k=mult?2:R.ent(2,4),S=[];for(let x=d;S.length<6;x=mult?x*2:x+k)S.push(x);const bo=R.choix(S.slice(2,5)),op=R.choix(["-le","-lt"]);
+  const calc=mult?"    i=$((i * 2))":`    i=$((i + ${k}))`,aff="    echo $i",vus=S.filter(x=>op==="-le"?x<=bo:x<bo).length,der=S[vus];
+  return {nom:"boucle.sh",A:[],pas:[SHEB,[`i=${d}`,`${cr("i")} part de ${d}.`],
+    [`while [[ $i ${op} ${bo} ]]\ndo\n${aff}\n${calc}\ndone`,`À chaque tour, on teste d'abord ${cr("$i "+op+" "+bo)} (${op==="-le"?"plus petit ou égal":"strictement plus petit"}), puis on affiche ${cr("i")}, puis il ${mult?"double":"augmente de "+k}. ${cr("i")} prend les valeurs ${et(S.slice(0,vus+1).map(String))} : à ${der}, le test est faux et la boucle s'arrête.`],
+    [`echo "après : $i"`,`Après la boucle, ${cr("i")} vaut ${der}.`]],
+   mut:[["borne comprise ou pas",`$i ${op} ${bo}`,`$i ${op==="-le"?"-lt":"-le"} ${bo}`,`${cr("-le")} veut dire plus petit ou égal, ${cr("-lt")} strictement plus petit : la valeur ${bo} ${op==="-le"?"passe":"ne passe pas"} le test.`],
+    ["affichage après le calcul",`${aff}\n${calc}`,`${calc}\n${aff}`,"Dans le bloc, on affiche d'abord, puis on change la valeur."]]};}],
+[0,"motif",R=>{const ext=R.choix([".txt",".py",".c"]),F=noms7(R,ext,R.ent(2,3),R.ent(2,3)),sous2=R.choix(["docs","old","tp"]),ok=F.filter(x=>x.endsWith(ext)).sort();
+  return {nom:"cherche.sh",A:[],T:arbo7([...F,dos7(sous2,["vieux"+ext])]),montre:"arbre",pas:[SHEB,["n=0","Le compteur part de 0."],
+    [`for f in *${ext}\ndo\n    echo "trouvé : $f"\n    n=$((n+1))\ndone`,`bash remplace ${cr("*"+ext)} par les noms du dossier courant qui finissent par ${cr(ext)}, dans l'ordre alphabétique : ${et(ok.map(cr))}. Il ne descend pas dans ${cr(sous2)}. Un tour par nom.`],
+    [`echo "$n fichiers"`,`Après ${ok.length} tours, ${cr("n")} vaut ${ok.length}.`]],
+   mut:[["motif entre guillemets",`*${ext}\ndo`,`"*${ext}"\ndo`,`Sans guillemets, bash remplace ${cr("*"+ext)} par les noms qui correspondent. Entre guillemets, il le laisserait tel quel.`],
+    ["sous-dossier parcouru aussi",`*${ext}\ndo`,`*${ext} ${sous2}/*${ext}\ndo`,`${cr("*"+ext)} ne regarde que le dossier courant : il ne descend pas dans ${cr(sous2)}.`],
+    ["tous les fichiers",`*${ext}\ndo`,`*\ndo`,`${cr("*"+ext)} ne garde que les noms qui finissent par ${cr(ext)}.`]]};}],
+
+[1,"bonjour",R=>{const m=R.choix(["Bonjour","Salut","Coucou","Bienvenue"]),P=R.mel(MOTS7);
+  return {nom:R.choix(["salut.sh","bonjour.sh"]),dit:`affiche ${cr(m)}, une espace, puis son premier paramètre`,vers:[{A:[P[0]]},{A:[P[1],P[2]]},{A:[P[3]]}],
+   pas:[SHEB,[`echo "${m} $1"`,`${cr("$1")} est le premier paramètre. Entre guillemets, bash le remplace par sa valeur.`]],
+   alt:[`echo ${m} $1`,`nom=$1\necho "${m} $nom"`,`echo "${m}" "$1"`],
+   mut:[["apostrophes à la place des guillemets",`"${m} $1"`,`'${m} $1'`,`Entre apostrophes, bash ne remplace rien : ${cr("$1")} s'afficherait tel quel. Il faut des guillemets.`],
+    ["nom du script à la place du paramètre",`$1"`,`$0"`,`${cr("$0")} est le nom du script ; le premier paramètre, c'est ${cr("$1")}.`],
+    ["dollar oublié",`$1"`,`1"`,`Sans ${cr("$")}, ${cr("1")} est juste le chiffre 1 : c'est ${cr("$1")} qui donne le premier paramètre.`],
+    ["tous les paramètres au lieu du premier",`$1"`,`$@"`,`${cr("$@")} donne tous les paramètres ; le premier seul, c'est ${cr("$1")}.`]]};}],
+[1,"nombre de paramètres",R=>{const [av,ap]=R.choix([["","paramètres"],["Il y a ","paramètres"],["","arguments"],["Nombre de paramètres : ",""],["Reçu : ",""]]),P=R.mel(MOTS7),K=R.mel([1,2,3,4,5]).slice(0,2).concat([0]),fin2=ap?" "+ap:"";let j=0;
+  return {nom:"compte.sh",dit:"affiche le nombre de paramètres qu'il reçoit, écrit comme dans l'exemple",vers:K.map(k=>({A:P.slice(j,j+=k)})),
+   pas:[SHEB,[`echo "${av}$#${fin2}"`,`${cr("$#")} est le nombre de paramètres. Le nom du script, ${cr("$0")}, n'est pas compté.`]],
+   alt:[`n=$#\necho "${av}$n${fin2}"`,`echo ${av}$#${fin2}`],
+   mut:[["paramètres au lieu de leur nombre","$#","$@",`${cr("$@")} donne les paramètres eux-mêmes ; leur nombre, c'est ${cr("$#")}.`],
+    ["premier paramètre au lieu du nombre","$#","$1",`${cr("$1")} est le premier paramètre ; le nombre de paramètres, c'est ${cr("$#")}.`],
+    ["dollar oublié","$#","#",`Sans ${cr("$")}, ${cr("#")} s'affiche tel quel.`]]};}],
+[1,"calcul",R=>{const [o,quoi]=R.choix([["+","la somme de ses deux paramètres"],["-","son premier paramètre moins le second"],["*","le produit de ses deux paramètres"],["/","le quotient entier de son premier paramètre par le second"],["%","le reste de la division de son premier paramètre par le second"]]);
+  const V=[0,1,2].map(()=>[R.ent(2,40),R.ent(2,9)]);if(V[0][0]<V[0][1]&&"/%".includes(o))V[0].reverse();if(o==="-"&&V[1][0]>V[1][1])V[1].reverse();
+  return {nom:"calcul.sh",dit:`affiche ${quoi}, qui sont des nombres entiers`,vers:V.map(x=>({A:x.map(String)})),
+   pas:[SHEB,[`echo $(($1 ${o} $2))`,`${cr("$(( ))")} fait le calcul sur des entiers ; ${cr("$1")} et ${cr("$2")} y sont remplacés par les deux paramètres.${o==="/"?" La division est entière : ce qui est après la virgule est jeté.":""}`]],
+   alt:[`echo $(( $1 ${o} $2 ))`,`r=$(($1${o}$2))\necho $r`,`a=$1\nb=$2\necho $((a ${o} b))`,...(o==="*"?[]:[`let r=$1${o}$2\necho $r`])],
+   mut:[["calcul sans les doubles parenthèses",`echo $(($1 ${o} $2))`,`echo $1${o}$2`,`Sans ${cr("$(( ))")}, bash ne calcule pas : il affiche les deux nombres et le signe, comme du texte.`],
+    ...("-/%".includes(o)?[["paramètres dans le mauvais ordre",`$(($1 ${o} $2))`,`$(($2 ${o} $1))`,`L'énoncé part du premier paramètre, ${cr("$1")}.`]]:[]),
+    ["dollar oublié devant les paramètres",`$(($1 ${o} $2))`,`$((1 ${o} 2))`,`Dans ${cr("$(( ))")}, ${cr("1")} est le nombre 1 ; le premier paramètre, c'est ${cr("$1")}.`]]};}],
+[1,"ordre inverse",R=>{const n=R.ent(2,3),P=R.mel(MOTS7),ref=`echo "${n===3?"$3 ":""}$2 $1"`;
+  return {nom:"inverse.sh",dit:`reçoit ${n} paramètres et les affiche dans l'ordre inverse, sur une seule ligne, séparés par une espace`,vers:[0,1,2].map(j=>({A:P.slice(j*n,j*n+n)})),
+   pas:[SHEB,[ref,`${cr("$1")}, ${cr("$2")}${n===3?`, ${cr("$3")}`:""} sont les paramètres dans l'ordre où on les a tapés : on les écrit du dernier au premier.`]],
+   alt:[ref.replace(/"/g,"")],
+   mut:[["ordre gardé",ref,`echo "$1 $2${n===3?" $3":""}"`,`Il faut commencer par le dernier paramètre, ${cr("$"+n)}.`],
+    ["nom du script compté comme un paramètre",ref,`echo "${n===3?"$2 ":""}$1 $0"`,`${cr("$0")} est le nom du script ; les paramètres commencent à ${cr("$1")}.`]]};}],
+[1,"nom du script",R=>{const nom=R.choix(["infos.sh","test.sh","lance.sh"]),P=R.mel(MOTS7),[a,b]=R.choix([["a reçu","paramètres"],["a été lancé avec","paramètres"],["compte","arguments"]]),K=[R.ent(1,3),0,R.ent(2,4)];let j=0;
+  return {nom,dit:"affiche son propre nom, tel qu'on l'a tapé pour le lancer, puis le nombre de ses paramètres, écrits comme dans l'exemple",vers:K.map(k=>({A:P.slice(j,j+=k)})),
+   pas:[SHEB,[`echo "$0 ${a} $# ${b}"`,`${cr("$0")} est le nom du script, tel qu'on l'a tapé (ici avec ${cr("./")} devant). ${cr("$#")} est le nombre de paramètres, sans compter ce nom.`]],
+   alt:[`echo $0 ${a} $# ${b}`],
+   mut:[["premier paramètre à la place du nom du script","$0","$1",`${cr("$1")} est le premier paramètre ; le nom du script, c'est ${cr("$0")}.`],
+    ["nom du script compté avec les paramètres","$#","$(($#+1))",`${cr("$#")} ne compte pas le nom du script.`],
+    ["paramètres au lieu de leur nombre","$#","$@",`${cr("$@")} donne les paramètres eux-mêmes ; leur nombre, c'est ${cr("$#")}.`]]};}],
+[1,"compter dans un fichier",R=>{const [opt,mot]=R.choix([["-l","lignes"],["-w","mots"]]),nf=R.choix(["notes.txt","liste.txt","phrases.txt","memo.txt"]);
+  const fic=()=>{const L=[],k=R.ent(3,7);for(let i=0;i<k;i++)L.push(R.mel(MOTS7).slice(0,R.ent(1,3)).join(" "));return L.join("\n")+"\n";};
+  return {nom:"taille.sh",dit:`affiche le nom du fichier donné en paramètre, puis son nombre de ${mot}, écrits comme dans l'exemple`,vers:[0,1,2].map(()=>({A:[nf],T:arbo7([{n:nf,c:fic()},"autre.txt"])})),
+   pas:[SHEB,[`n=$(wc ${opt} < $1)`,`${cr("$( )")} est remplacé par ce qu'affiche la commande : ${cr("wc "+opt)} compte les ${mot}. Avec ${cr("< $1")}, wc lit le fichier sans connaître son nom, et n'écrit que le nombre.`],[`echo "$1 : $n ${mot}"`,`${cr("$1")} est le nom du fichier, ${cr("$n")} le nombre trouvé.`]],
+   alt:[`echo "$1 : $(wc ${opt} < $1) ${mot}"`,`n=$(cat $1 | wc ${opt})\necho "$1 : $n ${mot}"`],
+   mut:[["wc avec le nom du fichier",`wc ${opt} < $1`,`wc ${opt} $1`,`Quand on donne à wc le nom du fichier, il l'écrit après le nombre : ${cr("wc "+opt+" "+nf)} affiche par exemple ${cr("7 "+nf)}. Avec ${cr("< $1")}, il n'écrit que le nombre.`],
+    ["lignes et mots confondus",`wc ${opt}`,`wc ${opt==="-l"?"-w":"-l"}`,`${cr("wc -l")} compte les lignes, ${cr("wc -w")} les mots.`],
+    ["commande écrite au lieu de son résultat",`n=$(wc ${opt} < $1)`,`n="wc ${opt} < $1"`,`Pour ranger ce qu'affiche une commande, il faut ${cr("$( )")} autour.`]]};}],
+
+[2,"chaque paramètre",R=>{const pre=R.choix(["","- ","> ","paramètre : ","→ "]),P=R.mel(MOTS7),K=[R.ent(2,4),R.ent(1,4),R.ent(3,5)];let j=0;
+  return {nom:"un-par-ligne.sh",dit:`affiche ses paramètres un par ligne${pre?", chacun précédé de "+cr(pre.trim()):""}, comme dans l'exemple`,vers:K.map(k=>({A:P.slice(j,j+=k)})),
+   pas:[SHEB,[`for p in "$@"\ndo\n    echo "${pre}$p"\ndone`,`${cr('"$@"')} donne les paramètres un par un : la boucle fait un tour par paramètre, et ${cr("p")} prend chaque valeur. Les guillemets gardent chaque paramètre entier.`]],
+   alt:[`for p\ndo\n    echo "${pre}$p"\ndone`,`for p in $@\ndo\n    echo "${pre}$p"\ndone`,`while [[ $# -gt 0 ]]\ndo\n    echo "${pre}$1"\n    shift\ndone`],
+   mut:[["un seul tour pour tous les paramètres",`"$@"`,`"$*"`,`${cr('"$*"')} colle tous les paramètres en un seul mot : la boucle ne fait qu'un tour. ${cr('"$@"')} en donne un par tour.`],
+    ["seulement le premier paramètre",`in "$@"`,`in $1`,`${cr("$1")} n'est que le premier paramètre ; tous, c'est ${cr('"$@"')}.`],
+    ["dollar oublié devant la variable",`${pre}$p"`,`${pre}p"`,`Sans ${cr("$")}, ${cr("p")} est un simple mot : c'est ${cr("$p")} qui donne la valeur du tour.`],
+    ["nom du script en plus",`in "$@"`,`in "$0" "$@"`,`${cr('"$@"')} donne seulement les paramètres.`]],sans:BOUCLE7};}],
+[2,"numéroter",R=>{const sep=R.choix([" : ",". ",") "," - "]),d=R.ent(0,1),P=R.mel(MOTS7),K=[R.ent(2,4),R.ent(3,5),R.ent(1,3)],aff=`    echo "$n${sep}$p"`,inc="    n=$((n+1))";let j=0;
+  return {nom:"numeros.sh",dit:`affiche ses paramètres un par ligne, chacun précédé de son numéro (le premier a le numéro ${d}), comme dans l'exemple`,vers:K.map(k=>({A:P.slice(j,j+=k)})),
+   pas:[SHEB,[`n=${d}`,`Le compteur part de ${d}, le numéro du premier paramètre.`],[`for p in "$@"\ndo\n${aff}\n${inc}\ndone`,`Un tour par paramètre : on affiche le numéro et le paramètre, puis le numéro augmente de 1 avec ${cr("$(( ))")}.`]],
+   alt:[`n=${d}\nfor p\ndo\n${aff}\n    let n=n+1\ndone`,`n=${d}\nfor p in $@\ndo\n${aff}\n    n=$(($n + 1))\ndone`],
+   mut:[["compteur augmenté avant l'affichage",`${aff}\n${inc}`,`${inc}\n${aff}`,"Dans le bloc, on affiche d'abord, puis on augmente le numéro : sinon le premier paramètre a déjà le numéro suivant."],
+    ["compteur jamais augmenté",`\n${inc}`,"",`Il faut augmenter le numéro à chaque tour, avec ${cr("n=$((n+1))")}.`],
+    ["calcul sans les doubles parenthèses",inc,"    n=$n+1",`Sans ${cr("$(( ))")}, ${cr("n=$n+1")} colle du texte : ${cr("n")} vaut ${cr(d+"+1")}, puis ${cr(d+"+1+1")}, et ainsi de suite.`],
+    ["mauvais numéro de départ",`n=${d}`,`n=${1-d}`,`Le premier paramètre a le numéro ${d}.`]],sans:BOUCLE7};}],
+[2,"compter",R=>{const s=R.choix(["monte","descend","pairs"]),[dep,op,pas2,quoi]={monte:["i=1","-le","    i=$((i+1))","les nombres entiers de 1 jusqu'au nombre donné en paramètre"],descend:["i=$1","-ge","    i=$((i-1))","les nombres entiers du nombre donné en paramètre jusqu'à 1, en descendant"],pairs:["i=2","-le","    i=$((i+2))","les nombres pairs de 2 jusqu'au nombre donné en paramètre"]}[s];
+  const borne=s==="descend"?"1":"$1",K=R.mel([3,4,5,6,7,8]).slice(0,2).concat([s==="pairs"?R.choix([5,7,9]):1]);
+  return {nom:"compte.sh",dit:`affiche, avec une boucle, ${quoi}, un par ligne`,vers:K.map(k=>({A:[String(k)]})),
+   pas:[SHEB,[dep,`${cr("i")} part de ${s==="descend"?"la valeur du paramètre":dep.slice(2)}.`],[`while [[ $i ${op} ${borne} ]]\ndo\n    echo $i\n${pas2}\ndone`,`Tant que ${cr("$i "+op+" "+borne)} est vrai (${op==="-le"?"plus petit ou égal":"plus grand ou égal"}), on affiche ${cr("i")} puis on ${s==="monte"?"lui ajoute 1":s==="pairs"?"lui ajoute 2":"lui retire 1"}.`]],
+   alt:s==="monte"?[`for i in $(seq 1 $1)\ndo\n    echo $i\ndone`,`i=1\nuntil [[ $i -gt $1 ]]\ndo\n    echo $i\n    i=$((i+1))\ndone`]:s==="pairs"?[`for i in $(seq 2 2 $1)\ndo\n    echo $i\ndone`]:[`for i in $(seq $1 -1 1)\ndo\n    echo $i\ndone`],
+   mut:[["borne exclue",`$i ${op} `,`$i ${op==="-le"?"-lt":"-gt"} `,`${op==="-le"?cr("-le")+" veut dire plus petit ou égal":cr("-ge")+" veut dire plus grand ou égal"} : la borne est gardée. ${cr(op==="-le"?"-lt":"-gt")} s'arrêterait un tour trop tôt.`],
+    ["affichage après le calcul",`    echo $i\n${pas2}`,`${pas2}\n    echo $i`,"Dans le bloc, on affiche d'abord, puis on passe au nombre suivant."],
+    ...(s==="monte"?[["départ à 0","i=1","i=0","La liste commence à 1."]]:[])],sans:BOUCLE7};}],
+[2,"somme",R=>{const [quoi,op,dep]=R.choix([["la somme","+","0"],["le produit","*","1"]]),V=[0,1,2].map(()=>NB7(R,R.ent(2,4),1,12).map(String)),tete=`for x in "$@"\ndo`;
+  return {nom:R.choix(["somme.sh","calcul.sh"]),dit:`affiche ${quoi} de ses paramètres, qui sont des nombres entiers`,vers:V.map(A=>({A})),
+   pas:[SHEB,[`s=${dep}`,`${cr("s")} part de ${dep}${op==="*"?" : avec 0, le produit resterait 0":""}.`],[`${tete}\n    s=$((s ${op} x))\ndone`,`Un tour par paramètre : ${cr("s")} ${op==="+"?"reçoit sa valeur plus":"est multiplié par"} le paramètre ${cr("x")}, avec ${cr("$(( ))")}.`],["echo $s","Après la boucle seulement, on affiche le résultat."]],
+   alt:[`s=${dep}\nfor x\ndo\n    s=$(($s ${op} $x))\ndone\necho $s`,`s=${dep}\nwhile [[ $# -gt 0 ]]\ndo\n    s=$((s ${op} $1))\n    shift\ndone\necho "$s"`],
+   mut:[["valeur de départ remise à chaque tour",`s=${dep}\n${tete}`,`${tete}\n    s=${dep}`,`${cr("s="+dep)} doit venir avant la boucle : dedans, la valeur repart de ${dep} à chaque tour.`],
+    ["affichage dans la boucle","done\necho $s","    echo $s\ndone",`L'${cr("echo")} doit venir après ${cr("done")} : dans la boucle, il afficherait un résultat à chaque tour.`],
+    ["calcul écrit comme du texte",`s=$((s ${op} x))`,`s=$s${op}$x`,`Sans ${cr("$(( ))")}, bash colle les nombres et les signes, comme du texte.`],
+    ...(op==="*"?[["produit parti de 0","s=1","s=0","Un produit part de 1 : en partant de 0, on reste à 0."]]:[])],sans:BOUCLE7};}],
+[2,"fichiers d'un type",R=>{const ext=R.choix([".txt",".py",".c",".sh"]),pre=R.choix(["","fichier : ","- "]),sous2=R.choix(["docs","old","tp"]);
+  return {nom:"liste.sh",dit:`affiche, avec une boucle, le nom de chaque fichier ${cr(ext)} du dossier courant, un par ligne${pre?", précédé de "+cr(pre.trim()):""}, comme dans l'exemple`,montre:"arbre",
+   vers:[0,1,2].map(()=>({A:[],T:arbo7([...noms7(R,ext,R.ent(1,3),R.ent(1,3)),dos7(sous2,["vieux"+ext])])})),
+   pas:[SHEB,[`for f in *${ext}\ndo\n    echo "${pre}$f"\ndone`,`bash remplace ${cr("*"+ext)} par les noms du dossier courant qui finissent par ${cr(ext)}, dans l'ordre alphabétique : un tour par nom. Il ne descend pas dans les sous-dossiers.`]],
+   alt:[`for f in *${ext}\ndo\n    echo ${pre}$f\ndone`,`for nom in ./*${ext}\ndo\n    echo "${pre}$(basename $nom)"\ndone`],
+   mut:[["motif entre guillemets",`*${ext}\ndo`,`"*${ext}"\ndo`,`Entre guillemets, ${cr("*"+ext)} reste tel quel : la boucle fait un seul tour, avec ce texte. Sans guillemets, bash le remplace par les noms qui correspondent.`],
+    ["tous les fichiers",`*${ext}\ndo`,`*\ndo`,`${cr("*")} donne tous les noms ; ${cr("*"+ext)} seulement ceux qui finissent par ${cr(ext)}.`],
+    ["boucle sur le mot ls",`in *${ext}`,"in ls",`${cr("for f in ls")} fait un seul tour, avec le mot ls : la commande n'est pas lancée. Le motif ${cr("*"+ext)} suffit, sans ls.`]],sans:BOUCLE7};}],
+[2,"compter sans wc",R=>{const ext=R.choix([".py",".txt",".c"]),d=R.choix(["tp","src","cours"]),ks=R.mel([0,1,2,3,4]).slice(0,3);if(!ks[0])ks.push(ks.shift());
+  return {nom:"compte.sh",dit:`affiche le nombre de fichiers ${cr(ext)} du dossier dont le nom est donné en paramètre, sans utiliser ${cr("ls")} ni ${cr("wc")}`,
+   vers:ks.map(k=>({A:[d],T:arbo7([...noms7(R,ext,1,1),dos7(d,[...noms7(R,ext,k,R.ent(1,2)),dos7("vieux"+ext,[])])])})),
+   pas:[SHEB,["n=0","Le compteur part de 0."],[`for f in $1/*${ext}\ndo\n    if [[ -f $f ]]\n    then\n        n=$((n+1))\n    fi\ndone`,`${cr("$1/*"+ext)} donne les chemins des ${cr(ext)} du dossier ${cr("$1")}. Le test ${cr("-f")} ne compte que les vrais fichiers : il écarte un dossier dont le nom finit par ${cr(ext)}, et le motif lui-même quand il n'y a aucun ${cr(ext)}, car bash le laisse alors tel quel.`],["echo $n","Après la boucle, on affiche le compteur."]],
+   alt:[`n=0\nfor f in $1/*${ext}\ndo\n    [[ -f $f ]] && n=$((n+1))\ndone\necho $n`,`n=0\nfor f in "$1"/*${ext}\ndo\n    if [ -f "$f" ]\n    then\n        let n=n+1\n    fi\ndone\necho $n`],
+   mut:[["test -f oublié",`    if [[ -f $f ]]\n    then\n        n=$((n+1))\n    fi`,"    n=$((n+1))",`Sans le test ${cr("-f")}, on compte aussi les dossiers dont le nom finit par ${cr(ext)}, et le motif lui-même quand il n'y a aucun fichier ${cr(ext)} : bash le laisse alors tel quel, et la boucle fait quand même un tour.`],
+    ["dossier courant au lieu du paramètre",`$1/*${ext}`,`*${ext}`,`${cr("*"+ext)} regarde le dossier courant ; le dossier du paramètre, c'est ${cr("$1/*"+ext)}.`],
+    ["affichage dans la boucle","done\necho $n","    echo $n\ndone","L'affichage vient après la boucle : dedans, il se répéterait à chaque tour."]],
+   sans:[[/\bls\b/,`L'énoncé demande de compter sans ${cr("ls")} : parcours ${cr("$1/*"+ext)} avec une boucle.`],[/\bwc\b/,`L'énoncé demande de compter sans ${cr("wc")} : utilise un compteur.`],...BOUCLE7]};}],
+[2,"numéroter les lignes",R=>{const sep=R.choix([" : ",". ",") "]),nf=R.choix(["fruits.txt","villes.txt","liste.txt"]),pool=(nf==="villes.txt"?VILLES:"pomme poire banane kiwi mangue cerise fraise orange citron raisin prune melon figue datte abricot").split(" ");
+  const aff=`    echo "$n${sep}$ligne"`,inc="    n=$((n+1))";
+  return {nom:"numerote.sh",dit:"affiche chaque ligne du fichier dont le nom est donné en paramètre, précédée de son numéro (la première est la ligne 1), comme dans l'exemple",montre:nf,
+   vers:[0,1,2].map(()=>({A:[nf],T:arbo7([{n:nf,c:R.mel(pool).slice(0,R.ent(2,5)).join("\n")+"\n"}])})),
+   pas:[SHEB,["n=1","Le numéro de la première ligne."],[`while read ligne\ndo\n${aff}\n${inc}\ndone < $1`,`${cr("read ligne")} lit une ligne à chaque tour et la range dans ${cr("ligne")} ; quand il n'y en a plus, le test est faux et la boucle s'arrête. ${cr("< $1")}, après ${cr("done")}, branche le fichier sur la boucle.`]],
+   alt:[`n=1\nfor ligne in $(cat $1)\ndo\n${aff}\n${inc}\ndone`,`n=0\nwhile read l\ndo\n    n=$((n+1))\n    echo "$n${sep}$l"\ndone < "$1"`],
+   mut:[["fichier oublié après done","done < $1","done",`Sans ${cr("< $1")} après ${cr("done")}, read lit le clavier, pas le fichier : la boucle ne lit aucune ligne du fichier.`],
+    ["compteur jamais augmenté",`\n${inc}`,"","Il faut augmenter le numéro à chaque tour."],
+    ["compteur augmenté avant l'affichage",`${aff}\n${inc}`,`${inc}\n${aff}`,"On affiche d'abord, puis on augmente le numéro."]],sans:BOUCLE7};}],
+
+[3,"fichier ou dossier",R=>{const d=R.choix(["docs","tp","cours","photos"]),[mf,md]=R.choix([["fichier","dossier"],["fichier","répertoire"],["F","D"]]);
+  const corps=`for f in $1/*\ndo\n    if [[ -d $f ]]\n    then\n        echo "${md} $f"\n    else\n        echo "${mf} $f"\n    fi\ndone`;
+  return {nom:"types.sh",dit:`affiche, pour chaque élément du dossier dont le nom est donné en paramètre, ${cr(md)} si c'est un dossier et ${cr(mf)} sinon, suivi de son chemin, comme dans l'exemple`,montre:"arbre",
+   vers:[0,1,2].map(()=>({A:[d],T:arbo7(["notes.txt",dos7(d,[...noms7(R,R.choix([".txt",".py"]),R.ent(1,2),R.ent(1,2)),...R.mel(["old","src","images","td"]).slice(0,R.ent(1,2)).map(n=>dos7(n,["a.txt"]))])])})),
+   pas:[SHEB,[corps,`${cr("$1/*")} donne les chemins des éléments du dossier, comme ${cr(d+"/notes.txt")}. ${cr("[[ -d $f ]]")} est vrai si ${cr("$f")} est un dossier : bash fait alors le bloc du then, sinon celui du else.`]],
+   alt:[`for f in $1/*\ndo\n    if [[ -f $f ]]\n    then\n        echo "${mf} $f"\n    else\n        echo "${md} $f"\n    fi\ndone`,corps.replace("$1/*",'"$1"/*').replace("[[ -d $f ]]",'[ -d "$f" ]')],
+   mut:[["tests -f et -d confondus","-d $f","-f $f",`${cr("-d")} est vrai pour un dossier, ${cr("-f")} pour un fichier ordinaire.`],
+    ["chemin sans le dossier","for f in $1/*","for f in $(ls $1)",`${cr("ls $1")} donne les noms seuls, sans le dossier devant : le test cherche alors chaque nom dans le dossier courant. ${cr("$1/*")} donne les chemins complets.`],
+    ["un seul élément","for f in $1/*","for f in $1",`${cr("for f in $1")} fait un seul tour, sur le dossier lui-même ; ${cr("$1/*")} donne ce qu'il contient.`]],sans:BOUCLE7};}],
+[3,"renommer",R=>{const ext=R.choix([".txt",".py",".c"]),[ou,mot]=R.choix([["devant","old"],["devant","bak_"],["devant","2025-"],["fin",".old"],["fin",".bak"]]),sous2=R.choix(["docs","tp"]);
+  const vers=[0,1,2].map(()=>({A:[],T:arbo7([...noms7(R,ext,R.ent(2,3),R.ent(1,2)),dos7(sous2,["vieux"+ext])])})),x=noeud(vers[0].T,COURANT).d.map(y=>y.n).filter(n=>n.endsWith(ext)).sort()[0];
+  const nv=ou==="devant"?`"${mot}$fichier"`:`"$fichier${mot}"`;
+  return {nom:"renomme.sh",etat:true,montre:"arbre",dit:`renomme chaque fichier ${cr(ext)} du dossier courant en ajoutant ${cr(mot)} ${ou==="devant"?"devant":"à la fin de"} son nom : ${cr(x)} devient ${cr(ou==="devant"?mot+x:x+mot)}`,vers,
+   pas:[SHEB,[`for fichier in *${ext}\ndo\n    mv "$fichier" ${nv}\ndone`,`${cr("*"+ext)} donne les noms des ${cr(ext)} du dossier courant, sans descendre dans ${cr(sous2)}. Pour chacun, ${cr("mv")} change le nom : le nouveau colle ${ou==="devant"?cr(mot)+" et l'ancien nom":"l'ancien nom et "+cr(mot)}.${ou==="devant"&&mot==="old"&&ext===".txt"?" C'est le corrigé officiel de janvier 2026.":""}`]],
+   alt:[`for f in *${ext}\ndo\n    mv $f ${ou==="devant"?mot+"$f":"$f"+mot}\ndone`,`for fichier in *${ext}\ndo\n    mv "$fichier" ${ou==="devant"?`"${mot}\${fichier}"`:`"\${fichier}${mot}"`}\ndone`],
+   mut:[["tous les fichiers renommés",`*${ext}\ndo`,"*\ndo",`${cr("*")} prend tous les noms, même les autres fichiers et le dossier ${cr(sous2)} ; il faut ${cr("*"+ext)}.`],
+    ["dollar oublié devant la variable",nv,nv.replace("$fichier","fichier"),`Sans ${cr("$")}, ${cr("fichier")} est un simple mot : tous les fichiers reçoivent le même nom, et chacun écrase le précédent.`],
+    ["nouveau nom sans l'ancien",nv,`"${mot}"`,`Le nouveau nom doit contenir l'ancien, ${cr("$fichier")} : sinon tous les fichiers prennent le même nom et s'écrasent.`]],sans:BOUCLE7};}],
+[3,"supprimer",R=>{const ext=R.choix([".txt",".log",".tmp"]),d=R.choix(["docs","tmp","vieux","brouillons"]),boucle=`for f in $1/*${ext}\ndo\n    rm "$f"\ndone`;
+  return {nom:"nettoie.sh",etat:true,montre:"arbre",dit:`supprime, avec une boucle, tous les fichiers ${cr(ext)} du dossier dont le nom est donné en paramètre, sans toucher à ses sous-dossiers`,
+   vers:[0,1,2].map(()=>({A:[d],T:arbo7([...noms7(R,ext,1,1),dos7(d,[...noms7(R,ext,R.ent(1,3),R.ent(1,2)),dos7("sous",["garde"+ext])])])})),
+   pas:[SHEB,[boucle,`${cr("$1/*"+ext)} donne les chemins des ${cr(ext)} du dossier ${cr("$1")}, comme ${cr(d+"/notes"+ext)} : ${cr("rm")} les trouve. ${cr("*")} ne descend pas dans ${cr("sous")}.`]],
+   alt:[`for f in $(ls $1)\ndo\n    if [[ $f == *${ext} ]]\n    then\n        rm $1/$f\n    fi\ndone`,`for f in "$1"/*${ext}\ndo\n    rm $f\ndone`],
+   mut:[["dossier courant au lieu du paramètre",`$1/*${ext}`,`*${ext}`,`${cr("*"+ext)} regarde le dossier courant ; le dossier du paramètre, c'est ${cr("$1/*"+ext)}.`],
+    ["motif entre guillemets",`$1/*${ext}`,`"$1/*${ext}"`,`Entre guillemets, ${cr("*")} reste tel quel : rm cherche un fichier nommé ${cr("*"+ext)}, qui n'existe pas.`],
+    ["chemin sans le dossier",boucle,`for f in $(ls $1)\ndo\n    if [[ $f == *${ext} ]]\n    then\n        rm $f\n    fi\ndone`,`${cr("ls $1")} donne les noms seuls : ${cr("rm $f")} cherche le fichier dans le dossier courant. Il faut ${cr("rm $1/$f")}.`]],sans:BOUCLE7};}],
+[3,"somme d'un champ",R=>{const k=R.choix([2,3]),lec=`    n=$(echo $ligne | cut -d, -f${k})`,add="    somme=$((somme+n))",tete="for ligne in $(cat $1)\ndo";
+  const fic=()=>R.mel(PROD7).slice(0,R.ent(3,5)).map(p=>`${p},${R.ent(1,20)},${R.ent(1,9)}`).join("\n")+"\n";
+  return {nom:"somme.sh",montre:"ventes.csv",dit:`lit le fichier CSV dont le nom est donné en paramètre, et affiche la somme ${k===2?"des quantités vendues, le 2e champ":"des prix, le 3e champ"}. Chaque ligne a trois champs séparés par des virgules : le nom du produit, la quantité vendue et le prix`,
+   vers:[0,1,2].map(()=>({A:["ventes.csv"],T:arbo7([{n:"ventes.csv",c:fic()}])})),
+   pas:[SHEB,["somme=0","La somme part de 0, avant la boucle."],[`${tete}\n${lec}\n${add}\ndone`,`${cr("$(cat $1)")} donne les lignes du fichier, une par tour, car aucune ne contient d'espace. ${cr("cut -d, -f"+k)} garde le ${ORD(k)} champ de la ligne, et ${cr("$(( ))")} l'ajoute à la somme.`],["echo $somme","On affiche la somme après la boucle. C'est la méthode du corrigé officiel de janvier 2024, qui additionne le 1er champ."]],
+   alt:[`somme=0\nwhile read ligne\ndo\n${lec}\n${add}\ndone < $1\necho $somme`,`s=0\nfor n in $(cut -d, -f${k} $1)\ndo\n    s=$((s+n))\ndone\necho $s`,`somme=0\nwhile IFS=, read nom q p\ndo\n    somme=$((somme+${k===2?"q":"p"}))\ndone < $1\necho $somme`],
+   mut:[["champ compté à partir de 0",`-f${k}`,`-f${k-1}`,`Les champs se comptent à partir de 1 : le ${ORD(k)} champ, c'est ${cr("-f"+k)}.`],
+    ["-d oublié",`cut -d, -f${k}`,`cut -f${k}`,`Sans ${cr("-d,")}, cut cherche des tabulations : il garde la ligne entière, et le calcul ne porte plus sur le bon champ.`],
+    ["affichage dans la boucle","done\necho $somme","    echo $somme\ndone","La somme s'affiche une fois, après la boucle."],
+    ["somme remise à 0 à chaque tour",`somme=0\n${tete}`,`${tete}\n    somme=0`,`${cr("somme=0")} doit venir avant la boucle.`]],sans:BOUCLE7};}],
+[3,"lsarg",R=>{const P=R.mel(MOTS7.concat("a b c x y z".split(" "))),K=[R.ent(2,4),R.ent(1,3),0];let j=0;
+  return {nom:"lsarg.sh",dit:`affiche ${cr("Liste des arguments :")}, puis chacun de ses arguments, y compris la commande elle-même, sur une ligne numérotée de 0 à n-1, comme dans l'exemple (TD de Meynard, exercice 44)`,vers:K.map(k=>({A:P.slice(j,j+=k)})),
+   pas:[SHEB,[`echo "Liste des arguments :"\necho "0 : $0"`,`L'en-tête, puis la commande elle-même : ${cr("$0")}, avec le numéro 0. Elle n'est pas dans ${cr('"$@"')}, on l'affiche donc à part.`],
+     ['i=1\nfor a in "$@"\ndo\n    echo "$i : $a"\n    i=$((i+1))\ndone',"Les paramètres ensuite, numérotés à partir de 1 : un tour par paramètre, et le compteur augmente de 1 à chaque tour."]],
+   alt:['echo "Liste des arguments :"\ni=0\nfor a in "$0" "$@"\ndo\n    echo "$i : $a"\n    i=$((i+1))\ndone'],
+   mut:[["commande oubliée",'echo "0 : $0"\n',"",`La commande elle-même, ${cr("$0")}, doit s'afficher avec le numéro 0 : ${cr('"$@"')} ne la contient pas.`],
+    ["numéros décalés","i=1","i=0","La commande a déjà le numéro 0 : le premier paramètre a le numéro 1."],
+    ["compteur jamais augmenté","\n    i=$((i+1))","","Il faut augmenter le numéro à chaque tour."]],sans:BOUCLE7};}],
+[3,"filtrer",R=>{const [op,quoi]=R.choix([["-gt","plus grands que"],["-lt","plus petits que"],["-ge","plus grands ou égaux à"],["pair","pairs"]]),N=R.ent(5,15);
+  const V=[0,1,2].map(i=>R.mel(NB7(R,R.ent(3,5),1,40).filter(x=>x!==N).concat(i<2&&op!=="pair"?[N]:[]).map(String))),test=op==="pair"?"[[ $((x % 2)) -eq 0 ]]":`[[ $x ${op} ${N} ]]`;
+  return {nom:"filtre.sh",dit:`affiche, un par ligne, ceux de ses paramètres qui sont ${quoi}${op==="pair"?"":" "+N}. Les paramètres sont des nombres entiers`,vers:V.map(A=>({A})),
+   pas:[SHEB,[`for x in "$@"\ndo\n    if ${test}\n    then\n        echo $x\n    fi\ndone`,op==="pair"?`Un tour par paramètre. Un nombre est pair quand le reste de sa division par 2 vaut 0 : ${cr("$((x % 2))")} calcule ce reste.`:`Un tour par paramètre ; ${cr(op)} compare des nombres (${{"-gt":"strictement plus grand","-lt":"strictement plus petit","-ge":"plus grand ou égal"}[op]}). On n'affiche que si le test est vrai.`]],
+   alt:[`for x\ndo\n    ${op==="pair"?"[[ $((x % 2)) -eq 0 ]]":`[ $x ${op} ${N} ]`} && echo $x\ndone`],
+   mut:op==="pair"?[["reste égal à 1 au lieu de 0","-eq 0","-eq 1","Pair veut dire : reste 0 dans la division par 2."],["division au lieu du reste","$((x % 2))","$((x / 2))",`${cr("%")} donne le reste ; ${cr("/")} donne le quotient.`],["seulement le premier paramètre",'in "$@"',"in $1",`${cr("$1")} n'est que le premier paramètre ; tous, c'est ${cr('"$@"')}.`]]
+     :[["nombres comparés comme des textes",`$x ${op} ${N}`,`$x ${op==="-lt"?"<":">"} ${N}`,`Dans ${cr("[[ ]]")}, ${cr(op==="-lt"?"<":">")} compare des textes, caractère par caractère : ${cr("9")} passe après ${cr("10")}. Pour des nombres, il faut ${cr(op)}.`],
+      ["borne comprise ou pas",`$x ${op} `,`$x ${{"-gt":"-ge","-lt":"-le","-ge":"-gt"}[op]} `,`${N} lui-même ${op==="-ge"?"doit":"ne doit pas"} s'afficher : ${cr("-gt")} et ${cr("-lt")} excluent la borne, ${cr("-ge")} et ${cr("-le")} la gardent.`],
+      ["seulement le premier paramètre",'in "$@"',"in $1",`${cr("$1")} n'est que le premier paramètre ; tous, c'est ${cr('"$@"')}.`]],sans:BOUCLE7};}],
+[3,"maximum",R=>{const [quoi,op]=R.choix([["le plus grand","-gt"],["le plus petit","-lt"]]),V=[NB7(R,R.ent(3,5),1,40),op==="-gt"?NB7(R,R.ent(3,4),-30,-1):NB7(R,R.ent(3,4),2,99),NB7(R,R.ent(2,5),-9,60)];
+  return {nom:"extreme.sh",dit:`affiche ${quoi} de ses paramètres, qui sont des nombres entiers`,vers:V.map(L=>({A:R.mel(L).map(String)})),
+   pas:[SHEB,["m=$1",`On part du premier paramètre : c'est ${quoi} vu jusqu'ici. Partir de 0 serait faux si ${op==="-gt"?"tous les nombres sont négatifs":"tous les nombres sont plus grands que 0"}.`],
+     [`for x in "$@"\ndo\n    if [[ $x ${op} $m ]]\n    then\n        m=$x\n    fi\ndone`,`Un tour par paramètre : s'il est ${op==="-gt"?"plus grand":"plus petit"} que ${cr("m")}, il devient le nouveau ${cr("m")}.`],["echo $m","Après la boucle, on affiche le résultat."]],
+   alt:[`m=$1\nshift\nfor x\ndo\n    [[ $x ${op} $m ]] && m=$x\ndone\necho $m`],
+   mut:[["valeur de départ prise à 0","m=$1","m=0",`En partant de 0, on se trompe quand ${op==="-gt"?"tous les nombres sont négatifs":"tous les nombres sont plus grands que 0"}. On part du premier paramètre.`],
+    ["nombres comparés comme des textes",`$x ${op} $m`,`$x ${op==="-gt"?">":"<"} $m`,`Dans ${cr("[[ ]]")}, ${cr(op==="-gt"?">":"<")} compare des textes, caractère par caractère : ${cr("9")} passe après ${cr("10")}. Pour des nombres, il faut ${cr(op)}.`],
+    ["affichage dans la boucle","done\necho $m","    echo $m\ndone","Le résultat s'affiche une fois, après la boucle."],
+    ["test à l'envers",`$x ${op} $m`,`$x ${op==="-gt"?"-lt":"-gt"} $m`,`${cr("-gt")} veut dire plus grand, ${cr("-lt")} plus petit.`]],sans:BOUCLE7};}],
+[3,"compter les dossiers",R=>{const d=R.choix(["docs","tp","projet2","cours"]),ks=R.mel([0,1,2,3]).slice(0,3);if(!ks[0])ks.push(ks.shift());
+  return {nom:"dossiers.sh",dit:"affiche le nombre de sous-dossiers, sans compter les fichiers, du dossier dont le nom est donné en paramètre",
+   vers:ks.map(k=>({A:[d],T:arbo7(["a.txt",dos7("old",[]),dos7(d,[...noms7(R,R.choix([".txt",".py",".c"]),R.ent(1,2),R.ent(1,2)),...R.mel(["src","images","td","vieux","bin"]).slice(0,k).map(n=>dos7(n,["x.txt"]))])])})),
+   pas:[SHEB,["n=0","Le compteur part de 0."],[`for f in $1/*\ndo\n    if [[ -d $f ]]\n    then\n        n=$((n+1))\n    fi\ndone`,`${cr("$1/*")} donne les chemins de tout ce que contient le dossier. ${cr("-d")} n'est vrai que pour un dossier : eux seuls font augmenter le compteur.`],["echo $n","On affiche le compteur après la boucle."]],
+   alt:['n=0\nfor f in "$1"/*\ndo\n    [ -d "$f" ] && n=$((n+1))\ndone\necho $n'],
+   mut:[["-f au lieu de -d","-d $f","-f $f",`${cr("-f")} est vrai pour un fichier ordinaire ; pour un dossier, c'est ${cr("-d")}.`],
+    ["test oublié",`    if [[ -d $f ]]\n    then\n        n=$((n+1))\n    fi`,"    n=$((n+1))","Sans le test, on compte tout ce que contient le dossier, fichiers compris."],
+    ["dossier courant au lieu du paramètre","$1/*","*",`${cr("*")} regarde le dossier courant ; le dossier du paramètre, c'est ${cr("$1/*")}.`],
+    ["chemin sans le dossier","for f in $1/*","for f in $(ls $1)",`${cr("ls $1")} donne les noms seuls : le test cherche alors chaque nom dans le dossier courant. ${cr("$1/*")} donne les chemins complets.`]],sans:BOUCLE7};}]];
+const S7P=[[],[],[],[]];for(const x of S7)S7P[x[0]].push(x);
+const ARBO7=arbo7([{n:"notes.txt",c:"un\ndeux\ntrois\n"},{n:"data.csv",c:"stylo,4,2\ncahier,7,3\ngomme,1,5\n"},{n:"vide.txt",c:""},"a.c","b.c","x.txt",dos7("docs",["b.txt","c.py",dos7("sous",["d.txt"])])]);
+/* des scripts en plus, seulement pour comparer le petit bash au vrai, sur ARBO7 */
+const BANC7=[
+ ['for f in *\ndo\n    if [[ -d $f ]]\n    then\n        echo "d $f"\n    elif [[ -f $f ]]\n    then\n        echo "f $f"\n    fi\ndone',[]],
+ ['x="a  b"\necho $x\necho "$x"\nfor m in $x\ndo\n    echo "[$m]"\ndone',[]],
+ ['echo $((7/2)) $((7%3)) $((-7/2)) $((2**5)) $((1+2*3)) $(((1+2)*3)) $((5>3)) $((2==3||1))',[]],
+ ['echo $# "$1" "${2}" $0\nshift\necho $# $1 ${#1}',["un","deux","trois"]],
+ ['for p\ndo\n    echo "<$p>"\ndone\nfor p in "$*"\ndo\n    echo "[$p]"\ndone\nfor p in $@\ndo\n    echo "{$p}"\ndone',["a","b c"]],
+ ['[[ 9 < 12 ]] && echo oui || echo non\n[[ 9 -lt 12 ]] && echo oui || echo non\n[[ abc == a* ]] && echo motif\n[[ abc == "a*" ]] || echo texte',[]],
+ ['[ "$1" = "a" ] && echo egal\n[ -n "$2" ] || echo vide\n[ $# -ge 1 -a $# -le 2 ] && echo entre\n[ -z "$1" ] || echo plein',["a"]],
+ ['i=0\nwhile [[ $i -lt 5 ]]\ndo\n    i=$((i+2))\ndone\necho $i\nuntil [[ $i -le 0 ]]\ndo\n    i=$((i-4))\n    echo $i\ndone',[]],
+ ['n=$(ls | wc -l)\necho "il y a $n noms"\necho "$(echo bonjour | tr a-z A-Z)"\nm=$(ls docs)\necho $m\necho "$m"',[]],
+ ['for f in *.txt\ndo\n    mv "$f" "old$f"\ndone\nls',[]],
+ ['rm nexistepas.txt\necho apres $?\nrm docs\necho $?\nrm -r docs\nls',[]],
+ ['mkdir rangement\nmv *.c rangement\nls rangement\ncp notes.txt copie.txt\ntouch neuf.txt\nmv x.txt docs/y.txt\nls\nls docs',[]],
+ ['basename /home/etu/projet/a.txt .txt\ndirname docs/sous/d.txt\nbasename docs/\ndirname a.c',[]],
+ ['seq 3\nseq 2 4\nseq 10 -3 1',[]],
+ ['while read ligne\ndo\n    echo "> $ligne"\ndone < notes.txt\nIFS=, read a b c < data.csv\necho "$b $c $a"',[]],
+ ['echo "a\\$b" \'c\\d\' e\\ f "x\'y" \'u"v\'',[]],
+ ['x=5\nlet x=x*2\necho $x\nlet "y = x + 1"\necho $y',[]],
+ ['if [[ $1 == *.txt ]]\nthen\n    echo texte\nelif [[ $1 == *.c ]]\nthen\n    echo c\nelse\n    echo autre\nfi',["a.c"]],
+ ['for f in docs/*\ndo\n    echo $(basename $f)\ndone\nfor f in docs/*.py docs/*.zz\ndo\n    echo "$f"\ndone',[]],
+ ['s=0\nfor n in $(cut -d, -f2 data.csv)\ndo\n    s=$((s+n))\ndone\necho $s\nl=$(wc -l < data.csv)\necho $((l * 2))',[]],
+ ['echo ${#1} ${#x}\nx=bonjour\necho ${#x} "${x}s"',["abcd"]],
+ ['[[ -e docs ]] && echo e\n[[ -s vide.txt ]] || echo vide\n[[ -s notes.txt ]] && echo plein\n[[ -z "" ]] && echo z\n[[ ! -d a.c ]] && echo pas-dossier',[]],
+ ['echo debut\nexit 0\necho jamais',[]],
+ ['for i in 1 2 3\ndo\n    for j in a b\n    do\n        echo $i$j\n    done\ndone',[]],
+ ['echo "$(head -n 2 notes.txt)" > sortie.txt\ncat sortie.txt\necho fin >> sortie.txt\nwc -l < sortie.txt\nls',[]],
+ ['grep -c deux notes.txt\nif grep deux notes.txt > /dev/null\nthen\n    echo trouve\nfi\ncat notes.txt | sort | head -n 1',[]],
+ ['a=3; b=4\nif [ $a -lt $b ] && [ $b -lt 5 ]\nthen\n    echo ok\nfi\n[ $a -gt 1 ] || echo non; echo fin',[]],
+ ['n=0\nfor f in docs/*\ndo\n    [[ -d $f ]] && n=$((n+1))\ndone\necho $n dossiers\nfor f in $(ls docs)\ndo\n    [[ -d $f ]] && echo "vu $f"\ndone\necho fin',[]],
+ ['m=$1\nfor x in "$@"\ndo\n    [[ $x > $m ]] && m=$x\ndone\necho $m\nfor x\ndo\n    [ $((x % 2)) -eq 0 ] && echo "$x pair"\ndone',["9","12","-4","30"]]];
+const SYMS7={"$":["＄","$"],'"':['"','"'],"$1":["＄1","$1"],"$2":["＄2","$2"],"$0":["＄0","$0"],"$#":["＄#","$#"],"$@":['"＄@"','"$@"'],calc:["＄((…))","$(( ))"],sub:["＄(…)","$( )"],"[[":["[[ ]]","[[  ]]"],
+  for:["for","for "],in:["in","in "],do:["do","do"],done:["done","done"],if:["if","if "],then:["then","then"],else:["else","else"],fi:["fi","fi"],while:["while","while "],read:["read","read "],"-le":["-le","-le "],"-gt":["-gt","-gt "],"-f":["-f","-f "],"-d":["-d","-d "],"<":["<","< "],"|":["|","| "]};
+const SYMP=["",'$ " $1 $2 $# $0 calc sub','$ " $@ $1 calc for in do done while [[ -le read <','$ " $@ $1 calc sub for in do done if then else fi [[ -gt -f -d |'];
+const lance7=(nom,v)=>"./"+nom+(v.A.length?" "+v.A.join(" "):""),vue7=(s,etat)=>etat?s.sortie.concat(["#fichiers"],etat7(s.T)):s.sortie;
+const norm7=s=>String(s==null?"":s).normalize("NFKC").replace(/[“”«»]/g,'"').replace(/[’‘]/g,"'").replace(/[−–—]/g,"-").replace(/\u00a0/g," ");
+/* pour la correction d'un script écrit, une boucle se note en trois lignes : l'en-tête, le corps, done */
+const coupe7=([code,why,pts])=>{const L=code.split("\n"),d=L.indexOf("do"),z=L[L.length-1];
+  if(!/^(for|while|until) /.test(L[0])||d<0||!/^done( |$)/.test(z)||d>=L.length-2)return [[code,why,pts]];
+  const corps=L.slice(d+1,-1).join("\n");
+  return [[L.slice(0,d+1).join("\n"),why],[corps,/^\s*if /.test(corps)||/\]\] && /.test(corps)?"Le corps de la boucle, refait à chaque tour : le test choisit ce qu'on fait de l'élément du tour.":"Le corps de la boucle, refait à chaque tour avec la valeur du tour."],
+    [z,z==="done"?"done ferme la boucle : ce qui vient après ne se fait qu'une fois, après le dernier tour.":`done ferme la boucle, et ${cr(z.slice(5))} branche le fichier sur elle : read en lit une ligne à chaque tour.`,0.5]];};
+function exoScript(R,p){const [,nat,f]=R.choix(S7P[p]),X=f(R);if(!X)return null;
+  const lire=p===0;if(!lire)X.pas=X.pas.flatMap(coupe7);const nom=X.nom,ref=X.pas.map(x=>x[0]).join("\n"),etat=!!X.etat,vers=(X.vers||[{A:X.A,T:X.T}]).map(v=>({A:v.A||[],T:v.T||arboDe([])})),v0=vers[0];
+  const joue=src=>vers.map(v=>lanceScript(src,v.T,v.A,nom)),O7=S=>S.map(s=>vue7(s,etat).map(propre));
+  const S=joue(ref),pb=S.find(s=>!s.sortie);if(pb)throw new Error("script de référence refusé : "+ref+" → "+(pb.err||pb.inconnu));
+  const bon=O7(S),att=S[0].sortie,attP=att.map(propre);
+  if(lire?(!att.length||att.length>7||att.some(x=>!propre(x))):(!etat&&!att.length))return null;
+  for(const a of X.alt||[]){const Sa=joue(a);if(Sa.some(s=>!s.sortie)||!O7(Sa).every((o,i)=>pareil(o,bon[i])))throw new Error("autre écriture fausse : "+a);}
+  const mut=[];for(const [type,de,en,msg] of X.mut||[]){if(!ref.includes(de))continue;const src=ref.replace(de,en),Sm=joue(src);if(Sm.some(s=>!s.sortie))continue;const O=O7(Sm);
+    if(lire?pareil(O[0],bon[0]):O.every((o,i)=>pareil(o,bon[i])))continue;
+    const k=X.pas.findIndex(x=>x[0].includes(de.split("\n").find(Boolean)||de));mut.push({type,src,O,Sm,msg,k:k<0?X.pas.length:k});}
+  const fausse=mut.find(m=>!lire||m.O[0].length);if(!fausse)return null;
+  const ex=lance7(nom,v0),arb=T=>blocr(dessin(noeud(T,COURANT),".")),fich=X.montre&&X.montre!=="arbre"?noeud(v0.T,absolu(X.montre)):null,voir=X.montre==="arbre";
+  const q=lire?`Le script ${cr(nom)} ci-dessous est lancé par ${cr(ex)}${voir?", dans le dossier affiché":""}. Qu'affiche-t-il ?`:`Écris un script Bash ${cr(nom)} qui ${X.dit}.`;
+  const corps=lire?(voir?arb(v0.T)+"<p>Le script&nbsp;:</p>":"")+blocr(ref)
+    :(voir?`<p>Le dossier courant&nbsp;:</p>${arb(v0.T)}`:fich?`<p>Le fichier ${cr(X.montre)}&nbsp;:</p>${blocr(contenu(fich).join("\n"))}`:"")
+     +`<p>Par exemple, ${etat?`après ${cr(ex)}, le dossier courant devient&nbsp;:</p>${arb(S[0].T)}`:`${cr(ex)} affiche&nbsp;:</p>${pave(att)}`}`;
+  const E=[...X.pas.map(([code,why,pts])=>({w:blocr(code),why,pts:pts===undefined?1:pts})),lire
+    ?{w:`<b>Le script affiche</b>&nbsp;:${pave(att)}`,why:X.fin||"Les commandes se font dans l'ordre, de haut en bas ; une boucle refait son bloc à chaque tour.",pts:1}
+    :{w:`Le script entier&nbsp;:${blocr(ref)}`,why:`${etat?`Après ${cr(ex)}, le dossier courant contient&nbsp;: ${arb(S[0].T)}`:`${cr(ex)} affiche&nbsp;: ${montre(att)}`}${X.alt&&X.alt.length?` On peut aussi écrire&nbsp;:${blocr(X.alt[0])}`:""}`,pts:0.5}];
+  const fin=E.length-1,faux=(ch,resume)=>(etape,type,titre,msg)=>({ok:false,faux:[ch],resume,diag:etape==null?{type,titre:d36(titre),msg}:{etape,type,titre:d36(titre),msg}});
+  const ecart=(St,i)=>{const v=vers[i],s=St[i],memeArbre=pareil(etat7(s.T),etat7(S[i].T)),ici=`${cr(lance7(nom,v))}${i&&(voir||etat)?`, dans ce dossier&nbsp;: ${arb(v.T)}`:""}`;
+    return `${i?`Avec l'exemple de l'énoncé, ton script tombe juste. Mais avec ${ici}`:`Avec ${ici}`}, ${etat&&!memeArbre?`le dossier devient&nbsp;: ${arb(s.T)} Il fallait&nbsp;: ${arb(S[i].T)}`:`il affiche&nbsp;: ${pave(s.sortie)} Il fallait&nbsp;: ${pave(S[i].sortie)}`}${s.avert.length?` bash écrit aussi l'erreur&nbsp;: ${cr(s.avert[0])}`:""}`;};
+  const plat=s=>s.replace(/\s+/g," ").trim();
+  const juge=lire?rep=>{const L0=String(rep.s==null?"":rep.s).split("\n").map(propre).filter(Boolean),non=faux("s","Pas tout à fait : ce n'est pas ce que le script affiche.");
+      if(!L0.length)return {incomplet:"Écris ce que le script affiche, ligne par ligne."};
+      const L=L0.length===1&&att.length>1&&att.every(x=>!/[ ,;]/.test(x))?L0[0].split(/[ ,;]+/).filter(Boolean):L0;
+      if(pareil(L,attP))return {ok:true};
+      const m=mut.find(m=>pareil(L,m.O[0]));if(m)return non(m.k,m.type,"Où ça part : "+m.type+".",m.msg);
+      if(pareil(L.slice().sort(),attP.slice().sort()))return non(fin,"lignes dans le mauvais ordre","Où ça part : l'ordre des lignes.","Ce sont les bonnes lignes, mais pas dans le bon ordre : le script se lit de haut en bas, et une boucle fait ses tours dans l'ordre.");
+      const j=L.findIndex((x,k)=>x!==attP[k]);
+      return non(fin,"affichage différent","Où ça part : ce que le script affiche.",`${j===1?"Ta première ligne est juste. ":j>1?`Tes ${j} premières lignes sont justes. `:""}Reprends le script ligne par ligne, en notant la valeur de chaque variable : la correction le fait pas à pas.`);}
+    :rep=>{const t=norm7(rep.c).trim(),non=faux("c","Pas tout à fait : ce script ne fait pas ce que demande l'énoncé.");if(!t)return {incomplet:"Écris le script."};
+      const sansNote=t.replace(/(^|\s)#.*$/gm,"$1");for(const [re,m] of X.sans||[])if(re.test(sansNote))return {incomplet:m};
+      const St=vers.map(v=>lanceScript(t,v.T,v.A,nom)),pb2=St.find(s=>!s.sortie);
+      if(pb2)return pb2.inconnu?{incomplet:d36(esc(pb2.inconnu))}:non(null,"script qui ne marche pas","Où ça part : bash ne peut pas aller au bout de ton script.",d36(esc(pb2.err)));
+      const O=O7(St);if(O.every((o,i)=>pareil(o,bon[i])))return {ok:true};
+      const i=O.findIndex((o,k)=>!pareil(o,bon[k])),C=mut.filter(m=>m.O.every((o,k)=>pareil(o,O[k]))),m=C.find(m=>plat(m.src)===plat(t))||C[0];
+      if(m)return non(m.k,m.type,"Où ça part : "+m.type+".",`${m.msg} ${ecart(St,i)}`);
+      return non(fin,"résultat différent","Où ça part : ce que fait le script.",ecart(St,i));};
+  const cas=(v,src,et2)=>{const r=lanceScript(src,v.T,v.A,nom);return {arbo:v.T,cmd:src,args:v.A,nom:"./"+nom,script:true,brut:true,ordre:true,etat:et2,abs:r.sortie?(et2?r.sortie.concat(["#fichiers"],etat7(r.T)):r.sortie):null};};
+  const bash=[...vers.map(v=>cas(v,ref,etat)),...(X.alt||[]).map(a=>cas(v0,a,etat)),...mut.map(m=>cas(v0,m.src,etat)),...[0,1].map(()=>{const [b,A]=R.choix(BANC7);return cas({T:ARBO7,A},b,true);})].filter(x=>x.abs!==null);
+  return {sig:lire?"S0"+ref+"|"+ex+"|"+(voir?etat7(v0.T).join(","):""):"S"+p+brut(q)+"|"+ex+"|"+etat7(v0.T).join(",")+"|"+(fich?contenu(fich).join(","):""),
+    q,corps,texte:brut(q)+" — "+(lire?ref.replace(/\n/g," ⏎ "):ex),
+    champs:lire?[{k:"code",id:"s",nom:"affichage",label:"Ce que le script affiche, ligne par ligne&nbsp;:",lignes:Math.max(3,att.length+1)}]
+      :[{k:"code",id:"c",nom:"script",label:`Le script ${cr(nom)}&nbsp;:`,lignes:Math.max(6,ref.split("\n").length+2),ex:"#!/bin/bash",sym:SYMP[p].split(" ").map(k=>SYMS7[k]).filter(Boolean),aide:`Ton script est lancé avec l'exemple de l'énoncé, puis avec d'autres ${voir||etat?"dossiers":"paramètres"}.`}],
+    juge,etapes:E,bonne:lire?pave(att):blocr(ref),bonneTxt:lire?att.join(" ⏎ "):ref.replace(/\n/g," ⏎ "),repBonne:lire?{s:att.join("\n")}:{c:ref},repFausse:lire?{s:fausse.Sm[0].sortie.join("\n")}:{c:fausse.src},nature:nat,
+    ens:{lire,nom,ref,alt:X.alt||[],etat,pieges:mut.map(m=>({type:m.type,src:m.src,sortie:m.O[0]})),bash}};}
+const tireScript=p=>R=>{for(;;){const e=exoScript(R,p);if(e)return e;}};
 
 G.add("usi",[
  {id:"US4",t:"Tubes et filtres",tache:"tubes et filtres",th:"processus",pts:1,lecons:["u-redir"],
@@ -28668,7 +29239,13 @@ G.add("usi",[
    {t:"ce que garde une expression",cc:2,min:150,gen:tireRe(0)},
    {t:"écrire l'expression : début, fin, un morceau",cc:2,min:45,gen:tireRe(1)},
    {t:"plusieurs morceaux, comme aux examens",cc:2,min:65,gen:tireRe(2)},
-   {t:"la commande grep -E entière",cc:3,min:60,gen:tireRe(3)}]}
+   {t:"la commande grep -E entière",cc:3,min:60,gen:tireRe(3)}]},
+ {id:"US7",t:"Scripts Bash",tache:"scripts Bash",th:"bash",pts:2.5,lecons:["u-bash1","u-bash2"],
+  paliers:[
+   {t:"ce qu'affiche un script",cc:2,min:240,gen:tireScript(0)},
+   {t:"écrire : paramètres, variables et calculs",cc:3,min:200,gen:tireScript(1)},
+   {t:"écrire une boucle",cc:4,min:230,gen:tireScript(2)},
+   {t:"une boucle et un test, comme aux examens",cc:6,min:255,gen:tireScript(3)}]}
 ]);
 })();
 
