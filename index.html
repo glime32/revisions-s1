@@ -32080,7 +32080,7 @@ const BYL={};SIDS.forEach(id=>{BYL[id]={};(LES[id]||[]).forEach((L,i)=>{L.i=i;L.
 const upcoming=()=>SIDS.filter(id=>examStart(SUBJ[id])>NOW()).sort((a,b)=>examStart(SUBJ[a])-examStart(SUBJ[b]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const plural=(n,s,p)=>n>1?(p||s+"s"):s;
-const examLine=S=>{const e=exam(S);return `${dayName(e.day,false)} à ${e.start.replace(":","h")}`;};
+const examLine=S=>{const e=exam(S);return e.report?"reporté, date à venir":`${dayName(e.day,false)} à ${e.start.replace(":","h")}`;};
 const hrefTask=(sid,t)=>t.lesson?`#/lecon/${sid}/${t.lesson}`:t.td?`#/${sid}/td`:t.links&&t.links.length?(t.links[0][0].startsWith("#")?t.links[0][0]:`#/${sid}/${t.links[0][0]}`):`#/${sid}`;
 const A4={algo:"A5, à recopier ligne par ligne",pf:"A4 recto-verso, à recopier ligne par ligne"};
 
@@ -32451,7 +32451,7 @@ function sw(o){return `<li><a class="swatch ${o.c||"c-bleu"}${o.size?" swatch--"
 const ttl=(t,lead)=>`<h1 class="stitle">${t}</h1>${lead?`<p class="hlead">${lead}</p>`:""}`;
 const tiroir=(t,body,cls)=>`<section class="tiroir${cls?" "+cls:""}"><h2 class="tiroir__title">${t}</h2>${body}</section>`;
 const lessonsDone=id=>lesOf(id).filter(x=>isDone(id,SUBJ[id].TB["L-"+x.id])).length;
-const shortDay=S=>{const e=exam(S);return `${dayName(e.day,false,true)} · ${e.start.replace(":","h")}`;};
+const shortDay=S=>{const e=exam(S);return e.report?"reporté":`${dayName(e.day,false,true)} · ${e.start.replace(":","h")}`;};
 function jxTag(S){const j=jx(S);return `<span class="tag${j==="demain"||j==="aujourd'hui"?" hot":""}">${exW(S)+" "+j}</span>`;}
 function subjPiece(id){const S=SUBJ[id],n=lesOf(id).length,d=lessonsDone(id),r=S.ORDER.filter(c=>ST[id].review[c.id]).length;
   return `<li class="slot s-${id}"><a class="piece" href="#/${id}" data-zoom="Fiches, leçons, annales">${jxTag(S)}${spark}<span class="piece__paper">${artSVG(ART[id]||"etoile")}</span><span class="piece__text"><span class="piece__title">${S.name}</span><span class="piece__meta">${shortDay(S)}</span><span class="piece__sub">${d} ${plural(d,"leçon")} sur ${n}${r?` · <span class="r">${r} en rouge</span>`:""}</span></span><span class="piece__bar" aria-hidden="true"><i style="width:${n?Math.round(d/n*100):0}%"></i></span></a></li>`;}
@@ -33220,7 +33220,7 @@ const xTitre=x=>x.sids.length>1?"Multi-matières":`${A.exam(SUBJ[x.sids[0]]).lab
 const xEnCours=()=>{const x=xLit();return x&&x.phase!=="fini"?x:null;};
 function xCarte(sid,bloque){const S=SUBJ[sid],ex=A.exam(S),D=dureeEp(S),s=xSujetDe(sid,false),np=s.Q.filter(q=>q.pap).length,dis=bloque?" disabled":"";
   const meta=!s.Q.length?"Le site n'a pas encore d'exercices pour cette épreuve.":`${hmin(s.dur)} · ${s.Q.length} ${plur(s.Q.length,"exercice")}${np?`, dont ${np} sur papier`:""}${s.dur<D?` (le vrai dure ${hmin(D)} : le site n'a pas encore de quoi le remplir)`:""}`;
-  return `<div class="xc s-${sid}"><span class="xc-k">${ex.label||"Épreuve"} · ${A.dayName(ex.day,false,true)}${ex.start?" · "+xHeure(ex.start):""}</span><h3>${S.name}</h3><span class="xc-m">${meta}</span>${s.Q.length?`<div class="acts"><button type="button" class="btn pri" data-xb="${sid}" data-c="0"${dis}>Comme le vrai · ${hmin(s.dur)}</button><button type="button" class="btn" data-xb="${sid}" data-c="1"${dis}>Court · ${hmin(xSujetDe(sid,true).dur)}</button></div>`:""}</div>`;}
+  return `<div class="xc s-${sid}"><span class="xc-k">${ex.label||"Épreuve"} · ${ex.report?"reporté, date à venir":A.dayName(ex.day,false,true)+(ex.start?" · "+xHeure(ex.start):"")}</span><h3>${S.name}</h3><span class="xc-m">${meta}</span>${s.Q.length?`<div class="acts"><button type="button" class="btn pri" data-xb="${sid}" data-c="0"${dis}>Comme le vrai · ${hmin(s.dur)}</button><button type="button" class="btn" data-xb="${sid}" data-c="1"${dis}>Court · ${hmin(xSujetDe(sid,true).dur)}</button></div>`:""}</div>`;}
 function xCartes(premier,page){const x=xEnCours(),n=A.NOW(),L=matieres(),pro=L.filter(s=>A.examStart(SUBJ[s])>n);
   const vus=(premier&&L.includes(premier)?[premier]:[]).concat(pro.filter(s=>s!==premier)).slice(0,3),autres=L.filter(s=>!vus.includes(s));
   const r=x&&x.phase==="sujet"?x.t0+x.dur-Date.now():0;
@@ -33616,7 +33616,15 @@ function setStatus(sid,cid,s){emit({k:"st",s:sid,c:cid,v:s});}
    une épreuve couvre ses propres leçons, ou celles listées dans covers. */
 const examsOf=S=>S.exams||[Object.assign({id:"cc1"},S.exam)];
 const examKey=(S,i)=>i===0?S.id:S.id+"."+examsOf(S)[i].id;
-function examAt(S,i){const e=examsOf(S)[i];return Object.assign({label:"CC"},e,hub.exams[examKey(S,i)]||{},{idx:i});}
+/* une épreuve reportée sans nouvelle date (report:1 dans la matière) n'est pas passée : en attendant, elle est posée REPORT jours plus loin,
+   avant l'épreuve suivante de la matière. Ses révisions restent dans le planning, aucune note n'est demandée, l'agenda ne la montre nulle part ;
+   la date tapée dans « Mes épreuves » la remplace. */
+const REPORT=14;
+function examAt(S,i){const L=examsOf(S),b=L[i],h=hub.exams[examKey(S,i)]||{},e=Object.assign({label:"CC"},b,h,{idx:i});
+  if(!e.report||(h.day&&h.day!==b.day))return Object.assign(e,{report:0});
+  let d=ymd(new Date(NOW().getTime()+REPORT*864e5));const nx=L[i+1]&&((hub.exams[examKey(S,i+1)]||{}).day||L[i+1].day);if(nx&&d>=nx)d=addDays(nx,-1);
+  return Object.assign(e,{day:d,jour0:b.day});}
+const quandEp=(e,court)=>e.report?"reporté, date à venir":`${dayName(e.day,false,court)} à ${e.start.replace(":","h")}`;
 /* une épreuve qu'il a enlevée (réglage exam:<clé>:off) ne compte plus : la suivante de la matière devient l'épreuve courante */
 function exam(S){const L=examsOf(S),n=NOW();let d=null;for(let i=0;i<L.length;i++){const e=examAt(S,i);if(e.off)continue;d=e;if(toD(e.day,mm(e.end||e.start))>n)return e;}return d||examAt(S,L.length-1);}
 const exW=S=>{const l=(exam(S)||{}).label||"CC";return /^CC/.test(l)?"CC":l;};
@@ -33667,7 +33675,7 @@ function miniDu(){const n=NOW(),t0=today(),fait=hub.mixOn===t0,noms=[];let need=
 function valeur(sid,t){const S=SUBJ[sid];if(!diagFait(sid))return 0;if(t.first)return 9;const T=S.TH[t.id];if(!T||themeEx(S,T)!==exam(S).id)return (t.base<=20?1.5:Math.min(2,0.3*themesOf(S).reduce((s,X)=>s+gainTheme(sid,X),0)))/Math.max(t.min,10);/* feuille autorisée : 1,5 point ; examen blanc ou TD : 30 % de ce qu'il reste à gagner dans la matière, 2 points au plus (les leçons des thèmes faibles passent avant) */
   const mins=(T.les||[]).map(l=>"L-"+l).concat(T.tasks||[]).reduce((s,x)=>s+((S.TB[x]||{}).min||0),0);return gainTheme(sid,T)/Math.max(mins,10);}
 const examStart=S=>{const e=exam(S);return toD(e.day,mm(e.start));};
-function jx(S){const e=exam(S),n=NOW(),k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
+function jx(S){const e=exam(S),n=NOW();if(e.report)return "reporté";const k=Math.round((toD(e.day,0)-toD(ymd(n),0))/864e5);return k>1?`J-${k}`:k===1?"demain":k===0?(n<examStart(S)?"aujourd'hui":"passé"):"passé";}
 const poids0=S=>{const e=exam(S);return S.coef*(e.share!=null?e.share:S.share);};
 const WMAX=Math.max(...SIDS.map(id=>poids0(SUBJ[id])));
 
@@ -33733,7 +33741,7 @@ function phrasesNotes(sid){const S=SUBJ[sid],B=bilan(sid),out=[];if(!B)return ou
   if(examStart(S)>NOW()){const v=estime(sid),e=exam(S),x=B.E.find(y=>y.i===e.idx)||{label:e.label};
     out.push(v?`Niveau estimé ${auEp(x)} d'après tes entraînements : <b>${Math.round(v.note)} sur 20</b>${!B.manque.length&&B.need>0&&B.need<=20?`, il te faut ${besoin(B.need)}`:""}${v.der?` (dernière mesure le ${dayName(v.der,false)})`:" (d'après ce qui est coché, pas encore de mesure)"}.`:`Niveau pas encore mesuré : fais <a href="#/${sid}/niveau">Où j'en suis</a>.`);}
   return out;}
-const ligneEp=(B,x)=>`<b>${x.label}</b> (${pct(x.w)}) : ${x.n!=null?sur20(x.n)+(B.efface&&x===B.drop?", s'efface":""):x.past?"pas de note entrée":x.e?`le ${dayName(x.e.day,false)}`:x.hors||"date pas encore publiée"}`;
+const ligneEp=(B,x)=>`<b>${x.label}</b> (${pct(x.w)}) : ${x.n!=null?sur20(x.n)+(B.efface&&x===B.drop?", s'efface":""):x.past?"pas de note entrée":x.e?(x.e.report?"reporté, date à venir":`le ${dayName(x.e.day,false)}`):x.hors||"date pas encore publiée"}`;
 function notesHTML(sid){const B=bilan(sid);if(!B)return "";
   return `<div>${B.E.map(x=>ligneEp(B,x)).join("<br>")}</div>${phrasesNotes(sid).map(p=>`<div>${p}</div>`).join("")}<a class="btn" href="#/examens">Taper ou corriger une note</a>`;}
 const carteNotes=sid=>{const h=notesHTML(sid);return h?`<section class="check" id="mesnotes"><h2 style="font-size:1.1rem">Mes notes</h2>${h}</section>`:"";};
@@ -33813,13 +33821,13 @@ const smatDe=(day,a)=>{const k=smatK(day,a),m=k&&hub.smat[k].m;return m&&SUBJ[m]
 const matCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.m:smatDe(day,a);};
 /* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours ;
    un cours dans un de ses créneaux compte comme "rev", sauf s'il a dit qu'il y va ("go") */
-const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day&&!x.e.off);
+const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day&&!x.e.off&&!x.e.report);
 const estCC=(day,c)=>epreuvesDu(day).some(x=>Math.abs(mm(x.e.start)-mm(c[0]))<=20);
 const skipDe=(day,c)=>{const s=hub.skip[day+":"+c[0]]||"";return s==="go"?"":s||(dansCreneau(day,mm(c[0]),mm(c[1]))?"rev":"");};
 const coursJour=day=>(CLASSES[day]||[]).filter(c=>!estCC(day,c)).map(c=>({day,start:c[0],end:c[1],name:c[2],detail:c[3],sid:c[4],skip:skipDe(day,c)}));
 function busyOf(day){
   const b=[];coursJour(day).forEach(c=>{if(!c.skip)b.push([mm(c.start),mm(c.end)]);});
-  SIDS.forEach(id=>{const e=exam(SUBJ[id]);if(e.day===day)b.push([mm(e.start)-30,mm(e.end)+10]);});
+  SIDS.forEach(id=>{const e=exam(SUBJ[id]);if(e.day===day&&!e.report)b.push([mm(e.start)-30,mm(e.end)+10]);});
   return b.sort((x,y)=>x[0]-y[0]);
 }
 /* Une séance dure 1 h 50 au plus, avec 15 min de pause au milieu ; 20 min de pause entre deux séances.
@@ -34033,7 +34041,7 @@ function hubHome(){
   const bon=Object.entries(P.bonus);
   if(bon.length)body+=sec(days.length?3:2,"Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes rapportent le moins : elles passent après. Fais-les quand un créneau est fini en avance.</p>${bon.map(([sid,L])=>`<details class="day"><summary><b>${SUBJ[sid].name}</b><span>${L.length} étape(s)</span></summary><ol class="todo" style="padding:0 12px 12px">${L.map(id=>taskHTML(sid,SUBJ[sid].TB[id],false)).join("")}</ol></details>`).join("")}`);
   const cards=SIDS.map(id=>{const S=SUBJ[id],T=S.tasks,d=T.filter(t=>isDone(id,t)).length,r=S.ORDER.filter(c=>ST[id].review[c.id]).length,e=exam(S);
-    return `<a class="mcard" href="#/${id}" style="--sc:${S.color}"><span class="mname">${S.name}</span><span class="muted">${S.code}</span><span>${exW(S)} ${dayName(e.day,false,true)} à ${e.start.replace(":","h")}, <b>${jx(S)}</b></span><span class="muted">Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % : poids ${String(weight(S).toFixed(2)).replace(".",",")}</span><div class="bar"><i style="width:${d/T.length*100}%;background:${S.color}"></i></div><span class="muted">${d} étape(s) sur ${T.length}${r?`, <span class="r">${r} en rouge</span>`:""}</span></a>`;}).join("");
+    return `<a class="mcard" href="#/${id}" style="--sc:${S.color}"><span class="mname">${S.name}</span><span class="muted">${S.code}</span><span>${exW(S)} ${quandEp(e,true)}, <b>${jx(S)}</b></span><span class="muted">Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % : poids ${String(weight(S).toFixed(2)).replace(".",",")}</span><div class="bar"><i style="width:${d/T.length*100}%;background:${S.color}"></i></div><span class="muted">${d} étape(s) sur ${T.length}${r?`, <span class="r">${r} en rouge</span>`:""}</span></a>`;}).join("");
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${dayName(t0,true)}</h1><span class="muted">4 CC cette semaine. Le plan se recalcule chaque matin avec ce qu'il reste.</span></div>
    <section class="mcards">${cards}</section>${body}
    <p class="muted" style="font-size:.9rem">Créneaux pris entre 8h et 22h30, hors cours, repas et trajets, au rythme « ${{leger:"léger",normal:"normal",intensif:"intensif"}[hub.rythme||"normal"]} » (modifiable dans <a href="#/examens">Examens et coefficients</a>). <a href="#/edt">Voir l'emploi du temps</a> <button class="btn" id="replan">Recalculer maintenant</button></p></div>`;
@@ -34205,7 +34213,7 @@ function examens(){
   const n0=NOW(),caseNote=(S,x)=>x&&(x.past||x.hors)?`<br><label class="manote">Ma note<br><input type="text" inputmode="decimal" size="4" data-note="${S.id}.${x.id}" value="${x.n!=null?fr(x.n):""}" aria-label="Ma note, ${x.label}, ${S.name}, sur 20"> sur 20</label>`:"";
   const rows=SIDS.map(id=>{const S=SUBJ[id],L=examsOf(S),E=epreuves(id),plus=E.filter(x=>x.i<0);return L.map((x,i)=>{const e=examAt(S,i),past=toD(e.day,mm(e.end||e.start))<=n0,sh=e.share!=null?e.share:S.share;
     const off=!past&&(e.off||L.some((y,j)=>j!==i&&!examAt(S,j).off));
-    return `<tr${past||e.off?' class="muted"':""}>${i===0?`<td rowspan="${L.length+plus.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":e.off?"<br>enlevé du planning":""}${caseNote(S,E.find(y=>y.i===i))}</td><td><input type="date" value="${e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted"><span class="nf">${e.place}</span>, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}${past?"":`<br><span class="muted">Source de la date : ${srcDe(S,e)}</span>`}${off?`<br><button class="btn" data-exoff="${examKey(S,i)}" aria-pressed="${!!e.off}">Cette épreuve n'a pas lieu</button>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("")+plus.map(x=>`<tr class="muted"><td><b>${x.label}</b>${caseNote(S,x)}</td><td>${x.hors||"date pas encore publiée"}</td><td>${pct(x.w)}</td><td><b>${String((S.coef*x.w).toFixed(2)).replace(".",",")}</b></td><td></td></tr>`).join("");}).join("");
+    return `<tr${past||e.off?' class="muted"':""}>${i===0?`<td rowspan="${L.length+plus.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":e.off?"<br>enlevé du planning":e.report?"<br>reporté, date à venir : tape la nouvelle date":""}${caseNote(S,E.find(y=>y.i===i))}</td><td><input type="date" value="${e.report?"":e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted"><span class="nf">${e.place}</span>, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}${past?"":`<br><span class="muted">Source de la date : ${srcDe(S,e)}</span>`}${off?`<br><button class="btn" data-exoff="${examKey(S,i)}" aria-pressed="${!!e.off}">Cette épreuve n'a pas lieu</button>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("")+plus.map(x=>`<tr class="muted"><td><b>${x.label}</b>${caseNote(S,x)}</td><td>${x.hors||"date pas encore publiée"}</td><td>${pct(x.w)}</td><td><b>${String((S.coef*x.w).toFixed(2)).replace(".",",")}</b></td><td></td></tr>`).join("");}).join("");
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Examens et coefficients</h1></div>
    <p class="lead">D'après le document officiel des modalités de contrôle 2026-2027 et les pages Moodle. Le poids d'un CC dans ta moyenne du semestre, c'est le coefficient de la matière multiplié par la part de ce CC dans sa note.</p>
    <section class="check" id="bilan">${bilanHTML()}</section>
@@ -34245,7 +34253,7 @@ function subjHome(sid){
   if(bon.length)body+=sec(k++,"Si tu as encore du temps",`<ol class="todo">${bon.map(id=>taskHTML(sid,S.TB[id],false)).join("")}</ol>`);
   if(done.length)body+=sec(k++,"Déjà fait",`<details class="day"><summary><b>${done.length} étape(s) terminée(s)</b><span>clique pour voir</span></summary><ol class="todo" style="padding:0 12px 12px">${done.map(t=>taskHTML(sid,t,false)).join("")}</ol></details>`);
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${S.name}</h1><span class="muted">${S.code}</span></div>
-   <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${dayName(e.day,false)} à ${e.start.replace(":","h")}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""} <span class="muted">Source de la date : ${srcDe(S,e)}</span></div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
+   <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${quandEp(e)}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""} <span class="muted">Source de la date : ${srcDe(S,e)}</span></div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
    ${carteNotes(sid)}
    ${body}</div>`;
   bindTicks($("#main"),()=>subjHome(sid));fixLinks($("#main"),sid);
