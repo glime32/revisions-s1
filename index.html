@@ -31591,6 +31591,246 @@ function exoPr3(R){const nG=R.ent(2,3),tue=R()<0.2,X=R.mel(LET10),L=[];let j=0;
     ens:{fam:"td37",L,att,k,piegesO:PO.map(p=>({type:p.type,o:p.v.join("\n")})),piegesN:PN.map(p=>({type:p.type,n:String(p.v)})),
       bash:[bashCompte10(lig.replace(/\( sleep/g,`( echo "(" >>"$L" ; sleep`),[...G.map(()=>"("),...G.map(()=>"sleep"),...G.filter(x=>x.ps).map(()=>"ps"),...L.filter(x=>x.k==="s").map(()=>"sleep")].sort(),"x")]}};}
 const tirePr=k=>R=>{for(;;){const e=[exoPr0,exoPr1,exoPr2,exoPr3][k](R);if(e)return e;}};
+/* ---------- US9 : le C sous Unix. argc et argv, les étapes de gcc, le passage par valeur et la portée, un programme entier lancé avec ses paramètres ; chaque programme est compilé et lancé par le vrai gcc ---------- */
+const blocC=t=>d36(window.W&&window.W.code?window.W.code(t,"c"):`<pre>${esc(t)}</pre>`);
+const vraiC9=(src,nom,args,abs)=>({arbo:arboDe([]),cmd:`cat > p.c <<'FIN'\n${src}\nFIN\ngcc -w -o ${nom} p.c -lm || exit 9\n./${nom} "$@"\necho "#code $?"`,args,nom:"./c.sh",script:true,c:true,abs});
+const lis9=(s,att)=>{let L=String(s==null?"":s).split("\n").map(x=>propre(x)).filter(Boolean);if(L.length===1&&/^\(?rien\)?$|^-$/i.test(L[0]))L=[];
+  if(L.length===1&&att.length>1&&att.every(x=>!/ /.test(x))){const D=L[0].split(/[\s,;]+/).filter(Boolean);if(D.length===att.length)L=D;}return L;};
+const plat9=x=>propre(x).replace(/\s+/g,"").replace(/(\d),(\d)/g,"$1.$2").replace(/^"(.*)"$/,"$1");
+const memes9=(L,A)=>L.length===A.length&&L.every((x,i)=>plat9(x)===plat9(A[i]));
+const no9=(ids,resume)=>(etape,type,titre,msg)=>({ok:false,faux:ids,resume,diag:{etape,type,titre,msg}});
+const ent9=s=>{const t=propre(s).replace(/^(argc|\$\?)\s*=\s*/i,"");if(!t)return {vide:1};return /^-?\d+$/.test(t)?{v:+t}:{err:1};};
+const pave9=L=>blocr(L.length?L.join("\n"):"(rien)");
+
+/* palier 1 : argc et argv */
+const MOTS9=["un","2","34.5","toto","-v","notes.txt","12","bonjour","8","-3"],NOMS9=["prog","argv","moy","affiche","calc"];
+function exoC0(R){const nom=R.choix(NOMS9),n=R.ent(2,4),A=R.mel(MOTS9).slice(0,n);
+  if(R()<0.4){const i=R.ent(0,n-1);A[i]=R.choix(["deux mots","fin du jeu","a b"]);}
+  const lig="./"+nom+" "+A.map(a=>/ /.test(a)?`"${a}"`:a).join(" "),argv=["./"+nom,...A],argc=argv.length,coupe=A.some(a=>/ /.test(a));
+  const corps=blocr(lig);
+  if(R()<0.5){const k=R.choix([0,...A.map((_,i)=>i+1),...A.map((_,i)=>i+1)]),att=argv[k];
+    const PA=[{type:"nom du programme oublié",v:argc-1,msg:`${c("argc")} compte tous les mots de la ligne, nom du programme compris : ${c("argv[0]")} est ${c("./"+nom)}.`},
+      ...(coupe?[{type:"guillemets coupés",v:argc+A.filter(a=>/ /.test(a)).length,msg:`Entre guillemets, plusieurs mots ne font qu'un seul paramètre : bash les passe ensemble.`}]:[])];
+    const PV=[...(k>0?[{type:"argv compté à partir de 1",v:argv[k-1],msg:`On compte à partir de 0 : ${c("argv[0]")} est le nom du programme, ${c("argv[1]")} le premier paramètre.`}]:[]),
+      ...(k+1<argc?[{type:"argv[0] oublié",v:argv[k+1],msg:`${c("argv[0]")} est le nom du programme : les paramètres commencent à ${c("argv[1]")}.`}]:[]),
+      ...(/ /.test(att)?[{type:"guillemets coupés",v:att.split(" ")[0],msg:`Entre guillemets, ${c(att)} est un seul paramètre, espace compris.`}]:[])].filter(p=>plat9(p.v)!==plat9(att));
+    const E=[{w:`Les mots de la ligne, numérotés à partir de 0 :<br>${argv.map((a,i)=>`${c("argv["+i+"]")} = ${c(a)}`).join("<br>")}`,why:`Le nom du programme est ${c("argv[0]")}. Des mots entre guillemets ne font qu'un paramètre.`,pts:1.5},
+      {w:`${c("argc")} = <b>${argc}</b>, et ${c("argv["+k+"]")} = <b>${c(att)}</b>`,why:`${c("argc")} compte aussi le nom du programme.`,pts:1}];
+    const juge=rep=>{const v=ent9(rep.n),a=propre(rep.a);if(v.vide||!a)return {incomplet:"Réponds aux deux : argc et argv["+k+"]."};if(v.err)return {incomplet:"Pour argc, écris un nombre."};
+      const okN=v.v===argc,okA=plat9(a)===plat9(att)||k===0&&plat9(a)===nom;if(okN&&okA)return {ok:true};
+      const no=no9([...(okN?[]:["n"]),...(okA?[]:["a"])],"Pas tout à fait : "+(okN?"argv["+k+"] est faux.":okA?"argc est faux.":"argc et argv["+k+"] sont faux."));
+      if(!okN){const m=PA.find(p=>p.v===v.v);return m?no(0,m.type,"Où ça part : "+m.type+".",m.msg):no(0,"argc faux","Où ça part : argc.","Compte les mots de la ligne, nom du programme compris, comme dans la correction.");}
+      const m=PV.find(p=>plat9(p.v)===plat9(a));return m?no(0,m.type,"Où ça part : "+m.type+".",m.msg):no(0,"argv faux","Où ça part : argv["+k+"].","Numérote les mots de la ligne à partir de 0, nom du programme compris.");};
+    return {sig:"C0a"+lig+k,q:`On lance le programme avec cette ligne. Que valent ${c("argc")} et ${c("argv["+k+"]")} ?`,corps,texte:lig+" : argc et argv["+k+"]",
+      champs:[{k:"champ",id:"n",nom:"argc",label:"argc =",ex:"par exemple 3",apercu:false,sym:[]},{k:"champ",id:"a",nom:"argv["+k+"]",label:`argv[${k}] =`,ex:"un mot de la ligne",apercu:false,sym:[]}],
+      juge,etapes:E,bonne:`argc = ${argc} ; argv[${k}] = ${c(att)}`,bonneTxt:argc+" ; "+att,repBonne:{n:String(argc),a:att},repFausse:{n:String(PA[0].v),a:att},nature:"argc et argv",
+      ens:{fam:"argv",argv,k,pieges:[...PA.map(p=>({type:p.type,n:String(p.v),a:att})),...PV.map(p=>({type:p.type,n:String(argc),a:p.v}))]}};}
+  const S=R.choix([0,1,1]),bas=R()<0.3,P=R.choix([1,1,2]),voit=R()<0.4;
+  const boucle=bas?`for (int i = argc - 1; i >= ${S}; i${P>1?" -= "+P:"--"})`:`for (int i = ${S}; i < argc; i${P>1?" += "+P:"++"})`;
+  const src=`#include <stdio.h>\n\nint main(int argc, char *argv[]) {\n${voit?'  printf("%d\\n", argc);\n':""}  ${boucle}\n    printf("%s\\n", argv[i]);\n  return 0;\n}`;
+  const joue=(s0,p0,b0,ac)=>{const o=voit?[String(ac)]:[];if(b0)for(let i=argv.length-1;i>=s0;i-=p0)o.push(argv[i]);else for(let i=s0;i<argv.length;i+=p0)o.push(argv[i]);return o;};
+  const att=joue(S,P,bas,argc);if(att.length<2)return null;
+  const MU=[["argv[0] oublié ou compté en trop",joue(1-S,P,bas,argc),`${c("argv[0]")} est le nom du programme, ${c(argv[0])} : la boucle l'affiche si elle part de (ou descend jusqu'à) ${c("i = 0")}.`],
+    ["nom du programme oublié dans argc",joue(S,P,bas,argc-1),`${c("argc")} compte aussi le nom du programme : ici ${argc}.`],
+    ["pas de la boucle oublié",joue(S,1,bas,argc),`${c("i += 2")} saute un paramètre sur deux.`],
+    ["sens de la boucle inversé",joue(S,P,!bas,argc),`La boucle ${bas?"descend : elle part de la fin":"monte : elle part du début"}.`]].filter(m=>!memes9(m[1],att));
+  const P2=[];for(const [type,out,msg] of MU)if(!P2.some(p=>memes9(p.out,out)))P2.push({type,out,msg});if(!P2.length)return null;
+  const E=[{w:`Les mots de la ligne :<br>${argv.map((a,i)=>`${c("argv["+i+"]")} = ${c(a)}`).join("<br>")}<br>donc ${c("argc")} = ${argc}.`,why:`${c("argv[0]")} est le nom du programme.`,pts:1},
+    {w:`${c(boucle)} prend i = ${(bas?(()=>{const L=[];for(let i=argc-1;i>=S;i-=P)L.push(i);return L;})():(()=>{const L=[];for(let i=S;i<argc;i+=P)L.push(i);return L;})()).join(", ")}.`,why:"La boucle s'arrête dès que la condition est fausse.",pts:1.5},
+    {w:`<b>Le programme affiche</b> :${pave9(att)}`,why:`${c("%d")} affiche un entier, ${c("%s")} une chaîne.`,pts:0.5}];
+  return {sig:"C0b"+src+lig,q:`Ce programme est compilé sous le nom ${c(nom)}, puis lancé avec la ligne ci-dessous. Qu'affiche-t-il ?`,corps:blocC(src)+corps,texte:"argv : "+boucle+" | "+lig,
+    champs:[{k:"code",id:"s",nom:"affichage",label:"Ce que le programme affiche, ligne par ligne&nbsp;:",lignes:Math.max(3,att.length+1)}],
+    juge:rep=>{const L=lis9(rep.s,att);if(!L.length)return {incomplet:"Écris ce que le programme affiche, ligne par ligne."};if(memes9(L,att))return {ok:true};
+      const no=no9(["s"],"Pas tout à fait : ce n'est pas ce que le programme affiche."),m=P2.find(p=>memes9(L,p.out));
+      return m?no(1,m.type,"Où ça part : "+m.type+".",m.msg):no(1,"affichage différent","Où ça part : la boucle.","Écris la valeur de i à chaque tour, puis argv[i], comme dans la correction.");},
+    etapes:E,bonne:pave9(att),bonneTxt:att.join(" ⏎ "),repBonne:{s:att.join("\n")},repFausse:{s:P2[0].out.join("\n")},nature:"une boucle sur argv",
+    ens:{fam:"boucle",argv,S,P,bas,voit,att,pieges:P2.map(p=>({type:p.type,s:p.out.join("\n")})),bash:[vraiC9(src,nom,A,[...att,"#code 0"])]}};}
+
+/* palier 2 : les étapes de gcc */
+const LH9="int carre(int x);",LC9='#include "liste.h"\nint carre(int x) { return x * x; }',MC9='#include <stdio.h>\n#include "liste.h"\nint main(void) {\n  printf("%d\\n", carre(7));\n  return 0;\n}';
+const ETAPE9=[["pre","le prétraitement"],["comp","la compilation (analyses, puis langage d'assemblage)"],["asm","l'assemblage"],["lien","l'édition des liens"]];
+const CIBLE9={E:"le fichier prétraité",S:"le fichier en langage d'assemblage",c:"le fichier objet"};
+function cmd9(s){const T=propre(s).replace(/^\$\s*/,"").split(" ").filter(Boolean);if(T[0]!=="gcc")return null;
+  const r={E:0,S:0,c:0,o:null,red:null,lm:0,g:0,W:0,src:[],autre:[]};
+  for(let i=1;i<T.length;i++){const t=T[i];if(t==="-E")r.E=1;else if(t==="-S")r.S=1;else if(t==="-c")r.c=1;else if(t==="-o")r.o=T[++i]||"";else if(t===">")r.red=T[++i]||"";else if(t==="-lm")r.lm=1;else if(t==="-g")r.g=1;else if(t==="-Wall")r.W=1;else if(/\.c$/.test(t))r.src.push(t);else r.autre.push(t);}
+  return r;}
+function exoC1(R){const f=R.choix([0,0,1,1,2]),F=R.choix(["prog","fact","moy","argv","calcul"]);
+  if(f===0){const k=R.choix(["E","S","c","x","x","x"]),X=k==="x"?{nom:R.choix([F,F,"appli","test"]),opt:R.choix(["","lm","g","W"])}:null;
+    const fic=k==="E"?F+".i":k==="S"?F+".s":k==="c"?F+".o":X.nom;
+    const q=k==="x"?`Écris la commande qui compile ${c(F+".c")} en un exécutable nommé ${c(X.nom)}${X.opt==="lm"?`, avec la bibliothèque mathématique (le programme utilise ${c("sqrt")})`:X.opt==="g"?`, avec les informations de débogage pour gdb`:X.opt==="W"?`, en affichant tous les avertissements`:""}.`
+      :`Écris la commande qui produit ${CIBLE9[k]} ${c(fic)} à partir de ${c(F+".c")}${k==="E"?" (gcc -E écrit à l'écran : redirige-le)":""}, sans aller plus loin.`;
+    const ref=k==="E"?`gcc -E ${F}.c > ${F}.i`:k==="S"?`gcc -S ${F}.c`:k==="c"?`gcc -c ${F}.c`:`gcc -o ${X.nom} ${F}.c${X.opt==="lm"?" -lm":X.opt==="g"?" -g":X.opt==="W"?" -Wall":""}`;
+    const MSG={E:`${c("-E")} s'arrête après le prétraitement : il écrit à l'écran le C où les ${c("#include")} ont été recopiés.`,S:`${c("-S")} s'arrête après la compilation : il produit le fichier en langage d'assemblage ${c(F+".s")}.`,c:`${c("-c")} compile et assemble seulement : il produit le fichier objet ${c(F+".o")}, sans édition des liens.`};
+    const juge=rep=>{if(!propre(rep.c))return {incomplet:"Écris la commande."};const r=cmd9(rep.c);if(!r)return {incomplet:"La commande commence par gcc."};
+      const no=no9(["c"],"Pas tout à fait : cette commande ne produit pas ce qui est demandé."),N=(et,type,msg)=>no(et,type,"Où ça part : "+type+".",msg);
+      if(r.src.join()!==F+".c"||r.autre.length)return r.src.length!==1?N(0,"fichier source","Il faut donner le fichier source "+c(F+".c")+", et lui seul."):{incomplet:"Je ne reconnais pas "+esc(r.autre[0])+" : écris seulement des options vues en cours (-E, -S, -c, -o, -lm, -g, -Wall)."};
+      if(r.o===F+".c")return N(1,"-o sur le fichier source",`${c("-o "+F+".c")} donnerait au résultat le nom du source : ton fichier ${c(F+".c")} serait écrasé.`);
+      const et=r.E?"E":r.S?"S":r.c?"c":"x";
+      if(et!==k)return N(1,et==="x"?"il manque l'option d'arrêt":k==="x"?"option qui s'arrête trop tôt":"mauvaise option d'arrêt",et==="x"?`Sans option d'arrêt, gcc va jusqu'à l'exécutable. ${MSG[k]}`:k==="x"?`${MSG[et]} Pour aller jusqu'à l'exécutable, aucune de ces options.`:MSG[et]+" "+MSG[k]);
+      const sortie=k==="E"?(r.red||r.o):(r.o||(k==="x"?"a.out":fic));
+      if(k==="E"&&!sortie)return N(2,"prétraitement laissé à l'écran",`${c("gcc -E")} écrit à l'écran : ${c("> "+F+".i")} (ou ${c("-o "+F+".i")}) le range dans le fichier.`);
+      if(sortie!==fic)return N(2,k==="x"&&!r.o?"-o oublié":"nom de sortie",k==="x"&&!r.o?`Sans ${c("-o")}, l'exécutable s'appelle ${c("a.out")}.`:`Le fichier produit s'appellerait ${c(sortie)}.`);
+      if(k==="x"&&X.opt==="lm"&&!r.lm)return N(2,"-lm oublié",`${c("sqrt")} est dans la bibliothèque mathématique : sans ${c("-lm")}, l'édition des liens échoue (« référence indéfinie vers sqrt »).`);
+      if(k==="x"&&X.opt==="g"&&!r.g)return N(2,"-g oublié",`${c("-g")} ajoute les informations de débogage pour gdb.`);
+      if(k==="x"&&X.opt==="W"&&!r.W)return N(2,"-Wall oublié",`${c("-Wall")} affiche tous les avertissements.`);
+      return {ok:true};};
+    const PI=[k!=="c"?{type:"mauvaise option d'arrêt",c:`gcc -c ${F}.c`}:{type:"mauvaise option d'arrêt",c:`gcc -S ${F}.c`},
+      ...(k==="x"?[{type:"-o oublié",c:`gcc ${F}.c${X.opt==="lm"?" -lm":X.opt==="g"?" -g":X.opt==="W"?" -Wall":""}`},{type:"-o sur le fichier source",c:`gcc -o ${F}.c ${F}.c`},...(X.opt?[{type:{lm:"-lm oublié",g:"-g oublié",W:"-Wall oublié"}[X.opt],c:`gcc -o ${X.nom} ${F}.c`}]:[])]:[]),
+      ...(k==="E"?[{type:"prétraitement laissé à l'écran",c:`gcc -E ${F}.c`}]:[]),...(k==="c"?[{type:"il manque l'option d'arrêt",c:`gcc -o ${F}.o ${F}.c`}]:[]).map(x=>x)].map(p=>p.type==="mauvaise option d'arrêt"&&k==="x"?Object.assign(p,{type:"option qui s'arrête trop tôt"}):p);
+    const src=X&&X.opt==="lm"?'#include <stdio.h>\n#include <math.h>\nint main(int argc, char *argv[]) {\n  printf("%f\\n", sqrt(argc));\n  return 0;\n}':'#include <stdio.h>\nint main(void) {\n  printf("bonjour\\n");\n  return 0;\n}';
+    const E=[{w:`Les étapes de gcc : prétraitement (${c("-E")}), compilation en langage d'assemblage (${c("-S")}, fichier ${c(".s")}), assemblage (${c("-c")}, fichier objet ${c(".o")}), édition des liens (l'exécutable).`,why:"Chaque option arrête gcc après son étape.",pts:1},
+      {w:k==="x"?`On va jusqu'au bout : aucune option d'arrêt, et ${c("-o "+X.nom)} pour le nom${X.opt?` ; ${c({lm:"-lm",g:"-g",W:"-Wall"}[X.opt])} en plus`:""}.`:`On s'arrête après ${k==="E"?"le prétraitement":k==="S"?"la compilation":"l'assemblage"} : ${c("-"+k)}.`,why:k==="x"?`Sans ${c("-o")}, l'exécutable s'appellerait ${c("a.out")}.`:MSG[k],pts:1},
+      {w:`<b>${c(ref)}</b>`,why:k==="E"?`On peut aussi écrire ${c(`gcc -E ${F}.c -o ${F}.i`)}.`:"L'ordre des options n'a pas d'importance.",pts:0.5}];
+    return {sig:"C1a"+ref,q,corps:"",texte:"gcc : "+ref,champs:[{k:"code",id:"c",nom:"commande",label:"La commande :",lignes:2,ex:"gcc …",sym:[["gcc ","gcc "],["-o ","-o "],["-c","-c"],["-S","-S"],["-E","-E"],[">",">"]]}],
+      juge,etapes:E,bonne:c(ref),bonneTxt:ref,repBonne:{c:ref},repFausse:{c:PI[0].c},nature:"écrire la commande gcc",
+      ens:{fam:"gcc",k,F,X,ref,pieges:PI,bash:[{arbo:arboDe([{n:F+".c",c:src+"\n"}]),cmd:ref,args:[],nom:"./gcc.sh",script:true,c:true,etat:true,abs:["#fichiers",...[F+".c",fic].sort()]}]}};}
+  if(f===1){const ops=[];let o={main:0,liste:0};const n=R.ent(1,3);
+    for(let t=0;t<n;t++){const k=t===n-1&&R()<0.7?"x":R.choix(["c","c","S","E"]);
+      if(k==="x"){const s=["main","liste"].map(b=>o[b]&&R()<0.8?b+".o":b+".c");ops.push(["x",R.mel(s),R()<0.6?R.choix(["prog","main","appli"]):null]);}
+      else if(k==="c"){const s=R()<0.5?["main","liste"]:[R.choix(["main","liste"])];s.forEach(b=>o[b]=1);ops.push(["c",s.map(b=>b+".c")]);}
+      else ops.push([k,[R.choix(["main","liste"])+".c"]]);}
+    const joue=lu=>{lu=lu||{};const F=new Set();for(const [k,s,nom] of ops){
+        if(k==="c")s.forEach(x=>F.add(x.replace(".c",lu.cS?".s":".o")));else if(k==="S")s.forEach(x=>F.add(x.replace(".c",lu.cS?".o":".s")));else if(k==="E")F.add(s[0].replace(".c",".i"));
+        else{if(nom||!lu.aout)F.add(nom||"a.out");if(lu.garde)s.filter(x=>/\.c$/.test(x)).forEach(x=>F.add(x.replace(".c",".o")));}}return [...F].sort();};
+    const txt=ops.map(([k,s,nom])=>k==="x"?`gcc ${nom?"-o "+nom+" ":""}${s.join(" ")}`:k==="E"?`gcc -E ${s[0]} > ${s[0].replace(".c",".i")}`:`gcc -${k} ${s.join(" ")}`);
+    const att=joue(),noms=[...new Set(["main.o","liste.o","main.s","liste.s","main.i","liste.i","a.out",...ops.filter(x=>x[2]).map(x=>x[2])])],O=noms.map(x=>[x,x]);
+    const MU=[["-c et -S confondus",{cS:1},`${c("-c")} produit le fichier objet ${c(".o")} ; ${c("-S")} s'arrête avant, au langage d'assemblage ${c(".s")}.`],
+      ["a.out oublié",{aout:1},`Sans ${c("-o")}, gcc appelle l'exécutable ${c("a.out")}.`],
+      ["fichiers objets gardés",{garde:1},`Quand gcc compile un ${c(".c")} jusqu'à l'exécutable, ses fichiers objets sont temporaires : ils ne restent pas dans le dossier.`]];
+    const P=[];for(const [type,lu,msg] of MU){const v=joue(lu);if(v.length&&v.join()!==att.join()&&!P.some(p=>p.g.join()===v.join()))P.push({type,g:v,msg});}
+    if(!P.length)return null;
+    const tri=L=>L.slice().sort().join();
+    const juge=rep=>{const S=(rep.g||[]).map(String);if(!S.length)return {incomplet:"Coche les nouveaux fichiers."};if(tri(S)===tri(att))return {ok:true};
+      const no=no9(["g"],"Pas tout à fait : ce ne sont pas les nouveaux fichiers."),m=P.find(p=>tri(p.g)===tri(S));
+      return m?no(1,m.type,"Où ça part : "+m.type+".",m.msg):no(1,"fichier en trop ou oublié","Où ça part : une commande.","Reprends les commandes une par une : -c donne un .o, -S un .s, -E rien (sauf redirigé), sans option un exécutable (a.out sans -o).");};
+    const E=[{w:`${c("-c")} : un ${c(".o")} par source ; ${c("-S")} : un ${c(".s")} ; ${c("-E")} : écrit à l'écran, ici redirigé ; sans option d'arrêt : l'exécutable, ${c("a.out")} sans ${c("-o")}.`,why:"Chaque option arrête gcc après une étape.",pts:1},
+      {w:txt.map(t=>{const i=txt.indexOf(t),[k,s,nom]=ops[i];return `${c(t)} : ${k==="x"?`crée l'exécutable ${c(nom||"a.out")}${s.some(x=>/\.o$/.test(x))?` en liant ${et(s.filter(x=>/\.o$/.test(x)).map(c))}`:""}`:k==="E"?`crée ${c(s[0].replace(".c",".i"))}`:`crée ${et(s.map(x=>c(x.replace(".c",k==="c"?".o":".s"))))}`}.`;}).join("<br>"),why:`Les fichiers objets qui servent à fabriquer l'exécutable ne sont gardés que si on les a demandés avec ${c("-c")}.`,pts:1.5},
+      {w:`<b>${et(att.map(c))}</b>`,why:"Les sources et liste.h ne bougent pas.",pts:0.5}];
+    return {sig:"C1b"+txt.join(";"),q:`Le dossier contient ${c("main.c")}, ${c("liste.c")} et ${c("liste.h")} (${c("main.c")} utilise la fonction ${c("carre")} de ${c("liste.c")}). On tape ces commandes, qui marchent toutes. Quels fichiers nouveaux y a-t-il ensuite ?`,corps:blocr(txt.join("\n")),texte:"fichiers après : "+txt.join(" ; "),
+      champs:[{k:"multi",id:"g",o:O}],juge,etapes:E,bonne:et(att.map(c)),bonneTxt:att.join(" "),repBonne:{g:att},repFausse:{g:P[0].g},nature:"les fichiers que gcc laisse",
+      ens:{fam:"fichiers",ops,att,pieges:P.map(p=>({type:p.type,g:p.g})),bash:[{arbo:arboDe([{n:"main.c",c:MC9+"\n"},{n:"liste.c",c:LC9+"\n"},{n:"liste.h",c:LH9+"\n"}]),cmd:txt.join("\n"),args:[],nom:"./gcc.sh",script:true,c:true,etat:true,abs:["#fichiers",...["main.c","liste.c","liste.h",...att].sort()]}]}};}
+  const v=R.ent(0,4),fn=R.choix(["carre","cube","somme","moitie"]),va=R.choix(["total","resultat","compte","n"]),vb=va==="n"?"m":va.slice(0,-1);
+  const CAS=[{e:"pre",fic:"main.c",src:`#include <stdio.h>\n#include "listes.h"\nint main(void) {\n  printf("%d\\n", ${fn}(7));\n  return 0;\n}`,cmd:"gcc -o prog main.c liste.c",msg:`main.c:2:10: erreur fatale: listes.h : Aucun fichier ou dossier de ce nom`},
+    {e:"comp",fic:"main.c",src:`#include <stdio.h>\n#include "liste.h"\nint main(void) {\n  int ${va} = ${fn}(7)\n  printf("%d\\n", ${va});\n  return 0;\n}`,cmd:"gcc -o prog main.c liste.c",msg:`main.c:5:3: erreur: « , » ou « ; » attendu avant « printf »`},
+    {e:"comp",fic:"main.c",src:`#include <stdio.h>\n#include "liste.h"\nint main(void) {\n  int ${va} = ${fn}(7);\n  printf("%d\\n", ${vb});\n  return 0;\n}`,cmd:"gcc -o prog main.c liste.c",msg:`main.c:5:19: erreur: « ${vb} » non déclaré (première utilisation dans cette fonction)`},
+    {e:"lien",fic:"main.c",src:`#include <stdio.h>\n#include "liste.h"\nint main(void) {\n  printf("%d\\n", ${fn}(7));\n  return 0;\n}`,cmd:"gcc -o prog main.c",msg:`/usr/bin/ld : main.o : dans la fonction « main » : référence indéfinie vers « ${fn} »`},
+    {e:"lien",fic:"liste.c",src:null,cmd:"gcc -o prog liste.c",msg:`/usr/bin/ld : (.text+0x1b) : référence indéfinie vers « main »`}],C=CAS[v];
+  const lc=`#include "liste.h"\nint ${fn}(int x) { return x * x; }`,lh=`int ${fn}(int x);`,mc=C.src||`#include <stdio.h>\n#include "liste.h"\nint main(void) {\n  printf("%d\\n", ${fn}(7));\n  return 0;\n}`;
+  const POUR={pre:`Le préprocesseur traite les ${c("#include")} : il recopie le fichier d'en-tête. S'il ne le trouve pas, gcc s'arrête là (« erreur fatale »).`,
+    comp:C===CAS[1]?`L'analyse syntaxique vérifie la grammaire du C : un ${c(";")} qui manque donne « ; attendu » (une erreur de syntaxe).`:`L'analyse sémantique vérifie que chaque nom a été déclaré avant d'être utilisé : ${c(vb)} ne l'est pas.`,
+    asm:"L'assemblage traduit le langage d'assemblage en fichier objet : il n'échoue presque jamais.",
+    lien:C.e==="lien"&&v===3?`Chaque fichier se compile très bien seul ; c'est l'édition des liens (le programme ${c("ld")}) qui cherche le code de ${c(fn)}. Il est dans ${c("liste.c")}, absent de la commande.`:`L'édition des liens cherche la fonction ${c("main")}, le point d'entrée du programme : ${c("liste.c")} n'en a pas.`};
+  const O=ETAPE9.map(([k,t])=>[k,t]),att=C.e;
+  const juge=rep=>{if(!rep.s)return {incomplet:"Choisis une étape."};if(rep.s===att)return {ok:true};
+    return no9(["s"],"Pas tout à fait : ce n'est pas à cette étape que gcc s'arrête.")(1,{pre:"erreur lue au prétraitement",comp:"erreur lue à la compilation",asm:"erreur lue à l'assemblage",lien:"erreur lue à l'édition des liens"}[rep.s],"Où ça part : l'étape.",`${POUR[att]} ${rep.s==="asm"?POUR.asm:""}`.trim());};
+  const E=[{w:`Les messages : « erreur fatale : … Aucun fichier » vient du préprocesseur ; « attendu avant » ou « non déclaré » vient des analyses du compilateur ; « référence indéfinie » vient de l'éditeur de liens ${c("ld")}.`,why:"Chaque étape a ses erreurs.",pts:1},
+    {w:POUR[att],why:"On lit le message, et on se demande quelle étape a pu le voir.",pts:1},{w:`<b>${ETAPE9.find(x=>x[0]===att)[1]}</b>`,why:"Le reste n'a pas pu être fait.",pts:0.5}];
+  const fic={"main.c":mc,"liste.c":lc,"liste.h":lh};
+  return {sig:"C1c"+v+fn+va,q:`On tape ${c(C.cmd)}. gcc écrit cette erreur. À quelle étape s'est-il arrêté ?`,corps:`<p>${c(C.fic)} :</p>`+blocC(C.fic==="main.c"?mc:lc)+blocr(C.msg),texte:"étape de l'erreur : "+C.msg,
+    champs:[{k:"choix",id:"s",o:O}],juge,etapes:E,bonne:ETAPE9.find(x=>x[0]===att)[1],bonneTxt:att,repBonne:{s:att},repFausse:{s:att==="lien"?"comp":"lien"},nature:"l'étape d'une erreur",
+    ens:{fam:"erreur",att,cmd:C.cmd,fic:C.fic,bash:[{arbo:arboDe(Object.entries(fic).map(([n,x])=>({n,c:x+"\n"}))),cmd:`gcc -E ${C.fic} >/dev/null 2>&1 || { echo pre; exit 0; }\ngcc -fsyntax-only ${C.fic} 2>/dev/null || { echo comp; exit 0; }\ngcc -c ${C.fic} -o /dev/null 2>/dev/null || { echo asm; exit 0; }\n${C.cmd} >/dev/null 2>&1 || { echo lien; exit 0; }\necho ok`,args:[],nom:"./gcc.sh",script:true,c:true,abs:[att]}]}};}
+
+/* palier 3 : passage par valeur, pointeurs, portée */
+function exoC2(R){
+  if(R()<0.8){const N=R.ent(2,9),M=R.ent(2,9),T=[R.ent(1,9),R.ent(1,9),R.ent(1,9)],ops=[];let off=0,pa=0,ok=false;
+    const n=R.ent(3,4);
+    for(let i=0;i<n;i++){const k=R.choix(["a","a","t","t","pp","ep","ep","pa"]);
+      if(k==="a")ops.push(["a",R.ent(1,5)]);else if(k==="t"){const j=R.ent(0,2-off);ops.push(["t",j,R.ent(10,30)]);}
+      else if(k==="pp"){if(off<1){off++;ops.push(["pp"]);}else continue;}else if(k==="ep")ops.push(["ep",R.ent(10,30),R()<0.5]);
+      else{if(pa)continue;pa=1;ops.push(["pa"]);}}
+    if(!ops.some(o=>o[0]==="t")||!ops.some(o=>o[0]==="ep")||!ops.some(o=>o[0]==="a"||o[0]==="pa"))return null;
+    const joue=lu=>{lu=lu||{};let a=N,o2=0,p="m";const st={n:N,m:M,t:T.slice()};
+      for(const op of ops){if(op[0]==="a"){a+=op[1];if(lu.copie)st.n=a;}
+        else if(op[0]==="t"){if(!lu.tCopie)st.t[o2+op[1]]=op[2];}else if(op[0]==="pp"){if(!lu.pp)o2++;}
+        else if(op[0]==="ep"){if(lu.pCopie)continue;const v=op[2]?((p==="m"?st.m:a)+op[1]):op[1];if(p==="m")st.m=v;else{a=v;if(lu.copie)st.n=a;}}
+        else if(!lu.pa)p="a";}
+      return st;};
+    const ligne=op=>op[0]==="a"?`  a = a + ${op[1]};`:op[0]==="t"?`  t[${op[1]}] = ${op[2]};`:op[0]==="pp"?"  t++;":op[0]==="ep"?(op[2]?`  *p = *p + ${op[1]};`:`  *p = ${op[1]};`):"  p = &a;";
+    const src=`#include <stdio.h>\n\nvoid f(int a, int t[], int *p) {\n${ops.map(ligne).join("\n")}\n}\n\nint main(void) {\n  int n = ${N}, m = ${M};\n  int tab[3] = {${T.join(", ")}};\n  f(n, tab, &m);\n  printf("n=%d m=%d\\n", n, m);\n  printf("tab = %d %d %d\\n", tab[0], tab[1], tab[2]);\n  return 0;\n}`;
+    const st=joue(),att={n:String(st.n),m:String(st.m),t:st.t.join(" ")},V=s=>({n:String(s.n),m:String(s.m),t:s.t.join(" ")});
+    const MU=[["paramètre int modifié pour l'appelant",{copie:1},`${c("a")} est une copie de ${c("n")} : la changer ne change pas ${c("n")}.`],
+      ["tableau lu comme une copie",{tCopie:1},`Passer un tableau, c'est passer l'adresse de sa première case : ${c("t[…] = …")} écrit dans le tableau ${c("tab")} de main.`],
+      ["t++ oublié",{pp:1},`${c("t++")} avance la copie du pointeur d'une case : après, ${c("t[0]")} est ${c("tab[1]")}.`],
+      ["p = &a oublié",{pa:1},`Après ${c("p = &a")}, p pointe sur la copie locale ${c("a")}, plus sur ${c("m")} : ${c("*p = …")} ne touche plus m.`],
+      ["pointeur lu comme une copie",{pCopie:1},`${c("p")} contient l'adresse de ${c("m")} : ${c("*p = …")} écrit dans m lui-même.`]];
+    const P=[];for(const [type,lu,msg] of MU){const v=V(joue(lu));if(JSON.stringify(v)!==JSON.stringify(att)&&!P.some(p=>JSON.stringify(p.v)===JSON.stringify(v)))P.push({type,v,msg});}
+    if(!P.length)return null;
+    let a=N,o2=0,p="m";const E=[{w:`À l'appel ${c("f(n, tab, &m)")} : ${c("a")} reçoit une copie de n (${N}), ${c("t")} l'adresse de ${c("tab[0]")}, ${c("p")} l'adresse de ${c("m")}.`,why:"En C, tout est passé par valeur : pour un tableau ou un pointeur, la valeur copiée est une adresse.",pts:1},
+      ...ops.map(op=>{let w;if(op[0]==="a"){a+=op[1];w=`a vaut ${a}, mais c'est la copie : n ne bouge pas.`}
+        else if(op[0]==="t"){w=`t pointe sur tab[${o2}], donc t[${op[1]}] est tab[${o2+op[1]}] : tab[${o2+op[1]}] = ${op[2]}.`}
+        else if(op[0]==="pp"){o2++;w=`t avance d'une case : il pointe maintenant sur tab[${o2}]. tab ne bouge pas.`}
+        else if(op[0]==="ep"){if(p==="m"){w=`p pointe sur m : m devient ${op[2]?"m + "+op[1]:op[1]}.`;}else{a=op[2]?a+op[1]:op[1];w=`p pointe sur a : a vaut ${a} ; m ne bouge pas.`;}}
+        else{p="a";w=`p pointe maintenant sur la copie a, plus sur m.`}
+        return {w:`${c(ligne(op).trim())} : ${w}`,why:op[0]==="a"||op[0]==="pp"||op[0]==="pa"?"On change une copie locale à f.":"On écrit à une adresse de main.",pts:1};}),
+      {w:`<b>n=${att.n} m=${att.m}</b> et <b>tab = ${att.t}</b>`,why:"main affiche ses propres variables.",pts:0.5}];
+    const juge=rep=>{const r={n:propre(rep.n),m:propre(rep.m),t:propre(rep.t).replace(/[{},;]/g," ").replace(/\s+/g," ").trim()};
+      if(!r.n||!r.m||!r.t)return {incomplet:"Remplis les trois cases : n, m et les trois cases de tab."};
+      const faux=["n","m","t"].filter(k=>r[k]!==att[k]);if(!faux.length)return {ok:true};
+      const no=no9(faux,"Pas tout à fait : "+faux.map(k=>k==="t"?"tab":k).join(", ")+(faux.length>1?" sont faux.":" est faux.")),m=P.find(p=>p.v.n===r.n&&p.v.m===r.m&&p.v.t===r.t);
+      if(m)return no(Math.min(E.length-2,1+ops.findIndex(o=>({"paramètre int modifié pour l'appelant":"a","tableau lu comme une copie":"t","t++ oublié":"pp","p = &a oublié":"pa","pointeur lu comme une copie":"ep"})[m.type]===o[0])),m.type,"Où ça part : "+m.type+".",m.msg);
+      return no(E.length-1,"valeur fausse","Où ça part : "+faux.map(k=>k==="t"?"tab":k).join(" et ")+".","Pour chaque ligne de f, demande-toi si elle écrit dans une copie (a, t, p eux-mêmes) ou à une adresse de main (t[…], *p).");};
+    return {sig:"C2a"+src,q:`Qu'affiche ce programme ?`,corps:blocC(src),texte:"passage par valeur : "+ops.map(o=>ligne(o).trim()).join(" "),
+      champs:[{k:"champ",id:"n",nom:"n",label:"n =",ex:"un entier",apercu:false,sym:[]},{k:"champ",id:"m",nom:"m",label:"m =",ex:"un entier",apercu:false,sym:[]},{k:"champ",id:"t",nom:"tab",label:"tab =",ex:"trois entiers, par exemple 1 2 3",apercu:false,sym:[]}],
+      juge,etapes:E,bonne:`n=${att.n} m=${att.m} ; tab = ${att.t}`,bonneTxt:`n=${att.n} m=${att.m} tab=${att.t}`,repBonne:att,repFausse:P[0].v,nature:"passage par valeur et pointeurs",
+      ens:{fam:"valeur",N,M,T,ops,att,pieges:P.map(p=>Object.assign({type:p.type},p.v)),bash:[vraiC9(src,"prog",[],[`n=${att.n} m=${att.m}`,`tab = ${att.t}`,"#code 0"])]}};}
+  const A=R.ent(1,9),B=R.ent(1,9),D=R.ent(1,5),Ee=R.ent(1,9),C0=R.ent(0,5),S=R.ent(1,4),nc=R.ent(2,3),sh=R()<0.4,st=R()<0.75;
+  const src=`#include <stdio.h>\n\nint x = ${A};\n\nint compte(void) {\n  ${st?"static ":""}int c = ${C0};\n  c = c + ${S};\n  return c;\n}\n\nvoid ajoute(int ${sh?"x":"k"}) {\n  x = x + ${sh?Ee:"k"};\n}\n\nint main(void) {\n  int y = ${B};\n  {\n    int x = y + ${D};\n    x = x * 2;\n    printf("%d\\n", x);\n  }\n  ajoute(${sh?R.ent(1,9):Ee});\n  printf("%d\\n", x);\n${"  compte();\n".repeat(nc-1)}  printf("%d\\n", compte());\n  return 0;\n}`;
+  const joue=lu=>{lu=lu||{};const l1=(B+D)*2;const l2=(lu.bloc?l1:A)+((sh?!!lu.param:true)?Ee:0);const l3=C0+S*((st?!lu.raz:!!lu.garde)?nc:1);return [l1,l2,l3].map(String);};
+  const att=joue();
+  const MU=[["bloc qui change la globale",{bloc:1},`${c("int x")} dans le bloc définit une nouvelle variable, qui cache la globale le temps du bloc : la globale x n'est pas touchée.`],
+    ...(sh?[["paramètre qui ne cache pas la globale",{param:1},`Dans ${c("ajoute")}, le paramètre s'appelle ${c("x")} : c'est la définition la plus proche, donc ${c("x = x + "+Ee)} change la copie locale, pas la globale.`]]:[]),
+    ...(st?[["static remis à zéro",{raz:1},`Une variable ${c("static")} est créée une seule fois, dans le segment statique : elle garde sa valeur d'un appel à l'autre.`]]:[["variable locale qui garde sa valeur",{garde:1},`Sans ${c("static")}, ${c("c")} est sur la pile : elle est recréée à ${C0} à chaque appel.`]])];
+  const P=[];for(const [type,lu,msg] of MU){const v=joue(lu);if(v.join()!==att.join()&&!P.some(p=>p.out.join()===v.join()))P.push({type,out:v,msg,etape:type.startsWith("bloc")?0:type.startsWith("param")?1:2});}
+  if(!P.length)return null;
+  const E=[{w:`Dans le bloc, ${c("int x = y + "+D)} crée un x local : ${B} + ${D} = ${B+D}, puis × 2 : <b>${att[0]}</b>. Il disparaît à la fin du bloc.`,why:"On prend la définition la plus proche en remontant les blocs.",pts:1},
+    {w:sh?`Dans ${c("ajoute")}, ${c("x")} est le paramètre : ${c("x = x + "+Ee)} change la copie. La globale reste <b>${A}</b>.`:`${c("ajoute("+Ee+")")} : dans ajoute, x est la globale : ${A} + ${Ee} = <b>${att[1]}</b>.`,why:"Une fonction voit la globale, sauf si un paramètre ou une variable locale porte le même nom.",pts:1},
+    {w:st?`${c("c")} est ${c("static")} : créée une fois à ${C0}, elle gagne ${S} à chaque appel. ${nc} appels : ${C0} + ${nc} × ${S} = <b>${att[2]}</b>.`:`${c("c")} est une variable locale : à chaque appel, elle repart de ${C0}. Le dernier appel renvoie ${C0} + ${S} = <b>${att[2]}</b>.`,why:"static : segment statique, toute la vie du programme ; sinon : la pile, le temps de l'appel.",pts:1},
+    {w:`<b>Le programme affiche</b> :${pave9(att)}`,why:"Trois printf, trois lignes.",pts:0.5}];
+  return {sig:"C2b"+src,q:`Qu'affiche ce programme ?`,corps:blocC(src),texte:`portée : x=${A} y=${B} D=${D} ${sh?"param x":"k"} ${st?"static":"local"} ×${nc}`,
+    champs:[{k:"code",id:"s",nom:"affichage",label:"Ce que le programme affiche, ligne par ligne&nbsp;:",lignes:4}],
+    juge:rep=>{const L=lis9(rep.s,att);if(!L.length)return {incomplet:"Écris ce que le programme affiche, ligne par ligne."};if(memes9(L,att))return {ok:true};
+      const no=no9(["s"],"Pas tout à fait : ce n'est pas ce que le programme affiche."),m=P.find(p=>memes9(L,p.out));if(m)return no(m.etape,m.type,"Où ça part : "+m.type+".",m.msg);
+      const i=L.findIndex((x,j)=>plat9(x)!==att[j]);return no(Math.max(0,Math.min(2,i)),"affichage différent","Où ça part : la ligne "+(i+1)+".","Pour chaque x, cherche la définition la plus proche, en remontant les blocs.");},
+    etapes:E,bonne:pave9(att),bonneTxt:att.join(" ⏎ "),repBonne:{s:att.join("\n")},repFausse:{s:P[0].out.join("\n")},nature:"portée et static",
+    ens:{fam:"portee",A,B,D,Ee,C0,S,nc,sh,st,att,pieges:P.map(p=>({type:p.type,s:p.out.join("\n")})),bash:[vraiC9(src,"prog",[],[...att,"#code 0"])]}};}
+
+/* palier 4 : un programme entier, lancé avec ses paramètres, puis echo $? (fact.c et moy.c du cours) */
+function exoC3(R){const t=R.choix(["fact","moy","moy","max"]),r1=R.ent(1,4),r2=r1+R.ent(1,3),r3=R.choix([0,0,13,R.ent(3,9)]);let src,joue,nom=t,A;
+  if(t==="fact"){src=`#include <stdio.h>\n#include <stdlib.h>\n\nunsigned int fact(unsigned int n) {\n  if (n <= 1) return 1;\n  return n * fact(n - 1);\n}\n\nint main(int argc, char *argv[]) {\n  if (argc != 2) {\n    fprintf(stderr, "Syntaxe : %s <entier>\\n", argv[0]);\n    return ${r1};\n  }\n  int n = atoi(argv[1]);\n  if (n < 0) {\n    fprintf(stderr, "Il faut un entier positif !\\n");\n    return ${r2};\n  }\n  printf("%d!=%d\\n", n, fact(n));\n  return ${r3};\n}`;
+    A=R.choix([[],[String(R.ent(0,7))],[String(R.ent(0,7))],["-"+R.ent(1,9)],["toto"],[String(R.ent(1,5)),String(R.ent(1,5))]]);
+    joue=lu=>{const ac=A.length+(lu.argc?0:1);if(ac!==2)return {o:lu.err?[`Syntaxe : ./fact <entier>`]:[],c:r1};const n=parseInt(A[0])||0;if(n<0)return {o:lu.err?["Il faut un entier positif !"]:[],c:r2};
+      let f=1;for(let i=2;i<=n;i++)f*=i;return {o:[`${n}!=${f}`],c:lu.zero?0:r3};};}
+  else if(t==="moy"){const fl=R()<0.6;nom="moy";A=[...Array(R.ent(2,4))].map(()=>String(R.ent(1,20)));if(R()<0.25)A[R.ent(0,A.length-1)]="toto";
+    src=`#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char *argv[]) {\n  ${fl?"float":"int"} m = 0;\n  for (int i = 1; i < argc; i++) {\n    m += atoi(argv[i]);\n  }\n  printf("Moyenne des %d nombres : ${fl?"%.2f":"%d"}\\n", argc - 1, m / (argc - 1));\n  return ${r3};\n}`;
+    joue=lu=>{const s=A.reduce((x,a)=>x+(parseInt(a)||0),0),k=A.length+(lu.argc?1:0),kk=lu.toto?A.filter(a=>a!=="toto").length:k;
+      const q=(fl&&!lu.ent)||(!fl&&lu.reel)?(s/kk).toFixed(2):String(Math.trunc(s/kk));return {o:[`Moyenne des ${kk} nombres : ${q}`],c:lu.zero?0:r3};};}
+  else{nom="max";A=R.choix([[],[0,0,0].map(()=>String(R.ent(-5,30))),[0,0].map(()=>String(R.ent(-5,30))),[0,0,0,0].map(()=>String(R.ent(-5,30)))]);
+    src=`#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char *argv[]) {\n  if (argc < 2) {\n    fprintf(stderr, "Usage : %s n1 n2 ...\\n", argv[0]);\n    return ${r1};\n  }\n  int max = atoi(argv[1]);\n  for (int i = 2; i < argc; i++) {\n    if (atoi(argv[i]) > max) max = atoi(argv[i]);\n  }\n  printf("max = %d\\n", max);\n  return max > 10 ? ${r2} : ${r3};\n}`;
+    joue=lu=>{if(A.length+(lu.argc?0:1)<2)return {o:lu.err?["Usage : ./max n1 n2 ..."]:[],c:r1};const B=A.length?A:["0"];let m=+B[0];B.forEach(x=>{if(+x>m)m=+x;});
+      return {o:[`max = ${m}`],c:lu.zero?0:m>10?r2:r3};};}
+  const lig="./"+nom+(A.length?" "+A.join(" "):"")+" ; echo $?",res=joue({}),att=res.o,code=String(res.c);
+  if(t==="moy"&&A.length===0)return null;
+  const MU=[["message d'erreur compté",{err:1},`${c("fprintf(stderr, …)")} écrit sur la sortie d'erreur, pas sur la sortie standard : il s'affiche à l'écran, mais ce n'est pas ce que le programme affiche avec printf.`],
+    ["nom du programme oublié dans argc",{argc:1},`${c("argc")} compte aussi le nom du programme : avec ${A.length} paramètre${A.length>1?"s":""}, argc vaut ${A.length+1}.`],
+    ["code de retour lu comme 0",{zero:1},`${cr("echo $?")} affiche le code renvoyé par ${c("return")} dans main, ici ${code} : il n'est pas toujours 0.`],
+    ...(t==="moy"?[["division entière ou réelle",{ent:1,reel:1},`${c("m")} est ${src.includes("float m")?"un float : la division est réelle, et %.2f garde 2 décimales":"un int : la division est entière, la partie après la virgule est perdue"}.`],["toto compté comme une erreur",{toto:1},`${c('atoi("toto")')} ne plante pas : il renvoie 0, et toto compte comme un nombre de plus.`]]:[])];
+  const P=[];for(const [type,lu,msg] of MU){const r=joue(lu),v={s:r.o,q:String(r.c)};if((!memes9(v.s,att)||v.q!==code)&&!P.some(p=>memes9(p.s,v.s)&&p.q===v.q))P.push({type,s:v.s,q:v.q,msg});}
+  if(!P.length)return null;
+  const branche=t==="fact"?(A.length!==1?"argc != 2":parseInt(A[0])<0?"n < 0":"ok"):t==="max"?(A.length<1?"argc < 2":"ok"):"ok";
+  const E=[{w:`${c(lig.replace(" ; echo $?",""))} : argc = ${A.length+1} (le nom du programme compte), ${A.map((a,i)=>`argv[${i+1}] = ${c(a)}`).join(", ")||"aucun paramètre"}.`,why:`${c("atoi")} convertit une chaîne en entier ; une chaîne qui n'est pas un nombre donne 0.`,pts:1},
+    {w:branche!=="ok"?`Le test ${c(branche)} est vrai : le message part sur la sortie d'erreur (${c("stderr")}), et main renvoie ${code}. Rien sur la sortie standard.`:t==="fact"?`n = ${parseInt(A[0])||0}, positif : ${c("fact")} calcule ${att[0].split("=")[0]} = ${att[0].split("=")[1]}.`:t==="moy"?`Somme : ${A.map(a=>parseInt(a)||0).join(" + ")} = ${A.reduce((x,a)=>x+(parseInt(a)||0),0)} ; ${A.length} nombres ; ${src.includes("float m")?"division réelle (m est un float), 2 décimales":"division entière (m est un int)"}.`:`On garde le plus grand de ${et(A)} : ${att[0].split("= ")[1]}.`,why:branche!=="ok"?"return dans main termine le programme : la suite n'est pas exécutée.":"printf écrit sur la sortie standard.",pts:1.5},
+    {w:`<b>Le programme affiche</b> :${pave9(att)}puis ${cr("echo $?")} affiche <b>${code}</b>.`,why:`${cr("$?")} est le code de retour de la dernière commande : la valeur du ${c("return")} de main.`,pts:1}];
+  const juge=rep=>{const L=lis9(rep.s,att),q=propre(rep.q);if(!q||(!L.length&&!/rien/i.test(String(rep.s||""))&&att.length))return {incomplet:"Réponds aux deux : ce qu'affiche le programme (écris « rien » s'il n'affiche rien) et ce qu'affiche echo $?."};
+    const v=ent9(q);if(v.err)return {incomplet:"Pour echo $?, écris un nombre."};
+    const okS=memes9(L,att),okQ=String(v.v)===code;if(okS&&okQ)return {ok:true};
+    const no=no9([...(okS?[]:["s"]),...(okQ?[]:["q"])],"Pas tout à fait : "+(okS?"le code de retour est faux.":okQ?"l'affichage est faux.":"l'affichage et le code de retour sont faux.")),m=P.find(p=>memes9(L,p.s)&&p.q===String(v.v))||P.find(p=>!okS&&memes9(L,p.s))||P.find(p=>okS&&p.q===String(v.v)&&memes9(p.s,att));
+    if(m)return no(m.type.startsWith("code")?2:m.type.startsWith("nom")?0:1,m.type,"Où ça part : "+m.type+".",m.msg);
+    return no(okS?2:1,"résultat différent","Où ça part : "+(okS?"le code de retour":"l'affichage")+".",okS?`${cr("$?")} vaut ce que main a renvoyé avec ${c("return")}, dans la branche où le programme est passé.`:"Suis le programme ligne par ligne avec ces paramètres, comme dans la correction.");};
+  return {sig:"C3"+src+lig,q:`Ce programme est compilé sous le nom ${c(nom)}. Qu'affiche-t-il sur la sortie standard, et qu'affiche ensuite ${cr("echo $?")} ?`,corps:blocC(src)+blocr(lig),texte:`programme ${nom} : `+lig,
+    champs:[{k:"code",id:"s",nom:"affichage",label:"Ce que le programme affiche (sans la sortie d'erreur ; « rien » s'il n'affiche rien)&nbsp;:",lignes:2},{k:"champ",id:"q",nom:"code de retour",label:"echo &#36;? affiche :",ex:"un entier",apercu:false,sym:[]}],
+    juge,etapes:E,bonne:`${pave9(att)} puis ${code}`,bonneTxt:(att.join(" ⏎ ")||"rien")+" ; "+code,repBonne:{s:att.length?att.join("\n"):"rien",q:code},repFausse:{s:P[0].s.length?P[0].s.join("\n"):"rien",q:P[0].q},nature:"un programme entier et echo $?",
+    ens:{fam:"prog",t,A,att,code,pieges:P.map(p=>({type:p.type,s:p.s.length?p.s.join("\n"):"rien",q:p.q})),bash:[vraiC9(src,nom,A,[...att,"#code "+code])]}};}
+const tireC=k=>R=>{for(;;){const e=[exoC0,exoC1,exoC2,exoC3][k](R);if(e)return e;}};
 G.add("usi",[
  {id:"US1",t:"Les droits : ls -l, chmod et umask",tache:"droits et umask",th:"fichiers",pts:1.5,lecons:["u-droits","u-umask"],
   paliers:[
@@ -31640,6 +31880,12 @@ G.add("usi",[
    {t:"écrire une petite fonction, comme en 2022, 2023 et 2024",cc:5,min:200,gen:tirePy(1)},
    {t:"un fichier et un dictionnaire",cc:8,min:200,gen:tirePy(2)},
    {t:"le parcours récursif d'un dossier, comme aux examens",cc:15,min:200,gen:tirePy(3)}]},
+ {id:"US9",t:"Le C sous Unix : argc et argv, gcc, passage par valeur et portée",tache:"le C sous Unix",th:"c",pts:2,lecons:["u-c"],
+  paliers:[
+   {t:"argc et argv",cc:1,min:150,gen:tireC(0)},
+   {t:"les étapes de gcc",cc:1,min:100,gen:tireC(1)},
+   {t:"passage par valeur, pointeurs et portée",cc:3,min:150,gen:tireC(2)},
+   {t:"un programme entier et son code de retour, comme au cours",cc:4,min:150,gen:tireC(3)}]},
  {id:"US10",t:"Les processus : fork, ; && ||, états, arrière-plan et kill",tache:"processus",th:"processus",pts:1.5,lecons:["u-processus","u-redir"],
   paliers:[
    {t:"combien de processus une ligne crée",cc:1,min:150,gen:tirePr(0)},
