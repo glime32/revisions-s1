@@ -31044,6 +31044,291 @@ function exoCh3(R){const F=R.mel(FICP2).slice(0,4),[A,BC]=R.choix(RANGE2),pl=R.c
     ens:{fam:"cmd",T,ref,cible,avant,faits:ops.flatMap(o=>o.faits),alt:ALT,pieges:PI,bash:[ref,...ALT,...PI.map(x=>x.c)].map(s=>vraiCmd2(T,s))}};}
 const tireCh=k=>R=>{for(;;){const e=[exoCh0,exoCh1,exoCh2,exoCh3][k](R);if(e)return e;}};
 
+/* ---------- US3 : inodes et liens. Des noms qui mènent à un inode (compteur de liens, contenu) ou à un chemin (lien symbolique), rejoués commande par commande ; la taille maximale par les blocs directs et indirects ; la cohérence des tables du TD ---------- */
+const grille3=(tete,rows)=>`<div style="overflow-x:auto"><table class="tbl tr"><thead><tr>${tete.map(v=>`<th>${v}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const nl3=n=>n+(n>1?" liens":" lien");
+const SUP3="⁰¹²³⁴⁵⁶⁷⁸⁹",pw3=e=>"2"+String(e).split("").map(d=>SUP3[d]).join("");
+/* un nombre tapé : 1024, 2^10, 2¹⁰, 4 Tio, 4 Ti octets, 4 Mo, 16 fois, ×16 */
+function lisN3(s){s=propre(String(s==null?"":s).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g,m=>"^"+[...m].map(ch=>SUP3.indexOf(ch)).join(""))).toLowerCase();
+  s=s.replace(/environ|à peu près|a peu pres|multipliée par|multipliee par|divisée par|divisee par|fois|bits?\b|blocs?\b|adresses?\b|liens?\b|sous-répertoires?|[≈~]/g,"").replace(/\*\*/g,"^").replace(/\s/g,"").replace(/^[×x*]/,"").replace(/,/g,".");
+  if(!s)return {vide:1};let M;
+  if((M=/^2\^(\d+)(o|b|octets?)?$/.exec(s)))return {v:2**+M[1]};
+  if((M=/^(\d+)[*×x.]2\^(\d+)(o|b|octets?)?$/.exec(s)))return {v:+M[1]*2**+M[2]};
+  if((M=/^(\d+(?:\.\d+)?)([kmgtpe])(i)?(o|b|octets?)?$/.exec(s)))return {v:+M[1]*2**(10*("kmgtpe".indexOf(M[2])+1))};
+  if((M=/^(\d+)(o|b|octets?)?$/.exec(s)))return {v:+M[1]};
+  return {err:"Écris un nombre : par exemple 1024, 2^10, 4 Mio ou 4 Tio."};}
+function jugeN3(s,acc,P,id,etape,quoi){const r=lisN3(s);if(r.vide)return {incomplet:"Écris un nombre."};if(r.err)return {incomplet:r.err};
+  if(acc.includes(r.v))return {ok:true};
+  const non=(type,titre,msg,et)=>({ok:false,faux:[id],resume:`Pas tout à fait : ce n'est pas ${quoi}.`,diag:{etape:et,type,titre,msg}});
+  for(const x of P)if(x.v===r.v)return non(x.type,x.titre||"Où ça part : ce qu'on compte.",x.msg,x.etape||0);
+  return non("compte faux","Où ça part : le compte.","Refais le compte avec la correction, étape par étape.",etape);}
+const unique3=(P,acc)=>{const L=[];for(const x of P)if(x.v!==undefined&&!acc.includes(x.v)&&!L.some(y=>y.v===x.v))L.push(x);return L;};
+
+/* palier 1 : le nombre de liens d'un répertoire */
+const SOUS3=["tp1","tp2","td","src","tests","doc","old","images","notes","exos"],FIC3=["main.c","notes.txt","rapport.pdf","script.sh","data.csv","README"];
+const vraiNb3=(T,cmd,att)=>({arbo:arboDe([T]),cmd,args:[],nom:"./liens.sh",script:true,abs:[String(att)]});
+function exoIn0(R){const f=R.choix([0,0,0,1,1,2,2]);
+  if(f<2){const X=R.choix(["tp","cours","usi","photos","rendu"]),s=R.ent(0,4),nf=R.ent(f?0:1,3),noms=R.mel(SOUS3).slice(0,s),fics=R.mel(FIC3).slice(0,nf);let pe=0;
+    const sous=noms.map(n=>{const k=R()<0.4?R.ent(1,2):0;pe+=k;return dossier(n,[...[...Array(k)].map((_,j)=>dossier(["v1","v2"][j],[fichier("a.txt")])),...(R()<0.5?[fichier(R.choix(["exo.py","cr.txt","img.png"]))]:[])]);});
+    const T=dossier(X,[...sous,...fics.map(fichier)]),k=2+s,bash=[vraiNb3(T,"stat -c %h "+X,k)];
+    const deux=`sa propre entrée ${c(".")} et son nom ${c(X)} dans le répertoire parent`;
+    if(f===0){const P=unique3([
+        {type:"« . » ou le nom oublié",v:1+s,msg:`Un répertoire a déjà 2 liens à lui seul : ${deux}. Puis 1 de plus par sous-répertoire.`},
+        {type:"sous-répertoires oubliés",v:2,msg:`Chaque sous-répertoire a une entrée ${c("..")} qui désigne ${c(X)} : un lien de plus par sous-répertoire.`,etape:1},
+        {type:"fichiers comptés",v:2+s+nf,msg:`Un fichier n'a pas d'entrée ${c("..")} : il ne fait pas de lien vers le répertoire qui le contient. Seuls les sous-répertoires comptent.`,etape:1},
+        {type:"sous-sous-répertoires comptés",v:2+s+pe,msg:`Seuls les sous-répertoires directs comptent : le ${c("..")} d'un sous-sous-répertoire désigne son propre parent, pas ${c(X)}.`,etape:1},
+        {type:"seulement les sous-répertoires",v:s,msg:`Il faut ajouter les 2 liens de départ : ${deux}.`}],[k]);
+      if(!P.length)return null;
+      const E=[{w:`${c(X)} est désigné par ${deux} : 2 liens.`,why:"Même vide, un répertoire a ces deux liens.",pts:1},
+        {w:`Ses sous-répertoires directs : ${s?et(noms.map(c)):"aucun"}. ${s?`Chacun a une entrée ${c("..")} qui désigne ${c(X)} : ${nl3(s)} de plus.`:"Aucun lien de plus."}`,why:`Les fichiers n'ont pas d'entrée ${c("..")}, et le ${c("..")} d'un sous-sous-répertoire désigne son propre parent.`,pts:1.5},
+        {w:`<b>2 + ${s} = ${k}</b>`,why:`C'est le nombre que ${c("ls -ld "+X)} affiche en 2e colonne.`,pts:0.5}];
+      return {sig:"I0"+dessin(T,X),q:`Voici le répertoire ${c(X)}, avec tout ce qu'il contient. Combien de liens a-t-il : quel nombre ${c("ls -ld "+X)} affiche-t-il en 2e colonne ?`,corps:bloc(dessin(T,X)),texte:`liens de ${X} : `+dessin(T,X).replace(/\n/g," "),
+        champs:[{k:"champ",id:"n",nom:"liens",label:"Le nombre de liens :",ex:"par exemple 3",apercu:false,sym:[]}],juge:rep=>jugeN3(rep.n,[k],P,"n",1,`le nombre de liens de ${c(X)}`),etapes:E,bonne:String(k),bonneTxt:String(k),repBonne:{n:String(k)},repFausse:{n:String(P[0].v)},nature:"liens d'un répertoire",
+        ens:{fam:"nbl",T,X,att:k,pieges:P.map(x=>({type:x.type,n:String(x.v)})),bash}};}
+    const P=unique3([{type:"compteur pris pour les sous-répertoires",v:k,msg:`Les 2 premiers liens ne viennent pas de sous-répertoires : ${deux}. Il faut les retirer.`},
+      {type:"un seul des deux premiers liens retiré",v:k-1,msg:`Il y a 2 liens qui ne viennent pas des sous-répertoires : ${deux}.`}],[s]);
+    const lsl=`drwxr-xr-x ${k} etu etu 4096 nov. ${R.ent(10,19)} ${R.ent(10,18)}:${String(R.ent(10,59))} ${X}`;
+    const E=[{w:`Sur les ${nl3(k)}, 2 viennent de ${c(X)} lui-même : ${deux}.`,why:"Tout répertoire a ces deux liens, même vide.",pts:1.5},
+      {w:`Les autres viennent des entrées ${c("..")} de ses sous-répertoires : ${k} − 2 = ${s}.`,why:`Chaque sous-répertoire a une entrée ${c("..")} qui désigne son parent ; les fichiers n'en ont pas.`,pts:1},
+      {w:`<b>${s} sous-répertoire${s>1?"s":""}</b>`,why:`Les fichiers ne comptent pas : le nombre de liens ne dit rien de leur nombre.`,pts:0.5}];
+    return {sig:"I1"+X+k,q:`${c("ls -ld "+X)} affiche cette ligne. Combien ${c(X)} a-t-il de sous-répertoires directs ?`,corps:bloc(lsl),texte:lsl+" : combien de sous-répertoires ?",
+      champs:[{k:"champ",id:"n",nom:"sous-répertoires",label:"Le nombre de sous-répertoires :",ex:"par exemple 2",apercu:false,sym:[]}],juge:rep=>jugeN3(rep.n,[s],P,"n",1,`le nombre de sous-répertoires de ${c(X)}`),etapes:E,bonne:String(s),bonneTxt:String(s),repBonne:{n:String(s)},repFausse:{n:String(P[0].v)},nature:"sous-répertoires d'après les liens",
+      ens:{fam:"sousrep",X,k,att:s,pieges:P.map(x=>({type:x.type,n:String(x.v)})),bash}};}
+  /* le tableau des liens du TD, exercice 22 */
+  const nos=R.mel([148,272,2405,256,498,311,1207,736,905,4410]).slice(0,5);let ks;
+  for(;;){ks=nos.map(()=>R.choix([1,1,2,2,3,4,5]));if(ks.includes(1)&&ks.includes(2)&&ks.some(x=>x>2))break;}
+  const g=R.choix([0,1]),sel=t=>nos.filter((n,i)=>t(ks[i])).map(String),att=g?sel(x=>x>=2):sel(x=>x===1);
+  const P=(g?[{type:"répertoire vide oublié",g:sel(x=>x>=3),msg:"Un répertoire vide a exactement 2 liens : son nom dans le parent et son « . ». Avec 2 liens, ce peut donc être un répertoire."},
+      {type:"tout coché",g:nos.map(String),msg:"Un répertoire a toujours au moins 2 liens : avec 1 seul lien, c'est forcément un fichier."},
+      {type:"à l'envers",g:sel(x=>x===1),msg:"Ce sont les inodes à 1 lien qui ne peuvent pas être des répertoires : un répertoire a au moins 2 liens."}]
+    :[{type:"2 liens pris pour un fichier sûr",g:sel(x=>x<=2),msg:"Avec 2 liens, on ne peut pas conclure : ce peut être un répertoire vide (son nom et son « . »), ou un fichier qui a un lien dur."},
+      {type:"à l'envers",g:sel(x=>x>=2),msg:"Avec plusieurs liens, on ne peut pas conclure : un fichier peut avoir des liens durs. C'est avec 1 seul lien qu'on est sûr : un répertoire en a au moins 2."}]).filter(x=>x.g.join()!==att.join());
+  const tri3=L=>L.slice().sort().join(","),O=[...nos.map(n=>[String(n),"inode "+n]),["0","aucun"]];
+  function juge(rep){const S=(rep.g||[]).map(String);if(!S.length)return {incomplet:"Coche les inodes (ou « aucun »)."};const v=S.includes("0")?[]:S;
+    if(tri3(v)===tri3(att))return {ok:true};
+    const non=(type,titre,msg,et)=>({ok:false,faux:["g"],resume:`Pas tout à fait : ce ne sont pas les inodes qui ${g?"peuvent être des répertoires":"sont sûrement des fichiers"}.`,diag:{etape:et,type,titre,msg}});
+    for(const x of P)if(tri3(x.g)===tri3(v))return non(x.type,"Où ça part : la règle des 2 liens.",x.msg,0);
+    return non("inode mal classé","Où ça part : un inode.",`Regarde chaque nombre de liens : 1 lien, c'est sûrement un fichier ; 2 liens ou plus, ce peut être un répertoire (ou un fichier avec des liens durs).`,1);}
+  const E=[{w:`Un répertoire a au moins 2 liens : son nom dans le répertoire parent et son entrée ${c(".")} en lui-même. Un fichier ordinaire peut avoir 1 lien, ou plus s'il a des liens durs.`,why:"C'est la règle du TD, exercice 22.",pts:1.5},
+    {w:nos.map((n,i)=>`inode ${n} : ${nl3(ks[i])}, ${ks[i]===1?"sûrement un fichier":"fichier ou répertoire"}`).join("<br>"),why:"On ne peut conclure que pour 1 lien.",pts:1},
+    {w:`<b>${att.length?att.map(x=>"inode "+x).join(", "):"aucun"}</b>`,why:g?"Avec 2 liens ou plus, rien n'interdit un répertoire.":"Seul 1 lien permet de conclure.",pts:0.5}];
+  return {sig:"I2"+g+nos.join()+ks.join(),q:`Voici le nombre de liens de cinq inodes (TD, exercice 22). Lesquels ${g?"peuvent être des répertoires":"sont sûrement des fichiers ordinaires, pas des répertoires"} ?`,corps:grille3(["inode","nb. de liens"],nos.map((n,i)=>[n,ks[i]])),texte:nos.map((n,i)=>n+":"+ks[i]).join(" ")+(g?" : répertoires possibles ?":" : fichiers sûrs ?"),
+    champs:[{k:"multi",id:"g",o:O,seul:"0"}],juge,etapes:E,bonne:att.map(x=>"inode "+x).join(", "),bonneTxt:att.join(" "),repBonne:{g:att},repFausse:{g:P[0].g},nature:g?"liens : répertoire possible":"liens : fichier sûr",
+    ens:{fam:"td22",g,nos,ks,pieges:P.map(x=>({type:x.type,g:x.g}))}};}
+
+/* palier 2 : ln, ln -s, rm, mv, cp, >> ; lu : une lecture fausse des commandes */
+function joue3(ops,lu){lu=lu||{};const N=new Map(),I=[];const vise=(x,k)=>{const e=N.get(x);if(!e||(k||0)>8)return null;return e.t==="f"?e.i:vise(e.v,(k||0)+1);};
+  for(const [k0,a,b] of ops){let k=k0;if(k==="lns"&&lu.symDur)k="ln";else if(k==="ln"&&lu.durSym)k="lns";else if(k==="ln"&&lu.lnCopie)k="cp";else if(k==="cp"&&lu.cpLien)k="ln";
+    if(k==="cree"){I.push({n:1,c:[b],sy:0});N.set(a,{t:"f",i:I.length-1});}
+    else if(k==="ln"){const i=vise(a);if(i==null||N.has(b))continue;I[i].n++;N.set(b,{t:"f",i});}
+    else if(k==="lns"){if(N.has(b))continue;const i=vise(a);if(lu.symCompte&&i!=null)I[i].sy++;N.set(b,{t:"l",v:a});}
+    else if(k==="cp"){const i=vise(a);if(i==null||N.has(b))continue;I.push({n:1,c:I[i].c.slice(),sy:0});N.set(b,{t:"f",i:I.length-1});}
+    else if(k==="rm"){const e=N.get(a);if(!e)continue;if(e.t==="f"&&lu.rmTout){for(const [x,y] of [...N])if(y.t==="f"&&y.i===e.i)N.delete(x);I[e.i].n=0;}else{N.delete(a);if(e.t==="f"&&!lu.rmOubli)I[e.i].n--;}}
+    else if(k==="mv"){const e=N.get(a);if(!e||N.has(b))continue;N.delete(a);N.set(b,e);if(lu.mvSuit)for(const y of N.values())if(y.t==="l"&&y.v===a)y.v=b;}
+    else if(k==="ajoute"){const i=vise(a);if(i!=null)I[i].c.push(b);}}
+  return {N,I,vise};}
+const cmd3=([k,a,b])=>k==="cree"?`echo ${b} > ${a}`:k==="ln"?`ln ${a} ${b}`:k==="lns"?`ln -s ${a} ${b}`:k==="rm"?`rm ${a}`:k==="mv"?`mv ${a} ${b}`:k==="cp"?`cp ${a} ${b}`:`echo ${b} >> ${a}`;
+const nbDe3=(s,x,lu)=>{const e=s.N.get(x);if(!e)return undefined;if(e.t==="l"){if(!(lu&&lu.viseCompte))return 1;const i=s.vise(x);return i==null?undefined:s.I[i].n;}return s.I[e.i].n+s.I[e.i].sy;};
+const catDe3=(s,x)=>{const i=s.vise(x);return i==null?"ERR":s.I[i].c.join("\n");};
+const LU3=[["ln -s lu comme un lien dur","symDur",`${c("ln -s")} ne crée pas un deuxième nom pour l'inode : il crée un nouveau petit fichier, de type l, qui contient seulement un chemin. Le compteur du fichier visé ne bouge pas, et le raccourci casse quand ce chemin ne mène plus à rien.`],
+  ["ln lu comme ln -s","durSym",`Sans ${c("-s")}, ${c("ln")} crée un lien dur : un deuxième nom pour le même inode. Il ne dépend pas de l'ancien nom : supprimer ou renommer l'un laisse l'autre intact.`],
+  ["ln lu comme une copie","lnCopie",`${c("ln")} ne copie rien : les deux noms désignent le même inode, donc le même contenu et le même compteur. Ce qu'on ajoute par un nom se voit par l'autre.`],
+  ["cp lu comme ln","cpLien",`${c("cp")} crée un nouvel inode avec une copie du contenu : la copie a 1 lien, et elle ne change plus quand on modifie l'original.`],
+  ["rm qui efface tous les noms","rmTout",`${c("rm")} enlève un seul nom et retire 1 au compteur. Le contenu n'est effacé que quand le compteur tombe à 0 : les autres noms de l'inode marchent toujours.`],
+  ["rm oublié dans le compte","rmOubli",`Chaque ${c("rm")} d'un nom retire 1 au compteur de liens de son inode.`],
+  ["raccourci qui suit mv","mvSuit",`Un lien symbolique contient un chemin, pas un numéro d'inode : après ${c("mv")}, l'ancien nom n'existe plus, et le raccourci qui le visait est cassé (il remarche si un fichier reprend ce nom).`],
+  ["ln -s ajouté au compteur","symCompte",`Un lien symbolique ne change pas le compteur de liens du fichier visé : seuls les liens durs (${c("ln")} sans ${c("-s")}) comptent.`],
+  ["compteur du fichier visé","viseCompte",`${c("ls -l")} sur un lien symbolique montre l'inode du raccourci lui-même, qui n'a qu'un nom : 1 lien. Le compteur du fichier visé n'est pas le sien.`]];
+const NOMS3=["t2","lien","copie","sauve","c.txt","raccourci","double","vieux","autre","b2"];
+function recit3(ops,no){const L=[];
+  for(let t=0;t<ops.length;t++){const av=joue3(ops.slice(0,t)),ap=joue3(ops.slice(0,t+1)),o=ops[t],[k,a,b]=o,cm=c(cmd3(o));
+    const noms=i=>[...ap.N].filter(([x,e])=>e.t==="f"&&e.i===i).map(([x])=>c(x));let w;
+    if(k==="cree"){const i=ap.I.length-1;w=`${cm} : crée ${c(a)}, ${no(i)}, 1 lien, contenu « ${b} ».`;}
+    else if(k==="ln"){const i=ap.N.get(b).i;w=`${cm} : ${c(b)} est un nom de plus pour ${no(i)}, qui a maintenant ${nl3(ap.I[i].n)} (${et(noms(i))}).`;}
+    else if(k==="lns")w=`${cm} : ${c(b)} est un raccourci, un nouveau petit fichier qui contient le chemin ${c(a)}. Le compteur de ${c(a)} ne bouge pas.`;
+    else if(k==="rm"){const e=av.N.get(a);if(e.t==="l")w=`${cm} : supprime le raccourci ${c(a)} ; le fichier visé n'est pas touché.`;
+      else{const n=ap.I[e.i].n;w=`${cm} : le nom ${c(a)} disparaît ; ${no(e.i)} passe à ${n?`${nl3(n)} (il reste ${et(noms(e.i))})`:"0 : son contenu est libéré"}.`;}}
+    else if(k==="mv")w=`${cm} : ${no(av.N.get(a).i)} s'appelle maintenant ${c(b)} ; son compteur ne change pas.`;
+    else if(k==="cp"){const i=ap.N.get(b).i;w=`${cm} : ${c(b)} est un nouvel inode, ${no(i)} (1 lien), avec une copie du contenu de ${c(a)}.`;}
+    else{const i=av.vise(a);w=`${cm} : ajoute la ligne « ${b} » au contenu de ${no(i)}${av.N.get(a).t==="l"?`, en passant par le raccourci ${c(a)}`:""}${noms(i).length>1?` ; ${et(noms(i))} la voient tous${noms(i).length===2?" les deux":""}`:""}.`;}
+    for(const [x,e] of ap.N)if(e.t==="l"&&av.N.has(x)){const d0=av.vise(x)==null,d1=ap.vise(x)==null;
+      if(!d0&&d1)w+=` Le raccourci ${c(x)}, qui contient le chemin ${c(e.v)}, est cassé.`;else if(d0&&!d1)w+=` Le raccourci ${c(x)} remarche : le nom ${c(e.v)} existe de nouveau.`;}
+    L.push(w);}
+  return L;}
+function exoIn1(R){const ops=[["cree","a.txt","bonjour"]];if(R()<0.4)ops.push(["cree","b.txt","salut"]);
+  const libres=R.mel(NOMS3),n=R.ent(3,5);let essais=0;
+  for(let t=0;t<n;t++){if(++essais>40)return null;const s=joue3(ops),reg=[...s.N].filter(([x,e])=>e.t==="f").map(([x])=>x),tous=[...s.N.keys()],ok=tous.filter(x=>s.vise(x)!=null);
+    const k=t===0?R.choix(["ln","lns"]):R.choix(["ln","ln","lns","lns","rm","rm","rm","ajoute","ajoute","mv","cp"]),neuf=()=>libres.pop();
+    if(k==="ln"&&reg.length)ops.push(["ln",R.choix(reg),neuf()]);
+    else if(k==="lns"&&reg.length)ops.push(["lns",R.choix(reg),neuf()]);
+    else if(k==="rm"&&tous.length>1){const x=R.choix(tous);ops.push(["rm",x]);if(R()<0.4)libres.push(x);}
+    else if(k==="ajoute"&&ok.length)ops.push(["ajoute",R.choix(ok),R.choix(["suite","fin","encore"])]);
+    else if(k==="mv"&&reg.length){const x=R.choix(reg);ops.push(["mv",x,neuf()]);if(R()<0.4)libres.push(x);}
+    else if(k==="cp"&&ok.length)ops.push(["cp",R.choix(ok),neuf()]);
+    else t--;}
+  if(ops.some(o=>o.includes(undefined)))return null;
+  const S=joue3(ops),noms=[...new Set(ops.flatMap(o=>o[0]==="ajoute"||o[0]==="cree"?[o[1]]:[o[1],o[2]]).filter(Boolean))],ex=[...S.N.keys()];
+  const nb=R()<0.55,regs=ex.filter(x=>S.N.get(x).t==="f"),syms=ex.filter(x=>S.N.get(x).t==="l");
+  const piege=x=>{const att=nb?nbDe3(S,x):catDe3(S,x),P=[];for(const [type,k,msg] of LU3){const v=nb?nbDe3(joue3(ops,{[k]:1}),x,{[k]:1}):catDe3(joue3(ops,{[k]:1}),x);if(v!==undefined&&v!==att&&!P.some(y=>y.v===v))P.push({type,v,msg});}return {x,att,P};};
+  const C=(nb?(syms.length&&R()<0.2?R.mel(syms):R.mel(regs)):R.mel(noms)).map(piege).filter(y=>y.P.length);if(!C.length)return null;
+  const {x,att,P}=C[0];
+  const base=R.ent(41,97)*10,no=i=>"l'inode "+(base+i),L=recit3(ops,no),e=S.N.get(x);
+  const script=ops.map(cmd3).join("\n"),fin=nb?`stat -c %h ${x}`:`cat ${x} 2>/dev/null || echo ERR`;
+  const voit=v=>v==="ERR"?"une erreur : ce nom ne mène à aucun fichier":v.split("\n").map(c).join("<br>");
+  const concl=nb?(e.t==="l"?`À la fin, ${c(x)} est un raccourci : ${c("ls -l")} montre son propre inode, qui n'a qu'un nom.`:`À la fin, ${c(x)} désigne ${no(e.i)}, qui a ${nl3(att)} : ${et([...S.N].filter(([y,f])=>f.t==="f"&&f.i===e.i).map(([y])=>c(y)))}.`)
+    :!e?`À la fin, ${c(x)} n'existe plus : ${c("cat")} affiche une erreur.`:e.t==="l"&&att==="ERR"?`À la fin, ${c(x)} est un raccourci vers ${c(e.v)}, qui ne mène plus à aucun fichier : ${c("cat")} affiche une erreur (lien cassé).`
+    :`À la fin, ${c(x)} ${e.t==="l"?`mène, par le chemin ${c(e.v)}, à`:"désigne"} ${no(S.vise(x))}, dont le contenu est ${att.split("\n").map(y=>"« "+y+" »").join(" puis ")}.`;
+  const E=[{w:L.join("<br>"),why:`${c("ln")} ajoute un nom au même inode, ${c("ln -s")} crée un raccourci qui contient un chemin, ${c("cp")} crée un nouvel inode, ${c("mv")} renomme, ${c("rm")} enlève un nom.`,pts:2},
+    {w:concl,why:nb?"Le compteur de liens compte les noms de l'inode : chaque ln ajoute 1, chaque rm retire 1 ; ln -s, cp et mv ne le changent pas.":`${c("cat")} suit les raccourcis jusqu'à un fichier ; si le chemin ne mène à rien, c'est une erreur.`,pts:1},
+    {w:`<b>${nb?att:voit(att)}</b>`,why:nb?`C'est le nombre que montrent ${c("ls -l "+x)} (2e colonne) et ${c("stat -c %h "+x)}.`:`C'est ce qu'affiche ${c("cat "+x)}.`,pts:0.5}];
+  const q=`Dans un répertoire vide, on tape ces commandes, dans l'ordre. ${nb?`Ensuite, combien de liens ${c("ls -l")} affiche-t-il pour ${c(x)} ?`:`Ensuite, qu'affiche ${c("cat "+x)} ?`}`;
+  const bash=[{arbo:arboDe([]),cmd:script+"\n"+fin,args:[],nom:"./liens.sh",script:true,abs:nb?[String(att)]:att.split("\n")}];
+  if(nb)return {sig:"I1"+script+"|"+x,q,corps:bloc(script),texte:script.replace(/\n/g," ; ")+" ; liens de "+x+" ?",
+    champs:[{k:"champ",id:"n",nom:"liens",label:"Le nombre de liens :",ex:"par exemple 2",apercu:false,sym:[]}],juge:rep=>jugeN3(rep.n,[att],P,"n",0,`le nombre de liens de ${c(x)}`),etapes:E,bonne:String(att),bonneTxt:String(att),repBonne:{n:String(att)},repFausse:{n:String(P[0].v)},nature:"compteur après ln et rm",
+    ens:{fam:"compte",ops,x,att,pieges:P.map(y=>({type:y.type,n:String(y.v)})),bash}};
+  const V0=[...new Set([att,...P.map(y=>y.v),"ERR"])],deb=att.split("\n")[0];if(V0.length<3&&!V0.includes(deb))V0.push(deb);const V=R.mel(V0),O=V.map((v,i)=>["o"+i,voit(v)]),val=v=>"o"+V.indexOf(v);
+  function juge(rep){if(!rep.s)return {incomplet:"Choisis ce qu'affiche cat."};const v=V[+String(rep.s).slice(1)];if(v===att)return {ok:true};
+    const y=P.find(z=>z.v===v),non=(type,msg)=>({ok:false,faux:["s"],resume:`Pas tout à fait : ce n'est pas ce qu'affiche ${c("cat "+x)}.`,diag:{etape:0,type,titre:"Où ça part : ce que fait une commande.",msg}});
+    return y?non(y.type,y.msg):non("contenu faux","Rejoue les commandes une par une avec la correction : quel inode désigne chaque nom, et quel est son contenu.");}
+  return {sig:"I1"+script+"|cat "+x,q,corps:bloc(script),texte:script.replace(/\n/g," ; ")+" ; cat "+x+" ?",
+    champs:[{k:"choix",id:"s",o:O}],juge,etapes:E,bonne:voit(att),bonneTxt:att.replace(/\n/g," / "),repBonne:{s:val(att)},repFausse:{s:val(P[0].v)},nature:"cat après ln, ln -s et rm",
+    ens:{fam:"cat",ops,x,att,V,pieges:P.map(y=>({type:y.type,s:val(y.v)})),bash}};}
+
+/* palier 3 : la taille maximale ; tout est en puissances de 2 : blocs de 2^b octets, adresses de 2^a octets, L niveaux d'indirection, D adresses directes */
+const UN3=[[60,"Eio"],[50,"Pio"],[40,"Tio"],[30,"Gio"],[20,"Mio"],[10,"Kio"],[0,"octets"]];
+const taille3=e=>{const u=UN3.find(x=>e>=x[0]);return `${2**(e-u[0])} ${u[1]}`;};
+const NIV3=["simple","double","triple"];
+function exoIn2(R){const f=R.choix([0,0,0,1,2,3,4]),b=R.choix([10,11,12,12,13]),a=R.choix([2,2,3]),bits=R()<0.4,L=R.choix([3,3,2]),D=R.choix([10,10,12]),x=b-a,n=2**x,e=L*x+b;
+  const tot=e2=>{let s=D;for(let j=1;j<=L;j++)s+=2**(j*x);return s*2**e2;},exact=tot(b),Aoct=2**a;
+  const don=(bb,aa)=>`<ul><li>${D} adresses directes, puis ${L===3?"une adresse simple indirecte, une double et une triple":"une adresse simple indirecte et une double"} ;</li><li>des blocs de ${taille3(bb)} ;</li><li>des adresses sur ${bits?8*2**aa+" bits":2**aa+" octets"}.</li></ul>`;
+  const nTxt=`${bits?`${8*Aoct} bits = ${Aoct} octets, donc `:""}n = ${taille3(b)} / ${Aoct} octets = ${pw3(b)} / ${pw3(a)} = ${pw3(x)} = ${n} adresses par bloc`;
+  const niv=`Directs : ${D} blocs. ${NIV3.slice(0,L).map((t,j)=>`${t[0].toUpperCase()+t.slice(1)} indirect : n${j?SUP3[j+1]:""} = ${pw3((j+1)*x)} blocs`).join(". ")}.`;
+  const sym=[["^","^"],["Kio"," Kio"],["Mio"," Mio"],["Gio"," Gio"],["Tio"," Tio"],["Pio"," Pio"]];
+  const Pn=unique3([{type:"taille du bloc prise pour le nombre d'adresses",v:2**b,msg:`Un bloc de ${taille3(b)} contient ${2**b} octets, mais chaque adresse en prend ${Aoct} : il faut diviser par la taille d'une adresse.`},
+    ...(bits?[{type:"bits pris pour des octets",v:2**(b-a-3),msg:`Une adresse sur ${8*Aoct} bits prend ${Aoct} octets (8 bits par octet) : on divise la taille du bloc, en octets, par ${Aoct}.`}]:[]),
+    {type:"Kio pas convertis",v:2**(b-10)/Aoct,msg:`Convertis d'abord le bloc en octets : ${taille3(b)} = ${pw3(b)} octets.`}].filter(y=>Number.isInteger(y.v)&&y.v>=1),[n]);
+  const Pt=k=>unique3([{type:"nombre de blocs pris pour la taille",v:2**(L*x),msg:`n${SUP3[L]} = ${pw3(L*x)} est un nombre de blocs : il faut le multiplier par la taille d'un bloc, ${pw3(b)} octets.`,etape:k},
+    {type:"un niveau oublié",v:2**((L-1)*x+b),msg:`Il y a ${L} niveaux d'indirection : le dernier atteint n${SUP3[L]} blocs, pas n${L>2?SUP3[L-1]:""}.`,etape:k},
+    {type:"taille du bloc prise pour le nombre d'adresses",v:2**(L*b+b),msg:`Un bloc d'adresses contient n = ${n} adresses, pas ${2**b} : chaque adresse prend ${Aoct} octets.`,etape:0},
+    ...(bits?[{type:"bits pris pour des octets",v:2**(L*(x-3)+b),msg:`Une adresse sur ${8*Aoct} bits prend ${Aoct} octets : n = ${n}.`,etape:0}]:[]),
+    {type:"niveaux additionnés au lieu de multipliés",v:(D+L*n)*2**b,msg:`Chaque niveau multiplie par n : le double indirect atteint n × n = n² blocs, pas n.`,etape:k}],[2**e,exact]);
+  const fin=(w,why)=>({w,why,pts:0.5}),En={w:nTxt+".",why:"Un bloc d'adresses est rempli d'adresses de blocs : taille du bloc / taille d'une adresse.",pts:1};
+  const Ecal={w:`${niv} Le plus gros terme : n${SUP3[L]} × ${pw3(b)} = ${pw3(L*x)} × ${pw3(b)} = ${pw3(e)} octets.`,why:`Total exact : (${D} + ${["n","n²","n³"].slice(0,L).join(" + ")}) × ${taille3(b)} ; le dernier niveau écrase les autres.`,pts:1.5};
+  const ens={fam:"taille",f,b,a,L,D,bits},IA=`<p>Un inode a :</p>${don(b,a)}`;
+  if(f===0){const P=Pt(1);if(!P.length)return null;
+    const juge=rep=>{const jn=jugeN3(rep.n,[n],Pn,"n",0,"le nombre d'adresses par bloc"),jt=jugeN3(rep.t,[2**e,exact],P,"t",1,"la taille maximale");
+      if(jn.incomplet||jt.incomplet)return {incomplet:jn.incomplet?"Le nombre d'adresses : "+jn.incomplet:"La taille : "+jt.incomplet};if(jn.ok&&jt.ok)return {ok:true};
+      const j=jn.ok?jt:jn;return Object.assign({},j,{faux:[...(jn.ok?[]:["n"]),...(jt.ok?[]:["t"])]});};
+    return {sig:"I2"+[f,b,a,bits,L,D].join(),q:"Combien d'adresses tient un bloc, et quelle est la taille maximale d'un fichier, environ ?",corps:IA,texte:`D=${D} L=${L} bloc ${taille3(b)} adresse ${Aoct} o : n et taille max ?`,
+      champs:[{k:"champ",id:"n",nom:"adresses",label:"Adresses par bloc :",ex:"par exemple 1024",apercu:false,sym:[]},{k:"champ",id:"t",nom:"taille",label:"Taille maximale :",ex:"par exemple 4 Tio ou 2^42",apercu:false,sym}],
+      juge,etapes:[En,Ecal,fin(`<b>n = ${n} ; environ ${taille3(e)}</b>`,`${pw3(e)} octets = ${taille3(e)} : on arrondit au plus gros terme, comme le cours.`)],bonne:`n = ${n}, environ ${taille3(e)}`,bonneTxt:`${n} ; ${taille3(e)}`,
+      repBonne:{n:String(n),t:taille3(e)},repFausse:{n:String(n),t:String(P[0].v)},nature:"taille maximale",ens:Object.assign(ens,{pieges:[...Pn.map(y=>({type:y.type,n:String(y.v),t:taille3(e)})),...P.map(y=>({type:y.type,n:String(n),t:String(y.v)}))]})};}
+  if(f===1){const adr=a===2&&R()<0.4,r=adr?2:R.choix([2,2,4]),att=adr?2**L:r**(L+1);
+    const P=unique3(adr?[{type:"un seul niveau divisé",v:2,msg:`Avec des adresses deux fois plus grandes, un bloc en tient deux fois moins : n est divisé par 2, et n${SUP3[L]} par 2${SUP3[L]} = ${2**L}.`},{type:"taille du bloc comptée",v:2**(L+1),msg:"La taille des blocs ne change pas : seul n change."}]
+      :[{type:"seulement la taille d'un bloc",v:r,msg:`n change aussi : un bloc ${r} fois plus grand tient ${r} fois plus d'adresses, et le dernier niveau en atteint ${r}${SUP3[L]} fois plus.`},
+        {type:"taille d'un bloc oubliée",v:r**L,msg:`Chaque bloc de données est aussi ${r} fois plus grand : on multiplie encore par ${r}.`},{type:"niveaux additionnés",v:r*L,msg:"Les facteurs se multiplient : un facteur par niveau d'adresses, et un pour la taille du bloc."}],[att]);
+    const q=adr?`Les adresses passent à ${bits?"64 bits":"8 octets"}, sans rien changer d'autre. Par combien la taille maximale d'un fichier est-elle divisée, environ ?`:`La taille des blocs passe à ${taille3(b+Math.log2(r))}, sans rien changer d'autre. Par combien la taille maximale d'un fichier est-elle multipliée, environ ?`;
+    const E=adr?[{w:`n passe de ${pw3(x)} à ${pw3(x-1)} : divisé par 2.`,why:"Un bloc tient deux fois moins d'adresses de 8 octets.",pts:1},{w:`Le plus gros terme n${SUP3[L]} × taille d'un bloc est divisé par 2${SUP3[L]} = ${2**L}.`,why:"La taille d'un bloc ne change pas.",pts:1.5},fin(`<b>${att}</b>`,`Divisée par ${att}.`)]
+      :[{w:`n passe de ${pw3(x)} à ${pw3(x+Math.log2(r))} : multiplié par ${r}.`,why:"Un bloc plus grand tient plus d'adresses.",pts:1},{w:`Le plus gros terme n${SUP3[L]} × taille d'un bloc est multiplié par ${r}${SUP3[L]} × ${r} = ${att}.`,why:`${L} niveaux d'adresses, et des blocs de données ${r} fois plus grands (cours : « ∗16 donc 64Tio » pour 4 → 8 Kio).`,pts:1.5},fin(`<b>${att}</b>`,`De ${taille3(e)} à environ ${taille3(adr?e-L:e+(L+1)*Math.log2(r))}.`)];
+    return {sig:"I2"+[f,b,a,bits,L,D,adr,r].join(),q,corps:IA,texte:`D=${D} L=${L} bloc ${taille3(b)} adresse ${Aoct} o : ${adr?"adresses ×2":"blocs ×"+r} ?`,
+      champs:[{k:"champ",id:"n",nom:"facteur",label:adr?"Divisée par :":"Multipliée par :",ex:"par exemple 4",apercu:false,sym:[]}],juge:rep=>jugeN3(rep.n,[att],P,"n",1,"le bon facteur"),etapes:E,bonne:String(att),bonneTxt:String(att),repBonne:{n:String(att)},repFausse:{n:String(P[0].v)},nature:"facteur de la taille maximale",
+      ens:Object.assign(ens,{adr,r,att,pieges:P.map(y=>({type:y.type,n:String(y.v)}))})};}
+  if(f===2){const kb=R.choix([32,35,40,48,64].filter(k=>Math.abs(k-e)>=2)),champ=kb<e,att=champ?[2**kb]:[2**e,exact];
+    const P=unique3([champ?{type:"champ taille oublié",v:2**e,msg:`Le champ « taille » ne peut pas écrire plus de ${pw3(kb)} octets : c'est lui qui limite, même si les blocs permettraient ${taille3(e)}.`,etape:2}
+      :{type:"blocs oubliés",v:2**kb,msg:`${kb} bits permettent d'écrire jusqu'à ${pw3(kb)}, mais les blocs n'atteignent que ${taille3(e)} : ce sont eux qui limitent.`,etape:2},...Pt(1).filter(y=>y.type!=="niveaux additionnés au lieu de multipliés")],att);
+    if(!P.length)return null;
+    return {sig:"I2"+[f,b,a,bits,L,D,kb].join(),q:`Le champ « taille » de l'inode est codé sur ${kb} bits. Quelle est la taille maximale d'un fichier, environ ?`,corps:IA,texte:`D=${D} L=${L} bloc ${taille3(b)} adresse ${Aoct} o, taille sur ${kb} bits : taille max ?`,
+      champs:[{k:"champ",id:"t",nom:"taille",label:"Taille maximale :",ex:"par exemple 4 Gio ou 2^32",apercu:false,sym}],juge:rep=>jugeN3(rep.t,att,P,"t",1,"la taille maximale"),
+      etapes:[En,Ecal,{w:`Le champ « taille » écrit au plus ${pw3(kb)} octets = ${taille3(kb)}. ${champ?`C'est moins que les ${taille3(e)} des blocs : le champ limite.`:`C'est plus que les ${taille3(e)} des blocs : les blocs limitent.`}`,why:"Les deux limites comptent : on garde la plus petite (cours : « taille sur 32 bits », 4 Gio).",pts:1},fin(`<b>environ ${taille3(champ?kb:e)}</b>`,"La plus petite des deux limites.")],
+      bonne:`environ ${taille3(champ?kb:e)}`,bonneTxt:taille3(champ?kb:e),repBonne:{t:taille3(champ?kb:e)},repFausse:{t:String(P[0].v)},nature:"champ taille",ens:Object.assign(ens,{kb,pieges:P.map(y=>({type:y.type,t:String(y.v)}))})};}
+  if(f===3){const P=unique3([{type:"nombre de blocs pris pour la taille",v:L*x,msg:`${pw3(L*x)} est le nombre de blocs ; la taille en octets est ${pw3(L*x)} × ${pw3(b)} = ${pw3(e)}.`,etape:1},
+      {type:"un niveau oublié",v:(L-1)*x+b,msg:`Il y a ${L} niveaux d'indirection : le dernier atteint n${SUP3[L]} blocs.`,etape:1},{type:"taille du bloc prise pour le nombre d'adresses",v:L*b+b,msg:`Un bloc contient n = ${pw3(x)} adresses, pas ${pw3(b)}.`,etape:0}],[e,e+1]);
+    return {sig:"I2"+[f,b,a,bits,L,D].join(),q:`Sur combien de bits faut-il coder le champ « taille » de l'inode, pour écrire la taille que l'adressage des blocs permet d'atteindre ?`,corps:IA,texte:`D=${D} L=${L} bloc ${taille3(b)} adresse ${Aoct} o : bits de la taille ?`,
+      champs:[{k:"champ",id:"n",nom:"bits",label:"Nombre de bits :",ex:"par exemple 32",apercu:false,sym:[]}],juge:rep=>jugeN3(rep.n,[e,e+1],P,"n",2,"le bon nombre de bits"),
+      etapes:[En,Ecal,fin(`<b>${e} bits</b>`,`${taille3(e)} = ${pw3(e)} octets : il faut ${e} bits, comme le cours (« 42 bits » pour 4 Tio). La taille exacte dépasse un peu ${pw3(e)} : ${e+1} bits est accepté aussi.`)],bonne:`${e} bits`,bonneTxt:String(e),repBonne:{n:String(e)},repFausse:{n:String(P[0].v)},nature:"bits du champ taille",
+      ens:Object.assign(ens,{pieges:P.map(y=>({type:y.type,n:String(y.v)}))})};}
+  const j=R.ent(Math.max(3,x-4),x),s=b+x+j,m=2**(s-b),app=m/n;
+  const P=unique3([{type:"blocs de données comptés",v:m,msg:`${m} est le nombre de blocs de données. Les blocs volés sont ceux qui rangent leurs adresses : ${m} adresses, ${n} par bloc.`,etape:1},
+    {type:"octets d'adresses pris pour des blocs",v:m*Aoct,msg:`${m} adresses de ${Aoct} octets font ${m*Aoct} octets : il faut encore diviser par la taille d'un bloc, ${2**b} octets.`,etape:1},
+    {type:"divisé deux fois par n",v:m/n/n,msg:`Un bloc d'adresses en tient n = ${n} : on divise ${m} par n une seule fois.`,etape:1}].filter(y=>y.v>=1&&Number.isInteger(y.v)),[app,app+1]);
+  return {sig:"I2"+[f,b,a,bits,L,D,s].join(),q:`Les blocs qui ne contiennent que des adresses sont « volés » à l'espace des données. Pour un fichier de ${taille3(s)}, combien de blocs sont ainsi volés, environ ?`,corps:IA,texte:`D=${D} bloc ${taille3(b)} adresse ${Aoct} o, fichier ${taille3(s)} : blocs volés ?`,
+    champs:[{k:"champ",id:"n",nom:"blocs",label:"Blocs volés :",ex:"par exemple 1024",apercu:false,sym:[]}],juge:rep=>jugeN3(rep.n,[app,app+1],P,"n",1,"le nombre de blocs volés"),
+    etapes:[En,{w:`Le fichier occupe ${taille3(s)}, soit ${pw3(s)} octets : ${pw3(s)} / ${pw3(b)} = ${pw3(s-b)} = ${m} blocs de données, donc ${m} adresses à ranger : ${m} / n = ${pw3(s-b)} / ${pw3(x)} = ${app} blocs d'adresses.`,why:`Comme le cours : ${pw3(s-b)} adresses × ${Aoct} octets = ${pw3(s-b+a)} octets, soit ${app} blocs de ${taille3(b)}.`,pts:1.5},
+      fin(`<b>environ ${app}</b>`,`En comptant aussi le bloc du haut du double indirect, on trouve ${app+1} : accepté aussi.`)],bonne:`environ ${app}`,bonneTxt:String(app),repBonne:{n:String(app)},repFausse:{n:String(P[0].v)},nature:"blocs volés",
+    ens:Object.assign(ens,{s,pieges:P.map(y=>({type:y.type,n:String(y.v)}))})};}
+
+/* palier 4 : la cohérence d'une table d'inodes (TD, exercices 21 à 23) */
+const NOS3=[148,272,256,498,2405,311,1207,736,4410,905,1530,627];
+const tri3b=L=>L.slice().sort().join(",");
+function cocher3(o,att,P,quoi,pourquoi){
+  return rep=>{const S=(rep.g||[]).map(String);if(!S.length)return {incomplet:"Coche les anomalies (ou « Tout est cohérent »)."};const v=S.includes("rien")?[]:S.filter(x=>x!=="rien");
+    if(tri3b(v)===tri3b(att))return {ok:true};
+    const non=(type,titre,msg,et)=>({ok:false,faux:["g"],resume:`Pas tout à fait : ce ne sont pas ${quoi}.`,diag:{etape:et,type,titre,msg}});
+    for(const x of P)if(tri3b(x.g)===tri3b(v))return non(x.type,"Où ça part : une règle.",x.msg,x.etape||0);
+    const m=att.find(y=>!v.includes(y)),t=v.find(y=>!att.includes(y)),k=m||t;
+    return non(m?"anomalie oubliée":"anomalie en trop","Où ça part : une ligne.",pourquoi(k,!!m),0);};}
+function coBlocs3(R){const bk=R.choix([1,2,4,8,8]),B=bk*1024,nos=R.mel(NOS3).slice(0,3),pris=new Set();
+  const neuf=()=>{for(;;){const y=R.ent(1000,9999);if(!pris.has(y)&&!nos.includes(y)){pris.add(y);return y;}}};
+  const I=nos.map(no=>{const k=R.ent(1,4),t=R()<0.15?k*B:R.ent((k-1)*B+1,k*B-1);return {no,t,s:[...Array(k)].map(neuf)};});
+  const A=R.mel(["peu","trop","partage","trou"]).slice(0,R.choix([0,1,1,2,2])),libre=R.mel([0,1,2]);
+  for(const an of A){const i=libre.pop();if(i===undefined)break;const x=I[i];
+    if(an==="peu"&&x.s.length>=2)x.s.pop();else if(an==="trop")x.s.push(neuf());
+    else if(an==="partage"){const j=(i+1)%3;x.s[R.ent(0,x.s.length-1)]=R.choix(I[j].s);}
+    else if(an==="trou"&&x.s.length>=2&&x.s.length<5)x.s.splice(x.s.length-1,0,0);}
+  let meme=null;if(R()<0.45){const i=R.ent(0,2),x=I[i];const J=x.s.map((y,k)=>y?k:-1).filter(k=>k>=0);if(!pris.has(x.no)&&J.length){x.s[R.choix(J)]=x.no;meme=x.no;}}
+  for(const x of I)while(x.s.length<6)x.s.push(0);
+  const util=x=>x.s.filter(Boolean),vu={};I.forEach(x=>util(x).forEach(y=>vu[y]=(vu[y]||0)+1));
+  const flags=besoin=>[...I.filter(x=>util(x).length!==besoin(x.t)).map(x=>"n"+x.no),...(Object.values(vu).some(v=>v>1)?["partage"]:[]),...(I.some(x=>x.s.some((y,k)=>y&&x.s.slice(0,k).includes(0)))?["trou"]:[])];
+  const att=flags(t=>Math.ceil(t/B));
+  const P=[{type:"arrondi vers le bas",g:flags(t=>Math.floor(t/B)),msg:`Un bloc à moitié rempli compte quand même : le nombre de blocs nécessaires est taille / ${B}, arrondi au-dessus.`},
+    {type:"Kio comptés pour 1000 octets",g:flags(t=>Math.ceil(t/(bk*1000))),msg:`1 Kio = 2¹⁰ = 1024 octets, pas 1000 : un bloc de ${bk} Kio fait ${B} octets.`},
+    ...(meme?[{type:"même numéro pris pour une anomalie",g:[...att,"meme"],msg:"Les inodes et les blocs sont numérotés à part : un bloc peut porter le même numéro qu'un inode (TD, exercice 21, bloc 2405)."}]:[])].filter((x,i,T)=>tri3b(x.g)!==tri3b(att)&&T.findIndex(y=>tri3b(y.g)===tri3b(x.g))===i);
+  const O=[...I.map(x=>["n"+x.no,`inode ${x.no} : le nombre de blocs ne va pas avec la taille`]),["partage","un même bloc sert à deux inodes"],["trou","un bloc utilisé vient après un bloc libre (0)"],...(meme?[["meme",`l'inode ${meme} utilise le bloc ${meme}`]]:[]),["rien","tout est cohérent"]];
+  const ligne=x=>{const k=util(x).length,bn=Math.ceil(x.t/B);return `inode ${x.no} : ${x.t} octets, il faut ${bn} bloc${bn>1?"s":""} (${(bn-1)*B} < ${x.t} ≤ ${bn*B}) ; il en a ${k}${k===bn?" : bon":" : incohérent"}.`;};
+  const dbl=Object.keys(vu).filter(y=>vu[y]>1),tr=I.filter(x=>x.s.some((y,k)=>y&&x.s.slice(0,k).includes(0)));
+  const pourquoi=(k,oubli)=>{if(k[0]==="n")return ligne(I.find(x=>"n"+x.no===k));if(k==="partage")return oubli?`Le bloc ${dbl[0]} apparaît dans deux inodes : un bloc n'appartient qu'à un seul fichier.`:"Aucun numéro de bloc ne se répète d'un inode à l'autre.";
+    if(k==="trou")return oubli?`Dans l'inode ${tr[0].no}, un bloc utilisé vient après un (0) : tous les blocs qui suivent le premier bloc libre doivent être libres.`:"Dans chaque inode, les (0) sont tous à la fin.";
+    if(k==="meme")return P.find(x=>x.type==="même numéro pris pour une anomalie").msg;return "Il y a au moins une anomalie.";};
+  const E=[{w:`Blocs nécessaires = taille / ${B}, arrondi au-dessus.<br>${I.map(ligne).join("<br>")}`,why:`1 Kio = 1024 octets : un bloc de ${bk} Kio fait ${B} octets, et un bloc commencé compte en entier.`,pts:1.5},
+    {w:`${dbl.length?`Le bloc ${dbl[0]} sert à deux inodes : incohérent.`:"Aucun bloc ne sert à deux inodes."} ${tr.length?`L'inode ${tr[0].no} a un bloc utilisé après un (0) : incohérent.`:"Les (0) sont tous à la fin."}${meme?` Le bloc ${meme} de l'inode ${meme} n'est pas une anomalie : inodes et blocs sont numérotés à part.`:""}`,why:"Un bloc n'appartient qu'à un seul fichier, et tous les blocs qui suivent le premier bloc libre sont libres.",pts:1},
+    {w:`<b>${att.length?att.map(k=>O.find(o=>o[0]===k)[1]).join(" ; "):"tout est cohérent"}</b>`,why:"Chaque anomalie, et seulement elles.",pts:0.5}];
+  return {sig:"I3b"+bk+JSON.stringify(I),q:`Voici trois inodes (TD, exercice 21). Les blocs font ${bk} Kio (1 Kio = 2¹⁰ octets) ; (0) veut dire « libre », et tous les blocs qui suivent le premier bloc libre doivent être libres. Coche chaque anomalie.`,
+    corps:grille3(["inode","taille (octets)","blocs d'adressage direct"],I.map(x=>[x.no,x.t,x.s.map(y=>y||"(0)").join(" · ")])),texte:`blocs de ${bk} Kio : `+I.map(x=>`${x.no} ${x.t} [${x.s.join(" ")}]`).join(" | "),
+    champs:[{k:"multi",id:"g",o:O,seul:"rien"}],juge:cocher3(O,att,P,"les anomalies",pourquoi),etapes:E,bonne:att.length?att.map(k=>O.find(o=>o[0]===k)[1]).join(" ; "):"tout est cohérent",bonneTxt:att.join(" ")||"rien",
+    repBonne:{g:att.length?att:["rien"]},repFausse:{g:P.length?(P[0].g.length?P[0].g:["rien"]):att.length?att.slice(1).concat(att.length>1?[]:["rien"]):["partage"]},nature:"cohérence des blocs",
+    ens:{fam:"coB",B,I,meme,pieges:P.map(x=>({type:x.type,g:x.g.length?x.g:["rien"]}))}};}
+const NOML3=["fibre","fini","finioui","fininon","figue","filon","fichtre","fibonacci","fiole","fiche","filet","fifre"];
+function coLiens3(R){const nI=R.ent(3,4),nos=R.mel(NOS3).slice(0,nI),pool=R.mel(NOML3),D=[[],[]],ks=[];
+  const libre=(d,nm)=>!D[d].some(y=>y[0]===nm);
+  for(const no of nos){const k=R.choix([1,1,2,2,3]);ks.push(k);let r=k;
+    if(k>=2&&R()<0.4){const nm=pool.find(y=>libre(0,y)&&libre(1,y));if(nm){D[0].push([nm,no]);D[1].push([nm,no]);r-=2;}}
+    for(;r>0;r--){const d=R.ent(0,1),nm=pool.find(y=>libre(d,y)&&!D[1-d].some(z=>z[0]===y));if(!nm)return null;D[d].push([nm,no]);}}
+  const A=R.mel(["manque","trop","double"]).slice(0,R.choix([0,1,1,2]));
+  for(const an of A){if(an==="manque"){const L=nos.filter(no=>D[0].concat(D[1]).filter(y=>y[1]===no).length>=2);if(!L.length)continue;const no=R.choix(L),d=D[0].some(y=>y[1]===no)?0:1;D[d].splice(D[d].findIndex(y=>y[1]===no),1);}
+    else if(an==="trop"){const d=R.ent(0,1),nm=pool.find(y=>libre(0,y)&&libre(1,y));if(nm)D[d].push([nm,R.choix(nos)]);}
+    else{const d=D[0].length>=2?0:1;if(D[d].length<2)continue;const L=D[d].filter(y=>!D[1-d].some(z=>z[0]===y[0]));if(L.length<2)continue;L[1][0]=L[0][0];}}
+  D.forEach(d=>d.sort((p,q)=>p[0]<q[0]?-1:1));
+  const deux=D[0].map(y=>y[0]).find(nm=>D[1].some(z=>z[0]===nm))||null;
+  const noms=(no,dist)=>{const L=D[0].concat(D[1]).filter(y=>y[1]===no).map(y=>y[0]);return dist?new Set(L).size:L.length;};
+  const dup=D.some(d=>new Set(d.map(y=>y[0])).size<d.length);
+  const flags=dist=>[...nos.filter((no,i)=>noms(no,dist)!==ks[i]).map(no=>"l"+no),...(dup?["double"]:[])],att=flags(false);
+  const P=[...(deux?[{type:"même nom dans deux répertoires pris pour une anomalie",g:[...att,"deux"],msg:"Un nom est unique dans un répertoire, mais le même nom peut servir dans deux répertoires différents (TD, exercice 23, figue)."},
+      {type:"même nom compté une fois",g:flags(true),msg:`Chaque entrée compte : ${c(deux)} dans le répertoire 1 et ${c(deux)} dans le répertoire 2 font deux noms, donc deux liens.`}]:[])].filter((x,i,T)=>tri3b(x.g)!==tri3b(att)&&T.findIndex(y=>tri3b(y.g)===tri3b(x.g))===i);
+  const O=[...nos.map(no=>["l"+no,`l'inode ${no} n'a pas autant de noms que de liens`]),["double","un répertoire contient deux fois le même nom"],...(deux?[["deux",`le nom ${deux} est dans les deux répertoires`]]:[]),["rien","tout est cohérent"]];
+  const ligne=(no,i)=>{const T=[0,1].flatMap(d=>D[d].filter(y=>y[1]===no).map(y=>[y[0],d])),L=T.map(([nm,d])=>c(nm)+(T.filter(z=>z[0]===nm).length>1?` (répertoire ${d+1})`:""));return `inode ${no} : ${L.length} nom${L.length>1?"s":""}${L.length?" ("+et(L)+")":""} pour ${nl3(ks[i])}${L.length===ks[i]?" : bon":" : incohérent"}.`;};
+  const pourquoi=(k,oubli)=>{if(k[0]==="l"){const i=nos.findIndex(no=>"l"+no===k);return ligne(nos[i],i);}if(k==="double")return oubli?"Dans un répertoire, chaque nom est unique : le même nom ne peut pas y être deux fois.":"Aucun répertoire ne contient deux fois le même nom.";
+    if(k==="deux")return P[0].msg;return "Il y a au moins une anomalie.";};
+  const E=[{w:`Pour chaque inode, on compte les entrées qui le désignent, dans les deux répertoires : ce doit être son nombre de liens.<br>${nos.map(ligne).join("<br>")}`,why:"Chaque nom est un lien dur : le compteur de liens d'un fichier ordinaire est son nombre de noms.",pts:1.5},
+    {w:`${dup?"Un répertoire contient deux fois le même nom : incohérent.":"Aucun répertoire ne contient deux fois le même nom."}${deux?` ${c(deux)} dans les deux répertoires n'est pas une anomalie.`:""}`,why:"Un nom est unique dans un répertoire, pas d'un répertoire à l'autre.",pts:1},
+    {w:`<b>${att.length?att.map(k=>O.find(o=>o[0]===k)[1]).join(" ; "):"tout est cohérent"}</b>`,why:"Chaque anomalie, et seulement elles.",pts:0.5}];
+  const rep=d=>D[d].map(y=>`${y[0]} → ${y[1]}`).join("<br>")||"(vide)";
+  return {sig:"I3l"+JSON.stringify([nos,ks,D]),q:`Voici des inodes de fichiers ordinaires, avec leur nombre de liens, et deux répertoires (TD, exercices 22 et 23). Ces deux répertoires contiennent tous les noms de ces inodes (on ne compte pas ${c(".")} et ${c("..")}). Coche chaque anomalie.`,
+    corps:grille3(["inode","nb. de liens"],nos.map((no,i)=>[no,ks[i]]))+grille3(["répertoire 1","répertoire 2"],[[rep(0),rep(1)]]),texte:nos.map((no,i)=>no+":"+ks[i]).join(" ")+" | "+D.map(d=>d.map(y=>y.join(">")).join(" ")).join(" | "),
+    champs:[{k:"multi",id:"g",o:O,seul:"rien"}],juge:cocher3(O,att,P,"les anomalies",pourquoi),etapes:E,bonne:att.length?att.map(k=>O.find(o=>o[0]===k)[1]).join(" ; "):"tout est cohérent",bonneTxt:att.join(" ")||"rien",
+    repBonne:{g:att.length?att:["rien"]},repFausse:{g:P.length?(P[0].g.length?P[0].g:["rien"]):att.length?att.slice(1).concat(att.length>1?[]:["rien"]):["double"]},nature:"cohérence des liens",
+    ens:{fam:"coL",nos,ks,D,deux,pieges:P.map(x=>({type:x.type,g:x.g.length?x.g:["rien"]}))}};}
+const tireIn=k=>R=>{for(;;){const e=[exoIn0,exoIn1,exoIn2,R=>R()<0.5?coBlocs3(R):coLiens3(R)][k](R);if(e)return e;}};
+
 G.add("usi",[
  {id:"US1",t:"Les droits : ls -l, chmod et umask",tache:"droits et umask",th:"fichiers",pts:1.5,lecons:["u-droits","u-umask"],
   paliers:[
@@ -31057,6 +31342,12 @@ G.add("usi",[
    {t:"une suite de cd, puis pwd, comme au TD",cc:2,min:150,gen:tireCh(1)},
    {t:"écrire le chemin : relatif, absolu, avec ~",cc:1,min:150,gen:tireCh(2)},
    {t:"ranger ses fichiers sans cd, comme au TD",cc:4,min:150,gen:tireCh(3)}]},
+ {id:"US3",t:"Inodes et liens : ln, ln -s, rm et la taille maximale",tache:"inodes et liens",th:"fichiers",pts:1.5,lecons:["u-inodes","u-taille"],
+  paliers:[
+   {t:"le nombre de liens d'un répertoire",cc:1,min:100,gen:tireIn(0)},
+   {t:"ln, ln -s, rm : ce qui reste, comme au TD",cc:2,min:150,gen:tireIn(1)},
+   {t:"la taille maximale d'un fichier",cc:2,min:100,gen:tireIn(2)},
+   {t:"la cohérence des blocs et des liens, comme au TD",cc:4,min:150,gen:tireIn(3)}]},
  {id:"US4",t:"Tubes et filtres",tache:"tubes et filtres",th:"processus",pts:1,lecons:["u-redir"],
   paliers:[
    {t:"ce qu'affiche un tube",cc:2,min:150,gen:tireTube(0)},
