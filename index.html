@@ -30448,7 +30448,315 @@ function exoPy(R,p){const [,nat,f]=R.choix(PYP[p]),X=f(R);if(!X)return null;
 const tirePy=p=>R=>{for(;;){const e=exoPy(R,p);if(e)return e;}};
 
 
+/* ---------- US1 : les droits. Un mode tient sur 9 bits (rwx du propriétaire, du groupe, des autres) ; un petit chmod, le umask, et la règle d'accès du noyau ---------- */
+const let1=m=>[..."rwxrwxrwx"].map((ch,i)=>m&(256>>i)?ch:"-").join("");
+const oct1=m=>[6,3,0].map(s=>(m>>s)&7).join("");
+const paq1=(m,k)=>(m>>(6-3*k))&7;
+const deP1=(a,b,d)=>(a<<6)|(b<<3)|d;
+const CAT1=["le propriétaire","le groupe","les autres"],DU1=["du propriétaire","du groupe","des autres"],VAL1=[4,2,1];
+const trip1=d=>"rwx".split("").map((l,i)=>d&VAL1[i]?l:"-").join("");
+const dec1=d=>{const P=VAL1.filter(v=>d&v);return P.length>1?`${d} = ${P.join(" + ")}`:String(d);};
+const bits1=m=>oct1(m).split("").map(d=>(+d).toString(2).padStart(3,"0")).join(" ");
+const parPaq1=(m,f)=>deP1(f(paq1(m,0)),f(paq1(m,1)),f(paq1(m,2)));
+const envers1=m=>parPaq1(m,d=>((d&1)<<2)|(d&2)|((d&4)>>2));
+const ordre1=m=>deP1(paq1(m,2),paq1(m,1),paq1(m,0));
+const compte1=m=>parPaq1(m,d=>(d&4?1:0)+(d&2?1:0)+(d&1?1:0));
+const lsl1=(R,m,dir,p,g,nom)=>`${dir?"d":"-"}${let1(m)} ${dir?2:1} ${p} ${g} ${dir?4096:R.ent(80,4000)} nov. ${R.ent(10,19)} ${String(R.ent(8,18)).padStart(2,"0")}:${String(R.ent(0,59)).padStart(2,"0")} ${nom}`;
+const NOMS1=["rapport.txt","notes.txt","script.sh","tp1.py","photo.jpg","main.c","data.csv","lsarg.sh","compte.py"];
+const SYMD1=[["r","r"],["w","w"],["x","x"],["-","-"]],SYMC1=[["chmod","chmod "],["u","u"],["g","g"],["o","o"],["a","a"],["+","+"],["-","-"],["=","="],["r","r"],["w","w"],["x","x"],[",",","]];
+/* un paquet au hasard, parmi ceux qu'on rencontre : rwx, r-x, rw-, r--, --- surtout */
+const tirePaq1=(R,dir)=>R.choix(dir?[7,7,5,5,1,0,0,3,6,4]:[6,6,4,4,0,0,7,5,2]);
+const tireMode1=(R,dir)=>{for(;;){const m=deP1(R.choix(dir?[7,7,5,3]:[6,6,7,4]),tirePaq1(R,dir),tirePaq1(R,dir));if(paq1(m,1)!==paq1(m,2)||R()<0.25)return m;}};
+
+/* ce que tape l'étudiant : des droits en lettres (rw-r-----, avec ou sans le type) ou en octal (640) */
+function lisDr1(s,veut){s=propre(s).replace(/\s/g,"");if(!s)return {vide:1};
+  if(/^0?[0-7]{3}$/.test(s))return veut==="let"?{err:"Écris les droits en lettres, comme ls -l : neuf caractères, par exemple rw-r--r--."}:{m:parseInt(s.slice(-3),8)};
+  if(/^[0-7]+$/.test(s))return {err:"En octal, il faut trois chiffres : un pour le propriétaire, un pour le groupe, un pour les autres."};
+  const t=s.length===10?s.replace(/^[-d]/,""):s;
+  if(/^[rwx-]+$/.test(t)){if(veut==="oct")return {err:"Ici, écris le nombre en octal : trois chiffres, par exemple 640."};
+    if(t.length!==9)return {err:`Il faut neuf caractères (tu en as écrit ${t.length}) : trois pour le propriétaire, trois pour le groupe, trois pour les autres, avec - pour un droit absent.`};
+    for(let i=0;i<9;i++)if(t[i]!=="-"&&t[i]!=="rwx"[i%3])return {err:`Dans chaque paquet de trois, l'ordre est toujours r, w, x, avec - pour un droit absent : ${esc(t.slice(i-i%3,i-i%3+3))} n'est pas dans cet ordre.`};
+    let m=0;for(let i=0;i<9;i++)if(t[i]!=="-")m|=256>>i;return {m};}
+  return {err:"Écris les droits en lettres (comme rw-r-----) ou en octal (comme 640)."};}
+
+/* le petit chmod : rend {m} ou {err}. um est le umask : il compte quand le mode ne dit ni u, ni g, ni o, ni a.
+   lu : une lecture fausse, pour reconnaître une erreur (o pris pour le propriétaire, = lu comme +, + lu comme =, a lu comme les autres, octal ajouté) */
+function chmod1(m,arg,um,lu){lu=lu||{};
+  if(/^[0-7]+$/.test(arg)){if(arg.length>4||arg.length===4&&arg[0]!=="0")return {err:"Avec quatre chiffres, le premier règle des droits spéciaux, hors programme : écris trois chiffres."};const v=parseInt(arg,8);return {m:lu.ajoute?m|v:v};}
+  let r=m;
+  for(const cl of arg.split(",")){const M=/^([ugoa]*)((?:[-+=][rwx]*)+)$/.exec(cl);
+    if(!M){const S=/^[ugoa]*[-+=][rwx]*([^rwx,])/.exec(cl);return {err:S?`Ici, seulement r, w et x après le signe : chmod ne comprend pas ${c(S[1])} dans ${c(cl)}.`:`chmod ne comprend pas ${c(cl||",")} : écris par exemple u+x, go-w, a=r ou 750.`};}
+    let qui=M[1];if(lu.o_u)qui=qui.replace(/o/g,"u");if(lu.a_o)qui=qui.replace(/a/g,"o");
+    let aff=!qui||qui.includes("a")?0o777:0;for(const ch of qui)aff|={u:0o700,g:0o070,o:0o007}[ch]||0;
+    const filtre=!qui&&!lu.sansMasque?0o777&~um:aff;
+    for(const op of M[2].match(/[-+=][rwx]*/g)){let p=0;for(const ch of op.slice(1))p|={r:0o444,w:0o222,x:0o111}[ch];
+      let o=op[0];if(lu.egalPlus&&o==="=")o="+";if(lu.plusEgal&&o==="+")o="=";
+      if(o==="+")r|=p&filtre;else if(o==="-")r&=~(p&filtre);else r=(r&~aff)|(p&filtre);}}
+  return {m:r};}
+/* une ligne « chmod MODE fichier… » */
+function ligneChmod1(l){const W=propre(l).split(" ").filter(Boolean);if(!W.length)return {vide:1};
+  if(W[0]!=="chmod")return {err:W[0]==="umask"?"umask règle seulement les fichiers créés ensuite : pour changer les droits d'un fichier qui existe, c'est chmod.":"La commande doit commencer par chmod."};
+  if(W[1]&&/^-/.test(W[1])&&!/^-[rwx]+$/.test(W[1]))return {err:`Ici, pas besoin d'option comme ${esc(W[1])} : chmod, le mode, puis le nom du fichier.`};
+  if(W.length<3)return {err:"Il manque quelque chose : chmod, puis le mode, puis le nom du fichier (par exemple chmod u+x script.sh)."};
+  return {mode:W[1],cibles:W.slice(2)};}
+/* la commande la plus courte en lettres pour passer de a à b : u+x,go-w ou u=rw */
+function sym1(a,b){const P=[0,1,2].map(k=>{const x=paq1(a,k),y=paq1(b,k),aj=y&~x,re=x&~y,l=d=>trip1(d).replace(/-/g,"");return x===y?"":aj&&re?"="+l(y):aj?"+"+l(aj):"-"+l(re);});
+  const G=[];P.forEach((p,k)=>{if(!p)return;const g=G.find(x=>x.p===p);if(g)g.q+="ugo"[k];else G.push({p,q:"ugo"[k]});});
+  return G.map(x=>(x.q==="ugo"?"a":x.q)+x.p).join(",");}
+const quiTxt1=q=>!q?"tout le monde, sauf ce que bloque le umask (sans lettre devant le signe)":q.includes("a")?"tout le monde":et([...new Set(q)].map(ch=>({u:"le propriétaire",g:"le groupe",o:"les autres"})[ch]));
+function clauses1(m,arg,um){if(/^[0-7]+$/.test(arg)){const v=parseInt(arg,8);return [{w:`${c(arg)} : ${[0,1,2].map(k=>`${dec1(paq1(v,k))} → ${c(trip1(paq1(v,k)))}`).join(", ")}, donc ${c(let1(v))}`,why:"Avec des chiffres, chmod remplace les neuf droits d'un coup : les anciens ne comptent plus."}];}
+  const L=[];let r=m;for(const cl of arg.split(",")){const M=/^([ugoa]*)(.*)$/.exec(cl);r=chmod1(r,cl,um).m;
+    const ops=M[2].match(/[-+=][rwx]*/g).map(op=>{const p=op.slice(1).split("").join(", ");return op[0]==="+"?`ajoute ${p}`:op[0]==="-"?`retire ${p}`:p?`met exactement ${p} (et retire les autres droits)`:"retire tous les droits";});
+    L.push({w:`${c(cl)} : pour ${quiTxt1(M[1])}, ${et(ops)}. On obtient ${c(let1(r))}.`,why:!M[1]?`Sans u, g, o ni a, chmod vise tout le monde mais laisse de côté les droits que le umask (ici ${oct1(um)}) retirerait.`:M[2].includes("=")?`${c("=")} remplace les droits de la catégorie ; ${c("+")} et ${c("-")} ne touchent qu'aux droits cités.`:"Les autres droits ne bougent pas."});}
+  return L;}
+
+/* juge des droits tapés : P = [[type, mode faux, message]], le premier qui colle donne le diagnostic ; sinon, le premier paquet faux */
+function jugeDr1(s,veut,att,P,id,etape,quoi){const r=lisDr1(s,veut);if(r.vide)return {incomplet:"Écris les droits."};if(r.err)return {incomplet:r.err};
+  if(r.m===att)return {ok:true};
+  const non=(type,titre,msg)=>({ok:false,faux:[id],resume:`Pas tout à fait : ce ne sont pas ${quoi||"les bons droits"}.`,diag:{etape,type,titre,msg}});
+  for(const [type,m,msg] of P)if(m!==att&&m===r.m)return non(type,"Où ça part : la règle.",msg);
+  const k=[0,1,2].find(k=>paq1(r.m,k)!==paq1(att,k));
+  return non("paquet faux","Où ça part : un paquet de trois droits.",`Pour ${CAT1[k]}, c'est ${c(trip1(paq1(att,k)))}, pas ${c(trip1(paq1(r.m,k)))}.`);}
+const MSG1={
+  envers:`On compte r = 4, w = 2, x = 1 (r vaut le plus, x le moins) : tu as pris r et x à l'envers.`,
+  ordre:`L'ordre est toujours le même : d'abord le propriétaire, puis le groupe, puis les autres. Tu as lu les paquets à l'envers.`,
+  compte:`Un chiffre n'est pas le nombre de droits : c'est la somme de leurs valeurs, r = 4, w = 2, x = 1. Ainsi r-- vaut 4, pas 1.`,
+  o_u:`${c("o")} veut dire les autres (others), pas le propriétaire (owner) : le propriétaire, c'est ${c("u")} (user).`,
+  egalPlus:`${c("=")} met exactement les droits cités et retire les autres. Pour ajouter sans rien retirer, c'est ${c("+")}.`,
+  plusEgal:`${c("+")} ajoute les droits cités et garde ceux qui y étaient déjà ; c'est ${c("=")} qui remplace.`,
+  a_o:`${c("a")} veut dire tout le monde (all) : le propriétaire, le groupe et les autres. Les autres seuls, c'est ${c("o")}.`,
+  ajoute:"Avec des chiffres, chmod remplace les neuf droits : les anciens ne comptent plus.",
+  sansMasque:`Sans u, g, o ni a devant le signe, chmod laisse de côté les droits que le umask retirerait. Pour viser vraiment tout le monde, écris ${c("a")} devant.`};
+const LU1=[["o lu comme le propriétaire","o_u"],["= lu comme +","egalPlus"],["+ lu comme =","plusEgal"],["a lu comme les autres","a_o"],["octal ajouté aux anciens droits","ajoute"],["umask oublié","sansMasque"]];
+const vraiCh1=(cmds,att)=>({arbo:arboDe([]),cmd:"umask 022\n"+cmds.join("\n"),args:[],nom:"./droits.sh",script:true,brut:true,ordre:true,abs:att});
+
+/* palier 1 : lire les droits */
+function exoDr0(R){const f=R.choix([0,0,1,1,2,2,2]),nom=R.choix(NOMS1);
+  if(f<2){const m=tireMode1(R,R()<0.3),o=oct1(m),L=let1(m),lire=f===0;
+    const P=[["r et x échangés",envers1(m),MSG1.envers],["catégories dans le désordre",ordre1(m),MSG1.ordre],...(lire?[]:[["nombre de lettres au lieu de la somme",compte1(m),MSG1.compte]])];
+    const juge=rep=>jugeDr1(rep.d,lire?"let":"oct",m,P,"d",lire?1:1),faux=P.map(x=>x[1]).find(x=>x!==m);if(faux===undefined)return null;
+    const E=[{w:`Un paquet par catégorie, dans l'ordre : le propriétaire, le groupe, les autres. ${lire?`${c(o)} se lit ${o.split("").map(c).join(" · ")}`:`${c(L)} se coupe en ${[0,1,2].map(k=>c(trip1(paq1(m,k)))).join(" · ")}`}.`,why:"chmod et ls -l rangent toujours les droits dans cet ordre.",pts:1},
+      {w:[0,1,2].map(k=>`${CAT1[k]} : ${lire?`${dec1(paq1(m,k))} → ${c(trip1(paq1(m,k)))}`:`${c(trip1(paq1(m,k)))} → ${dec1(paq1(m,k))}`}`).join("<br>"),why:"r = 4, w = 2, x = 1 : chaque chiffre de 0 à 7 s'écrit d'une seule façon comme somme de ces valeurs.",pts:1.5},
+      {w:`<b>${lire?c(L):c(o)}</b>`,why:lire?`C'est ce qu'affiche ${c("ls -l")} après le type : ${c("-"+L)}.`:`La commande : ${c("chmod "+o+" "+nom)}.`,pts:0.5}];
+    return {sig:"D0"+f+o,q:lire?`Quels droits donne la commande ${c("chmod "+o+" "+nom)} ? Écris-les en lettres, comme ${c("ls -l")} les affiche : neuf caractères, sans le type.`:`Écris en octal les droits ${c(L)} : le nombre à donner à chmod.`,corps:"",texte:lire?`chmod ${o} ${nom} : les droits en lettres ?`:`${L} en octal ?`,
+      champs:[{k:"champ",id:"d",nom:"droits",label:lire?"Les droits :":"En octal :",ex:lire?"par exemple rw-r--r--":"par exemple 644",apercu:false,sym:lire?SYMD1:[]}],juge,etapes:E,bonne:c(lire?L:o),bonneTxt:lire?L:o,repBonne:{d:lire?L:o},repFausse:{d:lire?let1(faux):oct1(faux)},nature:lire?"octal vers lettres":"lettres vers octal",
+      ens:{fam:lire?"lire":"octal",m,pieges:P.filter(x=>x[1]!==m).map(x=>({type:x[0],d:lire?let1(x[1]):oct1(x[1])})),bash:[vraiCh1([`touch ${nom}`,`chmod ${o} ${nom}`,`stat -c %A ${nom}`],["-"+L])]}};}
+  /* une ligne de ls -l et une personne : quels droits a-t-elle ? */
+  const dir=R()<0.4,obj=dir?R.choix(["tp","photos","partage","src"]):nom,m=tireMode1(R,dir),grp=R.choix(["etu","l1info","prof"]),qui=R.choix([0,1,1,2,2]);
+  const P0=R.choix(["bob","alice","nora"]),nomQ=qui===0?P0:R.choix(["marie","lucas","yanis","emma"].filter(x=>x!==P0)),autreG=R.choix(["staff","l2info","invite"].filter(x=>x!==grp));
+  const G=qui===2?[autreG]:qui===1?(R()<0.5?[grp]:[autreG,grp]):[grp],uid=R.ent(1001,1009);
+  const idl=`uid=${uid}(${nomQ}) gid=${uid}(${G[0]}) groupes=${G.map((g,i)=>(i?uid+20+i:uid)+"("+g+")").join(",")}`,lsl=lsl1(R,m,dir,P0,grp,obj);
+  const att=paq1(m,qui),U=paq1(m,0)|paq1(m,1)|paq1(m,2);
+  const P=[["droits de toutes les catégories ajoutés",U,`Une seule catégorie compte pour ${nomQ} : ${qui===0?"le propriétaire":qui===1?"le groupe":"les autres"}. Le système ne cumule jamais les droits de plusieurs catégories.`],
+    ...(qui!==0?[["paquet du propriétaire",paq1(m,0),`${nomQ} n'est pas le propriétaire (c'est ${P0}) : le premier paquet n'est pas le sien.`]]:[]),
+    ...(qui===1?[["paquet des autres pour un membre du groupe",paq1(m,2),`${nomQ} fait partie du groupe ${grp} (voir ${c("groupes=")}) : c'est le paquet du groupe qui compte, pas celui des autres.`]]:[]),
+    ...(qui===0?[["paquet du groupe pour le propriétaire",paq1(m,1),`${nomQ} est le propriétaire : seul le premier paquet compte, même en faisant aussi partie du groupe ${grp}.`]]:[]),
+    ...(qui===2?[["paquet du groupe pour un autre",paq1(m,1),`${nomQ} ne fait pas partie du groupe ${grp} : c'est le dernier paquet, celui des autres, qui compte.`]]:[])];
+  if(!P.some(x=>x[1]!==att))return null;
+  const O=dir?[["r","r : lister les noms (ls)"],["w","w : créer, supprimer, renommer des entrées"],["x","x : traverser (cd, atteindre un fichier dedans)"],["0","aucun droit"]]:[["r","r : lire le contenu"],["w","w : modifier le contenu"],["x","x : l'exécuter"],["0","aucun droit"]];
+  const vers=d=>d?"rwx".split("").filter((l,i)=>d&VAL1[i]):["0"],dir1=d=>d?et(O.filter(o=>vers(d).includes(o[0])).map(o=>o[1].replace(/^. : /,""))):"rien";
+  function juge(rep){const S=(rep.g||[]).map(String);if(!S.length)return {incomplet:"Coche les droits (ou « aucun droit »)."};
+    const d=S.includes("0")?0:S.reduce((a,x)=>a|({r:4,w:2,x:1}[x]||0),0);if(d===att)return {ok:true};
+    const non=(type,titre,msg)=>({ok:false,faux:["g"],resume:`Pas tout à fait : ce ne sont pas les droits de ${nomQ}.`,diag:{etape:0,type,titre,msg}});
+    for(const [type,v,msg] of P)if(v!==att&&v===d)return non(type,"Où ça part : la catégorie.",msg);
+    return non("paquet mal lu","Où ça part : la lecture du paquet.",`Le paquet ${qui===0?"du propriétaire":qui===1?"du groupe":"des autres"} est ${c(trip1(att))} : ${nomQ} a ${att?"le droit "+vers(att).join(", "):"aucun droit"}.`);}
+  const E=[{w:qui===0?`${nomQ} est le propriétaire (troisième colonne) : c'est le premier paquet, ${c(trip1(att))}.`:qui===1?`${nomQ} n'est pas le propriétaire (c'est ${P0}), mais fait partie du groupe ${grp} (quatrième colonne) : c'est le deuxième paquet, ${c(trip1(att))}.`:`${nomQ} n'est pas le propriétaire (c'est ${P0}) et ne fait pas partie du groupe ${grp} : c'est le troisième paquet, celui des autres, ${c(trip1(att))}.`,
+      why:"Le système prend une seule catégorie : le propriétaire si c'est lui, sinon le groupe s'il en fait partie, sinon les autres. Les droits des autres catégories ne comptent pas, même s'ils sont plus larges.",pts:1.5},
+    {w:`${c(trip1(att))}${dir?" sur un répertoire":" sur un fichier"} : ${dir1(att)}.`,why:dir?"Sur un répertoire, r permet de lister les noms, w de changer la liste (créer, supprimer, renommer, avec x en plus), x de le traverser.":"Sur un fichier, r permet de lire le contenu, w de le modifier, x de l'exécuter.",pts:1},
+    {w:`<b>${att?vers(att).join(", "):"aucun droit"}</b>`,why:`Le type ${c(dir?"d":"-")} en tête de la ligne dit ${dir?"répertoire":"fichier ordinaire"}.`,pts:0.5}];
+  const faux=P.map(x=>x[1]).find(x=>x!==att);
+  return {sig:"D02"+oct1(m)+dir+P0+grp+nomQ+G.join(),q:`Voici une ligne affichée par ${c("ls -l")}, puis ce qu'affiche ${c("id "+nomQ)}. Quels droits a ${nomQ} sur ${dir?"le répertoire":"le fichier"} ${c(obj)} ?`,corps:bloc(lsl+"\n"+idl),texte:lsl+" | "+idl,
+    champs:[{k:"multi",id:"g",o:O,seul:"0"}],juge,etapes:E,bonne:att?vers(att).join(", "):"aucun droit",bonneTxt:att?vers(att).join(""):"aucun",repBonne:{g:vers(att)},repFausse:{g:vers(faux)},nature:"ls -l et catégorie",
+    ens:{fam:"ls",m,dir,proprio:P0,grp,qui:nomQ,G,att,pieges:P.filter(x=>x[1]!==att).map(x=>({type:x[0],g:vers(x[1])}))}};}
+
+/* palier 2 : chmod */
+const BUT1=[["u+x","ajoute le droit d'exécution au propriétaire"],["go-w","retire le droit d'écriture au groupe et aux autres"],["o-rwx","retire tous les droits aux autres"],["a+r","donne le droit de lecture à tout le monde"],
+  ["g+w","donne au groupe le droit de modifier le fichier"],["a-x","retire le droit d'exécution à tout le monde"],["u-w","retire au propriétaire le droit d'écriture (pour ne pas modifier le fichier par erreur)"],["g-rwx","retire tous les droits au groupe"],
+  ["ug+x","ajoute le droit d'exécution au propriétaire et au groupe"],["o+r","donne aux autres le droit de lecture"],["g=r","fait que le groupe puisse seulement lire le fichier"],["go=","retire tous les droits au groupe et aux autres"],["a+x","rend le fichier exécutable par tout le monde"],["o-w","retire aux autres le droit de modifier le fichier"]];
+function tireSym1(R){const n=R()<0.35?2:1,L=[];
+  if(R()<0.08)return "+x";
+  for(let i=0;i<n;i++){const qui=R.choix(["u","g","o","o","a","ug","go","go","uo"]),op=R.choix(["+","-","=","+","-"]);
+    const p=R.mel(["r","w","x"]).slice(0,R.ent(op==="="?0:1,op==="="?3:2)).sort((a,b)=>"rwx".indexOf(a)-"rwx".indexOf(b)).join("");L.push(qui+op+p);}
+  return L.join(",");}
+function jugeCmd1(rep,nom,starts,att,lus){const r=ligneChmod1(rep.c);if(r.vide)return {incomplet:"Écris la commande chmod."};if(r.err)return {incomplet:r.err};
+  const ok=x=>x.replace(/^\.\//,"")===nom;if(r.cibles.length!==1||!ok(r.cibles[0]))return {incomplet:`La commande doit viser le fichier ${c(nom)}, et lui seul.`};
+  const X=starts.map(s=>chmod1(s,r.mode,0o022));if(X[0].err)return {incomplet:X[0].err};
+  if(X.every((x,i)=>x.m===att[i]))return {ok:true};
+  const non=(type,titre,msg)=>({ok:false,faux:["c"],resume:"Pas tout à fait : ta commande ne donne pas les bons droits.",diag:{etape:lus.etape,type,titre,msg}});
+  const oc=/^[0-7]+$/.test(r.mode);
+  if(oc&&starts.length>1)return non("chiffres sans connaître les droits","Où ça part : chiffres ou lettres.",`Avec des chiffres, chmod remplace les neuf droits : il faudrait connaître les droits actuels pour ne rien changer d'autre. Avec des lettres (${c("u")}, ${c("g")}, ${c("o")}, ${c("a")}, puis ${c("+")} ou ${c("-")}), on ne touche qu'à ce qu'on cite.`);
+  if(oc){const v=parseInt(r.mode,8)&0o777;for(const [t,f,msg] of [["r et x échangés",envers1,MSG1.envers],["catégories dans le désordre",ordre1,MSG1.ordre],["nombre de lettres au lieu de la somme",compte1,MSG1.compte]])if(f(att[0])===v&&v!==att[0])return non(t,"Où ça part : le calcul en octal.",msg);}
+  else for(const [t,k] of LU1){if(k==="ajoute")continue;const Y=starts.map(s=>chmod1(s,r.mode,0o022,{[k]:1}).m);if(Y.every((y,i)=>y===att[i]))return non(t,"Où ça part : le sens d'une lettre ou d'un signe.",MSG1[k]);}
+  const i=X.findIndex((x,i)=>x.m!==att[i]),k=[0,1,2].find(k=>paq1(X[i].m,k)!==paq1(att[i],k));
+  return non("droits faux","Où ça part : un paquet de trois droits.",`${starts.length>1?`Si ${c(nom)} avait les droits ${c(let1(starts[i]))}, ta commande donnerait`:"Ta commande donne"} ${c(let1(X[i].m))} au lieu de ${c(let1(att[i]))} : pour ${CAT1[k]}, ${c(trip1(paq1(X[i].m,k)))} au lieu de ${c(trip1(paq1(att[i],k)))}.`);}
+function exoDr1(R){const f=R.choix([0,0,0,1,1,2,2]),nom=R.choix(NOMS1),m0=tireMode1(R,false);
+  if(f===0){const cmd=R()<0.15?R.choix(["640","600","755","644","700","750","444","664"]):tireSym1(R),att=chmod1(m0,cmd,0o022).m;if(att===m0)return null;
+    const P=LU1.map(([t,k])=>[t,chmod1(m0,cmd,0o022,{[k]:1}).m,MSG1[k]]).filter(x=>x[1]!==att);if(!P.length)return null;
+    const juge=rep=>jugeDr1(rep.d,"let",att,P,"d",1),lsl=lsl1(R,m0,false,"bob","etu",nom);
+    const E=[{w:`Avant : ${c(let1(m0))}, c'est-à-dire ${[0,1,2].map(k=>`${c(trip1(paq1(m0,k)))} pour ${CAT1[k]}`).join(", ")}.`,why:"Ce sont les neuf caractères après le type, dans la ligne de ls -l.",pts:1},
+      ...clauses1(m0,cmd,0o022).map(x=>Object.assign(x,{pts:1.5})),{w:`<b>${c(let1(att))}</b>`,why:`${c("ls -l")} afficherait ${c("-"+let1(att))}.`,pts:0.5}];
+    return {sig:"D10"+oct1(m0)+cmd,q:`Voici la ligne de ${c("ls -l")} pour ${c(nom)}. Quels sont ses droits après la commande ${c("chmod "+cmd+" "+nom)} ? Écris-les en lettres (neuf caractères).`,corps:bloc(lsl),texte:`${let1(m0)} puis chmod ${cmd}`,
+      champs:[{k:"champ",id:"d",nom:"droits",label:"Les droits après :",ex:"par exemple rw-r--r--",apercu:false,sym:SYMD1}],juge,etapes:E,bonne:c(let1(att)),bonneTxt:let1(att),repBonne:{d:let1(att)},repFausse:{d:let1(P[0][1])},nature:/^\d/.test(cmd)?"chmod en octal":"chmod en lettres",
+      ens:{fam:"apres",m0,cmd,att,pieges:P.map(x=>({type:x[0],d:let1(x[1])})),bash:[vraiCh1([`touch ${nom}`,`chmod ${oct1(m0)} ${nom}`,`chmod ${cmd} ${nom}`,`stat -c %A ${nom}`],["-"+let1(att)])]}};}
+  if(f===1){let m1;for(;;){m1=m0;const K=R.mel([0,1,2]).slice(0,R.ent(1,2));for(const k of K)m1=(m1&~(7<<(6-3*k)))|(tirePaq1(R,false)<<(6-3*k));if(m1!==m0)break;}
+    if(R()<0.3)m1|=0o100;const s=sym1(m0,m1),o=oct1(m1),eg="u="+trip1(paq1(m1,0)).replace(/-/g,"")+",g="+trip1(paq1(m1,1)).replace(/-/g,"")+",o="+trip1(paq1(m1,2)).replace(/-/g,"");if(m1===m0)return null;
+    const juge=rep=>jugeCmd1(rep,nom,[m0],[m1],{etape:1}),fx=[envers1,ordre1].map(g=>g(m1)).find(x=>x!==m1);if(fx===undefined)return null;
+    const E=[{w:[0,1,2].map(k=>`${CAT1[k]} : ${c(trip1(paq1(m0,k)))} → ${c(trip1(paq1(m1,k)))}${paq1(m0,k)===paq1(m1,k)?" (rien ne change)":""}`).join("<br>"),why:"On compare paquet par paquet ce qu'on a et ce qu'on veut.",pts:1},
+      {w:`En octal : ${c("chmod "+o+" "+nom)}, car ${[0,1,2].map(k=>`${c(trip1(paq1(m1,k)))} = ${paq1(m1,k)}`).join(", ")}.`,why:"Avec des chiffres, on donne les neuf droits d'un coup : r = 4, w = 2, x = 1.",pts:1.5},
+      {w:`En lettres : ${c("chmod "+s+" "+nom)}.`,why:`On ne cite que ce qui change : ${c("+")} ajoute, ${c("-")} retire, ${c("=")} remplace. ${c("u")} le propriétaire, ${c("g")} le groupe, ${c("o")} les autres, ${c("a")} tout le monde.`,pts:1},
+      {w:`<b>${c("chmod "+o+" "+nom)}</b> (ou ${c("chmod "+s+" "+nom)})`,why:"Les deux écritures donnent les mêmes droits.",pts:0.5}];
+    return {sig:"D11"+oct1(m0)+o,q:`Le fichier ${c(nom)} a les droits ${c(let1(m0))}. Écris une commande qui lui donne les droits ${c(let1(m1))}.`,corps:"",texte:`${let1(m0)} → ${let1(m1)} : la commande ?`,
+      champs:[{k:"champ",id:"c",nom:"commande",label:"La commande :",ex:"chmod … "+nom,apercu:false,sym:SYMC1}],juge,etapes:E,bonne:c("chmod "+o+" "+nom),bonneTxt:"chmod "+o+" "+nom,repBonne:{c:"chmod "+o+" "+nom},repFausse:{c:"chmod "+oct1(fx)+" "+nom},nature:"écrire chmod",
+      ens:{fam:"ecrire",m0,att:m1,nom,alt:["chmod "+s+" "+nom,"chmod "+eg+" "+nom,"chmod 0"+o+" ./"+nom],pieges:[{type:"r et x échangés",c:"chmod "+oct1(envers1(m1))+" "+nom}].filter(x=>envers1(m1)!==m1),
+        bash:["chmod "+o+" "+nom,"chmod "+s+" "+nom,"chmod "+eg+" "+nom].map(x=>vraiCh1([`touch ${nom}`,`chmod ${oct1(m0)} ${nom}`,x,`stat -c %A ${nom}`],["-"+let1(m1)]))}};}
+  const [ref,phrase]=R.choix(BUT1),S=[m0,m0^0o777,tireMode1(R,false)],att=S.map(s=>chmod1(s,ref,0o022).m);if(att[0]===m0)return null;
+  const juge=rep=>jugeCmd1(rep,nom,S,att,{etape:0}),qui=/^[ugoa]*/.exec(ref)[0];
+  const P=[["chiffres sans connaître les droits","chmod "+oct1(att[0])+" "+nom],["o lu comme le propriétaire","chmod "+ref.replace(/^u/,"o")+" "+nom],...(ref.includes("+")?[["= lu comme +","chmod "+ref.replace("+","=")+" "+nom]]:[])].filter(([t,x])=>x!=="chmod "+ref+" "+nom&&!S.every((s,i)=>chmod1(s,x.split(" ")[1],0o022).m===att[i]));
+  const E=[{w:`Qui : ${quiTxt1(qui)}, donc ${c(qui)}.`,why:`${c("u")} : user, le propriétaire ; ${c("g")} : group, le groupe ; ${c("o")} : others, les autres ; ${c("a")} : all, tout le monde.`,pts:1},
+    {w:`Le signe et les droits : ${c(ref.slice(qui.length))}.`,why:`${c("+")} ajoute, ${c("-")} retire, ${c("=")} remplace. On ne connaît pas les droits actuels : avec des chiffres, chmod remplacerait les neuf droits, et on changerait ce qu'il ne fallait pas toucher.`,pts:1.5},
+    {w:`<b>${c("chmod "+ref+" "+nom)}</b>`,why:`Par exemple, si ${c(nom)} avait ${c(let1(m0))}, il aurait ensuite ${c(let1(att[0]))}.`,pts:0.5}];
+  return {sig:"D12"+ref+nom,q:`Tu ne connais pas les droits actuels de ${c(nom)}. Écris la commande qui ${phrase}, sans rien changer d'autre.`,corps:"",texte:`Sans connaître les droits : ${phrase}`,
+    champs:[{k:"champ",id:"c",nom:"commande",label:"La commande :",ex:"chmod … "+nom,apercu:false,sym:SYMC1}],juge,etapes:E,bonne:c("chmod "+ref+" "+nom),bonneTxt:"chmod "+ref+" "+nom,repBonne:{c:"chmod "+ref+" "+nom},repFausse:{c:"chmod "+oct1(att[0])+" "+nom},nature:"sans connaître les droits",
+    ens:{fam:"relatif",starts:S,att,nom,ref,pieges:P.map(([type,x])=>({type,c:x})),bash:S.map((s,i)=>vraiCh1([`touch ${nom}`,`chmod ${oct1(s)} ${nom}`,`chmod ${ref} ${nom}`,`stat -c %A ${nom}`],["-"+let1(att[i])]))}};}
+
+/* palier 3 : umask */
+const sous1=(b,u)=>{const D=oct1(b).split("").map((x,i)=>+x-+oct1(u)[i]);return D.every(x=>x>=0)?parseInt(D.join(""),8):null;};
+const retire1=u=>{const L=[0,1,2].map(k=>{const d=paq1(u,k);return d?(d===7?`tout ${k===2?"aux autres":k===1?"au groupe":"au propriétaire"}`:`${trip1(d).replace(/-/g,"").split("").join(" et ")} ${k===2?"aux autres":k===1?"au groupe":"au propriétaire"}`):null;}).filter(Boolean);return L.length?"il retire "+et(L):"il ne retire rien";};
+function exoDr2(R){const f=R.choix([0,0,0,1,1,2,2]);let um;
+  for(;;){um=deP1(R.choix([0,0,0,0,2]),R.choix([0,2,2,7,5,3,1,6,4]),R.choix([0,2,2,7,7,5,3,1,6,4]));if(um)break;}
+  const F=0o666&~um,D=0o777&~um,ens0=[`umask ${oct1(um)}`,"touch f","mkdir d","stat -c %A f d"];
+  if(f===0){const Pf=[["soustraction au lieu de retirer des bits",sous1(0o666,um),`On retire des bits, on ne soustrait pas : 6 = 110 sans le bit 1 reste 110, donc 6 (et 6 − 1 = 5 ferait apparaître un x).`],["base 777 pour un fichier",0o777&~um,"Un nouveau fichier part de 666 (rw-rw-rw-) : il ne naît jamais exécutable. C'est un répertoire qui part de 777."],["umask pris pour les droits",um,"Le umask donne les droits à retirer, pas ceux à donner."]].filter(x=>x[1]!==null&&x[1]!==F);
+    const Pd=[["base 666 pour un répertoire",0o666&~um,"Un nouveau répertoire part de 777 (rwxrwxrwx) : sans x, on ne pourrait pas y entrer."],["umask pris pour les droits",um,"Le umask donne les droits à retirer, pas ceux à donner."]].filter(x=>x[1]!==D);
+    function juge(rep){const a=lisDr1(rep.f),b=lisDr1(rep.d);if(a.vide||b.vide)return {incomplet:"Donne les deux : les droits du fichier et ceux du répertoire."};if(a.err)return {incomplet:a.err};if(b.err)return {incomplet:b.err};
+      if(a.m===F&&b.m===D)return {ok:true};const j=a.m!==F?jugeDr1(rep.f,"",F,Pf,"f",2,"les droits du fichier"):jugeDr1(rep.d,"",D,Pd,"d",3,"les droits du répertoire");
+      if(a.m!==F&&b.m!==D)j.faux=["f","d"];return j;}
+    const E=[{w:"Les bases : un fichier part de 666 (rw-rw-rw-), un répertoire de 777 (rwxrwxrwx).",why:"Un fichier ne naît jamais exécutable ; un répertoire naît traversable.",pts:1},
+      {w:`Le masque ${c(oct1(um))} = ${bits1(um)} : ${retire1(um)}.`,why:"Chaque chiffre fait trois bits, r w x ; un bit à 1 dans le umask est un droit retiré.",pts:1},
+      {w:`Fichier : ${bits1(0o666)} sans ${bits1(um)} donne ${bits1(F)} = ${oct1(F)}, ${c(let1(F))}.`,why:"On garde les bits de la base qui ne sont pas dans le masque.",pts:1},
+      {w:`Répertoire : ${bits1(0o777)} sans ${bits1(um)} donne ${bits1(D)} = ${oct1(D)}, ${c(let1(D))}.`,why:"Même calcul, avec la base 777.",pts:1},
+      {w:`<b>fichier ${c(let1(F))} (${oct1(F)}), répertoire ${c(let1(D))} (${oct1(D)})</b>`,why:`${c("ls -l")} afficherait ${c("-"+let1(F))} et ${c("d"+let1(D))}.`,pts:0.5}];
+    const pf=Pf[0]?Pf[0][1]:0o777&~um;
+    return {sig:"D20"+oct1(um),q:`Avec ${c("umask "+oct1(um))}, tu crées un fichier (${c("touch f")}) et un répertoire (${c("mkdir d")}). Quels sont leurs droits ? En lettres ou en octal.`,corps:"",texte:`umask ${oct1(um)} : fichier et répertoire ?`,
+      champs:[{k:"champ",id:"f",nom:"fichier",label:"Le fichier f :",ex:"par exemple rw-r--r-- ou 644",apercu:false,sym:SYMD1},{k:"champ",id:"d",nom:"répertoire",label:"Le répertoire d :",ex:"par exemple rwxr-xr-x ou 755",apercu:false,sym:SYMD1}],juge,etapes:E,
+      bonne:`fichier ${c(let1(F))}, répertoire ${c(let1(D))}`,bonneTxt:`${let1(F)} ${let1(D)}`,repBonne:{f:let1(F),d:oct1(D)},repFausse:{f:let1(pf),d:let1(D)},nature:"umask : les droits",
+      ens:{fam:"umask",um,F,D,piegesF:Pf.map(x=>({type:x[0],f:let1(x[1])})),piegesD:Pd.map(x=>({type:x[0],d:let1(x[1])})),bash:[vraiCh1(ens0,["-"+let1(F),"d"+let1(D)])]}};}
+  if(f===1){const P=[["droits donnés au lieu du umask",D,`Le umask contient les droits à retirer, pas ceux qu'on veut obtenir : c'est ce qui manque à ${c(let1(D))}.`],["calculé sur le fichier seul",0o666&~F,`En partant du fichier, on ne voit pas les x (un fichier n'en a jamais au départ) : le répertoire ${c(let1(D))} dit aussi quels x retirer.`],["droits du fichier donnés",F,"Le umask contient les droits à retirer, pas ceux qu'on veut obtenir."]].filter(x=>x[1]!==um);
+    function juge(rep){let s=propre(rep.u).replace(/^umask\s*/,"").replace(/\s/g,"");if(!s)return {incomplet:"Écris le umask."};if(!/^[0-7]{1,4}$/.test(s)||parseInt(s,8)>0o777)return {incomplet:"Le umask s'écrit en octal, avec trois chiffres (par exemple 022)."};
+      const v=parseInt(s,8);if(v===um)return {ok:true};const non=(type,titre,msg)=>({ok:false,faux:["u"],resume:"Pas tout à fait : ce n'est pas le bon umask.",diag:{etape:0,type,titre,msg}});
+      for(const [t,x,msg] of P)if(x===v)return non(t,"Où ça part : ce que contient le umask.",msg);
+      return non("umask faux","Où ça part : le calcul.",`Avec ${c("umask "+oct1(v))}, un fichier naîtrait en ${c(let1(0o666&~v))} et un répertoire en ${c(let1(0o777&~v))}.`);}
+    const E=[{w:`Le répertoire part de 777 : le umask, c'est exactement ce qui manque à ${c(let1(D))}.`,why:"Le umask retire des droits ; pour un répertoire, rien d'autre ne manque au départ.",pts:1.5},
+      {w:`Chiffre par chiffre : ${oct1(D).split("").map(d=>`7 − ${d} = ${7-d}`).join(", ")}, donc ${c(oct1(um))}.`,why:"Ici on peut soustraire : 7 = 111, et retirer à 111 les bits d'un chiffre donne 7 moins ce chiffre.",pts:1},
+      {w:`On vérifie sur le fichier : ${bits1(0o666)} sans ${bits1(um)} donne ${c(let1(F))}.`,why:"C'est bien ce que demande l'énoncé.",pts:1},
+      {w:`<b>${c("umask "+oct1(um))}</b>`,why:retire1(um).replace(/^il/,"Il")+".",pts:0.5}];
+    return {sig:"D21"+oct1(um),q:`Quel umask faut-il donner pour que les nouveaux fichiers naissent avec les droits ${c(let1(F))} et les nouveaux répertoires avec ${c(let1(D))} ?`,corps:"",texte:`umask pour ${let1(F)} et ${let1(D)} ?`,
+      champs:[{k:"champ",id:"u",nom:"umask",label:"Le umask :",ex:"par exemple 022",apercu:false,sym:[]}],juge,etapes:E,bonne:c(oct1(um)),bonneTxt:oct1(um),repBonne:{u:oct1(um)},repFausse:{u:oct1(P.length?P[0][1]:um^0o001)},nature:"umask à trouver",
+      ens:{fam:"umaskInv",um,F,D,pieges:P.map(x=>({type:x[0],u:oct1(x[1])})),bash:[vraiCh1(ens0,["-"+let1(F),"d"+let1(D)])]}};}
+  const nom=R.choix(["s.sh","lance.sh","tp.py","job.sh"]),cmd=R.choix(["u+x","+x","+x","a+x","g+w","go-r","ug+x","u+x,g+w","+w"]),att=chmod1(F,cmd,um).m;
+  const P=[["base 777 pour un fichier",chmod1(0o777&~um,cmd,um).m,"Un nouveau fichier part de 666 (rw-rw-rw-), pas de 777."],["umask oublié",chmod1(F,cmd,um,{sansMasque:1}).m,MSG1.sansMasque],["umask oublié à la création",chmod1(0o666,cmd,um).m,`Le fichier naît déjà sans les droits du umask : ${c(let1(F))}.`],["soustraction au lieu de retirer des bits",sous1(0o666,um)===null?null:chmod1(sous1(0o666,um),cmd,um).m,"On retire des bits, on ne soustrait pas : 6 sans le bit 1 reste 6."]].filter(x=>x[1]!==null&&x[1]!==att);
+  if(!P.length)return null;
+  const E=[{w:`Le fichier naît avec 666 sans ${oct1(um)} : ${bits1(0o666)} sans ${bits1(um)} donne ${c(let1(F))}.`,why:"Un nouveau fichier part de 666, et le umask retire ses bits.",pts:1.5},
+    ...clauses1(F,cmd,um).map(x=>Object.assign(x,{pts:1.5})),{w:`<b>${c(let1(att))}</b>`,why:"Le umask ne compte qu'à la création et pour un chmod sans u, g, o ni a.",pts:0.5}];
+  return {sig:"D22"+oct1(um)+cmd,q:`Avec ${c("umask "+oct1(um))}, tu tapes ${c("touch "+nom)}, puis ${c("chmod "+cmd+" "+nom)}. Quels sont les droits de ${c(nom)} ? Écris-les en lettres.`,corps:"",texte:`umask ${oct1(um)}, touch, chmod ${cmd}`,
+    champs:[{k:"champ",id:"d",nom:"droits",label:"Les droits :",ex:"par exemple rwxr--r--",apercu:false,sym:SYMD1}],juge:rep=>jugeDr1(rep.d,"let",att,P,"d",1),etapes:E,bonne:c(let1(att)),bonneTxt:let1(att),repBonne:{d:let1(att)},repFausse:{d:let1(P[0][1])},nature:"umask puis chmod",
+    ens:{fam:"umaskChmod",um,cmd,att,pieges:P.map(x=>({type:x[0],d:let1(x[1])})),bash:[vraiCh1([`umask ${oct1(um)}`,`touch ${nom}`,`chmod ${cmd} ${nom}`,`stat -c %A ${nom}`],["-"+let1(att)])]}};}
+
+/* palier 4 : qui peut faire quoi. Une chaîne : /home/bob, /home/bob/tp, /home/bob/tp/note.txt ; une action demande des bits sur des maillons (0, 1, 2) */
+const ACT1={lire:{t:"lire note.txt (cat)",b:[[0,1],[1,1],[2,4]],cmd:"cat bob/tp/note.txt"},modifier:{t:"modifier note.txt",b:[[0,1],[1,1],[2,2]],cmd:"echo fin >> bob/tp/note.txt"},
+  supprimer:{t:"supprimer note.txt (rm)",b:[[0,1],[1,1],[1,2]],cmd:"rm bob/tp/note.txt"},renommer:{t:"renommer note.txt (mv)",b:[[0,1],[1,1],[1,2]],cmd:"mv bob/tp/note.txt bob/tp/vieux.txt"},
+  lister:{t:"lister tp (ls)",b:[[0,1],[1,4]],cmd:"ls bob/tp"},creer:{t:"créer un fichier dans tp",b:[[0,1],[1,1],[1,2]],cmd:"touch bob/tp/nouveau.txt"},entrer:{t:"entrer dans tp (cd)",b:[[0,1],[1,1]],cmd:"cd bob/tp"}};
+const lv1=v=>"rwx"[[4,2,1].indexOf(v)],NOMB1=["bob","tp","note.txt"],CHEM1=["/home/bob","/home/bob/tp","/home/bob/tp/note.txt"];
+/* eff : le paquet qui compte pour la personne, maillon par maillon ; lu : une règle mal lue */
+const peut1=(eff,a,lu)=>{lu=lu||{};let B=ACT1[a].b;
+  if(lu.fichier&&(a==="supprimer"||a==="renommer"))B=[[0,1],[1,1],[2,2]];
+  if(lu.sansX)B=B.filter(([i,v])=>!(v===1&&i<2));if(lu.rPourX)B=B.map(([i,v])=>v===1&&i<2?[i,4]:[i,v]);
+  return B.every(([i,v])=>eff[i]&v);};
+const manque1=(eff,a)=>ACT1[a].b.filter(([i,v])=>!(eff[i]&v)).map(([i,v])=>`${lv1(v)} sur ${NOMB1[i]}`);
+const cat1=(e,qui)=>e.p===qui.n?0:qui.G.includes(e.g)?1:2;
+const effDe1=(ch,qui,lu)=>ch.map(e=>lu&&lu.union?paq1(e.m,0)|paq1(e.m,1)|paq1(e.m,2):lu&&lu.sansGroupe?paq1(e.m,e.p===qui.n?0:2):paq1(e.m,cat1(e,qui)));
+const MSGA1={union:"Une seule catégorie compte, maillon par maillon : le propriétaire si c'est la personne, sinon le groupe si elle en fait partie, sinon les autres. Les droits des autres catégories ne s'ajoutent pas.",
+  sansGroupe:"La personne fait partie de certains groupes (voir id) : sur un maillon de son groupe, c'est le paquet du groupe qui compte, pas celui des autres.",
+  fichier:"Supprimer ou renommer un fichier change la liste des noms du répertoire : il faut w et x sur le répertoire, et les droits du fichier ne comptent pas.",
+  sansX:"Pour atteindre quelque chose dans un répertoire, il faut le droit x (traverser) sur chaque répertoire du chemin.",
+  rPourX:"Traverser un répertoire demande x, pas r : r sert seulement à lister ses noms."};
+function voitChaine1(R,ch,qui){const L=ch.map((e,i)=>lsl1(R,e.m,i<2,e.p,e.g,CHEM1[i]));return `${c("id "+qui.n)} :${bloc(qui.id)}${c("ls -ld")} sur le dossier de bob, sur tp et sur note.txt :${bloc(L.join("\n"))}`;}
+function tireQui1(R){const G=R()<0.5?["etu"]:["etu","l1info"];return {n:"alice",G,id:`uid=1003(alice) gid=1003(etu) groupes=${G.map((g,i)=>(1003+i*20)+"("+g+")").join(",")}`};}
+function exoDr3(R){const f=R()<0.6?0:1,qui=tireQui1(R);
+  if(f===0){const ch=[0,1,2].map(i=>{const p=i===2&&R()<0.35?"alice":i===1&&R()<0.15?"alice":"bob",g=R.choix(["etu","etu","prof"]);
+      const m=deP1(p==="alice"?R.choix(i<2?[7,5,3]:[6,4,2]):R.choix(i<2?[7,7,5]:[6,6,4]),tirePaq1(R,i<2),tirePaq1(R,i<2));return {p,g,m};});
+    const A=R.mel(Object.keys(ACT1)).slice(0,6),eff=effDe1(ch,qui),bon=A.filter(a=>peut1(eff,a));if(!bon.length||bon.length===A.length)return null;
+    const LU=[["droits de toutes les catégories ajoutés",{union:1}],["groupe oublié",{sansGroupe:1}],["supprimer selon les droits du fichier",{fichier:1}],["traversée oubliée",{sansX:1}],["r au lieu de x pour traverser",{rPourX:1}]];
+    const vu=lu=>{const e2=effDe1(ch,qui,lu);return A.filter(a=>peut1(e2,a,lu));},key=L=>A.filter(a=>L.includes(a)).join(",");
+    const P=LU.map(([t,lu])=>[t,vu(lu),MSGA1[Object.keys(lu)[0]]]).filter(x=>key(x[1])!==key(bon));if(P.length<2)return null;
+    function juge(rep){const S=(rep.g||[]).map(String);if(!S.length)return {incomplet:"Coche les actions permises (ou « aucune »)."};
+      const moi=S.includes("0")?[]:A.filter(a=>S.includes(a));if(key(moi)===key(bon))return {ok:true};
+      const non=(etape,type,titre,msg)=>({ok:false,faux:["g"],resume:"Pas tout à fait : ce ne sont pas les actions permises à alice.",diag:{etape,type,titre,msg}});
+      for(const [t,L,msg] of P)if(key(L)===key(moi))return non(t==="droits de toutes les catégories ajoutés"||t==="groupe oublié"?0:1,t,"Où ça part : la règle.",msg);
+      const a=A.find(a=>moi.includes(a)!==bon.includes(a));
+      return non(2,bon.includes(a)?"action permise oubliée":"action cochée à tort","Où ça part : une action.",`${ACT1[a].t} : ${bon.includes(a)?"alice a tous les droits qu'il faut ("+ACT1[a].b.map(([i,v])=>`${lv1(v)} sur ${NOMB1[i]}`).join(", ")+")":"il manque "+et(manque1(eff,a))}.`);}
+    const raison=(e,i)=>{const k=cat1(e,qui);return `${c(NOMB1[i])} : ${k===0?"alice en est propriétaire":k===1?`le groupe est ${e.g}, et alice en fait partie`:`propriétaire ${e.p}, groupe ${e.g} : alice n'est ni l'un ni dans l'autre`} → ${c(trip1(eff[i]))}`;};
+    const E=[{w:"Le paquet qui compte pour alice, maillon par maillon :<br>"+ch.map(raison).join("<br>"),why:"Une seule catégorie par maillon : le propriétaire si c'est alice, sinon le groupe si elle en fait partie, sinon les autres. Les autres paquets ne comptent pas.",pts:1.5},
+      {w:"Les droits qu'il faut :<br>"+A.map(a=>`${ACT1[a].t} : ${ACT1[a].b.map(([i,v])=>`${lv1(v)} sur ${NOMB1[i]}`).join(", ")}`).join("<br>"),why:"x sur chaque répertoire du chemin pour l'atteindre ; r sur un répertoire pour le lister ; w (et x) sur le répertoire pour créer, supprimer ou renommer, quels que soient les droits du fichier.",pts:1.5},
+      {w:A.map(a=>`${ACT1[a].t} : ${bon.includes(a)?"oui":"non, il manque "+et(manque1(eff,a))}`).join("<br>"),why:"On compare avec les paquets de la première étape.",pts:1.5},
+      {w:`<b>alice peut : ${et(bon.map(a=>ACT1[a].t))}</b>`,why:`${bon.length} action${bon.length>1?"s":""} sur ${A.length}.`,pts:0.5}];
+    /* le vrai bash joue chaque action, sur des copies où le paquet qui compte pour alice est mis au propriétaire */
+    const tst=A.map(a=>`t; { ${ACT1[a].cmd==="cd bob/tp"?"(cd bob/tp)":ACT1[a].cmd} ; } >/dev/null 2>&1 && echo ${a}:oui || echo ${a}:non; n`);
+    const vrai=vraiCh1([`t(){ mkdir -p bob/tp; echo texte > bob/tp/note.txt; chmod ${eff[2]}00 bob/tp/note.txt; chmod ${eff[1]}00 bob/tp; chmod ${eff[0]}00 bob; }`,"n(){ chmod u+rwx bob; chmod u+rwx bob/tp; rm -rf bob; }",...tst],A.map(a=>a+":"+(bon.includes(a)?"oui":"non")));
+    const O=A.map(a=>[a,ACT1[a].t]).concat([["0","aucune"]]);
+    return {sig:"D30"+ch.map(e=>e.p+e.g+oct1(e.m)).join("|")+qui.G.join()+A.slice().sort().join(),q:"Coche ce qu'alice peut faire. Sous chaque commande, ce qu'elle affiche :",corps:voitChaine1(R,ch,qui),texte:`alice ${qui.G.join(",")} ; `+ch.map((e,i)=>`${NOMB1[i]} ${let1(e.m)} ${e.p} ${e.g}`).join(" ; "),
+      champs:[{k:"multi",id:"g",o:O,seul:"0"}],juge,etapes:E,bonne:et(bon.map(a=>ACT1[a].t)),bonneTxt:bon.join(","),repBonne:{g:bon},repFausse:{g:P[0][1].length?P[0][1]:["0"]},nature:"qui peut faire quoi",
+      ens:{fam:"acces",ch,qui,A,bon,pieges:P.map(x=>({type:x[0],g:x[1].length?x[1]:["0"]})),bash:[vrai]}};}
+  /* régler les droits : bob, dans /home/bob, tape des chmod pour qu'une personne puisse faire ceci et pas cela */
+  const BUTS=[
+    {t:"lucas (qui n'est pas dans le groupe etu) puisse lire et modifier tp/note.txt, mais pas lister tp (comme au TD, exercice 18)",k:2,ok:["lire","modifier"],non:["lister"],fixe:[0,1],v:(t,n)=>[1,n|6]},
+    {t:"marie (du groupe etu) puisse lister tp et lire tp/note.txt, mais ni modifier note.txt, ni créer ou supprimer de fichier dans tp",k:1,ok:["lister","lire"],non:["modifier","creer","supprimer"],fixe:[0,2],v:(t,n)=>[5,4]},
+    {t:"marie (du groupe etu) puisse modifier tp/note.txt, mais pas le supprimer",k:1,ok:["modifier"],non:["supprimer"],fixe:[0,2],v:(t,n)=>[(t|1)&~2,n|2]},
+    {t:"ni marie (du groupe etu) ni lucas (qui n'y est pas) ne puissent entrer dans tp",k:-1,ok:[],non:["entrer"],fixe:[0],v:null},
+    {t:"lucas (qui n'est pas dans le groupe etu) ne puisse plus rien faire dans tp, ni sur note.txt, sans changer les droits du groupe",k:2,ok:[],non:["lire","modifier","lister","entrer","creer","supprimer"],fixe:[0,1],v:(t,n)=>[0,n]},
+    {t:"marie (du groupe etu) puisse créer des fichiers dans tp",k:1,ok:["creer"],non:[],fixe:[0,2],v:(t,n)=>[t|3,n]}];
+  const B=R.choix(BUTS),t0=deP1(7,tirePaq1(R,true),tirePaq1(R,true)),n0=deP1(6,tirePaq1(R,false),tirePaq1(R,false));
+  const PERS=[{n:"marie",G:["etu"]},{n:"lucas",G:["prof"]}],ks=B.k<0?[1,2]:[B.k];
+  const chDe=(t,n)=>[{p:"bob",g:"etu",m:0o711},{p:"bob",g:"etu",m:t},{p:"bob",g:"etu",m:n}];
+  const tient=(t,n)=>ks.every(k=>{const e=effDe1(chDe(t,n),PERS[k-1]);return B.ok.every(a=>peut1(e,a))&&B.non.every(a=>!peut1(e,a));})&&B.fixe.every(k=>paq1(t,k)===paq1(t0,k)&&paq1(n,k)===paq1(n0,k));
+  if(tient(t0,n0))return null;
+  let t1=t0,n1=n0;if(B.v){const [a,b]=B.v(paq1(t0,B.k),paq1(n0,B.k)),sh=6-3*B.k;t1=(t0&~(7<<sh))|(a<<sh);n1=(n0&~(7<<sh))|(b<<sh);}else t1=t0&~0o011;
+  if(!tient(t1,n1))throw new Error("US1 : but mal réglé "+B.t);
+  const ref=[t1!==t0?`chmod ${sym1(t0,t1)} tp`:null,n1!==n0?`chmod ${sym1(n0,n1)} tp/note.txt`:null].filter(Boolean).join("\n");
+  const chem=s=>{s=s.replace(/\/+$/,"").replace(/^(\/home\/bob|~|\.)\//,"");return s==="tp"?1:s==="tp/note.txt"?2:s==="note.txt"?-2:0;};
+  function joueRegle(src){let t=t0,n=n0;const L=String(src||"").split("\n").map(x=>x.trim()).filter(Boolean);if(!L.length)return {vide:1};
+    for(const l of L){const r=ligneChmod1(l);if(r.err)return {err:r.err};for(const x of r.cibles){const i=chem(x);
+        if(i===-2)return {err:`bob est dans /home/bob : note.txt est dans tp, son chemin est ${c("tp/note.txt")}.`};if(!i)return {err:`Ici, les commandes visent tp ou tp/note.txt (bob est dans /home/bob), pas ${c(x)}.`};
+        const y=chmod1(i===1?t:n,r.mode,0o022);if(y.err)return {err:y.err};if(i===1)t=y.m;else n=y.m;}}
+    return {t,n};}
+  const verdict=(t,n)=>{for(const k of ks){const Q=PERS[k-1],e=effDe1(chDe(t,n),Q);for(const a of B.ok)if(!peut1(e,a))return {type:"action encore impossible",msg:`Avec tes commandes, ${Q.n} ne peut pas ${ACT1[a].t.replace(/ \(.*\)/,"")} : il manque ${et(manque1(e,a))} (paquet ${DU1[k]}).`};
+      for(const a of B.non)if(peut1(e,a))return {type:a==="lister"?"r laissé sur le répertoire":a==="supprimer"||a==="creer"?"w laissé sur le répertoire":"action encore permise",msg:`Avec tes commandes, ${Q.n} peut encore ${ACT1[a].t.replace(/ \(.*\)/,"")} : ${a==="supprimer"||a==="creer"?"créer et supprimer dépendent de w sur le répertoire tp, pas des droits du fichier":a==="lister"?"lister tp demande r sur tp ; pour seulement le traverser, x suffit":"il faut lui retirer un des droits "+ACT1[a].b.map(([i,v])=>`${lv1(v)} sur ${NOMB1[i]}`).join(", ")}.`};}
+    for(const k of B.fixe){if(paq1(t,k)!==paq1(t0,k))return {type:"autre catégorie changée",msg:`Tu as changé le paquet ${DU1[k]} sur tp (${c(trip1(paq1(t0,k)))} devient ${c(trip1(paq1(t,k)))}) : l'énoncé ne demande pas d'y toucher.`};
+      if(paq1(n,k)!==paq1(n0,k))return {type:"autre catégorie changée",msg:`Tu as changé le paquet ${DU1[k]} sur note.txt (${c(trip1(paq1(n0,k)))} devient ${c(trip1(paq1(n,k)))}) : l'énoncé ne demande pas d'y toucher.`};}
+    return null;};
+  function juge(rep){const r=joueRegle(rep.c);if(r.vide)return {incomplet:"Écris les commandes chmod, une par ligne."};if(r.err)return {incomplet:r.err};const v=verdict(r.t,r.n);if(!v)return {ok:true};
+    return {ok:false,faux:["c"],resume:"Pas tout à fait : avec ces droits, l'énoncé n'est pas respecté.",diag:{etape:v.type==="autre catégorie changée"?2:1,type:v.type,titre:"Où ça part : une action.",msg:v.msg}};}
+  const PI=[];const ajoute=src=>{const r=joueRegle(src);if(r.err||r.vide)return;const v=verdict(r.t,r.n);if(v&&!PI.some(x=>x.c===src))PI.push({type:v.type,c:src});};
+  ajoute(`chmod ${"ugo"[ks[0]]}= tp`);ajoute(`chmod ${"ugo"[ks[0]]}=rwx tp`);ajoute("chmod 777 tp\nchmod 666 tp/note.txt");ajoute(`chmod ${"ugo"[ks[0]]}-w tp/note.txt`);
+  if(!PI.length)return null;
+  const garde=new Set(B.ok.flatMap(a=>ACT1[a].b.map(([i,v])=>i+""+v))),Q=PERS[ks[0]-1],e0=effDe1(chDe(t0,n0),Q),Lsl=[lsl1(R,0o711,true,"bob","etu","/home/bob"),lsl1(R,t0,true,"bob","etu","/home/bob/tp"),lsl1(R,n0,false,"bob","etu","/home/bob/tp/note.txt")];
+  const E=[{w:`Qui est visé : ${ks.map(k=>`${PERS[k-1].n} → le paquet ${DU1[k]}`).join(" ; ")}.`,why:`${ks.map(k=>k===1?"marie fait partie du groupe etu, le groupe de tp et de note.txt : pour elle, c'est le paquet du groupe":"lucas ne fait pas partie du groupe etu : pour lui, c'est le paquet des autres").join(" ; ")}. Le dossier de bob (rwx--x--x) se traverse par tous.`,pts:1},
+    {w:"Ce qu'il faut :<br>"+[...B.ok.map(a=>`${ACT1[a].t} : ${ACT1[a].b.filter(([i])=>i).map(([i,v])=>`${lv1(v)} sur ${NOMB1[i]}`).join(", ")}`),...B.non.map(a=>`pas ${ACT1[a].t.replace(/ \(.*\)/,"")} : il faut lui retirer ${ACT1[a].b.filter(([i,v])=>i&&!garde.has(i+""+v)).map(([i,v])=>`${lv1(v)} sur ${NOMB1[i]}`).join(" ou ")}`)].join("<br>"),why:"Atteindre un fichier : x sur les répertoires du chemin. Lister : r sur le répertoire. Créer ou supprimer : w et x sur le répertoire, quels que soient les droits du fichier.",pts:1.5},
+    {w:`Les droits voulus : tp ${c(let1(t1))}, note.txt ${c(let1(n1))}${B.fixe.length?` ; ${et(B.fixe.map(k=>CAT1[k]))} ne bouge${B.fixe.length>1?"nt":""} pas`:""}.`,why:"On ne change que le paquet de la personne visée.",pts:1},
+    {w:`<b>${ref.split("\n").map(c).join("<br>")}</b>`,why:`Avant : tp ${c(let1(t0))}, note.txt ${c(let1(n0))}. ${B.ok.length||B.non.length?"D'autres écritures marchent aussi, par exemple en octal : "+[t1!==t0?c(`chmod ${oct1(t1)} tp`):"",n1!==n0?c(`chmod ${oct1(n1)} tp/note.txt`):""].filter(Boolean).join(" et ")+".":""}`,pts:0.5}];
+  const alt=[[t1!==t0?`chmod ${oct1(t1)} tp`:"",n1!==n0?`chmod ${oct1(n1)} tp/note.txt`:""].filter(Boolean).join("\n"),ref.replace(/ tp/g," /home/bob/tp")];
+  const bashDe=src=>{const r=joueRegle(src);return vraiCh1(["mkdir tp","touch tp/note.txt",`chmod ${oct1(n0)} tp/note.txt`,`chmod ${oct1(t0)} tp`,...src.split("\n").map(l=>l.replace(/(\/home\/bob\/|~\/)/g,"")),"stat -c %A tp tp/note.txt","chmod u+rwx tp"],["d"+let1(r.t),"-"+let1(r.n)]);};
+  return {sig:"D31"+B.t+oct1(t0)+oct1(n0),q:`bob est dans /home/bob. Écris les commandes chmod (une par ligne) pour que ${B.t}.${B.fixe.length?` Ne change pas les droits ${et(B.fixe.map(k=>DU1[k]))}.`:""}`,corps:`${c("ls -ld")} :${bloc(Lsl.join("\n"))}`,texte:`${B.t} ; tp ${let1(t0)} note ${let1(n0)}`,
+    champs:[{k:"code",id:"c",nom:"commandes",label:"Les commandes chmod :",lignes:4,ex:"chmod … tp",sym:SYMC1}],juge,etapes:E,bonne:ref.split("\n").map(c).join("<br>"),bonneTxt:ref.replace(/\n/g," ; "),repBonne:{c:ref},repFausse:{c:PI[0].c},nature:"régler les droits",
+    ens:{fam:"regler",B:{ok:B.ok,non:B.non,fixe:B.fixe},ks,t0,n0,t1,n1,ref,alt:alt.filter(Boolean),pieges:PI,bash:[ref,...alt.filter(x=>x&&x!==ref)].map(bashDe)}};}
+const tireDr=k=>R=>{for(;;){const e=[exoDr0,exoDr1,exoDr2,exoDr3][k](R);if(e)return e;}};
+
 G.add("usi",[
+ {id:"US1",t:"Les droits : ls -l, chmod et umask",tache:"droits et umask",th:"fichiers",pts:1.5,lecons:["u-droits","u-umask"],
+  paliers:[
+   {t:"lire les droits : lettres, octal, ls -l",cc:1,min:150,gen:tireDr(0)},
+   {t:"chmod en lettres ou en chiffres",cc:2,min:150,gen:tireDr(1)},
+   {t:"umask : les droits d'un nouveau fichier",cc:2,min:100,gen:tireDr(2)},
+   {t:"qui peut faire quoi, comme au TD",cc:4,min:200,gen:tireDr(3)}]},
  {id:"US4",t:"Tubes et filtres",tache:"tubes et filtres",th:"processus",pts:1,lecons:["u-redir"],
   paliers:[
    {t:"ce qu'affiche un tube",cc:2,min:150,gen:tireTube(0)},
