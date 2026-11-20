@@ -19920,6 +19920,59 @@ function relationCube(R){const forme=R.choix(["bin","gen","gen","iso"]),I="I₃"
     champs:champsRel(ids),juge:rep=>jugeRel(rep,{ids,noms:["α","β","γ"],S,c,I,dec:pre.length,bin:m}),etapes:pre.concat(S.E),bonne:`A⁻¹ = ${polyT(S.X,I)}`,bonneTxt:`A⁻¹ = ${polyT(S.X,I)}`,
     repBonne:{al:brut(S.X[0]),be:brut(S.X[1]),ga:brut(S.X[2])},repFausse:{al:brut(sub(0,S.X[0])),be:brut(sub(0,S.X[1])),ga:brut(sub(0,S.X[2]))},nature:forme,ens:{k:"rel",c,X:S.X.map(fracE),m}};}
 
+/* ---------- AL11 : famille libre ou liée ---------- */
+const CL=["a","b","c","d"],GV=["u","v","w","z"],famT=k=>"("+GV.slice(0,k).join(", ")+")",vecsT=V=>et(V.map((v,i)=>fx(GV[i]+" = "+vt(v)))),Rn=n=>"ℝ"+["","","²","³","⁴"][n];
+const champLib={k:"choix",id:"lib",o:[["libre","libre"],["liee","liée"]]};
+function deuxVecteurs(R){const n=R.choix([2,3,3]),lie=R()<0.5;let u,v;
+  for(;;){u=vAlea(R,n,3);const l=R.choix([2,-1,3,-2,-3]);v=u.map(x=>l*x);if(R()<0.4)[u,v]=[v,u];
+    if(!lie){const i=R.ent(0,n-1);v=v.slice();v[i]+=R.choix([1,-1,2]);}
+    if(v.every(x=>!x)||v.concat(u).some(x=>Math.abs(x)>9))continue;
+    const i0=u.findIndex(x=>x),l0=div(v[i0],u[i0]),bad=v.findIndex((x,i)=>!egal(mul(l0,u[i]),x));if((bad<0)!==lie)continue;break;}
+  const i0=u.findIndex(x=>x),l0=div(v[i0],u[i0]),bad=v.findIndex((x,i)=>!egal(mul(l0,u[i]),x));
+  const E=[{w:`Si v = λu, la ${rangOrd(i0)} composante donne ${fx(`${nb(v[i0])} = λ × ${par(u[i0])}`)}, donc λ = ${nb(l0)}.`,why:`Deux vecteurs non nuls forment une famille liée exactement quand l'un est un multiple de l'autre : ils sont colinéaires. On cherche donc λ avec v = λu.`,pts:1},
+    lie?{w:`Les autres composantes marchent aussi : v = ${comb([l0],["u"])}, donc ${comb([1,sub(0,l0)],["v","u"])} = 0, avec des nombres pas tous nuls. <b>La famille (u, v) est liée.</b>`,why:`Une relation au + bv = 0 avec a ou b non nul : c'est la définition d'une famille liée.`,pts:1}
+      :{w:`Mais la ${rangOrd(bad)} composante donnerait ${fx(`${nb(l0)} × ${par(u[bad])} = ${nb(mul(l0,u[bad]))}`)}, pas ${nb(v[bad])}. Aucun λ ne marche : u et v ne sont pas colinéaires. <b>La famille (u, v) est libre.</b>`,why:`Le même λ doit marcher pour toutes les composantes. Comme u et v ne sont pas nuls, u n'est pas non plus un multiple de v.`,pts:1}];
+  function juge(rep){if(!rep.lib)return {incomplet:"Choisis d'abord : libre ou liée."};
+    if((rep.lib==="liee")!==lie)return {ok:false,faux:["lib"],resume:lie?"Non : la famille est liée.":"Non : la famille est libre.",diag:{etape:1,type:lie?"liée lue comme libre":"libre lue comme liée",titre:"Où ça part : la comparaison des composantes.",msg:lie?`v = ${comb([l0],["u"])} : toutes les composantes marchent avec λ = ${nb(l0)}.`:`λ = ${nb(l0)} marche pour la ${rangOrd(i0)} composante, mais pas pour la ${rangOrd(bad)}.`}};
+    if(!lie)return {ok:true};const x=nombre(rep.la);if(!x)return {incomplet:"Écris λ, un nombre, par exemple −2 ou 1/2."};if(egal(x,l0))return {ok:true};
+    if(!nul(x)&&egal(x,div(1,l0)))return {ok:false,faux:["la"],resume:"Pas tout à fait : λ est faux.",diag:{etape:0,type:"u = λv au lieu de v = λu",titre:"Où ça part : le sens de la division.",msg:`Tu as trouvé u = ${nb(x)}v. On demande v = λu : λ = ${nb(v[i0])} / ${par(u[i0])} = ${nb(l0)}.`}};
+    return {ok:false,faux:["la"],resume:"Pas tout à fait : λ est faux.",diag:{etape:0,type:"calcul de λ",titre:"Où ça part : le calcul de λ.",msg:`La ${rangOrd(i0)} composante donne λ = ${nb(v[i0])} / ${par(u[i0])} = ${nb(l0)}.`}};}
+  return {sig:"F2"+JSON.stringify([u,v]),q:`Dans ${Rn(n)}, on pose ${vecsT([u,v])}. La famille (u, v) est-elle libre ou liée ? Si elle est liée, écris v = λu.`,corps:"",texte:`u = ${vt(u)}, v = ${vt(v)} ; libre ou liée ?`,
+    champs:[champLib,{k:"champ",id:"la",nom:"λ",si:{lib:"liee"},label:"v = λu, avec λ =",ex:"par exemple −2"}],juge,etapes:E,bonne:lie?`liée : v = ${comb([l0],["u"])}`:"libre",bonneTxt:lie?`liée, v = ${comb([l0],["u"])}`:"libre",
+    repBonne:lie?{lib:"liee",la:brut(l0)}:{lib:"libre"},repFausse:{lib:lie?"libre":"liee"},nature:lie?"liee":"libre",ens:{k:"deux",V:[u,v],libre:!lie,la:lie?fracE(l0):null}};}
+function tireFamille(R,n,k,libre){for(;;){let V;
+  if(libre)V=tireLibres(R,n,k,2);
+  else{const B=tireLibres(R,n,Math.min(k-1,n),2),reste=[];for(let t=B.length;t<k;t++){const co=B.map(()=>R.ent(-2,2));if(co.every(x=>!x))co[0]=1;reste.push(combV(co,B).map(x=>q(x).n));}V=R.mel(B.concat(reste));}
+  if(V.some(v=>v.every(x=>!x)||v.some(x=>Math.abs(x)>9)))continue;
+  const A=colonnes(V),Rr=echelonne(A,A.map(()=>0));if((Rr.rang===k)!==libre||!Rr.pas.every(P=>P.M.flat().every(x=>q(x).d===1)))continue;
+  return V;}}
+function famille(V,o){const k=V.length,n=V[0].length,C=CL.slice(0,k),G=GV.slice(0,k),A=colonnes(V),z=A.map(()=>0),R=echelonne(A,z),sol=solution(R,C),libre=R.rang===k,E=[];
+  if(k>n)E.push({w:`${k} vecteurs dans ${Rn(n)} : il y en a plus que ${n}, la famille est forcément liée. Pour trouver une relation, on résout quand même le système.`,why:`Dans ${Rn(n)}, une famille libre a au plus ${n} vecteurs.`,pts:1});
+  E.push({w:`On cherche les nombres ${et(C)} tels que ${fx(C.map((c,i)=>c+G[i]).join(" + ")+" = 0")}. Composante par composante : ${sys(A,z,C)}`,why:`La famille est libre si la seule solution est ${C.join(" = ")} = 0, et liée s'il y en a une autre. On résout par le pivot de Gauss.`,pts:1});
+  E.push({w:`Matrice du système (les vecteurs en colonnes) : ${mat(A)}`,why:`Le second membre est nul et le reste à chaque opération : on ne l'écrit pas.`,pts:0.5});
+  etapesOps(E,R,C,M=>mat(M.map(r=>r.slice(0,-1))),"L'opération se fait sur toute la ligne.");
+  let co=null;
+  if(libre)E.push({w:`<b>Chaque colonne a un pivot : la seule solution est ${C.join(" = ")} = 0. La famille ${famT(k)} est libre.</b>`,why:`Sans variable libre, le système homogène n'a que la solution nulle.`,pts:1.5});
+  else{const L=sol.libres[0],f=sol.S.map(e=>e.k[C[L]]||Q(0)),den=f.reduce((m,x)=>{const d=q(x).d;let a=m,b=d;while(b){[a,b]=[b,a%b];}return m*d/a;},1);co=f.map(x=>q(mul(x,den)).n);
+    const {remonte}=lecteur(R,sol,C);
+    E.push({w:`${C[L]} n'a pas de pivot : c'est une variable libre.<br>${R.piv.map((_,r)=>remonte(R.piv.length-1-r)).join("<br>")}<br>Avec ${fx(`${C[L]} = ${co[L]}`)}${sol.libres.length>1?` et ${et(sol.libres.slice(1).map(j=>C[j]+" = 0"))}`:""} : ${et(C.map((c,i)=>fx(c+" = "+nb(co[i]))))}. <b>${fx(comb(co,G)+" = 0")}, avec des nombres pas tous nuls : la famille ${famT(k)} est liée.</b> Vérification sur la première composante : ${fx(`${verifTxt(A[0],co)} = 0`)}.`,why:`Une colonne sans pivot donne une variable libre, donc d'autres solutions que la solution nulle. Toute valeur non nulle de ${C[L]} donne une relation.`,pts:1.5});}
+  const iFin=E.length-1;
+  function juge(rep){if(o.choix&&!rep.lib)return {incomplet:"Choisis d'abord : libre ou liée."};
+    if(o.choix&&(rep.lib==="libre")!==libre)return {ok:false,faux:["lib"],resume:libre?"Non : la famille est libre.":"Non : la famille est liée.",diag:{etape:k>n&&!libre?0:iFin,type:libre?"libre lue comme liée":k>n?"trop de vecteurs pour être libre":"liée lue comme libre",titre:"Où ça part : la lecture de la matrice échelonnée.",
+      msg:libre?`La descente donne un pivot dans chaque colonne : la seule solution est ${C.join(" = ")} = 0.`:k>n?`${k} vecteurs dans ${Rn(n)} sont toujours liés : ${comb(co,G)} = 0.`:`Une colonne n'a pas de pivot : il y a d'autres solutions que ${C.join(" = ")} = 0, par exemple ${comb(co,G)} = 0.`}};
+    if(libre||!o.rel)return {ok:true};
+    const Y=coefsLus(rep,C);if(!Y)return {incomplet:`Écris ${et(C)} : ${k} nombres, pas tous nuls.`};
+    if(Y.every(y=>nul(y)))return {ok:false,faux:C,resume:"Pas tout à fait : tous tes nombres sont nuls.",diag:{etape:iFin,type:"relation triviale",titre:"Où ça part : la relation choisie.",msg:"Avec tous les nombres nuls, l'égalité est toujours vraie, même pour une famille libre. Il faut une relation avec au moins un nombre non nul."}};
+    const S=V[0].map((_,i)=>V.reduce((s,v,j)=>add(s,mul(Y[j],v[i])),Q(0)));if(S.every(x=>nul(x)))return {ok:true};
+    return {ok:false,faux:C,resume:"Pas tout à fait : ta relation ne donne pas le vecteur nul.",diag:{etape:iFin,type:"relation fausse",titre:"Vérifie ta relation.",msg:`Avec tes nombres, ${comb(Y,G)} = ${vt(S)}, pas le vecteur nul. Une relation juste : ${comb(co,G)} = 0.`}};}
+  const champs=[];if(o.choix)champs.push(champLib);
+  if(o.rel)C.forEach(c=>champs.push(Object.assign({k:"champ",id:c,nom:c,label:c+" =",ex:"par exemple −1"},o.choix?{si:{lib:"liee"}}:{})));
+  const rel=`${fx(C.map((c,i)=>c+G[i]).join(" + ")+" = 0")}`,repBonne=Object.assign(o.choix?{lib:libre?"libre":"liee"}:{},!libre&&o.rel?Object.fromEntries(C.map((c,i)=>[c,String(co[i])])):{});
+  const repFausse=o.choix?{lib:libre?"liee":"libre"}:Object.fromEntries(C.map((c,i)=>[c,String(co[i]+(i?0:1))]));
+  return {sig:"FL"+JSON.stringify(V)+o.choix+o.rel,q:`Dans ${Rn(n)}, on pose ${vecsT(V)}. ${o.choix?`La famille ${famT(k)} est-elle libre ou liée ?${o.rel?` Si elle est liée, donne des nombres ${et(C)}, pas tous nuls, tels que ${rel}.`:""}`:`La famille ${famT(k)} est liée : trouve des nombres ${et(C)}, pas tous nuls, tels que ${rel}.`}`,corps:"",
+    texte:`${V.map((v,i)=>GV[i]+" = "+vt(v)).join(", ")} ; ${o.choix?"libre ou liée ?":"relation ?"}`,champs,juge,etapes:E,bonne:libre?`la famille ${famT(k)} est libre`:`liée : ${fx(comb(co,G)+" = 0")}`,bonneTxt:libre?"libre":`liée : ${comb(co,G)} = 0`,
+    repBonne,repFausse,nature:(libre?"libre":"liee")+(k>n?"-trop":""),ens:{k:"fam",V,libre,co}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -19981,7 +20034,13 @@ G.add("lin",[
    {t:"la relation est donnée : A⁻¹ = αA + βI",cc:2,gen:relationDonnee},
    {t:"calculer A² − kA",cc:4,gen:calculRel},
    {t:"comme au CC2 : calculer A² − kA, puis A⁻¹",cc:6,gen:relationCC},
-   {t:"une relation de degré 3, comme (A + I₃)³ = 0",cc:4,min:170,gen:relationCube}]}
+   {t:"une relation de degré 3, comme (A + I₃)³ = 0",cc:4,min:170,gen:relationCube}]},
+ {id:"AL11",t:"Famille libre ou liée",tache:"famille libre ou liée",th:"base",ex:"cc2",pts:2.5,apres:["AL1"],lecons:["l2-libre"],
+  paliers:[
+   {t:"deux vecteurs : colinéaires ou pas",cc:2,gen:deuxVecteurs},
+   {t:"trois vecteurs de ℝ³ : libre ou liée",cc:4,gen:R=>famille(tireFamille(R,3,3,R()<0.5),{choix:true})},
+   {t:"une famille liée : trouver une relation",cc:5,gen:R=>{const r=R();return famille(r<0.6?tireFamille(R,3,3,false):tireFamille(R,4,3,false),{rel:true});}},
+   {t:"comme au CC2 : libre ou liée, et la relation",cc:6,gen:R=>{const r=R();return famille(r<0.45?tireFamille(R,3,3,R()<0.5):r<0.8?tireFamille(R,4,3,R()<0.5):tireFamille(R,3,4,false),{choix:true,rel:true});}}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
