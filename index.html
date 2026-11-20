@@ -27971,7 +27971,7 @@ function subject(sid){
   if(S.pages.length)h+=tiroir("Pages utiles",`<ul class="minis">${S.pages.map(p=>sw({href:`#/${sid}/p/${p.id}`,c,size:"small",name:esc(p.t)})).join("")}</ul>`,c);
   const mine=P.blocks.filter(b=>b.sid===sid),days=[...new Set(mine.map(b=>b.day))];
   const bon=(P.bonus[sid]||[]).filter(id=>!isDone(sid,S.TB[id])),done=S.tasks.filter(t=>isDone(sid,t));
-  const planned=new Set(mine.flatMap(b=>b.tasks)),orphan=S.tasks.filter(t=>!isDone(sid,t)&&!planned.has(t.id)&&!bon.includes(t.id));
+  const planned=new Set(mine.flatMap(b=>b.tasks)),orphan=S.tasks.filter(t=>!isDone(sid,t)&&!planned.has(t.id)&&!bon.includes(t.id)&&!t.cache);
   let pl=days.length?days.map((dd,i)=>{const B=mine.filter(b=>b.day===dd);return dayBox(`${dayName(dd,true)}${dd===t0?" (aujourd'hui)":""}`,hm(B.reduce((a,b)=>a+b.end-b.start,0)),`<div style="padding:0 12px 12px;display:grid;gap:12px">${B.map(b=>blockHTML(b,false)).join("")}</div>`,i===0);}).join(""):`<p class="muted">Aucun créneau prévu pour cette matière${examStart(S)<NOW()?" : le CC est passé.":"."}</p>`;
   if(orphan.length)pl+=dayBox("Pas encore placé",`${orphan.length} ${plural(orphan.length,"étape")}`,todoBox(sid,orphan));
   if(bon.length)pl+=dayBox("Si tu as encore du temps",`${bon.length} ${plural(bon.length,"étape")}`,todoBox(sid,bon.map(id=>S.TB[id])));
@@ -28507,7 +28507,7 @@ function xBloc(){const x=xLit(),enc=x&&x.phase!=="fini",r=enc&&x.phase==="sujet"
   return `<section class="tiroir"><h2 class="tiroir__title">Examen blanc</h2><ol class="todo">${enc?li("Examen blanc en cours",`${xNoms(x)} · ${r>0?"il reste "+hmin(Math.max(1,Math.ceil(r/60e3)))+", le chrono continue":"le temps est fini : il reste ta copie à noter"}`,"#/entrainer/examen/copie","Reprendre",true):""}${li("Examen blanc 1 matière","Un sujet neuf, à la forme de ta prochaine épreuve · chrono, note sur 20","#/entrainer/examen/une","Commencer")}${li("Examen blanc multi-matières","Une épreuve courte par matière cochée, à la suite · un seul chrono","#/entrainer/examen/multi","Commencer")}</ol>${der?`<p class="gomore">Dernier examen blanc : ${virg(der.n)} sur 20, ${A.dayName(A.ymd(new Date(der.t)),false,true)}.</p>`:""}</section>`;}
 
 /* le choix de la matière (ou des matières) et de la durée ; le sujet est tiré dès qu'on choisit, pour annoncer ce qu'il contient */
-function xChoix(mode,sid0){const une=mode==="une",M=matieres(),base=A.nouvRun();let sel=une&&M.includes(sid0)?[sid0]:[],court=!une,suj=null;
+function xChoix(mode,sid0){const une=mode==="une",M=matieres(),base=A.nouvRun();let sel=(sid0||"").split(",").filter(s=>M.includes(s)).slice(0,une?1:99),court=!une,suj=null;
   $("#main").className="";
   if(X&&X.phase!=="fini")return xDeja(mode);
   $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>${une?"Examen blanc 1 matière":"Examen blanc multi-matières"}</h1></div>
@@ -28620,7 +28620,9 @@ function xFinir(){const run=A.nouvRun();let note=0,nok=0;
        :{reponse:r.vide?"(pas de réponse)":repTexte(e,rep)+(r.inc?" (incomplète)":""),etape:dg?dg.titre:null,erreur:dg?dg.type:null,explication:dg?A.brut(dg.msg):null}));
     if(SUBJ[q.s].TB["en-"+d.id]&&av.val&&!etat(d.id).val)A.emit({k:"task",s:q.s,x:"en-"+d.id,v:false});});
   X.note=quart(note);X.nok=nok;X.phase="fini";
-  A.emit({k:"xb",x:X.id,sids:X.sids,c:X.court,n:X.note,ms:X.fin-X.t0,d:X.dur,nq:X.Q.length,ok:nok});}
+  A.emit({k:"xb",x:X.id,sids:X.sids,c:X.court,n:X.note,ms:X.fin-X.t0,d:X.dur,nq:X.Q.length,ok:nok});
+  /* l'étape « examen blanc » du planning est faite pour cette épreuve */
+  X.sids.forEach(s=>{const t=SUBJ[s].TB[(X.sids.length>1?"xbm-":"xb-")+A.exam(SUBJ[s]).id];if(t)A.emit({k:"task",s,x:t.id,v:true});});}
 function xResultat(){const n=X.Q.length,multi=X.sids.length>1,rates=n-X.nok,TH={};
   X.Q.forEach((q,k)=>{const d=GEN.par[q.g],T=theme(d),c=q.s+"|"+(T?T.id:d.id),o=TH[c]||(TH[c]={s:q.s,t:T?T.t:d.t,got:0,pts:0});o.got+=X.res[k].got;o.pts+=q.pts;});
   const parEx=X.Q.map((q,k)=>{const r=X.res[k];return `<tr><td>${k+1}</td><td>${multi?SUBJ[q.s].name+" · ":""}${GEN.par[q.g].t}</td><td><b>${virg(r.got)}</b> sur ${virg(q.pts)}</td><td>${X.tq[k]?duree(X.tq[k]):"pas ouvert"} (prévu : ${q.min} min)</td></tr>`;}).join("");
@@ -28648,6 +28650,25 @@ function xRapport(L){const vus=new Set(),R=L.filter(r=>r&&r.o==="examen blanc"&&
     fx.forEach(r=>{txt+=`   * Exercice ${r.n}, ${SUBJ[r.s]?SUBJ[r.s].name+", ":""}${r.methode} : ${virg(r.obtenu)} sur ${virg(r.pts)}, ${r.ms?duree(r.ms):"pas ouvert"} (prévu : ${r.tempsCC} min)\n     Énoncé : ${r.enonce}\n     ${r.papier?`Sur papier, note : ${virg(r.note)} sur ${virg(r.noteSur)}. Lignes non écrites : ${(r.lignesManquantes||[]).join(" | ")||"aucune"}`:`Sa réponse : ${r.reponse}`}\n     Bonne réponse : ${r.bonne}\n${r.etape?`     ${r.etape} ${r.explication||""}\n`:""}`;});
     h+=`<details class="ex"><summary><span><span class="sub">${virg(ev.n)} sur 20 · ${jour}</span><br><span class="h">${noms}</span></span></summary><div class="body"><p>${bilan.charAt(0).toUpperCase()+bilan.slice(1)}.</p>${fx.map(r=>`<div class="expl no"><b>Exercice ${r.n} · ${esc(r.methode)} · ${virg(r.obtenu)} sur ${virg(r.pts)}</b><br>${esc(r.enonce)}<br>${r.papier?`Sur papier, note : ${virg(r.note)} sur ${virg(r.noteSur)}.`:`Ta réponse : ${esc(r.reponse||"")}`}<br>Bonne réponse : ${esc(r.bonne)}${r.etape?`<br>${esc(r.etape)}`:""}</div>`).join("")||"<p>Aucun exercice raté.</p>"}</div></details>`;});
   return E.length?{txt:`\n=== EXAMENS BLANCS (sujet tiré au hasard, chrono, correction seulement à la fin) ===\n${txt}`,h:`<section class="sec"><h2><span>Examens blancs</span></h2>${h}</section>`}:{txt:"",h:""};}
+/* l'examen blanc se propose de lui-même dans le planning (étapes xb-<épreuve> et xbm-<épreuve> de chaque matière, voir brancher) :
+   celui d'une matière, dès que chaque chapitre à son programme a ses leçons faites et au moins une méthode essayée ;
+   le multi-matières, quand deux épreuves au moins tombent dans les 7 jours et que leurs matières en sont là ; jamais le jour ni la veille d'une épreuve (buildPlan) */
+let XM={k:"",v:{}};
+const xMemo=(nom,f)=>{const k=A.journal().length+"|"+A.today();if(XM.k!==k)XM={k,v:{}};return nom in XM.v?XM.v[nom]:(XM.v[nom]=f());};
+const xPret=sid=>xMemo("p:"+sid,()=>{const G={};defs(sid).filter(d=>!d.fixe).forEach(d=>{const T=theme(d),k=T?T.id:"-"+d.id;(G[k]=G[k]||[]).push(d);});
+  const L=Object.values(G);return L.length>0&&L.every(D=>D.some(d=>etat(d.id).n>0)&&!leconsAFaire(D[0]).length);});
+const xGroupe=()=>xMemo("g",()=>{const n=A.NOW(),L=matieres().filter(s=>{const j=(A.examStart(SUBJ[s])-n)/864e5;return j>1&&j<=7&&xPret(s);});
+  return L.length>=2&&!A.journal().some(e=>e.k==="xb"&&Array.isArray(e.sids)&&e.sids.length>1&&n-new Date(e.t)<7*864e5)?L:[];});
+function xEtapes(){A.SIDS.forEach(sid=>{const S=SUBJ[sid];if(!(GEN.defs[sid]||[]).length)return;
+  A.examsOf(S).forEach(e=>{/* juste après la dernière leçon : une fois proposé, l'examen blanc passe avant les séries d'exercices qui restent */
+    const dl=S.tasks.reduce((k,t,i)=>t.lesson&&!t.late?i:k,-1),der=S.tasks.findIndex(t=>t.last),ou=dl>=0?dl+1:der<0?S.tasks.length:der;
+    const une={id:"xb-"+e.id,ex:e.id,xb:1,manual:true,p:1,t:"Examen blanc : un sujet tiré au hasard, puis correction",links:[["#/entrainer/examen/une/"+sid,"Examen blanc"]],quand:()=>xPret(sid)};
+    const multi={id:"xbm-"+e.id,ex:e.id,xb:1,manual:true,p:1,t:"Examen blanc multi-matières, puis correction",quand:()=>xGroupe()[0]===sid};
+    Object.defineProperty(une,"min",{get:()=>Math.min(105,dureeEp(S)),enumerable:true,configurable:true});
+    Object.defineProperty(multi,"min",{get:()=>Math.min(105,xGroupe().reduce((s,x)=>s+Math.round(dureeEp(SUBJ[x])/2),0)||60),enumerable:true,configurable:true});
+    Object.defineProperty(multi,"links",{get:()=>[["#/entrainer/examen/multi/"+xGroupe().join(","),"Examen blanc"]],enumerable:true,configurable:true});
+    /* cache : tant que ce n'est pas le moment, l'étape n'est dans aucune liste (pas même « Pas encore placé ») */
+    [une,multi].forEach((t,k)=>{if(S.TB[t.id])return;t.train=true;Object.defineProperty(t,"cache",{get:()=>!(A.inScope(S,t)&&t.quand()),enumerable:true,configurable:true});S.tasks.splice(ou+k,0,t);S.TB[t.id]=t;});});});}
 function xRoute(p){stop();XT=0;X=xLit();
   if(X&&X.phase==="sujet"&&xReste()<=0)xCorrige(true);
   if(p[0]==="copie"){if(!X)return location.replace("#/entrainer/examen/une");return xMontre();}
@@ -28678,6 +28699,7 @@ function brancher(A0,ext){A=A0;
     Object.defineProperty(t,"p",{get(){return moment(d)?base():Math.max(3,base());},enumerable:true,configurable:true});
     Object.defineProperty(t,"min",{get(){return dureeTache(d);},enumerable:true,configurable:true});
     if(T&&T.les&&T.les.length){const k=Math.max(...T.les.map(l=>S.tasks.findIndex(x=>x.lesson===l))),moi=S.tasks.indexOf(t);if(k>=0&&moi>k+1){S.tasks.splice(moi,1);S.tasks.splice(k+1,0,t);}}});
+  xEtapes();
   A.SIDS.forEach(sid=>SUBJ[sid].tasks.forEach((t,k)=>{t.i=k;}));
   window.addEventListener("pagehide",()=>{try{xSauve();}catch(e){}});
   new MutationObserver(bouton).observe($("#main"),{childList:true,subtree:true});}
@@ -29029,8 +29051,12 @@ const SANS_REVISION={"2026-11-12":1};
 const WIN=[[480,750],[840,1140],[1200,1350]];/* 8h-12h30, 14h-19h, 20h-22h30 */
 /* ses créneaux à lui (clés cren: du journal) : {d:premier jour, a, b:"HH:MM", w:1 chaque semaine, x:[jours enlevés]} */
 const jourSem=day=>{const[y,m,d]=day.split("-").map(Number);return new Date(y,m-1,d).getDay();};
-const creneauxDu=day=>Object.keys(hub.cren).map(id=>({id,c:hub.cren[id]})).filter(({c})=>c.w?day>=c.d&&jourSem(day)===jourSem(c.d)&&!(c.x||[]).includes(day):c.d===day).map(({id,c})=>({id,day,a:mm(c.a),b:mm(c.b),w:!!c.w})).sort((x,y)=>x.a-y.a);
+const creneauxDu=day=>Object.keys(hub.cren).map(id=>({id,c:hub.cren[id]})).filter(({c})=>c.w?day>=c.d&&jourSem(day)===jourSem(c.d)&&!(c.x||[]).includes(day):c.d===day).map(({id,c})=>({id,day,a:mm(c.a),b:mm(c.b),w:!!c.w,ty:c.ty||""})).sort((x,y)=>x.a-y.a);
 const dansCreneau=(day,a,b)=>creneauxDu(day).some(s=>a<s.b&&b>s.a);
+/* un créneau à lui peut avoir un type (champ ty) : "cours", "exos" ou "xb" (examen blanc) ; sans type, le site choisit */
+const TYN={cours:"Cours",exos:"Exercices",xb:"Examen blanc"};
+const genreTache=t=>t.td||t.train||/^en-/.test(t.id)||(!t.lesson&&(t.links||[]).some(l=>/^annales|^#\/entrainer/.test(l[0])))?"exos":"cours";
+const typeCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.ty:"";};
 /* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours ;
    un cours dans un de ses créneaux compte comme "rev", sauf s'il a dit qu'il y va ("go") */
 const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day&&!x.e.off);
@@ -29084,7 +29110,7 @@ const mienAvant=(day,until)=>seancesMiennes(day,0).reduce((s,[a,b])=>a<until?s+w
 
 /* ---------- le plan de la semaine ---------- */
 /* une étape marquée apres:"<id>" n'est proposée qu'une fois l'étape <id> faite (le 2e sujet blanc après le 1er) */
-function pendingTasks(sid){const S=SUBJ[sid],attend=t=>{const a=t.apres&&S.TB[t.apres];return a&&inScope(S,a)&&!isDone(sid,a);};return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t)&&!attend(t));}
+function pendingTasks(sid){const S=SUBJ[sid],attend=t=>{const a=t.apres&&S.TB[t.apres];return a&&inScope(S,a)&&!isDone(sid,a);};return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t)&&!attend(t)&&(!t.quand||t.quand()));}
 /* ce qui se fait d'abord chaque jour et qui est du temps de révision : « Où j'en suis » quand il est nécessaire, l'entretien du jour,
    le mini-contrôle mélangé et les cartes de Réviser ; pour les jours suivants, seules les cartes sont connues d'avance */
 function rituels(day){const X=APP.ext,L=[];
@@ -29105,9 +29131,9 @@ function buildPlan(){
   const lastDay=ymd(new Date(Math.max(...active.map(id=>examStart(SUBJ[id]).getTime()))));
   /* les rituels du jour prennent le début du premier moment libre (25 min au moins, pour rester lisibles sur la grille) ; les séances viennent après */
   let blocks=[];for(let d=t0;d<=lastDay;d=addDays(d,1)){let from=d===t0?Math.ceil((nowMin+10)/5)*5:0;
-    const R=rituels(d),lib=R&&freeBlocks(d,from,1e4)[0];
+    const R=rituels(d),lib=R&&freeBlocks(d,from,1e4).find(([a])=>typeCren(d,a)!=="xb");
     if(lib){from=Math.min(lib[1],lib[0]+Math.max(25,Math.ceil(R.min/5)*5));plan.rituels.push({day:d,start:lib[0],end:from,L:R.L});}
-    freeBlocks(d,from,d===t0?Math.max(0,dayCap(t0)-Math.max(0,doneTodayMin()-mienAvant(t0,nowMin))):null).forEach(([a,b])=>blocks.push({day:d,start:a,end:b}));}
+    freeBlocks(d,from,d===t0?Math.max(0,dayCap(t0)-Math.max(0,doneTodayMin()-mienAvant(t0,nowMin))):null).forEach(([a,b])=>{if(typeCren(d,a)!=="xb")blocks.push({day:d,start:a,end:b});});}
   const dl=id=>examStart(SUBJ[id]).getTime();
   /* 1. Ce qu'on garde, quand tout ne tient pas : le temps est partagé entre les matières en proportion du poids de chaque CC
         dans la moyenne (coefficient × part du CC), de sa proximité (bonus dans les 7 jours) et des points qu'il reste
@@ -29135,7 +29161,11 @@ function buildPlan(){
   /* rythme réduit avant une date (exam.pace = {until, perDay}) : un peu chaque jour, sans passer devant les CC */
   const dayUse={},paceLeft=(id,day)=>{const p=exam(SUBJ[id]).pace;if(!p||day>=p.until)return Infinity;return Math.max(0,p.perDay-(dayUse[id+"|"+day]||0));},useDay=(id,day,m)=>{dayUse[id+"|"+day]=(dayUse[id+"|"+day]||0)+m;};
   const ratee=(id,t,B)=>t.lesson&&!pri(t)&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0;/* leçon ratée aujourd'hui : on la refait demain */
-  const fill=(id,B,dur,src,finalWin,ordre)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(ratee(id,t,B))continue;if(!fitsIn(t,dur-used)){if(ordre&&!t.last)break;continue;}tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
+  /* un créneau « exercices » ne reçoit que TD, entraînement, annales et examens blancs ; un créneau « cours », que le reste (leçons, quiz, veille, feuille à recopier) ;
+     un examen blanc tiré au hasard (t.xb) ne se place ni le jour ni la veille d'une épreuve */
+  const genre=genreTache,tyB=B=>B.ty!=null?B.ty:(B.ty=typeCren(B.day,B.start)),EPJ={},pres=day=>EPJ[day]!=null?EPJ[day]:(EPJ[day]=epreuvesDu(day).length+epreuvesDu(addDays(day,1)).length>0);
+  const non=(id,t,B)=>ratee(id,t,B)||(!!tyB(B)&&genre(t)!==tyB(B))||(!!t.xb&&pres(B.day));
+  const fill=(id,B,dur,src,finalWin,ordre)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(non(id,t,B))continue;if(!fitsIn(t,dur-used)){if(ordre&&!t.last)break;continue;}tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
   const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(lenFor(used),30));
     tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=25)blocks.splice(i+1,0,{day:B.day,start:B.end,end:full});};
   const freeIdx=[];
@@ -29151,7 +29181,7 @@ function buildPlan(){
       if(!ordre&&!proche(id))return;
       const room=Math.min(dur,paceLeft(id,B.day));if(room<=0)return;
       const finalWin=fenetre(id,B,bs);
-      const elig=Q[id].filter(t=>(!t.last||finalWin)&&!ratee(id,t,B));if(!elig.length||(ordre?!fitsIn(elig[0],room):!elig.some(t=>fitsIn(t,room))))return;
+      const elig=Q[id].filter(t=>(!t.last||finalWin)&&!non(id,t,B));if(!elig.length||(ordre?!fitsIn(elig[0],room):!elig.some(t=>fitsIn(t,room))))return;
       let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
       const rem=elig.reduce((s,t)=>s+t.min,0);
       let sc=rem/Math.max(avail,1)*(1+0.3*weight(SUBJ[id])/WMAX);
@@ -29163,7 +29193,7 @@ function buildPlan(){
       if(sc>bestScore){bestScore=sc;best=id;}});return best;};
     let ordre=true,best=choisir(true);
     if(!best||(!proche(best)&&!pri(Q[best][0]))){const u=choisir(false);if(u){best=u;ordre=false;}
-      else{let r=null;active.forEach(id=>{if(!proche(id)||be>dl(id)||!R1[id].some(t=>fitsIn(t,dur)))return;if(!r||dl(id)<dl(r)||(dl(id)===dl(r)&&weight(SUBJ[id])>weight(SUBJ[r])))r=id;});
+      else{let r=null;active.forEach(id=>{if(!proche(id)||be>dl(id)||!R1[id].some(t=>fitsIn(t,dur)&&!non(id,t,B)))return;if(!r||dl(id)<dl(r)||(dl(id)===dl(r)&&weight(SUBJ[id])>weight(SUBJ[r])))r=id;});
         if(r){const f=fill(r,B,dur,R1,false);if(f.tk.length){f.tk.forEach(t=>{const k=plan.bonus[r].indexOf(t.id);if(k>=0)plan.bonus[r].splice(k,1);});useDay(r,B.day,f.used);place(i,r,f.tk,f.used,dur,true);continue;}}}}
     if(!best){freeIdx.push(i);continue;}
     const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),Q,fenetre(best,B,bs),ordre);
@@ -29174,7 +29204,7 @@ function buildPlan(){
   const BQ={};active.forEach(id=>{BQ[id]=(plan.bonus[id]||[]).map(tid=>SUBJ[id].TB[tid]).concat(Q[id]).sort((x,y)=>(x.p-y.p)||(x.i-y.i));Q[id]=[];});
   for(let i=0;i<blocks.length;i++){const B=blocks[i];if(B.sid)continue;const bs=toD(B.day,B.start).getTime(),be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
     /* d'abord l'étape la plus importante (p le plus petit), puis la matière au plus fort coefficient dont le CC est le plus proche */
-    let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||"")||paceLeft(id,B.day)<=0)return;const f=BQ[id].filter(t=>!t.last&&fitsIn(t,Math.min(dur,paceLeft(id,B.day))));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
+    let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||"")||paceLeft(id,B.day)<=0)return;const f=BQ[id].filter(t=>!t.last&&!non(id,t,B)&&fitsIn(t,Math.min(dur,paceLeft(id,B.day))));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
     if(!best)continue;const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),BQ,false);if(tk.length){useDay(best,B.day,used);place(i,best,tk,used,dur,true);}}
   plan.blocks.sort((x,y)=>x.day<y.day?-1:x.day>y.day?1:x.start-y.start);
   plan.assign={};plan.blocks.forEach((B,k)=>B.tasks.forEach(tid=>plan.assign[B.sid+":"+tid]=k));
@@ -29287,18 +29317,21 @@ function cotes(day,P){const hit=(a,b,L)=>L.some(([x,y])=>a<y&&b>x),Cr=creneauxDu
   const tout=P.blocks.concat(P.rituels||[]).filter(b=>b.day===day).map(b=>[b.start,b.end]).concat(Cr,sansDu(day),epreuvesDu(day).map(({e})=>[mm(e.start),e.end?mm(e.end):mm(e.start)+60]));
   const cote=coursJour(day).filter(c=>c.skip).map(c=>[mm(c.start),mm(c.end)]).filter(([a,b])=>hit(a,b,tout)),crS=Cr.filter(([a,b])=>hit(a,b,cote));
   return{cours:(a,b)=>cote.some(([x,y])=>x===a&&y===b)?" cote":"",autre:(a,b)=>hit(a,b,cote)||hit(a,b,crS)?" serre":""};}
-function cadreCren(c,P,top,h,cls){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.concat(P.rituels||[]).some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
-  return `<div class="ev mien${cls||""}" role="button" tabindex="0" data-cr="${c.id}|${c.day}" title="${t}, ${hh(c.a)}–${hh(c.b)}" style="top:${top}px;height:${h}px"><i>${t}</i>${vide&&!fini?"<span>rien de prévu</span>":""}</div>`;}
+function cadreCren(c,P,top,h,cls){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.concat(P.rituels||[]).some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.ty?" · "+TYN[c.ty].toLowerCase():"")+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
+  return `<div class="ev mien${cls||""}" role="button" tabindex="0" data-cr="${c.id}|${c.day}" title="${t}, ${hh(c.a)}–${hh(c.b)}" style="top:${top}px;height:${h}px"><i>${t}</i>${vide&&!fini&&c.ty!=="xb"?"<span>rien de prévu</span>":""}</div>`;}
 function boiteCren(box,o,refresh){
-  const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0;
+  const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0,ty=(c&&c.ty)||"";
   const a0=c?c.a:hhmm(o.a),b0=c?c.b:hhmm(Math.min(o.a+120,23*60));
   const heures=`<label>de <input type="time" step="900" data-f="a" value="${a0}"></label><label>à <input type="time" step="900" data-f="b" value="${b0}"></label>`;
+  const types=`<div class="filters">${[["","Le site choisit"]].concat(Object.entries(TYN)).map(([v,n])=>`<button class="btn" data-ty="${v}" aria-pressed="${v===ty}">${n}</button>`).join("")}</div>`;
+  const lien=ty==="xb"?`<a class="btn pri" href="#/entrainer/examen/une">Commencer l'examen blanc</a>`:ty==="exos"?`<a class="btn" href="#/entrainer">Ouvrir S'entraîner</a>`:ty==="cours"?`<a class="btn" href="#/apprendre">Ouvrir Apprendre</a>`:"";
   box.innerHTML=c?`<div><b>Ton créneau</b>, ${c.w?"chaque "+jr(day):dayName(day,false)}, de ${hh(mm(c.a))} à ${hh(mm(c.b))}.</div>
     <div class="crrow">${heures}<button class="btn" data-cr="heures">Changer les heures</button></div>${c.w?`<p class="crnote muted">Les nouvelles heures valent pour tous les ${jr(day)}s.</p>`:""}
-    <div class="filters">${c.w?`<button class="btn" data-cr="sauf">Enlever ce ${jr(day)} seulement</button><button class="btn" data-cr="tout">Enlever tous les ${jr(day)}s</button>`:`<button class="btn" data-cr="tout">Enlever ce créneau</button>`}<button class="btn" data-cr="non">Fermer</button></div><p class="crmsg"></p>`
+    ${types}<div class="filters">${lien}${c.w?`<button class="btn" data-cr="sauf">Enlever ce ${jr(day)} seulement</button><button class="btn" data-cr="tout">Enlever tous les ${jr(day)}s</button>`:`<button class="btn" data-cr="tout">Enlever ce créneau</button>`}<button class="btn" data-cr="non">Fermer</button></div><p class="crmsg"></p>`
    :`<div><b>Ajouter un créneau de révision</b></div>
     <div class="crrow"><label>Jour <input type="date" data-f="d" value="${day}" min="${today()}"></label>${heures}</div>
     <div class="filters"><button class="btn" data-rep="0" aria-pressed="true">Une fois</button><button class="btn" data-rep="1" aria-pressed="false">Chaque ${jr(day)}</button></div>
+    ${types}
     <div class="filters"><button class="btn pri" data-cr="ajout">Ajouter</button><button class="btn" data-cr="non">Annuler</button></div><p class="crmsg"></p>`;
   box.hidden=false;box.dataset.k="";
   const val=f=>{const i=box.querySelector(`[data-f="${f}"]`);return i?i.value:"";},msg=box.querySelector(".crmsg");
@@ -29312,10 +29345,12 @@ function boiteCren(box,o,refresh){
   const montre=()=>{const r=verif();msg.textContent=r.err||r.info||"";msg.classList.toggle("r",!!r.err);return r;};
   box.querySelectorAll("input").forEach(i=>i.addEventListener("input",()=>{if(!c&&i.dataset.f==="d"&&val("d"))box.querySelector('[data-rep="1"]').textContent="Chaque "+jr(val("d"));montre();}));
   box.querySelectorAll("[data-rep]").forEach(b=>b.addEventListener("click",()=>{rep=+b.dataset.rep;box.querySelectorAll("[data-rep]").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.rep===rep)));}));
+  box.querySelectorAll("[data-ty]").forEach(b=>b.addEventListener("click",()=>{ty=b.dataset.ty;box.querySelectorAll("[data-ty]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    if(c){emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{ty})});box.hidden=true;refresh();}}));
   box.querySelectorAll("[data-cr]").forEach(b=>b.addEventListener("click",()=>{const k=b.dataset.cr;
     if(k==="non"){box.hidden=true;return;}
     if(k==="ajout"||k==="heures"){const r=montre();if(r.err)return;
-      if(k==="ajout")emit({k:"set",key:"cren:"+nouvRun(),v:rep?{d:day,a:r.a,b:r.b,w:1}:{d:day,a:r.a,b:r.b}});
+      if(k==="ajout")emit({k:"set",key:"cren:"+nouvRun(),v:Object.assign(rep?{d:day,a:r.a,b:r.b,w:1}:{d:day,a:r.a,b:r.b},ty?{ty}:{})});
       else emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{a:r.a,b:r.b})});}
     else if(k==="sauf")emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{x:(c.x||[]).concat(day)})});
     else if(k==="tout")emit({k:"set",key:"cren:"+id,v:""});
@@ -29379,7 +29414,7 @@ function subjHome(sid){
   const mine=P.blocks.filter(b=>b.sid===sid);const days=[...new Set(mine.map(b=>b.day))];
   const bon=(P.bonus[sid]||[]).filter(id=>!isDone(sid,S.TB[id]));
   const done=S.tasks.filter(t=>isDone(sid,t));
-  const planned=new Set(mine.flatMap(b=>b.tasks));const orphan=S.tasks.filter(t=>!isDone(sid,t)&&!planned.has(t.id)&&!bon.includes(t.id));
+  const planned=new Set(mine.flatMap(b=>b.tasks));const orphan=S.tasks.filter(t=>!isDone(sid,t)&&!planned.has(t.id)&&!bon.includes(t.id)&&!t.cache);
   let body=sec(1,"Ton programme",(days.length?days.map(d=>`<h3 style="margin-top:4px">${dayName(d,true)}${d===t0?" (aujourd'hui)":""}</h3>${mine.filter(b=>b.day===d).map(b=>blockHTML(b,d===t0)).join("")}`).join(""):`<p class="muted">Aucun créneau prévu pour cette matière${examStart(S)<NOW()?" : le CC est passé.":"."}</p>`)+(orphan.length?`<details class="day"><summary><b>Pas encore placé</b><span>${orphan.length} étape(s)</span></summary><ol class="todo" style="padding:0 12px 12px">${orphan.map(t=>taskHTML(sid,t,false)).join("")}</ol></details>`:""));
   let k=2;
   if(bon.length)body+=sec(k++,"Si tu as encore du temps",`<ol class="todo">${bon.map(id=>taskHTML(sid,S.TB[id],false)).join("")}</ol>`);
@@ -29768,7 +29803,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,genreTache,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};}
 window.APP=APP;/* pour les vérifications dans la console */
 APP.onChange=APP.ext.onChange||null;
