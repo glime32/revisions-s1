@@ -31329,6 +31329,268 @@ function coLiens3(R){const nI=R.ent(3,4),nos=R.mel(NOS3).slice(0,nI),pool=R.mel(
     ens:{fam:"coL",nos,ks,D,deux,pieges:P.map(x=>({type:x.type,g:x.g.length?x.g:["rien"]}))}};}
 const tireIn=k=>R=>{for(;;){const e=[exoIn0,exoIn1,exoIn2,R=>R()<0.5?coBlocs3(R):coLiens3(R)][k](R);if(e)return e;}};
 
+/* ---------- US10 : les processus. Une ligne jouée comme dans le cours (un processus par commande externe et par parenthèses, ; && || et $?), les états actif, prêt, bloqué rejoués événement par événement, l'arrière-plan avec & et sleep, puis kill ---------- */
+const PH10="chat.png",MOTS10=["bonjour","salut","coucou","bravo","merci"];
+const env10=w=>arboDe([{n:"notes.txt",c:w+"\n"},dossier("photos",[{n:PH10,c:"x\n"}])]);
+const lieu10=w=>`<p>Dans le dossier courant : le fichier ${cr("notes.txt")}, qui contient la seule ligne « ${w} », et le répertoire ${cr("photos")}, qui contient ${cr(PH10)}. Il n'y a pas de fichier ${cr("toto")}.</p>`;
+const X10=(s,ok,code,out)=>({k:"x",s,ok:ok!==false,code:ok===false?code||1:0,out:out||[]});
+const dit10=it=>it.k==="p"?it.L.map(dit10).join(" | "):it.k==="g"?"( "+ligne10(it.L)+" )"+(it.bg?" &":""):it.s;
+const ligne10=L=>L.map(([op,it],i)=>(i?(L[i-1][1].bg?" ":" "+op+" "):"")+dit10(it)).join("");
+const passe10=(op,st,lu)=>{if(lu.tout||!op||op===";"||op==="&")return true;const o=lu.inv?(op==="&&"?"||":"&&"):op;return o==="&&"?st===0:st!==0;};
+function run10(L,lu,r){const ev=[];
+  if(lu.prioC){const seg=[];L.forEach(([op,it],i)=>{if(!i||op===";")seg.push([]);seg[seg.length-1].push([op,it]);});
+    for(const S of seg){const ch=[];S.forEach(([op,it],i)=>{if(!i||op==="||")ch.push([]);ch[ch.length-1].push([op,it]);});
+      ch.forEach((C,j)=>{let go=!j||r.st!==0;C.forEach(([op,it],i)=>{if(i)go=go&&r.st===0;const e={op,it,go,av:r.st};ev.push(e);if(go){ex10(it,lu,r,e);e.st=r.st;}});});}
+    return ev;}
+  for(const [op,it] of L){const go=passe10(op,r.st,lu),e={op,it,go,av:r.st};ev.push(e);if(go){ex10(it,lu,r,e);e.st=r.st;}}
+  return ev;}
+function ex10(it,lu,r,e){
+  if(it.k==="x"){r.nx++;r.ran.push(it.s.split(" ")[0]);if(it.ok)it.out.forEach(x=>{r.out.push(x);r.z.push(false);});r.st=r.stN=it.code;}
+  else if(it.k==="p"){it.L.forEach((x,j)=>{r.nx++;if(j)r.npx++;r.ran.push(x.s.split(" ")[0]);});r.st=r.stN=0;}
+  else if(it.k==="g"){r.ng++;r.ran.push("(");e.sub=run10(it.L,lu,r);if(it.bg)r.st=r.stN=0;}
+  else{r.ni++;if(it.k==="q"){const v=lu.qSaute?r.stN:r.st;r.out.push(String(v));r.z.push(v!==0);}else if(it.out)it.out.forEach(x=>{r.out.push(x);r.z.push(false);});r.st=it.ok===false?1:0;if(it.k!=="i"&&it.k!=="q")r.stN=r.st;}}
+const joue10=(L,lu)=>{const r={st:0,stN:0,out:[],z:[],ran:[],ni:0,ng:0,nx:0,npx:0};r.ev=run10(L,lu||{},r);r.n=r.nx+r.ng;r.ran.sort();return r;};
+const pr10=n=>n+" processus";
+const FONC10=["ls","date","ps","cat","wc","sort","head","rm"];
+function bashCompte10(ligneB,ran,w){
+  const cmd=`L=$PWD/.j;for f in ${FONC10.join(" ")};do eval "$f(){ echo $f >>\\"\\$L\\";command $f \\"\\$@\\";}";done;sleep(){ echo sleep >>"$L";};{ ${ligneB}${/&$/.test(ligneB)?" }":" ; }"} >/dev/null 2>&1;wait;command sort "$L" 2>/dev/null`;
+  return {arbo:env10(w),cmd,args:[],nom:"./compte.sh",script:true,abs:ran};}
+const ditB10=it=>it.k==="p"?it.L.map(ditB10).join(" | "):it.k==="g"?`( echo "(" >>"$L" ; `+ligneB10(it.L)+" )"+(it.bg?" &":""):it.s;
+const ligneB10=L=>L.map(([op,it],i)=>(i?(L[i-1][1].bg?" ":" "+op+" "):"")+ditB10(it)).join("");
+const POUR10={"&&":"&& ne lance la commande que si celle d'avant a réussi (code 0)","||":"|| ne lance la commande que si celle d'avant a échoué (code différent de 0)"};
+function decrit10(ev,prof){return ev.map(e=>{const s=cr(dit10(e.it));
+  if(!e.go)return `${s} : <b>pas lancée</b> : ${POUR10[e.op]}, et ${e.av?"elle a échoué":"elle a réussi"}.`;
+  const it=e.it;
+  if(it.k==="x")return `${s} : commande externe, 1 processus${it.ok?"":` ; elle échoue (${/toto/.test(it.s)?"toto n'existe pas":"erreur"}), mais elle a bien été lancée`}.`;
+  if(it.k==="p")return `${s} : un tube, ${it.L.length} commandes externes qui tournent en même temps : ${pr10(it.L.length)}.`;
+  if(it.k==="g")return `${s} : des parenthèses, donc un sous-shell (un enfant de bash) : 1 processus${it.bg?", lancé en arrière-plan":""}. Il exécute :<br>${decrit10(e.sub,prof+1).map(x=>"&nbsp;&nbsp;· "+x).join("<br>")}`;
+  return `${s} : commande interne de bash, aucun processus${it.k==="cd"&&!it.ok?" (elle échoue : toto n'existe pas)":""}.`;});}
+const non10=(ids,resume)=>(etape,type,titre,msg)=>({ok:false,faux:ids,resume,diag:{etape,type,titre,msg}});
+const nb10=s=>{const t=propre(s).toLowerCase().replace(/nouveaux|nouveau|processus|process/g,"").trim();if(!t)return {vide:1};return /^\d+$/.test(t)?{v:+t}:{err:1};};
+const uniq10=(P,att,cle)=>{const L=[];for(const x of P){const k=cle(x);if(k!==undefined&&k!==cle({v:att,out:att})&&!L.some(y=>cle(y)===k))L.push(x);}return L;};
+
+/* palier 1 : combien de processus */
+const EXT10=["ls","date","ps","ls photos","cat notes.txt","wc -l notes.txt","sort notes.txt","head -1 notes.txt","sleep 1"],RAT10=[["cat toto",1],["ls toto",2],["rm toto",1]];
+const INT10=["echo fini",'echo "échec !"',"echo ok","pwd","export N=3"].map(s=>({k:"i",s,out:[]}));
+const TUBE10=[["ls","wc -l"],["cat notes.txt","sort"],["sort notes.txt","head -1"],["ps","wc -l"],["ls photos","wc -l"],["cat notes.txt","sort","head -1"]];
+const CD10=ok=>({k:"cd",s:ok?"cd photos":"cd toto",ok});
+const GR10=[()=>[["",CD10(true)],[";",X10("ls")]],()=>[["",CD10(false)],["&&",X10("ls")]],()=>[["",CD10(true)],[";",{k:"i",s:"pwd"}]],
+  ()=>[["",X10("sleep 2")],[";",{k:"i",s:'echo "fin des 2 s"'}],[";",X10("ps f")]],()=>[["",X10("date")],[";",{k:"i",s:"echo ok"}]],
+  ()=>[["",X10("cat toto",false,1)],["||",{k:"i",s:'echo "échec !"'}]],()=>[["",X10("cat notes.txt")],["&&",X10("wc -l notes.txt")]]];
+function item10(R){const k=R.choix(["x","x","x","r","r","i","i","p","p","g","g"]);
+  if(k==="x")return X10(R.choix(EXT10));if(k==="r"){const [s,c0]=R.choix(RAT10);return X10(s,false,c0);}
+  if(k==="i")return R.choix(INT10);if(k==="p")return {k:"p",L:R.choix(TUBE10).map(s=>X10(s))};
+  return {k:"g",L:R.choix(GR10)(),bg:R()<0.35};}
+function exoPr0(R){const w=R.choix(MOTS10),n=R.ent(2,4),L=[];
+  for(let i=0;i<n;i++){const it=item10(R),av=L.length?L[L.length-1][1]:null;
+    const op=!av?"":av.bg?"&":av.k==="p"||it.k==="p"?";":R.choix([";","&&","||","&&","||"]);
+    if(av&&dit10(av)===dit10(it))return null;L.push([op,it]);}
+  const r=joue10(L),k=r.n;if(!k)return null;const lig=ligne10(L);
+  const P=uniq10([{type:"commandes internes comptées",v:k+r.ni,msg:`${c("echo")}, ${c("cd")}, ${c("pwd")} et ${c("export")} sont des commandes internes : bash les exécute lui-même, sans créer de processus.`,etape:1},
+    {type:"parenthèses oubliées",v:k-r.ng,msg:`Des parenthèses ( … ) sont exécutées par un enfant de bash, un sous-shell : c'est un processus de plus, en plus des commandes externes qu'il lance.`,etape:1},
+    {type:"tube compté pour un seul processus",v:k-r.npx,msg:`Dans un tube, chaque commande a son propre processus, et ils tournent en même temps : ${c("ls | wc -l")} en crée 2.`,etape:1},
+    {type:"&& et || oubliés",v:joue10(L,{tout:1}).n,msg:`Une commande après ${c("&&")} ou ${c("||")} n'est pas toujours lancée : ${c("&&")} seulement si la commande d'avant a réussi, ${c("||")} seulement si elle a échoué. Une commande pas lancée ne crée pas de processus.`,etape:0},
+    {type:"&& et || inversés",v:joue10(L,{inv:1}).n,msg:`${c("&&")} lance la suite quand la commande d'avant a réussi (code 0), ${c("||")} quand elle a échoué. Tu as fait l'inverse.`,etape:0},
+    {type:"bash compté",v:k+1,msg:`On compte les nouveaux processus : le bash qui lit la ligne existait déjà.`,etape:2}],k,x=>x.v);
+  if(!P.length)return null;
+  const E=[{w:`Ce qui est lancé, de gauche à droite :<br>${decrit10(r.ev,0).join("<br>")}`,why:`${c(";")} enchaîne toujours ; ${c("&&")} seulement après une réussite (code 0) ; ${c("||")} seulement après un échec. Une commande pas lancée ne crée rien.`,pts:1.5},
+    {w:`Commandes externes lancées : ${r.nx} ; parenthèses lancées : ${r.ng}${r.ni?` ; commandes internes (sans processus) : ${r.ni}`:""}.`,why:`Une commande externe : bash fait un fork, puis l'enfant fait un exec. Des parenthèses : un fork de bash, le sous-shell. Une commande interne s'exécute dans bash.`,pts:1},
+    {w:`${[r.nx?r.nx+" commande"+(r.nx>1?"s":"")+" externe"+(r.nx>1?"s":""):"",r.ng?r.ng+" sous-shell"+(r.ng>1?"s":""):""].filter(Boolean).join(" + ")} : <b>${pr10(k)}</b>`,why:/&$|& /.test(lig.replace(/&&/g,""))?`Le ${c("&")} ne change pas le compte : bash n'attend pas la fin, c'est tout.`:`Le bash qui lit la ligne n'est pas compté : il existait déjà.`,pts:0.5}];
+  return {sig:"R0"+lig,q:`Combien de nouveaux processus cette ligne de commande crée-t-elle ?`,corps:lieu10(w)+blocr(lig),texte:"processus créés : "+lig,
+    champs:[{k:"champ",id:"n",nom:"processus",label:"Le nombre de nouveaux processus :",ex:"par exemple 3",apercu:false,sym:[]}],
+    juge:rep=>{const v=nb10(rep.n);if(v.vide)return {incomplet:"Écris un nombre."};if(v.err)return {incomplet:"Écris un nombre, par exemple 3."};if(v.v===k)return {ok:true};
+      const no=non10(["n"],"Pas tout à fait : ce n'est pas le nombre de nouveaux processus."),x=P.find(p=>p.v===v.v);
+      return x?no(x.etape,x.type,"Où ça part : "+x.type+".",x.msg):no(1,"compte faux","Où ça part : le compte.","Reprends la ligne commande par commande : qui est lancé, et chaque commande externe ou parenthèse lancée, c'est 1 processus.");},
+    etapes:E,bonne:pr10(k),bonneTxt:String(k),repBonne:{n:String(k)},repFausse:{n:String(P[0].v)},nature:"processus d'une ligne",
+    ens:{fam:"compte",L,w,att:k,pieges:P.map(x=>({type:x.type,n:String(x.v)})),bash:[bashCompte10(ligneB10(L),r.ran,w)]}};}
+
+/* palier 2 : ce qu'affiche une ligne avec ; && || et $? */
+function brique10(R,w,deb){const k=R.choix(deb?["c","c","t","t","l"]:["c","t","e","e","e","q","q"]);
+  if(k==="c")return R()<0.5?X10("cat notes.txt",true,0,[w]):X10("cat toto",false,1);
+  if(k==="l")return X10("ls photos",true,0,[PH10]);
+  if(k==="t"){const [s,ok]=R.choix([["[ -f notes.txt ]",true],["[ -f toto ]",false],["[ -d photos ]",true],["[ -d notes.txt ]",false],["[ -f photos ]",false]]);return {k:"t",s,ok};}
+  if(k==="q")return {k:"q",s:"echo $?"};
+  const m=R.choix(["oui","non","fini","ok","raté","encore"]);return {k:"i",s:"echo "+m,out:[m]};}
+function exoPr1(R){const w=R.choix(MOTS10),n=R.ent(3,5),L=[];
+  for(let i=0;i<n;i++){const it=brique10(R,w,!i||(i===2&&R()<0.4)),av=L.length?L[L.length-1][1]:null;if(av&&av.s===it.s)return null;L.push([i?R.choix([";","&&","||","&&","||"]):"",it]);}
+  const r=joue10(L),att=r.out;if(!att.length||att.length>5)return null;
+  if(r.ev.every(e=>e.go)&&R()<0.8)return null;
+  const nz=r.z;
+  const lig=ligne10(L),mem=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
+  const MUT=[["&& et || oubliés",{tout:1},`Une commande après ${c("&&")} ou ${c("||")} n'est pas toujours lancée : ${c("&&")} seulement si la commande d'avant a réussi, ${c("||")} seulement si elle a échoué.`],
+    ["&& et || inversés",{inv:1},`${c("&&")} lance la suite quand la commande d'avant a réussi (code 0), ${c("||")} quand elle a échoué. Tu as fait l'inverse.`],
+    ["&& lu comme prioritaire",{prioC:1},`Dans bash, ${c("&&")} et ${c("||")} ont la même priorité : ils se lisent de gauche à droite. Chaque ${c("&&")} ou ${c("||")} regarde seulement le code de la dernière commande qui a tourné.`],
+    ["$? d'une autre commande",{qSaute:1},`${cr("$?")} est le code de retour de la commande lancée juste avant, même si c'est un ${c("echo")} : un echo réussit toujours, donc 0.`]];
+  const P=[];for(const [type,lu,msg] of MUT){const m=joue10(L,lu);if(!mem(m.out,att)&&!P.some(p=>mem(p.out,m.out))){const i=r.ev.findIndex((e,j)=>!m.ev[j]||e.go!==m.ev[j].go);P.push({type,out:m.out,msg,etape:i<0?r.ev.length:i});}}
+  if(!P.length)return null;
+  const E=r.ev.map(e=>{const s=cr(dit10(e.it)),it=e.it;let w2;
+    if(!e.go)w2=`${s} : <b>pas lancée</b> : ${POUR10[e.op]}, et ${e.av?`elle a échoué (code ${e.av})`:"elle a réussi (code 0)"}. ${cr("$?")} reste à ${e.av}.`;
+    else if(it.k==="x")w2=it.ok?`${s} : affiche ${it.out.map(x=>"« "+x+" »").join(", ")} et réussit : code 0.`:`${s} : toto n'existe pas, cat échoue : code 1. Son message d'erreur part sur la sortie d'erreur, il ne compte pas ici.`;
+    else if(it.k==="t")w2=`${s} : le test est ${it.ok?"vrai : code 0":"faux : code 1"}. Il n'affiche rien.`;
+    else if(it.k==="q")w2=`${s} : affiche le code de la commande d'avant : <b>${e.av}</b>. Puis echo réussit : code 0.`;
+    else w2=`${s} : affiche « ${it.out[0]} », code 0.`;
+    return {w:w2,why:e.go?(e.op==="&&"||e.op==="||"?`${POUR10[e.op]} : c'est le cas.`:e.op===";"?`${c(";")} enchaîne toujours.`:"La première commande est toujours lancée."):`${c("&&")} et ${c("||")} ont la même priorité et se lisent de gauche à droite.`,pts:1};});
+  E.push({w:`<b>La ligne affiche</b> :${pave(att)}`,why:`Seule la sortie standard compte : les messages d'erreur partent ailleurs.${att.some((x,i)=>nz[i])?` Un code d'échec différent de 1 est accepté aussi : tout nombre autre que 0 veut dire échec.`:""}`,pts:1});
+  const lis=s=>{let L0=String(s==null?"":s).split("\n").map(propre).filter(Boolean);if(L0.length===1&&att.length>1)L0=L0[0].split(/[\s,;]+/).filter(Boolean);return L0;};
+  const colle=(L0,A,z)=>L0.length===A.length&&L0.every((x,i)=>x===A[i]||(z&&z[i]&&/^[1-9]\d*$/.test(x)));
+  return {sig:"R1"+w+lig,q:`Qu'affiche cette ligne de commande ? Écris les lignes dans l'ordre, sans les messages d'erreur.`,corps:lieu10(w)+blocr(lig),texte:"affichage de : "+lig,
+    champs:[{k:"code",id:"s",nom:"affichage",label:"Ce que la ligne affiche, ligne par ligne&nbsp;:",lignes:Math.max(3,att.length+1)}],
+    juge:rep=>{const L0=lis(rep.s);if(!L0.length)return {incomplet:"Écris ce que la ligne affiche, ligne par ligne."};if(colle(L0,att,nz))return {ok:true};
+      const no=non10(["s"],"Pas tout à fait : ce n'est pas ce que la ligne affiche."),m=P.find(p=>colle(L0,p.out));
+      if(m)return no(Math.min(m.etape,E.length-1),m.type,"Où ça part : "+m.type+".",m.msg);
+      if(L0.length===att.length&&L0.some((x,i)=>nz[i]&&x==="0"))return no(E.length-1,"échec lu comme une réussite","Où ça part : un code de retour.","Une commande qui échoue renvoie un code différent de 0 : 0 veut dire réussite.");
+      return no(E.length-1,"affichage différent","Où ça part : ce que la ligne affiche.","Reprends la ligne de gauche à droite : à chaque commande, note si elle est lancée, ce qu'elle affiche et son code. La correction le fait pas à pas.");},
+    etapes:E,bonne:pave(att),bonneTxt:att.join(" ⏎ "),repBonne:{s:att.join("\n")},repFausse:{s:P[0].out.join("\n")||"rien"},nature:"; && || et $?",
+    ens:{fam:"aff",L,w,att,nz,pieges:P.map(x=>({type:x.type,s:x.out.join("\n")})).filter(x=>x.s),bash:[{arbo:env10(w),cmd:lig,args:[],nom:"./ligne.sh",script:true,abs:att}]}};}
+
+/* palier 3 : actif, prêt, bloqué */
+const ET10={a:"actif",p:"prêt",b:"bloqué"},FL10={dem:2,quant:1,arr:3,elit:4},VERS10={dem:"b",quant:"p",arr:"p",elit:"a"};
+const RES10=[{d:"attend que l'utilisateur tape une ligne au clavier (read)",att:"attend le clavier",a:X=>`L'utilisateur tape la ligne attendue par ${X}, puis Entrée.`},
+  {d:"demande à lire un fichier sur le disque",att:"attend le disque",a:X=>`La lecture du disque demandée par ${X} est finie.`},
+  {d:"lance ls, puis attend sa fin (wait)",att:"attend la fin de son enfant",a:X=>`L'enfant de ${X} se termine.`},
+  {d:"appelle sleep(5) : il s'endort 5 secondes",att:"dort 5 secondes",a:X=>`Les 5 secondes de ${X} sont écoulées.`}];
+const POURQ10={dem:"Il lui manque une ressource autre que le processeur : il est bloqué.",quant:"Il ne lui manque que le processeur : il redevient prêt.",arr:"Il a sa ressource, mais pas le processeur : il passe par prêt, jamais directement actif.",elit:"L'ordonnanceur choisit l'élu parmi les processus prêts."};
+function suite10(R){const N=["P1","P2","P3"],st={},res={},ini={};const A0=R.choix(N);
+  for(const X of N){st[X]=X===A0?"a":R.choix(["p","b"]);if(st[X]==="b")res[X]=R.choix(RES10);ini[X]={s:st[X],r:res[X]};}
+  const E=[],n=R.ent(4,6);
+  for(let t=0;t<n+1;t++){const A=N.find(X=>st[X]==="a"),pr=N.filter(X=>st[X]==="p"),bl=N.filter(X=>st[X]==="b"),O=[];
+    if(t>=n&&(A||!pr.length))break;
+    if(!A&&pr.length)O.push(...pr.map(X=>["elit",X]));
+    else{if(A){O.push(["dem",A],["dem",A]);if(pr.length)O.push(["quant",A]);}bl.forEach(X=>O.push(["arr",X],["arr",X]));}
+    if(!O.length)return null;const [k,X]=R.choix(O);let r=null;
+    if(k==="dem"){r=R.choix(RES10);res[X]=r;}else if(k==="arr")r=res[X];
+    st[X]=VERS10[k];E.push({k,X,r});}
+  if(!E.some(e=>e.k==="arr")||!E.some(e=>e.k==="elit")||E.length>7)return null;
+  return {N,ini,E,fin:st};}
+const texteEv10=e=>e.k==="dem"?`${e.X}, actif, ${e.r.d}.`:e.k==="quant"?`Le temps accordé à ${e.X} sur le processeur est écoulé : l'ordonnanceur le lui reprend.`:e.k==="arr"?e.r.a(e.X):`L'ordonnanceur élit ${e.X}.`;
+const etatsDe10=(S,V)=>{const st={};S.N.forEach(X=>st[X]=S.ini[X].s);S.E.forEach(e=>st[e.X]=V[e.k]);return st;};
+function exoPr2(R){const S=suite10(R);if(!S)return null;const f=R.choix([0,0,1,1,2]),N=S.N;
+  const corps=`<p>Un seul processeur. Au départ :</p>${grille3(["processus","état"],N.map(X=>[X,ET10[S.ini[X].s]+(S.ini[X].r?" ("+S.ini[X].r.att+")":"")]))}<p>Puis, dans l'ordre :</p><ol>${S.E.map(e=>`<li>${texteEv10(e)}</li>`).join("")}</ol><p class="muted">Les flèches du cours : 1 actif → prêt, 2 actif → bloqué, 3 bloqué → prêt, 4 prêt → actif.</p>`;
+  const de10=x=>/^[aeiouéè]/.test(x)?"d'"+x:"de "+x;
+  const E=S.E.map((e,i)=>({w:`Événement ${i+1} : ${e.X} passe ${de10(ET10[i?(S.E.slice(0,i).reverse().find(x=>x.X===e.X)?VERS10[S.E.slice(0,i).reverse().find(x=>x.X===e.X).k]:S.ini[e.X].s):S.ini[e.X].s])} à <b>${ET10[VERS10[e.k]]}</b> : flèche ${FL10[e.k]}.`,why:POURQ10[e.k],pts:1}));
+  const fin=S.fin,texte=N.map(X=>X+":"+S.ini[X].s).join(" ")+" | "+S.E.map(e=>e.k+" "+e.X).join(", ");
+  const dernier=X=>{for(let i=S.E.length-1;i>=0;i--)if(S.E[i].X===X)return i;return 0;};
+  if(f===1){const att=S.E.map(e=>FL10[e.k]).join(", ");
+    const MU=[["prêt et bloqué confondus",{dem:1,quant:2},"Actif → bloqué (flèche 2) : il attend autre chose que le processeur (clavier, disque, fin d'un enfant). Actif → prêt (flèche 1) : on lui reprend le processeur alors qu'il pourrait continuer."],
+      ["réveil compté comme une élection",{arr:4},"Quand ce qu'il attendait arrive, un processus bloqué devient prêt (flèche 3), pas actif : il doit encore être élu."],
+      ["flèches 3 et 4 inversées",{arr:4,elit:3},"3 : bloqué → prêt (sa ressource arrive). 4 : prêt → actif (l'ordonnanceur l'élit)."]];
+    const P=[];for(const [type,m,msg] of MU){const v=S.E.map(e=>m[e.k]||FL10[e.k]).join(", ");if(v!==att&&!P.some(p=>p.v===v))P.push({type,v,msg,etape:S.E.findIndex(e=>m[e.k])});}
+    if(!P.length)return null;
+    E.push({w:`<b>${att}</b>`,why:"On ne devient actif qu'en passant par prêt.",pts:0.5});
+    return {sig:"R2f"+texte,q:`Quelle flèche du cours chaque événement fait-il suivre ? Donne les numéros, dans l'ordre des événements.`,corps,texte:"flèches : "+texte,
+      champs:[{k:"champ",id:"f",nom:"flèches",label:"Les numéros des flèches :",ex:"par exemple 2, 4, 3",apercu:false,sym:[]}],
+      juge:rep=>{const t=propre(rep.f);if(!t)return {incomplet:"Écris les numéros des flèches."};if(/[^\d\s,;.\-→>]/.test(t)||/[05-9]/.test(t))return {incomplet:"Écris seulement des numéros de 1 à 4, par exemple 2, 4, 3."};
+        const v=(t.match(/[1-4]/g)||[]).join(", ");if(v===att)return {ok:true};const no=non10(["f"],"Pas tout à fait : ce ne sont pas les bonnes flèches.");
+        if(v.split(", ").length!==S.E.length)return no(0,"nombre de flèches","Où ça part : le nombre de flèches.",`Il y a ${S.E.length} événements : une flèche pour chacun.`);
+        const m=P.find(p=>p.v===v);if(m)return no(m.etape,m.type,"Où ça part : "+m.type+".",m.msg);
+        const i=v.split(", ").findIndex((x,j)=>+x!==FL10[S.E[j].k]);return no(i,"flèche fausse","Où ça part : l'événement "+(i+1)+".",POURQ10[S.E[i].k]);},
+      etapes:E,bonne:att,bonneTxt:att,repBonne:{f:att},repFausse:{f:P[0].v},nature:"états : les flèches",ens:{fam:"fleches",S:{N,ini:S.ini,E:S.E.map(e=>({k:e.k,X:e.X}))},att,pieges:P.map(p=>({type:p.type,f:p.v}))}};}
+  const stat=f===2,O=stat?[["R","R"],["S","S"]]:[["a","actif"],["p","prêt"],["b","bloqué"]],val=x=>stat?(x==="b"?"S":"R"):x;
+  const att={};N.forEach((X,i)=>att["e"+i]=val(fin[X]));
+  const MU=stat?[["prêt lu comme S",x=>x==="a"?"R":"S","Dans ps, R (run) veut dire prêt ou élu : un processus prêt est marqué R lui aussi. S (sleep) : il attend un événement, il est bloqué."],
+      ["R et S inversés",x=>x==="b"?"R":"S","R (run) : prêt ou élu. S (sleep) : en attente d'un événement, donc bloqué."]].map(([t,g,m])=>[t,null,m,g])
+    :[["réveil direct à actif",{arr:"a"},"Quand ce qu'il attendait arrive, un processus bloqué devient prêt, pas actif : il doit encore être élu par l'ordonnanceur."],
+      ["fin du temps lue comme bloqué",{quant:"b"},"Quand son temps est écoulé, il ne lui manque que le processeur : il est prêt, pas bloqué."],
+      ["attente lue comme prêt",{dem:"p"},"Un processus qui attend le clavier, le disque ou la fin d'un enfant est bloqué : il ne pourrait pas avancer même avec le processeur."]];
+  const P=[];for(const [type,m,msg,g] of MU){const st=m?etatsDe10(S,Object.assign({},VERS10,m)):fin,v={};N.forEach((X,i)=>v["e"+i]=g?g(st[X]):val(st[X]));
+    if(JSON.stringify(v)!==JSON.stringify(att)&&!P.some(p=>JSON.stringify(p.v)===JSON.stringify(v)))P.push({type,v,msg,etape:m?Math.max(0,S.E.findIndex(e=>m[e.k])):S.E.length});}
+  if(!P.length)return null;
+  E.push({w:`<b>À la fin : ${N.map(X=>`${X} ${stat?val(fin[X])+" ("+ET10[fin[X]]+")":ET10[fin[X]]}`).join(", ")}</b>`,why:stat?"Dans ps, la colonne STAT montre R (run) pour un processus prêt ou élu, S (sleep) pour un processus en attente d'un événement.":"L'état d'un processus est celui que lui a donné le dernier événement qui le touche.",pts:stat?1:0.5});
+  return {sig:"R2"+f+texte,q:stat?`À la fin, que montre ${c("ps")} dans la colonne STAT pour chaque processus : R ou S ?`:`Dans quel état est chaque processus à la fin ?`,corps,texte:(stat?"STAT : ":"états : ")+texte,
+    champs:N.map((X,i)=>({k:"choix",id:"e"+i,titre:X+" :",o:O})),
+    juge:rep=>{if(N.some((X,i)=>!rep["e"+i]))return {incomplet:stat?"Choisis R ou S pour chaque processus.":"Choisis l'état de chaque processus."};
+      const faux=N.map((X,i)=>"e"+i).filter(k=>rep[k]!==att[k]);if(!faux.length)return {ok:true};
+      const no=non10(faux,"Pas tout à fait : "+(faux.length>1?"des états sont faux.":"un état est faux.")),m=P.find(p=>N.every((X,i)=>rep["e"+i]===p.v["e"+i]));
+      if(m)return no(Math.min(m.etape,E.length-1),m.type,"Où ça part : "+m.type+".",m.msg);
+      const X=N[+faux[0].slice(1)],i=dernier(X);
+      return no(stat?E.length-1:i,"état faux","Où ça part : "+X+".",stat?"R (run) : prêt ou élu. S (sleep) : bloqué, en attente d'un événement. Retrouve d'abord l'état de chaque processus, événement par événement.":`Le dernier événement qui touche ${X} est le ${i+1}e : ${POURQ10[S.E[i].k]}`);},
+    etapes:E,bonne:N.map(X=>X+" "+(stat?val(fin[X]):ET10[fin[X]])).join(", "),bonneTxt:N.map(X=>X+" "+val(fin[X])).join(" "),repBonne:att,repFausse:P[0].v,nature:stat?"états : ps STAT":"états : à la fin",
+    ens:{fam:stat?"stat":"etats",S:{N,ini:S.ini,E:S.E.map(e=>({k:e.k,X:e.X}))},att,pieges:P.map(p=>Object.assign({type:p.type},p.v))}};}
+
+/* palier 4 : l'arrière-plan, comme au TD (exercices 37 et 38) */
+const LET10=["A","B","C","D","E"];
+const ditT10=it=>it.k==="g"?`( sleep ${it.a} ; echo ${it.X}${it.ps?" ; ps f":""} ) &`:it.k==="e"?`echo ${it.X}`:it.k==="s"?`sleep ${it.b}`:"wait";
+const ligneT10=L=>L.map((it,i)=>(i?(L[i-1].k==="g"?" ":" ; "):"")+ditT10(it)).join("");
+function temps10(L,lu){lu=lu||{};let t=0;const O=[],fins=[];
+  L.forEach((it,i)=>{if(it.k==="g"){if(lu.attend){t+=it.a;O.push({X:it.X,t,i});}else{O.push({X:it.X,t:t+it.a,i,bg:1});fins.push(t+it.a);}}
+    else if(it.k==="s")t+=it.b;else if(it.k==="e")O.push({X:it.X,t,i});else if(!lu.sansWait)t=Math.max(t,...fins);});
+  return O;}
+const ordre10=(O,lu)=>(lu&&lu.lance?O.slice().sort((a,b)=>a.i-b.i):lu&&lu.bashFin?[...O.filter(o=>!o.bg).sort((a,b)=>a.i-b.i),...O.filter(o=>o.bg).sort((a,b)=>a.t-b.t)]:O.slice().sort((a,b)=>a.t-b.t)).map(o=>o.X);
+function exoPr3(R){const nG=R.ent(2,3),tue=R()<0.2,X=R.mel(LET10),L=[];let j=0;
+  for(let g=0;g<nG;g++)L.push({k:"g",a:R.ent(1,6),X:X[j++],ps:!tue&&R()<0.4});
+  if(tue){L.push({k:"e",X:X[j++]});
+    const p0=R.ent(2100,8800),pid=L.filter(x=>x.k==="g").map((x,i)=>p0+i*R.ent(1,4)+i*3),G=L.filter(x=>x.k==="g");G.forEach(x=>x.a=R.ent(20,60));
+    const q=R.ent(0,nG-1),cible=G[q],jn=q+1,pj=pid[q],ordreFin=G.slice().sort((a,b)=>a.a-b.a);if(new Set(G.map(x=>x.a)).size<nG)return null;
+    const k2=ordreFin.indexOf(cible)+1,lig=ligneT10(L);
+    const P=[{type:"numéro de tâche pris pour un PID",c:"kill "+jn,msg:`${c("kill "+jn)} vise le processus de PID ${jn}, pas la tâche ${jn} : pour une tâche, il faut le ${c("%")}, ${c("kill %"+jn)}.`},
+      ...(k2!==jn?[{type:"tâches numérotées dans l'ordre où elles finissent",c:"kill %"+k2,msg:`Les numéros [1], [2], [3] suivent l'ordre de lancement des ${c("&")}, de gauche à droite, pas l'ordre où les groupes finissent.`}]:[]),
+      {type:"Ctrl-C sur une tâche de fond",c:"Ctrl-C",msg:`Ctrl-C n'arrête que le processus au premier plan. Ce groupe est en arrière-plan : il faut ${c("kill")}, ou le ramener d'abord avec ${c("%"+jn)}.`},
+      {type:"% devant un PID",c:"kill %"+pj,msg:`Le ${c("%")} se met devant un numéro de tâche (${c("%"+jn)}) ; un PID s'écrit seul : ${c("kill "+pj)}.`},
+      {type:"ramené sans être arrêté",c:"%"+jn,msg:`${c("%"+jn)} ramène la tâche au premier plan, sans l'arrêter : il faut ensuite Ctrl-C. Ou directement ${c("kill %"+jn)}.`}];
+    const lis=s=>String(s==null?"":s).split("\n").map(x=>propre(x).toLowerCase().replace(/\s+/g," ").replace(/^\$ /,"")).filter(Boolean);
+    const ctrlc=x=>/^(ctrl|control|contrôle|ctl)\s*[-+ ]?\s*c$|^\^c$/.test(x);
+    const tueOk=x=>{const m=/^kill(?: -(?:9|15|kill|term|sigkill|sigterm))? (%?)(\d+)$/.exec(x);return m&&(m[1]?+m[2]===jn:+m[2]===pj);};
+    const juge=rep=>{const T=lis(rep.c);if(!T.length)return {incomplet:"Écris la commande."};
+      if(T.length===1&&tueOk(T[0]))return {ok:true};
+      if(T.length===1&&ctrlc(T[0]))return non10(["c"],"Pas tout à fait : cette commande n'arrête pas ce groupe.")(2,"Ctrl-C sur une tâche de fond","Où ça part : Ctrl-C sur une tâche de fond.",P.find(p=>p.c==="Ctrl-C").msg);
+      if(T.length===1&&(T[0]==="%"+jn||T[0]==="fg %"+jn))return non10(["c"],"Pas tout à fait : cette commande n'arrête pas ce groupe.")(2,"ramené sans être arrêté","Où ça part : ramené sans être arrêté.",P.find(p=>p.c==="%"+jn).msg);
+      if(T.length===2&&(T[0]==="%"+jn||T[0]==="fg %"+jn||T[0]==="fg "+jn)&&ctrlc(T[1]))return {ok:true};
+      const no=non10(["c"],"Pas tout à fait : cette commande n'arrête pas ce groupe."),t=T.join(" ; ");
+      for(const p of P)if(t===p.c.toLowerCase())return no(p.type==="Ctrl-C sur une tâche de fond"||p.type==="ramené sans être arrêté"?2:p.type==="numéro de tâche pris pour un PID"||p.type==="% devant un PID"?2:1,p.type,"Où ça part : "+p.type+".",p.msg);
+      const m=/^kill(?: -\S+)? (%?)(\d+)$/.exec(T[0]);
+      if(m&&m[1])return no(1,"pas la bonne tâche","Où ça part : le numéro de la tâche.",`Le groupe qui affiche ${it2(cible)} est le ${jn===1?"1er":jn+"e"} lancé avec ${c("&")} : c'est la tâche [${jn}].`);
+      if(m)return no(1,"pas le bon PID","Où ça part : le PID.",`Le PID de la tâche [${jn}] est celui que bash a écrit à côté : ${pj}.`);
+      return no(2,"commande qui n'arrête rien","Où ça part : la commande.",`Pour arrêter une tâche de fond : ${c("kill %"+jn)} (son numéro de tâche) ou ${c("kill "+pj)} (son PID).`);};
+    const it2=x=>"« "+x.X+" »";
+    const E=[{w:`Chaque ${c("( … ) &")} est une tâche de fond. bash les numérote [1], [2]${nG>2?", [3]":""} dans l'ordre où il les lance, de gauche à droite, et écrit à côté le PID du sous-shell.`,why:"Ce sont les numéros que montre la commande jobs.",pts:1},
+      {w:`Le groupe qui affiche ${it2(cible)} est le ${jn===1?"1er":jn+"e"} : la tâche [${jn}], de PID ${pj}.`,why:`Peu importe quand il finit : le numéro vient du lancement.`,pts:1},
+      {w:`<b>${c("kill %"+jn)}</b> ou <b>${c("kill "+pj)}</b>`,why:`Ctrl-C ne touche que le premier plan. On peut aussi ramener la tâche avec ${c("%"+jn)}, puis Ctrl-C ; ${c("kill -9")} s'il résiste.`,pts:1}];
+    const dejà=G.map((x,i)=>`[${i+1}] ${pid[i]}`).join("\n");
+    return {sig:"R3k"+lig+pid.join()+q,q:`Juste après cette ligne, bash affiche les numéros des tâches. Avant que le groupe qui affiche ${it2(cible)} ait fini, écris une commande qui l'arrête.`,
+      corps:blocr(lig)+`<p>bash affiche aussitôt :</p>`+blocr(dejà),texte:lig+" | "+dejà.replace(/\n/g," ")+" | arrêter "+cible.X,
+      champs:[{k:"code",id:"c",nom:"commande",label:"La commande :",lignes:2,ex:"kill …",sym:[["kill ","kill "],["%","%"],["kill -9 ","kill -9 "]]}],juge,etapes:E,
+      bonne:`${c("kill %"+jn)} ou ${c("kill "+pj)}`,bonneTxt:"kill %"+jn,repBonne:{c:"kill %"+jn},repFausse:{c:P[0].c},nature:"arrêter une tâche de fond",
+      ens:{fam:"kill",L,pid,cible:cible.X,att:jn,pj,pieges:P.map(p=>({type:p.type,c:p.c}))}};}
+  const nE=R.ent(1,2);for(let e=0;e<nE;e++)L.splice(R.ent(1,L.length),0,{k:"e",X:X[j++]});
+  if(R()<0.4)L.splice(R.ent(1,L.length),0,{k:"s",b:R.ent(1,4)});
+  if(R()<0.3){L.splice(L.length-1,0,{k:"w"});if(L[L.length-1].k!=="e")return null;}
+  if(L[L.length-1].k==="g"&&L.some(x=>x.k==="w"))return null;
+  const O=temps10(L);if(new Set(O.map(o=>o.t)).size<O.length)return null;
+  const att=ordre10(O),lig=ligneT10(L),G=L.filter(x=>x.k==="g");
+  const k=G.length*2+G.filter(x=>x.ps).length+L.filter(x=>x.k==="s").length,nEcho=O.length;
+  const MO=[["lancé en premier, affiché en premier",{lance:1},`Le ${c("&")} lance le groupe en arrière-plan : bash n'attend pas sa fin et passe tout de suite à la suite. Chaque groupe affiche après son sleep : c'est le temps qui donne l'ordre.`],
+    ["bash attend les &",{attend:1},`Avec ${c("&")}, bash n'attend pas : les groupes tournent en même temps que la suite de la ligne.`],
+    ["echo de bash en dernier",{bashFin:1},`Un ${c("echo")} au premier plan s'affiche dès que bash y arrive : il n'attend pas les tâches de fond${L.some(x=>x.k==="s")?", seulement les sleep au premier plan":""}.`],
+    ...(L.some(x=>x.k==="w")?[["wait oublié",{sansWait:1},`${c("wait")} fait attendre bash jusqu'à la fin de toutes ses tâches de fond : ce qui vient après s'affiche en dernier.`]]:[])];
+  const PO=[];for(const [type,lu,msg] of MO){const v=lu.lance||lu.bashFin?ordre10(O,lu):ordre10(temps10(L,lu));if(v.join()!==att.join()&&!PO.some(p=>p.v.join()===v.join()))PO.push({type,v,msg});}
+  const PN=uniq10([{type:"echo compté",v:k+nEcho,msg:`${c("echo")} et ${c("wait")} sont des commandes internes : aucun processus.`},
+    {type:"parenthèses oubliées",v:k-G.length,msg:`Chaque ( … ) est exécutée par un enfant de bash, un sous-shell : 1 processus par groupe, en plus de ce qu'il lance.`},
+    {type:"sleep pris pour une commande interne",v:k-G.length-L.filter(x=>x.k==="s").length,msg:`${c("sleep")} est une commande externe (${c("/usr/bin/sleep")}) : chaque sleep est un processus.`},
+    {type:"seulement les groupes",v:G.length,msg:`Chaque groupe est un processus, mais il en crée d'autres : son sleep${G.some(x=>x.ps)?" et son ps":""}.`}],k,x=>x.v);
+  if(!PO.length||!PN.length||PO[0].v.join()===att.join())return null;
+  const quand=O.slice().sort((a,b)=>a.t-b.t);
+  const E=[{w:`Le temps, ligne lue de gauche à droite :<br>${(()=>{let t=0;const fins=[];return L.map(it=>{const s=cr(ditT10(it));
+      if(it.k==="g"){fins.push(t+it.a);return `${s} : lancé à ${t} s, en arrière-plan ; il affiche ${it.X} à ${t+it.a} s.`;}
+      if(it.k==="s"){t+=it.b;return `${s} : au premier plan, bash attend : on est à ${t} s.`;}
+      if(it.k==="e")return `${s} : bash affiche ${it.X} tout de suite, à ${t} s.`;
+      t=Math.max(t,...fins);return `${s} : bash attend la fin de ses tâches de fond : on est à ${t} s.`;}).join("<br>");})()}`,why:`Avec ${c("&")}, bash n'attend pas : la suite de la ligne part aussitôt. Un ${c("sleep")} au premier plan, lui, le fait attendre.`,pts:1.5},
+    {w:`Dans l'ordre des temps : ${quand.map(o=>`${o.X} (${o.t} s)`).join(", ")}.`,why:"Les groupes tournent en parallèle : c'est la fin de leur sleep qui décide.",pts:1},
+    {w:`Processus : ${G.length} sous-shell${G.length>1?"s":""}, ${G.length} sleep lancé${G.length>1?"s":""} par eux${G.some(x=>x.ps)?`, ${G.filter(x=>x.ps).length} ps`:""}${L.some(x=>x.k==="s")?", 1 sleep au premier plan":""} : <b>${pr10(k)}</b>.`,why:`${c("echo")} et ${c("wait")} sont internes. Comme au TD, exercice 37 : 2 groupes ( sleep ; echo ; ps ) font 6 processus.`,pts:1},
+    {w:`<b>${pr10(k)} ; affichage :</b>${pave(att)}`,why:"On ne peut pas prédire l'ordre de départ des processus (c'est l'ordonnanceur qui choisit), mais les sleep de longueurs différentes fixent l'ordre des affichages.",pts:0.5}];
+  const lis=s=>{let L0=String(s==null?"":s).split("\n").map(x=>propre(x).toUpperCase()).filter(Boolean);if(L0.length===1&&att.length>1)L0=L0[0].split(/[\s,;]+/).filter(Boolean);return L0;};
+  const juge=rep=>{const v=nb10(rep.n),L0=lis(rep.o);if(v.vide||!L0.length)return {incomplet:"Réponds aux deux questions : le nombre de processus et l'ordre des affichages."};if(v.err)return {incomplet:"Écris un nombre de processus, par exemple 4."};
+    const okN=v.v===k,okO=L0.join()===att.join();if(okN&&okO)return {ok:true};
+    const no=non10([...(okN?[]:["n"]),...(okO?[]:["o"])],"Pas tout à fait : "+(okN?"l'ordre des affichages est faux.":okO?"le nombre de processus est faux.":"le nombre de processus et l'ordre sont faux."));
+    if(!okO){const m=PO.find(p=>p.v.join()===L0.join());if(m)return no(0,m.type,"Où ça part : "+m.type+".",m.msg);
+      return no(1,"ordre faux","Où ça part : l'ordre des affichages.",L0.slice().sort().join()===att.slice().sort().join()?"Ce sont les bons messages, mais pas dans le bon ordre : note l'heure où chacun s'affiche, comme dans la correction.":`Il y a ${att.length} messages : ${att.slice().sort().join(", ")}, un par echo.`);}
+    const m=PN.find(p=>p.v===v.v);if(m)return no(2,m.type,"Où ça part : "+m.type+".",m.msg);
+    return no(2,"compte faux","Où ça part : le compte des processus.","Compte 1 processus par groupe ( … ), plus chaque commande externe qu'il lance (sleep, ps), plus les sleep au premier plan.");};
+  return {sig:"R3"+lig,q:`Combien de nouveaux processus cette ligne crée-t-elle ? Et dans quel ordre les messages des ${c("echo")} s'affichent-ils (sans la sortie de ps) ?`,corps:blocr(lig),texte:"arrière-plan : "+lig,
+    champs:[{k:"champ",id:"n",nom:"processus",label:"Le nombre de nouveaux processus :",ex:"par exemple 4",apercu:false,sym:[]},{k:"code",id:"o",nom:"affichage",label:"Les messages, dans l'ordre où ils s'affichent&nbsp;:",lignes:Math.max(3,att.length+1)}],
+    juge,etapes:E,bonne:`${pr10(k)} ; ${att.join(", ")}`,bonneTxt:k+" ; "+att.join(" "),repBonne:{n:String(k),o:att.join("\n")},repFausse:{n:String(PN[0].v),o:PO[0].v.join("\n")},nature:"arrière-plan, comme au TD 37",
+    ens:{fam:"td37",L,att,k,piegesO:PO.map(p=>({type:p.type,o:p.v.join("\n")})),piegesN:PN.map(p=>({type:p.type,n:String(p.v)})),
+      bash:[bashCompte10(lig.replace(/\( sleep/g,`( echo "(" >>"$L" ; sleep`),[...G.map(()=>"("),...G.map(()=>"sleep"),...G.filter(x=>x.ps).map(()=>"ps"),...L.filter(x=>x.k==="s").map(()=>"sleep")].sort(),"x")]}};}
+const tirePr=k=>R=>{for(;;){const e=[exoPr0,exoPr1,exoPr2,exoPr3][k](R);if(e)return e;}};
 G.add("usi",[
  {id:"US1",t:"Les droits : ls -l, chmod et umask",tache:"droits et umask",th:"fichiers",pts:1.5,lecons:["u-droits","u-umask"],
   paliers:[
@@ -31377,7 +31639,13 @@ G.add("usi",[
    {t:"ce qu'affiche un programme",cc:2,min:200,gen:tirePy(0)},
    {t:"écrire une petite fonction, comme en 2022, 2023 et 2024",cc:5,min:200,gen:tirePy(1)},
    {t:"un fichier et un dictionnaire",cc:8,min:200,gen:tirePy(2)},
-   {t:"le parcours récursif d'un dossier, comme aux examens",cc:15,min:200,gen:tirePy(3)}]}
+   {t:"le parcours récursif d'un dossier, comme aux examens",cc:15,min:200,gen:tirePy(3)}]},
+ {id:"US10",t:"Les processus : fork, ; && ||, états, arrière-plan et kill",tache:"processus",th:"processus",pts:1.5,lecons:["u-processus","u-redir"],
+  paliers:[
+   {t:"combien de processus une ligne crée",cc:1,min:150,gen:tirePr(0)},
+   {t:"ce qu'affiche une ligne : ; && || et le code de retour",cc:2,min:150,gen:tirePr(1)},
+   {t:"actif, prêt, bloqué : les changements d'état",cc:2,min:150,gen:tirePr(2)},
+   {t:"l'arrière-plan et kill, comme au TD",cc:4,min:120,gen:tirePr(3)}]}
 ]);
 })();
 
