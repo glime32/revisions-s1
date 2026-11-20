@@ -29862,12 +29862,14 @@ const SANS_REVISION={"2026-11-12":1};
 const WIN=[[480,750],[840,1140],[1200,1350]];/* 8h-12h30, 14h-19h, 20h-22h30 */
 /* ses créneaux à lui (clés cren: du journal) : {d:premier jour, a, b:"HH:MM", w:1 chaque semaine, x:[jours enlevés]} */
 const jourSem=day=>{const[y,m,d]=day.split("-").map(Number);return new Date(y,m-1,d).getDay();};
-const creneauxDu=day=>Object.keys(hub.cren).map(id=>({id,c:hub.cren[id]})).filter(({c})=>c.w?day>=c.d&&jourSem(day)===jourSem(c.d)&&!(c.x||[]).includes(day):c.d===day).map(({id,c})=>({id,day,a:mm(c.a),b:mm(c.b),w:!!c.w,ty:c.ty||""})).sort((x,y)=>x.a-y.a);
+const creneauxDu=day=>Object.keys(hub.cren).map(id=>({id,c:hub.cren[id]})).filter(({c})=>c.w?day>=c.d&&jourSem(day)===jourSem(c.d)&&!(c.x||[]).includes(day):c.d===day).map(({id,c})=>({id,day,a:mm(c.a),b:mm(c.b),w:!!c.w,ty:c.ty||"",m:c.m&&SUBJ[c.m]?c.m:""})).sort((x,y)=>x.a-y.a);
 const dansCreneau=(day,a,b)=>creneauxDu(day).some(s=>a<s.b&&b>s.a);
 /* un créneau à lui peut avoir un type (champ ty) : "cours", "exos" ou "xb" (examen blanc) ; sans type, le site choisit */
 const TYN={cours:"Cours",exos:"Exercices",xb:"Examen blanc"};
 const genreTache=t=>t.td||t.train||/^en-/.test(t.id)||(!t.lesson&&(t.links||[]).some(l=>/^annales|^#\/entrainer/.test(l[0])))?"exos":"cours";
 const typeCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.ty:"";};
+/* et une matière (champ m) : le planning n'y met alors que cette matière, sans compter son plafond du jour */
+const matCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.m:"";};
 /* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours ;
    un cours dans un de ses créneaux compte comme "rev", sauf s'il a dit qu'il y va ("go") */
 const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day&&!x.e.off);
@@ -29974,8 +29976,8 @@ function buildPlan(){
   const ratee=(id,t,B)=>t.lesson&&!pri(t)&&B.day===t0&&(ST[id].les[t.lesson]||{}).on===t0;/* leçon ratée aujourd'hui : on la refait demain */
   /* un créneau « exercices » ne reçoit que TD, entraînement, annales et examens blancs ; un créneau « cours », que le reste (leçons, quiz, veille, feuille à recopier) ;
      un examen blanc tiré au hasard (t.xb) ne se place ni le jour ni la veille d'une épreuve */
-  const genre=genreTache,tyB=B=>B.ty!=null?B.ty:(B.ty=typeCren(B.day,B.start)),EPJ={},pres=day=>EPJ[day]!=null?EPJ[day]:(EPJ[day]=epreuvesDu(day).length+epreuvesDu(addDays(day,1)).length>0);
-  const non=(id,t,B)=>ratee(id,t,B)||(!!tyB(B)&&genre(t)!==tyB(B))||(!!t.xb&&pres(B.day));
+  const genre=genreTache,tyB=B=>B.ty!=null?B.ty:(B.ty=typeCren(B.day,B.start)),mB=B=>B.mt!=null?B.mt:(B.mt=matCren(B.day,B.start)),allure=(id,B)=>mB(B)===id?1e9:paceLeft(id,B.day),EPJ={},pres=day=>EPJ[day]!=null?EPJ[day]:(EPJ[day]=epreuvesDu(day).length+epreuvesDu(addDays(day,1)).length>0);
+  const non=(id,t,B)=>ratee(id,t,B)||(!!tyB(B)&&genre(t)!==tyB(B))||(!!mB(B)&&id!==mB(B))||(!!t.xb&&pres(B.day));
   const fill=(id,B,dur,src,finalWin,ordre)=>{let used=0;const tk=[];for(const t of src[id].slice()){if(t.last&&!finalWin)continue;if(non(id,t,B))continue;if(!fitsIn(t,dur-used)){if(ordre&&!t.last)break;continue;}tk.push(t);used+=t.min;src[id].splice(src[id].indexOf(t),1);if(used>=dur-10)break;}return{tk,used};};
   const place=(i,best,tk,used,dur,extra)=>{const B=blocks[i];B.sid=best;B.tasks=tk.map(t=>t.id);if(extra)B.extra=true;const full=B.end;B.end=Math.min(full,B.start+Math.max(lenFor(used),30));
     tk.forEach(t=>plan.assign[best+":"+t.id]=plan.blocks.length);plan.blocks.push(B);if(full-B.end>=25)blocks.splice(i+1,0,{day:B.day,start:B.end,end:full});};
@@ -29990,7 +29992,7 @@ function buildPlan(){
     const choisir=ordre=>{let best=null,bestScore=-1;
     active.forEach(id=>{if(!Q[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||""))return;
       if(!ordre&&!proche(id))return;
-      const room=Math.min(dur,paceLeft(id,B.day));if(room<=0)return;
+      const room=Math.min(dur,allure(id,B));if(room<=0)return;
       const finalWin=fenetre(id,B,bs);
       const elig=Q[id].filter(t=>(!t.last||finalWin)&&!non(id,t,B));if(!elig.length||(ordre?!fitsIn(elig[0],room):!elig.some(t=>fitsIn(t,room))))return;
       let avail=0;for(let j=i;j<blocks.length;j++){const e=toD(blocks[j].day,blocks[j].end).getTime();if(e<=dl(id))avail+=work(blocks[j].end-blocks[j].start);}
@@ -30007,7 +30009,7 @@ function buildPlan(){
       else{let r=null;active.forEach(id=>{if(!proche(id)||be>dl(id)||!R1[id].some(t=>fitsIn(t,dur)&&!non(id,t,B)))return;if(!r||dl(id)<dl(r)||(dl(id)===dl(r)&&weight(SUBJ[id])>weight(SUBJ[r])))r=id;});
         if(r){const f=fill(r,B,dur,R1,false);if(f.tk.length){f.tk.forEach(t=>{const k=plan.bonus[r].indexOf(t.id);if(k>=0)plan.bonus[r].splice(k,1);});useDay(r,B.day,f.used);place(i,r,f.tk,f.used,dur,true);continue;}}}}
     if(!best){freeIdx.push(i);continue;}
-    const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),Q,fenetre(best,B,bs),ordre);
+    const {tk,used}=fill(best,B,Math.min(dur,allure(best,B)),Q,fenetre(best,B,bs),ordre);
     if(!tk.length){freeIdx.push(i);continue;}
     useDay(best,B.day,used);place(i,best,tk,used,dur,false);
   }
@@ -30128,21 +30130,22 @@ function cotes(day,P){const hit=(a,b,L)=>L.some(([x,y])=>a<y&&b>x),Cr=creneauxDu
   const tout=P.blocks.concat(P.rituels||[]).filter(b=>b.day===day).map(b=>[b.start,b.end]).concat(Cr,sansDu(day),epreuvesDu(day).map(({e})=>[mm(e.start),e.end?mm(e.end):mm(e.start)+60]));
   const cote=coursJour(day).filter(c=>c.skip).map(c=>[mm(c.start),mm(c.end)]).filter(([a,b])=>hit(a,b,tout)),crS=Cr.filter(([a,b])=>hit(a,b,cote));
   return{cours:(a,b)=>cote.some(([x,y])=>x===a&&y===b)?" cote":"",autre:(a,b)=>hit(a,b,cote)||hit(a,b,crS)?" serre":""};}
-function cadreCren(c,P,top,h,cls){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.concat(P.rituels||[]).some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.ty?" · "+TYN[c.ty].toLowerCase():"")+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
+function cadreCren(c,P,top,h,cls){const fini=toD(c.day,c.b)<=NOW(),vide=!P.blocks.concat(P.rituels||[]).some(b=>b.day===c.day&&b.start<c.b&&b.end>c.a),t="ton créneau"+(c.m?" · "+SUBJ[c.m].name:"")+(c.ty?" · "+TYN[c.ty].toLowerCase():"")+(c.w?" · chaque "+JOURS[jourSem(c.day)]:"");
   return `<div class="ev mien${cls||""}" role="button" tabindex="0" data-cr="${c.id}|${c.day}" title="${t}, ${hh(c.a)}–${hh(c.b)}" style="top:${top}px;height:${h}px"><i>${t}</i>${vide&&!fini&&c.ty!=="xb"?"<span>rien de prévu</span>":""}</div>`;}
 function boiteCren(box,o,refresh){
-  const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0,ty=(c&&c.ty)||"";
+  const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0,ty=(c&&c.ty)||"",mt=(c&&c.m&&SUBJ[c.m]?c.m:"");
   const a0=c?c.a:hhmm(o.a),b0=c?c.b:hhmm(Math.min(o.a+120,23*60));
   const heures=`<label>de <input type="time" step="900" data-f="a" value="${a0}"></label><label>à <input type="time" step="900" data-f="b" value="${b0}"></label>`;
   const types=`<div class="filters">${[["","Le site choisit"]].concat(Object.entries(TYN)).map(([v,n])=>`<button class="btn" data-ty="${v}" aria-pressed="${v===ty}">${n}</button>`).join("")}</div>`;
+  const mats=`<div class="filters">${[["","Toutes les matières"]].concat(SIDS.filter(s=>s===mt||examStart(SUBJ[s])>NOW()).map(s=>[s,SUBJ[s].name])).map(([v,n])=>`<button class="btn" data-mt="${v}" aria-pressed="${v===mt}">${n}</button>`).join("")}</div>`;
   const lien=ty==="xb"?`<a class="btn pri" href="#/entrainer/examen/une">Commencer l'examen blanc</a>`:ty==="exos"?`<a class="btn" href="#/entrainer">Ouvrir S'entraîner</a>`:ty==="cours"?`<a class="btn" href="#/apprendre">Ouvrir Apprendre</a>`:"";
   box.innerHTML=c?`<div><b>Ton créneau</b>, ${c.w?"chaque "+jr(day):dayName(day,false)}, de ${hh(mm(c.a))} à ${hh(mm(c.b))}.</div>
     <div class="crrow">${heures}<button class="btn" data-cr="heures">Changer les heures</button></div>${c.w?`<p class="crnote muted">Les nouvelles heures valent pour tous les ${jr(day)}s.</p>`:""}
-    ${types}<div class="filters">${lien}${c.w?`<button class="btn" data-cr="sauf">Enlever ce ${jr(day)} seulement</button><button class="btn" data-cr="tout">Enlever tous les ${jr(day)}s</button>`:`<button class="btn" data-cr="tout">Enlever ce créneau</button>`}<button class="btn" data-cr="non">Fermer</button></div><p class="crmsg"></p>`
+    ${types}${mats}<div class="filters">${lien}${c.w?`<button class="btn" data-cr="sauf">Enlever ce ${jr(day)} seulement</button><button class="btn" data-cr="tout">Enlever tous les ${jr(day)}s</button>`:`<button class="btn" data-cr="tout">Enlever ce créneau</button>`}<button class="btn" data-cr="non">Fermer</button></div><p class="crmsg"></p>`
    :`<div><b>Ajouter un créneau de révision</b></div>
     <div class="crrow"><label>Jour <input type="date" data-f="d" value="${day}" min="${today()}"></label>${heures}</div>
     <div class="filters"><button class="btn" data-rep="0" aria-pressed="true">Une fois</button><button class="btn" data-rep="1" aria-pressed="false">Chaque ${jr(day)}</button></div>
-    ${types}
+    ${types}${mats}
     <div class="filters"><button class="btn pri" data-cr="ajout">Ajouter</button><button class="btn" data-cr="non">Annuler</button></div><p class="crmsg"></p>`;
   box.hidden=false;box.dataset.k="";
   const val=f=>{const i=box.querySelector(`[data-f="${f}"]`);return i?i.value:"";},msg=box.querySelector(".crmsg");
@@ -30158,10 +30161,12 @@ function boiteCren(box,o,refresh){
   box.querySelectorAll("[data-rep]").forEach(b=>b.addEventListener("click",()=>{rep=+b.dataset.rep;box.querySelectorAll("[data-rep]").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.rep===rep)));}));
   box.querySelectorAll("[data-ty]").forEach(b=>b.addEventListener("click",()=>{ty=b.dataset.ty;box.querySelectorAll("[data-ty]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
     if(c){emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{ty})});box.hidden=true;refresh();}}));
+  box.querySelectorAll("[data-mt]").forEach(b=>b.addEventListener("click",()=>{mt=b.dataset.mt;box.querySelectorAll("[data-mt]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    if(c){const v=Object.assign({},c);if(mt)v.m=mt;else delete v.m;emit({k:"set",key:"cren:"+id,v});box.hidden=true;refresh();}}));
   box.querySelectorAll("[data-cr]").forEach(b=>b.addEventListener("click",()=>{const k=b.dataset.cr;
     if(k==="non"){box.hidden=true;return;}
     if(k==="ajout"||k==="heures"){const r=montre();if(r.err)return;
-      if(k==="ajout")emit({k:"set",key:"cren:"+nouvRun(),v:Object.assign(rep?{d:day,a:r.a,b:r.b,w:1}:{d:day,a:r.a,b:r.b},ty?{ty}:{})});
+      if(k==="ajout")emit({k:"set",key:"cren:"+nouvRun(),v:Object.assign(rep?{d:day,a:r.a,b:r.b,w:1}:{d:day,a:r.a,b:r.b},ty?{ty}:{},mt?{m:mt}:{})});
       else emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{a:r.a,b:r.b})});}
     else if(k==="sauf")emit({k:"set",key:"cren:"+id,v:Object.assign({},c,{x:(c.x||[]).concat(day)})});
     else if(k==="tout")emit({k:"set",key:"cren:"+id,v:""});
@@ -30189,11 +30194,18 @@ function lierSeances(root,box,refresh){
 }
 
 /* ---------- examens et coefficients ---------- */
+/* d'où vient chaque date d'épreuve (le champ src d'une épreuve, dans le fichier de sa matière, passe avant) */
+const SRC={"algo.cc1":"mail de ton chargé de TD du 5/11.",
+  "algo.cc2":"mail du responsable de l'UE du 24/9, « Dates des contrôles continus d'algo 1 » : « CC2 : créneau de TD entre le jeudi 26/11 et le mercredi 2/12 ». Ton TD d'Algo est le jeudi : le jour est déduit, l'heure n'est pas donnée. Le même mail annonçait le CC1 mi-octobre et il a eu lieu le 12/11 : demande à ton chargé de TD si le 26 tient toujours.",
+  "algo.cc3":"le même mail du 24/9 : « CC3 : entre le lundi 14/12 et le vendredi 18/12 ». Le jour et l'heure sont supposés.",
+  "ana.cc1":"annonce de l'enseignante sur le forum Moodle, le 9/11.","calc.cc2":"mail de l'enseignant du 6/11.","geo.cc2":"mail du 27/10.",
+  "lin.cc1":"mail du prof du 11/11 ; le lieu, mail du 18/11.","rai.cc2":"mail du 3/11.","pf.ct":"date supposée, pas encore officielle.","usi.exam":"date supposée, pas encore officielle."};
+const srcDe=(S,e)=>e.src||SRC[S.id+"."+e.id]||"pas encore notée sur le site.";
 function examens(){
   const n0=NOW(),caseNote=(S,x)=>x&&(x.past||x.hors)?`<br><label class="manote">Ma note<br><input type="text" inputmode="decimal" size="4" data-note="${S.id}.${x.id}" value="${x.n!=null?fr(x.n):""}" aria-label="Ma note, ${x.label}, ${S.name}, sur 20"> sur 20</label>`:"";
   const rows=SIDS.map(id=>{const S=SUBJ[id],L=examsOf(S),E=epreuves(id),plus=E.filter(x=>x.i<0);return L.map((x,i)=>{const e=examAt(S,i),past=toD(e.day,mm(e.end||e.start))<=n0,sh=e.share!=null?e.share:S.share;
     const off=!past&&(e.off||L.some((y,j)=>j!==i&&!examAt(S,j).off));
-    return `<tr${past||e.off?' class="muted"':""}>${i===0?`<td rowspan="${L.length+plus.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":e.off?"<br>enlevé du planning":""}${caseNote(S,E.find(y=>y.i===i))}</td><td><input type="date" value="${e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted"><span class="nf">${e.place}</span>, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}${off?`<br><button class="btn" data-exoff="${examKey(S,i)}" aria-pressed="${!!e.off}">Cette épreuve n'a pas lieu</button>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("")+plus.map(x=>`<tr class="muted"><td><b>${x.label}</b>${caseNote(S,x)}</td><td>${x.hors||"date pas encore publiée"}</td><td>${pct(x.w)}</td><td><b>${String((S.coef*x.w).toFixed(2)).replace(".",",")}</b></td><td></td></tr>`).join("");}).join("");
+    return `<tr${past||e.off?' class="muted"':""}>${i===0?`<td rowspan="${L.length+plus.length}"><i class="sdot" style="background:${S.color}"></i> ${S.name}<br><span class="muted">${S.code} · coef ${S.coef}</span></td>`:""}<td><b>${e.label}</b>${past?"<br>passé":e.off?"<br>enlevé du planning":""}${caseNote(S,E.find(y=>y.i===i))}</td><td><input type="date" value="${e.day}" data-ex="${examKey(S,i)}:day"> <input type="time" value="${e.start}" data-ex="${examKey(S,i)}:start"><br><span class="muted"><span class="nf">${e.place}</span>, ${e.dur}</span>${e.unsure?`<br><span class="r">${e.unsure}</span>`:""}${past?"":`<br><span class="muted">Source de la date : ${srcDe(S,e)}</span>`}${off?`<br><button class="btn" data-exoff="${examKey(S,i)}" aria-pressed="${!!e.off}">Cette épreuve n'a pas lieu</button>`:""}</td><td>${Math.round(sh*100)} %</td><td><b>${String((S.coef*sh).toFixed(2)).replace(".",",")}</b></td><td>${e.docs||S.docs}</td></tr>`;}).join("")+plus.map(x=>`<tr class="muted"><td><b>${x.label}</b>${caseNote(S,x)}</td><td>${x.hors||"date pas encore publiée"}</td><td>${pct(x.w)}</td><td><b>${String((S.coef*x.w).toFixed(2)).replace(".",",")}</b></td><td></td></tr>`).join("");}).join("");
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Examens et coefficients</h1></div>
    <p class="lead">D'après le document officiel des modalités de contrôle 2026-2027 et les pages Moodle. Le poids d'un CC dans ta moyenne du semestre, c'est le coefficient de la matière multiplié par la part de ce CC dans sa note.</p>
    <section class="check" id="bilan">${bilanHTML()}</section>
@@ -30231,7 +30243,7 @@ function subjHome(sid){
   if(bon.length)body+=sec(k++,"Si tu as encore du temps",`<ol class="todo">${bon.map(id=>taskHTML(sid,S.TB[id],false)).join("")}</ol>`);
   if(done.length)body+=sec(k++,"Déjà fait",`<details class="day"><summary><b>${done.length} étape(s) terminée(s)</b><span>clique pour voir</span></summary><ol class="todo" style="padding:0 12px 12px">${done.map(t=>taskHTML(sid,t,false)).join("")}</ol></details>`);
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${S.name}</h1><span class="muted">${S.code}</span></div>
-   <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${dayName(e.day,false)} à ${e.start.replace(":","h")}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}</div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
+   <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${dayName(e.day,false)} à ${e.start.replace(":","h")}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""} <span class="muted">Source de la date : ${srcDe(S,e)}</span></div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
    ${carteNotes(sid)}
    ${body}</div>`;
   bindTicks($("#main"),()=>subjHome(sid));fixLinks($("#main"),sid);
