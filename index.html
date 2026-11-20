@@ -1028,6 +1028,77 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .fin-bil .en-in,.rp-txt{display:block;width:100%;box-sizing:border-box}
 .rp-txt{resize:vertical;text-align:left;line-height:1.45}
 
+/* examen blanc : une carte par prochaine épreuve (6a) */
+.xb-bloc{gap:12px}
+.xcartes{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr))}
+.xc{position:relative;display:grid;gap:6px;align-content:start;min-width:0;padding:14px;border-radius:16px;border:2px solid color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 7%,#000);box-shadow:0 4px 0 color-mix(in srgb,var(--c) 35%,#000)}
+.xc h3{margin:0;font:400 1.3rem/1.1 var(--f-serif);color:#fff}
+.xc-k{font:850 .7rem/1.2 var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--c)}
+.xc-m{font-size:.85rem;color:var(--icy)}
+.xc .acts{gap:8px;margin-top:4px}
+.xc .btn.pri{--sc:var(--c)}
+.xc .btn:disabled{opacity:.45;cursor:not-allowed}
+.xc-encours{border-style:dashed}
+.xc-multi{padding:10px 12px}
+.xc-multi h3{font-size:1.05rem}
+.xc-intro{margin:0;font-size:.85rem}
+.xc-autres{display:grid;gap:12px}
+.xc-autres summary{cursor:pointer;font-weight:750;font-size:.9rem;color:var(--icy)}
+.xc-autres[open] summary{margin-bottom:12px}
+
+/* la copie : fenêtre flottante au milieu, le site assombri derrière (7b) ; le sujet entier sur une page (8a) ; le chrono (9a) */
+html.xb-ouvert{overflow:hidden}
+.xb-voile{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px 40px;background:rgba(0,0,0,.6)}
+.xb-fen{--sc:var(--c);display:flex;flex-direction:column;width:min(980px,100%);height:100%;min-width:0;background:#000;border:2px solid var(--c);border-radius:16px;box-shadow:0 6px 0 var(--c-deep);overflow:hidden;outline:none}
+.xb-haut{position:relative;flex:none;display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--trait)}
+.xb-haut .lp-x{width:36px;height:36px;background:none;font:inherit;font-weight:800;cursor:pointer}
+.xb-haut .lp-kicker{min-width:0;overflow-wrap:anywhere}
+.xb-haut .lp-n{margin-left:auto}
+.xb-tps{margin-left:auto;font:800 1.6rem/1 var(--f-sans);font-variant-numeric:tabular-nums;color:#fff}
+.xb-fine{position:absolute;left:0;right:0;bottom:-1px;height:3px;background:color-mix(in srgb,var(--c) 15%,#000)}
+.xb-fine i{display:block;height:100%;width:100%;background:var(--c);transition:width 1s linear}
+.xb-amb .xb-tps{color:var(--ambre)}
+.xb-amb .xb-fine i{background:var(--ambre)}
+.xb-rouge .xb-tps{color:var(--rouge)}
+.xb-rouge .xb-fine i{background:var(--rouge)}
+.xb-corps{position:relative;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px}
+.xb-grille{display:grid;gap:20px;max-width:900px;margin:0 auto}
+.xb-som{display:none}
+.xb-sujet,.xb-note,.xb-rendre{display:grid;gap:16px;min-width:0}
+.xb-sujet>*,.xb-note>*{min-width:0}
+.xb-tete{display:grid;gap:4px;padding:14px;border:2px solid var(--trait);border-radius:14px;background:var(--feuille)}
+.xb-u{font:800 .66rem/1.3 var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--graphite)}
+.xb-tete h2{margin:2px 0;font:400 1.5rem/1.1 var(--f-serif);color:#fff}
+.xb-cd{font-size:.84rem;color:var(--icy)}
+.xb-partie{margin:6px 0 0;font:850 .74rem/1.2 var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--c)}
+.xb-exo{display:grid;gap:10px;min-width:0;padding-top:14px;border-top:1px solid var(--trait)}
+.xb-exo>*{min-width:0}
+.xb-eh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.xb-eh h3{margin:0;font:400 1.15rem/1.1 var(--f-serif);color:#fff}
+.xb-eh span{font:800 .72rem/1.2 var(--f-sans);color:var(--c);text-align:right}
+.xb-eh span.pap{color:var(--ambre)}
+.xb-exo .lq,.xb-note .lq{font-size:1rem;font-weight:500}
+.xb-papier{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 10px;border:2px dashed color-mix(in srgb,var(--ambre) 60%,transparent);border-radius:10px;font-size:.88rem;color:var(--ambre)}
+.xb-papier .btn{margin-left:auto;min-height:34px;font-size:.82rem}
+.xb-fin{justify-content:center}
+.xb-fin .btn.big{flex:1;max-width:440px;min-height:54px;border-radius:14px}
+.xb-rendre{max-width:560px;margin:0 auto;text-align:center}
+.xb-rendre h2{margin:0;font:400 1.6rem/1.15 var(--f-serif);color:#fff}
+@media (min-width:900px){
+  .xb-grille{grid-template-columns:150px minmax(0,1fr)}
+  .xb-som{position:sticky;top:0;align-self:start;display:grid;gap:4px;align-content:start}
+  .xb-som button{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border:2px solid transparent;border-radius:10px;background:none;color:var(--icy);font:700 .86rem/1.2 var(--f-sans);text-align:left;cursor:pointer}
+  .xb-som button i{font-style:normal;color:var(--c);visibility:hidden}
+  .xb-som button.ok i{visibility:visible}
+  .xb-som button[aria-current]{border-color:var(--c);color:#fff}
+}
+@media (max-width:600px){
+  .xb-voile{padding:0}
+  .xb-fen{border-width:3px 0 0;border-radius:0;box-shadow:none}
+  .xb-haut{padding:8px 12px}
+  .xb-corps{padding:12px}
+}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-192.png">
@@ -32858,7 +32929,7 @@ function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="multi")return `<div class="filters" data-multi="${c.id}"${c.seul?` data-seul="${c.seul}"`:""}>${c.o.map(o=>`<button type="button" class="btn" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`;
   if(c.k==="champ")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep"><div class="mq-row"><label class="en-case en-long">${c.label}<input class="en-in en-large" data-n="${c.id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"${c.ex?` placeholder="${esc(c.ex)}"`:""}></label></div>${c.sym&&c.apercu!==false?`<div class="mq-apercu" hidden></div>`:""}${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
   return "";}).join("");}
-function lire(e){const rep={},b=$("#lpb");
+function lire(e,b){const rep={};b=b||$("#lpb");
   e.champs.forEach(c=>{
     if(c.k==="choix"){const on=b.querySelector(`[data-ch="${c.id}"] [aria-pressed="true"]`);if(on)rep[c.id]=on.dataset.v;}
     else if(c.k==="cases"){const o={};b.querySelectorAll(`[data-ch="${c.id}"] input`).forEach(i=>{o[i.dataset.n]=i.value;});rep[c.id]=o;}
@@ -33100,7 +33171,7 @@ function refaire(id){stop();$("#main").className="";$("#main").innerHTML=`<div c
    La copie en cours est gardée sur l'appareil (localStorage) : une page fermée ou rechargée la retrouve, et le chrono continue.
    À la fin : un événement « tr » par exercice (m:"xb"), un événement « xb » pour la note, et le détail dans le carnet. */
 const XK="rev-s1-examen";
-let X=null,XE={id:null,L:{}},XT=0;
+let X=null,XE={id:null,L:{}},XT=0,LISTE=null;
 const xLit=()=>{try{const x=JSON.parse(localStorage.getItem(XK)||"null");return x&&Array.isArray(x.Q)&&x.Q.length&&x.Q.every(q=>GEN.par[q.g]&&SUBJ[q.s])?x:null;}catch(e){return null;}};
 const xGarde=()=>{try{localStorage.setItem(XK,JSON.stringify(X));}catch(e){}};
 const xExo=k=>{if(XE.id!==X.id)XE={id:X.id,L:{}};return XE.L[k]||(XE.L[k]=GEN.tire(GEN.par[X.Q[k].g],X.Q[k].lv,X.Q[k].gr));};
@@ -33141,43 +33212,58 @@ function xSujet(sids,court,base){const evite={},P=sids.map(s=>xCompose(s,court,b
 
 function xHisto(){const E=A.journal().filter(e=>e.k==="xb"&&Array.isArray(e.sids)).reverse();if(!E.length)return "";
   return `<section class="sec"><h2><span>Tes examens blancs</span></h2><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Jour</th><th>Matières</th><th>Note</th><th>Temps</th></tr></thead><tbody>${E.map(e=>`<tr><td>${A.dayName(A.ymd(new Date(e.t)),false,true)}</td><td>${e.sids.filter(s=>SUBJ[s]).map(s=>SUBJ[s].name).join(", ")}${e.c&&e.sids.length===1?" (version courte)":""}</td><td><b>${virg(e.n)}</b> sur 20</td><td>${xDuree(e.ms)} sur ${hmin(e.d/60e3)}</td></tr>`).join("")}</tbody></table></div>${X&&X.phase==="fini"?`<p class="gomore"><a href="#/entrainer/examen/copie">Revoir le corrigé du dernier</a></p>`:""}</section>`;}
-function xBloc(){const x=xLit(),enc=x&&x.phase!=="fini",r=enc&&x.phase==="sujet"?x.t0+x.dur-Date.now():0,der=A.journal().filter(e=>e.k==="xb").pop();
-  const li=(t,meta,href,btn,pri)=>`<li class="task"><button class="tick" disabled aria-label="Rien à cocher"></button><div><div class="tt">${t}</div><div class="meta">${meta}</div></div><a class="btn${pri?" pri":""} go" href="${href}">${btn}</a></li>`;
-  return `<section class="tiroir"><h2 class="tiroir__title">Examen blanc</h2><ol class="todo">${enc?li("Examen blanc en cours",`${xNoms(x)} · ${r>0?"il reste "+hmin(Math.max(1,Math.ceil(r/60e3)))+", le chrono continue":"le temps est fini : il reste ta copie à noter"}`,"#/entrainer/examen/copie","Reprendre",true):""}${li("Examen blanc 1 matière","Un sujet neuf, à la forme de ta prochaine épreuve · chrono, note sur 20","#/entrainer/examen/une","Commencer")}${li("Examen blanc multi-matières","Une épreuve courte par matière cochée, à la suite · un seul chrono","#/entrainer/examen/multi","Commencer")}</ol>${der?`<p class="gomore">Dernier examen blanc : ${virg(der.n)} sur 20, ${A.dayName(A.ymd(new Date(der.t)),false,true)}.</p>`:""}</section>`;}
+/* les cartes : une par prochaine épreuve (comme le vrai, ou court), le multi-matières à part, l'examen en cours en haut.
+   Le sujet d'une carte est tiré une fois (jusqu'au prochain exercice fait) : ce qu'elle annonce est ce qui s'ouvre. */
+const xHeure=h=>{const[a,b]=(h||"").split(":");return a?(+a)+"h"+(b&&b!=="00"?b:""):"";};
+const xSujetDe=(sid,court)=>xMemo("s:"+sid+":"+(court?1:0),()=>{const base=A.nouvRun();return Object.assign(xSujet([sid],court,base),{base});});
+const xTitre=x=>x.sids.length>1?"Multi-matières":`${A.exam(SUBJ[x.sids[0]]).label||"Épreuve"} ${SUBJ[x.sids[0]].name}${x.court?" · court":""}`;
+const xEnCours=()=>{const x=xLit();return x&&x.phase!=="fini"?x:null;};
+function xCarte(sid,bloque){const S=SUBJ[sid],ex=A.exam(S),D=dureeEp(S),s=xSujetDe(sid,false),np=s.Q.filter(q=>q.pap).length,dis=bloque?" disabled":"";
+  const meta=!s.Q.length?"Le site n'a pas encore d'exercices pour cette épreuve.":`${hmin(s.dur)} · ${s.Q.length} ${plur(s.Q.length,"exercice")}${np?`, dont ${np} sur papier`:""}${s.dur<D?` (le vrai dure ${hmin(D)} : le site n'a pas encore de quoi le remplir)`:""}`;
+  return `<div class="xc s-${sid}"><span class="xc-k">${ex.label||"Épreuve"} · ${A.dayName(ex.day,false,true)}${ex.start?" · "+xHeure(ex.start):""}</span><h3>${S.name}</h3><span class="xc-m">${meta}</span>${s.Q.length?`<div class="acts"><button type="button" class="btn pri" data-xb="${sid}" data-c="0"${dis}>Comme le vrai · ${hmin(s.dur)}</button><button type="button" class="btn" data-xb="${sid}" data-c="1"${dis}>Court · ${hmin(xSujetDe(sid,true).dur)}</button></div>`:""}</div>`;}
+function xCartes(premier,page){const x=xEnCours(),n=A.NOW(),L=matieres(),pro=L.filter(s=>A.examStart(SUBJ[s])>n);
+  const vus=(premier&&L.includes(premier)?[premier]:[]).concat(pro.filter(s=>s!==premier)).slice(0,3),autres=L.filter(s=>!vus.includes(s));
+  const r=x&&x.phase==="sujet"?x.t0+x.dur-Date.now():0;
+  return `${x?`<div class="xc xc-encours ${x.sids.length>1?"c-violet":"s-"+x.sids[0]}"><span class="xc-k">En cours · ${r>0?"il reste "+hmin(Math.max(1,Math.ceil(r/60e3))):"le temps est fini"}</span><h3>${xTitre(x)}</h3>${r>0?"":`<span class="xc-m">Il te reste à noter ta copie.</span>`}<div class="acts"><a class="btn pri" href="#/entrainer/examen/copie">${r>0?"Reprendre":"Noter ma copie"}</a>${page?`<button type="button" class="btn" id="xb-abandon">Abandonner cet examen</button>`:""}</div></div>`:""}
+   <p class="muted xc-intro">${x?`Pour en commencer un autre, finis celui-ci${page?" ou abandonne-le":` ou abandonne-le depuis <a href="#/entrainer/examen">la page Examen blanc</a>`}.`:"Tes prochaines épreuves : un sujet neuf à leur forme."}</p>
+   <div class="xcartes">${vus.map(s=>xCarte(s,x)).join("")}</div>
+   ${autres.length?`<details class="xc-autres"><summary>Les autres matières (${autres.length})</summary><div class="xcartes" data-autres="${autres.join(",")}"></div></details>`:""}
+   <div class="xc c-violet xc-multi"><span class="xc-k">Plusieurs matières</span><h3>Multi-matières</h3><span class="xc-m">Une épreuve courte par matière cochée, un seul chrono</span><div class="acts"><a class="btn" href="#/entrainer/examen/multi">Choisir les matières</a></div></div>`;}
+function xBloc(){const der=A.journal().filter(e=>e.k==="xb").pop();
+  return `<section class="tiroir xb-bloc"><h2 class="tiroir__title">Examen blanc</h2>${xCartes()}${der?`<p class="gomore">Dernier examen blanc : ${virg(der.n)} sur 20, ${A.dayName(A.ymd(new Date(der.t)),false,true)}. <a href="#/entrainer/examen">Tous tes examens blancs</a></p>`:""}</section>`;}
+function xLance(sid,court){if(xEnCours())return;const s=xSujetDe(sid,court);if(!s.Q.length)return;
+  X={id:s.base,mode:"une",sids:[sid],court:court?1:0,t0:Date.now(),dur:s.dur*60e3,cur:0,Q:s.Q,rep:{},tq:s.Q.map(()=>0),phase:"sujet"};XT=0;xGarde();XM.k="";location.hash="#/entrainer/examen/copie";}
+function xPage(premier){$("#main").className="";
+  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>Examen blanc</h1></div>
+   <p class="lead">Un sujet neuf à chaque fois, tiré dans tes exercices d'entraînement et tes démonstrations, à la forme de ta prochaine épreuve : sa durée, seulement les chapitres à son programme, une note sur 20.</p>
+   <section class="tiroir xb-bloc">${xCartes(premier,true)}</section>
+   <div class="paper"><b>Les conditions de l'épreuve.</b><div>Une feuille, un stylo, pas de cours ni de fiches. Aucun indice ; la correction et la note arrivent seulement à la fin. Tu peux rendre ta copie avant la fin. Le chrono ne s'arrête pas : si tu fermes la fenêtre de l'examen, tu retrouves ta copie, et le temps a continué.</div></div>${xHisto()}</div>`;
+  const ab=$("#xb-abandon");if(ab)ab.addEventListener("click",()=>{if(!ab.dataset.sur){ab.dataset.sur="1";ab.textContent="Confirmer : effacer cette copie";return;}
+    try{localStorage.removeItem(XK);}catch(e){}X=null;xPage(premier);});
+  window.scrollTo(0,0);}
 
-/* le choix de la matière (ou des matières) et de la durée ; le sujet est tiré dès qu'on choisit, pour annoncer ce qu'il contient */
-function xChoix(mode,sid0){const une=mode==="une",M=matieres(),base=A.nouvRun();let sel=(sid0||"").split(",").filter(s=>M.includes(s)).slice(0,une?1:99),court=!une,suj=null;
+/* le multi-matières : on coche les matières ; le sujet est tiré dès qu'on coche, pour annoncer ce qu'il contient */
+function xChoix(sid0){const M=matieres(),base=A.nouvRun();let sel=(sid0||"").split(",").filter(s=>M.includes(s)),suj=null;
   $("#main").className="";
-  if(X&&X.phase!=="fini")return xDeja(mode);
-  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>${une?"Examen blanc 1 matière":"Examen blanc multi-matières"}</h1></div>
-   <p class="lead">${une?"Un sujet neuf à chaque fois, tiré dans tes exercices d'entraînement et tes démonstrations, à la forme de ta prochaine épreuve : sa durée, seulement les chapitres à son programme, une note sur 20.":"Une épreuve courte par matière cochée (la moitié de sa vraie durée), à la suite, avec un seul chrono et une note sur 20. Le sujet est neuf à chaque fois."}</p>
-   <p><b>${une?"La matière":"Les matières (au moins deux)"}</b></p><div class="filters" id="xb-sid">${M.map(s=>`<button type="button" class="btn" data-v="${s}" aria-pressed="${sel.includes(s)}">${SUBJ[s].name}</button>`).join("")}</div>
-   ${une?`<p><b>La durée</b></p><div class="filters" id="xb-dur"><button type="button" class="btn" data-v="0" aria-pressed="true">Comme le vrai</button><button type="button" class="btn" data-v="1" aria-pressed="false">Version courte</button></div>`:""}
+  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer/examen">‹ Examen blanc</a><div class="title-row"><h1>Examen blanc multi-matières</h1></div>
+   <p class="lead">Une épreuve courte par matière cochée (la moitié de sa vraie durée), à la suite, avec un seul chrono et une note sur 20. Le sujet est neuf à chaque fois.</p>
+   <p><b>Les matières (au moins deux)</b></p><div class="filters" id="xb-sid">${M.map(s=>`<button type="button" class="btn" data-v="${s}" aria-pressed="${sel.includes(s)}">${SUBJ[s].name}</button>`).join("")}</div>
    <p id="xb-res" aria-live="polite"></p>
-   <div class="paper"><b>Les conditions de l'épreuve.</b><div>Une feuille, un stylo, pas de cours ni de fiches<span id="xb-docs"></span>. Aucun indice ; la correction et la note arrivent seulement à la fin. Tu peux rendre ta copie avant la fin. Le chrono ne s'arrête pas : si tu fermes la page, tu retrouves ta copie au même exercice, et le temps a continué.</div></div>
-   <div class="acts"><button class="btn pri big" id="xb-go" disabled>Commencer l'examen</button></div>${xHisto()}</div>`;
+   <div class="paper"><b>Les conditions de l'épreuve.</b><div>Une feuille, un stylo, pas de cours ni de fiches. Aucun indice ; la correction et la note arrivent seulement à la fin. Tu peux rendre ta copie avant la fin. Le chrono ne s'arrête pas : si tu fermes la fenêtre de l'examen, tu retrouves ta copie, et le temps a continué.</div></div>
+   <div class="acts"><button class="btn pri big" id="xb-go" disabled>Commencer l'examen</button></div></div>`;
   const choisies=()=>M.filter(s=>sel.includes(s));
-  const maj=()=>{const L=choisies(),bon=une?L.length===1:L.length>=2,r=$("#xb-res");suj=bon?xSujet(L,court,base):null;
-    if(une){const S=L.length?SUBJ[L[0]]:null,D=S?dureeEp(S):0,B=$("#xb-dur").children;B[0].textContent="Comme le vrai"+(S?" : "+hmin(D):"");B[1].textContent="Version courte : "+(S?hmin(Math.round(D/2)):"la moitié");
-      $("#xb-docs").textContent=S?` (documents autorisés ${auCC(S)} : ${S.docs})`:"";}
+  const maj=()=>{const L=choisies(),r=$("#xb-res");suj=L.length>=2?xSujet(L,true,base):null;
     $("#xb-go").disabled=!(suj&&suj.Q.length);
-    if(!suj){r.textContent=une?"Choisis une matière.":"Coche au moins deux matières.";return;}
-    if(!suj.Q.length){r.textContent="Le site n'a pas encore d'exercices à tirer pour cette épreuve.";return;}
-    const np=suj.Q.filter(q=>q.pap).length,ex=A.exam(SUBJ[L[0]]);
-    const court2=L.map((s,i)=>suj.durs[i]<suj.P[i].D?`Le site n'a pas encore assez d'exercices pour remplir l'épreuve ${L.length>1?"de "+SUBJ[s].name:""} : ${hmin(suj.durs[i])} au lieu de ${hmin(suj.P[i].D)}.`:"").filter(Boolean).join(" ");
-    r.innerHTML=`${une?`<b>${ex.label||"Épreuve"} · ${SUBJ[L[0]].name}</b> (le vrai : ${A.dayName(ex.day)})`:`<b>${L.length} matières</b>`} : ${suj.Q.length} ${plur(suj.Q.length,"exercice")} en ${hmin(suj.dur)}${np?`, dont ${np} à rédiger sur papier`:""}.${une?"":" "+L.map((s,i)=>`${SUBJ[s].name} : ${hmin(suj.durs[i])}`).join(", ")+"."} ${court2}`;};
-  $("#xb-sid").addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;const v=b.dataset.v;sel=une?[v]:sel.includes(v)?sel.filter(x=>x!==v):sel.concat(v);
+    if(!suj){r.textContent="Coche au moins deux matières.";return;}
+    if(!suj.Q.length){r.textContent="Le site n'a pas encore d'exercices à tirer pour ces épreuves.";return;}
+    const np=suj.Q.filter(q=>q.pap).length;
+    const court2=L.map((s,i)=>suj.durs[i]<suj.P[i].D?`Le site n'a pas encore assez d'exercices pour remplir l'épreuve de ${SUBJ[s].name} : ${hmin(suj.durs[i])} au lieu de ${hmin(suj.P[i].D)}.`:"").filter(Boolean).join(" ");
+    r.innerHTML=`<b>${L.length} matières</b> : ${suj.Q.length} ${plur(suj.Q.length,"exercice")} en ${hmin(suj.dur)}${np?`, dont ${np} à rédiger sur papier`:""}. ${L.map((s,i)=>`${SUBJ[s].name} : ${hmin(suj.durs[i])}`).join(", ")}. ${court2}`;};
+  $("#xb-sid").addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;const v=b.dataset.v;sel=sel.includes(v)?sel.filter(x=>x!==v):sel.concat(v);
     $("#xb-sid").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",sel.includes(x.dataset.v)));maj();});
-  if(une)$("#xb-dur").addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;court=b.dataset.v==="1";[...$("#xb-dur").children].forEach(x=>x.setAttribute("aria-pressed",x===b));maj();});
   $("#xb-go").addEventListener("click",()=>{if(!suj||!suj.Q.length)return;
-    X={id:base,mode,sids:choisies(),court:court?1:0,t0:Date.now(),dur:suj.dur*60e3,cur:0,Q:suj.Q,rep:{},tq:suj.Q.map(()=>0),phase:"sujet"};XT=0;xGarde();location.hash="#/entrainer/examen/copie";});
+    X={id:base,mode:"multi",sids:choisies(),court:1,t0:Date.now(),dur:suj.dur*60e3,cur:0,Q:suj.Q,rep:{},tq:suj.Q.map(()=>0),phase:"sujet"};XT=0;xGarde();location.hash="#/entrainer/examen/copie";});
   maj();window.scrollTo(0,0);}
-function xDeja(mode){const pap=X.phase==="papier";
-  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>Examen blanc en cours</h1></div><p class="lead">${xNoms(X)} : ${pap?"le temps est fini, il te reste à noter ta copie.":"il te reste "+hmin(Math.max(1,Math.ceil(xReste()/60e3)))+". Le chrono continue."}</p><div class="acts"><a class="btn pri big" href="#/entrainer/examen/copie">${pap?"Noter ma copie":"Reprendre ma copie"}</a><button class="btn" id="xb-abandon">Abandonner cet examen</button></div></div>`;
-  $("#xb-abandon").addEventListener("click",ev=>{const b=ev.currentTarget;if(!b.dataset.sur){b.dataset.sur="1";b.textContent="Confirmer : effacer cette copie";return;}
-    try{localStorage.removeItem(XK);}catch(e){}X=null;xChoix(mode);});}
-
-/* ---------- la copie : un exercice à l'écran, on va et vient comme sur un sujet papier ---------- */
 function xRemplir(b,e,rep){if(!rep)return;
   e.champs.forEach(c=>{const z=b.querySelector(`[data-ch="${c.id}"]`);
     if(c.k==="choix"){if(z)z.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===rep[c.id]));}
@@ -33188,43 +33274,62 @@ function xRemplir(b,e,rep){if(!rep)return;
       if(c.k==="trace"){while(tb.children.length<T.length)tb.insertAdjacentHTML("beforeend",ligneTrace(c,tb.children.length));while(tb.children.length>Math.max(1,T.length))tb.lastElementChild.remove();}
       [...tb.children].forEach((tr,r)=>tr.querySelectorAll("input").forEach((i,k)=>{i.value=(T[r]||[])[k]||"";}));}
     else if(c.k==="trous")c.ids.forEach(id=>{const i=b.querySelector(`input[data-c="${id}"]`);if(i)i.value=rep[id]||"";});});}
-function xSauve(){if(!X||X.phase!=="sujet"||!$("#xb-nav"))return;const k=X.cur,e=xExo(k);xTemps();
-  if(e.papier){const p=$("#xb-pap button");if(p&&p.getAttribute("aria-pressed")==="true")X.rep[k]={fait:1};else delete X.rep[k];}
-  else{const r=lire(e);if(plein(r))X.rep[k]=r;else delete X.rep[k];}
-  xGarde();}
-function xVa(i){xSauve();X.cur=Math.max(0,Math.min(X.Q.length-1,i));xGarde();xDessine();}
+/* ---------- la copie : une fenêtre posée au milieu du site assombri, le sujet entier à la suite ----------
+   Elle reste dans la fenêtre du navigateur : au PC, Rnote reste utilisable à côté, et dans une colonne étroite elle se lit encore. */
+const xCls=()=>X.sids.length>1?"c-violet":"s-"+X.sids[0];
+function xFenetre(kick,droite,corps){let v=$("#xb-voile");
+  if(!v){v=document.createElement("div");v.id="xb-voile";v.className="xb-voile";document.body.append(v);}
+  document.documentElement.classList.add("xb-ouvert");
+  v.innerHTML=`<div class="xb-fen ${xCls()}" role="dialog" aria-modal="true" aria-label="Examen blanc · ${esc(xTitre(X))}" tabindex="-1"><div class="xb-haut"><button type="button" class="lp-x" id="xb-x" aria-label="Fermer : ta copie est gardée, le chrono continue">✕</button><span class="lp-kicker">${kick}</span>${droite}<span class="xb-fine"><i></i></span></div><div class="xb-corps" id="xb-corps">${corps}</div></div>`;
+  $("#xb-x").addEventListener("click",()=>{location.hash="#/entrainer";});
+  v.firstElementChild.focus({preventScroll:true});return $("#xb-corps");}
+function xFerme(){const v=$("#xb-voile");if(v)v.remove();document.documentElement.classList.remove("xb-ouvert");}
+function xSauveK(k){const z=$(`#xb-voile .xb-exo[data-k="${k}"]`);if(!X||X.phase!=="sujet"||!z)return;const e=xExo(k);
+  if(e.papier){const p=z.querySelector("[data-pap]");if(p&&p.getAttribute("aria-pressed")==="true")X.rep[k]={fait:1};else delete X.rep[k];}
+  else{const r=lire(e,z);if(plein(r))X.rep[k]=r;else delete X.rep[k];}
+  const s=$(`#xb-nav [data-k="${k}"]`);if(s)s.classList.toggle("ok",!!X.rep[k]);}
+function xSauve(){if(!X||X.phase!=="sujet"||!$("#xb-voile .xb-exo"))return;xTemps();X.Q.forEach((q,k)=>xSauveK(k));xGarde();}
+/* le temps passé va à l'exercice qu'on regarde (ou dans lequel on écrit) */
+function xVoit(k){if(k===X.cur)return;xTemps();X.cur=k;document.querySelectorAll("#xb-nav [data-k]").forEach(b=>b.toggleAttribute("aria-current",+b.dataset.k===k));xGarde();}
+function xVa(k,net){const c=$("#xb-corps"),z=c&&c.querySelector(`.xb-exo[data-k="${k}"]`);if(!z)return;c.scrollTo({top:z.offsetTop-12,behavior:net?"auto":"smooth"});xVoit(k);}
+let XR=0;
+function xSuit(c){const L=c.querySelectorAll(".xb-exo"),lim=c.getBoundingClientRect().top+c.clientHeight*0.35;let k=0;L.forEach(z=>{if(z.getBoundingClientRect().top<=lim)k=+z.dataset.k;});xVoit(k);}
 function xTic(){const c=$("#en-chrono");if(!c||!X||X.phase!=="sujet")return stop();const r=xReste();
   if(r<=0){xSauve();xCorrige(true);return xMontre();}
-  xTemps();c.textContent=horloge(r);const i=$(".lp-bar i");if(i)i.style.width=Math.min(100,(1-r/X.dur)*100)+"%";
+  xTemps();c.textContent=horloge(r);const f=c.closest(".xb-fen");
+  if(f){f.classList.toggle("xb-amb",r<=10*60e3&&r>5*60e3);f.classList.toggle("xb-rouge",r<=5*60e3);const i=f.querySelector(".xb-fine i");if(i)i.style.width=Math.max(0,Math.min(100,r/X.dur*100))+"%";}
   if(Math.floor(r/1000)%5===0)xGarde();}
-function xDessine(){const k=X.cur,q=X.Q[k],e=xExo(k),S=SUBJ[q.s],n=X.Q.length,pap=!!e.papier;
-  $("#main").className="s-"+q.s;
-  $("#main").innerHTML=`<div class="lp s-${q.s}">
-   <div class="lp-top"><a class="lp-x" href="#/entrainer" aria-label="Sortir : ta copie est gardée, le chrono continue">✕</a><div class="lp-bar" role="progressbar" aria-label="Temps écoulé"><i></i></div><span class="lp-n" id="en-chrono"></span></div>
-   <div class="lp-kicker">Examen blanc · ${S.name}<span class="lp-left"> · exercice ${k+1} sur ${n} · ${ptsTxt(q.pts)}</span></div>
-   <div class="filters" id="xb-nav">${X.Q.map((_,i)=>`<button type="button" class="btn" data-k="${i}" aria-pressed="${i===k}">${i+1}${X.rep[i]?" ✓":""}</button>`).join("")}</div>
-   <div class="lp-body" id="lpb"></div>
-   <div class="lp-foot" id="en-pied">${k?`<button class="btn" id="xb-prec">Précédent</button>`:""}<button class="btn pri big" id="xb-suiv">${k<n-1?"Exercice suivant":"Rendre la copie"}</button></div>
-   <p class="kbdhint">Si tu fermes la page, tu retrouveras ta copie au même exercice. Le chrono, lui, continue.</p></div>`;
-  const b=$("#lpb"),rendre=k<n-1?`<div class="acts"><button type="button" class="btn" id="xb-rendre">Rendre la copie</button></div>`:"";
-  b.innerHTML=tx(pap?`<p class="prekick">Sur papier · à rédiger sur ta copie</p><p class="lq">${e.qNeutre||e.q}</p><div>${e.corpsPapier!=null?e.corpsPapier:e.corps}</div><div class="paper"><b>Rédige-le sur ta feuille, comme ${auCC(S)}.</b> Tu le noteras toi-même avec le barème, après l'examen. Compte environ ${q.min} minutes.</div><div class="filters" id="xb-pap"><button type="button" class="btn" aria-pressed="${!!X.rep[k]}">Je l'ai rédigé</button></div>${rendre}`
-    :`<p class="lq">${e.qNeutre||e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><p class="muted">Compte environ ${q.min} minutes. Ta réponse est gardée telle quelle et corrigée à la fin.</p>${rendre}`);
-  if(!pap){xRemplir(b,e,X.rep[k]);ecoute(b,e,()=>false,()=>{});b.querySelectorAll("input.en-large").forEach(i=>{if(i.value)i.dispatchEvent(new Event("input",{bubbles:true}));});}
-  const maj=()=>{xSauve();const x=$(`#xb-nav [data-k="${X.cur}"]`);if(x)x.textContent=(X.cur+1)+(X.rep[X.cur]?" ✓":"");};
-  b.addEventListener("input",maj);b.addEventListener("click",()=>setTimeout(maj,0));
-  const pb=$("#xb-pap button");if(pb)pb.addEventListener("click",()=>pb.setAttribute("aria-pressed",pb.getAttribute("aria-pressed")!=="true"));
-  $("#xb-nav").addEventListener("click",ev=>{const x=ev.target.closest("button");if(x)xVa(+x.dataset.k);});
-  const pr=$("#xb-prec"),re=$("#xb-rendre");if(pr)pr.addEventListener("click",()=>xVa(k-1));if(re)re.addEventListener("click",xRendre);
-  $("#xb-suiv").addEventListener("click",()=>k<n-1?xVa(k+1):xRendre());
-  XT=Date.now();stop();xTic();if(X.phase==="sujet")TIC=setInterval(xTic,1000);
-  longues(b);queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);}
+const xChrono=()=>`<span class="xb-tps" id="en-chrono"></span>`;
+function xDessine(){const multi=X.sids.length>1,S0=SUBJ[X.sids[0]],ex=A.exam(S0),n=X.Q.length;
+  const tete=multi?`<h2>Examen blanc multi-matières</h2><span class="xb-cd">${xNoms(X)} · durée ${hmin(X.dur/60e3)} · pas de cours ni de fiches · ${n} exercices, noté sur 20</span>`
+    :`<h2>${ex.label||"Épreuve"} · ${S0.name}${X.court?" (version courte)":""}</h2><span class="xb-cd">Durée ${hmin(X.dur/60e3)} · documents : ${S0.docs||"aucun"} · ${n} ${plur(n,"exercice")}, noté sur 20</span>`;
+  let h=`<div class="xb-tete"><span class="xb-u">Université de Montpellier · L1 maths-info · examen blanc</span>${tete}</div>`;
+  X.Q.forEach((q,k)=>{const e=xExo(k);
+    if(multi&&(!k||X.Q[k-1].s!==q.s))h+=`<h3 class="xb-partie s-${q.s}">${SUBJ[q.s].name}</h3>`;
+    h+=`<section class="xb-exo s-${q.s}" data-k="${k}"><div class="xb-eh"><h3>Exercice ${k+1}</h3><span${e.papier?' class="pap"':""}>${ptsTxt(q.pts)}${e.papier?" · sur papier":""}</span></div><p class="lq">${e.qNeutre||e.q}</p><div>${e.papier&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${e.papier
+      ?`<div class="xb-papier"><span>✎ À rédiger sur ta feuille, comme ${auCC(SUBJ[q.s])} · environ ${q.min} min</span><button type="button" class="btn" data-pap aria-pressed="${!!X.rep[k]}">Je l'ai rédigé</button></div>`
+      :`<div class="en-rep">${champsHTML(e)}</div>`}</section>`;});
+  h+=`<div class="acts xb-fin"><button type="button" class="btn pri big" id="xb-rendre">Rendre ma copie</button></div><p class="kbdhint">Aucun indice : la correction et la note arrivent à la fin. Si tu fermes cette fenêtre, ta copie est gardée ; le chrono, lui, continue.</p>`;
+  const nav=`<nav class="xb-som" id="xb-nav" aria-label="Les exercices">${X.Q.map((q,k)=>`<button type="button" data-k="${k}" class="${X.rep[k]?"ok":""}"${k===X.cur?" aria-current":""}>Exercice ${k+1}<i>✓</i></button>`).join("")}</nav>`;
+  const c=xFenetre(xTitre(X),xChrono(),`<div class="xb-grille">${nav}<div class="xb-sujet">${tx(h)}</div></div>`);
+  c.querySelectorAll(".xb-exo").forEach(z=>{const k=+z.dataset.k,e=xExo(k);if(e.papier)return;
+    xRemplir(z,e,X.rep[k]);ecoute(z,e,()=>false,()=>{});z.querySelectorAll("input.en-large").forEach(i=>{if(i.value)i.dispatchEvent(new Event("input",{bubbles:true}));});});
+  const maj=z=>{xSauveK(+z.dataset.k);xGarde();};
+  c.addEventListener("input",ev=>{const z=ev.target.closest(".xb-exo");if(z)maj(z);});
+  c.addEventListener("click",ev=>{const p=ev.target.closest("[data-pap]");if(p)p.setAttribute("aria-pressed",p.getAttribute("aria-pressed")!=="true");
+    const s=ev.target.closest("#xb-nav [data-k]");if(s)return xVa(+s.dataset.k);
+    const z=ev.target.closest(".xb-exo");if(z){xVoit(+z.dataset.k);setTimeout(()=>maj(z),0);}});
+  c.addEventListener("focusin",ev=>{const z=ev.target.closest(".xb-exo");if(z)xVoit(+z.dataset.k);});
+  c.addEventListener("scroll",()=>{if(!XR)XR=requestAnimationFrame(()=>{XR=0;if(X&&X.phase==="sujet")xSuit(c);});},{passive:true});
+  $("#xb-rendre").addEventListener("click",xRendre);
+  longues(c);if(X.cur)xVa(X.cur,true);
+  XT=Date.now();stop();xTic();TIC=setInterval(xTic,1000);}
 /* avant de rendre : ce qui est resté sans réponse, et ce que le site n'arrive pas à lire (sans dire si c'est juste) */
 function xRendre(){xSauve();stop();const vides=[],flou=[];
   X.Q.forEach((q,k)=>{const e=xExo(k),rep=X.rep[k];if(!rep)return vides.push(k+1);if(e.papier)return;let j=null;try{j=e.juge(rep);}catch(x){}if(j&&j.incomplet)flou.push([k+1,A.brut(j.incomplet)]);});
-  $("#main").className="";
-  $("#main").innerHTML=`<div class="page lp-end"><p class="kick">Examen blanc · ${xNoms(X)}</p><h1>Rendre ta copie ?</h1><p class="lead">Il te reste <span id="en-chrono"></span>. Une fois la copie rendue, tu ne peux plus rien changer.</p>${vides.length?`<p>Sans réponse : ${plur(vides.length,"l'exercice","les exercices")} ${vides.join(", ")}.</p>`:`<p>Tu as répondu à tous les exercices.</p>`}${flou.map(([k,m])=>`<p>Exercice ${k}, réponse incomplète ou que le site n'arrive pas à lire : ${esc(m)}</p>`).join("")}<div class="acts"><button class="btn" id="xb-retour">Revenir à ma copie</button><button class="btn pri big" id="xb-oui">Rendre ma copie</button></div></div>`;
+  xFenetre(xTitre(X),xChrono(),`<div class="xb-rendre"><h2>Rendre ta copie ?</h2><p>Une fois la copie rendue, tu ne peux plus rien changer.</p>${vides.length?`<p>Sans réponse : ${plur(vides.length,"l'exercice","les exercices")} ${vides.join(", ")}.</p>`:`<p>Tu as répondu à tous les exercices.</p>`}${flou.map(([k,m])=>`<p>Exercice ${k}, réponse incomplète ou que le site n'arrive pas à lire : ${esc(m)}</p>`).join("")}<div class="acts xb-fin"><button class="btn" id="xb-retour">Revenir à ma copie</button><button class="btn pri big" id="xb-oui">Rendre ma copie</button></div></div>`);
   $("#xb-retour").addEventListener("click",xDessine);$("#xb-oui").addEventListener("click",()=>{xCorrige(false);xMontre();});
-  xTic();if(X.phase==="sujet")TIC=setInterval(xTic,1000);window.scrollTo(0,0);}
+  xTic();if(X.phase==="sujet")TIC=setInterval(xTic,1000);}
 
 /* ---------- la fin : jugement des réponses à l'écran, barème coché pour les rédactions, puis la note ---------- */
 function xCorrige(auto){stop();xTemps();X.fin=Math.min(Date.now(),X.t0+X.dur);X.auto=auto?1:0;
@@ -33232,20 +33337,15 @@ function xCorrige(auto){stop();xTemps();X.fin=Math.min(Date.now(),X.t0+X.dur);X.
     let j;try{j=e.juge(rep);}catch(x){j={ok:false};}return j.incomplet?{ok:0,inc:A.brut(j.incomplet)}:{ok:j.ok?1:0};});
   X.phase="papier";if(!X.res.some(r=>r.pap))xFinir();xGarde();}
 function xPapier(){const k=X.res.findIndex(r=>r.pap&&r.note==null),q=X.Q[k],e=xExo(k),S=SUBJ[q.s],L=X.res.filter(r=>r.pap),fait=L.filter(r=>r.note!=null).length,tot=e.etapes.reduce((s,x)=>s+x.pts,0)||1;
-  $("#main").className="s-"+q.s;
-  $("#main").innerHTML=`<div class="lp s-${q.s}">
-   <div class="lp-top"><a class="lp-x" href="#/entrainer" aria-label="Sortir : tu finiras de noter ta copie plus tard">✕</a><div class="lp-bar" role="progressbar" aria-label="Exercices notés"><i style="width:${fait/L.length*100}%"></i></div><span class="lp-n">${fait+1} sur ${L.length}</span></div>
-   <div class="lp-kicker">Examen blanc · ${S.name}<span class="lp-left"> · exercice ${k+1} · ${ptsTxt(q.pts)}</span></div>
-   <div class="lp-body" id="lpb"></div>
-   <div class="lp-foot" id="en-pied"><button class="btn" id="xb-nul">Je ne l'ai pas fait</button><button class="btn pri big" id="en-noter">Enregistrer ma note</button></div></div>`;
-  const b=$("#lpb");
-  b.innerHTML=tx(`<p class="prekick">${X.auto?"Le temps est écoulé":"Copie rendue"} · note ce que tu as rédigé, avec le barème</p><p class="lq">${e.qNeutre||e.q}</p><div>${e.corpsPapier!=null?e.corpsPapier:e.corps}</div><h3>La correction : coche ce que tu as écrit</h3><div class="pcheck">${e.etapes.map((x,i)=>`<label><input type="checkbox" data-k="${i}"><span>${x.w}</span><b>${virg(x.pts)}</b></label>`).join("")}</div><div class="verdict info" id="en-note"></div>`);
+  const c=xFenetre(`Noter ta copie · ${S.name}`,`<span class="lp-n">${fait+1} sur ${L.length}</span>`,`<div class="xb-note" id="lpb"></div>`),b=$("#lpb");
+  c.closest(".xb-fen").classList.add("xb-prog");c.closest(".xb-fen").querySelector(".xb-fine i").style.width=fait/L.length*100+"%";
+  b.innerHTML=tx(`<p class="prekick">${X.auto?"Le temps est écoulé":"Copie rendue"} · note ce que tu as rédigé, avec le barème</p><div class="xb-eh"><h3>Exercice ${k+1}</h3><span class="pap">${ptsTxt(q.pts)} · sur papier</span></div><p class="lq">${e.qNeutre||e.q}</p><div>${e.corpsPapier!=null?e.corpsPapier:e.corps}</div><h3>La correction : coche ce que tu as écrit</h3><div class="pcheck">${e.etapes.map((x,i)=>`<label><input type="checkbox" data-k="${i}"><span>${x.w}</span><b>${virg(x.pts)}</b></label>`).join("")}</div><div class="verdict info" id="en-note"></div><div class="acts xb-fin"><button class="btn" id="xb-nul">Je ne l'ai pas fait</button><button class="btn pri big" id="en-noter">Enregistrer ma note</button></div>`);
   const coche=()=>[...b.querySelectorAll(".pcheck input")].map(i=>i.checked),note=C=>C.reduce((s,c,i)=>s+(c?e.etapes[i].pts:0),0);
   const maj=()=>{const v=note(coche());$("#en-note").textContent=`Note de l'exercice : ${virg(v)} sur ${virg(tot)}, soit ${virg(quart(q.pts*v/tot))} sur ${virg(q.pts)} à l'examen.`;};
   const pose=C=>{const r=X.res[k];r.note=note(C);r.tot=tot;r.coche=C.map(c=>c?1:0);if(!X.res.some(x=>x.pap&&x.note==null))xFinir();xGarde();xMontre();};
   b.querySelector(".pcheck").addEventListener("change",maj);maj();
   $("#en-noter").addEventListener("click",()=>pose(coche()));$("#xb-nul").addEventListener("click",()=>pose(e.etapes.map(()=>false)));
-  longues(b);queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);}
+  longues(b);}
 /* la note, et la suite pour chaque méthode : l'exercice raté repart dans l'entretien (voir etats et entretien) */
 function xFinir(){const run=A.nouvRun();let note=0,nok=0;
   X.Q.forEach((q,k)=>{const d=GEN.par[q.g],e=xExo(k),r=X.res[k],rep=X.rep[k],N=d.paliers.length,part=r.pap?r.note/r.tot:r.ok,ok=r.pap?(part>=0.8-1e-9?1:0):r.ok,av=Object.assign({},etat(d.id));
@@ -33262,7 +33362,7 @@ function xFinir(){const run=A.nouvRun();let note=0,nok=0;
   A.emit({k:"xb",x:X.id,sids:X.sids,c:X.court,n:X.note,ms:X.fin-X.t0,d:X.dur,nq:X.Q.length,ok:nok});
   /* l'étape « examen blanc » du planning est faite pour cette épreuve */
   X.sids.forEach(s=>{const t=SUBJ[s].TB[(X.sids.length>1?"xbm-":"xb-")+A.exam(SUBJ[s]).id];if(t)A.emit({k:"task",s,x:t.id,v:true});});}
-function xResultat(){const n=X.Q.length,multi=X.sids.length>1,rates=n-X.nok,TH={};
+function xResultat(){xFerme();const n=X.Q.length,multi=X.sids.length>1,rates=n-X.nok,TH={};
   X.Q.forEach((q,k)=>{const d=GEN.par[q.g],T=theme(d),c=q.s+"|"+(T?T.id:d.id),o=TH[c]||(TH[c]={s:q.s,t:T?T.t:d.t,got:0,pts:0});o.got+=X.res[k].got;o.pts+=q.pts;});
   const parEx=X.Q.map((q,k)=>{const r=X.res[k];return `<tr><td>${k+1}</td><td>${multi?SUBJ[q.s].name+" · ":""}${GEN.par[q.g].t}</td><td><b>${virg(r.got)}</b> sur ${virg(q.pts)}</td><td>${X.tq[k]?duree(X.tq[k]):"pas ouvert"} (prévu : ${q.min} min)</td></tr>`;}).join("");
   const parCh=X.sids.map(s=>{const L=Object.values(TH).filter(o=>o.s===s),g=L.reduce((a,o)=>a+o.got,0),p=L.reduce((a,o)=>a+o.pts,0);
@@ -33310,8 +33410,10 @@ function xEtapes(){A.SIDS.forEach(sid=>{const S=SUBJ[sid];if(!(GEN.defs[sid]||[]
     [une,multi].forEach((t,k)=>{if(S.TB[t.id])return;t.train=true;Object.defineProperty(t,"cache",{get:()=>!(A.inScope(S,t)&&t.quand()),enumerable:true,configurable:true});S.tasks.splice(ou+k,0,t);S.TB[t.id]=t;});});});}
 function xRoute(p){stop();XT=0;X=xLit();
   if(X&&X.phase==="sujet"&&xReste()<=0)xCorrige(true);
-  if(p[0]==="copie"){if(!X)return location.replace("#/entrainer/examen/une");return xMontre();}
-  xChoix(p[0]==="multi"?"multi":"une",p[1]);}
+  if(p[0]==="copie"){if(!X)return location.replace("#/entrainer/examen");if(X.phase!=="fini"&&LISTE)LISTE();return xMontre();}
+  xFerme();
+  if(p[0]==="multi"&&!xEnCours())return xChoix(p[1]);
+  xPage(p[0]==="une"?p[1]:"");}
 
 /* ---------- branchement sur le site ---------- */
 function route(parts){const a=parts[0],b=parts[1];
@@ -33333,7 +33435,7 @@ function bouton(){const p=(location.hash||"").slice(2).split("/"),main=$("#main"
     const D=defs(p[1]).filter(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2])&&!x.fixe;});
     D.forEach(d=>acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">${D.length>1?"M'entraîner : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)):"M'entraîner sur cette méthode"}</a>`));}}
 function brancher(A0,ext){A=A0;
-  const liste=ext.routes.entrainer;ext.routes.entrainer=parts=>parts&&parts.length?route(parts):(stop(),liste());
+  const liste=ext.routes.entrainer;LISTE=liste;ext.routes.entrainer=parts=>parts&&parts.length?route(parts):(stop(),liste());
   /* l'étape « Entraînement » du planning : après les leçons de son thème, importante seulement quand c'est le moment des exercices */
   Object.values(GEN.par).forEach(d=>{const S=SUBJ[d.sid],t=S&&S.TB&&S.TB["en-"+d.id];if(!t)return;const T=theme(d);
     const p0=Object.getOwnPropertyDescriptor(t,"p"),base=()=>p0&&p0.get?p0.get.call(t):p0?p0.value:1;
@@ -33343,6 +33445,9 @@ function brancher(A0,ext){A=A0;
   xEtapes();
   A.SIDS.forEach(sid=>SUBJ[sid].tasks.forEach((t,k)=>{t.i=k;}));
   window.addEventListener("pagehide",()=>{try{xSauve();}catch(e){}});
+  window.addEventListener("hashchange",()=>{if(location.hash!=="#/entrainer/examen/copie"&&$("#xb-voile")){try{xSauve();}catch(e){}xFerme();}});
+  document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest("[data-xb]");if(b&&!b.disabled)xLance(b.dataset.xb,b.dataset.c==="1");});
+  document.addEventListener("toggle",ev=>{const z=ev.target.querySelector&&ev.target.querySelector("[data-autres]");if(z&&ev.target.open&&!z.children.length)z.innerHTML=z.dataset.autres.split(",").map(s=>xCarte(s,xEnCours())).join("");},true);
   new MutationObserver(bouton).observe($("#main"),{childList:true,subtree:true});}
 const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);try{brancher(A0,ext);}catch(e){console.error(e);}return ext;};
