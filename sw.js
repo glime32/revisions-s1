@@ -1,18 +1,29 @@
 /* Hors ligne : une copie du site reste sur l'appareil.
-   La page elle-même est toujours demandée au réseau d'abord : chaque mise à jour apparaît tout de suite ;
-   sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan. */
-const CACHE = "revisions-20261120-012328";
-const FICHIERS = ["./", "index.html", "manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf"];
-self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS))); self.skipWaiting(); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE).map(n => caches.delete(n))))); self.clients.claim(); });
+   La page est demandée au réseau. Si elle n'est pas arrivée en entier au bout de 5 s (réseau lent, ou qui ne répond plus),
+   on sert la copie gardée : jamais de page à moitié chargée ; la page neuve finit d'arriver en fond, pour l'ouverture suivante.
+   Sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan. */
+const CACHE = "revisions-20261120-043136", PAGE = "revisions-page", DELAI = 5000;
+const FICHIERS = ["manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf"];
+const gardePage = async () => {
+  const c = await caches.open(PAGE);
+  if (await c.match("index.html")) return;
+  const ancienne = await caches.match("index.html");
+  if (ancienne) await c.put("index.html", ancienne); else await c.add("index.html");
+};
+self.addEventListener("install", e => { e.waitUntil(Promise.all([caches.open(CACHE).then(c => c.addAll(FICHIERS)), gardePage()])); self.skipWaiting(); });
+self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE && n !== PAGE).map(n => caches.delete(n))))); self.clients.claim(); });
 self.addEventListener("fetch", e => {
   const r = e.request;
   if (r.method !== "GET" || new URL(r.url).origin !== location.origin) return;
   if (r.mode === "navigate") {
     const ici = new URL(r.url).pathname, base = new URL("./", location).pathname;
     if (ici !== base && ici !== base + "index.html") return;
-    e.respondWith(fetch(r).then(rep => { const copie = rep.clone(); caches.open(CACHE).then(c => c.put("index.html", copie)); return rep; })
-      .catch(() => caches.match("index.html")));
+    const page = caches.open(PAGE);
+    const neuve = page.then(c => fetch(r).then(async rep => { if (rep && rep.ok) await c.put("index.html", rep.clone()); return rep; }));
+    e.waitUntil(neuve.catch(() => {}));
+    e.respondWith(page.then(c => c.match("index.html")).then(copie => !copie ? neuve : Promise.race([
+      neuve.then(rep => rep && rep.ok ? rep : copie, () => copie),
+      new Promise(ok => setTimeout(() => ok(copie), DELAI))])));
     return;
   }
   e.respondWith(caches.open(CACHE).then(async c => {
