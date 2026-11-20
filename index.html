@@ -1099,6 +1099,52 @@ html.xb-ouvert{overflow:hidden}
   .xb-corps{padding:12px}
 }
 
+/* revenir chaque jour : pastille, série, points, rang du jour, récap, étiquettes (choix 10a à 15a et 19a du 20/11) */
+.el-p{flex:none;display:inline-flex;align-items:center;gap:8px;height:38px;border:2px solid var(--edge);border-radius:20px;padding:0 12px;font-weight:800;font-size:.9rem;color:#fff;background:#000;text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
+.el-p:hover,.el-p:focus-visible{border-color:var(--violet-hi)}
+.el-p .el-s{color:var(--ambre);display:inline-flex;align-items:center;gap:3px}
+.el-p .el-pt{color:var(--violet-hi)}
+.el-fl{width:16px;height:18px;display:inline-block;vertical-align:-3px;flex:none}
+.el-gros{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;color:var(--icy)}
+.el-n{font:400 2.6rem/1 var(--f-serif);color:#fff}
+.el-sem{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center;font-size:.7rem;color:var(--graphite);max-width:420px}
+.el-sem i{display:grid;place-items:center;height:30px;border-radius:8px;border:2px solid var(--trait);font-style:normal;font-weight:800;color:#000}
+.el-sem i.ok{background:var(--violet-hi);border-color:var(--violet-hi)}
+.el-sem i.rep{border-style:dashed;border-color:var(--violet-hi);color:var(--violet-hi)}
+.el-sem i.auj{border-style:dashed;border-color:var(--aqua);color:var(--aqua)}
+.el-sem i.non{background:var(--voile)}
+.el-crit{display:grid;gap:5px;font-size:.92rem;min-width:0}
+.el-crit span::before{content:"✓ ";color:var(--vert);font-weight:900}
+.el-crit span.no{color:var(--graphite)}
+.el-crit span.no::before{content:"· ";color:var(--graphite)}
+.el-bar{display:grid;gap:6px}
+.el-bar>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:.92rem;border-bottom:1px solid var(--trait);padding-bottom:5px}
+.el-bar small{display:block;color:var(--graphite);font-size:.78rem}
+.el-bar b{color:var(--violet-hi);font-variant-numeric:tabular-nums;text-align:right}
+.el-bar .zero b{color:var(--graphite)}
+.el-h3{margin:6px 0 0;font-size:1rem}
+.el-pt{font-size:.85rem;margin:0}
+.el-suite{margin:0}
+.el-rang{display:inline-grid;place-items:center;min-width:46px;height:46px;padding:0 6px;border-radius:7px 14px 14px 7px;border:2px solid #000;background:var(--tagc);color:#05040b;font:400 1.6rem/1 var(--f-serif)}
+.el-rang.grand{flex:none;min-width:96px;height:96px;font-size:3.4rem;border-radius:12px 26px 26px 12px;box-shadow:0 5px 0 color-mix(in srgb,var(--violet-hi) 40%,#000)}
+.el-jour{display:flex;gap:14px;align-items:center}
+.el-jrs{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.85rem;color:var(--icy)}
+.el-jrs span{display:inline-flex;align-items:center;gap:6px}
+.el-jrs .el-rang{min-width:34px;height:34px;font-size:1.2rem}
+.el-recap{border:2px solid var(--edge);border-radius:16px;padding:14px;display:grid;gap:8px;background:color-mix(in srgb,var(--violet) 14%,#000)}
+.el-chif{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.el-chif div{border:1px solid var(--trait);border-radius:10px;padding:6px 2px;font-size:.72rem;color:var(--graphite)}
+.el-chif b{display:block;font:400 1.5rem/1.1 var(--f-serif);color:#fff}
+.el-recap ul{margin:0;padding-left:1.1em;font-size:.9rem;display:grid;gap:3px}
+.el-shots{position:fixed;z-index:90;display:grid;gap:8px;justify-items:end;pointer-events:none}
+.el-shot{background:var(--violet-hi);color:#05040b;font-weight:800;font-size:.9rem;padding:6px 12px;border-radius:12px;box-shadow:0 4px 0 var(--violet);animation:el-monte 1.2s var(--snap) both}
+.el-shot small{display:block;font-weight:600;font-size:.74rem}
+.el-shot.or{background:var(--ambre);box-shadow:0 4px 0 #8A4A00;animation-delay:.12s}
+@keyframes el-monte{0%{opacity:0;transform:translateY(10px)}15%{opacity:1;transform:translateY(0)}75%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-22px)}}
+@keyframes el-fondu{0%,80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.el-shot{animation-name:el-fondu}}
+@media (max-width:600px){.el-p{height:34px;padding:0 9px;gap:6px;font-size:.85rem}}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-192.png">
@@ -1118,6 +1164,7 @@ html.xb-ouvert{overflow:hidden}
    <a href="#/plus" data-tab="plus">Plus</a>
   </nav>
   <div class="search"><input id="q" type="search" placeholder="Chercher : Thalès, filtrage, IPP…" aria-label="Chercher une notion" autocomplete="off"><div class="results" id="res" hidden></div></div>
+  <a class="el-p" id="elan" href="#/progres" hidden></a>
   <span class="jx" id="jx"></span>
   <a class="syncb" id="syncb" href="#/synchro" hidden>Synchro</a>
  </header>
@@ -32558,6 +32605,7 @@ function home(){
   const nx=up[0]?SUBJ[up[0]]:null,mixed=A.hub.mixOn===t0;
   let h=`<div class="page wide home">${ttl(dayName(t0,true),nx?`${exW(nx)==="CC"?"Prochain CC":"Prochain "+exW(nx).toLowerCase()} : <b>${nx.name}</b>, ${examLine(nx)} (${jx(nx)}).`:"Tous les CC sont passés.")}`;
   if(exToday.length)h+=`<div class="examday">${exToday.map(S=>`<p><b>${exW(S)} ${W.de(S.name)} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, <span class="nf">${exam(S).place}</span>. ${S.examMorning||""}</p>`).join("")}</div>`;
+  if(window.ENT&&ENT.recap)h+=ENT.recap();
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
   /* le gros bouton : une leçon commencée, sinon les cartes du jour, sinon la suite du programme, sinon du repos */
   const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
@@ -32581,6 +32629,7 @@ function home(){
   h+=journees(P);
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
+  if(window.ENT&&ENT.prevu)ENT.prevu(tot);
   /* un seul créneau ouvert : le prochain à faire ; les autres sont repliés */
   const openB=tb.find(b=>b.tasks.some(id=>{const t=SUBJ[b.sid].TB[id];return t&&!isDone(b.sid,t);}));
   const fold=b=>{const S=SUBJ[b.sid],T=b.tasks.map(id=>S.TB[id]).filter(Boolean),left=T.filter(t=>!isDone(b.sid,t)).length;
@@ -32808,8 +32857,9 @@ const matieres=()=>A.SIDS.filter(sid=>defs(sid).length).sort((a,b)=>A.examStart(
 const neuf=()=>({n:0,nok:0,lv:0,ok:0,ko:0,val:null,np:0,du:null,eo:0,ek:0,pap:0,trav:false,vu:{},jour:{},passe:null,ms:0,rt:0});
 let CACHE={n:-1,der:"",E:{}};
 function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n===J.length&&CACHE.der===der)return CACHE.E;
-  const E={};
-  J.forEach(e=>{if(e.k!=="tr")return;const d=GEN.par[e.g];if(!d)return;
+  const E={};J.forEach(e=>pas(E,e));
+  CACHE={n:J.length,der,E};return E;}
+function pas(E,e){if(e.k!=="tr")return;const d=GEN.par[e.g];if(!d)return;
     const g=E[e.g]||(E[e.g]=neuf()),day=A.ymd(new Date(e.t)),last=dernier(d),jr=g.jour[day]||(g.jour[day]={n:0,e:0});
     g.n++;g.vu[e.sg]=1;jr.n++;g.fx=e.r===0&&e.na?{lv:e.lv,m:e.m,na:e.na}:null;if(e.r===1){g.nok++;g.ms+=e.ms||0;g.rt+=(e.ms||0)/(ccMin(d,Math.min(last,e.lv||0))*60e3);}
     if(e.r===1&&!(e.m==="xb"&&g.xk===day))g.xk=null;
@@ -32828,8 +32878,7 @@ function etats(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(CACHE.n=
     else if(e.m==="e"&&g.val){jr.e+=e.ms||0;
       if(e.r===1)g.eo++;else if(e.r===0)g.ek++;
       if(g.eo>=1){if(!g.ek)g.np++;g.du=A.addDays(day,ECARTS[Math.min(g.np,ECARTS.length-1)]);g.passe=day;g.eo=g.ek=0;}
-      else if(g.ek>=2){g.val=null;g.du=null;g.trav=true;g.lv=Math.max(0,last-1);g.ok=g.ko=g.pap=0;g.eo=g.ek=0;}}});
-  CACHE={n:J.length,der,E};return E;}
+      else if(g.ek>=2){g.val=null;g.du=null;g.trav=true;g.lv=Math.max(0,last-1);g.ok=g.ko=g.pap=0;g.eo=g.ek=0;}}}
 const etat=id=>etats()[id]||neuf();
 /* le prochain passage : jamais après l'épreuve, et la veille s'il tombait le jour même ou plus tard */
 function echeance(d,g){if(!g.val||!g.du)return null;const S=SUBJ[d.sid],ex=A.exam(S);let du=g.du;
@@ -33012,7 +33061,7 @@ function enregistre(r,o){
   const d=P.d,e=P.exo,ms=Date.now()-P.t0,cc=ccMin(d,P.lv),lent=ms>LENT*cc*60e3,N=d.paliers.length,av=Object.assign({},etat(d.id));
   if(!P.sess.avant[d.id])P.sess.avant[d.id]=av;
   const ev={k:"tr",s:d.sid,g:d.id,lv:P.lv,r,m:P.m,ms,sg:e.cle};if(lent)ev.lent=1;if(o.papier)ev.pap=1;if(P.m==="pl"&&r!==1)ev.to=palierDepart(d);if(o.type)ev.ty=o.type;if(r===0&&e.nature&&P.m!=="pl")ev.na=e.nature;
-  A.emit(ev);
+  A.emit(ev);shot(ev);pastille();
   if(r!==2&&d.th)A.emit({k:"diag",s:d.sid,th:d.th,ok:Math.round((r===1?(P.lv+1)/N:0.6*P.lv/N)*100)/100,n:1,run:P.sess.run});
   A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:P.re?"refait":{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle,gr:e.gr,lv:P.lv},P.re?{refait:1}:{},o.carnet||{}));
   const ap=etat(d.id);
@@ -33435,6 +33484,7 @@ function bouton(){const p=(location.hash||"").slice(2).split("/"),main=$("#main"
     const D=defs(p[1]).filter(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2])&&!x.fixe;});
     D.forEach(d=>acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">${D.length>1?"M'entraîner : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)):"M'entraîner sur cette méthode"}</a>`));}}
 function brancher(A0,ext){A=A0;
+  ext.routes.progres=()=>{stop();pageElan();};
   const liste=ext.routes.entrainer;LISTE=liste;ext.routes.entrainer=parts=>parts&&parts.length?route(parts):(stop(),liste());
   /* l'étape « Entraînement » du planning : après les leçons de son thème, importante seulement quand c'est le moment des exercices */
   Object.values(GEN.par).forEach(d=>{const S=SUBJ[d.sid],t=S&&S.TB&&S.TB["en-"+d.id];if(!t)return;const T=theme(d);
@@ -33451,8 +33501,135 @@ function brancher(A0,ext){A=A0;
   new MutationObserver(bouton).observe($("#main"),{childList:true,subtree:true});}
 const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);try{brancher(A0,ext);}catch(e){console.error(e);}return ext;};
+/* ---------- revenir chaque jour (ses choix 10a, 11a, 12b, 13b, 14a, 15a et 19a du 20/11) : série, points, rang du jour et récap,
+   rejoués depuis le journal, rien n'est gardé à part. La règle de la série : un jour compte s'il n'y a plus d'entretien dû
+   (ou 3 entretiens faits) et qu'une chose a fait progresser, ou si c'est un jour d'épreuve ; le premier jour sans de la semaine
+   est le repos ; deux jours sans de suite cassent la série, sauf si l'un des deux est le repos ; trois de suite la cassent toujours. */
+const BAREME={pal:["Exercice juste au palier en cours",5],pl:["Placement réussi",5],monte:["Palier validé",25],val:["Méthode validée",60],rep:["Raté, puis réussi",15],eok:["Entretien dû, fait à temps et juste",20],eko:["Entretien dû, fait mais raté",5],xb:["Examen blanc",0],les:["Leçon finie",15],quiz:["Quiz réussi",10],mix:["Mini-contrôle mélangé",0]};
+const PROGRES={monte:1,val:1,rep:1,xb:1,les:1},RANGS=["D","C","B","A","A+"],RCOUL=["#FFD3DB","#FFE7C2","#DCE2FF","#C5F9FC","#CFF9DF"];
+const FL=`<svg class="el-fl" viewBox="0 0 16 18" aria-hidden="true"><path d="M8 1c1 3 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 1 1 2 2 2 4 1-2 1-5 1-8z" fill="var(--ambre)"/></svg>`;
+const lundiDe=x=>{const[y,m,d]=x.split("-").map(Number);return A.addDays(x,-((new Date(y,m-1,d).getDay()+6)%7));};
+const nb=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
+function duLe(d,g,x){if(!g.val||!g.du)return null;const ex=A.exam(SUBJ[d.sid]);let du=g.du;
+  if(ex.day>x&&du>=ex.day){const v=A.addDays(ex.day,-1);if(v>(g.passe||g.val))du=v;}return du;}
+let EL={n:-1,der:"",R:null};
+function elan(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(EL.n===J.length&&EL.der===der)return EL.R;
+  const E={},dern={},lesOk={},D={},t0=A.today();let cur=null,debut=null;
+  const jr=x=>D[x]||(D[x]={x,pts:0,gains:[],prog:[],e:0,rep:0,ms:0,min:0,prevu:null,dus:0,act:false});
+  const dus=x=>{let n=0;for(const id in E){const du=duLe(GEN.par[id],E[id],x);if(du&&du<=x)n++;}return n;};
+  const ferme=fin=>{for(let x=cur;x<fin;x=A.addDays(x,1))jr(x).dus=dus(x);};
+  const gagne=(j,k,det,n,t,pq)=>{n=n==null?BAREME[k][1]:n;j.pts+=n;j.gains.push({k,det,n,t,pq});if(PROGRES[k])j.prog.push({k,det});};
+  J.slice().sort((a,b)=>a.t-b.t).forEach(e=>{const x=A.ymd(new Date(e.t));if(cur==null)cur=x;else if(x>cur){ferme(x);cur=x;}
+    const j=jr(x);
+    if(e.k==="tr"){const d=GEN.par[e.g];if(!d)return;
+      const g0=Object.assign({},E[e.g]||neuf());pas(E,e);const g1=E[e.g]||g0;j.act=true;if(!debut)debut=x;
+      if(e.m!=="xb")j.ms+=e.ms||0;
+      if(e.m!=="xb"&&e.m!=="x"&&e.r!==2){
+        if(e.m==="p"&&e.r===1)gagne(j,"pal",`${d.id} · palier ${(e.lv||0)+1}`,null,e.t);
+        if(e.m==="pl"&&e.r===1)gagne(j,"pl",d.id,null,e.t);
+        if(e.m==="e"&&g0.val){j.e++;const du=duLe(d,g0,x);if(du&&du<=x)gagne(j,e.r===1?"eok":"eko",d.id,null,e.t);}
+        if(e.m==="p"&&g1.lv>g0.lv)gagne(j,"monte",`${d.id} · palier ${g1.lv+1}`,null,e.t);
+        if(g1.val&&!g0.val)gagne(j,"val",d.id,null,e.t);
+        const av=dern[e.g];if(e.r===1&&av&&av.r===0){j.rep++;gagne(j,"rep",d.id,null,e.t,av.x===x?"raté tout à l'heure, réussi":av.x===A.addDays(x,-1)?"raté hier, réussi aujourd'hui":`raté ${A.dayName(av.x,false,true)}, réussi aujourd'hui`);}}
+      if(e.r!==2)dern[e.g]={r:e.r,x};}
+    else if(e.k==="xb"){j.act=true;if(!debut)debut=x;j.ms+=e.ms||0;gagne(j,"xb",`${String(Math.round((e.n||0)*10)/10).replace(".",",")} sur 20`,Math.round(5*(e.n||0)+(e.d&&e.ms>=0.8*e.d?30:0)),e.t);}
+    else if(e.k==="les"){j.act=true;if(!debut)debut=x;j.min+=e.dur||0;const k=e.s+"/"+e.l;
+      if((e.sc||0)>=0.5&&!lesOk[k]){lesOk[k]=1;const L=((A.LES||{})[e.s]||[]).find(l=>l.id===e.l);gagne(j,"les",L?L.t:e.l,null,e.t);}}
+    else if(e.k==="quiz"&&e.goal&&SUBJ[e.s]){j.act=true;if(!debut)debut=x;gagne(j,"quiz",SUBJ[e.s].name,null,e.t);}
+    else if(e.k==="mix"){j.act=true;if(!debut)debut=x;j.min+=10;if(e.n)gagne(j,"mix",`${e.n} sur ${e.sur||12}`,2*e.n,e.t);}
+    else if(e.k==="task"&&e.v&&SUBJ[e.s]&&!/^en-/.test(e.x)){const T=SUBJ[e.s].TB[e.x];if(T)j.min+=T.min||0;}
+    else if(e.k==="pj"&&e.d===x)j.prevu=Math.max(j.prevu||0,e.min||0);});
+  if(cur!=null&&cur<=t0)ferme(A.addDays(t0,1));
+  const jours=[];
+  if(debut)for(let x=debut;x<=t0;x=A.addDays(x,1)){const j=jr(x);
+    j.travail=Math.round(j.min+j.ms/60000);j.cc=A.epreuvesDu(x).length>0;j.ent=j.dus===0||j.e>=3;
+    j.obj=j.prevu==null?false:j.prevu<=0?j.act:j.travail>=Math.round(j.prevu*2/3);
+    j.utile=j.cc||(j.ent&&j.prog.length>0);
+    j.rang=!j.act?0:j.ent&&j.obj&&j.rep?4:j.ent&&j.obj?3:j.ent||j.obj?2:1;jours.push(j);}
+  let serie=0,run=[];const semR={};
+  jours.forEach(j=>{if(j.x===t0)return;const l=lundiDe(j.x);
+    if(j.utile){j.st="u";serie++;run=[];}
+    else{j.st=semR[l]?"m":(semR[l]=1,"r");run.push(j.st);if(run.length>=3||(run.length===2&&!run.includes("r"))){serie=0;j.casse=true;}}
+    j.serie=serie;});
+  const auj=jr(t0);if(!jours.length){auj.travail=0;auj.ent=auj.dus===0;auj.obj=false;auj.utile=false;auj.rang=0;}
+  auj.st=auj.utile?"u":"?";auj.serie=serie+(auj.utile?1:0);
+  const stAuj=semR[lundiDe(t0)]?"m":"r",run2=run.concat(stAuj),danger=!auj.utile&&serie>0&&(run2.length>=3||(run2.length===2&&!run2.includes("r")));
+  const ouverts=Object.keys(dern).filter(id=>dern[id].r===0&&GEN.par[id]&&!(E[id]&&E[id].val)).map(id=>({d:GEN.par[id],x:dern[id].x})).sort((a,b)=>b.x<a.x?-1:1);
+  const R={D,jours,auj,serie:auj.serie,run,danger,ouverts,semR,debut};
+  EL={n:J.length,der,R};return R;}
+const lettre=r=>`<span class="el-rang nf" style="--tagc:${RCOUL[r]}">${RANGS[r]}</span>`;
+function semaine(l){const R=elan(),t0=A.today(),L=[];for(let i=0;i<7;i++){const x=A.addDays(l,i);if(x>t0)break;const j=R.D[x];if(j&&j.x>=(R.debut||t0))L.push(j);}
+  const pts=L.reduce((s,j)=>s+j.pts,0),comp=L.filter(j=>j.st!=="r"&&(j.x<t0||j.act)),moy=comp.length?Math.round(comp.reduce((s,j)=>s+j.rang,0)/comp.length):0;
+  return {L,pts,rang:moy,utiles:L.filter(j=>j.st==="u").length};}
+/* la pastille du haut (choix 14a) : série et points du jour, sur toutes les pages */
+function pastille(){const el=document.getElementById("elan");if(!el)return;let R;try{R=elan();}catch(e){el.hidden=true;return;}
+  const j=R.auj;el.hidden=false;
+  el.innerHTML=`<span class="el-s">${FL}${R.serie}</span><span class="el-pt">${nb(j.pts)}</span>`;
+  el.setAttribute("aria-label",`${R.serie} ${plur(R.serie,"jour utile","jours utiles")} d'affilée, ${nb(j.pts)} ${plur(j.pts,"point")} aujourd'hui : le détail`);
+  el.title=`${R.serie} ${plur(R.serie,"jour utile","jours utiles")} d'affilée · ${nb(j.pts)} ${plur(j.pts,"point")} aujourd'hui`;}
+/* le temps prévu aujourd'hui (pour l'objectif du rang) : Aujourd'hui l'écrit dans le journal quand il grandit */
+function prevu(reste){const R=elan(),j=R.auj,v=Math.round((j.travail||0)+reste);if(j.prevu==null||v>=j.prevu+5)A.emit({k:"pj",d:A.today(),min:v});}
+const plusTxt=j=>{const m=[];if(!j.ent)m.push(`ton entretien (il en reste ${j.dus})`);if(!j.obj)m.push(j.prevu==null?"l'objectif du jour (ouvre Aujourd'hui pour le calculer)":`l'objectif du jour (encore ${A.hm(Math.max(5,Math.round(j.prevu*2/3)-j.travail))})`);if(!j.rep)m.push("répare un exercice raté");return m;};
+function suivant(j){if(j.rang===4)return "Rang le plus haut : rien à ajouter aujourd'hui.";
+  if(j.rang===0)return "Pour passer C : un exercice, une leçon ou un examen blanc qui te fait progresser.";
+  const m=plusTxt(j);
+  if(j.rang===3)return "Pour passer A+ : refais un exercice raté et réussis-le.";
+  if(j.rang===2)return `Pour passer A : ${j.ent?m.find(x=>x.startsWith("l'objectif")):m[0]}.`;
+  return `Pour passer B : ${m[0]}${m[1]&&!m[1].startsWith("répare")?` ou ${m[1]}`:""}.`;}
+function critJour(j){const fait=j.gains.filter(g=>g.k==="rep").map(g=>g.det);
+  return `<div class="el-crit"><span class="${j.ent?"":"no"}">${j.ent?"tout l'entretien dû est fait":`l'entretien dû : il en reste ${j.dus}`}</span><span class="${j.obj?"":"no"}">${j.prevu==null?"objectif du jour : pas encore calculé (ouvre Aujourd'hui)":j.prevu<=0?(j.obj?"objectif du jour atteint (rien de prévu, et tu as travaillé)":"objectif du jour : rien de prévu, un exercice suffit"):`objectif du jour ${j.obj?"atteint":"pas encore atteint"} (${A.hm(j.travail)} de travail sur ${A.hm(j.prevu)} prévues)`}</span><span class="${j.rep?"":"no"}">${j.rep?`${j.rep>1?j.rep+" ratés réparés":"un raté réparé"} (${[...new Set(fait)].slice(0,3).join(", ")})`:"un raté réparé : pas encore"}</span></div>`;}
+function recapBloc(){const R=elan(),t0=A.today(),hier=A.addDays(t0,-1);if(!R.debut||R.debut>hier)return "";
+  const lundi=lundiDe(t0)===t0;
+  if(lundi){const l=A.addDays(t0,-7),W=semaine(l),G=W.L.flatMap(j=>j.gains),vl=G.filter(g=>g.k==="val").map(g=>g.det),xb=G.filter(g=>g.k==="xb").map(g=>g.det),rp=W.L.reduce((s,j)=>s+j.rep,0);
+    const li=[];if(vl.length)li.push(`Méthodes validées : ${[...new Set(vl)].join(", ")}`);if(xb.length)li.push(`Examen blanc : ${xb.join(", ")}`);li.push(`${W.utiles} ${plur(W.utiles,"jour utile","jours utiles")} sur 7, ${rp} ${plur(rp,"raté réparé","ratés réparés")}`);
+    li.push(...ratesTxt(R));const ep=prochaines();if(ep)li.push(`Cette semaine : ${ep}`);
+    return `<div class="el-recap"><span class="kick">La semaine dernière · du ${A.dayName(l,false,true).replace(/^\S+ /,"")} au ${A.dayName(A.addDays(l,6),false,true).replace(/^\S+ /,"")}</span><div class="el-chif nf"><div><b>${RANGS[W.rang]}</b>rang</div><div><b>${nb(W.pts)}</b>points</div><div><b>${R.D[hier]?R.D[hier].serie||0:0}</b>jours</div></div><ul>${li.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;}
+  const j=R.D[hier];if(!j)return "";
+  const li=[];
+  if(j.act){const pal=j.gains.filter(g=>g.k==="monte"||g.k==="val").map(g=>g.k==="val"?g.det+" validée":g.det),f=[];
+    if(pal.length)f.push(pal.slice(0,3).join(", "));const ne=j.gains.filter(g=>g.k==="eok").length;if(j.e)f.push(`${ne} ${plur(j.e,"entretien")} sur ${j.e}`);if(j.rep)f.push(`${j.rep} ${plur(j.rep,"raté réparé","ratés réparés")}`);
+    const ls=j.gains.filter(g=>g.k==="les").length;if(ls)f.push(`${ls} ${plur(ls,"leçon finie","leçons finies")}`);const xb=j.gains.filter(g=>g.k==="xb");if(xb.length)f.push(`examen blanc ${xb.map(g=>g.det).join(", ")}`);
+    li.push(`Fait : ${f.length?f.join(", "):`${A.hm(j.travail)} de travail`}`);}
+  else li.push(j.st==="r"?"Hier : ton jour de repos de la semaine, pris tout seul.":"Hier sans révision : pas grave. Un jour manqué ne casse rien, deux de suite oui.");
+  li.push(...ratesTxt(R));
+  return `<div class="el-recap"><span class="kick">Hier, ${A.dayName(hier)}</span><div class="el-chif nf"><div><b>${RANGS[j.rang]}</b>rang</div><div><b>${nb(j.pts)}</b>points</div><div><b>${j.serie||0}</b>jours</div></div><ul>${li.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;}
+function ratesTxt(R){const L=R.ouverts.slice(0,2);if(!L.length)return [];const ent=new Set(entretien(true).map(x=>x.d.id));
+  return L.map(({d})=>`Raté encore : ${d.t.charAt(0).toLowerCase()+d.t.slice(1)} (${SUBJ[d.sid].name}) : ${ent.has(d.id)?"il est dans ton entretien d'aujourd'hui":`à refaire dans <a href="#/entrainer/${d.sid}/${d.id}">S'entraîner</a>`}`);}
+function prochaines(){const t0=A.today(),fin=A.addDays(t0,6),L=[];for(let x=t0;x<=fin;x=A.addDays(x,1))A.epreuvesDu(x).forEach(({S,e})=>L.push(`${e.label||"CC"} ${S.name} ${x===t0?"aujourd'hui":A.dayName(x,false,true)}`));return L.join(", ");}
+/* la page du détail (« un onglet qui détaille bien ») */
+function pageElan(){$("#main").className="";const R=elan(),j=R.auj,t0=A.today(),l=lundiDe(t0),W=semaine(l),tir=(t,b)=>`<section class="tiroir"><h2 class="tiroir__title">${t}</h2>${b}</section>`;
+  const JL=["L","M","M","J","V","S","D"],cell=x=>{const k=R.D[x];if(x>t0)return "<i></i>";if(x===t0)return j.utile?'<i class="ok">✓</i>':'<i class="auj">?</i>';if(!k||!R.debut||x<R.debut)return "<i></i>";return k.st==="u"?'<i class="ok">✓</i>':k.st==="r"?'<i class="rep">R</i>':'<i class="non"></i>';};
+  let sem=`<div class="el-sem nf">${JL.map(x=>`<span>${x}</span>`).join("")}${JL.map((x,i)=>cell(A.addDays(l,i))).join("")}</div>`;
+  const pr=j.prog[0],hier=R.D[A.addDays(t0,-1)];
+  let s=`<div class="el-gros"><span class="el-n">${R.serie}</span><span>${plur(R.serie,"jour utile","jours utiles")} d'affilée ${FL}</span></div>${sem}`;
+  s+=j.cc&&!j.utile?`<div class="examcard" style="--sc:var(--aqua)"><b>Aujourd'hui, jour d'épreuve : il compte de toute façon.</b></div>`:`<div class="examcard" style="--sc:var(--aqua)"><b>${j.utile?"Aujourd'hui compte déjà :":"Aujourd'hui compte quand :"}</b><div class="el-crit"><span class="${j.ent?"":"no"}">ton entretien dû est fait${j.ent?"":` (il en reste ${j.dus})`}</span><span class="${pr?"":"no"}">une chose qui fait progresser${pr?` (fait : ${pr.k==="val"?pr.det+" validée":pr.k==="rep"?pr.det+" réparé":pr.det})`:" : un palier, un raté réparé, un examen blanc ou une leçon"}</span></div></div>`;
+  if(hier&&hier.st==="m"&&!hier.casse&&R.serie>0)s+=`<div class="examcard" style="--sc:var(--ambre)"><b>Hier sans révision : pas grave.</b><p class="muted" style="margin:0">Un jour manqué ne casse rien, deux de suite oui. ${R.danger?"Aujourd'hui compte pour garder ta série.":"Aujourd'hui, un jour sans serait ton repos de la semaine."}</p></div>`;
+  else if(R.danger)s+=`<div class="examcard" style="--sc:var(--ambre)"><b>Aujourd'hui compte pour garder ta série.</b></div>`;
+  const rp=W.L.find(k=>k.st==="r");
+  s+=`<p class="muted el-pt">${rp?`${A.dayName(rp.x,true).split(" ")[0]} : ton jour de repos de la semaine, pris tout seul. `:""}Un jour de CC compte toujours. Un jour sans ne casse rien ; deux de suite cassent la série, sauf si l'un des deux est ton jour de repos (le premier jour sans de la semaine) ; trois de suite la cassent toujours.</p>`;
+  let h=`<div class="page"><div class="title-row"><h1>Ta progression</h1></div><p class="lead">Ta série, tes points et ton rang du jour viennent de ce que tu fais sur le site : ils suivent ta synchronisation entre téléphone et ordinateur.</p>`;
+  h+=tir("Ta série",s);
+  const grp={};j.gains.forEach(g=>{const o=grp[g.k]||(grp[g.k]={n:0,c:0,det:[]});o.n+=g.n;o.c++;if(g.det&&!o.det.includes(g.det))o.det.push(g.det);});
+  const lignes=Object.keys(BAREME).filter(k=>grp[k]).map(k=>`<div><span>${BAREME[k][0]}${grp[k].c>1?` × ${grp[k].c}`:""}<small>${grp[k].det.slice(0,4).join(", ")}${grp[k].det.length>4?"…":""}</small></span><b>+${nb(grp[k].n)}</b></div>`).join("");
+  const bar=[["Raté, puis réussi","+15"],["Palier validé","+25"],["Méthode validée (dernier palier)","+60"],["Entretien dû, fait à temps et juste","+20"],["Entretien dû, fait mais raté","+5"],["Exercice juste au palier en cours, placement réussi","+5"],["Examen blanc","5 × la note, +30 s'il est fait en entier"],["Leçon finie · quiz réussi","+15 · +10"],["Mini-contrôle mélangé","2 par bonne réponse"],["Juste sur une méthode déjà sue, hors entretien","0",1],["Réponse aidée, temps passé, tâche cochée","0",1]];
+  h+=tir(`Tes points · ${A.dayName(t0).split(" ")[0]}`,`<div class="el-gros"><span class="el-n">${nb(j.pts)}</span><span>${plur(j.pts,"point")} aujourd'hui</span></div>${lignes?`<div class="el-bar nf">${lignes}</div>`:`<p class="muted">Pas encore de point aujourd'hui : ils viennent de ce qui te fait progresser.</p>`}
+   <h3 class="el-h3">Cette semaine : ${nb(W.pts)} ${plur(W.pts,"point")}</h3><div class="el-bar nf">${W.L.map(k=>`<div${k.pts?"":' class="zero"'}><span>${A.dayName(k.x,true,true)}${k.x===t0?" (aujourd'hui)":""}</span><b>${nb(k.pts)}</b></div>`).join("")}</div>
+   <details class="day"><summary><b>Le barème</b><span>ce qui donne des points</span></summary><div class="el-bar nf" style="padding:0 12px 12px">${bar.map(([t,v,z])=>`<div${z?' class="zero"':""}><span>${t}</span><b>${v}</b></div>`).join("")}</div></details>`);
+  h+=tir("Ta journée",`<div class="el-jour">${lettre(j.rang).replace("el-rang ","el-rang grand ")}${critJour(j)}</div><p class="el-suite nf"><b>${suivant(j)}</b></p><p class="muted el-pt nf">A+ = entretien + objectif + un raté réparé · A = entretien + objectif · B = l'un des deux · C = quelque chose d'utile · D = rien. L'objectif : les deux tiers du temps prévu sur Aujourd'hui. Le rang de la semaine = la moyenne des jours.</p>
+   <h3 class="el-h3 nf">Ta semaine : rang ${RANGS[W.rang]}</h3><div class="el-jrs nf">${W.L.map(k=>`<span>${A.dayName(k.x,false,true).split(" ")[0]} ${k.st==="r"?"repos":lettre(k.rang)}</span>`).join("")}</div>`);
+  const rc=recapBloc();h+=tir(lundiDe(t0)===t0?"Le récap de la semaine":"Le récap d'hier",rc||`<p class="muted">Le récap arrive demain matin, en haut d'Aujourd'hui : rang, points, série, ce que tu as fait et ce qui reste raté.</p>`);
+  $("#main").innerHTML=h+`</div>`;}
+/* le « shot » (choix 15a) : une étiquette qui monte 1 s avec la raison, sans son, quand une réponse fait progresser */
+function shot(ev){let R;try{R=elan();}catch(e){return;}const j=R.D[A.ymd(new Date(ev.t))];if(!j)return;const G=j.gains.filter(g=>g.t===ev.t);if(!G.length)return;
+  setTimeout(()=>{const v=document.querySelector("#en-fb .verdict")||document.getElementById("en-fb");if(!v)return;const r=v.getBoundingClientRect();
+    const box=document.createElement("div");box.className="el-shots";box.setAttribute("aria-hidden","true");box.style.top=Math.max(8,Math.min(innerHeight-120,r.bottom-8))+"px";box.style.right=Math.max(8,innerWidth-r.right+6)+"px";
+    const gros=G.filter(g=>g.k==="monte"||g.k==="val"),petits=G.filter(g=>!(g.k==="monte"||g.k==="val"));
+    const n=petits.reduce((s,g)=>s+g.n,0),pq=(petits.find(g=>g.k==="rep")||{}).pq;
+    if(petits.length)box.insertAdjacentHTML("beforeend",`<div class="el-shot">+${n}<small>${pq||petits.map(g=>BAREME[g.k][0].charAt(0).toLowerCase()+BAREME[g.k][0].slice(1)).join(" · ")}</small></div>`);
+    gros.forEach(g=>box.insertAdjacentHTML("beforeend",`<div class="el-shot or">${BAREME[g.k][0]} · +${g.n}</div>`));
+    document.body.appendChild(box);setTimeout(()=>box.remove(),1300);},0);}
 const couvre=(sid,th)=>defs(sid).some(d=>!d.fixe&&d.th===th&&etat(d.id).n>0);
-window.ENT={bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
+window.ENT={elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
   rendu:e=>tx(`<p class="lq">${e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="en-rep" id="en-fb"><div class="verdict no">Pas tout à fait.</div><h3>La correction</h3><p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,0)}</div>`)};
 })();
 
@@ -33996,7 +34173,7 @@ function fixLinks(root,sid){if(!LOCAL)root.querySelectorAll('a[href^="../"]').fo
 /* ---------- plus de barre latérale : tout passe par les pages ---------- */
 let CUR={sid:null,page:"today"};
 function renderSide(){if(APP.ext&&APP.ext.badges)try{APP.ext.badges();}catch(e){}}
-function topInfo(){const n=NOW();const next=SIDS.map(id=>SUBJ[id]).filter(S=>examStart(S)>n).sort((a,b)=>examStart(a)-examStart(b))[0];const el=$("#jx");if(el){el.innerHTML=next?`${next.name} · <b>${jx(next)}</b>`:"CC passés";el.title=next?"Prochain CC":"";}}
+function topInfo(){if(window.ENT&&ENT.pastille)ENT.pastille();const n=NOW();const next=SIDS.map(id=>SUBJ[id]).filter(S=>examStart(S)>n).sort((a,b)=>examStart(a)-examStart(b))[0];const el=$("#jx");if(el){el.innerHTML=next?`${next.name} · <b>${jx(next)}</b>`:"CC passés";el.title=next?"Prochain CC":"";}}
 
 /* ---------- petits morceaux de page ---------- */
 const sec=(n,t,body)=>`<section class="sec"><h2><span class="num">${n}</span><span>${t}</span></h2>${body}</section>`;
