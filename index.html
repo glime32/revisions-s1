@@ -32194,7 +32194,7 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},notes:{},skip:{},cren:{},sans:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
+const hub={theme:local.theme,exams:{},notes:{},skip:{},cren:{},sans:{},smat:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
@@ -32217,7 +32217,7 @@ const neuve=day=>{CARTES.neuves[day]=(CARTES.neuves[day]||0)+1;};
 const mesureCarte=(e,day)=>{if(e.ms>0)CARTES.L.push([Math.min(180000,e.ms),e.re?0:1,day]);};
 function applyEv(e){
   const day=ymd(new Date(e.t));
-  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("carnet:")===0){CARTES.carnet[e.key.slice(7)]=e.v;}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("sans:")===0){const k=e.key.slice(5);if(e.v)hub.sans[k]=+e.v;else delete hub.sans[k];}else if(typeof e.key==="string"&&e.key.indexOf("note:")===0){const k=e.key.slice(5);if(typeof e.v==="number"&&e.v>=0&&e.v<=20)hub.notes[k]=e.v;else delete hub.notes[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("carnet:")===0){CARTES.carnet[e.key.slice(7)]=e.v;}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("smat:")===0){const k=e.key.slice(5);if(e.v&&e.v.m)hub.smat[k]=e.v;else delete hub.smat[k];}else if(typeof e.key==="string"&&e.key.indexOf("sans:")===0){const k=e.key.slice(5);if(e.v)hub.sans[k]=+e.v;else delete hub.sans[k];}else if(typeof e.key==="string"&&e.key.indexOf("note:")===0){const k=e.key.slice(5);if(typeof e.v==="number"&&e.v>=0&&e.v<=20)hub.notes[k]=e.v;else delete hub.notes[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -32491,7 +32491,11 @@ const TYN={cours:"Cours",exos:"Exercices",xb:"Examen blanc"};
 const genreTache=t=>t.td||t.train||/^en-/.test(t.id)||(!t.lesson&&(t.links||[]).some(l=>/^annales|^#\/entrainer/.test(l[0])))?"exos":"cours";
 const typeCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.ty:"";};
 /* et une matière (champ m) : le planning n'y met alors que cette matière, sans compter son plafond du jour */
-const matCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.m:"";};
+/* la matière choisie pour une séance placée hors de ses créneaux (choix 42b du 20/11) : réglage smat:<jour>:<début> = {m, b:fin},
+   valable pour toute séance qui commence dans [début, fin), même quand celle du jour glisse avec l'heure */
+const smatK=(day,a)=>Object.keys(hub.smat).find(k=>k.slice(0,10)===day&&+k.slice(11)<=a&&a<hub.smat[k].b);
+const smatDe=(day,a)=>{const k=smatK(day,a),m=k&&hub.smat[k].m;return m&&SUBJ[m]&&examStart(SUBJ[m])>NOW()?m:"";};
+const matCren=(day,a)=>{const s=creneauxDu(day).find(s=>a>=s.a&&a<s.b);return s?s.m:smatDe(day,a);};
 /* les cours d'un jour, sans les CC ; skip : "rev" (révision à la place) ou "abs" (pas allé), choisi en cliquant sur le cours ;
    un cours dans un de ses créneaux compte comme "rev", sauf s'il a dit qu'il y va ("go") */
 const epreuvesDu=day=>SIDS.flatMap(id=>examsOf(SUBJ[id]).map((x,i)=>({S:SUBJ[id],e:examAt(SUBJ[id],i)}))).filter(x=>x.e.day===day&&!x.e.off);
@@ -32819,11 +32823,15 @@ const fantome=(d,a,b,cls,pos)=>`<div class="ev sans${cls}" role="button" tabinde
 function lierSeances(root,box,refresh){
   const montre=h=>{box.innerHTML=h;box.hidden=false;box.dataset.k="";box.scrollIntoView({behavior:"smooth",block:"nearest"});},quand=(d,a,b)=>`${dayName(d,true)}, de ${hh(+a)} à ${hh(+b)}`;
   root.querySelectorAll("a.ev.rev[data-rv]").forEach(el=>el.addEventListener("click",e=>{e.preventDefault();const[d,a,b,sid]=el.dataset.rv.split("|");
-    montre(`<div><b>${SUBJ[sid].name}</b>, ${quand(d,a,b)}.</div><div class="filters"><a class="btn" href="${el.getAttribute("href")}">${el.dataset.go}</a><button class="btn" data-sn="${d}:${a}" data-v="${b}">Enlever ce créneau</button><button class="btn" data-sn="">Fermer</button></div>`);}));
+    const hors=!creneauxDu(d).some(s=>+a>=s.a&&+a<s.b),mt=smatDe(d,+a),kx=smatK(d,+a),ck=kx||d+":"+a,cb=kx?hub.smat[kx].b:b;
+    montre(`<div><b>${SUBJ[sid].name}</b>, ${quand(d,a,b)}.</div><div class="filters"><a class="btn" href="${el.getAttribute("href")}">${el.dataset.go}</a>${hors?`<button class="btn" data-chm>Changer de matière</button>`:""}<button class="btn" data-sn="${d}:${a}" data-v="${b}">Enlever ce créneau</button><button class="btn" data-sn="">Fermer</button></div>${hors?`<div data-mats hidden><p class="crnote"><b>Matière</b></p><div class="filters">${[["","Toutes les matières"]].concat(SIDS.filter(s=>s===mt||examStart(SUBJ[s])>NOW()).map(s=>[s,SUBJ[s].name])).map(([v,n])=>`<button class="btn" data-sm="${v}" data-k="${ck}" data-b="${cb}" aria-pressed="${v===mt}">${n}</button>`).join("")}</div></div>`:""}`);}));
   root.querySelectorAll(".ev.sans").forEach(el=>{const go=()=>{const[d,a,b]=el.dataset.sans.split("|");
       montre(`<div><b>Révision enlevée</b>, ${quand(d,a,b)}.</div><div class="filters"><button class="btn" data-sn="${d}:${a}" data-v="">Remettre ce créneau</button><button class="btn" data-sn="">Fermer</button></div>`);};
     el.addEventListener("click",go);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});
-  box.addEventListener("click",e=>{const b=e.target.closest("[data-sn]");if(!b)return;box.hidden=true;if(!b.dataset.sn)return;emit({k:"set",key:"sans:"+b.dataset.sn,v:b.dataset.v?+b.dataset.v:""});refresh();});
+  box.addEventListener("click",e=>{const c=e.target.closest("[data-chm]"),m=e.target.closest("[data-sm]");
+    if(c){const z=box.querySelector("[data-mats]");if(z){z.hidden=!z.hidden;c.setAttribute("aria-pressed",String(!z.hidden));}return;}
+    if(m){box.hidden=true;emit({k:"set",key:"smat:"+m.dataset.k,v:m.dataset.sm?{m:m.dataset.sm,b:+m.dataset.b}:""});refresh();return;}
+    const b=e.target.closest("[data-sn]");if(!b)return;box.hidden=true;if(!b.dataset.sn)return;emit({k:"set",key:"sans:"+b.dataset.sn,v:b.dataset.v?+b.dataset.v:""});refresh();});
 }
 
 /* ---------- examens et coefficients ---------- */
