@@ -30761,6 +30761,288 @@ function exoDr3(R){const f=R()<0.6?0:1,qui=tireQui1(R);
     ens:{fam:"regler",B:{ok:B.ok,non:B.non,fixe:B.fixe},ks,t0,n0,t1,n1,ref,alt:alt.filter(Boolean),pieges:PI,bash:[ref,...alt.filter(x=>x&&x!==ref)].map(bashDe)}};}
 const tireDr=k=>R=>{for(;;){const e=[exoDr0,exoDr1,exoDr2,exoDr3][k](R);if(e)return e;}};
 
+/* ---------- US2 : les chemins. Un chemin se lit morceau par morceau, depuis la racine, l'accueil ou le dossier courant ; un petit shell joue mkdir, rmdir, touch, cp, mv et rm ---------- */
+const cw=s=>`<code>${esc(s).replace(/\//g,"/<wbr>")}</code>`;
+const ACC2=["home","etu"],COUR2=["home","etu","projet"],ab2=P=>"/"+P.join("/"),meme2=(a,b)=>a.join("/")===b.join("/");
+const HAUT2={cours:["usi","algo","maths"],projet:["src","tests","doc"],photos:["2024","vacances","famille"],docs:["factures","cv","banque"]};
+const FIC2={usi:["td1.pdf","tp1.sh"],algo:["tri.py","exos.txt"],maths:["dm.tex","exos.pdf"],src:["main.c","outils.c"],tests:["essai.py","test.sh"],doc:["README","guide.md"],"2024":["mer.jpg","fete.jpg"],vacances:["plage.jpg","ski.jpg"],famille:["noel.jpg","mamie.jpg"],factures:["edf.pdf","eau.pdf"],cv:["cv.pdf","lettre.odt"],banque:["releve.pdf"]};
+const BAS2={usi:"tp2",algo:"tris",src:"lib",vacances:"ete","2024":"juin",factures:"2023",tests:"vieux",doc:"images"};
+const FBAS2={tp2:"exo.sh",tris:"tas.py",lib:"liste.c",ete:"lac.jpg",juin:"bac.jpg","2023":"gaz.pdf",vieux:"old.py",images:"img.png"};
+function arbre2(R){const sous=s=>dossier(s,[...R.mel(FIC2[s]).slice(0,R.ent(1,2)).map(fichier),...(BAS2[s]&&R()<0.6?[dossier(BAS2[s],[fichier(FBAS2[BAS2[s]])])]:[])]);
+  const acc=dossier("etu",[...["projet",R.choix(["cours","photos","docs"])].map(t=>dossier(t,R.mel(HAUT2[t]).slice(0,2).map(sous))),fichier("todo.txt")]);
+  return dossier("",[dossier("etc",[fichier("passwd")]),dossier("home",[dossier("bob",[dossier("tp",[fichier("note.txt")])]),acc]),dossier("tmp",[]),dossier("usr",[dossier("bin",[fichier("ls"),fichier("python3")]),dossier("include",[fichier("stdio.h")])])]);}
+const noeuds2=T=>{const L=[];const va=(t,P)=>{for(const x of t.d||[]){const Q=[...P,x.n];L.push({P:Q,dir:!!x.d,n:x.n});if(x.d)va(x,Q);}};va(T,[]);return L;};
+const AILLEURS2=`<p>Ailleurs sur le disque : ${["/etc/passwd","/home/bob/tp/note.txt","/tmp","/usr/bin/ls","/usr/include/stdio.h"].map(c).join(", ")}.</p>`;
+const voitArbre2=T=>`<p>Ton dossier d'accueil, ${cw("~")} :</p>${bloc(dessin(noeud(T,"/home/etu"),"/home/etu"))}${AILLEURS2}`;
+const rel2=(a,b)=>{let k=0;while(k<a.length&&k<b.length&&a[k]===b[k])k++;const L=[...Array(a.length-k).fill(".."),...b.slice(k)];return L.length?L.join("/"):".";};
+const dans2=(a,b)=>b.length>a.length&&a.every((x,i)=>x===b[i]);
+const nbPP2=s=>s.split("/").filter(x=>x==="..").length;
+
+/* lu : une lecture fausse (depuisRacine, depuisAcc, ppCourant : .. lu comme ., ppMoins : le premier .. oublié, tildeCourant) ; fantome : sans regarder si les noms existent */
+function marche2(T,dep,s,lu){lu=lu||{};s=String(s);let P,d0;
+  if(s[0]==="/"){P=[];d0="racine";s=s.slice(1);}
+  else if(s==="~"||s.slice(0,2)==="~/"){P=lu.tildeCourant?dep.slice():ACC2.slice();d0="accueil";s=s.slice(2);}
+  else{P=lu.depuisRacine?[]:lu.depuisAcc?ACC2.slice():dep.slice();d0="courant";}
+  const pas=[],M=s.split("/");let haut=false,moins=!!lu.ppMoins,fic=null;
+  for(const m of M){
+    if(fic)return {err:{ou:ab2(P.slice(0,-1)),nom:fic,fic:true},pas,d0};
+    if(m===""||m==="."){if(m===".")pas.push({m,P:P.slice()});continue;}
+    if(m===".."){if(lu.ppCourant||moins){moins=false;pas.push({m,P:P.slice()});continue;}if(P.length)P.pop();else haut=true;}
+    else{if(!lu.fantome){const t=noeud(T,ab2(P)),y=t&&t.d&&t.d.find(x=>x.n===m);if(!y)return {err:{ou:ab2(P),nom:m},pas,d0};if(!y.d)fic=m;}P.push(m);}
+    pas.push({m,P:P.slice()});}
+  return {P,p:ab2(P),pas,d0,haut,fic:!!fic};}
+const ou2Txt=d0=>d0==="racine"?`commence par ${cw("/")} : on part de la racine`:d0==="accueil"?`commence par ${cw("~")} : on part de ton dossier d'accueil, ${cw("/home/etu")}`:"ne commence ni par / ni par ~ : on part du dossier courant";
+const trajet2=(dep,r)=>`${cw(ab2(dep))}${r.pas.map(x=>` → (${cw(x.m)}) ${cw(ab2(x.P))}`).join("")}`;
+
+/* le vrai bash, dans une arborescence temporaire dont la racine est R : les chemins absolus y sont préfixés par R */
+const shq2=s=>"'"+s+"'";
+const shp2=p=>p[0]==="/"?'"$R"'+shq2(p):p==="~"?"~":p.slice(0,2)==="~/"?"~/"+(p.length>2?shq2(p.slice(2)):""):shq2(p);
+const DEB2='R=${HOME%/home/etu}\n',VOIR2='x=${PWD#"$R"}; echo "${x:-/}"';
+const vraiOu2=(T,cur,p,att)=>({arbo:T,cmd:DEB2+'cd "$R'+ab2(cur)+'"\np='+shp2(p)+'\nif [ -d "$p" ]; then cd -- "$p"; '+VOIR2+'; elif [ -e "$p" ]; then cd -- "$(dirname -- "$p")"; x=${PWD#"$R"}; echo "${x%/}/$(basename -- "$p")"; else echo ERR; fi',args:[],nom:"./chemin.sh",script:true,abs:[att]});
+const vraiCd2=(T,dep,L,att)=>({arbo:T,cmd:DEB2+'cd "$R'+ab2(dep)+'"\n'+L.map(ch=>ch===""?"cd":"cd "+shp2(ch)).join("\n")+"\n"+VOIR2,args:[],nom:"./cd.sh",script:true,abs:[att]});
+
+/* ce que tape l'étudiant : un chemin, avec ou sans la commande devant */
+const net2=s=>propre(s).replace(/^(cd|ls|cat|pwd|cp|mv|less|nano)\s+/,"").replace(/["']/g,"").replace(/\s/g,"");
+function lisAbs2(s){s=net2(s);if(!s)return {vide:1};
+  if(s[0]==="~")return {err:`Écris le chemin depuis la racine : il commence par ${cw("/")} (${cw("~")} veut dire ${cw("/home/etu")}).`};
+  if(s[0]!=="/")return {err:`Un chemin absolu commence par ${cw("/")}, la racine.`};
+  if(s.split("/").some(x=>x==="."||x===".."))return {err:`Écris le chemin le plus direct, sans ${cw(".")} ni ${cw("..")} : chaque nom, depuis la racine.`};
+  return {p:"/"+s.split("/").filter(Boolean).join("/")};}
+const MSG2={
+  depuisRacine:ch=>`${cw(ch)} ne commence pas par ${cw("/")} : c'est un chemin relatif, il part du dossier courant, pas de la racine.`,
+  depuisAcc:ch=>`${cw(ch)} ne commence ni par ${cw("/")} ni par ${cw("~")} : il part du dossier courant, pas de ton dossier d'accueil.`,
+  ppCourant:()=>`${cw("..")} n'est pas le dossier courant : il remonte d'un cran, vers le dossier parent. C'est ${cw(".")} qui reste sur place.`,
+  ppMoins:ch=>`Chaque ${cw("..")} compte : ${cw(ch)} en a ${nbPP2(ch)}, donc on remonte de ${nbPP2(ch)} cran${nbPP2(ch)>1?"s":""}.`,
+  tildeCourant:()=>`${cw("~")} est toujours ton dossier d'accueil, ${cw("/home/etu")}, quel que soit le dossier courant.`};
+const LU2=[["parti de la racine","depuisRacine"],["parti de l'accueil","depuisAcc"],[".. lu comme le dossier courant","ppCourant"],["un .. oublié","ppMoins"],["~ lu comme le dossier courant","tildeCourant"]];
+function jugeAbs2(s,att,P,etape,quoi){const r=lisAbs2(s);if(r.vide)return {incomplet:"Écris le chemin absolu."};if(r.err)return {incomplet:r.err};if(r.p===att)return {ok:true};
+  const non=(type,titre,msg)=>({ok:false,faux:["d"],resume:`Pas tout à fait : ce n'est pas ${quoi}.`,diag:{etape:type==="chemin faux"?etape:0,type,titre,msg}});
+  for(const x of P)if(x.p===r.p)return non(x.type,"Où ça part : le point de départ ou un morceau.",x.msg);
+  return non("chemin faux","Où ça part : un morceau du chemin.",`Refais le trajet morceau par morceau : chaque ${cw("..")} remonte d'un dossier, ${cw(".")} ne bouge pas, chaque nom descend dans ce dossier.`);}
+const SYMP2=[["/","/"],["..",".."],[".","."],["~","~"]];
+
+/* palier 1 : où mène un chemin */
+function exoCh0(R){const T=arbre2(R),N=noeuds2(T),f=R.choix([0,1,1,1,2,3,3]);
+  const cur=R.choix(N.filter(x=>x.dir&&x.P[1]==="etu"&&x.P.length>=3)).P;let cible,ch;
+  if(f===0){const L=N.filter(x=>dans2(cur,x.P));if(!L.length)return null;cible=R.choix(L).P;ch=(R()<0.3?"./":"")+rel2(cur,cible);}
+  else if(f===1){const L=N.filter(x=>!dans2(cur,x.P)&&!meme2(x.P,cur)&&(x.P[1]==="etu"||R()<0.12));cible=R.choix(L).P;ch=rel2(cur,cible);}
+  else if(f===2){cible=R.choix(N.filter(x=>x.P[0]==="home"&&x.P.length>2)).P;ch=cible[1]==="etu"?"~/"+cible.slice(2).join("/"):"~/../"+cible.slice(1).join("/");}
+  else{cible=R.choix(N.filter(x=>x.P[1]==="etu"&&x.P.length>=3&&!meme2(x.P,cur))).P;const M=rel2(cur,cible).split("/"),k=R.ent(0,M.length-1);
+    const ici=marche2(T,cur,M.slice(0,k).join("/")||".").P,fils=(noeud(T,ab2(ici)).d||[]).filter(x=>x.d&&x.n!==M[k]);
+    if(fils.length&&R()<0.6)M.splice(k,0,R.choix(fils).n,"..");else if(k===0)M.splice(0,0,"..",cur[cur.length-1]);else M.splice(k,0,".");
+    ch=M.join("/");}
+  const r=marche2(T,cur,ch),att=ab2(cible),dir=!!noeud(T,att).d;if(r.err||r.haut||r.p!==att)return null;
+  const P=[];for(const [type,k] of LU2){const x=marche2(T,cur,ch,{[k]:1,fantome:1});if(x.p!==att&&!x.haut&&!P.some(y=>y.p===x.p))P.push({type,p:x.p,msg:MSG2[k](ch)});}
+  if(!P.length)return null;
+  const E=[{w:`${cw(ch)} ${ou2Txt(r.d0)}${r.d0==="courant"?`, ${cw(ab2(cur))}`:""}.`,why:`Un chemin absolu part de la racine ${cw("/")}, un chemin qui commence par ${cw("~")} part de ton dossier d'accueil, un chemin relatif part du dossier courant.`,pts:1},
+    {w:`Morceau par morceau : ${trajet2(r.d0==="racine"?[]:r.d0==="accueil"?ACC2:cur,r)}`,why:`Chaque ${cw("..")} remonte d'un cran, ${cw(".")} reste sur place, chaque nom descend dans ce dossier.`,pts:1.5},
+    {w:`<b>${cw(att)}</b>`,why:dir?`C'est ce qu'afficherait ${cw("pwd")} après ${cw("cd "+ch)}.`:"C'est le chemin absolu du fichier : il le désigne depuis n'importe quel dossier.",pts:0.5}];
+  return {sig:"C0"+ab2(cur)+"|"+ch+"|"+noeuds2(noeud(T,"/home/etu")).length,q:`Tu es dans ${cw(ab2(cur))}. Quel est le chemin absolu de ${cw(ch)} ?`,corps:voitArbre2(T),texte:`depuis ${ab2(cur)} : ${ch}`,
+    champs:[{k:"champ",id:"d",nom:"chemin",label:"Le chemin absolu :",ex:"par exemple /home/etu/cours",apercu:false,sym:SYMP2}],juge:rep=>jugeAbs2(rep.d,att,P,1,`le chemin de ${cw(ch)}`),etapes:E,bonne:cw(att),bonneTxt:att,repBonne:{d:att},repFausse:{d:P[0].p},nature:["descendre","remonter","avec ~","avec un détour"][f],
+    ens:{fam:"ou",cur,ch,att,pieges:P.map(x=>({type:x.type,d:x.p})),bash:[vraiOu2(T,cur,ch,att)]}};}
+
+/* palier 2 : une suite de cd, puis pwd (TD ex. 8) */
+function suite2(T,dep,L,lu){lu=lu||{};let P=dep.slice();const Q=[];
+  for(const ch of L){if(ch===""){if(!lu.cdSeul)P=ACC2.slice();}
+    else{const r=marche2(T,P,ch,lu.fantome?Object.assign({},lu,{fantome:1}):lu);if(!r.err&&(lu.fantome||!r.fic))P=r.P;}Q.push(P.slice());}
+  return Q;}
+const AUTRES2=["tp3","Documents","cours2","bin","src","usi","photos","docs","old"];
+function exoCh1(R){const T=arbre2(R),N=noeuds2(T),D=N.filter(x=>x.dir),Dacc=D.filter(x=>x.P[1]==="etu");
+  const dep=R.choix(Dacc.filter(x=>x.P.length>=3)).P,n=R.choix([2,3,3,4]),rate=R()<0.55?R.ent(0,n-1):-1,L=[];let P=dep.slice(),seul=false;
+  for(let i=0;i<n;i++){let ch;const ici=noeud(T,ab2(P)),noms=new Set((ici.d||[]).map(x=>x.n));
+    if(i===rate){const fics=(ici.d||[]).filter(x=>!x.d);ch=fics.length&&R()<0.4?R.choix(fics).n:R.choix(AUTRES2.filter(x=>!noms.has(x)));}
+    else{const st=R.choix(["rel","rel","rel","tilde","abs","seul","pp","racine"]);
+      if(st==="seul"&&!seul&&!meme2(P,ACC2)){ch="";seul=true;}
+      else if(st==="tilde")ch=R()<0.2?"~/..":"~/"+R.choix(Dacc.filter(x=>x.P.length>=3)).P.slice(2).join("/");
+      else if(st==="abs")ch=ab2(R.choix(D.filter(x=>!meme2(x.P,P))).P);
+      else if(st==="pp"&&P.length>=3)ch=R.choix(["..","../..","../.."]);
+      else if(st==="racine"&&i<n-1)ch="/";
+      else{const t=R.choix(Dacc.filter(x=>!meme2(x.P,P))).P;ch=rel2(P,t);}}
+    const r=ch===""?null:marche2(T,P,ch);if(r&&r.haut)return null;
+    if(i===rate&&r&&!r.err&&!r.fic)return null;
+    L.push(ch);P=suite2(T,P,[ch])[0];}
+  const Q=suite2(T,dep,L),att=ab2(Q[n-1]);
+  const LUS=[["parti de la racine",{depuisRacine:1},"Un chemin sans / au début part du dossier où l'on est à ce moment-là, pas de la racine."],[".. lu comme le dossier courant",{ppCourant:1},MSG2.ppCourant()],["~ lu comme le dossier courant",{tildeCourant:1},MSG2.tildeCourant()],
+    ["cd seul lu comme sans effet",{cdSeul:1},`${cw("cd")} tout seul n'est pas sans effet : il ramène dans ton dossier d'accueil, ${cw("/home/etu")}.`],
+    ["cd raté compté comme fait",{fantome:1},`Un ${cw("cd")} qui échoue ne change pas de dossier : on reste où l'on est, et la commande suivante part de là.`]];
+  const PI=[];for(const [type,lu,msg] of LUS){const QQ=suite2(T,dep,L,lu),p=ab2(QQ[n-1]);if(p!==att&&!PI.some(y=>y.p===p))PI.push({type,p,msg,etape:QQ.findIndex((x,i)=>!meme2(x,Q[i]))});}
+  if(!PI.length)return null;
+  const E=L.map((ch,i)=>{const de=i?Q[i-1]:dep,vers=Q[i],cmd=cw(ch===""?"cd":"cd "+ch);
+    if(ch!==""&&meme2(de,vers)&&i===rate){const r=marche2(T,de,ch);return {w:`${cmd} échoue : ${r.fic?`${cw(ch)} est un fichier, pas un dossier (bash dit « Not a directory »)`:`il n'y a pas de ${cw(r.err.nom)} dans ${cw(r.err.ou)} (bash dit « No such file or directory »)`}. On reste dans ${cw(ab2(de))}.`,why:"Un cd qui échoue ne change pas de dossier : la commande suivante part du même endroit.",pts:1};}
+    return {w:`${cmd} : ${cw(ab2(de))} → ${cw(ab2(vers))}`,why:ch===""?`${cw("cd")} tout seul ramène dans ton dossier d'accueil.`:ch[0]==="/"?"Un chemin qui commence par / part de la racine, quel que soit le dossier courant.":ch[0]==="~"?`${cw("~")} est ton dossier d'accueil, ${cw("/home/etu")}.`:`Un chemin relatif part du dossier où l'on est à ce moment-là : chaque ${cw("..")} remonte d'un cran.`,pts:1};});
+  E.push({w:`<b>${cw(att)}</b>`,why:`${cw("pwd")} affiche le chemin absolu du dossier courant.`,pts:0.5});
+  const lignes=[...L.map(ch=>ch===""?"cd":"cd "+ch),"pwd"];
+  function juge(rep){const r=lisAbs2(rep.d);if(r.vide)return {incomplet:"Écris ce qu'affiche pwd."};if(r.err)return {incomplet:r.err};if(r.p===att)return {ok:true};
+    const x=PI.find(y=>y.p===r.p),non=(etape,type,titre,msg)=>({ok:false,faux:["d"],resume:"Pas tout à fait : ce n'est pas le dossier où l'on arrive.",diag:{etape,type,titre,msg}});
+    if(x)return non(Math.max(0,x.etape),x.type,"Où ça part : un cd.",x.msg);
+    return non(0,"dossier faux","Où ça part : un cd.","Suis les cd un par un, en notant après chacun le dossier où tu es : un chemin relatif part de là, un chemin qui commence par / part de la racine.");}
+  return {sig:"C1"+ab2(dep)+"|"+L.join(";")+"|"+noeuds2(noeud(T,"/home/etu")).length,q:`Tu es dans ${cw(ab2(dep))}. Tu tapes ces commandes, dans l'ordre. Qu'affiche le ${cw("pwd")} de la fin ?`,corps:bloc(lignes.join("\n"))+voitArbre2(T),texte:`depuis ${ab2(dep)} : ${lignes.join(" ; ")}`,
+    champs:[{k:"champ",id:"d",nom:"pwd",label:"pwd affiche :",ex:"par exemple /home/etu",apercu:false,sym:SYMP2}],juge,etapes:E,bonne:cw(att),bonneTxt:att,repBonne:{d:att},repFausse:{d:PI[0].p},nature:rate>=0?"avec un cd qui échoue":"suite de cd",
+    ens:{fam:"pwd",T,dep,L,att,pieges:PI.map(x=>({type:x.type,d:x.p})),bash:[vraiCd2(T,dep,L,att)]}};}
+
+/* palier 3 : écrire le chemin. mode : rel (relatif), abs (absolu), til (avec ~) */
+function exoCh2(R){const T=arbre2(R),N=noeuds2(T),f=R.choix([0,1,1,2,3]),mode=f<2?"rel":f===2?"abs":"til";
+  const cur=R.choix(N.filter(x=>x.dir&&x.P[1]==="etu"&&x.P.length>=3)).P,compte={};N.forEach(x=>{compte[x.n]=(compte[x.n]||0)+1;});
+  const L=f===0?N.filter(x=>dans2(cur,x.P)):f===1?N.filter(x=>!dans2(cur,x.P)&&!meme2(x.P,cur)&&(x.P[1]==="etu"&&x.P.length>2||R()<0.1)):N.filter(x=>compte[x.n]===1&&(x.P[1]==="etu"&&x.P.length>2||f===3&&x.P[1]==="bob"&&R()<0.3));
+  if(!L.length)return null;const ci=R.choix(L),cible=ci.P,att=ab2(cible),dir=ci.dir,par=cible[cible.length-2];
+  const ref=mode==="rel"?rel2(cur,cible):mode==="abs"?att:cible[1]==="etu"?"~/"+cible.slice(2).join("/"):"~/../"+cible.slice(1).join("/");
+  const quoi=`${dir?"le dossier":"le fichier"} ${mode==="rel"?cw(att):`${cw(ci.n)}, rangé dans ${cw(par)}`}`;
+  const cmd=dir?R.choix(["cd","ls"]):R.choix(["cat","less"]);
+  const vaA=(dep,s)=>{const r=marche2(T,dep,s);return !r.err&&!r.fic||!r.err&&!dir?r.p:null;};
+  const bon=s=>{const r=marche2(T,cur,s);return !r.err&&r.p===att;};
+  const cas=s=>{if(mode==="rel"){if(vaA([],s)===att)return ["parti de la racine",`${cw(s)} ne commence pas par ${cw("/")} : il part du dossier courant, ${cw(ab2(cur))}, pas de la racine. Depuis la racine, on écrirait ${cw("/"+s)}.`];
+      if(!meme2(cur,ACC2)&&vaA(ACC2,s)===att)return ["parti de l'accueil",`Ce chemin marcherait depuis ton dossier d'accueil, mais tu es dans ${cw(ab2(cur))} : un chemin relatif part du dossier courant.`];
+      if(vaA(cur.slice(0,-1),s)===att)return ["un .. de moins",`Ce chemin part de ${cw(ab2(cur.slice(0,-1)))}, le dossier au-dessus. Tu es dans ${cw(ab2(cur))} : il faut d'abord remonter d'un cran de plus avec ${cw("..")}.`];
+      if(s.slice(0,3)==="../"&&vaA(cur,s.slice(3))===att)return ["un .. de trop",`Un ${cw("..")} de trop : ${cw(s)} remonte d'un cran de plus qu'il ne faut.`];}
+    else if(mode==="abs"){if(vaA(["home"],s.slice(1))===att||vaA(ACC2,s.slice(1))===att)return ["début du chemin oublié",`Un chemin absolu part de la racine et nomme chaque dossier : ${cw("/")}, puis ${cw("home")}, puis ${cw("etu")}… Ici, le début manque.`];
+      if(vaA(cur,s.slice(1))===att)return ["dossier courant pris pour la racine",`${cw("/")} au début veut dire la racine, pas le dossier courant : ${cw(s)} cherche ${cw(s.split("/")[1])} directement sous ${cw("/")}.`];}
+    else{if(/^~\/home(\/|$)/.test(s)&&vaA([],s.slice(1))===att)return ["accueil écrit deux fois",`${cw("~")} vaut déjà ${cw("/home/etu")} : ${cw(s)} désigne ${cw("/home/etu"+s.slice(1))}, qui n'existe pas.`];
+      if(s.slice(0,2)==="~/"&&vaA(cur,s.slice(2))===att)return ["~ lu comme le dossier courant",`${cw("~")} est ton dossier d'accueil, ${cw("/home/etu")}, pas le dossier courant.`];}
+    return null;};
+  function juge(rep){const s=net2(rep.d);if(!s)return {incomplet:"Écris le chemin."};
+    if(mode==="rel"&&s[0]==="/")return {incomplet:`C'est un chemin absolu (il commence par ${cw("/")}) : ici, écris un chemin relatif, qui part du dossier courant.`};
+    if(mode==="rel"&&s[0]==="~")return {incomplet:`${cw("~")} part de ton dossier d'accueil : ici, écris un chemin relatif, qui part du dossier courant (avec ${cw("..")} pour remonter).`};
+    if(mode==="abs"&&s[0]!=="/")return {incomplet:s[0]==="~"?`${cw("~")} marche aussi, mais ici écris le chemin depuis la racine : il commence par ${cw("/")}.`:`Un chemin absolu commence par ${cw("/")}, la racine.`};
+    if(mode==="til"&&s[0]!=="~")return {incomplet:`Ici, écris le chemin avec ${cw("~")} au début (${cw("~")} veut dire ${cw("/home/etu")}).`};
+    if(bon(s))return {ok:true};
+    const non=(etape,type,msg)=>({ok:false,faux:["d"],resume:`Pas tout à fait : ce chemin ne mène pas à ${quoi}.`,diag:{etape,type,titre:"Où ça part : le chemin.",msg}});
+    if(mode==="til"&&/^~[^/]/.test(s))return non(0,"~nom",`${cw(s.split("/")[0])} veut dire le dossier d'accueil de l'utilisateur ${esc(s.split("/")[0].slice(1))} (comme ${cw("~toto")} au TD) : écris ${cw("~/")}, puis le chemin.`);
+    const k=cas(s);if(k)return non(0,k[0],k[1]);
+    const r=marche2(T,cur,s);if(r.err)return non(1,"nom qui n'existe pas",r.err.fic?`${cw(r.err.nom)} est un fichier : un chemin ne peut pas passer à travers.`:`En suivant ton chemin, on arrive dans ${cw(r.err.ou)}, qui n'a pas de ${cw(r.err.nom)}.`);
+    return non(1,"mauvais chemin",`Ton chemin mène à ${cw(r.p)}${r.fic&&dir?", un fichier":""}.`);}
+  const PI=[];const ajoute=s=>{if(!s||bon(s)||PI.some(x=>x.d===s))return;const k=mode==="til"&&/^~[^/]/.test(s)?["~nom"]:cas(s);if(k)PI.push({type:k[0],d:s});};
+  if(mode==="rel"){ajoute(cible.join("/"));ajoute(cible.slice(2).join("/"));ajoute(rel2(cur.slice(0,-1),cible));ajoute("../"+ref);}
+  else if(mode==="abs"){ajoute("/"+cible.slice(1).join("/"));ajoute("/"+cible.slice(2).join("/"));if(dans2(cur,cible))ajoute("/"+rel2(cur,cible));}
+  else{ajoute("~/"+cible.join("/"));if(dans2(cur,cible))ajoute("~/"+rel2(cur,cible));if(cible[1]==="etu")ajoute("~"+cible.slice(2).join("/"));}
+  if(!PI.length)return null;
+  const alt=[...(mode==="rel"&&ref!=="."?["./"+ref]:[]),...(dir?[ref+"/"]:[]),...(mode==="rel"?["../"+cur[cur.length-1]+"/"+ref]:mode==="til"?["~/./"+ref.slice(2)]:[])].filter(bon);
+  const r=marche2(T,cur,ref);
+  let k0=0;while(k0<cur.length&&k0<cible.length&&cur[k0]===cible[k0])k0++;
+  const E=[mode==="rel"?{w:`On part du dossier courant, ${cw(ab2(cur))}. ${dans2(cur,cible)?`${cw(att)} est dedans : on descend, sans ${cw("..")}.`:`Le premier dossier qui contient à la fois ${cw(ab2(cur))} et ${cw(att)} est ${cw(ab2(cur.slice(0,k0)))} : on y remonte avec ${nbPP2(ref)} fois ${cw("..")}.`}`,why:"Un chemin relatif ne commence ni par / ni par ~ : il part du dossier où tu es.",pts:1.5}
+      :mode==="abs"?{w:`Sur l'arbre, ${cw(ci.n)} est dans ${et(cible.slice(0,-1).map(c))}, en partant de la racine.`,why:"Un chemin absolu part de la racine / et nomme chaque dossier jusqu'à la cible : il marche depuis n'importe quel dossier.",pts:1.5}
+      :{w:`${cw("~")} remplace ${cw("/home/etu")}, ton dossier d'accueil${cible[1]==="etu"?"":` ; ${cw(ab2(cible))} n'est pas dedans : on remonte d'abord dans ${cw("/home")} avec ${cw("~/..")}`}.`,why:`${cw("~/")} au début : on part de l'accueil, puis on nomme les dossiers un par un.`,pts:1.5},
+    {w:`Morceau par morceau : ${trajet2(mode==="rel"?cur:mode==="abs"?[]:ACC2,r)}`,why:`Chaque nom descend d'un cran${nbPP2(ref)?`, chaque ${cw("..")} remonte d'un cran`:""}.`,pts:1},
+    {w:`<b>${cw(ref)}</b>`,why:`La commande : ${cw(cmd+" "+ref)}.${alt.length?` On peut aussi écrire ${cw(alt[0])}.`:""}`,pts:0.5}];
+  const qq=mode==="rel"?"un chemin relatif":mode==="abs"?"un chemin absolu":`un chemin qui commence par ${cw("~")}`;
+  const bash=[ref,...alt,...PI.map(x=>x.d)].map(s=>{const x=marche2(T,cur,s);return x.haut?null:vraiOu2(T,cur,s,x.err||x.fic&&s.endsWith("/")?"ERR":x.p);}).filter(Boolean);
+  return {sig:"C2"+mode+ab2(cur)+"|"+att+"|"+noeuds2(noeud(T,"/home/etu")).length,q:`Tu es dans ${cw(ab2(cur))}. Pour ${cw(cmd+" …")}, écris ${qq} vers ${quoi}.`,corps:voitArbre2(T),texte:`${mode} depuis ${ab2(cur)} vers ${att}`,
+    champs:[{k:"champ",id:"d",nom:"chemin",label:"Le chemin :",ex:mode==="rel"?"par exemple ../src":mode==="abs"?"par exemple /home/etu/cours":"par exemple ~/cours",apercu:false,sym:SYMP2}],juge,etapes:E,bonne:cw(ref),bonneTxt:ref,repBonne:{d:ref},repFausse:{d:PI[0].d},nature:{rel:f===0?"relatif, descendre":"relatif, avec ..",abs:"absolu",til:"avec ~"}[mode],
+    ens:{fam:"ecrire",mode,cur,cible,ref,alt,pieges:PI,bash}};}
+
+/* palier 4 : le petit shell. Les chemins partent de /home/etu/projet ; une commande ratée écrit son erreur et la suite continue, comme dans bash */
+const clone2=t=>t.d?{n:t.n,d:t.d.map(clone2)}:{n:t.n};
+function ou2(T,s){let P;if(s[0]==="/"){P=[];s=s.slice(1);}else if(s==="~"||s.slice(0,2)==="~/"){P=ACC2.slice();s=s.slice(2);}else P=COUR2.slice();
+  const M=s.split("/"),barre=M.length>1&&M[M.length-1]==="",Q=M.filter(x=>x&&x!==".");
+  for(let i=0;i<Q.length;i++){const m=Q[i];if(m===".."){if(P.length)P.pop();continue;}
+    const t=noeud(T,ab2(P)),y=t.d.find(z=>z.n===m);
+    if(i===Q.length-1){if(barre&&y&&!y.d)return {err:"fichier",nom:ab2(P)+"/"+m};return {par:t,nom:m,x:y||null,P:[...P,m],barre};}
+    if(!y)return {err:"absent",nom:ab2([...P,m])};if(!y.d)return {err:"fichier",nom:ab2([...P,m])};P.push(m);}
+  return {par:P.length?noeud(T,ab2(P.slice(0,-1))):null,nom:P[P.length-1],x:noeud(T,ab2(P)),P,barre,point:true};}
+const vu2=P=>{const Q=P.join("/"),C=COUR2.join("/")+"/";return Q.startsWith(C)?Q.slice(C.length):"/"+Q;};
+function joue2(T0,src){const T=clone2(T0),E=[];
+  const pb=(l,type,msg)=>{E.push({l,type,msg});return false;};
+  const motif=a=>{if(!/[*?[]/.test(a))return [a];const j=a.lastIndexOf("/"),dd=j<0?"":a.slice(0,j+1),o=ou2(T,(dd||".")+"");if(o.err||!o.x||!o.x.d)return [a];
+    const re=motifRe(a.slice(j+1)),L=o.x.d.map(x=>x.n).filter(n=>n[0]!=="."&&re.test(n)).sort();return L.length?L.map(n=>dd+n):[a];};
+  const ote=x=>{const t=noeud(T,ab2(x.P.slice(0,-1)));t.d.splice(t.d.indexOf(x.x),1);};
+  const sousDe=(a,b)=>b.length>=a.length&&a.every((x,i)=>x===b[i]);
+  const fondre=(dst,src)=>{for(const y of src.d){const z=dst.d.find(w=>w.n===y.n);if(z&&z.d&&y.d)fondre(z,y);else{if(z)dst.d.splice(dst.d.indexOf(z),1);dst.d.push(clone2(y));}}};
+  function une(l){const W=l.replace(/["']/g,"").split(" ").filter(Boolean),cmd=W[0];let O="";const A=[];
+    for(const w of W.slice(1))if(/^-[a-zA-Z]+$/.test(w)&&!A.length)O+=w.slice(1);else A.push(...motif(w));
+    if(cmd==="cd")throw {cd:1};
+    if(["ls","pwd","tree","echo","cat"].includes(cmd))return true;
+    if(!["mkdir","rmdir","touch","cp","mv","rm"].includes(cmd))throw {inconnu:`Le site connaît ici mkdir, rmdir, touch, cp, mv et rm${cmd?`, pas ${esc(cmd)}`:""}.`};
+    const opt={mkdir:"p",rm:"rRf",cp:"rR",mv:"",rmdir:"",touch:""}[cmd];for(const ch of O)if(!opt.includes(ch))throw {inconnu:`Le site ne connaît pas l'option -${esc(ch)} de ${cmd}.`};
+    const r=/[rR]/.test(O),force=O.includes("f");
+    if(!A.length)return pb(l,"argument manquant",`${cw(l)} : il manque le nom du fichier ou du dossier.`);
+    let ok=true;
+    if(cmd==="mkdir"||cmd==="rmdir"||cmd==="touch"||cmd==="rm"){for(const a of A){
+      if(cmd==="mkdir"&&O.includes("p")){let P=a[0]==="/"?[]:a==="~"||a.slice(0,2)==="~/"?ACC2.slice():COUR2.slice();
+        for(const m of a.replace(/^~?\/?/,a[0]==="~"||a[0]==="/"?"":"").split("/").filter(x=>x&&x!==".")){if(m===".."){P.pop();continue;}const t=noeud(T,ab2(P));const y=t.d.find(z=>z.n===m);
+          if(y&&!y.d){ok=pb(l,"existe déjà",`${cw(l)} échoue : ${cw(m)} est un fichier.`);break;}if(!y)t.d.push(dossier(m,[]));P.push(m);}continue;}
+      const o=ou2(T,a);
+      if(o.err){ok=cmd==="rm"&&force?ok:pb(l,cmd==="mkdir"?"mkdir avant le parent":"nom qui n'existe pas",cmd==="mkdir"?`${cw(l)} échoue : ${cw(vu2(o.nom.slice(1).split("/")))} n'existe pas encore. Crée d'abord le dossier parent (ou écris ${cw("mkdir -p")}).`:`${cw(l)} échoue : ${cw(vu2(o.nom.slice(1).split("/")))} ${o.err==="fichier"?"est un fichier, pas un dossier":"n'existe pas"}.`);continue;}
+      if(cmd==="mkdir"){if(o.x)ok=pb(l,"existe déjà",`${cw(l)} échoue : ${cw(a)} existe déjà.`);else o.par.d.push(dossier(o.nom,[]));continue;}
+      if(cmd==="touch"){if(!o.x)o.par.d.push(fichier(o.nom));continue;}
+      if(!o.x){if(!(cmd==="rm"&&force))ok=pb(l,"nom qui n'existe pas",`${cw(l)} échoue : ${cw(a)} n'existe pas.`);continue;}
+      if(o.point||sousDe(o.P,COUR2)){ok=pb(l,"commande refusée",`${cw(l)} échoue : ${cw(a)} est le dossier courant ou un dossier qui le contient.`);continue;}
+      if(cmd==="rmdir"){if(!o.x.d)ok=pb(l,"rmdir sur un fichier",`${cw(l)} échoue : ${cw(a)} est un fichier, et rmdir ne supprime que des dossiers. Pour un fichier, c'est ${cw("rm")}.`);
+        else if(o.x.d.length)ok=pb(l,"rmdir sur un dossier plein",`${cw(l)} échoue : ${cw(a)} n'est pas vide, et rmdir ne supprime qu'un dossier vide. Pour un dossier et tout son contenu : ${cw("rm -r "+a)}.`);else ote(o);continue;}
+      if(o.x.d&&!r){ok=pb(l,"rm sans -r",`${cw(l)} échoue : ${cw(a)} est un dossier, et rm sans -r refuse les dossiers. Écris ${cw("rm -r "+a)}${o.x.d.length?"":` (ou ${cw("rmdir "+a)}, puisqu'il est vide)`}.`);continue;}
+      ote(o);}
+      return ok;}
+    if(A.length<2)return pb(l,"destination manquante",`${cw(l)} : il manque la destination (${cmd} source destination).`);
+    const D=ou2(T,A[A.length-1]);if(D.err)return pb(l,"nom qui n'existe pas",`${cw(l)} échoue : ${cw(vu2(D.nom.slice(1).split("/")))} ${D.err==="fichier"?"est un fichier, pas un dossier":"n'existe pas"}.`);
+    const dansD=!!(D.x&&D.x.d);if(A.length>2&&!dansD)return pb(l,"destination absente",`${cw(l)} échoue : avec plusieurs fichiers, la destination doit être un dossier qui existe.`);
+    for(const s of A.slice(0,-1)){const S=ou2(T,s);if(S.err||!S.x){ok=pb(l,"nom qui n'existe pas",`${cw(l)} échoue : ${cw(s)} n'existe pas.`);continue;}
+      if(cmd==="cp"&&S.x.d&&!r){ok=pb(l,"cp sans -r",`${cw(l)} échoue : ${cw(s)} est un dossier, et cp sans -r ne copie que des fichiers. Écris ${cw("cp -r")}.`);continue;}
+      const par=dansD?D.x:D.par,nom=dansD?S.x.n:D.nom,Pc=dansD?[...D.P,S.x.n]:D.P;
+      if(S.x.d&&sousDe(S.P,Pc)){ok=pb(l,"commande refusée",`${cw(l)} échoue : on ne peut pas mettre ${cw(s)} dans lui-même.`);continue;}
+      if(sousDe(S.P,COUR2)){ok=pb(l,"commande refusée",`${cw(l)} échoue : ${cw(s)} contient le dossier courant.`);continue;}
+      const y=par.d.find(z=>z.n===nom);
+      if(y===S.x){ok=pb(l,"commande refusée",`${cw(l)} échoue : la source et la destination sont le même fichier.`);continue;}
+      if(!dansD&&D.barre&&!S.x.d){ok=pb(l,"destination absente",`${cw(l)} échoue : ${cw(A[A.length-1])} n'est pas un dossier.`);continue;}
+      if(y&&y.d&&!S.x.d){ok=pb(l,"commande refusée",`${cw(l)} échoue : ${cw(vu2(Pc))} est un dossier, on ne peut pas le remplacer par un fichier.`);continue;}
+      if(y&&!y.d&&S.x.d){ok=pb(l,"commande refusée",`${cw(l)} échoue : ${cw(vu2(Pc))} est un fichier, on ne peut pas le remplacer par un dossier.`);continue;}
+      if(y&&y.d&&S.x.d){if(cmd==="cp"){fondre(y,S.x);continue;}if(y.d.length){ok=pb(l,"commande refusée",`${cw(l)} échoue : ${cw(vu2(Pc))} existe déjà et n'est pas vide.`);continue;}}
+      if(y)par.d.splice(par.d.indexOf(y),1);
+      if(cmd==="mv")ote(S);const z=cmd==="cp"?clone2(S.x):S.x;z.n=nom;par.d.push(z);}
+    return ok;}
+  for(const l0 of String(src).split("\n")){for(const seg of l0.split(";")){let suite=true;for(const l1 of seg.split("&&")){const l=propre(l1);if(!l||l[0]==="#"||!suite)continue;
+    try{suite=une(l);}catch(x){if(x.cd)return {cd:1};if(x.inconnu)return {inconnu:x.inconnu};throw x;}}}}
+  return {T,E};}
+const liste2=T=>{const L=[];const va=(t,q)=>{for(const e of t.d){if(e.d){L.push(q+e.n+"/");va(e,q+e.n+"/");}else L.push(q+e.n);}};va(noeud(T,ab2(COUR2)),"");return L.sort();};
+const vraiCmd2=(T,src)=>({arbo:T,cmd:src,args:[],nom:"./ranger.sh",script:true,etat:1,abs:["#fichiers",...liste2(joue2(T,src).T)]});
+const RANGE2=[["USI",["Script","Fable"]],["cours",["usi","algo"]],["rangement",["textes","scripts"]],["S1",["tp","td"]],["archives",["2024","2025"]]];
+const FICP2=["lsparent.sh","fable.txt","notes.txt","tp1.py","rapport.pdf","exo.c","liste.txt","photo.jpg"];
+function exoCh3(R){const F=R.mel(FICP2).slice(0,4),[A,BC]=R.choix(RANGE2),pl=R.choix(["vieux","tp0","brouillons"]),plF=R.mel(["a.txt","b.txt","old.py","essai.c"]).slice(0,2),vide=R()<0.5?R.choix(["tmp","vide","test"]):null;
+  const T=dossier("",[dossier("home",[dossier("etu",[dossier("projet",[...F.map(fichier),dossier(pl,plF.map(fichier)),...(vide?[dossier(vide,[])]:[])])])])]);
+  const ops=[],avecA=R()<0.75;
+  if(avecA){const subs=R.mel(BC).slice(0,R.ent(1,2)),mk=`mkdir ${subs.map(s=>A+"/"+s).join(" ")}`,mvs=subs.map((s,i)=>`mv ${F[i]} ${A}/${s}`);
+    ops.push({k:"A",cmds:[`mkdir ${A}`,mk,...mvs],con:`Crée le dossier ${cw(A)} et, dedans, ${et(subs.map(c))} ; range ${et(subs.map((s,i)=>`${cw(F[i])} dans ${cw(A+"/"+s)}`))}, sans ${subs.length>1?"les":"le"} recopier.`,
+      why:`On crée d'abord le parent : sans ${cw("-p")}, ${cw("mkdir")} ne crée pas deux niveaux d'un coup. Puis ${cw("mv")} déplace sans recopier : le fichier change seulement de dossier.`,pts:2,
+      pi:[["mkdir avant le parent",[mk,`mkdir ${A}`,...mvs]],["cp au lieu de mv",[`mkdir ${A}`,mk,...mvs.map(x=>x.replace(/^mv/,"cp"))]],["dossier pas créé avant mv",[`mkdir ${A}`,...mvs]]],
+      alt:[[`mkdir -p ${subs.map(s=>A+"/"+s).join(" ")}`,...mvs],[`mkdir ${A}`,mk,...subs.map((s,i)=>`mv ./${F[i]} ~/projet/${A}/${s}/`)]],faits:subs.map((s,i)=>`${A}/${s}/${F[i]}`).concat(subs.map((s,i)=>"!"+F[i]))});}
+  const reste=F.slice(avecA?2:0),autres=R.mel(["B","C","D","E"]).slice(0,R.ent(avecA?1:2,2));
+  if(!avecA&&!autres.includes("B"))autres[0]="B";
+  autres.sort();
+  for(const o of autres){
+    if(o==="B"){const X=avecA?A:pl,Bk=R.choix(["Backup","sauvegarde","copie"]);
+      ops.push({k:"B",cmds:[`mkdir ${Bk}`,`cp -r ${X} ${Bk}`],con:`Crée un dossier ${cw(Bk)} et mets-y une copie complète de ${cw(X)}${X===pl&&autres.includes("C")?"":` (${cw(X)} reste en place)`}.`,why:`${cw("cp -r")} copie un dossier et tout son contenu. Comme ${cw(Bk)} existe, la copie va dedans : ${cw(Bk+"/"+X)}.`,pts:1.5,Bk,X,
+        pi:[["cp sans -r",[`mkdir ${Bk}`,`cp ${X} ${Bk}`]],["dossier pas créé avant cp -r",[`cp -r ${X} ${Bk}`]]],alt:[[`mkdir ${Bk}`,`cp -R ${X} ${Bk}/`]],faits:[`${Bk}/${X}/`]});}
+    else if(o==="C")ops.push({k:"C",cmds:[`rm -r ${pl}`],con:`Supprime le dossier ${cw(pl)} et tout ce qu'il contient.`,why:`${cw("rmdir")} refuse un dossier qui n'est pas vide, et ${cw("rm")} sans ${cw("-r")} refuse un dossier : il faut ${cw("rm -r")}, sans corbeille.`,pts:1,
+      pi:[["rmdir sur un dossier plein",[`rmdir ${pl}`]],["rm sans -r",[`rm ${pl}`]]],alt:[[`rm -rf ${pl}`]],faits:["!"+pl+"/"]});
+    else if(o==="D"&&vide)ops.push({k:"D",cmds:[`rmdir ${vide}`],con:`Supprime le dossier vide ${cw(vide)}.`,why:`${cw("rmdir")} supprime un dossier vide (${cw("rm -r")} marche aussi).`,pts:1,pi:[["rm sans -r",[`rm ${vide}`]]],alt:[[`rm -r ${vide}`]],faits:["!"+vide+"/"]});
+    else if(o==="D"&&reste.length>1)ops.push({k:"D",cmds:[`rm ${reste[1]}`],con:`Supprime le fichier ${cw(reste[1])}.`,why:`${cw("rm")} supprime un fichier, sans corbeille.`,pts:1,pi:[["rmdir sur un fichier",[`rmdir ${reste[1]}`]]],alt:[[`rm ./${reste[1]}`]],faits:["!"+reste[1]]});
+    else if(o==="E"){const f=reste[0],nv=f.replace(".","-v2.");ops.push({k:"E",cmds:[`mv ${f} ${nv}`],con:`Renomme ${cw(f)} en ${cw(nv)}.`,why:`${cw("mv")} renomme quand la destination n'est pas un dossier qui existe.`,pts:1,pi:[["cp au lieu de mv",[`cp ${f} ${nv}`]]],alt:[[`mv ./${f} ~/projet/${nv}`]],faits:[nv,"!"+f]});}}
+  if(ops.length<2)return null;
+  const ref=ops.flatMap(o=>o.cmds).join("\n"),J=joue2(T,ref);if(J.E.length)return null;const cible=liste2(J.T),avant=liste2(T);
+  const avec=(i,L)=>ops.map((o,j)=>j===i?L:o.cmds).flat().join("\n");
+  const ETAPE={};ops.forEach((o,i)=>o.pi.forEach(([t])=>{if(!(t in ETAPE))ETAPE[t]=i;}));
+  const opB=ops.find(o=>o.k==="B");
+  function diag(r,L){if(r.E.length){const e=r.E[0];return {etape:ETAPE[e.type]!==undefined?ETAPE[e.type]:0,type:e.type,titre:"une commande échoue.",msg:e.msg};}
+    if(opB&&L.includes(opB.Bk+"/")&&!L.includes(opB.Bk+"/"+opB.X+"/")&&cible.includes(opB.Bk+"/"+opB.X+"/"))return {etape:ETAPE["dossier pas créé avant cp -r"]||0,type:"dossier pas créé avant cp -r",titre:"une copie.",msg:`${cw(opB.Bk)} n'existait pas : ${cw("cp -r "+opB.X+" "+opB.Bk)} a fait une copie de ${cw(opB.X)} nommée ${cw(opB.Bk)}, au lieu de la ranger dedans. Crée d'abord ${cw(opB.Bk)} avec ${cw("mkdir")}.`};
+    const f=L.find(x=>!x.endsWith("/")&&cible.includes(x+"/"));
+    if(f)return {etape:ETAPE["dossier pas créé avant mv"]||0,type:"dossier pas créé avant mv",titre:"un déplacement.",msg:`${cw(f)} est devenu un fichier : quand la destination de ${cw("mv")} n'existe pas, ${cw("mv")} renomme au lieu de ranger. Crée d'abord le dossier ${cw(f)}.`};
+    const g=L.find(x=>avant.includes(x)&&!cible.includes(x)&&!x.endsWith("/"));
+    if(g&&L.length>cible.length)return {etape:ETAPE["cp au lieu de mv"]||0,type:"cp au lieu de mv",titre:"un déplacement.",msg:`${cw(g)} est encore là : ${cw("cp")} recopie le fichier et garde l'original, ${cw("mv")} le déplace ou le renomme.`};
+    const m=cible.find(x=>!L.includes(x)),t=L.find(x=>!cible.includes(x));
+    return {etape:0,type:"arbre différent",titre:"le résultat.",msg:m?`À la fin, il manque ${cw(m)}.`:`À la fin, ${cw(t)} est en trop.`};}
+  function juge(rep){const src=rep.c==null?"":String(rep.c);if(!src.trim())return {incomplet:"Écris les commandes, une par ligne."};
+    const r=joue2(T,src);if(r.cd)return {incomplet:`L'énoncé demande de ne pas changer de dossier : pas de ${cw("cd")}, écris les chemins depuis ${cw("projet")} (par exemple ${cw("mv notes.txt docs")}).`};if(r.inconnu)return {incomplet:r.inconnu};
+    const L=liste2(r.T);if(L.join("|")===cible.join("|"))return {ok:true};
+    const d=diag(r,L);return {ok:false,faux:["c"],resume:"Pas tout à fait : à la fin, le dossier n'est pas celui qu'on veut.",diag:{etape:d.etape,type:d.type,titre:"Où ça part : "+d.titre,msg:d.msg}};}
+  const PI=[];ops.forEach((o,i)=>o.pi.forEach(([type,L])=>{const s=avec(i,L);if(!PI.some(x=>x.c===s))PI.push({type,c:s});}));
+  const ALT=ops.flatMap((o,i)=>o.alt.map(L=>avec(i,L)));
+  const vers=(i)=>dessin(noeud(joue2(T,ops.slice(0,i+1).flatMap(o=>o.cmds).join("\n")).T,ab2(COUR2)),"projet");
+  const E=[...ops.map(o=>({w:o.cmds.map(c).join("<br>"),why:o.why,pts:o.pts})),{w:`À la fin, ${cw("ls -R")} montre :${bloc(vers(ops.length-1))}`,why:"On vérifie : chaque fichier est à sa place, sans copie en trop ni oubli.",pts:0.5}];
+  return {sig:"C3"+avant.join(",")+"|"+ref,q:`Tu es dans ${cw("/home/etu/projet")} et tu n'en sors pas : pas de ${cw("cd")}. Écris les commandes, une par ligne, pour faire ce qui est demandé.`,
+    corps:`<p>Le dossier courant, avant :</p>${bloc(dessin(noeud(T,ab2(COUR2)),"projet"))}<p>Ce qu'il faut faire, dans l'ordre :</p><ol>${ops.map(o=>`<li>${o.con}</li>`).join("")}</ol><p>Après, il doit être comme ceci :</p>${bloc(vers(ops.length-1))}`,
+    texte:ops.map(o=>o.k).join("")+" : "+ref.replace(/\n/g," ; "),
+    champs:[{k:"code",id:"c",nom:"commandes",label:"Les commandes :",lignes:ref.split("\n").length+1,ex:"mkdir …",sym:[["mkdir ","mkdir "],["mv ","mv "],["cp -r ","cp -r "],["rm ","rm "],["rmdir ","rmdir "],["/","/"],["..",".."]]}],
+    juge,etapes:E,bonne:ref.split("\n").map(c).join("<br>"),bonneTxt:ref.replace(/\n/g," ; "),repBonne:{c:ref},repFausse:{c:PI[0].c},nature:"ranger : "+ops.map(o=>o.k).join(""),
+    ens:{fam:"cmd",T,ref,cible,avant,faits:ops.flatMap(o=>o.faits),alt:ALT,pieges:PI,bash:[ref,...ALT,...PI.map(x=>x.c)].map(s=>vraiCmd2(T,s))}};}
+const tireCh=k=>R=>{for(;;){const e=[exoCh0,exoCh1,exoCh2,exoCh3][k](R);if(e)return e;}};
+
 G.add("usi",[
  {id:"US1",t:"Les droits : ls -l, chmod et umask",tache:"droits et umask",th:"fichiers",pts:1.5,lecons:["u-droits","u-umask"],
   paliers:[
@@ -30768,6 +31050,12 @@ G.add("usi",[
    {t:"chmod en lettres ou en chiffres",cc:2,min:150,gen:tireDr(1)},
    {t:"umask : les droits d'un nouveau fichier",cc:2,min:100,gen:tireDr(2)},
    {t:"qui peut faire quoi, comme au TD",cc:4,min:200,gen:tireDr(3)}]},
+ {id:"US2",t:"Les chemins : absolus, relatifs, cd et les commandes de base",tache:"chemins",th:"fichiers",pts:1,lecons:["u-chemins"],
+  paliers:[
+   {t:"où mène un chemin",cc:1,min:150,gen:tireCh(0)},
+   {t:"une suite de cd, puis pwd, comme au TD",cc:2,min:150,gen:tireCh(1)},
+   {t:"écrire le chemin : relatif, absolu, avec ~",cc:1,min:150,gen:tireCh(2)},
+   {t:"ranger ses fichiers sans cd, comme au TD",cc:4,min:150,gen:tireCh(3)}]},
  {id:"US4",t:"Tubes et filtres",tache:"tubes et filtres",th:"processus",pts:1,lecons:["u-redir"],
   paliers:[
    {t:"ce qu'affiche un tube",cc:2,min:150,gen:tireTube(0)},
