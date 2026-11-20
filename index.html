@@ -9497,8 +9497,8 @@ const recettes=({sec})=>`<div class="title-row"><h1>Rédactions modèles</h1></d
  ${sec(4,"Montrer que m = sup(A)",`<div class="recipe"><ol><li>« Pour tout a ∈ A, a ≤ m : m est un majorant de A. »</li><li>Exhiber une suite (aₙ) d'éléments de A qui tend vers m (par exemple m − 1/n), ou : « Soit ε &gt; 0 ; a = … ∈ A vérifie m − ε &lt; a. »</li><li>« D'après la caractérisation de la borne supérieure, m = sup(A). »</li></ol></div>`)}`;
 
 SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"rev-ana-v1",lang:"",from:"2026-11-14",
- exams:[{id:"cc1",label:"CC1",day:"2026-11-23",start:"15:00",end:"16:00",place:"amphi 5.02 (double licence)",dur:"1 h",share:0.25},
-        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"salle à confirmer (au CC1 : amphi 5.02)",dur:"1 h",share:0.25,unsure:"Programme du CC2 pas encore annoncé ; ses leçons viendront après le CC1."}],
+ exams:[{id:"cc1",label:"CC1",day:"2026-11-23",start:"15:00",end:"16:00",place:"amphi 5.02 (double licence)",dur:"1 h",share:0.25,src:"annonce de l'enseignante sur le forum Moodle, le 9/11 (« le CC1 de l'UE HAX103X aura lieu lundi 23 novembre à partir de 15 h ») ; la salle, son annonce du 18/11, « CC1 HAX103X, répartition dans les amphis »."},
+        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"salle à confirmer (au CC1 : amphi 5.02)",dur:"1 h",share:0.25,src:"aucune annonce Moodle ni aucun mail retrouvé ne donne cette date : elle est sur le site depuis le début du semestre. Demande-la à l'enseignante ou en TD.",unsure:"Programme du CC2 pas encore annoncé ; ses leçons viendront après le CC1."}],
  docs:"aucun, et aucun appareil électronique",examMinutes:60,get examMorning(){const e=window.APP&&window.APP.exam?window.APP.exam(this):null,id=e?e.id:"cc1";
   return id==="cc1"?"Récite les quatre rédactions modèles (page « Rédactions modèles »), relis les fiches « Caractériser la borne sup ; point adhérent » et « Limite d'une suite : la définition », puis les cartes en rouge."
    :"Relis les fiches en rouge, puis fais les cartes de « Réviser » jusqu'à 0.";},
@@ -16758,7 +16758,7 @@ ana:{
   "Limites et suites":`<p><b>Le lien.</b> Si f(x) tend vers ℓ quand x tend vers x₀, alors pour <b>n'importe quelle</b> suite (xₙ) qui tend vers x₀, la suite des images f(xₙ) tend vers ℓ. Quelle que soit la façon de s'approcher de x₀, on arrive au même résultat.</p>
 <p><b>On s'en sert à l'envers, pour montrer qu'une limite n'existe pas.</b> Il suffit de trouver <b>deux</b> façons de s'approcher de x₀ qui donnent deux résultats différents.</p>
 <p><b>Exemple : la partie entière E(x), en 1.</b> (E(x) est l'entier juste en dessous de x.)</p>
-<ul><li>Je m'approche de 1 par la droite avec xₙ = 1 + 1/n : ces nombres sont entre 1 et 2, donc E(xₙ) = 1. Les images tendent vers 1.</li><li>Je m'approche de 1 par la gauche avec yₙ = 1 − 1/n (n ≥ 2) : ces nombres sont entre 0 et 1, donc E(yₙ) = 0. Les images tendent vers 0.</li></ul>
+<ul><li>Je m'approche de 1 par la droite avec xₙ = 1 + 1/n (n ≥ 2) : ces nombres sont entre 1 et 2, sans atteindre 2, donc E(xₙ) = 1. Les images tendent vers 1.</li><li>Je m'approche de 1 par la gauche avec yₙ = 1 − 1/n (n ≥ 2) : ces nombres sont entre 0 et 1, donc E(yₙ) = 0. Les images tendent vers 0.</li></ul>
 <p>Deux résultats différents : E(x) n'a pas de limite en 1.</p>
 <p><b>La méthode sur la copie :</b> j'écris mes deux suites, je vérifie que toutes les deux tendent vers x₀, je calcule les deux suites d'images, et je constate que leurs limites sont différentes.</p>
 <p><b>L'erreur à éviter.</b> Une seule suite ne prouve rien dans l'autre sens. Par exemple sin(πx) vaut 0 pour tous les entiers x, et pourtant sin(πx) n'a pas de limite en +∞ : entre deux entiers, la fonction remonte à 1 ou redescend à −1.</p>`}},
@@ -19866,7 +19866,7 @@ function limRacine(R){const t=R(),ind0=lu=>lu.v===0?{etape:0,type:"« +∞ − �
     {w:`<b>${fx(`lim uₙ = ${limT(L)}`)}</b>`,why:`Sous chaque racine, tout tend vers 1 : le dénominateur tend vers ${fx("1 + 1 = 2")}.`,pts:1}]});}
 function limPuis(R){const [p,qb]=R.choix([[2,3],[2,5],[3,5],[3,4],[2,7],[4,5],[3,7],[5,7]]),a=R.nz(-5,5),c=R.nz(-5,5),t=R(),b=t<0.8&&t>=0.6?0:R.nz(-5,5),d=t>=0.8?0:R.nz(-5,5);
   const T=(x,y,B1,B2)=>{let s="";[[x,B1],[y,B2]].forEach(([k,B])=>{if(!k)return;const m=Math.abs(k);s+=sgn(s,k)+(m===1?"":m+" × ")+B;});return s;},pn=p+"ⁿ",qn=qb+"ⁿ",r=`(${p}/${qb})ⁿ`,ri=`(${qb}/${p})ⁿ`;
-  const num=T(a,b,pn,qn),den=T(c,d,pn,qn),expr=`${b?`(${num})`:num}/${d?`(${den})`:den}`;
+  const num=T(a,b,pn,qn),den=T(c,d,pn,qn),expr=`${b?`(${num})`:num}/${d||/[×−]/.test(den)?`(${den})`:den}`;
   if(d){const L={v:Q(b,d)},cst=(x,y)=>{let s=T(x,0,r,"");if(y)s+=sgn(s,y)+Math.abs(y);return s;};
     return limite({sig:"LG"+[p,qb,a,b,c,d],expr,lim:L,nature:b?"quotient des coefficients":"vers 0",type:"quotient de puissances",ens:{u:n=>(a*Math.pow(p/qb,n)+b)/(c*Math.pow(p/qb,n)+d),grand:[60,120]},
       diag:lu=>lu.inf||lu.sans?{etape:1,type:"limite de qⁿ avec q entre 0 et 1",titre:"Où ça part : la limite de la puissance.",msg:`${fx(r)} tend vers 0, parce que ${fx(`${p}/${qb}`)} est entre 0 et 1.`}:null,etapes:[
