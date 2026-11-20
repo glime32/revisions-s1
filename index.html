@@ -25691,6 +25691,212 @@ function dmPiege(R){const v=R.ent(0,2),ln=R()<0.5;
 const dmDeux=R=>{const t=R();return (t<0.25?dmSur:t<0.4?dmSousRac:t<0.6?dmInvLn:t<0.85?dmSomme:dmPiege)(R);};
 const dmMix=R=>R.choix([dmSimple,dmQuot,dmTrin,dmRapport,dmSur,dmSousRac,dmInvLn,dmSomme,dmPiege])(R);
 
+/* ---------- CA9 : étude de fonction (CC1 2025, exercice 1 ; CC 2023, exercice 3) ----------
+   Six familles dont on connaît tout : domaine, limites aux bornes, dérivée, zéros de f′, valeurs aux extremums.
+   Le contrôle relit ens.expr et refait chaque morceau en nombres flottants. */
+const feV=(t,tp,v)=>({t,tp,v}),feQ=r=>{r=q(r);return feV(nb(r),brut(r),r.n/r.d);};
+const feE=m=>m===0?"1":m===1?"e":`e^{${nb(m)}}`;
+function feEx(c,m){c=q(c);if(m===0)return feQ(c);const E=feE(m),an=Math.abs(c.n),top=an===1?E:an+E;
+  return feV((c.n<0?"−":"")+(c.d===1?top:lmF(top,c.d)),`(${brut(c)})*e^(${m})`,c.n/c.d*Math.exp(m));}
+const feInf=s=>({x:s*Infinity,t:lmInf(s),k:"inf"}),feBord=c=>({x:c,t:nb(c),k:"bord"}),feZ=z=>({x:z.v,t:z.t,k:"zero"});
+const feLim=(P,L,w,why,pg)=>({P,L,w,why,pg:pg||[]}),feSg=v=>v>0?"+":"−",feFl=v=>v>0?"↗":"↘",feAff=s=>s>0?"croissante : négative avant, positive après":"décroissante : positive avant, négative après";
+const FE_DIV="Diviser par un nombre qui tend vers 0 ne donne pas 0 : le quotient devient très grand, et son signe vient des signes du haut et du bas.";
+const FE_QUOT="(u/v)′ = (u′v − uv′)/v² : d'abord u′v, puis moins uv′.";
+const FE_FRAC="Une fraction n'existe que si son dénominateur est différent de 0.";
+function feTire(R,fam){let o;
+  if(fam==="cube"){const s=R()<0.5?1:-1,p=R.ent(1,3),k=R.ent(-5,5),p2=p*p,z=[feQ(-p),feQ(p)],fa=`${s>0?"3":"−3"}(x + ${p})(x − ${p})`;
+    o={sig:`c${s},${p},${k}`,nat:"polynôme de degré 3",expr:lmPoly([k,-3*s*p2,0,s]),f:x=>s*(x**3-3*p2*x)+k,d:x=>3*s*(x*x-p2),P:dmR(),
+      Dw:{w:`f est un polynôme : ${fx("D = ℝ")}.`,why:"Un polynôme se calcule pour tout réel x."},dJ:"f est un polynôme : elle est dérivable sur ℝ.",
+      dT:lmPoly([-3*s*p2,0,3*s]),dTp:`${3*s}*x^2+(${-3*s*p2})`,dF:fa,noeuds:[feInf(-1),feZ(z[0]),feZ(z[1]),feInf(1)],zeros:z,vals:[feQ(2*s*p**3+k),feQ(-2*s*p**3+k)],
+      vWhy:`On remplace x dans f(x) : ${fx(`(${nb(-p)})³ = ${nb(-(p**3))}`)} et ${fx(`${p}³ = ${p**3}`)}.`,
+      bornes:[-1,1].map(t=>feLim({inf:t},{inf:t*s},`En ${fx(lmInf(t))}, f a la même limite que son terme de plus haut degré, ${fx(lmM(s,3))}.`,`${fx("x³")} tend vers ${fx(lmInf(t))} quand x tend vers ${fx(lmInf(t))}${s<0?" ; le signe moins change le signe de l'infini":""}.`))};
+    o.dE=[{w:`${fx(`f′(x) = ${o.dT}`)}.`,why:`On dérive terme à terme : ${fx("(x³)′ = 3x²")}, ${fx("(x)′ = 1")}${k?`, et la constante ${nb(k)} a pour dérivée 0`:""}.`}];
+    o.sgW={w:`On factorise : ${fx(`f′(x) = ${fa}`)}, qui s'annule en ${fx(nb(-p))} et en ${fx(nb(p))}.`,why:`${fx(`x² − ${p2} = (x + ${p})(x − ${p})`)}. Un trinôme a le signe de son coefficient en x² à l'extérieur de ses racines, le signe contraire entre elles.`};
+    o.dpg=[[x=>3*s*x*x,`${3*s}*x^2`,"dérivée terme à terme",`Chaque terme se dérive : ${fx("(x)′ = 1")}, donc le terme en x donne une constante.`]];}
+  else if(fam==="homo"||fam==="rat"){const c=fam==="homo"?R.ent(-5,5):R.ent(-3,3),den=lmPoly([-c,1]),den2=c?`(${den})²`:"x²",denP=c?`(${den})`:"x",bords=[-1,1];
+    const base={P:dmSauf(c),acc:dmAcc(c),dJ:"f est une fraction rationnelle (un quotient de polynômes) : elle est dérivable sur son domaine D.",
+      Dw:{w:`Le dénominateur doit être non nul : ${c?`${fx(`${den} ≠ 0`)} donne `:""}${fx(`x ≠ ${nb(c)}`)}, donc ${fx(`D = ${dmT(dmSauf(c))}`)}.`,why:FE_FRAC},
+      Dpg:[[dmR(),"valeur interdite oubliée","le dénominateur.",`Pour ${fx(`x = ${nb(c)}`)}, le dénominateur vaut 0 : f n'y est pas définie.`,0]]};
+    if(fam==="homo"){let a,b;do{a=R.nz(-4,4);b=R.ent(-6,6);}while(a*c+b===0);
+      const K=a*c+b,N=-K,num=dmAff(a,b),aV=c?`${coefK(a)}${denP}`:lmM(a,1),dT=(N<0?"−":"")+lmF(Math.abs(N),den2);
+      o=Object.assign(base,{sig:`h${a},${b},${c}`,nat:"quotient de deux affines",expr:lmF(num,den),f:x=>(a*x+b)/(x-c),d:x=>N/(x-c)**2,dT,dTp:`(${N})/(x-(${c}))^2`,dF:dT,
+        noeuds:[feInf(-1),feBord(c),feInf(1)],zeros:[],vals:[],vWhy:"",
+        dE:[{w:`${fx(`u(x) = ${num}`)} et ${fx(`v(x) = ${den}`)}, donc ${fx(`u′(x) = ${nb(a)}`)} et ${fx("v′(x) = 1")}.`,why:"f est un quotient u/v de deux fonctions dérivables, avec v ≠ 0 sur D."},
+          {w:`${fx(`f′(x) = ${lmF(`${aV} − (${num})`,den2)}`)}.`,why:fx("(u/v)′ = (u′v − uv′)/v²")},
+          {w:`Au numérateur, les termes en x s'annulent : ${fx(`f′(x) = ${dT}`)}.`,why:`${fx(`${aV} − (${num}) = ${nb(N)}`)}.`}],
+        sgW:{w:`${fx(`f′(x) = ${dT}`)} ne s'annule jamais sur D : elle a partout le signe de ${fx(nb(N))}.`,why:`Le dénominateur ${fx(den2)} est un carré, strictement positif sur D.`},
+        dpg:[[x=>-N/(x-c)**2,`-(${N})/(x-(${c}))^2`,"ordre de u′v et uv′",FE_QUOT]],
+        bornes:[feLim({inf:-1},{v:Q(a)},`En ${fx("−∞")}, f se comporte comme le quotient des termes de plus haut degré : ${fx(`${lmF(lmM(a,1),"x")} = ${nb(a)}`)}.`,"On peut aussi diviser le haut et le bas par x : les termes en 1/x tendent vers 0.",[{L:{v:Q(0)},type:"forme ∞/∞",msg:"Le haut et le bas tendent tous les deux vers l'infini : c'est une forme indéterminée, qu'on lève avec les termes de plus haut degré."}])]
+          .concat(bords.map(t=>feLim({a:c,c:t},{inf:t*Math.sign(K)},`En ${fx(lmPt({a:c,c:t}))}, le haut tend vers ${fx(nb(K))} et le bas ${fx(den)} tend vers 0 en restant ${t>0?"positif":"négatif"}.`,`${fx(nb(K))} divisé par un nombre ${t>0?"positif":"négatif"} très proche de 0 : le quotient est très grand, de signe ${t*K>0?"+":"−"}.`,[{L:{v:Q(0)},type:"division par 0",msg:FE_DIV}])))
+          .concat([feLim({inf:1},{v:Q(a)},`En ${fx("+∞")}, f se comporte comme le quotient des termes de plus haut degré : ${fx(`${lmF(lmM(a,1),"x")} = ${nb(a)}`)}.`,"On peut aussi diviser le haut et le bas par x : les termes en 1/x tendent vers 0.",[{L:{v:Q(0)},type:"forme ∞/∞",msg:"Le haut et le bas tendent tous les deux vers l'infini : c'est une forme indéterminée, qu'on lève avec les termes de plus haut degré."}])])});}
+    else{const m=R.ent(1,3),a=R.ent(-4,4),m2=m*m,num=lmPoly([m2-a*c,a-c,1]),nD=lmPoly([c*c-m2,-2*c,1]),du=lmPoly([a-c,2]),z=[feQ(c-m),feQ(c+m)],fa=lmF([dmFac(c-m),dmFac(c+m)].sort((u,v)=>(v==="x")-(u==="x")).join(""),den2),dT=lmF(nD,den2);
+      const pgI={L:{v:Q(1)},type:"forme ∞/∞",msg:"Le haut est de degré 2 et le bas de degré 1 : le quotient se comporte comme x²/x = x, qui tend vers l'infini."};
+      o=Object.assign(base,{sig:`r${m},${a},${c}`,nat:"fraction rationnelle avec deux extremums",expr:lmF(num,den),f:x=>x+a+m2/(x-c),d:x=>1-m2/(x-c)**2,dT,dTp:`(x^2+(${-2*c})*x+(${c*c-m2}))/(x-(${c}))^2`,dF:fa,
+        noeuds:[feInf(-1),feZ(z[0]),feBord(c),feZ(z[1]),feInf(1)],zeros:z,vals:[feQ(c+a-2*m),feQ(c+a+2*m)],
+        vWhy:`Pour x ≠ ${nb(c)}, ${fx(`f(x) = ${lmPoly([a,1])} + ${lmF(m2,den)}`)} (on le vérifie en remettant au même dénominateur), puis on remplace x.`,
+        dE:[{w:`${fx(`u(x) = ${num}`)} et ${fx(`v(x) = ${den}`)}, donc ${fx(`u′(x) = ${du}`)} et ${fx("v′(x) = 1")}.`,why:"f est un quotient u/v de deux fonctions dérivables, avec v ≠ 0 sur D."},
+          {w:`${fx(`f′(x) = ${lmF(`(${du})${denP} − (${num})`,den2)}`)}.`,why:fx("(u/v)′ = (u′v − uv′)/v²")},
+          {w:`On développe le haut : ${fx(`f′(x) = ${dT}`)}.`,why:`${fx(`(${du})${denP} = ${lmPoly([-c*(a-c),a-3*c,2])}`)}, puis on retire ${fx(num)} terme à terme.`}],
+        sgW:{w:`Le haut vaut ${fx(`${den2} − ${m2}`)}, donc ${fx(`f′(x) = ${fa}`)} : f′ s'annule en ${fx(z[0].t)} et en ${fx(z[1].t)}.`,why:`${fx("A² − B² = (A − B)(A + B)")}. Le bas est un carré, strictement positif sur D ; le haut est un trinôme, positif à l'extérieur de ses racines, négatif entre elles.`},
+        dpg:[[x=>-(1-m2/(x-c)**2),`-(${`(x^2+(${-2*c})*x+(${c*c-m2}))/(x-(${c}))^2`})`,"ordre de u′v et uv′",FE_QUOT]],
+        bornes:[feLim({inf:-1},{inf:-1},`En ${fx("−∞")}, f se comporte comme le quotient des termes de plus haut degré : ${fx(`${lmF("x²","x")} = x`)}.`,`x tend vers ${fx("−∞")}.`,[pgI])]
+          .concat(bords.map(t=>feLim({a:c,c:t},{inf:t},`En ${fx(lmPt({a:c,c:t}))}, le haut tend vers ${fx(String(m2))} (sa valeur en ${fx(nb(c))}) et le bas ${fx(den)} tend vers 0 en restant ${t>0?"positif":"négatif"}.`,`Un nombre positif divisé par un nombre ${t>0?"positif":"négatif"} très proche de 0 : f tend vers ${fx(lmInf(t))}.`,[{L:{v:Q(0)},type:"division par 0",msg:FE_DIV}])))
+          .concat([feLim({inf:1},{inf:1},`En ${fx("+∞")}, f se comporte comme le quotient des termes de plus haut degré : ${fx(`${lmF("x²","x")} = x`)}.`,`x tend vers ${fx("+∞")}.`,[pgI])])});}}
+  else if(fam==="expo"){const k=R.choix([1,-1,2,-2]),b=R.ent(-5,5),E=lmE(k),u=lmPoly([b,1]),uP=b?`(${u})`:"x",lin=dmAff(k,k*b+1),xq=Q(-b*k-1,k),x0=feQ(xq),m=-b*k-1,ak=Math.abs(k)===1?"":Math.abs(k);
+    const dT=k*b+1?`(${lin})${E}`:`${lin} ${E}`,cc={L:{v:Q(0)},w:`c'est une forme « ∞ × 0 ». Par croissances comparées, l'exponentielle l'emporte.`,why:`${fx(`x ${E}`)} tend vers 0${b?`, et ${fx(`${nb(b)}${E}`)} aussi`:""}.`};
+    o={sig:`e${k},${b}`,nat:"(x + b)eᵏˣ",expr:`${uP}${b?"":" "}${E}`,f:x=>(x+b)*Math.exp(k*x),d:x=>(k*x+k*b+1)*Math.exp(k*x),P:dmR(),
+      Dw:{w:`${fx(u)} et ${fx(E)} se calculent pour tout réel x : ${fx("D = ℝ")}.`,why:"Un polynôme et l'exponentielle sont définis sur ℝ."},
+      dJ:`f est le produit de ${fx(`x ↦ ${u}`)} et de ${fx(`x ↦ ${E}`)}, dérivables sur ℝ : f est dérivable sur ℝ.`,dT,dTp:`(${k}*x+(${k*b+1}))*e^(${k}*x)`,dF:dT,
+      noeuds:[feInf(-1),feZ(x0),feInf(1)],zeros:[x0],vals:[feEx(Q(-1,k),m)],
+      vWhy:`En ${fx(`x = ${x0.t}`)} : ${b?`${fx(`x ${b<0?"−":"+"} ${Math.abs(b)} = ${nb(Q(-1,k))}`)}, et `:""}l'exposant vaut ${fx(`${lmM(k,1)} = ${nb(m)}`)}.`,
+      dE:[{w:`${fx(`u(x) = ${u}`)} et ${fx(`v(x) = ${E}`)}, donc ${fx("u′(x) = 1")} et ${fx(`v′(x) = ${coefK(k)}${E}`)}.`,why:`f est un produit uv, et ${fx("(e^{kx})′ = ke^{kx}")}.`},
+        {w:`${fx(`f′(x) = ${E} ${k>0?"+":"−"} ${ak}${uP} ${E}`)}, puis on met ${fx(E)} en facteur : ${fx(`f′(x) = ${dT}`)}.`,why:`${fx("(uv)′ = u′v + uv′")}, et ${fx(`1 ${k>0?"+":"−"} ${ak}${uP} = ${lin}`)}.`}],
+      sgW:{w:`Une exponentielle est strictement positive : f′(x) a le signe de ${fx(lin)}, qui s'annule en ${fx(`x = ${x0.t}`)}.`,why:`${fx(`${lin} = 0`)} donne ${fx(`x = ${x0.t}`)}, et ${fx(lin)} est une fonction affine ${feAff(k)}.`},
+      dpg:[[x=>k*Math.exp(k*x),`${k}*e^(${k}*x)`,"dérivée d'un produit",`${fx("(uv)′ = u′v + uv′")}, et non ${fx("u′v′")}.`]].concat(k===1?[]:[[x=>Math.exp(k*x)*(1+x+b),`(x+(${b+1}))*e^(${k}*x)`,"dérivée de l'exponentielle",`${fx("(e^{kx})′ = ke^{kx}")} : n'oublie pas le facteur ${fx(nb(k))}.`]]),
+      bornes:k>0?[feLim({inf:-1},cc.L,`En ${fx("−∞")}, ${fx(u)} tend vers ${fx("−∞")} et ${fx(E)} vers 0 : ${cc.w}`,cc.why,[{L:{inf:-1},type:"croissances comparées",msg:"C'est une forme « ∞ × 0 » : en −∞, l'exponentielle l'emporte sur x, et le produit tend vers 0."}]),
+          feLim({inf:1},{inf:1},`En ${fx("+∞")}, ${fx(u)} et ${fx(E)} tendent vers ${fx("+∞")}.`,`Par produit : ${fx("(+∞) × (+∞) = +∞")}.`)]
+        :[feLim({inf:-1},{inf:-1},`En ${fx("−∞")}, ${fx(u)} tend vers ${fx("−∞")} et ${fx(E)} vers ${fx("+∞")}.`,`Par produit : ${fx("(−∞) × (+∞) = −∞")}.`),
+          feLim({inf:1},cc.L,`En ${fx("+∞")}, ${fx(u)} tend vers ${fx("+∞")} et ${fx(E)} vers 0 : ${cc.w}`,cc.why,[{L:{inf:1},type:"croissances comparées",msg:"C'est une forme « ∞ × 0 » : en +∞, l'exponentielle l'emporte sur x, et le produit tend vers 0."}])]};}
+  else if(fam==="log"){const s=R()<0.5?1:-1,p=R.ent(1,3),qq=R.ent(1,6),r=Q(qq,p),x0=feQ(r),px=lmM(p,1),ql=`${qq===1?"":qq+" "}ln(x)`,nm=s>0?`${px} − ${qq}`:`${qq} − ${px}`,lt=r.d===1?`ln ${r.n}`:`ln(${nb(r)})`,qf=`${qq===1?"":qq+" "}${lmF("ln(x)","x")}`;
+    const dT=lmF(nm,"x"),ff={type:"forme ∞ − ∞",msg:"C'est une forme « ∞ − ∞ » : on met x en facteur, et ln(x)/x tend vers 0 par croissances comparées."};
+    o={sig:`l${s},${p},${qq}`,nat:"x et ln x",expr:s>0?`${px} − ${ql}`:`${ql} − ${px}`,f:x=>s*(p*x-qq*Math.log(x)),d:x=>s*(p-qq/x),P:[dmI(0,true,null,true)],
+      Dw:{w:`${fx("ln(x)")} n'existe que pour ${fx(`x ${dmGT} 0`)} : ${fx("D = ]0 ; +∞[")}.`,why:"Le logarithme n'est défini que sur ]0 ; +∞[, le reste se calcule partout."},
+      Dpg:[[dmR(),"condition du logarithme oubliée","le logarithme.",`${fx("ln(x)")} n'existe que si ${fx(`x ${dmGT} 0`)}.`,0]],
+      dJ:`${fx("x ↦ x")} et ln sont dérivables sur ${fx("]0 ; +∞[")} : f l'est aussi.`,dT,dTp:`(${s})*(${p}*x-${qq})/x`,dF:dT,
+      noeuds:[feBord(0),feZ(x0),feInf(1)],zeros:[x0],
+      vals:[r.n===r.d?feQ(s*qq):feV(s>0?(qq===1?`1 − ${lt}`:`${qq} − ${qq} ${lt}`):(qq===1?`${lt} − 1`:`${qq} ${lt} − ${qq}`),`(${s})*(${qq}-${qq}*ln(${brut(r)}))`,s*(qq-qq*Math.log(qq/p)))],
+      vWhy:p===1?`On remplace x par ${fx(x0.t)} dans f(x).`:`En ${fx(`x = ${x0.t}`)} : ${fx(`${p} × ${x0.t} = ${qq}`)}.`,
+      dE:[{w:`${fx(`f′(x) = ${s>0?`${p} − ${lmF(qq,"x")}`:`${lmF(qq,"x")} − ${p}`}`)}.`,why:`${fx("(ln x)′ = 1/x")} et ${fx(`(${px})′ = ${p}`)}.`},
+        {w:`Au même dénominateur : ${fx(`f′(x) = ${dT}`)}.`,why:`${fx(`${p} = ${lmF(px,"x")}`)} pour x ≠ 0.`}],
+      sgW:{w:`Sur D, ${fx(`x ${dmGT} 0`)} : f′(x) a le signe de ${fx(nm)}, qui s'annule en ${fx(`x = ${x0.t}`)}.`,why:`${fx(`${nm} = 0`)} donne ${fx(`x = ${x0.t}`)}, et ${fx(nm)} est une fonction affine ${feAff(s)}.`},
+      dpg:[[x=>s*p,String(s*p),"dérivée du logarithme",`${fx("(ln x)′ = 1/x")} : le terme en ln(x) ne disparaît pas en dérivant.`]],
+      bornes:[feLim({a:0,c:1},{inf:s},`En ${fx("0⁺")}, ${fx("ln(x)")} tend vers ${fx("−∞")}, donc ${s>0?`${fx(`−${ql}`)} tend vers ${fx("+∞")}`:`${fx(ql)} tend vers ${fx("−∞")}`}, et ${fx(px)} tend vers 0.`,`${fx("lim_{x → 0⁺} ln(x) = −∞")}, et il n'y a pas de forme indéterminée.`),
+        feLim({inf:1},{inf:s},`En ${fx("+∞")}, c'est une forme « ∞ − ∞ ». On met x en facteur : ${fx(`f(x) = x(${s>0?`${p} − ${qf}`:`${qf} − ${p}`})`)}.`,`Par croissances comparées, ${fx("ln(x)/x")} tend vers 0 : la parenthèse tend vers ${fx(nb(s*p))}, et x vers ${fx("+∞")}.`,[Object.assign({L:{v:Q(0)}},ff),Object.assign({L:{inf:-s}},ff)])]};}
+  else{const g=R()<0.45?1:2;
+    if(g===1){const k=R.ent(1,5),kl=k===1?"ln(x)":`${k} ln(x)`,nm=k===1?"1 − ln(x)":`${k}(1 − ln(x))`,dT=lmF(nm,"x²"),t1=lmF(`${k} − ${kl}`,"x²"),zz=feV("e","e",Math.E);
+      o={sig:`q${k}`,nat:"ln(x)/x",expr:lmF(kl,"x"),f:x=>k*Math.log(x)/x,d:x=>k*(1-Math.log(x))/(x*x),dT,dTp:`${k}*(1-ln(x))/x^2`,dF:dT,
+        Dw:{w:`${fx("ln(x)")} exige ${fx(`x ${dmGT} 0`)}, et le dénominateur x ne s'annule pas sur ${fx("]0 ; +∞[")} : ${fx("D = ]0 ; +∞[")}.`,why:"Le logarithme n'est défini que pour x strictement positif, et une fraction demande un dénominateur non nul."},
+        Dpg:[[dmSauf(0),"condition du logarithme oubliée","le logarithme.",`Le dénominateur n'est pas la seule condition : ${fx("ln(x)")} n'existe que si ${fx(`x ${dmGT} 0`)}.`,0],[dmR(),"condition du logarithme oubliée","le logarithme.",`${fx("ln(x)")} n'existe que si ${fx(`x ${dmGT} 0`)}.`,0]],
+        dJ:`ln et ${fx("x ↦ x")} sont dérivables sur ${fx("]0 ; +∞[")}, et x ne s'y annule pas : f est dérivable sur D.`,
+        noeuds:[feBord(0),feZ(zz),feInf(1)],zeros:[zz],vals:[feEx(Q(k),-1)],vWhy:`${fx("ln(e) = 1")}, donc ${fx(`f(e) = ${lmF(k,"e")}`)}.`,
+        dE:[{w:`${fx(`u(x) = ${kl}`)} et ${fx("v(x) = x")}, donc ${fx(`u′(x) = ${lmF(k,"x")}`)} et ${fx("v′(x) = 1")}.`,why:`f est un quotient u/v, et ${fx("(ln x)′ = 1/x")}.`},
+          {w:`${fx(`f′(x) = ${t1}`)}${k===1?"":`, soit ${fx(`f′(x) = ${dT}`)}`}.`,why:`${fx("(u/v)′ = (u′v − uv′)/v²")}, et ${fx(`u′v = ${lmF(k,"x")} × x = ${k}`)}.`}],
+        sgW:{w:`${fx("x²")} est strictement positif sur D : f′(x) a le signe de ${fx("1 − ln(x)")}, qui s'annule en ${fx("x = e")}.`,why:`${fx(`1 − ln(x) ${dmGT} 0`)} ⇔ ${fx(`ln(x) ${dmLT} 1`)} ⇔ ${fx(`x ${dmLT} e`)}, car ln est strictement croissante et ${fx("ln(e) = 1")}.`},
+        dpg:[[x=>k*(Math.log(x)-1)/(x*x),`${k}*(ln(x)-1)/x^2`,"ordre de u′v et uv′",FE_QUOT]],
+        bornes:[feLim({a:0,c:1},{inf:-1},`En ${fx("0⁺")}, ${fx("ln(x)")} tend vers ${fx("−∞")} et ${fx("1/x")} vers ${fx("+∞")}.`,`Ce n'est pas une forme indéterminée : ${fx("(−∞) × (+∞) = −∞")}.`,[{L:{v:Q(0)},type:"pas une forme indéterminée",msg:"(−∞) × (+∞) n'est pas une forme indéterminée : le produit tend vers −∞."}]),
+          feLim({inf:1},{v:Q(0)},`En ${fx("+∞")}, c'est une forme « ∞/∞ ».`,`Par croissances comparées, ${fx("ln(x)/x")} tend vers 0 en ${fx("+∞")} : x l'emporte sur ln(x).`,[{L:{inf:1},type:"croissances comparées",msg:"En +∞, x l'emporte sur ln(x) : ln(x)/x tend vers 0."}])]};}
+    else{const k=R.choix([1,2,3,-1,-2,-3]),sg=Math.sign(k),kx=lmM(k,1),dT=k===1?"ln(x) + 1":k===-1?"−ln(x) − 1":`${nb(k)}(ln(x) + 1)`,zz=feV("e^{−1}","e^(-1)",1/Math.E),ax=lmM(Math.abs(k),1);
+      o={sig:`p${k}`,nat:"x ln(x)",expr:`${kx} ln(x)`,f:x=>k*x*Math.log(x),d:x=>k*(Math.log(x)+1),dT,dTp:`${k}*(ln(x)+1)`,dF:dT,
+        Dw:{w:`${fx("ln(x)")} exige ${fx(`x ${dmGT} 0`)} : ${fx("D = ]0 ; +∞[")}.`,why:"Le logarithme n'est défini que sur ]0 ; +∞[."},
+        Dpg:[[dmR(),"condition du logarithme oubliée","le logarithme.",`${fx("ln(x)")} n'existe que si ${fx(`x ${dmGT} 0`)}.`,0]],
+        dJ:`f est le produit de ${fx(`x ↦ ${kx}`)} et de ln, dérivables sur ${fx("]0 ; +∞[")} : f est dérivable sur D.`,
+        noeuds:[feBord(0),feZ(zz),feInf(1)],zeros:[zz],vals:[feEx(Q(-k),-1)],vWhy:`${fx("ln(e^{−1}) = −1")} : on remplace x par ${fx("e^{−1}")} dans f(x).`,
+        dE:[{w:`${fx(`u(x) = ${kx}`)} et ${fx("v(x) = ln(x)")}, donc ${fx(`u′(x) = ${nb(k)}`)} et ${fx("v′(x) = 1/x")}.`,why:"f est un produit uv."},
+          {w:`${fx(`f′(x) = ${coefK(k)}ln(x) ${k>0?"+":"−"} ${ax} × 1/x`)}, soit ${fx(`f′(x) = ${dT}`)}.`,why:`${fx("(uv)′ = u′v + uv′")}, et ${fx(`${ax} × 1/x = ${Math.abs(k)}`)}.`}],
+        sgW:{w:`${k===1?"":`${fx(`f′(x) = ${dT}`)} : `}f′(x) a le signe ${k>0?"de":"contraire de"} ${fx("ln(x) + 1")}, qui s'annule en ${fx("x = e^{−1}")}.`,why:`${fx(`ln(x) + 1 ${dmGT} 0`)} ⇔ ${fx(`ln(x) ${dmGT} −1`)} ⇔ ${fx(`x ${dmGT} e^{−1}`)}, car ln est strictement croissante.`},
+        dpg:[[x=>k*Math.log(x),`${k}*ln(x)`,"dérivée d'un produit",`${fx("(uv)′ = u′v + uv′")} : le terme ${fx(`uv′ = ${ax} × 1/x`)} a été oublié.`]],
+        bornes:[feLim({a:0,c:1},{v:Q(0)},`En ${fx("0⁺")}, x tend vers 0 et ${fx("ln(x)")} vers ${fx("−∞")} : c'est une forme « 0 × ∞ ».`,`Par croissances comparées, ${fx("x ln(x)")} tend vers 0 en ${fx("0⁺")}.`,[{L:{inf:-sg},type:"croissances comparées",msg:"C'est une forme « 0 × ∞ » : près de 0, x l'emporte sur ln(x), et x ln(x) tend vers 0."}]),
+          feLim({inf:1},{inf:sg},`En ${fx("+∞")}, ${fx(kx)} tend vers ${fx(lmInf(sg))} et ${fx("ln(x)")} vers ${fx("+∞")}.`,`Par produit : f tend vers ${fx(lmInf(sg))}.`)]};}
+    o.P=[dmI(0,true,null,true)];}
+  const N=o.noeuds;o.inter=N.slice(1).map((h,i)=>`]${N[i].t} ; ${h.t}[`);
+  o.signes=N.slice(1).map((h,i)=>{const a=N[i].x,b=h.x,m=a===-Infinity?b-1:b===Infinity?a+1:(a+b)/2;return Math.sign(o.d(m));});
+  return o;}
+const FE_FAM=["cube","homo","homo","expo","expo","log","log","lnx","rat","rat"];
+const feFin=b=>`${b.w} Donc ${lmFin(b.P,b.L)}.`;
+const feEns=o=>({expr:o.expr,D:dmTp(o.P),dTp:o.dTp,noeuds:o.noeuds.map(n=>n.x),genres:o.noeuds.map(n=>n.k),zeros:o.zeros.map(z=>z.tp),vals:o.vals.map(v=>v.tp),signes:o.signes,
+  lims:o.bornes.map((b,i)=>({id:"l"+i,pt:b.P.inf?b.P.inf*Infinity:b.P.a,cote:b.P.c||0,lim:b.L.inf?b.L.inf*Infinity:b.L.v.n/b.L.v.d,aff:lmT(b.L),pieges:b.pg.map(p=>[lmTp(p.L),p.type])}))});
+function feTab(o){const N=o.noeuds,S=o.signes,lim=(x,c)=>{const b=o.bornes.find(b=>b.P.inf?!c&&b.P.inf*Infinity===x:b.P.a===x&&b.P.c===c);return b?fx(lmT(b.L)):"";};
+  const X=[],Dp=[],F=[];let zi=0;
+  N.forEach((n,i)=>{if(i){X.push("");Dp.push(feSg(S[i-1]));F.push(feFl(S[i-1]));}X.push(fx(n.t));
+    if(n.k==="inf"){Dp.push("");F.push(lim(n.x,0));}else if(n.k==="zero"){Dp.push("0");F.push(fx(o.vals[zi++].t));}else{Dp.push("‖");F.push(`${lim(n.x,-1)} ‖ ${lim(n.x,1)}`.trim());}});
+  const ligne=(t,L)=>`<tr><td>${t}</td> ${L.map(c=>`<td>${c}</td>`).join(" ")}</tr>`;
+  return `<div style="overflow-x:auto"><table class="tbl tv"><tbody>${ligne(fx("x"),X)} ${ligne(fx("f′(x)"),Dp)} ${ligne("<b>f</b>",F)}</tbody></table></div>`;}
+/* palier 1 : le domaine (le juge de CA15) */
+function feDom(R){const o=feTire(R,R.choix(["homo","homo","rat","rat","log","log","lnx","expo"]));
+  const e=dmExo({sig:"E"+o.sig,expr:o.expr,P:o.P,nature:o.nat,type:"domaine",pieges:o.Dpg||[],acc:o.acc,
+    etapes:[{w:o.Dw.w,why:o.Dw.why,pts:1},{w:`Donc ${fx(`D = ${dmT(o.P)}`)}.`,why:"On écrit D avec des intervalles : crochet ouvert du côté d'une valeur interdite et du côté de l'infini.",pts:1}]});
+  e.q=`On commence l'étude de ${fx(`f(x) = ${o.expr}`)}. Donne son domaine de définition D, comme un intervalle ou une réunion d'intervalles.`;
+  e.texte="étude de fonction, domaine de "+o.expr;e.ens.etude="dom";return e;}
+/* palier 2 : les limites aux bornes du domaine */
+function feLims(R){const o=feTire(R,R.choix(FE_FAM)),B=o.bornes,ids=B.map((_,i)=>"l"+i),D=dmT(o.P);
+  const E=[{w:`${fx(`D = ${D}`)} : on cherche la limite de f en chaque borne (${B.map(b=>fx(lmPt(b.P))).join(", ")}).`,why:o.noeuds.some(n=>n.k==="bord"&&n.x!==0)?"Autour d'une valeur interdite, on regarde les deux côtés : à gauche et à droite.":"Une limite par borne du domaine.",pts:1}].concat(B.map(b=>({w:feFin(b),why:b.why,pts:1})));
+  const ok=(L,lu)=>L.inf?lu.inf===L.inf:lu.v!==undefined&&pres(lu.v,L.v.n/L.v.d);
+  function juge(rep){const lu=ids.map(k=>lmLis(rep[k]));
+    if(lu.some(x=>!x))return {incomplet:"Écris chaque limite : un nombre exact (3, -1/2), +∞ ou −∞."};
+    if(lu.some((x,i)=>x.dec&&!B[i].L.inf&&!ok(B[i].L,x)))return {incomplet:"Donne les valeurs exactes : une fraction, pas un nombre à virgule arrondi."};
+    const F=ids.filter((_,i)=>!ok(B[i].L,lu[i]));if(!F.length)return {ok:true};
+    const i=ids.indexOf(F[0]),b=B[i],x=lu[i],g=b.pg.find(p=>ok(p.L,x)),et=1+i,ici=`Ici ${lmFin(b.P,b.L)}.`;
+    const d=g?lmD(et,g.type,`la limite en ${lmPt(b.P)}.`,`${g.msg} ${ici}`):x.sans?lmD(et,"limite déclarée inexistante",`la limite en ${lmPt(b.P)}.`,`Cette limite existe. ${ici}`)
+      :b.L.inf&&x.inf?lmD(et,"signe de l'infini",`la limite en ${lmPt(b.P)}.`,`f tend bien vers l'infini, mais reprends le signe de chaque morceau. ${ici}`):lmD(et,"limite aux bornes",`la limite en ${lmPt(b.P)}.`,ici);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length} limite${F.length>1?"s sont":" est"} à revoir.`,diag:d};}
+  const RB=Object.fromEntries(ids.map((k,i)=>[k,lmTp(B[i].L)])),b0=B[0];
+  return {sig:"EL"+o.sig,q:`Calcule les limites de ${fx(`f(x) = ${o.expr}`)} aux bornes de son domaine ${fx(`D = ${D}`)}. Réponds par un nombre exact, ${fx("+∞")} ou ${fx("−∞")}.`,corps:"",texte:`étude de fonction, limites de ${o.expr} aux bornes`,
+    champs:B.map((b,i)=>({k:"champ",id:ids[i],nom:"limite en "+lmPt(b.P),label:`$lim_{x → ${lmPt(b.P)}} f(x) =$`,ex:"un nombre, +∞ ou −∞"})).concat([{k:"sym",id:"s",sym:LM_SYM,aide:"Les boutons écrivent dans la case où tu es."}]),juge,etapes:E,
+    bonne:B.map(b=>fx(`lim_{x → ${lmPt(b.P)}} f(x) = ${lmT(b.L)}`)).join(" ; "),bonneTxt:B.map(b=>`en ${lmPt(b.P)} : ${lmT(b.L)}`).join(" ; "),repBonne:RB,
+    repFausse:Object.assign({},RB,{l0:b0.pg.length?lmTp(b0.pg[0].L):b0.L.inf?lmTp({inf:-b0.L.inf}):"17"}),nature:o.nat,ens:Object.assign({etude:"lim"},feEns(o))};}
+/* palier 3 : la dérivée, et les valeurs où elle s'annule */
+function feLisZ(t){const s=propre(t).toLowerCase();if(!s)return null;if(/^(aucune?s?|aucun|rien|∅|vide|jamais|non|nulle ?part|pas de (solution|valeur)s?)$/.test(s))return [];
+  const V=[];for(const p of s.split(/;|,|\bet\b/)){const u=p.replace(/^\s*x\s*=\s*/,"").trim();if(!u)continue;const r=lisReel(u);if(r.v===undefined||r.avecI)return null;if(r.dec)return "dec";V.push(r.v);}
+  return V.length?V:null;}
+function feDer(R){const o=feTire(R,R.choix(FE_FAM)),D=dmT(o.P),dE=o.dE.map(x=>Object.assign({pts:1},x)),E=dE.concat([{w:o.sgW.w,why:o.sgW.why,pts:1}]),dern=E.length-1;
+  const jx=jugeX({ref:o.d,ans:o.dT,fin:dE.length-1,type:"dérivée",pieges:o.dpg.map(p=>[p[0],{etape:dE.length-1,type:p[2],titre:"Où ça part : la dérivée.",msg:p[3]}])});
+  const Z=o.zeros.map(z=>z.v),zT=o.zeros.map(z=>fx(`x = ${z.t}`)).join(" et "),bords=o.noeuds.filter(n=>n.k==="bord").map(n=>n.x),fin=Z.length?`f′(x) = 0 pour ${zT}.`:"f′(x) ne s'annule jamais sur D.";
+  function juge(rep){const j=jx(rep);if(j.incomplet)return j;const lu=feLisZ(rep.z);
+    if(lu===null)return {incomplet:"Écris les valeurs de x séparées par « ; », par exemple 2 ; -1, ou « aucune » si f′ ne s'annule pas."};
+    if(lu==="dec")return {incomplet:"Donne les valeurs exactes (une fraction, e, e^(-1)), pas des nombres arrondis."};
+    const okZ=lu.length===Z.length&&Z.every(z=>lu.some(v=>pres(v,z)))&&lu.every(v=>Z.some(z=>pres(v,z)));
+    if(j.ok&&okZ)return {ok:true};
+    const F=(j.ok?[]:["f"]).concat(okZ?[]:["z"]);if(!j.ok)return {ok:false,faux:F,resume:j.resume,diag:j.diag};
+    const bv=lu.find(v=>bords.some(b=>pres(v,b))),T="les valeurs où f′ s'annule.";
+    const d=bv!==undefined?lmD(dern,"valeur hors du domaine",T,`Pour ${fx(`x = ${nb(bords.find(b=>pres(bv,b)))}`)}, f n'est pas définie : ce n'est pas une valeur de D. ${fin}`)
+      :!Z.length?lmD(dern,"f′ ne s'annule pas",T,`${o.sgW.w} ${o.sgW.why}`):!lu.length?lmD(dern,"zéro de f′ oublié",T,fin)
+      :lu.length<Z.length&&lu.every(v=>Z.some(z=>pres(v,z)))?lmD(dern,"zéro de f′ oublié",T,`Il y en a ${Z.length} : ${fin}`):lmD(dern,"zéros de f′",T,fin);
+    return {ok:false,faux:F,resume:"Pas tout à fait : la dérivée est juste, mais pas les valeurs où elle s'annule.",diag:d};}
+  const zB=o.zeros.map(z=>z.tp).join(" ; ")||"aucune";
+  return {sig:"ED"+o.sig,q:`Calcule la dérivée de ${fx(`f(x) = ${o.expr}`)} sur ${fx(`D = ${D}`)}, puis donne les valeurs de x où ${fx("f′(x) = 0")}.`,corps:"",texte:`étude de fonction, dérivée de ${o.expr} et ses zéros`,
+    champs:[{k:"champ",id:"f",nom:"dérivée",label:"$f′(x) =$",ex:"une formule en x",sym:["e^(","ln(","x","^","/","(",")"],aide:"Écris e^(2x) avec des parenthèses, x^2 pour x², et (…)/(…) pour une fraction."},
+      {k:"champ",id:"z",nom:"zéros de f′",label:"$f′(x) = 0$ pour $x =$",ex:"par exemple 2 ; -1, ou aucune"}],juge,etapes:E,
+    bonne:`${fx(`f′(x) = ${o.dT}`)} ; ${Z.length?`${fx("f′(x) = 0")} pour ${zT}`:"f′ ne s'annule pas sur D"}`,bonneTxt:`f′(x) = ${o.dT} ; zéros : ${o.zeros.map(z=>z.t).join(" ; ")||"aucun"}`,
+    repBonne:{f:o.dTp,z:zB},repFausse:{f:`(${o.dTp})+x`,z:zB},nature:o.nat,ens:Object.assign({etude:"der",dpg:o.dpg.map(p=>[p[1],p[2]])},feEns(o))};}
+/* palier 4 : le tableau de variations, case par case */
+const feSigne=t=>{const s=propre(t).toLowerCase().replace(/\s/g,"");return /^(\+|positif|positive|pos|>0|plus)$/.test(s)?1:/^(-|négatif|negatif|négative|negative|neg|<0|moins)$/.test(s)?-1:s?0:null;};
+const feSens=t=>{const s=propre(t).toLowerCase().replace(/\s/g,"");return /^(↗|croissante?|crois|c|monte|augmente|\/|hausse)$/.test(s)?1:/^(↘|décroissante?|decroissante?|d|descend|diminue|\\|baisse)$/.test(s)?-1:s?0:null;};
+function feTabExo(R){const o=feTire(R,R.choix(FE_FAM)),I=o.inter,S=o.signes,zs=o.zeros,D=dmT(o.P),sI=I.map((_,i)=>"s"+i),vI=I.map((_,i)=>"v"+i),yI=zs.map((_,j)=>"y"+j);
+  const E=[{w:`${o.sgW.w}<br>${I.map((x,i)=>`sur ${fx(x)} : ${fx(`f′(x) ${S[i]>0?dmGT:dmLT} 0`)}`).join(" ; ")}.`,why:o.sgW.why,pts:1},
+    {w:`Donc ${I.map((x,i)=>`f est ${S[i]>0?"croissante":"décroissante"} sur ${fx(x)}`).join(" ; ")}.`,why:"Si f′ est strictement positive sur un intervalle, f y est croissante ; strictement négative, f y est décroissante.",pts:1}];
+  if(zs.length)E.push({w:o.vals.map((v,j)=>fx(`f(${zs[j].t}) = ${v.t}`)).join(" et ")+".",why:o.vWhy,pts:1});
+  E.push({w:feTab(o),why:"On complète le tableau avec les limites aux bornes du domaine.",pts:1});
+  function juge(rep){const s=sI.map(k=>feSigne(rep[k])),v=vI.map(k=>feSens(rep[k])),y=yI.map(k=>lisReel(rep[k]));
+    if(s.concat(v).some(x=>x===null)||y.some(r=>r.vide))return {incomplet:"Remplis toutes les cases : le signe (+ ou −), le sens (↗ ou ↘) et les valeurs."};
+    if(s.concat(v).some(x=>x===0))return {incomplet:"Pour le signe, écris + ou − ; pour le sens, ↗ ou ↘ (ou croissante, décroissante)."};
+    if(y.some(r=>r.v===undefined||r.avecI))return {incomplet:"Je n'arrive pas à lire une valeur. Écris par exemple 2 - 2ln(2), -e^(-1) ou 5/2."};
+    if(y.some((r,j)=>r.dec&&!pres(r.v,o.vals[j].v)))return {incomplet:"Donne les valeurs exactes, pas des nombres arrondis."};
+    const okS=s.map((x,i)=>x===S[i]),okV=v.map((x,i)=>x===S[i]),okY=y.map((r,j)=>pres(r.v,o.vals[j].v));
+    const F=sI.filter((_,i)=>!okS[i]).concat(vI.filter((_,i)=>!okV[i]),yI.filter((_,j)=>!okY[j]));if(!F.length)return {ok:true};
+    const i=okS.indexOf(false),iv=okV.indexOf(false),j=okY.indexOf(false),et=E.length-2;
+    const d=i>=0?lmD(0,"signe de f′","le signe de f′.",`Sur ${fx(I[i])}, ${fx(`f′(x) ${S[i]>0?dmGT:dmLT} 0`)}. ${o.sgW.why}`)
+      :iv>=0?lmD(1,"sens qui ne suit pas le signe de f′","le sens de variation.",`Sur ${fx(I[iv])}, f′ est ${S[iv]>0?"positive : f est croissante (↗)":"négative : f est décroissante (↘)"}.`)
+      :pres(y[j].v,zs[j].v)?lmD(et,"abscisse au lieu de la valeur","la valeur de f.",`${fx(zs[j].t)} est l'abscisse : la case attend ${fx(`f(${zs[j].t}) = ${o.vals[j].t}`)}.`)
+      :lmD(et,"valeur de f","la valeur de f.",`${fx(`f(${zs[j].t}) = ${o.vals[j].t}`)}. ${o.vWhy}`);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length} case${F.length>1?"s sont":" est"} à revoir.`,diag:d};}
+  const RB=Object.assign(Object.fromEntries(sI.map((k,i)=>[k,S[i]>0?"+":"-"])),Object.fromEntries(vI.map((k,i)=>[k,feFl(S[i])])),Object.fromEntries(yI.map((k,j)=>[k,o.vals[j].tp])));
+  return {sig:"ET"+o.sig,q:`Dresse le tableau de variations de ${fx(`f(x) = ${o.expr}`)}, en complétant les cases.`,
+    corps:`<p>Sur ${fx(`D = ${D}`)}, ${fx(`f′(x) = ${o.dF}`)}${zs.length?`, qui s'annule en ${zs.map(z=>fx(z.t)).join(" et ")}`:""}.</p>${I.map((x,i)=>`<p><b>Sur ${fx(x)}</b> : signe de ${fx("f′(x)")} ${O.trou(sI[i])} ; sens de f ${O.trou(vI[i])}</p>`).join("")}${zs.map((z,j)=>`<p>${fx(`f(${z.t}) =`)} ${O.trou(yI[j],1)}</p>`).join("")}`,
+    corpsPapier:`<p>Sur ta feuille, dresse le tableau de variations en entier : la ligne de x, le signe de f′, les flèches, les valeurs aux points où f′ s'annule et les limites aux bornes.</p>`,
+    texte:`étude de fonction, tableau de variations de ${o.expr}`,
+    champs:[{k:"trous",ids:sI.concat(vI,yI)},{k:"sym",id:"sy",sym:[["+","+"],["−","-"],["↗","↗"],["↘","↘"]],aide:"Pour le signe, + ou − ; pour le sens, ↗ ou ↘ (tu peux aussi écrire croissante ou décroissante). Les boutons écrivent dans la case où tu es."}],juge,etapes:E,
+    bonne:feTab(o),bonneTxt:I.map((x,i)=>`${x} : ${feSg(S[i])} ${feFl(S[i])}`).join(" ; ")+(zs.length?" ; "+o.vals.map((v,j)=>`f(${zs[j].t}) = ${v.t}`).join(" ; "):""),
+    repBonne:RB,repFausse:Object.assign({},RB,{s0:S[0]>0?"-":"+",v0:feFl(-S[0])}),nature:o.nat,ens:Object.assign({etude:"tab"},feEns(o))};}
+/* palier 5 : l'étude complète, sur papier, avec le barème du CC1 2025 */
+function fePapier(R){const o=feTire(R,R.choix(FE_FAM));
+  const L=[[o.Dw.w,o.Dw.why,1],[o.bornes.map(b=>`${feFin(b)} <span class="muted">${b.why}</span>`).join("<br>"),"Une limite par borne du domaine, et des deux côtés d'une valeur interdite.",1.5],
+    [o.dJ,"Sommes, produits, quotients (dénominateur non nul) et composées de fonctions dérivables sont dérivables.",1],
+    [o.dE.map(x=>x.w).concat([o.sgW.w]).join("<br>"),o.dE.map(x=>x.why).concat([o.sgW.why]).join(" "),1.5],
+    [feTab(o)+(o.zeros.length?`<p>${o.vals.map((v,j)=>fx(`f(${o.zeros[j].t}) = ${v.t}`)).join(" et ")}.</p>`:""),o.zeros.length?o.vWhy:"f′ garde le même signe sur chaque intervalle de D : f n'a pas d'extremum.",1.5]];
+  return G.ana.papierQ("EP"+o.sig,`Étude complète de ${fx(`f(x) = ${o.expr}`)}, comme au CC1 2025 (exercice 1) et au CC 2023 (exercice 3).`,
+    `<ol type="a"><li>Donne le domaine de définition D de f.</li><li>Détermine les limites de f aux bornes de D.</li><li>Montre que f est dérivable sur D.</li><li>Calcule ${fx("f′(x)")} et étudie son signe.</li><li>Dresse le tableau de variations de f, avec les valeurs aux points où f′ s'annule.</li></ol><p class="muted">Toute réponse doit être justifiée : la rédaction compte, comme au CC.</p>`,
+    L,Object.assign({etude:"pap"},feEns(o)),o.nat);}
+
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -25786,7 +25992,14 @@ G.add("calc",[
    {t:"un quotient : les valeurs qui annulent le dénominateur",cc:2,gen:R=>dmQuot(R,true)},
    {t:"le signe d'un trinôme ou d'un quotient, sous une racine ou un logarithme",cc:4,gen:dmSigne},
    {t:"plusieurs conditions à la fois",cc:4,gen:dmDeux},
-   {t:"tout mélangé, comme au TD 1 (exercice 3) et aux CC",cc:3,gen:dmMix}]}
+   {t:"tout mélangé, comme au TD 1 (exercice 3) et aux CC",cc:3,gen:dmMix}]},
+ {id:"CA9",t:"Étude de fonction",tache:"étude de fonction",th:"derivees",pts:2,lecons:["c-derivees"],apres:["CA8","CA14","CA15"],
+  paliers:[
+   {t:"le domaine de définition",cc:2,min:180,gen:feDom},
+   {t:"les limites aux bornes du domaine",cc:4,min:180,gen:feLims},
+   {t:"la dérivée, et les valeurs où elle s'annule",cc:4,min:180,gen:feDer},
+   {t:"le tableau de variations",cc:5,min:180,gen:feTabExo},
+   {t:"l'étude complète sur papier, comme au CC1 2025 (exercice 1)",cc:15,min:180,gen:fePapier}]}
 ]);
 })();
 
