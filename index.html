@@ -25478,6 +25478,219 @@ function lmConj(R){const t=R(),PI={inf:1},pi=fx("+∞"),rac=(p,a)=>`√(${p} ${l
     diag:lu=>lu.inf?nonLevee:pres(lu.v,a-b)?lmD(1,"dénominateur oublié","la limite du bas.",`${fx(nb(a-b))} est seulement le haut : il est divisé par ${fx(som)}, qui tend vers l'infini.`):null});}
 const lmMix=R=>R.choix([lmQuot,lmEnA,lmCroiss,lmTaux,lmConj])(R);
 
+/* ---------- CA15 : domaine de définition (TD 1, exercice 3 ; CC1 2025, exercice 1 a ; CC 2023, exercice 3) ----------
+   La réponse est un intervalle ou une réunion d'intervalles ; « ℝ∖{…} », ℝ* et ℝ₊ sont lus aussi (dmLis).
+   Le contrôle relit ens.expr et regarde, point par point, où elle se calcule. */
+const DM_SYM=[["]","]"],["[","["],[";"," ; "],["∪"," ∪ "],["+∞","+∞"],["−∞","-∞"],["ℝ","ℝ"],["∖","∖"],["{","{"],["}","}"]];
+const DM_CRO="Un crochet est fermé quand la borne est permise (une racine accepte 0), ouvert quand elle est interdite (ln(0) et la division par 0 n'existent pas), et toujours ouvert du côté de l'infini.";
+const dmGT="&gt;",dmLT="&lt;";
+const dmI=(a,oa,b,ob)=>G.ana.pc(a==null?null:G.ana.val(a),oa,b==null?null:G.ana.val(b),ob),dmR=()=>[dmI(null,true,null,true)];
+const dmTout=P=>P.length===1&&!P[0].a&&!P[0].b;
+const dmEcrit=(P,t)=>dmTout(P)?"ℝ":P.map(p=>`${p.oa?"]":"["}${p.a?(t?brut(p.a.q):p.a.t):t?"-∞":"−∞"} ; ${p.b?(t?brut(p.b.q):p.b.t):"+∞"}${p.ob?"[":"]"}`).join(" ∪ ");
+const dmT=P=>dmEcrit(P,false),dmTp=P=>dmEcrit(P,true);
+const dmTri=v=>[...new Set(v)].sort((x,y)=>x-y);
+/* ℝ privé de quelques entiers */
+const dmSauf=(...v)=>{v=dmTri(v);return v.map((x,i)=>dmI(i?v[i-1]:null,true,x,true)).concat([dmI(v[v.length-1],true,null,true)]);};
+const dmAcc=(...v)=>`ℝ ∖ {${dmTri(v).map(x=>nb(x)).join(" ; ")}}`;
+const dmDemi=(r,droite,st)=>droite?dmI(r,st,null,true):dmI(null,true,r,st);
+const dmAff=(a,b)=>a<0&&b>0?`${b} − ${lmM(-a,1)}`:lmPoly([b,a]);
+const dmFac=r=>r?`(x ${r>0?"−":"+"} ${Math.abs(r)})`:"x";
+function dmLis(src){const s=propre(src).replace(/\s+/g,"").replace(/^d_?f?=/i,"").replace(/privéde|privede|\\|-(?=\{)/gi,"∖");
+  const m0=/^r(\*?)([+-]?)(\*?)$/i.exec(s.replace(/[\^_]/g,""));
+  if(m0&&(m0[1]||m0[2]||m0[3])){if(m0[1]&&m0[3])return null;return m0[2]?[dmDemi(0,m0[2]==="+",!!(m0[1]||m0[3]))]:dmSauf(0);}
+  const k=s.indexOf("∖");if(k<0)return G.ana.lisEns(s);
+  const E0=G.ana.lisEns(s.slice(0,k)),m=/^\{(.+)\}$/.exec(s.slice(k+1));if(!E0||E0==="ordre"||!m)return null;
+  let P=E0;
+  for(const t of m[1].split(m[1].includes(";")?";":",")){const v=O.calcule(t,{});if(v===null||!Number.isFinite(v))return null;
+    P=P.flatMap(p=>{const g=p.a?p.a.v:-Infinity,d=p.b?p.b.v:Infinity,z=x=>Math.abs(v-x)<1e-9;
+      return z(g)&&z(d)?[]:z(g)?[{...p,oa:true}]:z(d)?[{...p,ob:true}]:v<g||v>d?[p]:[{a:p.a,oa:p.oa,b:{v},ob:true},{a:{v},oa:true,b:p.b,ob:p.ob}];});}
+  return P;}
+/* « ax + b ≥ 0 » (ou > 0) résolue : la demi-droite, la phrase et sa raison */
+function dmCond(a,b,st){const r=Q(b?-b:0,a),dr=a>0,u=dmAff(a,b),op=st?dmGT:"≥",o2=dr?op:st?dmLT:"≤",sol=`x ${o2} ${nb(r)}`,cond=`${u} ${op} 0`,dep=b?`On ${b>0?"retire":"ajoute"} ${Math.abs(b)} des deux côtés`:"";
+  const w=a===1&&!b?`La condition porte directement sur x : ${fx(sol)}.`:a===1||!b?`${fx(cond)} donne ${fx(sol)}.`:`${fx(cond)} donne ${fx(`${lmM(a,1)} ${op} ${nb(-b)}`)}, donc ${fx(sol)}.`;
+  const why=a===1?(b?dep+".":"Il n'y a rien à résoudre."):`${b?dep+", puis on":"On"} divise par ${nb(a)}, qui est ${a>0?"positif : le sens de l'inégalité ne change pas":"négatif : le sens de l'inégalité change"}.`;
+  return {r,rv:(b?-b:0)/a,dr,st,u,op,sol,cond,w,why,P:dmDemi(r,dr,st)};}
+/* o : {sig, expr, P, etapes, nature, type, pieges:[[ensemble faux, type, titre, message, étape]], crochets, acc, note} */
+function dmExo(o){const {unir,memeEns}=G.ana,U=X=>unir(X.map(p=>({...p}))),P=U(o.P),bon=dmT(P),E0=o.etapes,dern=E0.length-1,vus=[P],pg=[];
+  for(const g of o.pieges||[]){const X=U(g[0]);if(vus.some(V=>memeEns(V,X)))continue;vus.push(X);pg.push({X,type:g[1],titre:g[2],msg:g[3],et:g[4]==null?dern:g[4]});}
+  function juge(rep){const L=dmLis(rep.D);
+    if(L==="ordre")return {incomplet:"Dans un intervalle, la borne de gauche est la plus petite. Vérifie l'ordre de tes deux bornes."};
+    if(!L)return {incomplet:"Écris un intervalle ou une réunion d'intervalles, par exemple ]-∞ ; 2[ ∪ ]2 ; +∞[. Tu peux aussi écrire ℝ∖{2}, et ℝ pour tous les réels."};
+    if(memeEns(L,P))return {ok:true};
+    const g=pg.find(g=>memeEns(L,g.X));
+    const d=g?lmD(g.et,g.type,g.titre,g.msg):!L.length?lmD(0,"domaine déclaré vide","le domaine.",`Il y a des x pour lesquels f(x) se calcule : ${fx(`D = ${bon}`)}.`)
+      :memeEns(L,P,true)?lmD(dern,"crochets ouverts ou fermés","les crochets.",`Les bornes sont justes, mais pas les crochets. ${o.crochets||DM_CRO} Ici ${fx(`D = ${bon}`)}.`)
+      :lmD(dern,o.type,"le domaine.",`${fx(`D = ${bon}`)}.`);
+    return {ok:false,faux:["D"],resume:"Pas tout à fait : ce n'est pas le bon domaine.",diag:d};}
+  return {sig:"DM"+o.sig,q:`Donne le domaine de définition D de la fonction ${fx(`f(x) = ${o.expr}`)}. Écris D comme un intervalle ou une réunion d'intervalles.`,corps:o.note?`<p class="muted">${o.note}</p>`:"",texte:`domaine de définition de ${o.expr}`,
+    champs:[{k:"champ",id:"D",nom:"D",label:"$D =$",ex:"par exemple ]-∞ ; 2[ ∪ ]2 ; +∞[",sym:DM_SYM,aide:"Pour tous les réels, écris ℝ. Pour « tous les réels sauf 2 », tu peux écrire ℝ∖{2}."}],juge,etapes:E0,
+    bonne:fx(`D = ${bon}`),bonneTxt:`D = ${bon}`,repBonne:{D:dmTp(P)},repFausse:{D:pg.length?dmTp(pg[0].X):dmTout(P)?"]0 ; +∞[":"ℝ"},nature:o.nature,
+    ens:{expr:o.expr,aff:bon,acc:o.acc||"",pieges:pg.map(g=>[dmTp(g.X),g.type])}};}
+/* palier 1 : une racine ou un logarithme d'un ax + b */
+function dmSimple(R,rappel){const ln=R()<0.5,a=R.nz(-4,4),b=R.ent(-9,9),K=dmCond(a,b,ln),c=`${ln?"ln":"√"}(${K.u})`,k=R.ent(2,5),dk=R.ent(0,5),r=K.r,br=fx(nb(r)),
+    expr=[c,`x² + ${c}`,`${k}x − ${c}`,`${c} + ${k}`,`x${ln?" ":""}${c}`,`(x² + 1)${c}`][dk];
+  return dmExo({sig:"S"+[ln?1:0,a,b,dk,dk===2||dk===3?k:0],expr,P:[K.P],nature:ln?"un logarithme":"une racine",type:"domaine d'une racine ou d'un logarithme",
+    note:rappel?`Le domaine de définition, c'est l'ensemble des x pour lesquels f(x) se calcule. Rappel : √u n'existe que si u ≥ 0, et ln(u) n'existe que si u ${dmGT} 0.`:"",
+    pieges:[[[dmDemi(r,!K.dr,ln)],"sens de l'inégalité","le sens de l'inégalité.",a<0?`Diviser par ${nb(a)}, qui est négatif, retourne l'inégalité : ${fx(K.sol)}.`:`${fx(K.cond)} donne ${fx(K.sol)} : le domaine est de l'autre côté de ${br}. Essaie avec un nombre pour vérifier.`,1],
+      [[dmDemi(Q(b,a),K.dr,ln)],"signe de la borne","la borne.",`${fx(K.u)} s'annule en ${br}, pas en ${fx(nb(Q(b,a)))} : remplace x pour vérifier.`,1],
+      [dmR(),"condition oubliée","la condition.",`${ln?"ln(u)":"√u"} n'existe pas pour tout u : il faut ${fx(K.cond)}.`,0]],
+    etapes:[{w:`Il faut ${fx(K.cond)}.`,why:`${ln?"ln(u) n'existe que pour u strictement positif : ln(0) n'existe pas.":"√u n'existe que pour u positif ou nul."}${dk?" Le reste de la formule se calcule pour tout x.":""}`,pts:1},
+      {w:K.w,why:K.why,pts:1},
+      {w:`<b>${fx(`D = ${dmT([K.P])}`)}</b>`,why:`${ln?`En ${br}, on aurait ln(0), qui n'existe pas : crochet ouvert.`:`En ${br}, on a √0 = 0, qui existe : crochet fermé.`} Du côté de l'infini, le crochet est toujours ouvert.`,pts:1}]});}
+/* un numérateur sans importance pour le domaine ; z : l'entier où il s'annule, s'il y en a un */
+function dmNum(R,evite){for(;;){const t=R.ent(0,3),c1=R.nz(-3,3),c0=R.ent(-9,9),k=R.ent(1,9),o=t===0?{t:String(k),z:[]}:t===1?{t:`x² + ${k}`,z:[]}:{t:lmPoly([c0,c1]),z:c0%c1?[]:[-c0/c1||0]};
+  if(!o.z.some(z=>evite.includes(z)))return o;}}
+/* palier 2 : un quotient, les valeurs qui annulent le dénominateur */
+function dmQuot(R,rappel){const t=R(),note=rappel?"Rappel : une fraction n'existe que si son dénominateur est différent de 0.":"",pasZero="On ne peut pas diviser par 0. Le numérateur, lui, se calcule pour tout x : il n'interdit rien.",
+    oubli=[dmR(),"condition oubliée","la condition.","On ne peut pas diviser par 0 : il faut enlever les x qui annulent le dénominateur.",0],
+    zNum=(N,I)=>N.z.map(z=>[dmSauf(...I,z),"zéro du numérateur enlevé","le numérateur.",`Le numérateur a le droit de valoir 0 : 0 divisé par un nombre non nul existe, et vaut 0. ${fx(nb(z))} reste dans le domaine.`,0]),
+    neg=(X,ou)=>[X,"confusion avec un logarithme","la condition.",`Un dénominateur a le droit d'être négatif : il doit seulement être différent de 0. ${ou}, f(x) se calcule aussi.`,0],
+    il=den=>({w:`Il faut ${fx(`${den} ≠ 0`)}.`,why:pasZero,pts:1}),
+    fin=(I,P)=>({w:`<b>${fx(`D = ${dmAcc(...I)}`)}</b>, c'est-à-dire ${fx(`D = ${dmT(P)}`)}.`,why:`On enlève de ℝ ${I.length>1?"les deux valeurs interdites":"la seule valeur interdite"}. Les crochets sont ouverts autour d'${I.length>1?"elles : elles ne sont":"elle : elle n'est"} pas dans le domaine.`,pts:1});
+  if(t<0.5){let r1,r2,m;do{r1=R.ent(-6,6);r2=R.ent(-6,6);}while(r1>=r2);
+    const s=r1+r2,p=r1*r2,den=lmPoly([p,-s,1]),I=[r1,r2],P=dmSauf(r1,r2),commun=R()<0.4,rc=R()<0.5?r1:r2,ra=rc===r1?r2:r1;do m=R.ent(-6,6);while(I.includes(m));
+    const N=commun?{t:[rc,m].sort((x,y)=>Math.abs(x)-Math.abs(y)).map(dmFac).join(""),z:[m]}:dmNum(R,I),
+      e2=!p?{w:`${fx(`${den} = x${dmFac(s)}`)} : le dénominateur s'annule pour ${fx("x = 0")} ou ${fx(`x = ${nb(s)}`)}.`,why:"On met x en facteur. Un produit est nul quand l'un de ses facteurs est nul.",pts:1}
+        :!s?{w:`${fx(`${den} = 0`)} veut dire ${fx(`x² = ${-p}`)} : ${fx(`x = ${nb(r1)}`)} ou ${fx(`x = ${nb(r2)}`)}.`,why:`Deux nombres ont pour carré ${-p} : ${r2} et son opposé ${nb(r1)}.`,pts:1}
+        :{w:`Le discriminant vaut ${fx(`Δ = ${s*s-4*p}`)} : le dénominateur s'annule pour ${fx(`x = ${nb(r1)}`)} ou ${fx(`x = ${nb(r2)}`)}.`,why:`${fx("Δ = b² − 4ac")} avec ${fx("a = 1")}, ${fx(`b = ${nb(-s)}`)} et ${fx(`c = ${nb(p)}`)}. Les racines sont ${fx("(−b − √Δ)/(2a)")} et ${fx("(−b + √Δ)/(2a)")}, avec ${fx(`√Δ = ${r2-r1}`)}. Pour vérifier : ${fx(`${den} = ${dmFac(r1)}${dmFac(r2)}`)}.`,pts:1};
+    return dmExo({sig:"Q2"+[r1,r2,N.t],expr:lmF(N.t,den),P,acc:dmAcc(r1,r2),note,nature:commun?"un facteur commun en haut et en bas":"deux valeurs interdites",type:"domaine d'un quotient",
+      pieges:[...(commun?[[dmSauf(ra),"fraction simplifiée avant de chercher le domaine","la simplification.",`Tu as simplifié par ${fx(dmFac(rc).replace(/[()]/g,""))} avant de chercher le domaine. Mais la formule de départ ne se calcule pas pour ${fx(`x = ${nb(rc)}`)} : cette valeur reste interdite.`,0]]:[]),
+        [dmSauf(r2),"valeur interdite oubliée","les racines.",`${fx(nb(r1))} annule aussi le dénominateur.`,1],[dmSauf(r1),"valeur interdite oubliée","les racines.",`${fx(nb(r2))} annule aussi le dénominateur.`,1],
+        [dmSauf(-r1,-r2),"signe des racines","les racines.",`Remplace x pour vérifier : le dénominateur s'annule en ${fx(nb(r1))} et en ${fx(nb(r2))}.`,1],
+        neg([dmI(null,true,r1,true),dmI(r2,true,null,true)],`Entre ${nb(r1)} et ${nb(r2)}`),neg([dmI(r1,true,r2,true)],`Avant ${nb(r1)} et après ${nb(r2)}`),oubli,...zNum(N,I),...zNum(N,[])],
+      etapes:[{w:`Il faut ${fx(`${den} ≠ 0`)}.`,why:pasZero+(commun?" Et on ne simplifie pas la fraction avant : c'est la formule de départ qui doit pouvoir se calculer.":""),pts:1},e2,fin(I,P)]});}
+  if(t<0.65){const k=R.ent(1,9),sq=Math.round(Math.sqrt(k)),den=`x² + ${k}`,N=dmNum(R,[]);
+    return dmExo({sig:"Q0"+[k,N.t],expr:lmF(N.t,den),P:dmR(),note,nature:"un dénominateur jamais nul",type:"domaine d'un quotient",
+      pieges:[...(sq*sq===k?[[dmSauf(-sq,sq),"confusion avec x² − k","le signe.",`${fx(`${den} = 0`)} voudrait dire ${fx(`x² = −${k}`)} : impossible, un carré n'est jamais négatif. C'est ${fx(`x² − ${k}`)} qui s'annule en ${fx(nb(-sq))} et en ${fx(String(sq))}.`,1]]:[]),
+        [dmSauf(-k),"équation mal résolue","l'équation.",`${fx(`${den} = 0`)} n'est pas ${fx(`x + ${k} = 0`)} : il y a un carré. Et ${fx(`x² = −${k}`)} est impossible.`,1],
+        [dmSauf(0),"valeur enlevée à tort","le dénominateur.",`Pour ${fx("x = 0")}, le dénominateur vaut ${k}, pas 0.`,1],...zNum(N,[])],
+      etapes:[il(den),{w:`${fx(`${den} ≥ ${k}`)} : le dénominateur ne s'annule jamais.`,why:`Un carré est toujours positif ou nul : ${fx("x² ≥ 0")}. En ajoutant ${k}, on obtient un nombre au moins égal à ${k} : il ne vaut jamais 0.`,pts:1},
+        {w:`<b>${fx("D = ℝ")}</b>`,why:"Aucune valeur n'est interdite : f(x) se calcule pour tout réel x.",pts:1}]});}
+  if(t<0.85){const r=R.ent(-8,8);let a=R.choix([1,1,-1,2,-2,3]);if(a<0&&r<=0)a=-a;
+    const b=-a*r||0,den=dmAff(a,b),N=dmNum(R,[r]),P=dmSauf(r);
+    return dmExo({sig:"Q1"+[a,r,N.t],expr:lmF(N.t,den),P,acc:dmAcc(r),note,nature:"une valeur interdite",type:"domaine d'un quotient",
+      pieges:[[dmSauf(-r),"signe de la valeur interdite","l'équation.",`Remplace x pour vérifier : ${fx(den)} s'annule en ${fx(nb(r))}.`,1],
+        neg([dmI(r,true,null,true)],`Pour x plus petit que ${nb(r)}`),neg([dmI(null,true,r,true)],`Pour x plus grand que ${nb(r)}`),oubli,...zNum(N,[r]),...zNum(N,[])],
+      etapes:[il(den),{w:a===1&&!b?`La seule valeur interdite est ${fx("x = 0")}.`:`${fx(`${den} = 0`)} donne ${fx(`x = ${nb(r)}`)}.`,
+        why:a===1&&!b?"Le dénominateur est x lui-même.":!b?`${fx(`${lmM(a,1)} = 0`)} seulement quand x vaut 0.`:a===1?`On ${b>0?"retire":"ajoute"} ${Math.abs(b)} des deux côtés.`:`${fx(`${lmM(a,1)} = ${nb(-b)}`)}, puis on divise par ${nb(a)}.`,pts:1},fin([r],P)]});}
+  const r=R.nz(-5,5),den=lmPoly([r*r,-2*r,1]),N=dmNum(R,[r]),P=dmSauf(r);
+  return dmExo({sig:"QC"+[r,N.t],expr:lmF(N.t,den),P,acc:dmAcc(r),note,nature:"un carré au dénominateur",type:"domaine d'un quotient",
+    pieges:[[dmSauf(-r),"signe de la racine","la racine.",`Remplace x pour vérifier : le dénominateur s'annule en ${fx(nb(r))}, pas en ${fx(nb(-r))}.`,1],
+      [dmSauf(r,-r),"racine en trop","les racines.",`Ici ${fx("Δ = 0")} : il n'y a qu'une racine, ${fx(nb(r))}.`,1],oubli,...zNum(N,[r]),...zNum(N,[])],
+    etapes:[il(den),{w:`${fx(`${den} = ${dmFac(r)}²`)} : le dénominateur s'annule seulement pour ${fx(`x = ${nb(r)}`)}.`,why:`C'est l'identité remarquable ${fx(r>0?"a² − 2ab + b² = (a − b)²":"a² + 2ab + b² = (a + b)²")}, avec ${fx("a = x")} et ${fx(`b = ${Math.abs(r)}`)}. Avec le discriminant, on trouve ${fx("Δ = 0")} : une seule racine.`,pts:1},fin([r],P)]});}
+/* palier 3 : le signe d'un trinôme sous une racine ou un logarithme */
+function dmTrin(R){const ln=R()<0.5,s=R()<0.5?1:-1;let r1,r2;do{r1=R.ent(-6,6);r2=R.ent(-6,6);}while(r1>=r2);
+  const T=lmPoly([s*r1*r2,-s*(r1+r2),s]),op=ln?dmGT:"≥",pl=ln?dmLT:"≤",pg=ln?dmGT:"≥",ext=[dmI(null,true,r1,ln),dmI(r2,ln,null,true)],int=[dmI(r1,ln,r2,ln)],P=s>0?ext:int,
+    quoi=ln?"un logarithme":"une racine",pos=ln?"strictement positif":"positif ou nul";
+  return dmExo({sig:"T"+[ln?1:0,s,r1,r2],expr:`${ln?"ln":"√"}(${T})`,P,nature:"le signe d'un trinôme",type:"signe d'un trinôme",
+    pieges:[[s>0?int:ext,"signe du trinôme","le signe du trinôme.",`Le coefficient de x² est ${s>0?"positif":"négatif"} : le trinôme est positif ${s>0?"à l'extérieur des racines, pas entre elles":"entre les racines, pas à l'extérieur"}. Pour ${fx(`x = ${nb(r2+1)}`)}, il vaut ${fx(nb(s*(r2+1-r1)))}.`,2],
+      [dmSauf(r1,r2),"confusion avec un dénominateur","la condition.",`Sous ${quoi}, il ne suffit pas d'être différent de 0 : il faut être ${pos}.`,0],
+      ...(s>0?[[[dmI(r2,ln,null,true)],"une partie du domaine oubliée","le signe du trinôme.",`Le trinôme est aussi positif pour ${fx(`x ${pl} ${nb(r1)}`)} : les deux facteurs y sont négatifs, et leur produit est positif.`,2],
+        [[dmI(null,true,r1,ln)],"une partie du domaine oubliée","le signe du trinôme.",`Le trinôme est aussi positif pour ${fx(`x ${pg} ${nb(r2)}`)}.`,2]]:[]),
+      [dmR(),"condition oubliée","la condition.",`Sous ${quoi}, tous les x ne conviennent pas : il faut ${fx(`${T} ${op} 0`)}.`,0]],
+    etapes:[{w:`Il faut ${fx(`${T} ${op} 0`)}.`,why:ln?"ln(u) n'existe que pour u strictement positif : ln(0) n'existe pas.":"√u n'existe que pour u positif ou nul.",pts:1},
+      {w:`${fx(T)} s'annule pour ${fx(`x = ${nb(r1)}`)} et pour ${fx(`x = ${nb(r2)}`)}.`,why:`Avec le discriminant : ${fx(`Δ = b² − 4ac = ${(r2-r1)**2}`)}, ${fx(`√Δ = ${r2-r1}`)}, et les racines sont ${fx("(−b − √Δ)/(2a)")} et ${fx("(−b + √Δ)/(2a)")}. Pour vérifier, on développe : ${fx(`${T} = ${s<0?"−":""}${dmFac(r1)}${dmFac(r2)}`)}.`,pts:1},
+      {w:`${fx(T)} est ${pos} ${s>0?`pour ${fx(`x ${pl} ${nb(r1)}`)} ou ${fx(`x ${pg} ${nb(r2)}`)}`:`pour ${fx(`${nb(r1)} ${pl} x ${pl} ${nb(r2)}`)}`}.`,why:`Un trinôme ${fx("ax² + bx + c")} est du signe de a à l'extérieur des racines, et du signe contraire entre les racines. Ici ${fx(`a = ${nb(s)}`)} est ${s>0?"positif":"négatif"} : le trinôme est positif ${s>0?"à l'extérieur des racines":"entre les racines"}.`,pts:1},
+      {w:`<b>${fx(`D = ${dmT(P)}`)}</b>`,why:ln?"Aux racines, le trinôme vaut 0, et ln(0) n'existe pas : les crochets sont ouverts.":"Aux racines, le trinôme vaut 0, et √0 = 0 existe : les crochets sont fermés.",pts:1}]});}
+/* palier 3 : le signe d'un quotient sous une racine ou un logarithme */
+function dmRapport(R){const ln=R()<0.5,f=ln?"ln":"√",op=ln?dmGT:"≥",quoi=ln?"un logarithme":"une racine",pos=ln?"strictement positif":"positif ou nul",
+    c0=`${ln?"ln(u) n'existe que pour u strictement positif":"√u n'existe que pour u positif ou nul"}, et le quotient lui-même n'existe que si son dénominateur n'est pas nul.`,
+    oubli=[dmR(),"condition oubliée","la condition.",`Sous ${quoi}, tous les x ne conviennent pas : il faut que le quotient soit ${pos}.`,0];
+  if(R()<0.3){const k=R.ent(1,9),b=R.ent(-6,6),sd=b>0&&R()<0.4?-1:1,haut=R()<0.5?`x² + ${k}`:`eˣ + ${k}`,bas=dmAff(sd,-sd*b||0),qt=lmF(haut,bas),dr=sd>0,P=[dmDemi(b,dr,true)],cote=fx(`x ${dr?dmGT:dmLT} ${nb(b)}`),bb=fx(nb(b));
+    return dmExo({sig:"RP"+[ln?1:0,haut,b,sd],expr:`${f}(${qt})`,P,nature:"un quotient dont le haut est toujours positif",type:"signe d'un quotient",crochets:`${bb} annule le dénominateur : il est interdit, le crochet est ouvert.`,
+      pieges:[[dmSauf(b),"signe du quotient oublié","la condition.",`Sous ${quoi}, il ne suffit pas que le quotient existe : il doit être ${pos}. Pour ${fx(`x ${dr?dmLT:dmGT} ${nb(b)}`)}, il est négatif.`,0],
+        [[dmDemi(b,!dr,true)],"signe du dénominateur","le signe du bas.",`${fx(bas)} est positif pour ${cote}, pas de l'autre côté.`,2],oubli],
+      etapes:[{w:`Il faut ${fx(`${qt} ${op} 0`)}, et ${fx(`${bas} ≠ 0`)}.`,why:c0,pts:1},
+        {w:`Le haut, ${fx(haut)}, est toujours strictement positif.`,why:haut[0]==="x"?`Un carré est positif ou nul : ${fx(`x² + ${k} ≥ ${k}`)}.`:`Une exponentielle est toujours strictement positive : ${fx(`eˣ + ${k} ${dmGT} ${k}`)}.`,pts:1},
+        {w:`Le quotient a donc le signe du bas : il est strictement positif pour ${cote}.`,why:`Un nombre positif divisé par un nombre positif est positif ; divisé par un nombre négatif, il est négatif. Et ${fx(bas)} est positif pour ${cote}.`,pts:1},
+        {w:`<b>${fx(`D = ${dmT(P)}`)}</b>`,why:`${bb} annule le dénominateur : il est interdit, le crochet est ouvert.${ln?"":" Le quotient ne vaut jamais 0, puisque le haut ne s'annule pas."}`,pts:1}]});}
+  let a,b;do{a=R.ent(-6,6);b=R.ent(-6,6);}while(a===b);
+  const sn=a>0&&R()<0.4?-1:1,haut=dmAff(sn,-sn*a||0),bas=dmAff(1,-b||0),qt=lmF(haut,bas),m=Math.min(a,b),M=Math.max(a,b),ouv=x=>x===a?ln:true,
+    ext=[dmI(null,true,m,ouv(m)),dmI(M,ouv(M),null,true)],int=[dmI(m,ouv(m),M,ouv(M))],P=sn>0?ext:int,cmp=(x,g)=>x===a&&!ln?(g?"≥":"≤"):g?dmGT:dmLT,aa=fx(nb(a)),bb=fx(nb(b)),
+    ou=sn>0?`pour ${fx(`x ${cmp(m,0)} ${nb(m)}`)} ou ${fx(`x ${cmp(M,1)} ${nb(M)}`)}`:`pour ${fx(`${nb(m)} ${cmp(m,0)} x ${cmp(M,0)} ${nb(M)}`)}`,
+    bords=`${ln?`En ${aa} le quotient vaut 0, et ln(0) n'existe pas : ${aa} est interdit`:`En ${aa} le quotient vaut 0, et √0 existe : ${aa} est dans le domaine, crochet fermé`}. En ${bb} on diviserait par 0 : ${bb} est interdit, crochet ouvert.`;
+  return dmExo({sig:"RQ"+[ln?1:0,sn,a,b],expr:`${f}(${qt})`,P,nature:"le signe d'un quotient",type:"signe d'un quotient",crochets:bords,
+    pieges:[[sn>0?int:ext,"signe du quotient","le tableau de signes.",`Le quotient est positif quand le haut et le bas ont le même signe : ${ou}. Essaie avec un nombre pour vérifier.`,2],
+      [[dmDemi(a,sn>0,ln)],"signe du dénominateur oublié","le signe du bas.",`Tu as regardé seulement le signe du haut. Le signe du quotient dépend aussi du bas, ${fx(bas)}, qui change de signe en ${bb}.`,1],
+      [dmSauf(b),"signe du quotient oublié","la condition.",`Sous ${quoi}, il ne suffit pas que le quotient existe : il doit être ${pos}.`,0],
+      [dmSauf(a,b),"signe du quotient oublié","la condition.",`Sous ${quoi}, il ne suffit pas d'éviter 0 : le quotient doit être ${pos}.`,0],oubli],
+    etapes:[{w:`Il faut ${fx(`${qt} ${op} 0`)}, et ${fx(`${bas} ≠ 0`)}.`,why:c0,pts:1},
+      {w:`Le haut, ${fx(haut)}, s'annule en ${aa} : il est positif pour ${fx(`x ${sn>0?dmGT:dmLT} ${nb(a)}`)}. Le bas, ${fx(bas)}, s'annule en ${bb} : il est positif pour ${fx(`x ${dmGT} ${nb(b)}`)}.`,why:"Une expression ax + b change de signe là où elle s'annule : elle est du signe de a après, et du signe contraire avant.",pts:1},
+      {w:`Le quotient est ${pos} ${ou}.`,why:`Un quotient est positif quand le haut et le bas ont le même signe. ${sn>0?`Avant ${nb(m)}, les deux sont négatifs ; après ${nb(M)}, les deux sont positifs ; entre ${nb(m)} et ${nb(M)}, ils sont de signes contraires.`:`Entre ${nb(m)} et ${nb(M)}, les deux sont ${b<a?"positifs":"négatifs"} ; ailleurs, ils sont de signes contraires.`}`,pts:1},
+      {w:`<b>${fx(`D = ${dmT(P)}`)}</b>`,why:bords,pts:1}]});}
+const dmSigne=R=>R()<0.5?dmTrin(R):dmRapport(R);
+/* palier 4 : plusieurs conditions à la fois */
+function dmSur(R){const ln=R()<0.5,a=R.nz(-3,3),b=R.ent(-8,8),K=dmCond(a,b,ln),f=`${ln?"ln":"√"}(${K.u})`,br=fx(nb(K.r));let c,ou;
+  do{c=R.ent(-8,8);ou=Math.abs(c-K.rv)<1e-9?0:(K.dr?c>K.rv:c<K.rv)?1:-1;}while(ou<1&&R()<0.7);
+  const bas=dmAff(1,-c||0),cc=fx(nb(c)),P=ou>0?(K.dr?[dmI(K.r,ln,c,true),dmI(c,true,null,true)]:[dmI(null,true,c,true),dmI(c,true,K.r,ln)]):ou?[K.P]:[dmDemi(K.r,K.dr,true)],
+    e3=ou>0?`, et ${cc} vérifie ${fx(K.sol)} : il faut l'enlever.`:ou?` : cette valeur ne vérifie pas ${fx(K.sol)}, elle est déjà hors du domaine. Il n'y a rien à enlever.`:ln?" : cette valeur est déjà exclue par la première condition.":" : c'est justement la borne, qui devient interdite.",
+    bord=ln?`En ${br}, on aurait ln(0) : crochet ouvert.`:`En ${br}, on a √0 = 0 : crochet fermé.`;
+  return dmExo({sig:"U"+[ln?1:0,a,b,c],expr:lmF(f,bas),P,nature:"une racine ou un logarithme, sur un dénominateur",type:"deux conditions à la fois",
+    pieges:[[[K.P],"dénominateur oublié","le dénominateur.",`${cc} annule le dénominateur : il faut l'enlever du domaine.`,2],
+      [dmSauf(c),ln?"condition du logarithme oubliée":"condition de la racine oubliée","la première condition.",`Il faut aussi que ${fx(f)} existe : ${fx(K.cond)}.`,0],
+      [[dmDemi(K.r,!K.dr,ln)],"sens de l'inégalité","le sens de l'inégalité.",`${fx(K.cond)} donne ${fx(K.sol)}.`,1],
+      [dmR(),"conditions oubliées","les conditions.",`Il y a deux conditions : ${fx(K.cond)} et ${fx(`${bas} ≠ 0`)}.`,0]],
+    etapes:[{w:`Deux conditions : ${fx(K.cond)} et ${fx(`${bas} ≠ 0`)}.`,why:`${ln?"ln(u) n'existe que pour u strictement positif":"√u n'existe que pour u positif ou nul"}, et on ne divise pas par 0. Il faut les deux à la fois.`,pts:1},
+      {w:K.w,why:K.why,pts:1},
+      {w:`${fx(`${bas} ≠ 0`)} donne ${fx(`x ≠ ${nb(c)}`)}${e3}`,why:"On regarde si la valeur interdite par le dénominateur fait partie des x gardés à l'étape précédente.",pts:1},
+      {w:`<b>${fx(`D = ${dmT(P)}`)}</b>`,why:ou>0?`On enlève ${cc} : les crochets sont ouverts autour de lui. ${bord}`:ou?bord:`${cc} est interdit : crochet ouvert.`,pts:1}]});}
+function dmSousRac(R){const a=R.nz(-3,3),b=R.ent(-8,8),K=dmCond(a,b,true),N=dmNum(R,[]),br=fx(nb(K.r)),zero=`En ${br}, la racine vaut 0 et on diviserait par 0 : la borne est interdite, le crochet est ouvert.`;
+  return dmExo({sig:"V"+[a,b,N.t],expr:lmF(N.t,`√(${K.u})`),P:[K.P],nature:"une racine au dénominateur",type:"racine au dénominateur",crochets:zero,
+    pieges:[[[dmDemi(K.r,!K.dr,true)],"sens de l'inégalité","le sens de l'inégalité.",`${fx(K.cond)} donne ${fx(K.sol)}.`,1],
+      [dmR(),"conditions oubliées","les conditions.","Il faut que la racine existe, et qu'elle ne vaille pas 0.",0]],
+    etapes:[{w:`Il faut ${fx(K.cond)} : strictement positif.`,why:`Pour que la racine existe, il faut ${fx(`${K.u} ≥ 0`)}. Mais elle est au dénominateur : elle ne doit pas valoir 0, donc ${fx(`${K.u} ≠ 0`)}. Les deux conditions ensemble donnent ${fx(K.cond)}.`,pts:1},
+      {w:K.w,why:K.why,pts:1},
+      {w:`<b>${fx(`D = ${dmT([K.P])}`)}</b>`,why:zero,pts:1}]});}
+/* 1/ln(x − c), comme x e^(1/ln x) au CC 2023 */
+function dmInvLn(R){const c=R.ent(-6,6),s=c>0&&R()<0.35?-1:1,K=dmCond(s,-s*c||0,true),w=K.u,un=c+s,k=R.ent(1,5),fo=R.ent(0,2),L=`ln(${w})`,iv=lmF(1,L),expr=[lmF(k,L),`e^{${iv}}`,`x e^{${iv}}`][fo],
+    P=s>0?[dmI(c,true,un,true),dmI(un,true,null,true)]:[dmI(null,true,un,true),dmI(un,true,c,true)],cc=fx(nb(c)),uu=fx(nb(un));
+  return dmExo({sig:"W"+[s,c,fo,fo?0:k],expr,P,nature:"un logarithme au dénominateur",type:"logarithme au dénominateur",
+    pieges:[[[K.P],"ln(u) = 0 oublié","le dénominateur.",`${fx(L)} vaut 0 pour ${fx(`x = ${nb(un)}`)}, car ${fx("ln(1) = 0")} : cette valeur est interdite aussi.`,2],
+      [dmSauf(un),"condition du logarithme oubliée","la première condition.",`Il faut d'abord que ${fx(L)} existe : ${fx(K.cond)}.`,0],
+      [dmSauf(c),"ln(u) = 0 mal résolu","l'équation ln(u) = 0.",`${fx("ln(u) = 0")} quand ${fx("u = 1")}, pas quand ${fx("u = 0")}. Et il faut aussi ${fx(K.cond)} pour que le logarithme existe.`,2],
+      [dmSauf(c,un),"condition du logarithme oubliée","la première condition.",`Il ne suffit pas d'enlever ${cc} : il faut ${fx(K.cond)}, c'est-à-dire ${fx(K.sol)}.`,0],
+      [dmR(),"conditions oubliées","les conditions.",`Il y a deux conditions : ${fx(K.cond)} et ${fx(`${L} ≠ 0`)}.`,0]],
+    etapes:[{w:`Deux conditions : ${fx(K.cond)} et ${fx(`${L} ≠ 0`)}.`,why:`ln(u) n'existe que pour u strictement positif. Et ${fx(L)} est au dénominateur : il ne doit pas valoir 0.${fo?" L'exponentielle, elle, se calcule pour tout nombre : elle n'interdit rien.":""}`,pts:1},
+      {w:K.w,why:K.why,pts:1},
+      {w:`${fx(`${L} = 0`)} quand ${fx(`${w} = 1`)}, c'est-à-dire ${fx(`x = ${nb(un)}`)} : cette valeur est interdite.`,why:`${fx("ln(1) = 0")}, et 1 est le seul nombre dont le logarithme vaut 0.`,pts:1},
+      {w:`<b>${fx(`D = ${dmT(P)}`)}</b>`,why:`On part de ${fx(dmT([K.P]))} et on enlève ${uu}. Tous les crochets sont ouverts : ${cc} donnerait ln(0), et ${uu} une division par 0.`,pts:1}]});}
+function dmSomme(R){for(;;){const l1=R()<0.5,l2=R()<0.5,K1=dmCond(R.nz(-3,3),R.ent(-9,9),l1),K2=dmCond(R.nz(-3,3),R.ent(-9,9),l2),opp=K1.dr!==K2.dr,g=K1.dr?K1:K2,d=K1.dr?K2:K1;
+  if(Math.abs(K1.rv-K2.rv)<1e-9||(!opp&&R()<0.6)||(opp&&g.rv>d.rv))continue;
+  const fort=opp?null:(K1.dr?K1.rv>K2.rv:K1.rv<K2.rv)?K1:K2,faible=fort===K1?K2:K1,P=opp?[dmI(g.r,g.st,d.r,d.st)]:[fort.P],f1=`${l1?"ln":"√"}(${K1.u})`,f2=`${l2?"ln":"√"}(${K2.u})`,sg=R()<0.5?"+":"−";
+  return dmExo({sig:"Z"+[l1?1:0,l2?1:0,K1.u,K2.u,sg],expr:`${f1} ${sg} ${f2}`,P,nature:opp?"deux conditions qui se croisent":"deux conditions du même côté",type:"deux conditions à la fois",
+    pieges:[...(opp?[[[K1.P,K2.P],"réunion au lieu de l'intersection","la mise en commun.","Il faut que les deux conditions soient vraies en même temps : on garde les x communs aux deux ensembles, pas tous les x de l'un ou de l'autre.",3]]:[]),
+      [[K1.P],"deuxième condition oubliée","la deuxième condition.",`Il faut aussi que ${fx(f2)} existe : ${fx(K2.cond)}.`,2],
+      [[K2.P],"première condition oubliée","la première condition.",`Il faut aussi que ${fx(f1)} existe : ${fx(K1.cond)}.`,1]],
+    etapes:[{w:`Deux conditions : ${fx(K1.cond)} et ${fx(K2.cond)}.`,why:`f(x) se calcule seulement si ses deux morceaux se calculent. ${l1&&l2?"ln(u) n'existe que pour u strictement positif.":!l1&&!l2?"√u n'existe que pour u positif ou nul.":"√u n'existe que pour u positif ou nul, et ln(u) que pour u strictement positif."}`,pts:1},
+      {w:K1.w,why:K1.why,pts:1},{w:K2.w,why:K2.why,pts:1},
+      {w:`Il faut les deux à la fois : <b>${fx(`D = ${dmT(P)}`)}</b>`,why:opp?`x doit vérifier ${fx(g.sol)} et ${fx(d.sol)} en même temps : on garde ce qui est commun aux deux ensembles (leur intersection). Chaque borne garde le crochet de sa condition.`:`Si ${fx(fort.sol)}, alors ${fx(faible.sol)} est vrai aussi : la condition la plus forte suffit.`,pts:1}]});}}
+/* rien d'interdit, une valeur absolue, une exponentielle : comme au TD 1, exercice 3 (a, e, g, h) */
+function dmPiege(R){const v=R.ent(0,2),ln=R()<0.5;
+  if(v===0){const k=R.ent(1,9),sq=Math.round(Math.sqrt(k)),u=`x² + ${k}`,dk=R.ent(0,ln?1:2),c=`${ln?"ln":"√"}(${u})`,expr=[c,`x${ln?" ":""}${c}`,lmF(1,c)][dk],trop=`x n'a pas besoin d'être positif : c'est ${fx(u)} qui doit l'être, et il l'est toujours.`;
+    return dmExo({sig:"F0"+[ln?1:0,k,dk],expr,P:dmR(),nature:"rien d'interdit",type:"condition toujours vraie",
+      pieges:[...(sq*sq===k?[[[dmI(null,true,-sq,ln),dmI(sq,ln,null,true)],"confusion avec x² − k","le signe.",`C'est ${fx(`x² − ${k}`)} qui change de signe en ${fx(nb(-sq))} et en ${fx(String(sq))}. ${fx(u)} est toujours positif.`,1]]:[]),
+        [[dmI(0,false,null,true)],"condition en trop","la condition.",trop,1],[[dmI(0,true,null,true)],"condition en trop","la condition.",trop,1],
+        [dmSauf(0),"valeur enlevée à tort","la condition.",`Pour ${fx("x = 0")}, ${fx(u)} vaut ${k}, qui est strictement positif : 0 est dans le domaine.`,1],
+        [[dmI(-k,ln,null,true)],"équation mal lue","la condition.",`Il y a un carré : ${fx(`${u} ${dmGT} 0`)} n'est pas ${fx(`x + ${k} ${dmGT} 0`)}.`,1]],
+      etapes:[{w:`Il faut ${fx(`${u} ${dk===2||ln?dmGT:"≥"} 0`)}.`,why:dk===2?"Sous la racine, il faut un nombre positif ou nul ; et comme la racine est au dénominateur, elle ne doit pas valoir 0.":ln?"ln(u) n'existe que pour u strictement positif.":"√u n'existe que pour u positif ou nul.",pts:1},
+        {w:`${fx(`${u} ≥ ${k}`)} : la condition est toujours vraie.`,why:`Un carré est toujours positif ou nul : ${fx("x² ≥ 0")}. En ajoutant ${k}, on obtient un nombre au moins égal à ${k}, donc strictement positif.`,pts:1},
+        {w:`<b>${fx("D = ℝ")}</b>`,why:"Aucune valeur de x n'est interdite.",pts:1}]});}
+  const a=R.ent(-8,8),w=dmAff(1,-a||0),P=dmSauf(a),aa=fx(nb(a)),fin={w:`<b>${fx(`D = ${dmAcc(a)}`)}</b>, c'est-à-dire ${fx(`D = ${dmT(P)}`)}.`,why:"On enlève de ℝ la seule valeur interdite. Les crochets sont ouverts autour d'elle.",pts:1},
+    signe=[dmSauf(-a),"signe de la valeur interdite","l'équation.",`${fx(w)} s'annule en ${aa}.`,1];
+  if(v===1)return dmExo({sig:"F1"+a,expr:`ln(|${w}|)`,P,acc:dmAcc(a),nature:"le logarithme d'une valeur absolue",type:"logarithme d'une valeur absolue",
+    pieges:[[[dmI(a,true,null,true)],"valeur absolue oubliée","la valeur absolue.",`Avec la valeur absolue, ${fx(w)} a le droit d'être négatif : ${fx(`|${w}|`)} reste positif.`,1],
+      [dmR(),"valeur interdite oubliée","la valeur absolue.",`${fx(`|${w}|`)} vaut 0 pour ${fx(`x = ${nb(a)}`)}, et ln(0) n'existe pas.`,1],signe],
+    etapes:[{w:`Il faut ${fx(`|${w}| ${dmGT} 0`)}.`,why:"ln(u) n'existe que pour u strictement positif.",pts:1},
+      {w:`${fx(`|${w}|`)} est toujours positif ou nul, et il vaut 0 seulement pour ${fx(`x = ${nb(a)}`)}.`,why:`La valeur absolue d'un nombre est sa distance à 0 : elle n'est jamais négative, et elle est nulle seulement quand le nombre est nul.${a?` Ici ${fx(`${w} = 0`)} donne ${fx(`x = ${nb(a)}`)}.`:""}`,pts:1},fin]});
+  const k=R.nz(-5,5),ex0=lmF(nb(k),w);
+  return dmExo({sig:"F2"+[a,k],expr:`e^{${ex0}}`,P,acc:dmAcc(a),nature:"une exponentielle dont l'exposant est une fraction",type:"exposant d'une exponentielle",
+    pieges:[[dmR(),"exposant oublié","l'exposant.",`L'exponentielle se calcule pour tout nombre, mais il faut d'abord que son exposant ${fx(ex0)} se calcule : ${fx(`${w} ≠ 0`)}.`,0],
+      [[dmI(a,true,null,true)],"confusion avec un logarithme","la condition.","Une exponentielle accepte les nombres négatifs : son exposant doit seulement exister.",0],signe],
+    etapes:[{w:`Il faut ${fx(`${w} ≠ 0`)}.`,why:`L'exponentielle se calcule pour tout nombre : elle n'interdit rien. Mais son exposant ${fx(ex0)} doit d'abord se calculer, et c'est une fraction : on ne divise pas par 0.`,pts:1},
+      {w:a?`${fx(`${w} = 0`)} donne ${fx(`x = ${nb(a)}`)}.`:`La seule valeur interdite est ${fx("x = 0")}.`,why:a?`On ${a>0?"ajoute":"retire"} ${Math.abs(a)} des deux côtés.`:"Le dénominateur est x lui-même.",pts:1},fin]});}
+const dmDeux=R=>{const t=R();return (t<0.25?dmSur:t<0.4?dmSousRac:t<0.6?dmInvLn:t<0.85?dmSomme:dmPiege)(R);};
+const dmMix=R=>R.choix([dmSimple,dmQuot,dmTrin,dmRapport,dmSur,dmSousRac,dmInvLn,dmSomme,dmPiege])(R);
+
 /* les exports servent aux contrôles (tools/verif/calc.js) */
 G.calc={lis,val,lettres,lisReel,lisCx,pres,presC};
 
@@ -25566,7 +25779,14 @@ G.add("calc",[
    {t:"croissances comparées : exponentielle, puissances, logarithme",cc:2,min:150,gen:lmCroiss},
    {t:"un taux d'accroissement, comme sin(x)/x",cc:3,min:120,gen:lmTaux},
    {t:"des racines : la quantité conjuguée",cc:4,min:170,gen:lmConj},
-   {t:"tout mélangé, comme au TD 1 (exercices 1 et 2)",cc:3,gen:lmMix}]}
+   {t:"tout mélangé, comme au TD 1 (exercices 1 et 2)",cc:3,gen:lmMix}]},
+ {id:"CA15",t:"Domaine de définition",tache:"domaine de définition",th:"domaine",pts:1.5,lecons:["c-domaine"],
+  paliers:[
+   {t:"une racine ou un logarithme",cc:2,gen:R=>dmSimple(R,true)},
+   {t:"un quotient : les valeurs qui annulent le dénominateur",cc:2,gen:R=>dmQuot(R,true)},
+   {t:"le signe d'un trinôme ou d'un quotient, sous une racine ou un logarithme",cc:4,gen:dmSigne},
+   {t:"plusieurs conditions à la fois",cc:4,gen:dmDeux},
+   {t:"tout mélangé, comme au TD 1 (exercice 3) et aux CC",cc:3,gen:dmMix}]}
 ]);
 })();
 
