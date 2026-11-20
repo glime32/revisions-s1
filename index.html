@@ -1145,6 +1145,25 @@ html.xb-ouvert{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.el-shot{animation-name:el-fondu}}
 @media (max-width:600px){.el-p{height:34px;padding:0 9px;gap:6px;font-size:.85rem}}
 
+/* la méthode (choix 16c, 17a, 18a, 20b du 20/11) : genre d'erreur, carte « idée clé », question avant la leçon */
+.en-genre{display:grid;gap:10px;margin-top:6px}
+.en-genre__q{margin:0;font-weight:700}
+.puces{display:flex;flex-wrap:wrap;gap:6px}
+.puce{min-height:34px;border:2px solid var(--trait);border-radius:20px;padding:4px 12px;background:none;font:700 .84rem/1.2 var(--f-sans);color:var(--icy);cursor:pointer;max-width:100%;overflow-wrap:anywhere;text-align:left}
+.puce:hover{border-color:color-mix(in srgb,var(--aqua) 60%,transparent)}
+.puce[aria-pressed="true"]{background:var(--aqua);border-color:var(--aqua);color:#000}
+.puce:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+.carte-r{--c:var(--sc,var(--violet-hi));border:2px solid color-mix(in srgb,var(--c) 50%,transparent);border-radius:14px;padding:12px;display:grid;gap:6px;background:color-mix(in srgb,var(--c) 6%,#000);min-width:0}
+.carte-r .k{font:850 .7rem/1.2 var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--c)}
+.carte-r b{color:#fff}
+.carte-r .muted{font-size:.84rem}
+.carte-r__l{margin:0;padding-left:20px;display:grid;gap:4px;font-size:.86rem;color:var(--icy);min-width:0}
+.carte-r__l li{min-width:0;overflow-wrap:anywhere}
+.en-seul{margin-top:6px}
+.av-fin{display:grid;gap:12px;margin:22px 0;text-align:left;min-width:0}
+.av-fin .acts{justify-content:flex-start}
+.trou{display:inline-block;min-width:2.5em;border-bottom:2px solid var(--graphite);text-align:center}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-192.png">
@@ -32317,6 +32336,7 @@ const expliquee=(sid,fid)=>{const ls=lecsFiche(sid,fid);return ls.length>0&&ls.e
 function leconDe(sid,cid){
   if(cid.indexOf("q:")===0){const r=quizQ(sid,cid.slice(2));if(!r)return null;if(r.L)return r.L.id;if(!r.q.link)return null;cid="c:"+r.q.link;}
   if(cid.indexOf("c:")===0){const ls=lecsFiche(sid,cid.slice(2));return ls.find(l=>!ST[sid].les[l])||ls[0]||null;}
+  if(cid.indexOf("e:")===0){const c=ST[sid].cards[cid],d=c&&window.GEN&&GEN.par[c.g];return d?(d.lecons||[]).find(l=>BYL[sid][l])||null:null;}
   const l=cid.replace(/^m:/,"").split("#")[0];return BYL[sid][l]?l:null;}
 function cardOf(sid,cid){
   if(cid.indexOf("c:")===0){const c=SUBJ[sid].BY[cid.slice(2)];return c?{f:c.q,b:c.a,src:`Fiche : ${c.short||c.t}`,link:`#/${sid}/c/${c.id}`}:null;}
@@ -32335,6 +32355,11 @@ function cardOf(sid,cid){
     const r=quizQ(sid,cid.slice(2));if(!r)return null;const q=r.q,S=SUBJ[sid],F=q.link&&S.BY[q.link],o=(ST[sid].cards[cid]||{}).o,lang=q.lang||S.lang||"txt";
     return {f:`${q.q}${q.code?W.code(q.code,lang):""}`,b:`<p><b>${q.o[q.a]}</b></p>${q.e?`<p>${q.e}</p>`:""}${F?`<p><b>La fiche « ${F.short||F.t} » :</b> ${F.plain||""}</p>`:""}`,
       src:`Question ratée · ${o==="mix"?"mini-contrôle mélangé":r.L?"leçon : "+r.L.t:"quiz de cours"}${F?" · fiche : "+(F.short||F.t):""}`,link:F?`#/${sid}/c/${F.id}`:r.L?`#/lecon/${sid}/${r.L.id}`:`#/${sid}/quiz`};}
+  if(cid.indexOf("e:")===0){/* l'idée clé d'un exercice raté (choix 20b) : le même exercice, retiré par sa graine ; au dos, le chemin de la correction */
+    const c=ST[sid].cards[cid],G=window.GEN,d=c&&G&&G.par[c.g];if(!d||!d.paliers[c.lv]||!A.inScope(SUBJ[sid],d))return null;let e;try{e=G.tire(d,c.lv,c.gr);}catch(x){return null;}if(e.cle!==cid.slice(2))return null;
+    const ty=ST[sid].err[e.cle],nom=ty&&window.ENT?(ENT.genres.find(x=>x[0]===ty)||[0,""])[1]:"",corps=String(e.corpsPapier!=null?e.corpsPapier:e.corps||"").replace(/<input[^>]*>/g,"<span class=\"trou\">…</span>");
+    return {f:W.tx(`${e.q}${corps?`<div>${corps}</div>`:""}<p class="muted">L'idée clé ? Dis de tête les étapes, puis retourne la carte.</p>`),b:W.tx(`<p><b>${esc(d.t)}</b></p><ol class="carte-r__l">${e.etapes.map(x=>`<li>${x.w}</li>`).join("")}</ol>`),
+      src:`Exercice raté · ${d.t}${nom?" · "+nom:""}`,link:"#/entrainer/erreurs"};}
   const [lid,n]=cid.split("#"),L=BYL[sid][lid];if(!L)return null;let k=0;
   for(const s of L.steps)if(s.k==="card"){if(k===+n)return {f:s.f,b:s.b,src:`Leçon : ${L.t}`,link:`#/lecon/${sid}/${lid}`};k++;}
   return null;}
@@ -32409,9 +32434,10 @@ function parts(L,sid){const F=flow(L),m=stepMins(L,sid),st=[0];let cur=0,rest=m.
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
-  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid),vue=(A.ST[sid].les||{})[lid];LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}else if(vue&&vue.n)LP.rap=1;}
+  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid),vue=(A.ST[sid].les||{})[lid];LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}else if(vue&&vue.n)LP.rap=1;else if(window.ENT&&ENT.avant)LP.av=ENT.avant(sid,lid);}
   else{LP.last=Date.now();const p=progGet(sid,lid);if(p&&p.ts>(LP.saved||0)&&p.i!==LP.i){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;LP.cp=null;LP.rap=0;}}
   if(LP.rap===1)return rappel(sid,lid);
+  if(LP.av)return ENT.avantEcran(LP.av,BYL[sid][lid],()=>{LP.av=null;LP.last=Date.now();drawStep();});
   drawStep();}
 /* une leçon déjà finie, rouverte depuis le début : 3 minutes pour écrire de mémoire ce qu'il en retient, puis la leçon (choix 30a du 20/11) ;
    ce qu'il a écrit va dans le journal (événement « mem ») et dans le rapport d'entraînement */
@@ -32588,20 +32614,20 @@ function finish(){
   const burst=sc>=0.5?`<div class="burst" aria-hidden="true">${[...Array(12)].map((_,i)=>{const a=i/12*Math.PI*2,r=120+(i*37)%60;return `<svg style="--bx:${Math.round(Math.cos(a)*r)}px;--by:${Math.round(Math.sin(a)*r*.7)}px;--dl:${(i%4)*50}ms"><use href="#i-star8"/></svg>`;}).join("")}</div>`:"";
   $("#main").innerHTML=`<div class="page lp-end s-${sid}">${burst}<p class="kick">${S.name}</p><h1>Leçon terminée</h1><p class="lead">${esc(L.t)}</p><p class="score" id="lsc">${Math.round(sc*100)} %</p><p>${msg}${sc<0.5?" Le plan te la reproposera : refais-la demain, à froid.":""}</p>${nc?`<p>${nc} ${plural(nc,"carte")} « À retenir » ${nc>1?"arrivent":"arrive"} dans « Réviser » : tu les reverras demain.</p>`:""}${nm?`<p>${nm} ${plural(nm,"question ratée","questions ratées")} ${nm>1?"t'attendent":"t'attend"} aussi dans « Réviser » : c'est en retrouvant plus tard ce qu'on a raté qu'on le retient.</p>`:""}
    ${nt&&!nt.today?`<p class="allgood">C'est tout ce qui était prévu aujourd'hui. Repose-toi : c'est pendant le repos que ton cerveau range ce que tu viens d'apprendre.</p>`:""}
-   <div id="bil-l"></div><div class="acts">${nt&&nt.today?`<a class="btn pri big" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:""}<a class="btn${nt&&nt.today?"":" pri"}" href="#/">Retour à aujourd'hui</a>${nt&&!nt.today?`<a class="btn" href="${hrefTask(nt.sid,nt.t)}">Avancer quand même : ${esc(nt.t.t)}</a>`:""}<button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
+   <div id="av-fin"></div><div id="bil-l"></div><div class="acts">${nt&&nt.today?`<a class="btn pri big" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:""}<a class="btn${nt&&nt.today?"":" pri"}" href="#/">Retour à aujourd'hui</a>${nt&&!nt.today?`<a class="btn" href="${hrefTask(nt.sid,nt.t)}">Avancer quand même : ${esc(nt.t.t)}</a>`:""}<button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
   const el=$("#lsc"),goal=Math.round(sc*100);
-  if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/700),v=Math.round(goal*(1-Math.pow(1-k,3)));el.textContent=v+" %";if(k<1)requestAnimationFrame(f);};el.textContent="0 %";requestAnimationFrame(f);}
-  A.bilanSeance($("#bil-l"),{o:"leçon",s:sid,l:lid});
+  if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now();const f=t=>{const k=Math.max(0,Math.min(1,(t-t0)/700)),v=Math.round(goal*(1-Math.pow(1-k,3)));el.textContent=v+" %";if(k<1)requestAnimationFrame(f);};el.textContent="0 %";requestAnimationFrame(f);}
+  A.bilanSeance($("#bil-l"),{o:"leçon",s:sid,l:lid});if(window.ENT&&ENT.avantFin)ENT.avantFin($("#av-fin"),sid,lid);
   LP=null;$("#redo").addEventListener("click",()=>{progDrop(sid,lid);LP=newLP(sid,lid);drawStep();});badges();}
 
 /* ================= Réviser : les cartes du jour ================= */
 /* la phrase du haut de Réviser : ce que contient vraiment la séance */
 const quand=S=>{const j=jx(S);return /^J-/.test(j)?"dans "+j.slice(2)+" jours":j;};
-function rvLead(){const n={l:0,q:0,m:0,c:0},vu=new Set(),veille=[];
-  (RV?RV.q:[]).forEach(x=>{const k=x.sid+"|"+x.cid;if(vu.has(k)||ST[x.sid].jv[x.cid])return;vu.add(k);const t=x.cid.slice(0,2);n[t==="q:"?"q":t==="m:"?"m":t==="c:"?"c":"l"]++;
+function rvLead(){const n={l:0,q:0,m:0,c:0,e:0},vu=new Set(),veille=[];
+  (RV?RV.q:[]).forEach(x=>{const k=x.sid+"|"+x.cid;if(vu.has(k)||ST[x.sid].jv[x.cid])return;vu.add(k);const t=x.cid.slice(0,2);n[t==="q:"?"q":t==="m:"?"m":t==="c:"?"c":t==="e:"?"e":"l"]++;
     if(examStart(SUBJ[x.sid])-NOW()<=36*3600e3&&!veille.includes(x.sid))veille.push(x.sid);});
   const P=[];if(n.l)P.push(`${n.l} ${plural(n.l,"carte")} de tes leçons à revoir`);if(n.q)P.push(`${n.q} ${plural(n.q,"question ratée","questions ratées")} au quiz ou au mini-contrôle`);
-  if(n.m)P.push(`${n.m} ${plural(n.m,"question ratée","questions ratées")} dans tes leçons`);if(n.c)P.push(`${n.c} ${plural(n.c,"fiche")} en rouge`);
+  if(n.m)P.push(`${n.m} ${plural(n.m,"question ratée","questions ratées")} dans tes leçons`);if(n.c)P.push(`${n.c} ${plural(n.c,"fiche")} en rouge`);if(n.e)P.push(`${n.e} ${plural(n.e,"idée clé","idées clés")} d'exercices ratés`);
   const liste=P.length>1?P.slice(0,-1).join(", ")+" et "+P[P.length-1]:P[0];
   const cc=veille.map(id=>{const S=SUBJ[id];return ` ${exam(S).label} ${/^[aeiouéè]/i.test(S.name)?"d'":"de "}${S.name} ${quand(S)} : toutes ses cartes sont là, même celles prévues plus tard.`;}).join("");
   const nb=RV?RV.total:0,T=A.tempsCarte();
@@ -32763,6 +32789,18 @@ function bindJours(){
     A.boiteCren(box,m>21*60?{day:addDays(today(),1),a:14*60}:{day:today(),a:Math.max(m,8*60)},home);});
   A.ajuste(M);}
 
+/* le soir (choix 18a du 20/11) : 5 minutes de feuille blanche pour chaque matière vue en cours aujourd'hui, sur la compréhension
+   (refaire de tête un raisonnement, un exemple, une démonstration, puis comparer), et 2 minutes sur le prochain jour de cours.
+   Après la fin du dernier cours (17h au plus tôt) ; les cases cochées sont dans le journal (« soir »). */
+function ceSoir(t0,n){const vus=A.coursJour(t0).filter(c=>!c.skip&&SUBJ[c.sid]);if(!vus.length)return "";
+  if(n.getHours()*60+n.getMinutes()<Math.max(17*60,...vus.map(c=>A.mm(c.end))))return "";
+  const typ=c=>/^CM/.test(c.detail||"")?"le CM":/^TP/.test(c.detail||"")?"le TP":/^TD/.test(c.detail||"")?"le TD":"le cours",par={};vus.forEach(c=>{(par[c.sid]=par[c.sid]||[]).push(c);});
+  const L=Object.entries(par).map(([sid,C])=>({x:"fb:"+sid,t:`5 min · feuille blanche : ${SUBJ[sid].name}`,m:`Tu as eu ${C.map(c=>`${typ(c)} (${hh(A.mm(c.start))})`).join(", ").replace(/, ([^,]*)$/," et $1")}. Ferme tout. Refais de tête un raisonnement, un exemple ou une démonstration vus aujourd'hui, sans réciter, puis compare avec tes notes.`}));
+  let dj=null;for(let k=1;k<=7&&!dj;k++){const d=addDays(t0,k),C=A.coursJour(d).filter(c=>!c.skip&&SUBJ[c.sid]);if(C.length)dj={d,c:C[0],k};}
+  if(dj){const sid=dj.c.sid,S=SUBJ[sid],der=lesOf(sid).filter(x=>ST[sid].les[x.id]).sort((a,b)=>(ST[sid].les[b.id].ts||0)-(ST[sid].les[a.id].ts||0))[0],jr=dayName(dj.d).split(" ")[0];
+    L.push({x:"dm",t:"2 min · demain",m:`${dj.k>1?"Rien en cours demain. "+jr.charAt(0).toUpperCase()+jr.slice(1):"Demain"} ${hh(A.mm(dj.c.start))} : ${typ(dj.c).replace(/^le /,"")} ${W.de(S.name)}. ${der?`Relis ta dernière leçon de ${S.name}, « ${esc(der.t)} » : tu arriveras en sachant où on en est.`:`Relis tes notes du dernier cours ${W.de(S.name)}.`}`});}
+  const fait=x=>!!A.hub.soir[t0+"|"+x];
+  return tiroir(`Ce soir · ${dayName(t0).split(" ").slice(0,2).join(" ")}`,`<ol class="todo">${L.map(o=>`<li class="task${fait(o.x)?" done":""}"><button class="tick" data-soir="${o.x}" aria-pressed="${fait(o.x)}" aria-label="${fait(o.x)?"Décocher":"Cocher"}">${fait(o.x)?"✓":""}</button><div><div class="tt">${o.t}</div><div class="meta">${o.m}</div></div></li>`).join("")}</ol>`,"soir");}
 function home(){
   const t0=today(),n=NOW(),P=plan(),up=upcoming(),due=dueCards();
   const tb=P.blocks.filter(b=>b.day===t0);
@@ -32793,6 +32831,7 @@ function home(){
   else go={href:nextT?hrefTask(nextT.sid,nextT.t):"#/apprendre",c:"c-vert",tile:"✓",kick:"Aujourd'hui",name:"C'est fini pour aujourd'hui",sub:`${doneTodayMin()>0?"Repose-toi : ce qui était prévu est fait.":"Plus de créneau aujourd'hui : le plan reprend demain."}${nextT?` Pour avancer quand même : ${esc(nextT.t.t)} (${nS.name}).`:""}`,done:true};
   h+=`<a class="gobig ${go.c}${go.done?" is-done":""}" href="${go.href}"><span class="gobig__tile" aria-hidden="true">${go.tile}</span><span class="gobig__bar"><span class="gobig__kick">${go.kick}</span><span class="gobig__name">${go.name}</span><span class="gobig__sub">${go.sub}</span></span>${ico("i-arrow","ico gobig__arrow")}</a>`;
   h+=`<p class="gomore">${after?`<span>${after}</span>`:""}${EJ&&go.href!=="#/entrainer/jour"?`<a href="#/entrainer/jour">Entretien du jour (${EJ.n} ${plural(EJ.n,"exercice")}, environ ${EJ.min} min)</a>`:""}${due.length&&go.href!=="#/reviser"?`<a href="#/reviser">Réviser ${due.length} ${plural(due.length,"carte")}</a>`:""}${DGS.filter(x=>!(go.href===`#/${x.sid}/niveau`)).slice(0,2).map(x=>`<a href="#/${x.sid}/niveau">Où j'en suis en ${SUBJ[x.sid].name} (${x.why})</a>`).join("")}${go.href==="#/mix"?"":`<a href="#/mix">Mini-contrôle mélangé${mixed?` : fait aujourd'hui (${A.hub.mixScore} sur ${A.hub.mixSur})${MD.proch?", à refaire "+qd(MD.proch):""}`:MD.du?" (conseillé aujourd'hui)":MD.proch?` (à refaire ${qd(MD.proch)})`:""}</a>`}<button type="button" class="linkbtn" id="toprog">Voir tout le programme du jour</button></p>`;
+  h+=ceSoir(t0,n);
   h+=journees(P);
   h+=`<div class="ecrin">${ruler}<div class="ecrin__velvet"><section class="group c-violet"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">Mes CC</h2><span class="group__count">${up.length?`${up.length} à venir`:"tous passés"}</span></div><ul class="group__grid subjects">${ordered().map(subjPiece).join("")}</ul></section></div></div>`;
   const tot=tb.reduce((a,b)=>a+work(b.end-b.start),0),F=factor(),dt=doneTodayMin();
@@ -32817,6 +32856,7 @@ function home(){
   h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
   $("#main").innerHTML=h+`</div>`;
   bindJours();
+  $("#main").querySelectorAll("[data-soir]").forEach(b=>b.addEventListener("click",()=>{emit({k:"soir",d:t0,x:b.dataset.soir,v:!A.hub.soir[t0+"|"+b.dataset.soir]});home();}));
   const tp=$("#toprog");if(tp)tp.addEventListener("click",()=>{const el=$(".tiroir.prog");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
   bindTicks($("#main"),home);badges();}
 
@@ -33123,6 +33163,7 @@ function prochain(){const S=P.sess;
     else if(!g.n&&!d.fixe){P.lv=dernier(d);P.m="pl";}
     else{P.lv=g.lv;P.m="p";}
     P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=seuil(d)-1&&!g.pap&&!d.sansPapier;}
+  P.seul=P.refais;P.refais=false;
   P.re=P.force?P.force.re:null;P.exo=P.force?P.force.e:tirage(P.d,P.lv,P.g);P.force=null;P.aide=false;P.res=null;P.papier=false;
   if(P.exo.papier)P.papierExige=P.papier=true;else if(P.exo.champs.some(c=>c.k==="trous")&&P.exo.corpsPapier==null)P.papierExige=false;else if(P.papierExige)P.papier=true;
   let t0=Date.now();try{const s=JSON.parse(sessionStorage.getItem("rev-s1-exo")||"null");if(s&&s.c===P.exo.cle&&t0-s.t<30*60e3)t0=s.t;else sessionStorage.setItem("rev-s1-exo",JSON.stringify({c:P.exo.cle,t:t0}));}catch(e){}
@@ -33190,9 +33231,10 @@ function dessine(){
   const cible=P.m==="e"?1:seuil(d),acquis=P.m==="p"?g.ok:0;
   let avant="";
   if(P.m==="pl")avant=`<p class="prekick">Pour commencer · un exercice du niveau ${duCC(S)}</p><p class="muted">S'il est juste, tu passes directement au dernier palier. Si tu ne sais pas le faire, clique sur « Je ne sais pas » : tu commenceras par plus simple.</p>`;
-  else if(P.m==="x")avant=`<p class="prekick">${P.re==="meme"?"Tu refais un exercice raté":P.re?"Un exercice du même genre que celui que tu as raté":"Exercice en plus"} · il ne change pas tes passages</p>`;
+  else if(P.m==="x")avant=`<p class="prekick">${P.seul?"À toi, sans aide · le même genre que celui que tu viens de rater":P.re==="meme"?"Tu refais un exercice raté":P.re?"Un exercice du même genre que celui que tu as raté":"Exercice en plus"} · il ne change pas tes passages</p>`;
   else if(e.papier)avant=`<p class="prekick">Sur papier · de mémoire, puis tu coches ligne par ligne</p>`;
   else if(P.papierExige)avant=`<p class="prekick">Sur papier · ${jr?"ce passage se fait comme "+auCC(S):"pour valider le dernier palier"}</p>`;
+  if(P.seul&&P.m!=="x")avant=`<p class="prekick">À toi, sans aide · le même genre que celui que tu viens de rater</p>`+avant;
   $("#main").className="s-"+d.sid;
   $("#main").innerHTML=`<div class="lp s-${d.sid}">
    <div class="lp-top"><a class="lp-x" href="${retour}" aria-label="Quitter l'entraînement">✕</a><div class="lp-bar" role="progressbar" aria-label="Réponses justes de suite" aria-valuemin="0" aria-valuemax="${cible}" aria-valuenow="${acquis}"><i style="width:${Math.min(100,acquis/cible*100)}%"></i></div><span class="lp-n" id="en-chrono">0:00</span></div>
@@ -33233,9 +33275,9 @@ function enregistre(r,o){
   A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:P.re?"refait":{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle,gr:e.gr,lv:P.lv},P.re?{refait:1}:{},o.carnet||{}));
   const ap=etat(d.id);
   if(SUBJ[d.sid].TB["en-"+d.id]){if(ap.val&&!av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:true});else if(!ap.val&&av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:false});}
-  P.sess.n++;if(r===1)P.sess.ok++;P.sess.faits.push(d.id);P.sess.refaire=r===0&&P.m==="e"&&ap.val?d.id:null;
+  P.sess.n++;if(r===1)P.sess.ok++;P.sess.faits.push(d.id);P.sess.refaire=r===0?d.id:null;
   try{sessionStorage.removeItem("rev-s1-exo");}catch(x){}
-  return {av,ap,ms,lent,cc};}
+  return {av,ap,ms,lent,cc,r};}
 function changement(d,av,ap){const N=d.paliers.length;
   if(ap.val&&!av.val)return ` ${d.fixe?"C'est réussi":seuil(d)+" justes de suite au dernier palier : méthode réussie"}. ${d.fixe?"Tu la referas":"Elle revient"} ${quand(echeance(d,ap))} dans l'entretien du jour.`;
   if(!ap.val&&av.val)return ` Deux erreurs sur ce passage : la méthode est à retravailler, à partir du palier ${ap.lv+1}.`;
@@ -33247,9 +33289,12 @@ function changement(d,av,ap){const N=d.paliers.length;
   if(ap.lv>av.lv)return ` ${seuil(d)} justes de suite : palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
   if(ap.lv<av.lv)return ` 2 fausses de suite : retour au palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
   return "";}
-function pied(R){const fini=P.mode==="jour"?!entretien(P.sess.tout).length:(R.ap.val&&!R.av.val);
-  $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}${P.re?`<a class="btn" href="#/entrainer/erreurs">Retour à mes erreurs</a>`:""}<button class="btn pri big" id="en-suiv">${fini?"Terminer":"Exercice suivant"}</button>`;
-  const s=$("#en-suiv");s.addEventListener("click",()=>fini?fin():prochain());const st=$("#en-stop");if(st)st.addEventListener("click",fin);s.focus();
+/* choix 16c du 20/11 : après une correction, le même genre d'exercice tout de suite, à faire seul */
+function pied(R){const fini=P.mode==="jour"?!entretien(P.sess.tout).length:(R.ap.val&&!R.av.val),
+    seul=R.r===0&&P.m!=="pl"&&!fini&&(P.mode!=="jour"||entretien(P.sess.tout).some(y=>y.d.id===P.d.id)),fb=$("#en-fb");
+  if(seul&&fb)fb.insertAdjacentHTML("beforeend",`<div class="verdict info en-seul">À toi, sans aide : le même genre d'exercice, avec d'autres données. ${P.m==="x"?"Il ne change pas tes passages.":P.m==="e"?"Il compte pour ton passage.":"Il compte pour ton palier."}</div>`);
+  $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}${P.re?`<a class="btn" href="#/entrainer/erreurs">Retour à mes erreurs</a>`:""}<button class="btn pri big" id="en-suiv">${fini?"Terminer":seul?"Refais-le seul":"Exercice suivant"}</button>`;
+  const s=$("#en-suiv");s.addEventListener("click",()=>{if(fini)return fin();if(seul){P.refais=true;if(P.m==="x")P.force={e:tirage(P.d,P.lv,etat(P.d.id)),lv:P.lv,re:P.re||"semblable"};}prochain();});const st=$("#en-stop");if(st)st.addEventListener("click",fin);s.focus();
   const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()?1:0):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/seuil(P.d)):0;bar.style.width=Math.min(100,v*100)+"%";}}
 function valide(nsp){
   const d=P.d,e=P.exo,b=$("#lpb"),fb=$("#en-fb");if(P.res)return;
@@ -33272,12 +33317,12 @@ function valide(nsp){
   else if(r===0)h+=`<h3>La correction</h3>${corr(j.diag?j.diag.etape:-1)}`;
   else h+=`<details class="ex"><summary><span><span class="h">Voir la correction</span></span></summary><div class="body">${corr(-1)}</div></details>`;
   fb.innerHTML=tx(h);longues(fb);
-  if(cherche)chercheErreur(cherche,corr,R);else pied(R);
+  if(cherche)chercheErreur(cherche,corr,R);else{if(r===0)genreErreur(fb,d,e);pied(R);}
   fb.scrollIntoView({behavior:"smooth",block:"nearest"});}
 /* l'erreur n'est pas reconnue : une ou deux questions sur ses résultats intermédiaires pour trouver où ça part */
 function chercheErreur(C,corr,R){const box=$("#en-ch"),vus=[];let k=0;
   const conclut=(dg,passe)=>{A.logRep({o:"entraînement : recherche d'erreur",s:P.d.sid,g:P.d.id,cle:P.exo.cle,questions:vus,etape:dg?dg.titre:null,passe:passe?1:0});
-    box.insertAdjacentHTML("beforeend",tx(`${dg?`<div class="expl no"><b>${dg.titre}</b><br>${dg.msg}</div>`:""}<h3>La correction</h3>${corr(dg?dg.etape:-1)}`));pied(R);};
+    box.insertAdjacentHTML("beforeend",tx(`${dg?`<div class="expl no"><b>${dg.titre}</b><br>${dg.msg}</div>`:""}<h3>La correction</h3>${corr(dg?dg.etape:-1)}`));genreErreur(box,P.d,P.exo);pied(R);};
   const pose=()=>{const q=C.L[k];
     box.insertAdjacentHTML("beforeend",tx(`<div class="qbox"><p class="qtxt">${k?"":"Cherchons où ça part. "}${q.q}</p><div class="mq-row"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Ta ligne"><button type="button" class="btn pri">Vérifier</button><button type="button" class="btn" data-passe="1">Voir la correction</button></div><div class="verdict" hidden></div></div>`));
     const bx=box.lastElementChild,inp=bx.querySelector("input"),ver=bx.querySelector(".verdict"),ok=bx.querySelector(".btn.pri");
@@ -33303,7 +33348,19 @@ function corrigePapier(){const d=P.d,e=P.exo,b=$("#lpb"),tot=e.etapes.reduce((s,
     const R=enregistre(ok?1:0,{papier:true,carnet:{papier:1,note:n,noteSur:tot,lignesManquantes:manque.map(k=>A.brut(e.etapes[k].w).slice(0,160))}}),ch=changement(d,R.av,R.ap);
     $("#en-note").className="verdict "+(ok?"ok":"no");
     $("#en-note").innerHTML=`Note estimée : ${virg(n)} sur ${virg(tot)}. ${ok?"L'exercice compte juste.":"L'exercice compte faux : il faut au moins 80 % des points."}${manque.length?` Il manque ${manque.length>1?"les lignes":"la ligne"} ${manque.map(k=>k+1).join(", ")}.`:""}${ch} ${duree(R.ms)} : ${auCC(SUBJ[d.sid])}, environ ${R.cc} min.`;
-    $("#en-fb").innerHTML=tx(`<details class="ex"><summary><span><span class="h">Voir l'explication de chaque étape</span></span></summary><div class="body">${etapesHTML(e,-1)}</div></details>`);pied(R);});}
+    $("#en-fb").innerHTML=tx(`<details class="ex"><summary><span><span class="h">Voir l'explication de chaque étape</span></span></summary><div class="body">${etapesHTML(e,-1)}</div></details>`);if(!ok)genreErreur($("#en-fb"),d,e);pied(R);});}
+
+/* ---------- le genre d'erreur (choix 20b du 20/11) : un toucher sous la correction ; l'idée clé de l'exercice (le chemin de la correction)
+   devient une carte de Réviser, revue le lendemain. Le genre se retrouve et se change dans « Mes erreurs ». ---------- */
+const GENRES=[["etourderie","Étourderie"],["methode","Méthode pas trouvée"],["cours","Cours pas su"],["calcul","Calcul"],["redaction","Rédaction"]];
+const genreNom=k=>(GENRES.find(x=>x[0]===k)||[0,""])[1],genreDe=(sid,cle)=>((A.ST[sid]||{}).err||{})[cle]||null;
+const genresHTML=on=>`<div class="puces" role="group" aria-label="Ce qui s'est passé">${GENRES.map(([k,n])=>`<button type="button" class="puce" data-genre="${k}" aria-pressed="${k===on}">${n}</button>`).join("")}</div>`;
+const ideeHTML=(d,e)=>`<div class="carte-r"><span class="k">Revient dans Réviser · carte, demain</span><b>Idée clé de l'exercice</b><span class="muted">${esc(d.t)} :</span><ol class="carte-r__l">${e.etapes.map(x=>`<li>${x.w}</li>`).join("")}</ol></div>`;
+function genreErreur(box,d,e){if(!box||e.gr==null)return;const on=genreDe(d.sid,e.cle);
+  box.insertAdjacentHTML("beforeend",`<div class="en-genre"><p class="en-genre__q">Ce qui s'est passé ? (un toucher)</p>${genresHTML(on)}<div class="en-genre__carte"></div></div>`);
+  const z=box.lastElementChild,c=z.querySelector(".en-genre__carte"),montre=()=>{if(!c.children.length){c.innerHTML=tx(ideeHTML(d,e));longues(c);}};if(on)montre();
+  z.querySelectorAll("[data-genre]").forEach(b=>b.addEventListener("click",()=>{z.querySelectorAll("[data-genre]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    A.emit({k:"err",s:d.sid,g:d.id,lv:e.palier,gr:e.gr,cle:e.cle,ty:b.dataset.genre});montre();}));}
 
 /* ---------- fin de séance ---------- */
 function fin(){stop();const S0=P.sess,ids=[...new Set(S0.faits)],jr=P.mode==="jour",sid=P.d?P.d.sid:null;
@@ -33366,11 +33423,14 @@ function erreurs(){stop();$("#main").className="";
     R.forEach(r=>{if(r.ok&&r.cle)juste[r.cle]=r.t;});R.filter(ratee).forEach(r=>{der[r.cle]=r;});
     const F=Object.values(der).sort((a,b)=>b.t-a.t),refait=r=>juste[r.cle]>r.t;
     if(!F.length){box.innerHTML=`<p class="muted">Aucun exercice raté pour l'instant.</p>`;return;}
+    const G={};F.filter(r=>!refait(r)).forEach(r=>{const k=genreDe(r.s,r.cle);if(k)G[k]=(G[k]||0)+1;});const GL=Object.entries(G).sort((a,b)=>b[1]-a[1]);
     const ligne=r=>{const d=GEN.par[r.g],cq=C.filter(c=>c.cle===r.cle).pop(),et=r.etape||(cq&&cq.etape),ok=refait(r);
-      return `<div class="expl${ok?"":" no"}"><b>${A.dayName(A.ymd(new Date(r.t)),false,true)} · ${esc(d.t)} · ${r.o==="examen blanc"?"examen blanc":`palier ${r.palier} sur ${r.sur}`}</b><br>${esc(r.enonce)}<br>${r.papier?`Sur papier, note : ${virg(r.note)} sur ${virg(r.noteSur)}.${(r.lignesManquantes||[]).length?` Lignes non écrites : ${esc(r.lignesManquantes.join(" | "))}`:""}`:`Ta réponse : ${esc(r.reponse||"")}`}<br>Bonne réponse : ${esc(r.bonne)}<br>${et?`L'erreur : ${esc(et)}`:"Le site n'a pas reconnu l'erreur."}${ok?`<br>Refait juste le ${A.dayName(A.ymd(new Date(juste[r.cle])),false,true)}.`:""}<div class="acts"><a class="btn${ok?"":" pri"}" href="#/entrainer/refaire/${encodeURIComponent(r.id)}">Le refaire</a></div></div>`;};
+      return `<div class="expl${ok?"":" no"}"><b>${A.dayName(A.ymd(new Date(r.t)),false,true)} · ${esc(d.t)} · ${r.o==="examen blanc"?"examen blanc":`palier ${r.palier} sur ${r.sur}`}</b><br>${esc(r.enonce)}<br>${r.papier?`Sur papier, note : ${virg(r.note)} sur ${virg(r.noteSur)}.${(r.lignesManquantes||[]).length?` Lignes non écrites : ${esc(r.lignesManquantes.join(" | "))}`:""}`:`Ta réponse : ${esc(r.reponse||"")}`}<br>Bonne réponse : ${esc(r.bonne)}<br>${et?`L'erreur : ${esc(et)}`:"Le site n'a pas reconnu l'erreur."}${ok?`<br>Refait juste le ${A.dayName(A.ymd(new Date(juste[r.cle])),false,true)}.`:""}${ok?"":`<p class="en-genre__q">Ce qui s'est passé ?</p><div data-rid="${esc(r.id)}">${genresHTML(genreDe(r.s,r.cle))}</div>`}<div class="acts"><a class="btn${ok?"":" pri"}" href="#/entrainer/refaire/${encodeURIComponent(r.id)}">Le refaire</a></div></div>`;};
     let h="";matieres().concat(A.SIDS.filter(s=>!matieres().includes(s))).forEach(sid=>{const K=F.filter(r=>r.s===sid&&!refait(r)),OK=F.filter(r=>r.s===sid&&refait(r));if(!K.length&&!OK.length)return;
       h+=`<section class="sec"><h2><span>${SUBJ[sid].name}</span></h2>${K.map(ligne).join("")||`<p class="muted">Tout est refait juste.</p>`}${OK.length?`<details class="ex"><summary><span><span class="h">Déjà refaits juste (${OK.length})</span></span></summary><div class="body">${OK.map(ligne).join("")}</div></details>`:""}</section>`;});
-    box.innerHTML=h;});}
+    box.innerHTML=(GL.length?`<p class="lead">Ce qui revient le plus : ${GL.map(([k,n])=>`${genreNom(k)} (${n})`).join(", ")}.</p>`:`<p class="muted">Sous chaque erreur, un toucher dit ce qui s'est passé : l'idée clé de l'exercice revient alors en carte dans Réviser.</p>`)+h;
+    box.querySelectorAll("[data-rid] [data-genre]").forEach(b=>b.addEventListener("click",()=>{const r=F.find(x=>x.id===b.closest("[data-rid]").dataset.rid),d=r&&GEN.par[r.g];if(!d)return;
+      b.parentNode.querySelectorAll("[data-genre]").forEach(x=>x.setAttribute("aria-pressed",x===b));const x=retrouve(r,d),ev={k:"err",s:r.s,g:d.id,cle:r.cle,ty:b.dataset.genre};if(x.e){ev.lv=x.lv;ev.gr=x.e.gr;}A.emit(ev);}));});}
 /* le même exercice : par sa graine ; sinon rejoué depuis le journal (le « tr » du même exercice donne le palier et le nombre d'exercices d'avant) */
 function retrouve(r,d){const essai=(lv,gr)=>{try{const e=GEN.tire(d,lv,gr);return e.cle===r.cle?e:null;}catch(x){return null;}},h=s=>parseInt(GEN.outils.hache(s),36);
   const T=A.journal().filter(x=>x.k==="tr"&&x.g===d.id),i=T.map(x=>x.sg).indexOf(r.cle),ev=i>=0?T[i]:null,lv=r.lv!=null?r.lv:ev?ev.lv:r.palier?r.palier-1:null;
@@ -33791,12 +33851,48 @@ function shot(ev){let R;try{R=elan();}catch(e){return;}const j=R.D[A.ymd(new Dat
   setTimeout(()=>{const v=document.querySelector("#en-fb .verdict")||document.getElementById("en-fb");if(!v)return;const r=v.getBoundingClientRect();
     const box=document.createElement("div");box.className="el-shots";box.setAttribute("aria-hidden","true");box.style.top=Math.max(8,Math.min(innerHeight-120,r.bottom-8))+"px";box.style.right=Math.max(8,innerWidth-r.right+6)+"px";
     const gros=G.filter(g=>g.k==="monte"||g.k==="val"),petits=G.filter(g=>!(g.k==="monte"||g.k==="val"));
-    const n=petits.reduce((s,g)=>s+g.n,0),pq=(petits.find(g=>g.k==="rep")||{}).pq;
-    if(petits.length)box.insertAdjacentHTML("beforeend",`<div class="el-shot">+${n}<small>${pq||petits.map(g=>BAREME[g.k][0].charAt(0).toLowerCase()+BAREME[g.k][0].slice(1)).join(" · ")}</small></div>`);
+    /* une étiquette par raison (choix 64b du 20/11) */
+    petits.forEach(g=>box.insertAdjacentHTML("beforeend",`<div class="el-shot">+${g.n}<small>${g.pq||BAREME[g.k][0].charAt(0).toLowerCase()+BAREME[g.k][0].slice(1)}</small></div>`));
     gros.forEach(g=>box.insertAdjacentHTML("beforeend",`<div class="el-shot or">${BAREME[g.k][0]} · +${g.n}</div>`));
     document.body.appendChild(box);setTimeout(()=>box.remove(),1300);},0);}
 const couvre=(sid,th)=>defs(sid).some(d=>!d.fixe&&d.th===th&&etat(d.id).n>0);
-window.ENT={elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
+/* ---------- avant une nouvelle leçon (choix 17a du 20/11) : un exercice du niveau du CC sur ce que la leçon explique, 2 minutes, sans note.
+   Il revient à la fin de la leçon : il le refait et voit la correction. Gardé sur l'appareil (localStorage), 14 jours au plus. ---------- */
+const AVK="rev-s1-avant-lecon";let AVT=0;
+const avLit=()=>{try{const o=JSON.parse(localStorage.getItem(AVK)||"{}");return o&&typeof o==="object"?o:{};}catch(x){return {};}};
+const avEcrit=o=>{try{localStorage.setItem(AVK,JSON.stringify(o));}catch(x){}};
+const methodeLecon=(sid,lid)=>{const D=defs(sid).filter(d=>!d.fixe&&(d.lecons||(theme(d)||{}).les||[]).includes(lid));return D.find(d=>(d.lecons||[]).includes(lid))||D[0]||null;};
+function avant(sid,lid){const d=SUBJ[sid]&&methodeLecon(sid,lid),k=sid+"/"+lid,o=avLit()[k];if(!d||(o&&Date.now()-o.t<14*864e5))return null;
+  const lv=dernier(d),gr=parseInt(GEN.outils.hache("avant|"+lid+"|"+d.id),36);try{GEN.tire(d,lv,gr);}catch(x){return null;}return {s:sid,l:lid,g:d.id,lv,gr};}
+function avantEcran(info,L,suite){stop();clearInterval(AVT);const d=GEN.par[info.g],S=SUBJ[d.sid],e=GEN.tire(d,info.lv,info.gr),T=theme(d),t0=Date.now(),DUR=120e3,pap=!!e.papier;
+  $("#main").className="s-"+d.sid;
+  $("#main").innerHTML=`<div class="lp s-${d.sid}"><div class="lp-top"><a class="lp-x" href="#/apprendre" aria-label="Quitter">✕</a><div class="lp-bar av-bar" role="progressbar" aria-label="Les 2 minutes" aria-valuemin="0" aria-valuemax="120" aria-valuenow="0"><i style="width:0%"></i></div><span class="lp-n" id="av-ch">0:00</span></div>
+   <div class="lp-kicker">${S.name} · avant la leçon « ${esc(L.t)} »</div><div class="lp-body" id="lpb"></div><div class="lp-foot" id="en-pied"></div></div>`;
+  const b=$("#lpb");
+  b.innerHTML=tx(`<p class="prekick">Ce qu'on te demandera ${auCC(S)} · 2 minutes, sans note</p>${T&&T.src?`<p class="muted">Aux ${estCC(S)?"CC":"examens"} d'avant : ${T.src}.</p>`:""}<p class="lq">${e.q}</p><div>${pap&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${pap?`<div class="paper"><b>Sur ta feuille, essaie, même sans savoir.</b> Ce que tu trouves en cherchant, même faux, t'aidera à suivre la leçon.</div>`:`<div class="en-rep" id="en-rep">${champsHTML(e)}</div>`}<p class="muted" id="av-msg">Puis la leçon s'ouvre ; à la fin, la même question revient et tu vois ce que tu as appris.</p>`);
+  $("#en-pied").innerHTML=`<button class="btn" id="av-nsp">Je ne sais pas encore</button><button class="btn pri big" id="av-ok">${pap?"J'ai essayé":"Valider"}</button>`;
+  const i0=b.querySelector("input:not([hidden]),textarea");if(i0){i0.placeholder="Essaie, même sans savoir";if(!matchMedia("(pointer:coarse)").matches)i0.focus();}
+  const bar=$(".av-bar"),ch=$("#av-ch");
+  AVT=setInterval(()=>{if(!ch.isConnected){clearInterval(AVT);return;}const ms=Date.now()-t0;ch.textContent=horloge(ms);bar.firstElementChild.style.width=Math.min(100,ms/DUR*100)+"%";bar.setAttribute("aria-valuenow",Math.min(120,Math.round(ms/1000)));
+    if(ms>=DUR){clearInterval(AVT);$("#av-msg").textContent="Les 2 minutes sont passées : valide ce que tu as, même incomplet. La leçon s'ouvre ensuite.";}},1000);
+  const fini=nsp=>{clearInterval(AVT);let txt="(je ne savais pas encore)";
+    if(!nsp&&pap)txt="(essayé sur papier)";else if(!nsp&&([...b.querySelectorAll("input,textarea")].some(i=>i.value.trim())||b.querySelector('#en-rep [aria-pressed="true"]')))txt=repTexte(e,lire(e,b));
+    const o=avLit();Object.keys(o).forEach(k=>{if(Date.now()-o[k].t>14*864e5)delete o[k];});o[info.s+"/"+info.l]=Object.assign({},info,{txt,t:Date.now()});avEcrit(o);
+    A.logRep({o:"avant la leçon",s:info.s,l:info.l,g:d.id,methode:d.t,palier:info.lv+1,enonce:e.texte,reponse:txt,ms:Date.now()-t0});suite();};
+  if(!pap)ecoute(b,e,()=>false,()=>fini(false));
+  $("#av-ok").addEventListener("click",()=>fini(false));$("#av-nsp").addEventListener("click",()=>fini(true));
+  longues(b);queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);}
+function avantFin(host,sid,lid){const k=sid+"/"+lid,o=avLit(),info=o[k],d=info&&GEN.par[info.g];if(!host||!d)return;let e;try{e=GEN.tire(d,info.lv,info.gr);}catch(x){return;}const pap=!!e.papier;
+  host.innerHTML=tx(`<section class="av-fin"><p class="prekick">La question du début</p><p class="muted">Avant la leçon, tu avais répondu : ${esc(info.txt||"")}. Maintenant ?</p><p class="lq">${e.q}</p><div>${pap&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${pap?`<div class="paper">Sur ta feuille, refais-la, puis regarde la correction.</div>`:`<div class="en-rep" id="av-rep">${champsHTML(e)}</div>`}<div class="acts">${pap?"":`<button class="btn pri" id="av-v">Valider</button>`}<button class="btn" id="av-c">Voir la correction</button></div><div class="en-rep" id="av-fb" aria-live="polite"></div></section>`);
+  const z=host.querySelector(".av-fin"),fb=host.querySelector("#av-fb"),fige=()=>!!z.dataset.fait;
+  const montre=(j,rep)=>{if(fige())return;z.dataset.fait="1";z.querySelectorAll("input,textarea,.filters button,#av-v,#av-c").forEach(x=>{x.disabled=true;});
+    delete o[k];avEcrit(o);A.logRep({o:"avant la leçon : à la fin",s:sid,l:lid,g:d.id,enonce:e.texte,avant:info.txt,reponse:rep?repTexte(e,rep):"(correction lue)",ok:j&&j.ok?1:0});
+    fb.innerHTML=tx(`${j?`<div class="verdict ${j.ok?"ok":"no"}">${j.ok?`Juste. Avant la leçon : ${esc(info.txt||"")}.`:j.resume||"Pas encore tout à fait."}</div>`:""}<h3>La correction</h3>${pap?"":`<p><b>La bonne réponse :</b> ${e.bonne}</p>`}${etapesHTML(e,j&&j.diag?j.diag.etape:-1)}`);longues(fb);};
+  const valide=()=>{if(fige())return;const rep=lire(e,z),j=e.juge(rep);if(j.incomplet){fb.innerHTML=`<div class="verdict info">${j.incomplet}</div>`;return;}montre(j,rep);};
+  if(!pap){ecoute(z,e,fige,valide);host.querySelector("#av-v").addEventListener("click",valide);}
+  host.querySelector("#av-c").addEventListener("click",()=>montre(null,null));longues(z);}
+
+window.ENT={avant,avantEcran,avantFin,genres:GENRES,elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
   rendu:e=>tx(`<p class="lq">${e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="en-rep" id="en-fb"><div class="verdict no">Pas tout à fait.</div><h3>La correction</h3><p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,0)}</div>`)};
 })();
 
@@ -33853,14 +33949,14 @@ const addDays=(s,n)=>{const[y,m,d]=s.split("-").map(Number);return ymd(new Date(
 const HUBKEY="rev-hub-v1",JKEY="rev-s1-journal",DKEY="rev-s1-appareil";
 const local={theme:null,open:{}};
 try{const h=JSON.parse(localStorage.getItem(HUBKEY)||"null");if(h){local.theme=h.theme||null;if(h.open&&typeof h.open==="object")local.open=h.open;}}catch(e){}
-const hub={theme:local.theme,exams:{},notes:{},skip:{},cren:{},sans:{},smat:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{}};
+const hub={theme:local.theme,exams:{},notes:{},skip:{},cren:{},sans:{},smat:{},rythme:"normal",vitesse:"auto",mixOn:null,mixScore:0,mixSur:10,se:{},soir:{}};
 const saveHub=()=>{local.theme=hub.theme;try{localStorage.setItem(HUBKEY,JSON.stringify({theme:local.theme,open:local.open}));}catch(e){}};
 let DEV="";try{DEV=localStorage.getItem(DKEY)||"";if(!DEV){DEV=Math.random().toString(36).slice(2,8);localStorage.setItem(DKEY,DEV);}}catch(e){DEV=Math.random().toString(36).slice(2,8);}
 let J=[];try{const r=JSON.parse(localStorage.getItem(JKEY)||"[]");if(Array.isArray(r))J=r.filter(e=>e&&e.i&&e.t&&e.k);}catch(e){}
 const persistJ=()=>{try{localStorage.setItem(JKEY,JSON.stringify(J));}catch(e){}};
 const ST={};
 function cardIds(sid,lid){const L=(LES[sid]||[]).find(x=>x.id===lid);if(!L)return [];const out=[];let n=0;L.steps.forEach(st=>{if(st.k==="card")out.push(lid+"#"+(n++));});return out;}
-function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{},prio:{},jv:{},pq:{}};}
+function blank(id){if(!local.open[id]||typeof local.open[id]!=="object")local.open[id]={};return {seen:{},known:{},review:{},knownOn:{},td:{},tdOn:{},tasks:{},best:0,quizOn:null,open:local.open[id],les:{},cards:{},pos:{},diag:{},prio:{},jv:{},pq:{},err:{}};}
 /* ce qu'on sait d'un thème : chaque réponse (mini-contrôle, quiz, carte, erreur en leçon) ajoute une preuve.
    Une preuve perd la moitié de son poids en 3 jours ; un nouveau mini-contrôle divise encore les anciennes par 2. */
 const jnum=d=>{const[y,m,j]=d.split("-").map(Number);return Math.round(Date.UTC(y,m-1,j)/864e5);};
@@ -33877,6 +33973,7 @@ const mesureCarte=(e,day)=>{if(e.ms>0)CARTES.L.push([Math.min(180000,e.ms),e.re?
 function applyEv(e){
   const day=ymd(new Date(e.t));
   if(e.k==="set"){if(e.key==="rythme")hub.rythme=e.v;else if(e.key==="vitesse")hub.vitesse=e.v;else if(typeof e.key==="string"&&e.key.indexOf("skip:")===0){const k=e.key.slice(5);if(e.v)hub.skip[k]=e.v;else delete hub.skip[k];}else if(typeof e.key==="string"&&e.key.indexOf("carnet:")===0){CARTES.carnet[e.key.slice(7)]=e.v;}else if(typeof e.key==="string"&&e.key.indexOf("cren:")===0){const k=e.key.slice(5);if(e.v&&e.v.d)hub.cren[k]=e.v;else delete hub.cren[k];}else if(typeof e.key==="string"&&e.key.indexOf("smat:")===0){const k=e.key.slice(5);if(e.v&&e.v.m)hub.smat[k]=e.v;else delete hub.smat[k];}else if(typeof e.key==="string"&&e.key.indexOf("sans:")===0){const k=e.key.slice(5);if(e.v)hub.sans[k]=+e.v;else delete hub.sans[k];}else if(typeof e.key==="string"&&e.key.indexOf("note:")===0){const k=e.key.slice(5);if(typeof e.v==="number"&&e.v>=0&&e.v<=20)hub.notes[k]=e.v;else delete hub.notes[k];}else if(typeof e.key==="string"&&e.key.indexOf("exam:")===0){const p=e.key.split(":");hub.exams[p[1]]=Object.assign({},hub.exams[p[1]],{[p[2]]:e.v});}return;}
+  if(e.k==="soir"){hub.soir[e.d+"|"+e.x]=!!e.v;return;}
   if(e.k==="mix"){hub.mixOn=day;hub.mixScore=e.n;hub.mixSur=e.sur||10;return;}
   /* séance en cours (mini-contrôle, quiz, cartes) : début, une réponse, fin */
   if(e.k==="sd"){hub.se[e.c]={run:e.run,q:e.q||[],rep:[],ts:e.t};return;}
@@ -33897,6 +33994,8 @@ function applyEv(e){
     else{const P=st.pq[e.p]||(st.pq[e.p]={}),R=P[e.q]||(P[e.q]={bad:[],ok:false});
       if(e.ok)R.ok=true;else if(!R.bad.includes(e.o)){R.bad.push(e.o);
         if(R.bad.length===1&&!R.ok){const id="p:"+e.p+"#"+e.q;if(!st.cards[id])neuve(day);const c=st.cards[id]||{n:0};c.box=0;c.due=day;st.cards[id]=c;delete st.jv[id];}}}}
+  else if(e.k==="err"){/* genre d'une erreur à l'entraînement (choix 20b) : l'idée clé de l'exercice devient une carte « e:clé », revue le lendemain */
+    st.err[e.cle]=e.ty;const id="e:"+e.cle;if(e.gr==null||st.cards[id])return;neuve(day);st.cards[id]={box:0,n:0,due:addDays(day,1),g:e.g,lv:e.lv,gr:e.gr};}
   else if(e.k==="jv"){/* « Jamais vu » dans Réviser : la carte attend la leçon qui l'explique, placée en tête du planning */st.jv[e.c]=e.l||true;if(e.l)st.prio[e.l]=e.t;}
   else if(e.k==="niv"){st.niv=e.v||0;}
   else if(e.k==="diag"){const d=st.diag[e.th]||(st.diag[e.th]={});if(e.self!=null)d.self=e.self;if(e.n)preuve(st,e.th,e.ok,e.n,day,e.run,true);}
@@ -33904,7 +34003,7 @@ function applyEv(e){
   else if(e.k==="card"){mesureCarte(e,day);const c=st.cards[e.c]||{box:0,n:0};c.n++;c.last=day;if(e.r===2)c.box=Math.min(4,c.box+1);else if(e.r===0)c.box=0;c.due=e.r===0?day:addDays(day,[1,1,2,4,7][c.box]);st.cards[e.c]=c;
     if(!e.re){const th=themeDe(SUBJ[e.s],e.c.replace(/^m:/,"").split("#")[0]);if(th)preuve(st,th,e.r/2,1,day);}}
 }
-function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.notes={};hub.skip={};hub.cren={};hub.sans={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];CARTES.L=[];CARTES.neuves={};CARTES.carnet={};hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(e=>{try{applyEv(e);}catch(x){}});}
+function rebuild(){SIDS.forEach(id=>{ST[id]=blank(id);});hub.exams={};hub.notes={};hub.skip={};hub.cren={};hub.sans={};hub.rythme="normal";hub.vitesse="auto";SPEED.by={};SPEED.all=[];CARTES.L=[];CARTES.neuves={};CARTES.carnet={};hub.mixOn=null;hub.mixScore=0;hub.mixSur=10;hub.se={};hub.soir={};J.sort((a,b)=>(a.t-b.t)||(a.i<b.i?-1:a.i>b.i?1:0));J.forEach(e=>{try{applyEv(e);}catch(x){}});}
 /* reprise de l'ancienne sauvegarde (une clé par matière) la première fois */
 (function migrate(){if(J.length)return;let n=0;
   const T=d=>{if(typeof d!=="string"||!/^\d{4}-\d\d-\d\d$/.test(d))d=ymd(new Date());const[y,m,dd]=d.split("-").map(Number);return new Date(y,m-1,dd,0,0,1).getTime()+n;};
@@ -34272,6 +34371,8 @@ function buildPlan(){
   const Q={};active.forEach(id=>{const P=pendingTasks(id).filter(t=>keep.has(id+":"+t.id));Q[id]=P.filter(t=>!t.last).sort((a,b)=>(pri(b)-pri(a))||(a.p-b.p)||(a.i-b.i)).concat(P.filter(t=>t.last));plan.bonus[id]=pendingTasks(id).filter(t=>!keep.has(id+":"+t.id)).map(t=>t.id);});
   /* 3. Affectation créneau par créneau : la matière la plus en retard sur son temps restant (bonus de coefficient).
         Une étape ne va que dans un créneau assez long. Le quiz et les fiches en rouge attendent les 30 h avant le CC, ou le dernier jour où il reste une séance. */
+  /* la file de chaque matière, pour les essais (tools/essai-part-exos.html) */
+  plan.files={};active.forEach(id=>{plan.files[id]=Q[id].map(t=>t.id);});
   const fitsIn=(t,room)=>t.min<=room+15;
   const dernier={};active.forEach(id=>{blocks.forEach(b=>{if(toD(b.day,b.end).getTime()<=dl(id))dernier[id]=b.day;});});
   const fenetre=(id,B,bs)=>dl(id)-bs<=30*3600e3||B.day===dernier[id];
