@@ -32872,7 +32872,7 @@ function home(){
   if(window.ENT&&ENT.recap)h+=ENT.recap();
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
   /* le gros bouton : une leçon commencée, sinon les cartes du jour, sinon la suite du programme, sinon du repos */
-  const lessonInfo=t=>{if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
+  const lessonInfo=t=>{if(t&&t.plus)return `Des exercices des méthodes que tu as déjà vues, mélangés, environ ${hm(t.min)}`;if(!t||!t.lesson)return "Sur papier, comme au CC";const L=BYL[nextT.sid][t.lesson],np=L?parts(L,nextT.sid).length:1;return `Leçon pas à pas${np>1?`, en ${np} parties`:""}, environ ${hm(t.min)}`;};
   let go,after="";
   /* « Où j'en suis » : en gros bouton quand c'est nécessaire, en lien quand c'est conseillé */
   const DGS=A.diagAFaire(),DGN=DGS.find(x=>x.need)||null,MD=A.miniDu(),EJ=window.ENT?ENT.jour():null,qd=d=>d===addDays(t0,1)?"demain":dayName(d,false,true);
@@ -33951,7 +33951,9 @@ function avantFin(host,sid,lid){const k=sid+"/"+lid,o=avLit(),info=o[k],d=info&&
   if(!pap){ecoute(z,e,fige,valide);host.querySelector("#av-v").addEventListener("click",valide);}
   host.querySelector("#av-c").addEventListener("click",()=>montre(null,null));longues(z);}
 
-window.ENT={avant,avantEcran,avantFin,genres:GENRES,elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
+/* choix 67a : une matière de maths reçoit « Entraînement en plus » quand une de ses méthodes est prête (une de ses leçons vue, ou déjà commencée) */
+const plusPret=sid=>defs(sid).some(d=>{if(d.fixe)return false;if(etat(d.id).n)return true;const S=SUBJ[sid],L=(d.lecons||(theme(d)||{}).les||[]).map(l=>S.TB["L-"+l]).filter(t=>t&&A.inScope(S,t));return L.some(t=>A.isDone(sid,t));});
+window.ENT={plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
   rendu:e=>tx(`<p class="lq">${e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="en-rep" id="en-fb"><div class="verdict no">Pas tout à fait.</div><h3>La correction</h3><p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,0)}</div>`)};
 })();
 
@@ -34483,6 +34485,17 @@ function buildPlan(){
     /* d'abord l'étape la plus importante (p le plus petit), puis la matière au plus fort coefficient dont le CC est le plus proche */
     let best=null,bestScore=-1;active.forEach(id=>{if(!BQ[id].length||be>dl(id)||B.day<(exam(SUBJ[id]).from||SUBJ[id].from||"")||paceLeft(id,B.day)<=0)return;const f=BQ[id].filter(t=>!t.last&&!non(id,t,B)&&fitsIn(t,Math.min(dur,paceLeft(id,B.day))));if(!f.length)return;const sc=(4-Math.min(...f.map(t=>t.p)))*100+weight(SUBJ[id])/Math.max(1,(dl(id)-bs)/864e5);if(sc>bestScore){bestScore=sc;best=id;}});
     if(!best)continue;const {tk,used}=fill(best,B,Math.min(dur,paceLeft(best,B.day)),BQ,false);if(tk.length){useDay(best,B.day,used);place(i,best,tk,used,dur,true);}}
+  /* 5. En maths (choix 67a du 20/11) : dans les créneaux restés libres, « Entraînement en plus » (les méthodes déjà vues, mélangées),
+        jusqu'à environ 4 minutes d'exercices pour 1 minute de leçon au planning de la matière. Rien n'est retiré ni déplacé. */
+  const MATHS_P=["ana","lin","geo","calc","rai"],pretPlus=id=>!!(window.ENT&&ENT.plusPret&&ENT.plusPret(id));
+  active.filter(id=>MATHS_P.includes(id)&&pretPlus(id)).sort((a,b)=>dl(a)-dl(b)).forEach(id=>{const S=SUBJ[id];let c=0,e=0;
+    plan.blocks.forEach(B=>{if(B.sid!==id)return;B.tasks.forEach(tid=>{const t=S.TB[tid];if(!t)return;if(genreTache(t)==="exos")e+=t.min;else c+=t.min;});});
+    let reste=4*c-e;const jours={};
+    for(let i=0;i<blocks.length&&reste>=20;i++){const B=blocks[i];if(B.sid)continue;const be=toD(B.day,B.end).getTime(),dur=work(B.end-B.start);
+      if(be>dl(id)||B.day<(exam(S).from||S.from||"")||dur<20||tyB(B)==="cours"||(mB(B)&&mB(B)!==id)||ST[id].tasks["plus-"+B.day]||jours[B.day])continue;jours[B.day]=1;
+      const m=Math.min(45,dur,Math.max(20,Math.round(reste/5)*5)),tid="plus-"+B.day;
+      const t=S.TB[tid]||(S.TB[tid]={id:tid,plus:1,train:true,manual:true,p:3,t:"Entraînement en plus : les méthodes que tu as déjà vues, mélangées",links:[["#/entrainer/"+id,"S'entraîner"]],why:"En maths, on retient en faisant : environ 4 minutes d'exercices pour 1 minute de leçon (ton choix du 20/11)."});
+      t.min=m;place(i,id,[t],m,dur,true);reste-=m;}});
   plan.blocks.sort((x,y)=>x.day<y.day?-1:x.day>y.day?1:x.start-y.start);
   plan.assign={};plan.blocks.forEach((B,k)=>B.tasks.forEach(tid=>plan.assign[B.sid+":"+tid]=k));
   active.forEach(id=>{plan.bonus[id]=BQ[id].map(t=>t.id);if(!plan.bonus[id].length)delete plan.bonus[id];});
