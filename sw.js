@@ -4,7 +4,7 @@
    Sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan.
    Quand la copie a été servie et que la page neuve, arrivée ensuite, est différente, la page affichée le sait (message « neuve ») :
    elle propose de recharger. */
-const CACHE = "revisions-20261120-143913", PAGE = "revisions-page", DELAI = 5000;
+const CACHE = "revisions-20261120-144507", PAGE = "revisions-page", DELAI = 5000;
 const FICHIERS = ["manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf"];
 const prevenir = (e, copie, neuve) => e.waitUntil(neuve.then(async rep => {
   if (!rep || !rep.ok) return;
