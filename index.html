@@ -184,7 +184,7 @@ main{padding:16px clamp(16px,3.4vw,44px) 96px;min-width:0;overflow-x:clip}
 .group__count{padding:1px 8px;border-radius:6px;background:color-mix(in srgb,var(--c-deep) 45%,transparent);color:var(--c);font-weight:800;font-size:.74rem;font-stretch:110%;white-space:nowrap}
 .group__count.r{background:var(--rouge-voile);color:var(--rouge)}
 .group__more{margin-left:auto;font-size:.88rem;font-weight:700}
-.group__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:18px clamp(14px,1.6vw,20px);margin:0;padding:0;list-style:none}
+.group__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(205px,100%),1fr));gap:18px clamp(14px,1.6vw,20px);margin:0;padding:0;list-style:none}
 .group__grid.subjects{grid-template-columns:repeat(4,minmax(0,1fr))}
 .slot{display:flex;padding:7px;border-radius:20px;background:#000;box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--c) 30%,transparent),inset 0 0 0 1px color-mix(in srgb,var(--c-deep) 40%,transparent);min-width:0}
 .piece{position:relative;flex:1;display:flex;flex-direction:column;min-width:0;padding:8px;border-radius:14px;border:2px solid color-mix(in srgb,var(--c) 32%,transparent);background:#000;color:var(--encre);text-decoration:none;cursor:pointer;transition:translate .3s var(--snap),rotate .3s var(--snap),box-shadow .3s var(--snap),border-color .2s}
@@ -244,7 +244,7 @@ main{padding:16px clamp(16px,3.4vw,44px) 96px;min-width:0;overflow-x:clip}
 .tiroir{display:grid;gap:12px;min-width:0}
 .tiroir__title{display:flex;align-items:center;gap:10px;margin:0;font-weight:800;font-size:.76rem;font-stretch:112%;text-transform:uppercase;letter-spacing:.08em;color:var(--c,var(--violet-hi));font-family:var(--f-sans)}
 .tiroir__title::after{content:"";flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--c-deep,var(--violet)),transparent)}
-.minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px 18px;margin:0;padding:0 0 5px;list-style:none}
+.minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:14px 18px;margin:0;padding:0 0 5px;list-style:none}
 
 /* ================= les animations ================= */
 .wipe{--wipe:var(--violet);--wipe-edge:var(--violet-hi);position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;pointer-events:none;visibility:hidden}
@@ -330,7 +330,7 @@ main.is-enter :is(.piece,.swatch,.fiche,.task,.blk,details.ex,details.day,.kcard
 .sec>h2::after{content:"";flex:1;min-width:20px;height:2px;border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 60%,transparent),transparent)}
 .sec>h2 .num{flex:none;width:30px;height:30px;border-radius:9px;background:var(--sc);color:#000;display:grid;place-items:center;font:850 .92rem var(--f-sans);box-shadow:3px 3px 0 color-mix(in srgb,var(--sc) 40%,#000)}
 .sec+.sec{padding-top:4px}
-.sec>*,.widget>*,.cours>*,.figs>*,.usage>*,.piege>*,.check>*,.redac>*,.recipe>*,.paper>*,details.ex>*,#tdl>*,#ann>*{min-width:0}
+.sec>*,.widget>*,.cours>*,.kcard>*,.lp-body>*,.suj>*,.figs>*,.usage>*,.piege>*,.check>*,.redac>*,.recipe>*,.paper>*,details.ex>*,#tdl>*,#ann>*{min-width:0}
 
 /* figure */
 .figwrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(220px,1fr);border:2px solid var(--trait);border-radius:18px;overflow:hidden;
@@ -400,7 +400,7 @@ svg .arrow-ok{fill:var(--vert)}
 .block h2{font-size:1.25rem}
 .cours{background:var(--feuille);border:2px solid var(--trait);border-left:5px solid var(--sc);border-radius:14px;padding:16px 18px;display:grid;gap:10px}
 .cours .ref{font-size:.74rem;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:var(--sc)}
-.cours ul,.cours ol,.block ul,.block ol{margin:0;padding-left:1.25em;display:grid;gap:4px}
+.cours ul,.cours ol,.block ul,.block ol{margin:0;padding-left:1.25em;display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
 .gloss{display:flex;flex-wrap:wrap;gap:6px}
 .gloss span{font-size:.88rem;background:var(--voile);border:1px solid var(--trait);border-radius:7px;padding:2px 8px}
 .piege{border:2px solid color-mix(in srgb,var(--rouge) 55%,transparent);background:var(--rouge-voile);border-radius:14px;padding:12px 16px;display:grid;gap:6px;max-width:72ch}
@@ -503,7 +503,7 @@ details.ex .h{font:400 1.12rem/1.3 var(--f-serif);color:var(--head)}
 details.ex .body{padding:0 16px 16px;display:grid;gap:12px}
 .enon{background:var(--voile);border:1px solid var(--trait);border-radius:14px;padding:12px 14px;line-height:1.55;color:var(--encre)}
 .sol{border-left:3px solid var(--sc);padding:2px 0 2px 14px}
-.sol ol{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.sol ol{margin:0;padding-left:1.2em;display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
 .sol .who{display:block;font-size:.85rem;color:var(--graphite);margin-bottom:4px}
 .tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
 .tip{border:2px solid color-mix(in srgb,var(--rouge) 40%,transparent);background:var(--feuille);border-radius:14px;padding:12px 14px;display:grid;gap:4px;align-content:start}
@@ -528,11 +528,17 @@ details.ex .body{padding:0 16px 16px;display:grid;gap:12px}
 .todo{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .task{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--feuille);border:2px solid var(--trait);border-radius:14px;padding:12px 14px;transition:border-color .2s}
 .task:hover{border-color:color-mix(in srgb,var(--sc) 55%,transparent)}
-.task .tick{width:26px;height:26px;border-radius:8px;border:2px solid var(--graphite);display:grid;place-items:center;background:none;padding:0;color:#000;font-size:.9rem;font-weight:900;margin-top:1px}
+.task .tick,.suj .tick{width:26px;height:26px;border-radius:8px;border:2px solid var(--graphite);display:grid;place-items:center;background:none;padding:0;color:#000;font-size:.9rem;font-weight:900;margin-top:1px}
 .task .tick[disabled]{cursor:default}
-.task.done{border-color:color-mix(in srgb,var(--vert) 30%,transparent)}
-.task.done .tick{background:var(--vert);border-color:var(--vert)}
-.task.done .tt{color:var(--graphite);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--vert) 60%,transparent)}
+.task.done,.suj.done{border-color:color-mix(in srgb,var(--vert) 30%,transparent)}
+.task.done .tick,.suj.done .tick{background:var(--vert);border-color:var(--vert)}
+.task.done .tt,.suj.done .tt{color:var(--graphite);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--vert) 60%,transparent)}
+.suj{background:var(--feuille);border:2px solid var(--trait);border-radius:16px;padding:14px;display:grid;gap:10px;min-width:0;transition:border-color .2s}
+.suj__head{display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;align-items:start;padding:2px 2px 4px}
+.suj__head .tt{margin:0;font-size:1.1rem}
+.suj__head .meta{font-size:.86rem;color:var(--graphite);margin-top:2px}
+.suj details.ex{background:#000}
+@media (max-width:420px){.suj{padding:10px}}
 .task .tt{font-weight:700;color:#EAF4FF;line-height:1.35}
 .task .meta{font-size:.86rem;color:var(--graphite);margin-top:2px}
 .task .meta .r{color:var(--rouge)}
@@ -552,7 +558,7 @@ details.day summary::before{content:"+";font:800 1.25rem/1 var(--f-sans);color:v
 details.day[open] summary::before{rotate:45deg}
 details.day summary b{font:400 1.12rem var(--f-serif);color:var(--head)}
 details.day summary span{color:var(--graphite);font-size:.9rem}
-.day ul{margin:0;padding:0 16px 14px 40px;display:grid;gap:4px}
+.day ul{margin:0;padding:0 16px 14px 40px;display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
 .allgood{border:2px solid color-mix(in srgb,var(--vert) 50%,transparent);background:var(--vert-voile);border-radius:14px;padding:12px 16px}
 .examcard{border:2px solid color-mix(in srgb,var(--sc) 45%,transparent);background:color-mix(in srgb,var(--sc) 8%,#000);border-radius:16px;padding:14px 18px;display:grid;gap:6px}
 .examday{border:2px solid var(--rouge);background:var(--rouge-voile);border-radius:16px;padding:14px 18px;box-shadow:5px 5px 0 #8A0F2A}
@@ -654,7 +660,7 @@ pre.console{margin:0;background:#020403;color:#B9F7CF;border:2px solid #10301F;b
 .mth{font-family:var(--f-math);font-size:1.08em}
 .mi{font-family:"KaTeX_Main",var(--f-math);font-size:1.17em;font-weight:inherit;line-height:1;text-transform:none;letter-spacing:normal;white-space:nowrap}
 .mx{white-space:nowrap}
-.mi.coupe,.mx.coupe{white-space:normal}
+.mi.coupe,.mx.coupe{white-space:normal;overflow-wrap:anywhere}
 .mi .mi{font-size:1em}
 .mi i{font-family:"KaTeX_Math","KaTeX_Main",var(--f-math);font-style:italic}
 .formula .mi,.redac .mi,.mth .mi,.mathq .mi,.mat .mi,.sys .mi{font-size:1.1em}
@@ -688,7 +694,7 @@ svg .grid{stroke:var(--trait);stroke-width:1}
 .paper{border:2px solid color-mix(in srgb,var(--ambre) 55%,transparent);background:color-mix(in srgb,var(--ambre) 8%,#000);border-radius:14px;padding:12px 16px;display:grid;gap:6px}
 .paper ul{margin:0;padding-left:1.2em}
 .recipe{display:grid;gap:10px}
-.recipe ol{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.recipe ol{margin:0;padding-left:1.4em;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
 .vcpas{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .vcpas>li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:12px 14px;border:2px solid transparent;border-radius:14px;cursor:pointer;transition:background .2s,border-color .2s,opacity .2s}
 .vcpas>li>div{display:grid;gap:8px;min-width:0}
@@ -731,7 +737,7 @@ svg .grid{stroke:var(--trait);stroke-width:1}
 .lp-body>*{min-width:0}
 .lp-body h2{font-size:1.6rem;line-height:1.2}
 .lx{font-size:1.07rem;line-height:1.68}
-.lx ul,.lx ol{padding-left:1.2em;display:grid;gap:5px}
+.lx ul,.lx ol{padding-left:1.2em;display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
 .lq{font-size:1.16rem;font-weight:680;line-height:1.45;margin:0;color:#EAF4FF}
 .lp-body .opts button{min-height:52px;font-size:1rem}
 .lp-foot{position:sticky;bottom:0;display:flex;justify-content:center;gap:10px;padding:14px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent,#000 40%);z-index:5}
@@ -764,7 +770,7 @@ select.blank.bad{border-color:var(--rouge);background:var(--rouge-voile);animati
 .par-line.mono{font:14px/1.45 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
 .par-line.ok{border-color:var(--vert);background:var(--vert-voile)}
 .par-line.bad{border-color:var(--rouge);background:var(--rouge-voile);animation:shake .42s}
-.par-sol{margin:0;padding-left:1.3em;display:grid;gap:4px}
+.par-sol{margin:0;padding-left:1.3em;display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
 .wex{margin:0;padding-left:1.3em;display:grid;gap:12px}
 .wex li{line-height:1.58;animation:rise .3s var(--snap)}
 .wex li::marker{color:var(--sc);font-weight:850}
@@ -856,7 +862,7 @@ body{overscroll-behavior-y:none}
 .look{border:2px dashed color-mix(in srgb,var(--ambre) 60%,transparent);border-radius:12px;padding:8px 12px;font-size:.95rem;color:#FFE7C2}
 .look b{color:var(--ambre)}
 .swatches.lead1>li:first-child{grid-column:1/-1}
-.group__grid.lessons{grid-template-columns:repeat(auto-fill,minmax(255px,1fr))}
+.group__grid.lessons{grid-template-columns:repeat(auto-fill,minmax(min(255px,100%),1fr))}
 .piece__title,.swatch__name,.fiche span{overflow-wrap:break-word;hyphens:auto}
 .lpiece .piece__title{font-size:1.1rem}
 .lpiece .tag{top:-21px}
@@ -29202,7 +29208,7 @@ function subject(sid){
    +sw({href:`#/${sid}/cartes`,c,tile:ico("i-cards"),kicker:"Se tester",name:"Cartes des fiches",sub:`${known} sur ${inProg.length} sues${red?`, <span class="r">${red} en rouge</span>`:""}`})
    +(S.quiz.length?sw({href:`#/${sid}/quiz`,c,tile:"?",kicker:"Se tester",name:"Quiz de cours",sub:`Meilleur score : ${st.best} sur ${A.activeQuiz(S).length}`}):"")
    +(S.td.length?sw({href:`#/${sid}/td`,c,tile:ico("i-pen"),kicker:"Sur papier",name:esc(S.tdTitle||"Exercices de TD"),sub:`${tdk} sur ${S.td.length} sus`}):"")
-   +(A.annOf(S).length?sw({href:`#/${sid}/annales`,c,tile:ico("i-doc"),kicker:exW(S)==="CC"?"Comme au CC":"Comme à l'examen",name:"Annales et chrono",sub:`${A.annOf(S).length} ${plural(A.annOf(S).length,"sujet")} corrigé${A.annOf(S).length>1?"s":""}`}):"")
+   +(A.annOf(S).length?sw({href:`#/${sid}/annales`,c,tile:ico("i-doc"),kicker:exW(S)==="CC"?"Comme au CC":"Comme à l'examen",name:"Annales et chrono",sub:`${A.sujetsDe(sid).length} ${plural(A.sujetsDe(sid).length,"sujet")} corrigé${A.sujetsDe(sid).length>1?"s":""}`}):"")
    +(A4[sid]?sw({href:`#/${sid}/p/feuille`,c,tile:ico("i-doc"),kicker:"Pour le jour du CC",name:"Ma feuille à recopier",sub:A4[sid]}):"")
    +`</ul>`;
   const mn=A.notesHTML(sid);if(mn)h+=tiroir("Mes notes",`<div class="check" id="mesnotes">${mn}</div>`,c);
@@ -30800,17 +30806,34 @@ function td(sid){
 
 /* ---------- annales ---------- */
 let tm={left:3600,end:0,int:null,warn:false,len:60};
+/* les annales rangées par sujet : « Sujet blanc A (liste du prof, 1 h) · Ex. 1 · 4 points » va dans le bloc « Sujet blanc A ».
+   La coche d'un sujet est celle de son étape du plan quand il en a une (champ suj de l'étape, sinon titre qui commence par le nom du sujet) */
+const sansBal=s=>String(s).replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim();
+function sujetsDe(sid){
+  const S=SUBJ[sid],G=[],by={};
+  annOf(S).forEach(x=>{const seg=String(x.src).split(" · "),m=seg[0].match(/^(.*?)\s*\(([^()]*)\)\s*$/),nom=m?m[1]:seg[0],cle=sansBal(nom);
+    let g=by[cle];if(!g){g=by[cle]={cle,nom,det:"",id:"suj:"+cle,ex:[]};G.push(g);}
+    if(m&&!g.det)g.det=m[2];g.ex.push({x,lab:seg.slice(1).join(" · ")});});
+  S.tasks.filter(t=>t.manual&&(t.links||[]).some(l=>l[0]==="annales")).forEach(t=>{const tt=strip(t.t);let best=null;
+    G.forEach(g=>{const c=strip(g.cle),ok=t.suj?sansBal(t.suj)===g.cle:tt.indexOf(c)===0&&!/[a-z0-9]/.test(tt.charAt(c.length));if(ok&&(!best||g.cle.length>best.cle.length))best=g;});
+    if(best)best.id=t.id;});
+  return G;
+}
 function annales(sid){
   const S=SUBJ[sid],len=S.examMinutes||60;if(tm.len!==len&&!tm.int)tm={left:len*60,end:0,int:null,warn:false,len};
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Annales et examen blanc</h1></div><p class="lead">Fais un sujet en temps réel, puis corrige-toi. ${S.annIntro||""} Coche ensuite l'étape dans ton plan.</p>
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Annales et examen blanc</h1></div><p class="lead">Fais un sujet en temps réel, puis corrige-toi. ${S.annIntro||""} Coche ensuite le sujet que tu as fait : s'il est dans ton plan, l'étape se coche aussi.</p>
    <section class="check"><h2 style="font-size:1.1rem">Chrono de ${len} minutes</h2><p class="muted">${S.docs?`Documents autorisés ${exW(S)==="CC"?"au CC":"à l'examen"} : ${S.docs}.`:""} Ne regarde aucun corrigé avant la fin.</p><div class="timer"><span class="score" id="tm"></span><button class="btn pri" id="tmgo">Lancer</button><button class="btn" id="tmre">Remettre à zéro</button><span class="muted" id="tmmsg" aria-live="polite"></span></div></section>
-   <div id="ann" style="display:grid;gap:10px"></div></div>`;
-  const AN=annOf(S),plus=S.ann.length-AN.length;
-  $("#ann").innerHTML=AN.map((x,i)=>`<details class="ex"><summary><span><span class="sub">${x.src}</span><br><span class="h">${x.t}</span></span></summary><div class="body"><div class="enon">${x.en}</div>
+   <div id="ann" style="display:grid;gap:16px"></div></div>`;
+  const AN=annOf(S),plus=S.ann.length-AN.length,G=sujetsDe(sid),st=ST[sid];let i=-1;
+  const carte=({x,lab})=>(i++,`<details class="ex"><summary><span>${lab?`<span class="sub">${lab}</span><br>`:""}<span class="h">${x.t}</span></span></summary><div class="body"><div class="enon">${x.en}</div>
    ${x.go?`<p><a class="btn pri" href="#/${sid}/c/${x.go}">Ouvrir la fiche</a></p>`:""}
    ${x.hint?`<div><button class="btn" data-rv="h${i}" data-l="Voir l'indice">Voir l'indice</button><div class="sol" id="h${i}" hidden style="margin-top:8px">${x.hint}</div></div>`:""}
-   ${x.sol?`<div><button class="btn" data-rv="s${i}" data-l="Voir le corrigé">Voir le corrigé</button><div class="sol" id="s${i}" hidden style="margin-top:8px"><span class="who">${x.who||"Corrigé du prof, réécrit"}</span>${x.sol}</div></div>`:""}</div></details>`).join("")+(plus?`<p class="muted">${plus} autre(s) sujet(s) portent sur les chapitres des épreuves suivantes : ils apparaîtront ici après ${exW(S)==="CC"?"ce CC":"cette épreuve"}.</p>`:"");
-  $("#ann").addEventListener("click",e=>{const r=e.target.closest("[data-rv]");if(!r)return;const el=document.getElementById(r.dataset.rv);el.hidden=!el.hidden;r.textContent=el.hidden?r.dataset.l:"Masquer";});
+   ${x.sol?`<div><button class="btn" data-rv="s${i}" data-l="Voir le corrigé">Voir le corrigé</button><div class="sol" id="s${i}" hidden style="margin-top:8px"><span class="who">${x.who||"Corrigé du prof, réécrit"}</span>${x.sol}</div></div>`:""}</div></details>`);
+  $("#ann").innerHTML=G.map((g,k)=>{const f=!!st.tasks[g.id],nb=g.ex.length;
+    return `<section class="suj${f?" done":""}"><div class="suj__head"><button class="tick" data-suj="${k}" aria-pressed="${f}" title="Coche ce sujet quand tu l'as fait" aria-label="J'ai fait ce sujet : ${sansBal(g.nom)}">${f?"✓":""}</button><div><h2 class="tt">${g.nom}</h2><div class="meta">${g.det?g.det+" · ":""}${nb} énoncé${nb>1?"s":""}</div></div></div>${g.ex.map(carte).join("")}</section>`;}).join("")+(plus?`<p class="muted">${plus} autre(s) sujet(s) portent sur les chapitres des épreuves suivantes : ils apparaîtront ici après ${exW(S)==="CC"?"ce CC":"cette épreuve"}.</p>`:"");
+  $("#ann").addEventListener("click",e=>{const c=e.target.closest("[data-suj]");
+    if(c){const g=G[+c.dataset.suj];emit({k:"task",s:sid,x:g.id,v:!ST[sid].tasks[g.id]});const f=!!ST[sid].tasks[g.id];c.textContent=f?"✓":"";c.setAttribute("aria-pressed",f);c.closest(".suj").classList.toggle("done",f);renderSide();return;}
+    const r=e.target.closest("[data-rv]");if(!r)return;const el=document.getElementById(r.dataset.rv);el.hidden=!el.hidden;r.textContent=el.hidden?r.dataset.l:"Masquer";});
   const show=()=>{const s=Math.max(0,Math.ceil(tm.left));const el=$("#tm");if(!el)return;el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");el.classList.toggle("end",s===0);};
   const tick=()=>{tm.left=(tm.end-Date.now())/1000;const msg=$("#tmmsg");if(!tm.warn&&tm.left<=600&&tm.left>0){tm.warn=true;if(msg)msg.textContent="Plus que 10 minutes : gardes-en 5 pour relire.";}if(tm.left<=0){tm.left=0;clearInterval(tm.int);tm.int=null;if(msg)msg.textContent="Temps écoulé : pose le stylo et corrige-toi.";if($("#tmgo"))$("#tmgo").textContent="Lancer";}show();};
   $("#tmgo").addEventListener("click",()=>{if(tm.int){clearInterval(tm.int);tm.int=null;tm.left=(tm.end-Date.now())/1000;$("#tmgo").textContent="Reprendre";$("#tmmsg").textContent="En pause.";}else if(tm.left>0){tm.end=Date.now()+tm.left*1000;tm.int=setInterval(tick,250);$("#tmgo").textContent="Pause";$("#tmmsg").textContent="";}show();});
@@ -31069,7 +31092,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,genreTache,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,SUBJ,SIDS,ST,hub,genreTache,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,sujetsDe,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};noteErr(err,"démarrage");}
 (window.PANNES||[]).forEach(m=>noteErr(m,"chargement"));
 addEventListener("error",e=>{if(e.message)noteErr(e.error||e.message,"page "+location.hash);});
@@ -31087,6 +31110,7 @@ window.addEventListener("hashchange",route);
  /* une formule ne se coupe plus en fin de ligne (choix du 18/11), sauf si elle est plus large que sa ligne : elle se coupe alors comme avant */
  const coupe=()=>{const L=[...main.querySelectorAll(".mi,.mx")].filter(m=>!m.parentElement.closest(".mi,.mx"));L.forEach(m=>m.classList.remove("coupe"));
    L.filter(m=>{const b=m.parentElement.closest("p,li,td,th,dd,dt,div,h1,h2,h3,summary,button,label");if(!b)return false;const r=m.getBoundingClientRect();return r.width>0&&r.right>b.getBoundingClientRect().right+1;}).forEach(m=>m.classList.add("coupe"));};
+ APP.coupe=coupe;
  let rafC=0,lg=innerWidth;const planCoupe=()=>{cancelAnimationFrame(rafC);rafC=requestAnimationFrame(coupe);};
  new MutationObserver(planCoupe).observe(main,{childList:true,subtree:true});
  main.addEventListener("toggle",planCoupe,true);
