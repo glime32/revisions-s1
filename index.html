@@ -27875,7 +27875,349 @@ function exoCmd(R){const X=R.choix(E3),F=X.F,ref=ecrit(F),ls=!!X.ls,nom=ls?"":R.
     ens:{F,B,bash:[...new Set(essais)].map(x=>{const P=planGrep(x,T),J=P.greps?joue(P):P;return J.sortie?{arbo:T,cmd:x,abs:J.sortie.slice().sort(),brut:true}:null;}).filter(Boolean)}};}
 const tireRe=k=>R=>{for(;;){const e=k===0?exoLire(R):k===3?exoCmd(R):exoExpr(R,k);if(e)return e;}};
 
+/* ---------- US4 : tubes et filtres. Un petit shell joue la commande tapée sur trois fichiers de la même forme ---------- */
+const ORD=n=>n===1?"1er":n+"e",Maj=s=>s[0].toUpperCase()+s.slice(1),VARB=/^\$(?:\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*))/;
+function coupe(l){const S=[];let cur="",q=null;
+  for(let i=0;i<l.length;i++){const x=l[i],d=l[i+1]||"";
+    if(q){cur+=x;if(x==="\\"&&q==='"'&&d){cur+=d;i++;}else if(x===q)q=null;}
+    else if(x==='"'||x==="'"){q=x;cur+=x;}
+    else if(x==="\\"&&d){cur+=x+d;i++;}
+    else if(x==="|"){if(d==="|")return {err:"|| n'est pas un tube : il en faut un seul."};S.push(cur.trim());cur="";}
+    else if(x===">")return {inconnu:"Le résultat doit s'afficher à l'écran : n'écris pas de redirection avec >."};
+    else if(";&`".includes(x)||(x==="$"&&d==="("))return {inconnu:`Écris une seule ligne de commandes reliées par des tubes, sans ${x}.`};
+    else cur+=x;}
+  if(q)return {err:`Un guillemet ${q} n'est pas refermé.`};S.push(cur.trim());return {S};}
+/* les mots d'un morceau, comme bash les donne à la commande : guillemets, \, $variable, ~, motifs * ? et < fichier */
+function motsT(seg,T,V){const W=[],n=seg.length,SEP="\u0001",val=x=>x==="HOME"?ACCUEIL:V&&V[x]!==undefined?V[x]:null;let i=0,lit=null,red=false;
+  while(i<n){if(seg[i]===" "){i++;continue;}
+    if(seg[i]==="<"){if(seg[i+1]==="<")return {inconnu:"Le site ne connaît pas << : envoie les lignes par un tube."};red=true;i++;continue;}
+    let w="",libre="";
+    while(i<n&&seg[i]!==" "&&seg[i]!=="<"){const ch=seg[i],m=ch==="$"&&VARB.exec(seg.slice(i));
+      if(ch==="'"){const j=seg.indexOf("'",i+1);if(j<0)return {err:"Un guillemet ' n'est pas refermé."};w+=seg.slice(i+1,j);libre+="_";i=j+1;}
+      else if(ch==='"'){let j=i+1;for(;j<n&&seg[j]!=='"';j++){const mv=seg[j]==="$"&&VARB.exec(seg.slice(j));
+          if(seg[j]==="\\"&&j+1<n&&'\\"$`'.includes(seg[j+1]))w+=seg[++j];
+          else if(mv){const v=val(mv[1]||mv[2]);if(v===null)return {inconnu:`La variable ${mv[0]} n'existe pas ici.`};w+=v;j+=mv[0].length-1;}
+          else w+=seg[j];}
+        if(j>=n)return {err:'Un guillemet " n\'est pas refermé.'};libre+="_";i=j+1;}
+      else if(ch==="\\"&&i+1<n){w+=seg[i+1];libre+="_";i+=2;}
+      else if(ch==="~"&&!libre&&(i+1===n||" /".includes(seg[i+1]))){w+=ACCUEIL;libre+="_";i++;}
+      else if(m){const v=val(m[1]||m[2]);if(v===null)return {inconnu:`La variable ${m[0]} n'existe pas ici.`};w+=v.trim().replace(/ +/g,SEP);libre+="_";i+=m[0].length;}
+      else{w+=ch;libre+=ch;i++;}}
+    const L=w.split(SEP);
+    if(red){lit=L[0];red=false;continue;}
+    if(L.length===1&&/[*?[]/.test(libre)&&!w.includes("/")){let C=[];try{const re=motifRe(w);C=(noeud(T,COURANT).d||[]).map(x=>x.n).filter(x=>x[0]!=="."&&re.test(x)).sort();}catch(e){}
+      if(C.length){W.push(...C);continue;}}
+    W.push(...L);}
+  return red?{err:"Après <, il faut le nom d'un fichier."}:{W,lit};}
+function getopt(A,val,drap,num){const o={},F=[];
+  for(let i=0;i<A.length;i++){const w=A[i];
+    if(num&&/^-\d+$/.test(w)){(o.n=o.n||[]).push(w.slice(1));continue;}
+    if(w.length<2||w[0]!=="-"){F.push(w);continue;}
+    for(let j=1;j<w.length;j++){const x=w[j];
+      if(val.includes(x)){const v=w.slice(j+1)||A[++i];if(v===undefined)return {bad:x,manque:1};(o[x]=o[x]||[]).push(v);break;}
+      if(!drap.includes(x))return {bad:x};o[x]=1;}}
+  return {o,F};}
+const opt=(nom,A,val,drap,num)=>{const g=getopt(A,val,drap,num);return !g.bad?g:g.manque?{err:`${nom} : il manque la valeur après -${g.bad}.`}:{inconnu:`Le site ne connaît pas l'option -${g.bad} de ${nom}.`};};
+const lisF=(T,f,nom)=>{const x=noeud(T,absolu(f));return !x?{err:`${nom} : ${f} : aucun fichier de ce nom.`}:x.d?{err:`${nom} : ${f} est un dossier, pas un fichier.`}:{L:contenu(x)};};
+const entree=(T,F,E,nom,un)=>{if(un&&F.length>1)return {inconnu:`Donne un seul fichier à ${nom}.`};
+  if(!F.length)return E?{L:E}:{err:`${nom} n'a rien à lire : donne-lui un fichier, ou envoie-lui des lignes par un tube.`};
+  const L=[];for(const f of F){const r=lisF(T,f,nom);if(!r.L)return r;L.push(...r.L);}return {L};};
+const ensTr=s=>{let o="";for(let i=0;i<s.length;i++){const m=/^\[:(lower|upper|digit):\]/.exec(s.slice(i));
+    if(m){o+={lower:"abcdefghijklmnopqrstuvwxyz",upper:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",digit:"0123456789"}[m[1]];i+=m[0].length-1;}
+    else if(s[i]==="\\"&&i+1<s.length){o+={n:"\n",t:"\t"}[s[i+1]]||s[i+1];i++;}
+    else if(s[i+1]==="-"&&i+2<s.length&&s[i]<=s[i+2]){for(let k=s.charCodeAt(i);k<=s.charCodeAt(i+2);k++)o+=String.fromCharCode(k);i+=2;}
+    else o+=s[i];}
+  return o;};
+/* chaque commande : (mots, lignes reçues par le tube ou null, arborescence, nom) → {L: lignes écrites}, {err} ou {inconnu} */
+const SHT={
+  cat:(A,E,T)=>{const g=opt("cat",A,"","");return g.o?entree(T,g.F,E,"cat"):g;},
+  echo:A=>/^-[neE]+$/.test(A[0]||"")?{inconnu:"Écris echo sans option."}:{L:[A.join(" ")]},
+  ls:(A,E,T)=>{if(A.some(w=>/^-\w*[lR]/.test(w)))return {inconnu:"Ici, écris ls sans -l ni -R : il donne alors un nom par ligne au tube."};
+    const g=opt("ls",A,"","1aAr");if(!g.o)return g;const o=g.o,d=g.F.length<2&&noeud(T,absolu(g.F[0]||"."));let L;
+    if(d&&d.d){L=tri(d.d).map(x=>x.n).filter(x=>o.a||o.A||x[0]!==".");if(o.a)L=[".","..",...L];}
+    else{for(const f of g.F){const x=noeud(T,absolu(f));if(!x)return {err:`ls : ${f} : aucun fichier ou dossier de ce nom.`};if(x.d)return {inconnu:"Donne à ls un seul dossier, ou seulement des fichiers."};}L=g.F.slice().sort();}
+    return {L:o.r?L.reverse():L};},
+  grep:(A,E,T,nom)=>{let mode=nom==="egrep"?"E":"G",re=null,e=false;const o={},F=[];
+    for(const w of A){
+      if(/^-./.test(w)&&!e){for(const x of w.slice(1)){if("EPG".includes(x))mode=x;else if("ivxc".includes(x))o[x]=1;else if(x==="e")e=true;else return {inconnu:`Le site ne connaît pas l'option -${x} de grep.`};}}
+      else if(re===null||e){re=w;e=false;}else F.push(w);}
+    if(re===null)return {err:"grep : il manque le motif à chercher."};
+    const r=entree(T,F,E,"grep",1);if(!r.L)return r;const f=filtre(re,mode,o);if(!f.f)return f;const L=r.L.filter(f.f);return {L:o.c?[String(L.length)]:L};},
+  wc:(A,E,T)=>{const g=opt("wc",A,"","lwcm");if(!g.o)return g;const K=Object.keys(g.o);
+    if(K.length!==1)return {inconnu:"Dis à wc quoi compter, avec une seule option : wc -l pour les lignes, wc -w pour les mots."};
+    const r=entree(T,g.F,E,"wc",1);if(!r.L)return r;const L=r.L,n=K[0]==="l"?L.length:K[0]==="w"?L.join(" ").split(/\s+/).filter(Boolean).length:L.join("").length+L.length;
+    return {L:[n+(g.F.length?" "+g.F[0]:"")]};},
+  head:(A,E,T,nom)=>{const g=opt(nom,A,"n","",1);if(!g.o)return g;const r=entree(T,g.F,E,nom,1);if(!r.L)return r;
+    const v=g.o.n?g.o.n[g.o.n.length-1]:"10",m=/^([+-]?)(\d+)$/.exec(v);if(!m)return {err:`${nom} : ${v} n'est pas un nombre de lignes.`};const k=+m[2],L=r.L;
+    return {L:nom==="head"?(m[1]==="-"?L.slice(0,Math.max(0,L.length-k)):L.slice(0,k)):m[1]==="+"?L.slice(Math.max(0,k-1)):k?L.slice(-k):[]};},
+  sort:(A,E,T)=>{const g=opt("sort",A,"tk","rnu");if(!g.o)return g;const o=g.o,r=entree(T,g.F,E,"sort");if(!r.L)return r;
+    const t=o.t&&o.t[o.t.length-1];if(t!==undefined&&t.length!==1)return {err:"sort : après -t, il faut un seul caractère, le séparateur des champs."};
+    let k=null;if(o.k){if(o.k.length>1)return {inconnu:"Le site ne connaît qu'une option -k à la fois."};const m=/^(\d+)([nr]*)(?:,(\d+)([nr]*))?$/.exec(o.k[0]);
+      if(!m||m[1]==="0")return {err:`sort : -k ${o.k[0]} : il faut un numéro de champ, compté à partir de 1.`};k={a:+m[1],b:m[3]?+m[3]:1e9,l:m[2]+(m[4]||"")};}
+    const cle=s=>!k?s:t!==undefined?s.split(t).slice(k.a-1,k.b).join(t):(s.match(/[ \t]*[^ \t]+/g)||[]).slice(k.a-1,k.b).join("");
+    const num=s=>{const v=parseFloat(/^[ \t]*(-?\d*\.?\d*)/.exec(s)[1]);return isNaN(v)?0:v;},oct=(a,b)=>a<b?-1:a>b?1:0;
+    const N=k&&k.l?k.l.includes("n"):!!o.n,Rv=k&&k.l?k.l.includes("r"):!!o.r,cmp=(a,b)=>{const x=cle(a),y=cle(b),c=N?Math.sign(num(x)-num(y)):oct(x,y);return Rv?-c:c;};
+    let L=r.L.slice().sort((a,b)=>cmp(a,b)||(o.u?0:(o.r?-1:1)*oct(a,b)));if(o.u)L=L.filter((x,i)=>!i||cmp(L[i-1],x)!==0);return {L};},
+  cut:(A,E,T)=>{const g=opt("cut",A,"dfc","s");if(!g.o)return g;const o=g.o,liste=o.f||o.c,d=o.d?o.d[o.d.length-1]:"\t",I=[];
+    if(!liste||(o.f&&o.c))return {err:"cut : dis quoi garder, avec -f pour des champs ou -c pour des caractères."};
+    if(d.length!==1)return {err:"cut : après -d, il faut un seul caractère, le séparateur des champs."};
+    for(const x of liste[liste.length-1].split(",")){const m=/^(\d*)(-?)(\d*)$/.exec(x),a=m&&(m[1]?+m[1]:1),b=m&&(m[2]?(m[3]?+m[3]:1e9):+m[1]);
+      if(!m||!(m[1]||m[3])||a<1||b<a)return {err:`cut : ${x} n'est pas un numéro de champ. Les champs se comptent à partir de 1.`};I.push([a,b]);}
+    const veut=i=>I.some(([a,b])=>i>=a&&i<=b),r=entree(T,g.F,E,"cut");if(!r.L)return r;
+    return {L:o.c?r.L.map(s=>[...s].filter((_,i)=>veut(i+1)).join("")):r.L.filter(s=>s.includes(d)||!o.s).map(s=>s.includes(d)?s.split(d).filter((_,i)=>veut(i+1)).join(d):s)};},
+  tr:(A,E)=>{const g=opt("tr",A,"","d");if(!g.o)return g;const d=g.o.d;
+    if(g.F.length!==(d?1:2))return {err:d?"tr -d attend une seule liste de caractères.":"tr attend deux listes de caractères, et pas de nom de fichier : il lit ce qui arrive par un tube."};
+    if(!E)return {err:"tr n'a rien à lire : il ne prend pas de nom de fichier, envoie-lui les lignes par un tube."};
+    const a=ensTr(g.F[0]),b=d?"":ensTr(g.F[1]);if(!a||(!d&&!b))return {err:"tr : une liste de caractères est vide."};
+    const s=[...E.map(x=>x+"\n").join("")].map(ch=>{const i=a.lastIndexOf(ch);return i<0?ch:d?"":b[Math.min(i,b.length-1)];}).join("");
+    return {L:s===""?[]:s.replace(/\n$/,"").split("\n")};},
+  sed:(A,E,T)=>{const g=opt("sed",A,"e","n");if(!g.o)return g;const F=g.F.slice(),s=g.o.e?g.o.e[0]:F.shift();if(s===undefined)return {err:"sed : il manque la commande, par exemple s/a/b/."};
+    const r=entree(T,F,E,"sed",1);if(!r.L)return r;const L=r.L,n=g.o.n;let m;
+    if((m=/^s\/([^\/\\.*^$\[\]&]+)\/([^\/\\&]*)\/(g?)$/.exec(s)))return {L:n?[]:L.map(x=>m[3]?x.split(m[1]).join(m[2]):x.replace(m[1],()=>m[2]))};
+    if((m=/^([1-9]\d*)(?:,([1-9]\d*))?([pdq])$/.exec(s))){const a=+m[1],b=m[2]?+m[2]:a,dans=(_,i)=>i+1>=a&&i+1<=b;
+      if(m[3]==="p"&&n)return {L:L.filter(dans)};if(m[3]==="d"&&!n)return {L:L.filter((x,i)=>!dans(x,i))};if(m[3]==="q"&&!m[2]&&!n)return {L:L.slice(0,a)};}
+    return {inconnu:"Le site ne connaît de sed que s/a/b/, s/a/b/g, -n 'Np' et 'Nd'."};},
+  uniq:(A,E,T)=>{const g=opt("uniq",A,"","c");if(!g.o)return g;const r=entree(T,g.F,E,"uniq",1);if(!r.L)return r;const G2=[];
+    for(const x of r.L){const d=G2[G2.length-1];if(d&&d[0]===x)d[1]++;else G2.push([x,1]);}return {L:G2.map(([x,k])=>g.o.c?String(k).padStart(7)+" "+x:x)};},
+  tee:(A,E)=>E?{L:E}:{err:"tee n'a rien à lire : il se place après un tube."},
+  more:(A,E)=>E&&!A.length?{L:E}:{inconnu:"Ici, place more à la fin du tube, sans option ni nom de fichier."},
+  less:(A,E,T)=>entree(T,A.filter(x=>x[0]!=="-"),E,"less",1)};
+SHT.tail=SHT.head;SHT.egrep=SHT.grep;
+/* rend {sortie: lignes affichées, P: ce qui sort de chaque morceau}, ou {err}, ou {inconnu} */
+function lanceTube(texte,T,V){const D=coupe(texte);if(!D.S)return D;let E=null;const P=[];
+  for(const seg of D.S){if(!seg)return {err:"Il manque une commande d'un côté du tube."};
+    const M=motsT(seg,T,V);if(!M.W)return M;const nom=M.W[0];if(nom===undefined)return {err:"Il manque le nom de la commande."};
+    if(!Object.prototype.hasOwnProperty.call(SHT,nom))return {inconnu:`Ici, le site connaît ${et(Object.keys(SHT))}, pas ${nom}.`};
+    if(M.lit!==null){const r=lisF(T,M.lit,nom);if(!r.L)return r;E=r.L;}
+    const r=SHT[nom](M.W.slice(1),E,T,nom);if(!r.L)return r;E=r.L;P.push(E);}
+  return {sortie:E,P};}
+G.usi.lanceTube=lanceTube;
+
+/* les fichiers d'essai : trois versions par famille, celle de l'énoncé et deux cachées */
+const melH=(h,L)=>{L=L.slice();for(let i=L.length-1;i>0;i--){const j=h.ent(0,i);[L[i],L[j]]=[L[j],L[i]];}return L;};
+const fic=(nom,L)=>({T:arboDe([{n:nom,c:L.join("\n")+"\n"}]),L});
+const genre=g=>g==="f"?{la:"la",gd:"grande",pt:"petite",asc:"de la plus petite à la plus grande",dsc:"de la plus grande à la plus petite",prem:"premières"}:{la:"le",gd:"grand",pt:"petit",asc:"du plus petit au plus grand",dsc:"du plus grand au plus petit",prem:"premiers"};
+/* toujours un 9, un autre chiffre et un nombre de 10 à 19 : l'ordre des caractères n'est jamais celui des nombres */
+const nombres=(h,n,max)=>{for(;;){const S=new Set([9,h.ent(10,19),h.ent(3,8)]);while(S.size<n)S.add(h.ent(10,max));const L=melH(h,[...S]);if(L.some((x,i)=>i&&x<L[i-1])&&L.some((x,i)=>i&&x>L[i-1]))return L;}};
+const FAM=[],TAILLES=[7,6,8],PETIT=[5,6,5],VILLES="paris lyon nice nantes lille rennes reims toulon grenoble dijon angers nimes brest tours amiens metz rouen caen nancy marseille bordeaux toulouse",PRENOMS="alice bruno chloe david emma farid gaelle hugo ines jules karim lea marc nina omar paul rose sami theo zoe louis manon";
+[["notes.txt","une note sur 20 par ligne","note","f",20],["ages.txt","un âge par ligne","âge","m",89],["scores.txt","un score par ligne","score","m",150],["tailles.txt","une taille en centimètres par ligne","taille","f",180]]
+  .forEach(([nom,desc,un,g,max],a)=>FAM.push(Object.assign({type:"nb",nom,desc,un,pl:un+"s",vers:TAILLES.map((n,v)=>fic(nom,nombres(hasard(101+10*a+v),n,max).map(String)))},genre(g))));
+[["villes.txt","un nom de ville par ligne, en minuscules","ville","f",VILLES],["prenoms.txt","un prénom par ligne, en minuscules","prénom","m",PRENOMS],["fruits.txt","un nom de fruit par ligne, en minuscules","fruit","m","pomme poire banane kiwi mangue cerise fraise orange citron raisin prune peche melon figue datte abricot ananas"]]
+  .forEach(([nom,desc,un,g,P],a)=>FAM.push(Object.assign({type:"mot",nom,desc,un,pl:un+"s",vers:TAILLES.map((n,v)=>{const h=hasard(201+10*a+v);for(;;){const L=melH(h,P.split(" ")).slice(0,n);if(L.join()!==L.slice().sort().join())return fic(nom,L);}})},genre(g))));
+const PREN="Alice Bruno Chloe David Emma Farid Hugo Ines Jules Karim Lea Marc Nina Omar Paul Rose".split(" "),NOMF="Martin Bernard Dubois Thomas Robert Richard Petit Durand Leroy Moreau Simon Michel Garcia".split(" ");
+["comptes.txt","utilisateurs.txt"].forEach((nom,a)=>FAM.push({type:"cpt",nom,desc:"une ligne par compte, avec quatre champs séparés par des deux-points : le nom de connexion, le numéro, le nom complet et le dossier d'accueil",vers:PETIT.map((n,v)=>{const h=hasard(301+10*a+v);
+  for(;;){const P=melH(h,PREN),N=melH(h,NOMF),U=melH(h,[9,1000,...melH(h,[33,52,107,998,1001,1004,1012,1020]).slice(0,n-2)]),L=U.map((u,i)=>`${N[i].toLowerCase()}:${u}:${P[i]} ${N[i]}:/home/${N[i].toLowerCase()}`);
+    const par=k=>L.slice().sort((x,y)=>x.split(":")[k]<y.split(":")[k]?-1:1).join();if(par(0)!==par(2)&&par(0)!==L.join()&&par(2)!==L.join())return fic(nom,L);}})}));
+[["ventes.csv","une ligne par produit, avec trois champs séparés par des virgules : le nom du produit, la quantité vendue et le prix en euros","f",["le nom du produit","la quantité vendue","le prix"],"les noms des produits","le nom du produit le plus vendu, c'est-à-dire celui dont le 2e champ est le plus grand","la plus grande quantité vendue","stylo cahier gomme regle classeur trousse agenda crayon feutre colle compas ciseaux",null],
+ ["joueurs.csv","une ligne par joueur, avec trois champs séparés par des virgules : le prénom, le score et la ville","m",["le prénom du joueur","le score","la ville"],"les prénoms des joueurs","le prénom du joueur qui a le plus grand score, le score étant le 2e champ","le plus grand score",PRENOMS,VILLES]]
+  .forEach(([nom,desc,g,ch,pl1,top,max,P1,P3],a)=>FAM.push(Object.assign({type:"csv",nom,desc,ch,pl1,top,max,vers:PETIT.map((n,v)=>{const h=hasard(401+10*a+v);
+    for(;;){const A=melH(h,P1.split(" ")),Q=nombres(h,n,150),L=Q.map((q,i)=>`${A[i]},${q},${P3?h.choix(P3.split(" ")):h.ent(1,9)}`),C=L.map(x=>x.split(",")[0]);if(C.join()!==C.slice().sort().join())return fic(nom,L);}})},genre(g))));
+FAM.push({type:"ls",nom:null,vers:["calcul.py copy.c cours.txt liste.txt main.c notes.txt notes.txt.old tp1.py tp2.py util.cpp","bilan.txt copy.c essai.py jeu.c jeu.py lisez.txt lisez.txt.old memo.txt pile.c pile.cpp test.py","agenda.txt copy.c liste.c main.cpp tri.py tri.txt.old util.py zero.c"].map(s=>({T:arboDe(s.split(" ").map(x=>fichier(x))),L:s.split(" ").sort()}))});
+FAM.push({type:"ll",nom:"liste.txt",desc:`le résultat de la commande ${c("ls -l")} : une ligne par fichier, et les lignes des répertoires commencent par la lettre d`,
+  vers:[[["-",85,"12 10:02","data.csv"],["d",4096,"14 08:30","docs"],["-",730,"20 17:45","main.c"],["-",20480,"11 09:12","memo.pdf"],["-",1200,"25 14:03","notes.txt"],["d",4096,"18 16:20","photos"]],
+    [["d",4096,"10 11:00","cours"],["-",12,"13 12:41","dates.csv"],["-",640,"22 18:05","devoir.txt"],["-",734003,"15 21:37","film.mp4"],["-",2210,"19 10:10","index.html"],["d",4096,"12 09:00","old"],["d",4096,"27 15:15","td"]],
+    [["d",4096,"16 13:20","bin"],["d",4096,"21 10:44","media"],["-",16824,"21 10:50","prog"],["-",310,"11 08:08","readme"],["-",96,"26 19:30","todo.md"]]]
+    .map(D=>{const w=Math.max(...D.map(e=>String(e[1]).length));return fic("liste.txt",D.map(e=>`${e[0]==="d"?"drwxr-xr-x 2":"-rw-r--r-- 1"} etu etu ${String(e[1]).padStart(w)} nov. ${e[2]} ${e[3]}`));})});
+FAM.push({type:"ty",nom:"types.txt",desc:`le résultat de la commande ${c("file *")} : sur chaque ligne, un nom, puis un deux-points, puis le type du contenu`,
+  vers:[["archive.tar: POSIX tar archive","main.c: C source, ASCII text","notes.txt: ASCII text","photo.jpg: JPEG image data","rapport.pdf: PDF document","tp: directory"],
+    ["cours: directory","liste.txt: UTF-8 Unicode text","logo.png: PNG image data","old: directory","son.mp3: Audio file with ID3","tri.py: Python script, ASCII text executable"],
+    ["a.out: ELF 64-bit LSB executable","data.csv: CSV text","docs: directory","image.gif: GIF image data","lisezmoi: ASCII text"]].map(L=>fic("types.txt",L))});
+const ETATS=["ok","erreur","alerte"],MSG=["disque plein","sauvegarde","connexion alice","reseau coupe","mise a jour","imprimante","mot de passe","demarrage","memoire pleine","copie finie"];
+["log.txt","journal.txt"].forEach((nom,a)=>FAM.push({type:"log",nom,desc:"une ligne par événement : l'heure, puis ok, alerte ou erreur, puis un message",vers:TAILLES.map((n,v)=>{const h=hasard(501+10*a+v);
+  for(;;){let t=h.ent(480,600);const M=melH(h,MSG),L=M.slice(0,n).map(m=>{t+=h.ent(2,25);return `${String(Math.floor(t/60)).padStart(2,"0")}:${String(t%60).padStart(2,"0")} ${h.choix(ETATS)} ${m}`;});
+    if(ETATS.every(e=>{const k=L.filter(x=>x.includes(" "+e+" ")).length;return k>=2&&k<=n-2;}))return fic(nom,L);}})}));
+[["ligne","une ligne d'un fichier CSV",["Dupont,12,Montpellier","Martin,9,Nimes","Leroy,15,Sete"]],["phrase","une phrase",["le chat dort ici","il pleut","un deux trois quatre cinq"]]]
+  .forEach(([nom,desc,X])=>FAM.push({type:"var",nom,desc,vers:X.map(x=>({T:arboDe([]),V:{[nom]:x},L:[x]}))}));
+
+/* les énoncés : [palier, (famille, hasard, version montrée) → {quoi: ce qu'il faut afficher, F: les filtres, alt: autres écritures justes}] ; palier 0 : seulement à lire */
+const K23=R=>R.ent(2,3),K24=R=>R.ent(2,4);
+const lettreDans=(L,R)=>{const C="aeioulnrst".split("").filter(x=>{const k=L.filter(s=>s.includes(x)).length;return k>0&&k<L.length;});return C.length?R.choix(C):null;};
+const initiale=(L,R)=>{const C=[...new Set(L.map(s=>s[0]))].filter(x=>L.filter(s=>s[0]===x).length>1);return C.length?R.choix(C):null;};
+const COMMUN=[
+  [1,(f,R)=>{const k=K24(R);return {quoi:`les ${k} premières lignes du fichier`,F:[`head -n ${k}`],alt:[`head -${k} ${f.nom}`]};}],
+  [1,(f,R)=>{const k=K24(R);return {quoi:`les ${k} dernières lignes du fichier`,F:[`tail -n ${k}`],alt:[`tail -${k} ${f.nom}`]};}],
+  [1,()=>({quoi:"le nombre de lignes du fichier",F:["wc -l"]})],
+  [2,(f,R)=>{const k=K24(R);return {quoi:`la ${k}e ligne du fichier, et rien d'autre`,F:[`head -n ${k}`,"tail -n 1"],alt:[`sed -n '${k}p' ${f.nom}`]};}],
+  [0,(f,R)=>({F:[`tail -n ${K24(R)}`,"head -n 1"]})]];
+const ITEMS={
+ nb:[
+  [1,f=>({quoi:`les ${f.pl}, ${f.asc}`,F:["sort -n"]})],
+  [1,f=>({quoi:`les ${f.pl}, ${f.dsc}`,F:["sort -n -r"],alt:[`sort -nr ${f.nom}`,`sort -r -n ${f.nom}`]})],
+  [2,f=>({quoi:`${f.la} plus ${f.gd} ${f.un}, et rien d'autre`,F:["sort -n","tail -n 1"],alt:[`sort -n -r ${f.nom} | head -n 1`]})],
+  [2,f=>({quoi:`${f.la} plus ${f.pt} ${f.un}, et rien d'autre`,F:["sort -n","head -n 1"],alt:[`sort -n -r ${f.nom} | tail -n 1`]})],
+  [2,(f,R)=>{const k=K23(R);return {quoi:`les ${k} plus ${f.gd}s ${f.pl}, ${f.la} plus ${f.gd} en premier`,F:["sort -n -r",`head -n ${k}`]};}],
+  [2,(f,R)=>{const k=K23(R);return {quoi:`les ${k} plus ${f.pt}s ${f.pl}, ${f.la} plus ${f.pt} en premier`,F:["sort -n",`head -n ${k}`]};}],
+  [2,(f,R)=>{const k=K24(R);return {quoi:`les ${k} premières lignes du fichier, triées ${f.asc}`,F:[`head -n ${k}`,"sort -n"]};}],
+  [0,(f,R)=>({F:["sort",`head -n ${K23(R)}`]})],[0,()=>({F:["sort","tail -n 1"]})],[0,(f,R)=>({F:["sort -r",`head -n ${K23(R)}`]})]],
+ mot:[
+  [1,f=>({quoi:`les ${f.pl} dans l'ordre alphabétique`,F:["sort"]})],
+  [1,f=>({quoi:`les ${f.pl} dans l'ordre alphabétique inverse, de z à a`,F:["sort -r"]})],
+  [1,(f,R,v)=>{const x=lettreDans(v.L,R);return x&&{quoi:`les ${f.pl} qui contiennent la lettre ${c(x)}`,F:[`grep ${x}`]};}],
+  [2,(f,R)=>{const k=K23(R);return {quoi:`les ${k} ${f.prem} ${f.pl} dans l'ordre alphabétique`,F:["sort",`head -n ${k}`]};}],
+  [2,f=>({quoi:`${f.la} ${f.un} qui vient en dernier dans l'ordre alphabétique, et rien d'autre`,F:["sort","tail -n 1"],alt:[`sort -r ${f.nom} | head -n 1`]})],
+  [2,(f,R,v)=>{const x=lettreDans(v.L,R);return x&&{quoi:`le nombre de ${f.pl} qui contiennent la lettre ${c(x)}`,F:[`grep ${x}`,"wc -l"],alt:[`grep -c ${x} ${f.nom}`]};}],
+  [2,(f,R,v)=>{const x=lettreDans(v.L,R);return x&&{quoi:`le nombre de ${f.pl} qui ne contiennent pas la lettre ${c(x)}`,F:[`grep -v ${x}`,"wc -l"],alt:[`grep -v -c ${x} ${f.nom}`]};}],
+  [2,(f,R,v)=>{const x=initiale(v.L,R);return x&&{quoi:`les ${f.pl} qui commencent par la lettre ${c(x)}, dans l'ordre alphabétique`,F:[`grep "^${x}"`,"sort"],alt:[`sort ${f.nom} | grep "^${x}"`]};}]],
+ cpt:[
+  [1,f=>({quoi:"le nom de connexion de chaque compte, c'est-à-dire le 1er champ",F:["cut -d: -f1"],alt:[`cut -d ":" -f 1 ${f.nom}`]})],
+  [1,()=>({quoi:"le nom complet de chaque compte, c'est-à-dire le 3e champ",F:["cut -d: -f3"]})],
+  [1,()=>({quoi:"le nom de connexion et le nom complet de chaque compte, c'est-à-dire les champs 1 et 3",F:["cut -d: -f1,3"]})],
+  [1,()=>({quoi:"le nombre de comptes",F:["wc -l"]})],
+  [2,()=>({quoi:"les noms de connexion, dans l'ordre alphabétique",F:["cut -d: -f1","sort"]})],
+  [3,()=>({quoi:"les lignes du fichier, triées selon le nom complet, qui est le 3e champ",F:["sort -t: -k3"]})],
+  [3,f=>({quoi:"les lignes du fichier, triées selon le numéro, qui est le 2e champ, du plus petit au plus grand",F:["sort -t: -k2 -n"],alt:[`sort -n -t: -k2 ${f.nom}`,`sort -t ":" -k 2n ${f.nom}`]})],
+  [3,f=>({quoi:"le nom de connexion, le nom complet et le dossier d'accueil de chaque compte, triés selon le nom complet, comme à l'exercice 40 du TD",F:["cut -d: -f1,3,4","sort -t: -k2"],alt:[`sort -t: -k3 ${f.nom} | cut -d: -f1,3,4`]})],
+  [3,f=>({quoi:"le nom de connexion du compte qui a le plus grand numéro, et rien d'autre",F:["sort -t: -k2 -n","tail -n 1","cut -d: -f1"],alt:[`sort -t: -k2 -n -r ${f.nom} | head -n 1 | cut -d: -f1`]})],
+  [3,(f,R)=>{const k=K23(R);return {quoi:`les noms de connexion des ${k} comptes qui ont les plus petits numéros, le plus petit en premier`,F:["sort -t: -k2 -n",`head -n ${k}`,"cut -d: -f1"]};}]],
+ csv:[
+  [1,(f,R)=>{const k=R.ent(1,3);return {quoi:`${f.ch[k-1]} de chaque ligne, c'est-à-dire le ${ORD(k)} champ`,F:[`cut -d, -f${k}`]};}],
+  [1,f=>({quoi:`${f.ch[0]} et ${f.ch[2]} de chaque ligne, c'est-à-dire les champs 1 et 3`,F:["cut -d, -f1,3"]})],
+  [2,f=>({quoi:`${f.pl1}, dans l'ordre alphabétique`,F:["cut -d, -f1","sort"]})],
+  [3,f=>({quoi:`les lignes du fichier, triées selon ${f.ch[1]}, qui est le 2e champ, ${f.asc}`,F:["sort -t, -k2 -n"]})],
+  [3,f=>({quoi:`${f.top}, et rien d'autre`,F:["sort -t, -k2 -n","tail -n 1","cut -d, -f1"],alt:[`sort -t, -k2 -n -r ${f.nom} | head -n 1 | cut -d, -f1`]})],
+  [3,f=>({quoi:`${f.max}, et rien d'autre`,F:["cut -d, -f2","sort -n","tail -n 1"],alt:[`cut -d, -f2 ${f.nom} | sort -n -r | head -n 1`]})]],
+ ls:[
+  [1,()=>({quoi:"le nombre de fichiers du dossier courant",F:["wc -l"]})],
+  [1,()=>({quoi:"les noms des fichiers du dossier courant dans l'ordre alphabétique inverse, de z à a",F:["sort -r"],alt:["ls -r"]})],
+  [1,(f,R)=>{const k=K24(R);return {quoi:`les ${k} premiers noms que donne ls`,F:[`head -n ${k}`]};}],
+  [2,(f,R)=>{const x=R.choix([".txt",".py",".c"]);return {quoi:`le nombre de fichiers du dossier courant dont le nom finit par ${c(x)}`,F:[`grep "\\${x}$"`,"wc -l"],alt:[`ls *${x} | wc -l`,`ls | grep -c "\\${x}$"`]};}],
+  [2,(f,R)=>{const x=R.choix([".txt",".py",".c"]);return {quoi:`le nombre de fichiers du dossier courant dont le nom ne finit pas par ${c(x)}`,F:[`grep -v "\\${x}$"`,"wc -l"]};}],
+  [2,(f,R)=>{const x=R.choix([".txt",".py",".c"]);return {quoi:`les noms des fichiers du dossier courant qui finissent par ${c(x)}, dans l'ordre alphabétique inverse`,F:[`grep "\\${x}$"`,"sort -r"]};}]],
+ ll:[
+  [1,f=>({quoi:"les lignes des répertoires",F:['grep "^d"'],alt:[`grep ^d ${f.nom}`]})],
+  [2,f=>({quoi:"le nombre de répertoires",F:['grep "^d"',"wc -l"],alt:[`grep -c "^d" ${f.nom}`]})],
+  [2,()=>({quoi:"le nombre de lignes qui ne sont pas celles d'un répertoire",F:['grep -v "^d"',"wc -l"]})],
+  [3,f=>({quoi:"la ligne où la taille est la plus grande, et rien d'autre : la taille est le 5e champ, et ici les champs sont séparés par des espaces",F:["sort -k5 -n","tail -n 1"],alt:[`sort -n -r -k5 ${f.nom} | head -n 1`]})]],
+ ty:[
+  [2,f=>({quoi:"le nombre de fichiers de type texte : ce sont les lignes qui contiennent le mot text",F:["grep text","wc -l"],alt:[`grep -c text ${f.nom}`]})],
+  [3,()=>({quoi:"les noms des fichiers de type texte, comme à l'exercice 40 du TD : leur ligne contient le mot text, et le nom est avant le deux-points",F:["grep text","cut -d: -f1"]})],
+  [3,()=>({quoi:"les noms des répertoires : leur ligne contient le mot directory, et le nom est avant le deux-points",F:["grep directory","cut -d: -f1"]})]],
+ log:[
+  [1,(f,R)=>{const w=R.choix(ETATS);return {quoi:`les lignes qui contiennent le mot ${c(w)}`,F:[`grep ${w}`]};}],
+  [2,(f,R)=>{const w=R.choix(ETATS);return {quoi:`le nombre de lignes qui contiennent le mot ${c(w)}`,F:[`grep ${w}`,"wc -l"],alt:[`grep -c ${w} ${f.nom}`]};}],
+  [2,(f,R)=>{const w=R.choix(ETATS);return {quoi:`le nombre de lignes qui ne contiennent pas le mot ${c(w)}`,F:[`grep -v ${w}`,"wc -l"]};}],
+  [2,(f,R)=>{const w=R.choix(ETATS);return {quoi:`la dernière ligne qui contient le mot ${c(w)}, et rien d'autre`,F:[`grep ${w}`,"tail -n 1"]};}],
+  [2,(f,R)=>{const w=R.choix(ETATS);return {quoi:`les 2 premières lignes qui contiennent le mot ${c(w)}`,F:[`grep ${w}`,"head -n 2"]};}],
+  [3,(f,R)=>{const w=R.choix(ETATS);return {quoi:`l'heure de chaque ligne qui contient le mot ${c(w)} : l'heure est le 1er champ, et les champs sont séparés par un espace`,F:[`grep ${w}`,'cut -d" " -f1'],alt:[`grep ${w} ${f.nom} | cut -d ' ' -f 1`]};}]],
+ var:[
+  [3,(f,R)=>{const k=R.ent(1,3);return f.nom==="ligne"?{quoi:`son ${ORD(k)} champ, les champs étant séparés par des virgules`,F:[`cut -d, -f${k}`]}:{quoi:"le nombre de mots qu'elle contient",F:["wc -w"]};}]]};
+/* des commandes en plus, seulement pour comparer le petit shell au vrai bash ; @ est le nom du fichier */
+const BANC={
+ nb:["sort -u @","sort -rn @ | uniq","head -n -2 @","tail -n +3 @","wc -w @","wc -c < @","cat @ | tr 0-9 a-j","sed -n '2,3p' @","sed 2d @","sort -n @ | tee copie.txt | tail -2","cat @ @ | sort -n | uniq -c","sed \"s/1/x/\" @","sed \"s/1/x/g\" @","cut -c1 @ | sort | uniq -c","cut -c2- @","sort -k1,1nr @","tr -d 1 < @","grep -c 1 @","cat @ | more | head -n 2","sed 3q @"],
+ mot:["tr a-z A-Z < @","cat @ | tr '[:lower:]' '[:upper:]'","sort @ | uniq","cut -c1-3 @","cut -c-2,4 @","sed \"s/a/o/g\" @ | sort -r","grep -i A @ | sort | head -3","tr -d aeiou < @","tr 'ae' 'x' < @","sort -r @ | tail -n +2 | head -n 2","cat @ | tr '\\n' ' '","wc -l @ | cut -d\" \" -f1","sed -n 3p @","grep -vc a @","sort -ru @","less @ | wc -w"],
+ cpt:["cut -d: -f2- @","cut -d: -f-2 @","cut -d: -f2,1 @","cut -f1 @","cut -d: -f5 @","cut -d: -s -f1 @","sort -t: -k2 @","sort -t: -k2,2nr @","sort -t: -k3 -r @","sort -k2 @","tr ':' ' ' < @ | sort -k2 -n","cut -d: -f3 @ | cut -d\" \" -f2 | sort","sort -t: -k4 @ | head -n 2","cut -d: -f3 @ | wc -w","sort -n -t: -k2 -u @","sort -t: -k2n @ | tail -1"],
+ csv:["sort -t, -k3 -n @","sort -t, -k3 -n -r @","sort -t, -k3,3n @","cut -d, -f3 @ | sort -n | uniq -c","cut -d, -f3 @ | sort -nu","sort -t, -k2nr @ | cut -d, -f1,2 | tr , \" \"","tr , : < @ | cut -d: -f2","sed \"s/,/ /g\" @ | sort -k2 -n -r | head -n 1","sort -t, -k3 @","sort -t, -k3,3 -u @"],
+ ls:["ls -a | head -n 3","ls -r | tail -n 2","ls *.py","ls *.c *.txt | sort -r","ls | grep -c py","ls | cut -d. -f2 | sort | uniq -c","ls | cut -d. -f2 | sort -u","ls | tr . \" \" | wc -w","ls -1 | sort -t. -k2","ls | sed \"s/txt/md/\"","ls ?????.*","ls | grep -v \"\\.\" | wc -l"],
+ ll:["sort -k5 @","sort -k5 -n -r @ | head -n 2","sort -k9 @","grep -c etu @","grep -v \"^-\" @ | wc -l","sort -k5,5n -u @","cut -c1 @ | sort | uniq -c","sort -k5,5n @","sort -r -k5,5n @"],
+ ty:["cut -d: -f2 @","cut -d: -f2 @ | sort | uniq","grep -v text @ | cut -d: -f1 | sort -r","sort -t: -k2 @","grep -i ascii @ | wc -l","cut -d\" \" -f2 @ | sort -u"],
+ log:["cut -d\" \" -f2 @ | sort | uniq -c","cut -d\" \" -f2 @ | sort -u","cut -d\" \" -f3- @","sort -k2 @","sort -k2,2 @","sort -r -k2,2 @","grep -v ok @ | cut -d\" \" -f1 | tail -n 2","cut -d: -f1 @ | sort -n | uniq","wc -w < @","grep -c -v erreur @","sed -n '2,4p' @ | cut -c1-5","tr ' ' '\\n' < @ | grep -c ok","sort -k2,2 -u @"],
+ ligne:["echo $ligne | cut -d, -f1,3","echo \"$ligne\" | tr , \"\\n\" | sort","echo \"${ligne}\" | sed \"s/,/;/g\"","echo ${ligne} | cut -d, -f2-","echo $ligne | wc -c"],
+ phrase:["echo $phrase | wc -c","echo \"$phrase\" | tr \" \" \"\\n\" | sort | head -n 1","echo \"$phrase\" | cut -d\" \" -f2","echo $phrase | tr -d \" \"","echo a $phrase b | wc -w"]};
+
+/* ce que fait un filtre, à l'infinitif, puis pourquoi ses options */
+function role(f){let m;
+  if(/^sort/.test(f)){m=/(?: -t(\S))? -k(\d)/.exec(f);return "trier les lignes"+(m?` selon le ${ORD(+m[2])} champ`+(m[1]?`, les champs étant séparés par ${NOMSEP(m[1])}`:""):"")+(/ -n/.test(f)?", en comparant des nombres":m?"":" dans l'ordre alphabétique")+(/ -r/.test(f)?", à l'envers":"");}
+  if((m=/^(head|tail) -n (\d+)$/.exec(f)))return m[2]==="1"?`garder la ${m[1]==="head"?"première":"dernière"} ligne`:`garder les ${m[2]} ${m[1]==="head"?"premières":"dernières"} lignes`;
+  if(f==="wc -l")return "compter les lignes";if(f==="wc -w")return "compter les mots";
+  if((m=/^grep( -v)? (.+)$/.exec(f))){const x=m[2].replace(/"/g,"");return `${m[1]?"enlever":"garder"} les lignes qui ${/^\^/.test(x)?"commencent par":/\$$/.test(x)?"finissent par":"contiennent"} ${cr(x.replace(/^\^|\$$/g,"").replace(/\\/g,""))}`;}
+  if((m=/^cut -d(" "|\S+) -f([\d,]+)$/.exec(f))){const L=m[2].split(",");return `garder ${L.length>1?"les champs "+et(L):"le "+ORD(+L[0])+" champ"} de chaque ligne, les champs étant séparés par ${NOMSEP(m[1])}`;}
+  return f;}
+function raison(f){let m;
+  if(/^sort/.test(f))return [(m=/( -t(\S))? -k(\d)/.exec(f))&&(m[1]?`${cr("-t"+m[2])} dit que les champs sont séparés par ${NOMSEP(m[2])}, et ${cr("-k"+m[3])} qu'on trie selon le ${ORD(+m[3])} champ.`:`${cr("-k"+m[3])} dit de trier selon le ${ORD(+m[3])} champ ; sans ${cr("-t")}, les champs sont séparés par des espaces.`),
+    / -n/.test(f)?`Avec ${cr("-n")}, sort compare des nombres ; sans lui, il compare caractère par caractère, et 10 passerait avant 9.`:!m&&`Sans ${cr("-n")}, sort compare caractère par caractère, comme dans un dictionnaire.`,/ -r/.test(f)&&`${cr("-r")} renverse l'ordre.`].filter(Boolean).join(" ");
+  if(/^(head|tail)/.test(f))return `${cr("head")} garde le début de ce qu'il reçoit, ${cr("tail")} la fin ; le nombre de lignes s'écrit après ${cr("-n")}.`;
+  if(/^wc/.test(f))return f==="wc -l"?`${cr("wc -l")} compte les lignes. Quand elles arrivent par un tube, il n'écrit que leur nombre ; quand on lui donne un nom de fichier, il écrit ce nom après le nombre.`:`${cr("wc -w")} compte les mots qu'il reçoit.`;
+  if(/^grep/.test(f))return ["grep garde les lignes où il trouve le motif.",/ -v/.test(f)&&`${cr("-v")} inverse : il garde les autres.`,/"\^/.test(f)&&`${cr("^")} colle le motif au début de la ligne.`,/\$"$/.test(f)&&`${cr("$")} colle le motif à la fin de la ligne, et ${cr("\\.")} veut dire un vrai point.`].filter(Boolean).join(" ");
+  if(/^cut/.test(f))return `${cr("-d")} donne le séparateur, un seul caractère ; ${cr("-f")} donne les numéros des champs à garder, comptés à partir de 1.`;
+  return "";}
+/* les erreurs connues : la même commande avec un défaut. e : message pour une commande écrite, l : pour un affichage lu */
+function mutantes(F){const M=[];
+  F.forEach((f,i)=>{let m;const nom=f.split(" ")[0],avec=x=>F.map((y,j)=>j===i?x:y),aj=(type,F2,e,l,o)=>M.push(Object.assign({k:i,type,F:F2,e,l:l||e,si:new RegExp("(^|[| ])"+F2[i].split(" ")[0]+"( |$)")},o));
+    if(nom==="sort"){
+      if(/ -n/.test(f))aj("-n oublié",avec(f.replace(" -n","")),`Sans ${cr("-n")}, sort compare les lignes caractère par caractère, comme des mots : 10 passe avant 9, parce que le caractère 1 est avant le caractère 9.`,`Ici, sort a l'option ${cr("-n")} : il compare des nombres, donc 9 passe avant 10.`);
+      else if(!/-k/.test(f))aj("sort lu comme sort -n",avec(f+" -n"),`Avec ${cr("-n")}, sort compare des nombres : il ne le faut pas ici.`,`Sans ${cr("-n")}, sort ne compare pas des nombres : il compare caractère par caractère, comme des mots. 10 passe avant 9, parce que le caractère 1 est avant le caractère 9.`);
+      if(/ -r/.test(f))aj("-r oublié",avec(f.replace(" -r","")),`Sans ${cr("-r")}, sort range du plus petit au plus grand, ou de a à z.`,`Avec ${cr("-r")}, l'ordre est renversé : le plus grand sort en premier.`);
+      else aj("ordre renversé",avec(f+" -r"),`${cr("-r")} renverse l'ordre : il ne le faut pas ici.`,`Il n'y a pas ${cr("-r")} : sort range du plus petit au plus grand, ou de a à z.`);
+      if((m=/( -t\S)? -k(\d)/.exec(f))){
+        if(m[1])aj("-t oublié",avec(f.replace(m[1],"")),`Sans ${cr(m[1].trim())}, sort croit que les champs sont séparés par des espaces : il ne trouve pas le ${ORD(+m[2])} champ.`,"",{si:/-k/,ecrit:1});
+        aj("-k oublié",avec(f.replace(m[0],"")),`Sans ${cr("-k"+m[2])}, sort trie sur la ligne entière, donc d'abord sur son début.`,`${cr("-k"+m[2])} dit à sort de trier selon le ${ORD(+m[2])} champ, pas selon le début de la ligne.`);}}
+    if((m=/^(head|tail)( .*)$/.exec(f)))aj("head et tail confondus",avec((m[1]==="head"?"tail":"head")+m[2]),`${cr("head")} garde les premières lignes de ce qu'il reçoit, ${cr("tail")} les dernières.`);
+    if(nom==="grep"){
+      if(/ -v/.test(f))aj("-v oublié",avec(f.replace(" -v","")),`Sans ${cr("-v")}, grep garde les lignes où il trouve le motif. C'est ${cr("-v")} qui garde les autres.`,`${cr("-v")} inverse le tri : grep garde les lignes où il ne trouve pas le motif.`);
+      else aj("-v en trop",avec(f.replace("grep","grep -v")),`${cr("-v")} inverse le tri : grep garde alors les lignes où il ne trouve pas le motif.`,`Il n'y a pas ${cr("-v")} : grep garde les lignes où il trouve le motif.`);
+      if((m=/"(\^?)([^"]*?)(\$?)"$/.exec(f))&&(m[1]||m[3]))aj("motif cherché partout",avec(f.replace(m[0],m[2].replace(/\\\.?/g,""))),`Sans ${cr(m[1]||m[3])}, grep cherche le motif n'importe où dans la ligne, pas seulement ${m[1]?"au début":"à la fin"}.`,`${cr(m[1]||m[3])} colle le motif ${m[1]?"au début":"à la fin"} de la ligne : une ligne qui a ces caractères ailleurs ne compte pas.`);}
+    if((m=/^cut -d(" "|\S+) -f(\d)([\d,]*)$/.exec(f))){
+      aj("-d oublié",avec(`cut -f${m[2]}${m[3]}`),`Sans ${cr("-d")}, cut croit que les champs sont séparés par des tabulations : il n'en trouve pas, et il recopie chaque ligne en entier.`,`${cr("-d")} donne le séparateur : cut coupe chaque ligne à cet endroit et ne garde que les champs demandés.`);
+      if(+m[2]>1&&!m[3])aj("champ compté à partir de 0",avec(`cut -d${m[1]} -f${m[2]-1}`),`Les champs se comptent à partir de 1 : le premier est ${cr("-f1")}. Ici, il faut ${cr("-f"+m[2])}.`,`Les champs se comptent à partir de 1 : ${cr("-f"+m[2])} garde le ${ORD(+m[2])} champ.`);}
+    if(f==="wc -l")aj("wc -w à la place de wc -l",avec("wc -w"),`${cr("wc -w")} compte les mots. Pour compter les lignes, c'est ${cr("wc -l")}.`,`${cr("wc -l")} compte les lignes, pas les mots.`);
+    if(f==="wc -w")aj("wc -l à la place de wc -w",avec("wc -l"),`${cr("wc -l")} compte les lignes. Pour compter les mots, c'est ${cr("wc -w")}.`,`${cr("wc -w")} compte les mots, pas les lignes.`);
+    if(i<F.length-1)aj("filtres dans le mauvais ordre",F.map((y,j)=>j===i?F[i+1]:j===i+1?F[i]:y),`Un tube se lit de gauche à droite. Il faut d'abord ${cr(F[i])}, ensuite ${cr(F[i+1])}, qui ne reçoit que ce qui sort du premier.`,`Un tube se lit de gauche à droite : ${cr(F[i])} travaille d'abord, et ${cr(F[i+1])} ne reçoit que ce qui en sort.`);});
+  for(let j=F.length-1;j>=0;j--)M.push({k:j,type:"tube incomplet",F:F.slice(0,j),e:`Ta commande s'arrête trop tôt : il reste à ${role(F[j])}.`,l:`Tu t'es arrêté avant la fin du tube : il reste ${cr(F[j])}, c'est-à-dire ${role(F[j])}.`});
+  return M;}
+
+const NOMSEP=x=>({":":"des deux-points",",":"des virgules",".":"des points",'" "':"des espaces"})[x]||cr(x);
+const pareil=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
+/* wc -l fichier écrit aussi le nom du fichier : « 7 notes.txt » vaut « 7 » */
+const norme=L=>L.length===1?[L[0].replace(/^(\d+) \S+$/,"$1")]:L;
+const pave=L=>blocr(L.length?L.slice(0,8).join("\n")+(L.length>8?"\n…":""):"(rien)");
+const montre=L=>!L.length?"rien.":L.length<=5&&L.join("").length<=36&&L.every(x=>x&&!/ /.test(x))?L.map(cr).join(", ")+".":pave(L);
+const SYMT=[["|","| "],["sort","sort "],["head","head "],["tail","tail "],["grep","grep "],["cut","cut "],["wc","wc "],["-n","-n "],["-d","-d"],["-f","-f"],['"','"'],["^","^"],["＄","$"]];
+const PAR=[[],[],[],[]];
+for(const f of FAM)for(const [p,gen] of ITEMS[f.type].concat(/^(nb|mot|log)$/.test(f.type)?COMMUN:[])){if(p)PAR[p].push([f,gen]);PAR[0].push([f,gen]);}
+function exoTube(R,p){const [fam,gen]=R.choix(PAR[p]),v=R.ent(0,2),vers=[0,1,2].map(i=>fam.vers[(v+i)%3]),ver=vers[0],it=gen(fam,R,ver);if(!it)return null;
+  const lire=p===0,F=it.F,src=fam.type==="ls"?"ls":fam.type==="var"?`echo "$${fam.nom}"`:null,d=src?1:0;
+  const cmdDe=F=>src?[src,...F].join(" | "):F.length?[F[0]+" "+fam.nom,...F.slice(1)].join(" | "):"cat "+fam.nom;
+  const sur=cmd=>{const S=vers.map(x=>lanceTube(cmd,x.T,x.V));return S.every(s=>s.sortie)?S:null;};
+  const ref=cmdDe(F),S=sur(ref);if(!S)throw new Error("commande de référence refusée : "+ref);
+  const bon=S.map(s=>norme(s.sortie)),att=S[0].sortie,attP=att.map(propre);
+  if(lire&&(!att.length||att.length>5||att.join("").length>40))return null;
+  const mut=[];for(const m of mutantes(F)){if(lire&&m.ecrit)continue;const cmd=cmdDe(m.F),Sm=sur(cmd);if(!Sm)continue;const O=Sm.map(s=>norme(s.sortie));
+    if(!(lire?pareil(O[0],bon[0]):O.every((o,i)=>pareil(o,bon[i]))))mut.push(Object.assign(m,{cmd,O}));}
+  const fausse=mut.find(m=>m.O[0].length);if(!fausse)return null;
+  const alt=lire?[]:[...(it.alt||[]),...(src?[]:["cat "+fam.nom+" | "+F.join(" | "),F[0]+" < "+fam.nom+F.slice(1).map(x=>" | "+x).join("")]),...(fam.type==="var"?[`echo $${fam.nom} | ${F.join(" | ")}`]:[])];
+  const ici=fam.type==="var"?"Avec la valeur de l'énoncé":fam.type==="ls"?"Dans le dossier de l'énoncé":"Sur le fichier de l'énoncé",segs=ref.split(" | "),sortie=i=>`${ici}, il en sort : ${montre(S[0].P[i])}`;
+  const q=fam.type==="var"?(lire?`Dans un script Bash, la variable ${cr(fam.nom)} contient ${cr(ver.L[0])}. Qu'affiche la commande ci-dessous ?`:`Dans un script Bash, la variable ${cr(fam.nom)} contient ${fam.desc}, par exemple ${cr(ver.L[0])}. Donne la commande qui affiche ${it.quoi}.`)
+    :fam.type==="ls"?(lire?"Voici les fichiers du dossier courant, puis une commande. Qu'affiche cette commande ?":`Le dossier courant contient les fichiers affichés ci-dessous. Donne la commande qui affiche ${it.quoi}.`)
+    :lire?`Le fichier ${cr(fam.nom)} contient ${fam.desc}. Voici le fichier, puis une commande. Qu'affiche cette commande ?`:`Le fichier ${cr(fam.nom)}, affiché ci-dessous, contient ${fam.desc}. Donne la commande qui affiche ${it.quoi}.`;
+  const donnees=fam.type==="var"?"":blocr(ver.L.join("\n")),corps=lire?(donnees?donnees+"<p>La commande&nbsp;:</p>":"")+blocr(ref):donnees;
+  const origine=src==="ls"?{w:`D'où viennent les lignes : ${cr("ls")} écrit un nom par ligne, et le tube ${cr("|")} les envoie au premier filtre.`,why:"Un tube branche la sortie de la commande de gauche sur l'entrée de celle de droite.",pts:1}
+    :src?{w:`D'où viennent les lignes : ${cr(src)} écrit le contenu de la variable, et le tube ${cr("|")} l'envoie au filtre.`,why:"Un filtre lit un fichier, ou ce qui arrive par un tube ; il ne lit pas une variable. C'est echo qui fait le passage, et les guillemets gardent le contenu tel quel.",pts:1}
+    :{w:`D'où viennent les lignes : du fichier ${cr(fam.nom)}. Son nom s'écrit après le premier filtre et ses options.`,why:`${cr("cat "+fam.nom+" | "+F[0])} marche aussi : cat envoie le fichier dans le tube.`,pts:1};
+  const E=lire?[...segs.map((s,i)=>({w:`${i?"Ensuite":"D'abord"} ${cr(s)} : ${i<d?(src==="ls"?"écrire les noms du dossier courant, un par ligne":"écrire le contenu de la variable"):role(F[i-d])}.`,why:`${i<d?"":raison(F[i-d])+" "}${sortie(i)}`,pts:1})),
+      {w:`<b>La commande affiche</b> : ${montre(att)}`,why:"Un tube se lit de gauche à droite : chaque filtre ne reçoit que ce qui sort du précédent.",pts:1}]
+    :[origine,...F.map((f,i)=>({w:`${Maj(role(f))} : ${cr((i||d?"| ":"")+f+(i||d?"":" "+fam.nom))}`,why:`${raison(f)} ${sortie(i+d)}`,pts:1})),
+      {w:`La commande : <b>${cr(ref)}</b>`,why:`${ici}, elle affiche : ${montre(att)}${it.alt?` On peut aussi écrire ${cr(it.alt[0])}.`:""}`,pts:0.5}];
+  const fin=E.length-1,faux=(ch,resume)=>(etape,type,titre,msg)=>({ok:false,faux:[ch],resume,diag:{etape,type,titre,msg}});
+  const juge=lire?rep=>{const L0=String(rep.s==null?"":rep.s).split("\n").map(propre).filter(Boolean),non=faux("s","Pas tout à fait : ce n'est pas ce que la commande affiche.");
+      if(!L0.length)return {incomplet:"Écris ce que la commande affiche, une ligne par ligne."};
+      const L=L0.length===1&&att.length>1&&att.every(x=>!/[ ,;]/.test(x))?L0[0].split(/[ ,;]+/).filter(Boolean):L0;
+      if(pareil(L,attP)||pareil(norme(L),bon[0]))return {ok:true};
+      const m=mut.find(m=>pareil(L,m.O[0].map(propre)));if(m)return non(m.k+d,m.type,"Où ça part : "+m.type+".",m.l);
+      if(pareil(L.slice().sort(),attP.slice().sort()))return non(fin,"lignes dans le mauvais ordre","Où ça part : l'ordre des lignes.","Ce sont les bonnes lignes, mais pas dans le bon ordre : à l'écran, l'ordre compte.");
+      return non(0,"affichage différent","Où ça part : le tube se lit de gauche à droite.","Écris ce qui sort du premier morceau, puis ce que le morceau suivant en garde, et ainsi de suite : la correction le fait pas à pas.");}
+    :rep=>{const t=propre(rep.c),non=faux("c","Pas tout à fait : cette commande n'affiche pas ce qui est demandé.");if(!t)return {incomplet:"Écris la commande."};
+      const St=vers.map(x=>lanceTube(t,x.T,x.V)),pb=St.find(s=>!s.sortie);
+      if(pb)return pb.inconnu?{incomplet:d36(esc(pb.inconnu))}:non(fin,"commande qui ne marche pas","Où ça part : la commande ne marche pas.",d36(esc(pb.err)));
+      const O=St.map(s=>norme(s.sortie));if(O.every((o,i)=>pareil(o,bon[i])))return {ok:true};
+      const C=mut.filter(m=>(!m.si||m.si.test(t))&&m.O.every((o,i)=>pareil(o,O[i]))),m=C.find(m=>m.cmd===t)||C[0];if(m)return non(m.k+1,m.type,"Où ça part : "+m.type+".",m.e);
+      const i=O.findIndex((o,k)=>!pareil(o,bon[k])),x=vers[i],ailleurs=fam.type==="var"?`avec une autre valeur de la variable, ${cr(x.L[0])},`:`${fam.type==="ls"?"dans cet autre dossier d'essai":"sur cet autre fichier d'essai"} : ${pave(x.L)}`;
+      return non(fin,"résultat différent","Où ça part : ce que la commande affiche.",`${i?`${ici}, ta commande tombe juste. Mais ${ailleurs} elle`:`${ici}, ta commande`} affiche : ${pave(St[i].sortie)} Il fallait : ${pave(S[i].sortie)}`);};
+  const cas=(x,cmd)=>{const r=lanceTube(cmd,x.T,x.V);return {arbo:x.T,cmd:(x.V?Object.entries(x.V).map(([k,y])=>`${k}='${y}'; `).join(""):"")+cmd,abs:r.sortie||null,brut:true,ordre:true};};
+  const banc=BANC[fam.type]||BANC[fam.nom],bash=[...vers.map(x=>cas(x,ref)),...alt.map(a=>cas(ver,a)),...mut.map(m=>cas(ver,m.cmd)),...[0,1].map(()=>cas(ver,R.choix(banc).replace(/@/g,fam.nom)))];
+  return {sig:lire?"T0"+ref+"|"+ver.L.join("|"):"T"+p+brut(q),q,corps,texte:brut(q)+(lire?" — "+ref+" — "+ver.L.join(" | "):""),
+    champs:lire?[{k:"code",id:"s",nom:"affichage",label:"Ce que la commande affiche, une ligne par ligne&nbsp;:",lignes:4}]
+      :[{k:"champ",id:"c",nom:"commande",label:"La commande :",ex:"… | …",apercu:false,sym:SYMT,aide:fam.type==="var"?"Ta commande est essayée avec cette valeur, et avec d'autres.":`Ta commande est essayée sur ce ${fam.type==="ls"?"dossier":"fichier"}, et sur d'autres de la même forme.`}],
+    juge,etapes:E,bonne:lire?pave(att):cr(ref),bonneTxt:lire?att.join(" ⏎ "):ref,repBonne:lire?{s:att.join("\n")}:{c:ref},repFausse:lire?{s:fausse.O[0].join("\n")}:{c:mut[0].cmd},nature:fam.type,
+    ens:{lire,ref,alt,pieges:mut.map(m=>({type:m.type,cmd:m.cmd,sortie:m.O[0]})),bash}};}
+const tireTube=p=>R=>{for(;;){const e=exoTube(R,p);if(e)return e;}};
+
 G.add("usi",[
+ {id:"US4",t:"Tubes et filtres",tache:"tubes et filtres",th:"processus",pts:1,lecons:["u-redir"],
+  paliers:[
+   {t:"ce qu'affiche un tube",cc:2,min:150,gen:tireTube(0)},
+   {t:"un seul filtre : sort, head, tail, cut, grep, wc",cc:2,min:60,gen:tireTube(1)},
+   {t:"deux filtres à enchaîner",cc:2,min:80,gen:tireTube(2)},
+   {t:"trois filtres et des champs, comme au TD",cc:3,min:25,gen:tireTube(3)}]},
  {id:"US5",t:"find : chercher des fichiers",tache:"find",th:"recherche",pts:1.5,lecons:["u-find"],
   paliers:[
    {t:"ce qu'affiche une commande find",cc:2,gen:tireFind(0)},
