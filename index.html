@@ -19746,6 +19746,94 @@ function inverser(A,o){o=o||{};const n=A.length,J=doubleMat(A),In=n===2?"I₂":"
     champs,juge,etapes:E,bonne:ok?`A⁻¹ = ${matH(inv)}`:"A n'est pas inversible",bonneTxt:ok?"A⁻¹ = "+inv.map(rangee).join(" ; "):"A n'est pas inversible",
     repBonne,repFausse,nature:ok?"inv":"non",ens:{A,inv:ok?inv.map(l=>l.map(x=>[x.n,x.d])):null}};}
 
+/* ---------- AL9 : produit de matrices ---------- */
+const matAlea=(R,n,p,h,z)=>{for(;;){const M=Array.from({length:n},()=>Array.from({length:p},()=>R()<z?0:R.ent(-h,h)));if(M.every(l=>l.some(x=>x))&&M[0].every((_,j)=>M.some(l=>l[j])))return M;}};
+const plu=(k,m)=>k+" "+m+(k>1?"s":"");
+const tailleH=(X,M)=>`${X} a ${plu(M.length,"ligne")} et ${plu(M[0].length,"colonne")} : ${X} ∈ M<sub>${M.length},${M[0].length}</sub>(ℝ)`;
+const tailleLue=s=>{s=String(s==null?"":s).trim().toLowerCase();if(!s)return null;const m=s.match(/\d+/g);if(!m&&/non|pas|impossible|aucun|existe|∅/.test(s))return "non";return m&&m.length===2?[+m[0],+m[1]]:null;};
+const tailleT=d=>d==="non"?"non défini":`${d[0]} × ${d[1]}`;
+const rangeeT=l=>"("+l.map(x=>nb(x).replace(/−/g,"-")).join(", ")+")";
+const lignesLues=(rep,pre,n,k)=>{const X=[];for(let i=0;i<n;i++){const l=liste(rep[pre+(i+1)],k);if(!l)return null;X.push(l);}return X;};
+const egalM=(X,C)=>X.length===C.length&&X.every((l,i)=>l.length===C[i].length&&l.every((x,j)=>egal(x,C[i][j])));
+const premierFaux=(X,C)=>{for(let i=0;i<C.length;i++)for(let j=0;j<C[0].length;j++)if(!egal(X[i][j],C[i][j]))return [i,j];return null;};
+const sommeH=(A,B,i,j)=>A[i].map((x,t)=>`${par(x)} × ${par(B[t][j])}`).join(" + ");
+const lignesProduit=(A,B,X)=>{const C=prod(A,B);return A.map((l,i)=>({w:`Ligne ${i+1} de ${X} :<br>${C[0].map((_,j)=>`(${X})<sub>${i+1}${j+1}</sub> = ${sommeH(A,B,i,j)} = ${nb(C[i][j])}`).join("<br>")}`,
+  why:i?`Même chose avec la ligne ${i+1} de ${X[0]}, fois chaque colonne de ${X[1]}.`:`On multiplie la ligne 1 de ${X[0]} par chaque colonne de ${X[1]} : premier terme fois premier terme, deuxième fois deuxième, et ainsi de suite, puis on additionne. La colonne 1 de ${X[1]} donne le coefficient de la colonne 1, et ainsi de suite.`,pts:1}));};
+const etapeTaille=(X,Y,MX,MY)=>{const c=MX[0].length,l=MY.length;return c===l
+  ?{w:`${X} a ${plu(c,"colonne")} et ${Y} a ${plu(l,"ligne")} : c'est le même nombre, donc <b>${X}${Y} est défini, de taille ${MX.length} × ${MY[0].length}</b>.`,why:`Pour ${X}${Y}, on multiplie chaque ligne de ${X} par chaque colonne de ${Y} : il faut que ${X} ait autant de colonnes que ${Y} a de lignes. Le résultat garde les lignes de ${X} (${MX.length}) et les colonnes de ${Y} (${MY[0].length}).`,pts:1}
+  :{w:`${X} a ${plu(c,"colonne")} et ${Y} a ${plu(l,"ligne")} : ${c} ≠ ${l}, donc <b>${X}${Y} n'est pas défini</b>.`,why:`Une ligne de ${X} a ${c} terme${c>1?"s":""}, une colonne de ${Y} en a ${l} : on ne peut pas les multiplier terme à terme.`,pts:1};};
+function tailleProduit(R){const cas=R.choix(["deux","AB","BA","AB","BA","aucun"]);let n,p,r,s;
+  for(;;){[n,p,r,s]=[0,0,0,0].map(()=>R.ent(1,4));const ab=p===r,ba=s===n;
+    if(n*p>1&&r*s>1&&n*p<=12&&r*s<=12&&!(n===p&&p===r&&r===s)&&cas===(ab&&ba?"deux":ab?"AB":ba?"BA":"aucun"))break;}
+  const A=matAlea(R,n,p,5,.2),B=matAlea(R,r,s,5,.2),dAB=p===r?[n,s]:"non",dBA=s===n?[r,p]:"non";
+  const E=[{w:`${tailleH("A",A)} ;<br>${tailleH("B",B)}.`,why:`On compte d'abord les lignes, puis les colonnes : une taille s'écrit toujours lignes × colonnes.`,pts:1},etapeTaille("A","B",A,B),etapeTaille("B","A",B,A)];
+  function juge(rep){const a=tailleLue(rep.ab),b=tailleLue(rep.ba);if(!a||!b)return {incomplet:"Pour AB et pour BA, écris la taille (par exemple 2 × 3), ou « non défini »."};
+    const bon=(x,d)=>x==="non"?d==="non":d!=="non"&&x[0]===d[0]&&x[1]===d[1],F=[];if(!bon(a,dAB))F.push("ab");if(!bon(b,dBA))F.push("ba");if(!F.length)return {ok:true};
+    const k=F[0],x=k==="ab"?a:b,d=k==="ab"?dAB:dBA,[X,Y,MX,MY]=k==="ab"?["A","B",A,B]:["B","A",B,A],c=MX[0].length,l=MY.length,et2=k==="ab"?1:2,P=X+Y;
+    const resume=F.length>1?"Pas tout à fait : les deux réponses sont fausses.":`Pas tout à fait : la réponse pour ${P} est fausse.`;
+    if(d==="non")return {ok:false,faux:F,resume,diag:{etape:et2,type:"produit non défini lu comme défini",titre:`Où ça part : la condition pour ${P}.`,msg:`${P} n'existe que si ${X} a autant de colonnes que ${Y} a de lignes. Ici ${X} a ${plu(c,"colonne")} et ${Y} a ${plu(l,"ligne")} : ${P} n'est pas défini.`}};
+    if(x==="non")return {ok:false,faux:F,resume,diag:{etape:et2,type:"produit défini lu comme non défini",titre:`Où ça part : la condition pour ${P}.`,msg:`${X} a ${plu(c,"colonne")} et ${Y} a ${plu(l,"ligne")} : c'est le même nombre, donc ${P} existe. On compare les colonnes de la matrice de gauche aux lignes de celle de droite.`}};
+    if(x[0]===d[1]&&x[1]===d[0])return {ok:false,faux:F,resume,diag:{etape:et2,type:"lignes et colonnes inversées",titre:`Où ça part : la taille de ${P}.`,msg:`${P} a autant de lignes que ${X} (${d[0]}) et autant de colonnes que ${Y} (${d[1]}) : c'est ${d[0]} × ${d[1]}. Les lignes s'écrivent toujours en premier.`}};
+    return {ok:false,faux:F,resume,diag:{etape:et2,type:"taille du produit",titre:`Où ça part : la taille de ${P}.`,msg:`${P} garde les lignes de ${X} et les colonnes de ${Y} : ${d[0]} × ${d[1]}. Le nombre commun (${c}) disparaît.`}};}
+  const repFausse={ab:dAB==="non"?`${n} × ${s}`:dAB[0]!==dAB[1]?`${dAB[1]} × ${dAB[0]}`:"non défini",ba:tailleT(dBA)};
+  return {sig:"PT"+JSON.stringify([A,B]),q:`Les produits AB et BA sont-ils définis ? Si oui, donne leur taille.`,corps:`<p>$A =$ ${matH(A)}</p><p>$B =$ ${matH(B)}</p>`,texte:`A = ${JSON.stringify(A)}, B = ${JSON.stringify(B)} ; AB et BA définis ? taille ?`,
+    champs:[{k:"champ",id:"ab",nom:"taille de AB",label:"AB :",ex:"par exemple 2 × 3, ou non défini"},{k:"champ",id:"ba",nom:"taille de BA",label:"BA :",ex:"par exemple 2 × 3, ou non défini"}],
+    juge,etapes:E,bonne:`AB : ${tailleT(dAB)} ; BA : ${tailleT(dBA)}`,bonneTxt:`AB : ${tailleT(dAB)} ; BA : ${tailleT(dBA)}`,repBonne:{ab:tailleT(dAB),ba:tailleT(dBA)},repFausse,nature:dAB==="non"?(dBA==="non"?"aucun":"BA"):dBA==="non"?"AB":"deux",ens:{k:"taille",A,B,ab:dAB,ba:dBA}};}
+function coefProduit(R){for(;;){const n=R.ent(2,3),m=R.ent(2,3),k=R.ent(2,3),A=matAlea(R,n,m,4,.15),B=matAlea(R,m,k,4,.15),i=R.ent(0,n-1),j=R.ent(0,k-1),C=prod(A,B),c=C[i][j];
+  if(Math.abs(c)>25)continue;
+  const Li=A[i],Cj=B.map(l=>l[j]),nom=`(AB)<sub>${i+1}${j+1}</sub>`,alt=[];
+  if(j<n&&i<k&&C[j][i]!==c)alt.push([C[j][i],"ligne et colonne échangées",`Tu as calculé (AB)<sub>${j+1}${i+1}</sub>, avec la ligne ${j+1} de A et la colonne ${i+1} de B. Le premier indice donne la ligne, le second la colonne.`]);
+  if(k===n&&i<m&&j<m){const v=B[i].reduce((s,x,t)=>s+x*A[t][j],0);if(v!==c)alt.push([v,"BA au lieu de AB",`Tu as calculé (BA)<sub>${i+1}${j+1}</sub> : la ligne ${i+1} de B fois la colonne ${j+1} de A. Pour AB, la ligne vient de A et la colonne vient de B.`]);}
+  if(k===m&&j<m){const v=Li.reduce((s,x,t)=>s+x*B[j][t],0);if(v!==c)alt.push([v,"ligne fois ligne",`Tu as multiplié la ligne ${i+1} de A par la ligne ${j+1} de B. Il faut la colonne ${j+1} de B, lue de haut en bas : ${vt(Cj)}.`]);}
+  if(n===m&&i<m){const v=A.reduce((s,l,t)=>s+l[i]*B[t][j],0);if(v!==c)alt.push([v,"colonne fois colonne",`Tu as multiplié la colonne ${i+1} de A par la colonne ${j+1} de B. Il faut la ligne ${i+1} de A, lue de gauche à droite : ${vt(Li)}.`]);}
+  const E=[{w:`On prend la ligne ${i+1} de A, ${vt(Li)}, et la colonne ${j+1} de B, ${vt(Cj)}.`,why:`Le coefficient de la ligne ${i+1} et de la colonne ${j+1} de AB vient de la ligne ${i+1} de A et de la colonne ${j+1} de B. Elles ont autant de termes l'une que l'autre, car A a autant de colonnes que B a de lignes.`,pts:1},
+    {w:`<b>${nom} = ${sommeH(A,B,i,j)} = ${nb(c)}</b>`,why:`Premier terme fois premier terme, deuxième fois deuxième, et ainsi de suite, puis on additionne. Attention aux signes.`,pts:1}];
+  function juge(rep){const x=nombre(rep.c);if(!x)return {incomplet:"Écris un seul nombre, par exemple −4."};if(egal(x,c))return {ok:true};
+    const a=alt.find(v=>egal(x,v[0]));
+    if(a)return {ok:false,faux:["c"],resume:"Pas tout à fait : ce n'est pas ce coefficient.",diag:{etape:0,type:a[1],titre:"Où ça part : la ligne et la colonne choisies.",msg:a[2]}};
+    return {ok:false,faux:["c"],resume:"Pas tout à fait : le calcul est faux.",diag:{etape:1,type:"calcul du coefficient",titre:"Où ça part : les produits et la somme.",msg:`${nom} = ${sommeH(A,B,i,j)} = ${nb(c)}. Refais chaque produit, puis la somme, en surveillant les signes.`}};}
+  return {sig:"PC"+JSON.stringify([A,B,i,j]),q:`Calcule le coefficient ${nom} de la matrice AB : celui de la ligne ${i+1} et de la colonne ${j+1}.`,corps:`<p>$A =$ ${matH(A)}</p><p>$B =$ ${matH(B)}</p>`,texte:`A = ${JSON.stringify(A)}, B = ${JSON.stringify(B)} ; calculer (AB)${i+1}${j+1}`,
+    champs:[{k:"champ",id:"c",nom:"coefficient",label:`${nom} =`,ex:"par exemple −4"}],juge,etapes:E,bonne:`${nom} = ${nb(c)}`,bonneTxt:`(AB)${i+1}${j+1} = ${nb(c)}`,repBonne:{c:nb(c).replace(/−/g,"-")},repFausse:{c:String(c+1)},nature:"coef",ens:{k:"coef",A,B,i,j,c}};}}
+function produitEntier(R){for(;;){const [n,m,k]=R.choix([[2,2,2],[2,3,2],[2,3,2],[3,2,2],[2,2,3],[3,3,3],[3,2,3]]),h=n*m*k>12?2:3,A=matAlea(R,n,m,h,.2),B=matAlea(R,m,k,h,.2),C=prod(A,B);
+  if(C.flat().some(x=>Math.abs(x)>15)||C.flat().filter(x=>x).length<2)continue;
+  const BA=k===n&&m===n?prod(B,A):null,E=lignesProduit(A,B,"AB"),noms=C.map((_,i)=>"l"+(i+1)),ex=`par exemple (${[1,-2,0].slice(0,k).join(", ")})`;
+  E.push({w:`<b>AB = ${matH(C)}</b>`,why:`AB a ${plu(n,"ligne")}, comme A, et ${plu(k,"colonne")}, comme B.`,pts:1});
+  function juge(rep){const X=lignesLues(rep,"l",n,k);if(!X)return {incomplet:`Écris les ${n} lignes de AB, chacune avec ${k} nombres, ${ex}.`};
+    const f=premierFaux(X,C);if(!f)return {ok:true};
+    const F=noms.filter((_,i)=>X[i].some((x,j)=>!egal(x,C[i][j]))),resume=`Pas tout à fait : ${F.length>1?"les lignes":"la ligne"} ${et(F.map(s=>s.slice(1)))} ${F.length>1?"sont fausses":"est fausse"}.`;
+    if(BA&&JSON.stringify(BA)!==JSON.stringify(C)&&egalM(X,BA))return {ok:false,faux:noms,resume,diag:{etape:0,type:"BA au lieu de AB",titre:"Où ça part : l'ordre des matrices.",msg:"Tu as calculé BA : les lignes de B fois les colonnes de A. Pour AB, on prend les lignes de A et les colonnes de B. L'ordre compte : en général AB ≠ BA."}};
+    if(n===k&&egalM(X,C[0].map((_,j)=>C.map(l=>l[j]))))return {ok:false,faux:noms,resume,diag:{etape:E.length-1,type:"lignes et colonnes inversées",titre:"Où ça part : l'écriture du résultat.",msg:"Tes nombres sont justes, mais tu as écrit les colonnes de AB à la place de ses lignes. La ligne i de AB vient de la ligne i de A."}};
+    const [i,j]=f;return {ok:false,faux:F,resume,diag:{etape:i,type:"calcul d'un coefficient",titre:`Où ça part : la ligne ${i+1}.`,msg:`(AB)<sub>${i+1}${j+1}</sub> : ligne ${i+1} de A fois colonne ${j+1} de B, ${sommeH(A,B,i,j)} = ${nb(C[i][j])}.`}};}
+  return {sig:"PE"+JSON.stringify([A,B]),q:`Calcule le produit AB.`,corps:`<p>$A =$ ${matH(A)}</p><p>$B =$ ${matH(B)}</p>`,texte:`A = ${JSON.stringify(A)}, B = ${JSON.stringify(B)} ; calculer AB`,
+    champs:noms.map((s,i)=>({k:"champ",id:s,nom:"ligne "+(i+1),label:`Ligne ${i+1} de AB :`,ex})),juge,etapes:E,bonne:`AB = ${matH(C)}`,bonneTxt:"AB = "+C.map(rangeeT).join(" ; "),
+    repBonne:Object.fromEntries(noms.map((s,i)=>[s,rangeeT(C[i])])),repFausse:Object.fromEntries(noms.map((s,i)=>[s,rangeeT(i?C[i]:C[i].map((x,j)=>j?x:x+1))])),nature:n===m&&m===k?"carree":"rect",ens:{k:"prod",A,B,C}};}}
+function abBa(R){for(;;){const n=R()<0.6?2:3,h=n===2?3:2,z=n===2?.1:.35,A=matAlea(R,n,n,h,z);let B,rel=null;
+  if(R()<0.3){const al=R.choix([1,-1,2]),be=R.choix([-2,-1,1,2]);B=A.map((l,i)=>l.map((x,j)=>al*x+(i===j?be:0)));rel=[al,be];if(B.flat().some(x=>Math.abs(x)>4))continue;}
+  else B=matAlea(R,n,n,h,z);
+  const C=prod(A,B),D=prod(B,A),com=JSON.stringify(C)===JSON.stringify(D);
+  if([...C.flat(),...D.flat()].some(x=>Math.abs(x)>15)||JSON.stringify(A)===JSON.stringify(B))continue;
+  const nA=C.map((_,i)=>"p"+(i+1)),nB=C.map((_,i)=>"q"+(i+1)),ex=`par exemple (${[1,-2,0].slice(0,n).join(", ")})`,iC=2*n+2;
+  let dif=null;if(!com)outer:for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(C[i][j]!==D[i][j]){dif=[i,j];break outer;}
+  const E=[...lignesProduit(A,B,"AB"),{w:`<b>AB = ${matH(C)}</b>`,why:`On range les coefficients ligne par ligne.`,pts:1},...lignesProduit(B,A,"BA"),{w:`<b>BA = ${matH(D)}</b>`,why:`Cette fois, ce sont les lignes de B fois les colonnes de A.`,pts:1},
+    com?{w:`<b>AB = BA</b> : tous les coefficients sont égaux. On dit que A et B commutent.`,why:rel?`Ce n'est pas un hasard : ici B = ${comb([rel[0],rel[1]],["A","I"+(n===2?"₂":"₃")])}, et A commute avec A et avec I. En général, AB ≠ BA : il faut toujours vérifier.`:`C'est rare : en général AB ≠ BA, il faut toujours vérifier.`,pts:1}
+      :{w:`<b>AB ≠ BA</b> : par exemple (AB)<sub>${dif[0]+1}${dif[1]+1}</sub> = ${nb(C[dif[0]][dif[1]])} alors que (BA)<sub>${dif[0]+1}${dif[1]+1}</sub> = ${nb(D[dif[0]][dif[1]])}.`,why:`Un seul coefficient différent suffit. Le produit de matrices n'est pas commutatif : l'ordre des facteurs compte.`,pts:1}];
+  function juge(rep){const X=lignesLues(rep,"p",n,n),Y=lignesLues(rep,"q",n,n);
+    if(!X||!Y)return {incomplet:`Écris les ${n} lignes de AB et les ${n} lignes de BA, chacune avec ${n} nombres, ${ex}.`};
+    if(!rep.com)return {incomplet:"Choisis enfin : AB = BA, ou AB ≠ BA."};
+    const FA=nA.filter((_,i)=>X[i].some((x,j)=>!egal(x,C[i][j]))),FB=nB.filter((_,i)=>Y[i].some((x,j)=>!egal(x,D[i][j]))),okCom=(rep.com==="oui")===com;
+    if(!FA.length&&!FB.length&&okCom)return {ok:true};
+    if(!com&&egalM(X,D)&&egalM(Y,C))return {ok:false,faux:nA.concat(nB),resume:"Pas tout à fait : AB et BA sont échangés.",diag:{etape:0,type:"ordre inversé (AB et BA échangés)",titre:"Où ça part : l'ordre des matrices.",msg:"Tes deux matrices sont justes, mais échangées. AB, ce sont les lignes de A fois les colonnes de B ; BA, les lignes de B fois les colonnes de A."}};
+    if(!FA.length&&!FB.length)return {ok:false,faux:["com"],resume:com?"Non : ici AB = BA.":"Non : AB ≠ BA.",diag:{etape:iC,type:"comparaison de AB et BA",titre:"Où ça part : la comparaison.",msg:com?"Tes deux produits sont justes, et tous leurs coefficients sont égaux : AB = BA.":"Tes deux produits sont justes, et ils ont au moins un coefficient différent : AB ≠ BA."}};
+    const resume=`Pas tout à fait : ${FA.length&&FB.length?"il y a des erreurs dans AB et dans BA":"il y a une erreur dans "+(FA.length?"AB":"BA")}.`;
+    const [P,M,N,G,H,dec]=FA.length?["AB",X,C,A,B,0]:["BA",Y,D,B,A,n+1],[i,j]=premierFaux(M,N);
+    return {ok:false,faux:FA.concat(FB),resume,diag:{etape:dec+i,type:"calcul d'un coefficient",titre:`Où ça part : la ligne ${i+1} de ${P}.`,msg:`(${P})<sub>${i+1}${j+1}</sub> : ligne ${i+1} de ${P[0]} fois colonne ${j+1} de ${P[1]}, ${sommeH(G,H,i,j)} = ${nb(N[i][j])}.`}};}
+  const champs=[...nA.map((s,i)=>({k:"champ",id:s,nom:"ligne "+(i+1)+" de AB",label:`Ligne ${i+1} de AB :`,ex})),...nB.map((s,i)=>({k:"champ",id:s,nom:"ligne "+(i+1)+" de BA",label:`Ligne ${i+1} de BA :`,ex})),{k:"choix",id:"com",titre:"Enfin :",o:[["oui","AB = BA"],["non","AB ≠ BA"]]}];
+  const repBonne=Object.assign(Object.fromEntries(nA.map((s,i)=>[s,rangeeT(C[i])])),Object.fromEntries(nB.map((s,i)=>[s,rangeeT(D[i])])),{com:com?"oui":"non"});
+  const repFausse=com?Object.assign({},repBonne,{com:"non"}):Object.assign(Object.fromEntries(nA.map((s,i)=>[s,rangeeT(D[i])])),Object.fromEntries(nB.map((s,i)=>[s,rangeeT(C[i])])),{com:"non"});
+  return {sig:"AB"+JSON.stringify([A,B]),q:`Calcule AB et BA. Est-ce que AB = BA ?`,corps:`<p>$A =$ ${matH(A)}</p><p>$B =$ ${matH(B)}</p>`,texte:`A = ${JSON.stringify(A)}, B = ${JSON.stringify(B)} ; calculer AB et BA, AB = BA ?`,
+    champs,juge,etapes:E,bonne:`AB = ${matH(C)}, BA = ${matH(D)}, ${com?"AB = BA":"AB ≠ BA"}`,bonneTxt:`AB = ${C.map(rangeeT).join(" ; ")} ; BA = ${D.map(rangeeT).join(" ; ")} ; ${com?"AB = BA":"AB ≠ BA"}`,
+    repBonne,repFausse,nature:com?"commutent":"differents",ens:{k:"deux",A,B,C,D,com}};}}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -19795,7 +19883,13 @@ G.add("lin",[
    {t:"2 × 2, en suivant les opérations données",cc:3,min:180,gen:R=>inverser(inv2(R),{guide:true})},
    {t:"3 × 3, pivots égaux à 1",cc:6,gen:R=>inverser(invUnite(R))},
    {t:"3 × 3, avec un échange de lignes ou un pivot différent de 1",cc:7,gen:R=>inverser(invPiege(R))},
-   {t:"comme au CC2 : inversible ou pas, puis A⁻¹",cc:8,gen:R=>{const r=R();return inverser(r<0.3?invNon(R):r<0.65?invUnite(R):invPiege(R),{choix:true});}}]}
+   {t:"comme au CC2 : inversible ou pas, puis A⁻¹",cc:8,gen:R=>{const r=R();return inverser(r<0.3?invNon(R):r<0.65?invUnite(R):invPiege(R),{choix:true});}}]},
+ {id:"AL9",t:"Produit de matrices",tache:"produit de matrices (taille, coefficient, AB et BA)",th:"matrices",ex:"cc2",pts:2,lecons:["l-matrices"],
+  paliers:[
+   {t:"AB et BA : défini ou pas, et leur taille",cc:1,gen:tailleProduit},
+   {t:"un coefficient de AB",cc:1,gen:coefProduit},
+   {t:"calculer AB en entier",cc:3,gen:produitEntier},
+   {t:"comme au CC2 : AB et BA, puis AB = BA ?",cc:6,gen:abBa}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
