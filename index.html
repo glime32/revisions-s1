@@ -1007,6 +1007,10 @@ details.chapd:not([open])>summary{margin-bottom:0}
 .mat .en-in,.tbl.tr .en-in{width:3.4em;padding:3px 6px;text-align:center}
 .en-cherche{display:grid;gap:14px}
 .pcheck label>span{flex:1;min-width:0}
+.fin-bil{width:100%;display:grid;gap:10px;text-align:left}
+.fin-bil label{display:grid;gap:4px;font-weight:700}
+.fin-bil .en-in,.rp-txt{display:block;width:100%;box-sizing:border-box}
+.rp-txt{resize:vertical;text-align:left;line-height:1.45}
 
 </style>
 <link rel="manifest" href="manifest.webmanifest">
@@ -18731,7 +18735,7 @@ function predicat(src,vars){let s=String(src==null?"":src).replace(/f\s*\(\s*x\s
 const GEN=window.GEN={defs:{},par:{},
   outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine,calcule,predicat},
   /* un tirage : la graine suffit à retrouver l'exercice */
-  tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
+  tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.gr=graine;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
   add(sid,defs){const S=SUBJ[sid];GEN.defs[sid]=(GEN.defs[sid]||[]).concat(defs);
     defs.forEach(d=>{d.sid=sid;GEN.par[d.id]=d;if(!S||!S.tasks||d.fixe)return;/* une récitation a déjà son étape dans le planning de la matière */
       const T=(S.themes||[]).find(x=>x.id===d.th),t={id:"en-"+d.id,t:"Entraînement : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)),min:15,p:1,train:d.id,links:[["#/entrainer/"+sid+"/"+d.id,"S'entraîner"]],why:"Des exercices tirés au hasard, du plus simple au niveau du CC, jusqu'à 3 justes de suite."};
@@ -30610,9 +30614,19 @@ function parts(L,sid){const F=flow(L),m=stepMins(L,sid),st=[0];let cur=0,rest=m.
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
-  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid);LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}}
-  else{LP.last=Date.now();const p=progGet(sid,lid);if(p&&p.ts>(LP.saved||0)&&p.i!==LP.i){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;LP.cp=null;}}
+  if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid),vue=(A.ST[sid].les||{})[lid];LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}else if(vue&&vue.n)LP.rap=1;}
+  else{LP.last=Date.now();const p=progGet(sid,lid);if(p&&p.ts>(LP.saved||0)&&p.i!==LP.i){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;LP.cp=null;LP.rap=0;}}
+  if(LP.rap===1)return rappel(sid,lid);
   drawStep();}
+/* une leçon déjà finie, rouverte depuis le début : 3 minutes pour écrire de mémoire ce qu'il en retient, puis la leçon (choix 30a du 20/11) ;
+   ce qu'il a écrit va dans le journal (événement « mem ») et dans le rapport d'entraînement */
+let RPT=0;
+function rappel(sid,lid){const L=BYL[sid][lid],S=SUBJ[sid],t0=Date.now(),DUR=180e3;clearInterval(RPT);
+  $("#main").className="s-"+sid;
+  $("#main").innerHTML=`<div class="page lp-end s-${sid}"><p class="kick">${S.name} · ${esc(L.t)}</p><h1>De mémoire d'abord</h1><p class="lead">Tu as déjà vu cette leçon. Avant de la rouvrir, écris ce que tu en retiens, sans regarder : définitions, méthodes, pièges. 3 minutes. Chercher dans sa mémoire fait mieux retenir que relire.</p><p class="muted" id="rp-ch">Il reste 3:00</p><textarea class="en-in rp-txt" id="rp-txt" rows="8" maxlength="4000" aria-label="Ce que tu retiens de la leçon, de mémoire" spellcheck="false"></textarea><div class="acts"><button class="btn pri big" id="rp-ok">Ouvrir la leçon</button><button class="btn" id="rp-passe">Passer</button></div></div>`;
+  const ch=$("#rp-ch"),ouvre=()=>{clearInterval(RPT);const txt=$("#rp-txt").value.trim();if(txt)A.emit({k:"mem",s:sid,l:lid,txt,ms:Date.now()-t0});if(LP&&LP.id===lid)LP.rap=2;drawStep();};
+  RPT=setInterval(()=>{if(!ch.isConnected){clearInterval(RPT);return;}const r=Math.max(0,DUR-(Date.now()-t0)),s=Math.ceil(r/1000);ch.textContent=r?`Il reste ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`:"Les 3 minutes sont passées : ouvre la leçon et compare.";if(!r)clearInterval(RPT);},1000);
+  $("#rp-ok").addEventListener("click",ouvre);$("#rp-passe").addEventListener("click",ouvre);$("#rp-txt").focus();}
 function mark(v,s,ch){const first=LP.got[LP.i]==null;
   A.logRep(Object.assign({o:"leçon",s:LP.sid,l:LP.id,ecran:LP.i,genre:s&&s.k,note:v,ok:v>=1?1:0,premiere:first?1:0,ms:Date.now()-(LP.shownT||Date.now())},s?A.repQ(s,ch==null?-2:ch):{}));if(first){LP.got[LP.i]=v;progSave();}if(v<1&&s&&s.c&&SUBJ[LP.sid].BY[s.c])emit({k:"st",s:LP.sid,c:s.c,v:"review"});
   /* une question ratée revient dans « Réviser », le jour même puis les jours suivants */
@@ -30779,9 +30793,10 @@ function finish(){
   const burst=sc>=0.5?`<div class="burst" aria-hidden="true">${[...Array(12)].map((_,i)=>{const a=i/12*Math.PI*2,r=120+(i*37)%60;return `<svg style="--bx:${Math.round(Math.cos(a)*r)}px;--by:${Math.round(Math.sin(a)*r*.7)}px;--dl:${(i%4)*50}ms"><use href="#i-star8"/></svg>`;}).join("")}</div>`:"";
   $("#main").innerHTML=`<div class="page lp-end s-${sid}">${burst}<p class="kick">${S.name}</p><h1>Leçon terminée</h1><p class="lead">${esc(L.t)}</p><p class="score" id="lsc">${Math.round(sc*100)} %</p><p>${msg}${sc<0.5?" Le plan te la reproposera : refais-la demain, à froid.":""}</p>${nc?`<p>${nc} ${plural(nc,"carte")} « À retenir » ${nc>1?"arrivent":"arrive"} dans « Réviser » : tu les reverras demain.</p>`:""}${nm?`<p>${nm} ${plural(nm,"question ratée","questions ratées")} ${nm>1?"t'attendent":"t'attend"} aussi dans « Réviser » : c'est en retrouvant plus tard ce qu'on a raté qu'on le retient.</p>`:""}
    ${nt&&!nt.today?`<p class="allgood">C'est tout ce qui était prévu aujourd'hui. Repose-toi : c'est pendant le repos que ton cerveau range ce que tu viens d'apprendre.</p>`:""}
-   <div class="acts">${nt&&nt.today?`<a class="btn pri big" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:""}<a class="btn${nt&&nt.today?"":" pri"}" href="#/">Retour à aujourd'hui</a>${nt&&!nt.today?`<a class="btn" href="${hrefTask(nt.sid,nt.t)}">Avancer quand même : ${esc(nt.t.t)}</a>`:""}<button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
+   <div id="bil-l"></div><div class="acts">${nt&&nt.today?`<a class="btn pri big" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:""}<a class="btn${nt&&nt.today?"":" pri"}" href="#/">Retour à aujourd'hui</a>${nt&&!nt.today?`<a class="btn" href="${hrefTask(nt.sid,nt.t)}">Avancer quand même : ${esc(nt.t.t)}</a>`:""}<button class="btn" id="redo">Refaire cette leçon</button></div></div>`;
   const el=$("#lsc"),goal=Math.round(sc*100);
   if(el&&!matchMedia("(prefers-reduced-motion: reduce)").matches){const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/700),v=Math.round(goal*(1-Math.pow(1-k,3)));el.textContent=v+" %";if(k<1)requestAnimationFrame(f);};el.textContent="0 %";requestAnimationFrame(f);}
+  A.bilanSeance($("#bil-l"),{o:"leçon",s:sid,l:lid});
   LP=null;$("#redo").addEventListener("click",()=>{progDrop(sid,lid);LP=newLP(sid,lid);drawStep();});badges();}
 
 /* ================= Réviser : les cartes du jour ================= */
@@ -30971,6 +30986,7 @@ function home(){
   const fold=b=>{const S=SUBJ[b.sid],T=b.tasks.map(id=>S.TB[id]).filter(Boolean),left=T.filter(t=>!isDone(b.sid,t)).length;
     return `<details class="day blkfold" style="--sc:${S.color}"><summary><b>${hh(b.start)} – ${hh(b.end)}</b><span class="blk-s">${S.name}</span><span>${left?`${left} ${plural(left,"étape")} à faire`:"fait"} · ${hm(work(b.end-b.start))}</span></summary><div style="padding:0 12px 12px">${blockHTML(b,false)}</div></details>`;};
   let pg=tb.length?`<p class="muted">Placé autour de tes cours. Il se recalcule chaque fois que tu termines quelque chose : ce qui est fait disparaît, ce qui est en retard est replacé.</p>${tb.map(b=>b===openB?blockHTML(b,false):fold(b)).join("")}`:`<p class="muted">${P.blocks.length?"Plus de créneau de révision aujourd'hui. Regarde les jours suivants, ou avance dans « Apprendre ».":"Tout ce qui était prévu est fait."}</p>`;
+  const vc=A.coucheTxt(t0);if(vc)pg=`<p class="muted">${vc}</p>`+pg;
   if(doneToday.length)pg+=dayBox("Fait aujourd'hui",`${doneToday.length} ${plural(doneToday.length,"étape")}`,`<ol class="todo" style="padding:0 12px 12px">${doneToday.map(o=>taskHTML(o.sid,o.t,false)).join("")}</ol>`,doneToday.length<=4);
   const fx=String((Math.round(F*10)/10)).replace(".",","),mes=SIDS.some(id=>measured(id)==="mesuré");
   pg+=`<div class="bilan"><p><b>Ton rythme :</b> une leçon te prend environ <b>${fx} fois</b> le temps que j'avais prévu au départ, ${mes?"mesuré sur tes leçons":"estimé d'après ta première séance (le site le mesure sur tes prochaines leçons)"}. Les durées affichées en tiennent compte.${dt?` Aujourd'hui, tu as déjà travaillé environ <b>${hm(dt)}</b> : c'est retiré de ta journée.`:""}</p>${P.need?`<p>Pour l'essentiel (les leçons et un examen blanc par matière), il faudrait encore environ <b>${hm(P.need)}</b> ; d'ici tes CC, tu as environ <b>${hm(P.have)}</b> de travail possible${P.need>P.have?`. Tout ne tiendra pas : le plan garde, matière par matière, ce qui rapporte le plus de points avant chaque CC ; le reste est dans « Si tu as encore du temps ». Mieux vaut bien comprendre la moitié que survoler le tout.`:"."}</p>`:""}<p class="muted">Pauses comprises : 15 min au milieu de chaque séance de plus d'une heure, 20 min entre deux séances. Rythme et vitesse se règlent dans <a href="#/examens">Examens et rythme</a>.</p></div>`;
@@ -30979,7 +30995,7 @@ function home(){
   h+=tiroir(`Ton programme d'aujourd'hui${tb.length||nbC?" · "+hm(tot+mC)+" de travail":""}`,pg,"prog");
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
   if(days.length)h+=tiroir("Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d),ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
-    return dayBox(dayName(d,true),`${ex.length?`<span class="r">${ex.every(S=>exW(S)==="CC")?"CC":ex.length>1?"Épreuves":exW(ex[0])} : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${hm(L.reduce((a,b)=>a+b.end-b.start,0))}`,`<div style="padding:0 12px 12px;display:grid;gap:12px">${L.map(b=>blockHTML(b,false)).join("")}</div>`);}).join(""));
+    return dayBox(dayName(d,true),`${ex.length?`<span class="r">${ex.every(S=>exW(S)==="CC")?"CC":ex.length>1?"Épreuves":exW(ex[0])} : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${hm(L.reduce((a,b)=>a+b.end-b.start,0))}`,`<div style="padding:0 12px 12px;display:grid;gap:12px">${A.coucheTxt(d)?`<p class="muted" style="margin:0">${A.coucheTxt(d)}</p>`:""}${L.map(b=>blockHTML(b,false)).join("")}</div>`);}).join(""));
   const bon=Object.entries(P.bonus);
   if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes passent après les autres : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
   h+=tiroir("Infos",`<ul class="minis">${sw({href:"#/edt",c:"c-bleu",size:"small",tile:ico("i-cal"),name:"Emploi du temps"})}${sw({href:"#/examens",c:"c-violet",size:"small",name:"Examens et rythme",sub:`Rythme ${{leger:"léger",normal:"normal",intensif:"intensif"}[A.hub.rythme||"normal"]}, vitesse ×${String(Math.round(factor()*10)/10).replace(".",",")}`})}${sw({href:"#/methode",c:"c-bleu",size:"small",name:"Comment réviser"})}${sw({href:"#/synchro",c:"c-violet",size:"small",tile:ico("i-sync"),name:"Synchroniser"})}</ul>`);
@@ -31259,7 +31275,7 @@ function rangee(x){const d=x.d,g=x.g,N=d.paliers.length,pts=points(d),du=echeanc
   else meta=`${g.trav?'<span class="pill rev">à retravailler</span> ':""}${d.fixe?"À refaire sur papier":`Palier ${g.lv+1} sur ${N}`}`;
   if(d.fixe&&!g.val&&!g.n)meta=meta.replace("Pas commencé","À écrire de mémoire, sur papier");
   return `<li class="task"><button class="tick" disabled title="Se coche toute seule quand la méthode est réussie" aria-label="Se coche toute seule"></button><div><div class="tt">${d.t}</div><div class="meta">${meta}${pts?" · "+pts:""}</div></div><a class="btn${pri?" pri":""} go" href="${inclus?"#/entrainer/jour":`#/entrainer/${d.sid}/${d.id}`}">${btn}</a></li>`;}
-const liens=sid=>`<p class="gomore">${sid?`<a href="#/entrainer/examen/une/${sid}">Examen blanc de cette matière</a>`:""}<a href="#/entrainer/rapport">Mon rapport d'entraînement</a></p>`;
+const liens=sid=>`<p class="gomore">${sid?`<a href="#/entrainer/examen/une/${sid}">Examen blanc de cette matière</a>`:""}<a href="#/entrainer/rapport">Mon rapport d'entraînement</a><a href="#/entrainer/erreurs">Mes erreurs</a></p>`;
 function bloc(){const M=matieres();if(!M.length)return "";const J=jour();let h="";
   if(J)h+=`<section class="tiroir"><h2 class="tiroir__title">Entretien du jour</h2><ol class="todo"><li class="task"><button class="tick" disabled aria-label="Se coche toute seule"></button><div><div class="tt">${J.n} ${plur(J.n,"exercice")} ${plur(J.n,"mélangé")}</div><div class="meta">Environ ${J.min} min · ${J.noms.join(", ")}</div></div><a class="btn pri go" href="#/entrainer/jour">Commencer</a></li></ol></section>`;
   h+=xBloc();
@@ -31286,15 +31302,16 @@ function prochain(){const S=P.sess;
     if(x.suite){P.lv=x.g.lv;P.m="p";P.papierExige=P.lv===dernier(x.d)&&x.g.ok>=seuil(x.d)-1&&!x.g.pap&&!x.d.sansPapier;}
     else{P.lv=dernier(x.d);P.m="e";P.papierExige=x.g.np>=2&&!x.g.ek&&!x.d.sansPapier;}}
   else{const d=P.d,g=etat(d.id);P.g=g;
-    if(g.val){P.lv=dernier(d);P.m="x";}
+    if(P.force){P.lv=P.force.lv;P.m="x";}
+    else if(g.val){P.lv=dernier(d);P.m="x";}
     else if(!g.n&&!d.fixe){P.lv=dernier(d);P.m="pl";}
     else{P.lv=g.lv;P.m="p";}
     P.papierExige=P.m==="p"&&P.lv===dernier(d)&&g.ok>=seuil(d)-1&&!g.pap&&!d.sansPapier;}
-  P.exo=tirage(P.d,P.lv,P.g);P.aide=false;P.res=null;P.papier=false;
+  P.re=P.force?P.force.re:null;P.exo=P.force?P.force.e:tirage(P.d,P.lv,P.g);P.force=null;P.aide=false;P.res=null;P.papier=false;
   if(P.exo.papier)P.papierExige=P.papier=true;else if(P.exo.champs.some(c=>c.k==="trous")&&P.exo.corpsPapier==null)P.papierExige=false;else if(P.papierExige)P.papier=true;
   let t0=Date.now();try{const s=JSON.parse(sessionStorage.getItem("rev-s1-exo")||"null");if(s&&s.c===P.exo.cle&&t0-s.t<30*60e3)t0=s.t;else sessionStorage.setItem("rev-s1-exo",JSON.stringify({c:P.exo.cle,t:t0}));}catch(e){}
   P.t0=t0;S.dernierG=P.d.id;dessine();}
-function debut(mode,d,tout){stop();P={mode,d:d||null,sess:{t0:Date.now(),n:0,ok:0,run:A.nouvRun(),avant:{},refaire:null,dernierG:null,faits:[],tout:!!tout}};
+function debut(mode,d,tout,force){stop();P={mode,d:d||null,force:force||null,sess:{t0:Date.now(),n:0,ok:0,run:A.nouvRun(),avant:{},refaire:null,dernierG:null,faits:[],tout:!!tout}};
   if(d)P.sess.avant[d.id]=Object.assign({},etat(d.id));prochain();}
 
 const versFormule=t=>esc(String(t).replace(/\$/g,"")).replace(/\^\(([^()]*)\)/g,"^{$1}").replace(/\^(-?[A-Za-z0-9α-ω]+)/g,"^{$1}").replace(/sqrt|racine|rac/g,"√").replace(/\*/g," × ").replace(/-/g,"−").replace(/&lt;=/g,"≤").replace(/&gt;=/g,"≥").replace(/!=/g,"≠");
@@ -31357,7 +31374,7 @@ function dessine(){
   const cible=P.m==="e"?1:seuil(d),acquis=P.m==="p"?g.ok:0;
   let avant="";
   if(P.m==="pl")avant=`<p class="prekick">Pour commencer · un exercice du niveau ${duCC(S)}</p><p class="muted">S'il est juste, tu passes directement au dernier palier. Si tu ne sais pas le faire, clique sur « Je ne sais pas » : tu commenceras par plus simple.</p>`;
-  else if(P.m==="x")avant=`<p class="prekick">Exercice en plus · il ne change pas tes passages</p>`;
+  else if(P.m==="x")avant=`<p class="prekick">${P.re==="meme"?"Tu refais un exercice raté":P.re?"Un exercice du même genre que celui que tu as raté":"Exercice en plus"} · il ne change pas tes passages</p>`;
   else if(e.papier)avant=`<p class="prekick">Sur papier · de mémoire, puis tu coches ligne par ligne</p>`;
   else if(P.papierExige)avant=`<p class="prekick">Sur papier · ${jr?"ce passage se fait comme "+auCC(S):"pour valider le dernier palier"}</p>`;
   $("#main").className="s-"+d.sid;
@@ -31397,7 +31414,7 @@ function enregistre(r,o){
   const ev={k:"tr",s:d.sid,g:d.id,lv:P.lv,r,m:P.m,ms,sg:e.cle};if(lent)ev.lent=1;if(o.papier)ev.pap=1;if(P.m==="pl"&&r!==1)ev.to=palierDepart(d);if(o.type)ev.ty=o.type;if(r===0&&e.nature&&P.m!=="pl")ev.na=e.nature;
   A.emit(ev);
   if(r!==2&&d.th)A.emit({k:"diag",s:d.sid,th:d.th,ok:Math.round((r===1?(P.lv+1)/N:0.6*P.lv/N)*100)/100,n:1,run:P.sess.run});
-  A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle},o.carnet||{}));
+  A.logRep(Object.assign({o:"entraînement",s:d.sid,g:d.id,methode:d.t,palier:P.lv+1,sur:N,mode:P.re?"refait":{pl:"placement",p:"palier",e:"entretien",x:"en plus"}[P.m],ok:r===1?1:0,aide:r===2?1:0,lent:lent?1:0,ms,tempsCC:cc,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle,gr:e.gr,lv:P.lv},P.re?{refait:1}:{},o.carnet||{}));
   const ap=etat(d.id);
   if(SUBJ[d.sid].TB["en-"+d.id]){if(ap.val&&!av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:true});else if(!ap.val&&av.val)A.emit({k:"task",s:d.sid,x:"en-"+d.id,v:false});}
   P.sess.n++;if(r===1)P.sess.ok++;P.sess.faits.push(d.id);P.sess.refaire=r===0&&P.m==="e"&&ap.val?d.id:null;
@@ -31415,7 +31432,7 @@ function changement(d,av,ap){const N=d.paliers.length;
   if(ap.lv<av.lv)return ` 2 fausses de suite : retour au palier ${ap.lv+1}, ${d.paliers[ap.lv].t}.`;
   return "";}
 function pied(R){const fini=P.mode==="jour"?!entretien(P.sess.tout).length:(R.ap.val&&!R.av.val);
-  $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}<button class="btn pri big" id="en-suiv">${fini?"Terminer":"Exercice suivant"}</button>`;
+  $("#en-pied").innerHTML=`${fini?"":`<button class="btn" id="en-stop">Arrêter là</button>`}${P.re?`<a class="btn" href="#/entrainer/erreurs">Retour à mes erreurs</a>`:""}<button class="btn pri big" id="en-suiv">${fini?"Terminer":"Exercice suivant"}</button>`;
   const s=$("#en-suiv");s.addEventListener("click",()=>fini?fin():prochain());const st=$("#en-stop");if(st)st.addEventListener("click",fin);s.focus();
   const bar=$(".lp-bar i");if(bar){const ap=R.ap,v=P.m==="e"?(ap.passe===A.today()?1:0):P.m==="p"?(ap.val||ap.lv>R.av.lv?1:ap.ok/seuil(P.d)):0;bar.style.width=Math.min(100,v*100)+"%";}}
 function valide(nsp){
@@ -31483,19 +31500,20 @@ function fin(){stop();const S0=P.sess,ids=[...new Set(S0.faits)],jr=P.mode==="jo
     return `<p><b>${d.t}</b> : ${t}</p>`;}).join("");
   const reste=jr?[]:ordre(sid).filter(x=>!x.g.val&&x.d.id!==P.d.id&&moment(x.d)),suiv=reste[0],reussie=!jr&&!!etat(P.d.id).val,rp=jr?reportes():0;
   $("#main").className=sid&&!jr?"s-"+sid:"";
-  $("#main").innerHTML=`<div class="page lp-end${sid&&!jr?" s-"+sid:""}"><p class="kick">${jr?"Entretien du jour":SUBJ[sid].name}</p><h1>Séance terminée</h1>${S0.n?`<p class="lead">${S0.n} ${plur(S0.n,"exercice")}, ${S0.ok} ${plur(S0.ok,"juste")}, en ${duree(Date.now()-S0.t0)}.</p>${lignes}`:`<p class="lead">Aucun exercice fait cette fois.</p>`}${rp?`<p class="muted">Tes ${MAXJOUR} minutes d'entretien sont faites pour aujourd'hui : ${rp} ${plur(rp,"méthode")} ${plur(rp,"attend","attendent")} demain.</p>`:""}
+  $("#main").innerHTML=`<div class="page lp-end${sid&&!jr?" s-"+sid:""}"><p class="kick">${jr?"Entretien du jour":SUBJ[sid].name}</p><h1>Séance terminée</h1>${S0.n?`<p class="lead">${S0.n} ${plur(S0.n,"exercice")}, ${S0.ok} ${plur(S0.ok,"juste")}, en ${duree(Date.now()-S0.t0)}.</p>${lignes}`:`<p class="lead">Aucun exercice fait cette fois.</p>`}${rp?`<p class="muted">Tes ${MAXJOUR} minutes d'entretien sont faites pour aujourd'hui : ${rp} ${plur(rp,"méthode")} ${plur(rp,"attend","attendent")} demain.</p>`:""}${S0.n?`<div id="en-bil"></div>`:""}
    <div class="acts">${jr?`${A.miniDu&&A.miniDu().du?`<a class="btn pri big" href="#/mix">Continuer : les questions rapides des autres thèmes</a><a class="btn" href="#/">Voir le programme du jour</a>`:`<a class="btn pri big" href="#/">Voir le programme du jour</a>`}${rp?`<button class="btn" id="en-tout">Les faire quand même</button>`:""}`:reussie&&suiv?`<a class="btn pri big" href="#/entrainer/${sid}/${suiv.d.id}">Méthode suivante : ${suiv.d.t}</a>`:""}${jr?"":`<a class="btn${reussie&&suiv?"":" pri"}" href="#/">Retour à aujourd'hui</a><button class="btn" id="en-encore">${reussie?"Encore un":"Continuer cette méthode"}</button>`}<a class="btn" href="#/entrainer/rapport">Mon rapport</a></div></div>`;
+  if(S0.n)A.bilanSeance($("#en-bil"),jr?{o:"entretien du jour"}:{o:"entraînement",s:sid,g:P.d.id});
   const en=$("#en-encore"),d0=P.d,et=$("#en-tout");if(en)en.addEventListener("click",()=>debut("g",d0));if(et)et.addEventListener("click",()=>debut("jour",null,true));
   A.renderSide();window.scrollTo(0,0);}
 
 /* ---------- le rapport : tout ce qui a été raté, à copier pour le montrer à un Claude ---------- */
 function rapport(){$("#main").className="";
-  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>Mon rapport d'entraînement</h1></div><p class="lead">Chaque exercice fait à l'entraînement est noté ici : la méthode, le palier, ton temps, ta réponse, et l'étape où ça s'est trompé quand le site l'a trouvée. Le rapport suit la synchronisation entre ton téléphone et ton ordinateur. Le bouton copie tout en texte : colle-le dans une fenêtre Claude pour qu'il travaille tes points faibles.</p><div class="acts"><button class="btn pri" id="en-copie">Copier le rapport</button><span class="muted" id="en-copie-ok"></span></div><div id="en-rap"><p class="muted">Lecture du carnet des réponses…</p></div></div>`;
+  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>Mon rapport d'entraînement</h1></div><p class="lead">Chaque exercice fait à l'entraînement est noté ici : la méthode, le palier, ton temps, ta réponse, et l'étape où ça s'est trompé quand le site l'a trouvée. Le rapport suit la synchronisation entre ton téléphone et ton ordinateur. Le bouton copie tout en texte : colle-le dans une fenêtre Claude pour qu'il travaille tes points faibles.</p><div class="acts"><button class="btn pri" id="en-copie">Copier le rapport</button><a class="btn" href="#/entrainer/erreurs">Mes erreurs</a><span class="muted" id="en-copie-ok"></span></div><div id="en-rap"><p class="muted">Lecture du carnet des réponses…</p></div></div>`;
   A.allReps().then(L=>{const box=$("#en-rap");if(!box)return;
     const vus=new Set(),R=L.filter(r=>r&&r.o==="entraînement"&&r.g&&GEN.par[r.g]&&!vus.has(r.id)&&vus.add(r.id)).sort((a,b)=>a.t-b.t);
-    const C=L.filter(r=>r&&r.o==="entraînement : recherche d'erreur"),XR=xRapport(L);
+    const C=L.filter(r=>r&&r.o==="entraînement : recherche d'erreur"),XR=xRapport(L),BL=bilans();
     let txt=`RAPPORT D'ENTRAÎNEMENT, ${A.dayName(A.today())}\n(site de révision, partie « Entraînement » : exercices tirés au hasard, réponse tapée ou cochée sur papier)\n`,h="";
-    if(!R.length&&!XR.h){box.innerHTML=`<p class="muted">Aucun exercice d'entraînement pour l'instant.</p>`;TXT=txt+"\nAucun exercice fait.";return;}
+    if(!R.length&&!XR.h&&!BL.h){box.innerHTML=`<p class="muted">Aucun exercice d'entraînement pour l'instant.</p>`;TXT=txt+"\nAucun exercice fait.";return;}
     matieres().concat(A.SIDS.filter(s=>!matieres().includes(s))).forEach(sid=>{const Rs=R.filter(r=>r.s===sid);if(!Rs.length)return;const S=SUBJ[sid];
       txt+=`\n=== ${S.name} (${A.exam(S).label} ${A.dayName(A.exam(S).day)}) ===\n`;h+=`<section class="sec"><h2><span>${S.name}</span></h2>`;
       (GEN.defs[sid]||[]).forEach(d=>{const X=Rs.filter(r=>r.g===d.id);if(!X.length)return;const g=etat(d.id),N=d.paliers.length,ok=X.filter(r=>r.ok).length,fx=X.filter(r=>!r.ok&&!r.aide),just=X.filter(r=>r.ok),moy=just.length?just.reduce((s,r)=>s+r.ms,0)/just.length:0,lents=X.filter(r=>r.lent).length;
@@ -31507,11 +31525,47 @@ function rapport(){$("#main").className="";
           txt+=`   * ${r.jour}, palier ${r.palier}/${r.sur}${r.mode==="entretien"?" (entretien)":r.mode==="placement"?" (placement)":""}${r.papier?", sur papier":""}, ${duree(r.ms)} (CC : ${r.tempsCC} min)\n     Énoncé : ${r.enonce}\n     ${r.papier?`Note estimée : ${virg(r.note)} sur ${virg(r.noteSur)}. Lignes non écrites : ${(r.lignesManquantes||[]).join(" | ")||"aucune"}`:`Sa réponse : ${r.reponse}`}\n     Bonne réponse : ${r.bonne}\n${r.etape?`     ${r.etape} ${r.explication||""}\n`:""}${cq&&cq.questions&&cq.questions.length?`     Recherche de l'erreur : ${cq.questions.map(q=>`« ${q.rep} » ${q.ok?"(ligne juste)":"(ligne fausse)"}`).join(", ")}${cq.etape?" → "+cq.etape:""}\n`:""}`;});
         h+=`<details class="ex"><summary><span><span class="sub">${ok} ${plur(ok,"juste")} sur ${X.length}</span><br><span class="h">${d.t}</span></span></summary><div class="body"><p>${ou.charAt(0).toUpperCase()+ou.slice(1)}.${moy?` Temps moyen quand c'est juste : ${duree(moy)}.`:""}${lents?` ${lents} ${plur(lents,"exercice")} trop ${plur(lents,"lent")}.`:""}</p>${tl.length?`<p><b>Tes erreurs :</b> ${tl.map(([k,n])=>`${esc(k)} (${n})`).join(", ")}.</p>`:`<p>Aucune erreur.</p>`}${fx.slice(-5).reverse().map(r=>`<div class="expl no"><b>${r.jour}, palier ${r.palier} sur ${r.sur}${r.papier?", sur papier":""}</b><br>${esc(r.enonce)}<br>${r.papier?`Note estimée : ${virg(r.note)} sur ${virg(r.noteSur)}.`:`Ta réponse : ${esc(r.reponse||"")}`}<br>Bonne réponse : ${esc(r.bonne)}${r.etape?`<br>${esc(r.etape)}`:""}</div>`).join("")}</div></details>`;});
       h+=`</section>`;});
-    TXT=txt+XR.txt;box.innerHTML=h+XR.h;});
+    TXT=txt+XR.txt+BL.txt;box.innerHTML=h+XR.h+BL.h;});
   $("#en-copie").addEventListener("click",async()=>{let ok=false;try{await navigator.clipboard.writeText(TXT);ok=true;}catch(e){}
     if(!ok){const z=document.createElement("textarea");z.value=TXT;document.body.append(z);z.select();try{ok=document.execCommand("copy");}catch(e){}z.remove();}
     $("#en-copie-ok").textContent=ok?"Copié : colle-le dans une fenêtre Claude.":"La copie n'a pas marché.";});}
 let TXT="";
+/* ses bilans de fin de séance (choix 29a du 20/11) et ce qu'il a écrit de mémoire avant de rouvrir une leçon (30a), pris dans le journal */
+function bilans(){const E=A.journal().filter(e=>e.k==="bil"||e.k==="mem").slice(-60).reverse();if(!E.length)return{txt:"",h:""};
+  const quoi=e=>{const S=SUBJ[e.s],T=S&&e.l&&S.TB["L-"+e.l],d=e.g&&GEN.par[e.g];return [e.k==="mem"?null:e.o,S&&S.name,T?T.t:d?d.t:null].filter(Boolean).join(" · ");};
+  const jour=e=>A.dayName(A.ymd(new Date(e.t)),false,true),B=E.filter(e=>e.k==="bil"),M=E.filter(e=>e.k==="mem");let txt="",h="";
+  if(B.length){txt+=`\n=== BILANS DE SÉANCE (ses deux lignes à la fin d'une séance) ===\n`+B.map(e=>`-- ${jour(e)}, ${quoi(e)}\n${e.r?`   Ce que je retiens : ${e.r}\n`:""}${e.c?`   Ce qui a coincé : ${e.c}\n`:""}`).join("");
+    h+=`<section class="sec"><h2><span>Tes bilans de séance</span></h2>${B.map(e=>`<div class="expl"><b>${jour(e)} · ${esc(quoi(e))}</b>${e.r?`<br>Ce que je retiens : ${esc(e.r)}`:""}${e.c?`<br>Ce qui a coincé : ${esc(e.c)}`:""}</div>`).join("")}</section>`;}
+  if(M.length){txt+=`\n=== ÉCRIT DE MÉMOIRE AVANT DE ROUVRIR UNE LEÇON ===\n`+M.map(e=>`-- ${jour(e)}, ${quoi(e)}, en ${duree(e.ms||0)}\n   ${String(e.txt).replace(/\n/g,"\n   ")}\n`).join("");
+    h+=`<section class="sec"><h2><span>Écrit de mémoire avant une leçon</span></h2>${M.map(e=>`<div class="expl"><b>${jour(e)} · ${esc(quoi(e))}</b><br>${esc(e.txt).replace(/\n/g,"<br>")}</div>`).join("")}</section>`;}
+  return{txt,h};}
+
+/* ---------- mes erreurs (choix 32a du 20/11) : les exercices ratés, à l'entraînement et aux examens blancs, l'erreur reconnue, et « Le refaire »
+   qui redonne le même exercice (graine gardée dans le carnet depuis le 20/11 ; avant, retrouvée par le journal), en exercice en plus ---------- */
+const ratee=r=>r&&r.cle&&!r.ok&&!r.aide&&(r.o==="entraînement"||r.o==="examen blanc")&&GEN.par[r.g]&&SUBJ[r.s];
+function erreurs(){stop();$("#main").className="";
+  $("#main").innerHTML=`<div class="page"><a class="back" href="#/entrainer">‹ S'entraîner</a><div class="title-row"><h1>Mes erreurs</h1></div><p class="lead">Les exercices que tu as ratés, à l'entraînement et aux examens blancs, avec l'erreur quand le site l'a reconnue. « Le refaire » te redonne le même exercice : il ne change pas tes passages. Un exercice refait juste descend dans « Déjà refaits juste ».</p><div id="en-err"><p class="muted">Lecture du carnet des réponses…</p></div></div>`;
+  A.allReps().then(L=>{const box=$("#en-err");if(!box)return;
+    const vus=new Set(),R=L.filter(r=>r&&r.id&&!vus.has(r.id)&&vus.add(r.id)).sort((a,b)=>a.t-b.t),C=R.filter(r=>r.o==="entraînement : recherche d'erreur"),juste={},der={};
+    R.forEach(r=>{if(r.ok&&r.cle)juste[r.cle]=r.t;});R.filter(ratee).forEach(r=>{der[r.cle]=r;});
+    const F=Object.values(der).sort((a,b)=>b.t-a.t),refait=r=>juste[r.cle]>r.t;
+    if(!F.length){box.innerHTML=`<p class="muted">Aucun exercice raté pour l'instant.</p>`;return;}
+    const ligne=r=>{const d=GEN.par[r.g],cq=C.filter(c=>c.cle===r.cle).pop(),et=r.etape||(cq&&cq.etape),ok=refait(r);
+      return `<div class="expl${ok?"":" no"}"><b>${A.dayName(A.ymd(new Date(r.t)),false,true)} · ${esc(d.t)} · ${r.o==="examen blanc"?"examen blanc":`palier ${r.palier} sur ${r.sur}`}</b><br>${esc(r.enonce)}<br>${r.papier?`Sur papier, note : ${virg(r.note)} sur ${virg(r.noteSur)}.${(r.lignesManquantes||[]).length?` Lignes non écrites : ${esc(r.lignesManquantes.join(" | "))}`:""}`:`Ta réponse : ${esc(r.reponse||"")}`}<br>Bonne réponse : ${esc(r.bonne)}<br>${et?`L'erreur : ${esc(et)}`:"Le site n'a pas reconnu l'erreur."}${ok?`<br>Refait juste le ${A.dayName(A.ymd(new Date(juste[r.cle])),false,true)}.`:""}<div class="acts"><a class="btn${ok?"":" pri"}" href="#/entrainer/refaire/${encodeURIComponent(r.id)}">Le refaire</a></div></div>`;};
+    let h="";matieres().concat(A.SIDS.filter(s=>!matieres().includes(s))).forEach(sid=>{const K=F.filter(r=>r.s===sid&&!refait(r)),OK=F.filter(r=>r.s===sid&&refait(r));if(!K.length&&!OK.length)return;
+      h+=`<section class="sec"><h2><span>${SUBJ[sid].name}</span></h2>${K.map(ligne).join("")||`<p class="muted">Tout est refait juste.</p>`}${OK.length?`<details class="ex"><summary><span><span class="h">Déjà refaits juste (${OK.length})</span></span></summary><div class="body">${OK.map(ligne).join("")}</div></details>`:""}</section>`;});
+    box.innerHTML=h;});}
+/* le même exercice : par sa graine ; sinon rejoué depuis le journal (le « tr » du même exercice donne le palier et le nombre d'exercices d'avant) */
+function retrouve(r,d){const essai=(lv,gr)=>{try{const e=GEN.tire(d,lv,gr);return e.cle===r.cle?e:null;}catch(x){return null;}},h=s=>parseInt(GEN.outils.hache(s),36);
+  const T=A.journal().filter(x=>x.k==="tr"&&x.g===d.id),i=T.map(x=>x.sg).indexOf(r.cle),ev=i>=0?T[i]:null,lv=r.lv!=null?r.lv:ev?ev.lv:r.palier?r.palier-1:null;
+  if(lv!=null&&d.paliers[lv]&&r.gr!=null){const e=essai(lv,r.gr);if(e)return{e,lv};}
+  const LV=lv!=null&&d.paliers[lv]?[lv]:r.o==="examen blanc"?d.paliers.map((p,k)=>k):[];
+  for(const l of LV)for(let k=0;k<60;k++){const e=r.o==="examen blanc"?essai(l,h(r.xb+"|"+d.id+"|"+k)):i>=0?essai(l,h(d.id+"|"+l+"|"+i+"|"+k)):null;if(e)return{e,lv:l};}
+  return{lv:LV.length===1?lv:etat(d.id).lv};}
+function refaire(id){stop();$("#main").className="";$("#main").innerHTML=`<div class="page"><p class="muted">Lecture du carnet des réponses…</p></div>`;
+  A.allReps().then(L=>{const r=L.find(x=>x&&x.id===id),d=r&&GEN.par[r.g];
+    if(!d||!SUBJ[r.s]||!A.inScope(SUBJ[r.s],d)){location.replace("#/entrainer/erreurs");return;}
+    const x=retrouve(r,d);debut("g",d,false,x.e?{e:x.e,lv:x.lv,re:"meme"}:{e:tirage(d,x.lv,etat(d.id)),lv:x.lv,re:"semblable"});});}
 
 /* ---------- examen blanc : un sujet tiré dans les générateurs, un chrono, la correction seulement à la fin ----------
    La copie en cours est gardée sur l'appareil (localStorage) : une page fermée ou rechargée la retrouve, et le chrono continue.
@@ -31671,7 +31725,7 @@ function xFinir(){const run=A.nouvRun();let note=0,nok=0;
     const dg=j&&j.diag?j.diag:null,ev={k:"tr",s:q.s,g:d.id,lv:q.lv,r:ok,m:"xb",ms:X.tq[k]||0,sg:e.cle};if(r.pap)ev.pap=1;if(!ok){ev.to=palierDepart(d);if(e.nature)ev.na=e.nature;}if(dg&&dg.type)ev.ty=dg.type;
     A.emit(ev);
     if(d.th)A.emit({k:"diag",s:q.s,th:d.th,ok:Math.round((ok?(q.lv+1)/N:0.6*q.lv/N)*100)/100,n:1,run});
-    A.logRep(Object.assign({o:"examen blanc",xb:X.id,n:k+1,s:q.s,g:d.id,methode:d.t,ok,pts:q.pts,obtenu:r.got,ms:X.tq[k]||0,tempsCC:q.min,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle},
+    A.logRep(Object.assign({o:"examen blanc",xb:X.id,n:k+1,s:q.s,g:d.id,methode:d.t,ok,pts:q.pts,obtenu:r.got,ms:X.tq[k]||0,tempsCC:q.min,enonce:e.texte,bonne:e.bonneTxt,cle:e.cle,gr:e.gr,lv:q.lv},
       r.pap?{papier:1,note:r.note,noteSur:r.tot,lignesManquantes:e.etapes.filter((x,i)=>!r.coche[i]).map(x=>A.brut(x.w).slice(0,160))}
        :{reponse:r.vide?"(pas de réponse)":repTexte(e,rep)+(r.inc?" (incomplète)":""),etape:dg?dg.titre:null,erreur:dg?dg.type:null,explication:dg?A.brut(dg.msg):null}));
     if(SUBJ[q.s].TB["en-"+d.id]&&av.val&&!etat(d.id).val)A.emit({k:"task",s:q.s,x:"en-"+d.id,v:false});});
@@ -31738,6 +31792,8 @@ function route(parts){const a=parts[0],b=parts[1];
     $("#main").className="";$("#main").innerHTML=`<div class="page"><a class="back" href="#/">‹ Aujourd'hui</a><div class="title-row"><h1>Entretien du jour</h1></div><p class="lead">${rp?`Tes ${MAXJOUR} minutes d'entretien sont faites pour aujourd'hui. ${rp} ${plur(rp,"méthode")} ${plur(rp,"attend","attendent")} demain.`:pro?`Rien à refaire aujourd'hui. Le prochain passage : ${quand(pro.du)} (${pro.d.t}).`:"Rien à refaire pour l'instant : une méthode entre dans l'entretien quand elle est réussie (3 justes de suite au dernier palier)."}</p><div class="acts"><a class="btn pri" href="#/entrainer">Voir les méthodes</a>${rp?`<button class="btn" id="en-tout">Les faire quand même</button>`:""}</div></div>`;
     const et=$("#en-tout");if(et)et.addEventListener("click",()=>debut("jour",null,true));return;}
   if(a==="rapport")return rapport();
+  if(a==="erreurs")return erreurs();
+  if(a==="refaire"&&b)return refaire(decodeURIComponent(b));
   if(SUBJ[a]&&b&&GEN.par[b]&&GEN.par[b].sid===a&&A.inScope(SUBJ[a],GEN.par[b]))return debut("g",GEN.par[b]);
   if(SUBJ[a]&&defs(a).length)return pageMatiere(a);
   location.replace("#/entrainer");}
@@ -32154,8 +32210,19 @@ const seances=iv=>{const r=[];iv.forEach(([a,b])=>{let t=a;while(b-t>=30){const 
 /* ses créneaux sont remplis en entier, en plus du temps habituel du jour (choix du 17/11) ; le temps habituel va dans les fenêtres WIN, hors de ses créneaux */
 /* un cours qu'il remplace par de la révision (« rev ») est rempli en entier lui aussi, en plus du temps habituel (19/11) : hors de ses créneaux, qui gardent leurs séances */
 const remplaces=day=>coursJour(day).filter(c=>c.skip==="rev").map(c=>[mm(c.start),mm(c.end)]);
+/* la veille d'une épreuve, rien après 22h30 (choix 31a du 20/11) : ses créneaux et les cours remplacés s'arrêtent là eux aussi (les fenêtres WIN finissent déjà à 22h30) */
+const COUCHER=22*60+30,veilleDe=day=>epreuvesDu(addDays(day,1)),couche=(iv,day)=>veilleDe(day).length?decoupe(iv,[[COUCHER,24*60]],0):iv;
+const coucheTxt=day=>{const L=veilleDe(day);return L.length?`Demain : ${L.map(({S,e})=>`${e.label||"CC"} ${W.de(S.name)}`).join(", ")}. Ce soir, rien n'est placé après 22h30 : dors, c'est la nuit qui fixe ce que tu as révisé.`:"";};
 const seancesMiennes=(day,from)=>{const C=creneauxDu(day).map(s=>[s.a,s.b]),tard=L=>L.map(([a,b])=>[Math.max(a,from),b]).filter(([a,b])=>b-a>=30);
-  return seances(horsSans(decoupe(tard(C),busyOf(day)),day)).concat(seances(horsSans(decoupe(tard(remplaces(day)),busyOf(day).concat(C)),day))).sort((x,y)=>x[0]-y[0]);};
+  return seances(couche(horsSans(decoupe(tard(C),busyOf(day)),day),day)).concat(seances(couche(horsSans(decoupe(tard(remplaces(day)),busyOf(day).concat(C)),day),day))).sort((x,y)=>x[0]-y[0]);};
+/* le bilan de fin de séance (choix 29a du 20/11) : deux lignes, gardées dans le journal et montrées dans le rapport d'entraînement */
+function bilanSeance(host,ctx){if(!host)return;
+  host.className="fin-bil";host.innerHTML=`<p><b>Ton bilan, en deux lignes</b> <span class="muted">(gardé dans ton rapport)</span></p><label>Ce que je retiens<input class="en-in" data-b="r" type="text" maxlength="300" autocomplete="off"></label><label>Ce qui a coincé<input class="en-in" data-b="c" type="text" maxlength="300" autocomplete="off"></label><div class="acts"><button class="btn" data-b="ok">Garder dans mon rapport</button><span class="muted" data-b="msg"></span></div>`;
+  const v=k=>host.querySelector(`[data-b="${k}"]`).value.trim(),ok=host.querySelector('[data-b="ok"]');
+  host.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();ok.click();}}));
+  ok.addEventListener("click",()=>{const r=v("r"),c=v("c");if(!r&&!c){host.querySelector('[data-b="msg"]').textContent="Écris au moins une des deux lignes.";return;}
+    emit(Object.assign({k:"bil",r,c},ctx));
+    host.innerHTML=`<p><b>Ton bilan est gardé dans ton rapport.</b></p>${r?`<p>Ce que je retiens : ${W.esc(r)}</p>`:""}${c?`<p>Ce qui a coincé : ${W.esc(c)}</p>`:""}`;});}
 function freeBlocks(day,from,capOv){
   const res=seancesMiennes(day,from);
   let iv=[];WIN.forEach(([a,b])=>{a=Math.max(a,from);if(b-a>=30)iv.push([a,b]);});
@@ -32381,8 +32448,8 @@ function boiteCren(box,o,refresh){
   const id=o.id,c=id?hub.cren[id]:null,jr=d=>JOURS[jourSem(d)];let day=o.day,rep=0,ty=(c&&c.ty)||"",mt=(c&&c.m&&SUBJ[c.m]?c.m:"");
   const a0=c?c.a:hhmm(o.a),b0=c?c.b:hhmm(Math.min(o.a+120,23*60));
   const heures=`<label>de <input type="time" step="900" data-f="a" value="${a0}"></label><label>à <input type="time" step="900" data-f="b" value="${b0}"></label>`;
-  const types=`<div class="filters">${[["","Le site choisit"]].concat(Object.entries(TYN)).map(([v,n])=>`<button class="btn" data-ty="${v}" aria-pressed="${v===ty}">${n}</button>`).join("")}</div>`;
-  const mats=`<div class="filters">${[["","Toutes les matières"]].concat(SIDS.filter(s=>s===mt||examStart(SUBJ[s])>NOW()).map(s=>[s,SUBJ[s].name])).map(([v,n])=>`<button class="btn" data-mt="${v}" aria-pressed="${v===mt}">${n}</button>`).join("")}</div>`;
+  const types=`<p class="crnote"><b>Type</b></p><div class="filters">${[["","Le site choisit"]].concat(Object.entries(TYN)).map(([v,n])=>`<button class="btn" data-ty="${v}" aria-pressed="${v===ty}">${n}</button>`).join("")}</div>`;
+  const mats=`<p class="crnote"><b>Matière</b></p><div class="filters">${[["","Toutes les matières"]].concat(SIDS.filter(s=>s===mt||examStart(SUBJ[s])>NOW()).map(s=>[s,SUBJ[s].name])).map(([v,n])=>`<button class="btn" data-mt="${v}" aria-pressed="${v===mt}">${n}</button>`).join("")}</div>`;
   const lien=ty==="xb"?`<a class="btn pri" href="#/entrainer/examen/une">Commencer l'examen blanc</a>`:ty==="exos"?`<a class="btn" href="#/entrainer">Ouvrir S'entraîner</a>`:ty==="cours"?`<a class="btn" href="#/apprendre">Ouvrir Apprendre</a>`:"";
   box.innerHTML=c?`<div><b>Ton créneau</b>, ${c.w?"chaque "+jr(day):dayName(day,false)}, de ${hh(mm(c.a))} à ${hh(mm(c.b))}.</div>
     <div class="crrow">${heures}<button class="btn" data-cr="heures">Changer les heures</button></div>${c.w?`<p class="crnote muted">Les nouvelles heures valent pour tous les ${jr(day)}s.</p>`:""}
@@ -32898,7 +32965,7 @@ function route(){
   /* pendant le volet, l'adresse a pu changer encore : on affiche la page demandée en dernier */
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
-const APP={$,SUBJ,SIDS,ST,hub,genreTache,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,sujetsDe,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+const APP={$,bilanSeance,coucheTxt,SUBJ,SIDS,ST,hub,genreTache,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cotes,cadreCren,lierCren,lierSeances,sansDu,fantome,boiteCren,LES,lesOf,annOf,sujetsDe,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};noteErr(err,"démarrage");}
 (window.PANNES||[]).forEach(m=>noteErr(m,"chargement"));
 addEventListener("error",e=>{if(e.message)noteErr(e.error||e.message,"page "+location.hash);});
@@ -32934,6 +33001,9 @@ window.addEventListener("hashchange",route);
 route();
 /* hors ligne : seulement dans la version installable (celle qui a un manifeste et un sw.js à côté) */
 if("serviceWorker" in navigator&&document.querySelector('link[rel="manifest"]')&&(location.protocol==="https:"||location.hostname==="localhost")){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}
+/* la copie gardée s'est affichée et la page neuve vient d'arriver en fond (message de sw.js) : une ligne discrète pour recharger (choix 37b du 20/11) */
+if("serviceWorker" in navigator)try{navigator.serviceWorker.addEventListener("message",e=>{const s=$("#syncb");if(!e.data||e.data.k!=="neuve"||$("#neuveb")||!s)return;
+  s.insertAdjacentHTML("afterend",`<a class="syncb" id="neuveb" href="#">Nouvelle version : recharger</a>`);$("#neuveb").addEventListener("click",ev=>{ev.preventDefault();location.reload();});});}catch(e){}
 })();
 
 </script>

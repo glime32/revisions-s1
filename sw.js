@@ -1,9 +1,18 @@
 /* Hors ligne : une copie du site reste sur l'appareil.
    La page est demandée au réseau. Si elle n'est pas arrivée en entier au bout de 5 s (réseau lent, ou qui ne répond plus),
    on sert la copie gardée : jamais de page à moitié chargée ; la page neuve finit d'arriver en fond, pour l'ouverture suivante.
-   Sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan. */
-const CACHE = "revisions-20261120-101720", PAGE = "revisions-page", DELAI = 5000;
+   Sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan.
+   Quand la copie a été servie et que la page neuve, arrivée ensuite, est différente, la page affichée le sait (message « neuve ») :
+   elle propose de recharger. */
+const CACHE = "revisions-20261120-103319", PAGE = "revisions-page", DELAI = 5000;
 const FICHIERS = ["manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf"];
+const prevenir = (e, copie, neuve) => e.waitUntil(neuve.then(async rep => {
+  if (!rep || !rep.ok) return;
+  const a = copie.headers.get("etag"), b = rep.headers.get("etag");
+  if (a && b ? a === b : await copie.text() === await rep.text()) return;
+  const ici = e.resultingClientId && await self.clients.get(e.resultingClientId);
+  (ici ? [ici] : await self.clients.matchAll({ type: "window" })).forEach(c => c.postMessage({ k: "neuve" }));
+}).catch(() => {}));
 const gardePage = async () => {
   const c = await caches.open(PAGE);
   if (await c.match("index.html")) return;
@@ -23,7 +32,7 @@ self.addEventListener("fetch", e => {
     e.waitUntil(neuve.catch(() => {}));
     e.respondWith(page.then(c => c.match("index.html")).then(copie => !copie ? neuve : Promise.race([
       neuve.then(rep => rep && rep.ok ? rep : copie, () => copie),
-      new Promise(ok => setTimeout(() => ok(copie), DELAI))])));
+      new Promise(ok => setTimeout(() => ok(copie), DELAI))]).then(rep => { if (rep === copie) prevenir(e, copie.clone(), neuve); return rep; })));
     return;
   }
   e.respondWith(caches.open(CACHE).then(async c => {
