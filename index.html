@@ -27853,8 +27853,8 @@ G.add("pf",[
 </script>
 <script>
 /* Générateurs d'USI.
-   Un petit bash, un petit find et un petit grep écrits en JavaScript jugent les commandes tapées sur des arborescences tirées au hasard.
-   Les mêmes commandes sont exécutées par le vrai bash, le vrai find et le vrai grep (tools/verif/usi-vrai/vrai-bash.js), et comparées par tools/verif/usi.js. */
+   Un petit bash, un petit find, un petit grep et un petit Python écrits en JavaScript jugent les commandes et les programmes tapés sur des arborescences tirées au hasard.
+   Les mêmes commandes sont exécutées par le vrai bash, find, grep et python3 (tools/verif/usi-vrai/vrai-bash.js), et comparées par tools/verif/usi.js. */
 (function(){
 "use strict";
 const G=window.GEN,O=G.outils;
@@ -29290,6 +29290,1160 @@ function exoScript(R,p){const [,nat,f]=R.choix(S7P[p]),X=f(R);if(!X)return null;
     ens:{lire,nom,ref,alt:X.alt||[],etat,pieges:mut.map(m=>({type:m.type,src:m.src,sortie:m.O[0]})),bash}};}
 const tireScript=p=>R=>{for(;;){const e=exoScript(R,p);if(e)return e;}};
 
+/* ---------- US8 : un petit Python qui joue un programme entier : listes, chaînes, dictionnaires, fichiers, sys.argv, os.listdir, récursion, et les erreurs de Python ---------- */
+class PE{constructor(t,m,l){this.t=t;this.m=m;this.l=l||0;}}
+class NonPris{constructor(m){this.m=m;}}
+const pe=(t,m)=>{throw new PE(t,m);},nonPris=m=>{throw new NonPris(m);};
+class Fl{constructor(v){this.v=v;}}
+class Tu{constructor(a){this.a=a;}}
+class Di{constructor(){this.m=new Map();}}
+class Rg{constructor(a,b,s){this.a=a;this.b=b;this.s=s;}}
+class Vu{constructor(k,d){this.k=k;this.d=d;}}
+class Fn{constructor(def,dv,clo){this.def=def;this.dv=dv;this.clo=clo;}}
+class Bi{constructor(n,f){this.n=n;this.f=f;}}
+class Mo{constructor(n,a,non){this.n=n;this.a=a;this.non=non;}}
+class Ex{constructor(n){this.n=n;}}
+class Fi{constructor(x,mode,nom){this.x=x;this.mode=mode;this.nom=nom;this.pos=0;this.ouvert=true;}}
+class Ma{constructor(m){this.m=m;}}
+const BOUCLE8={boucle:true},SORTIE8={sortie:true},PAS8=40000,PROF8=150;
+const MOTS8=new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield".split(" "));
+
+function lexPy(src){
+  const s=src.replace(/\r\n?/g,"\n")+"\n",T=[],pile=[0];let i=0,l=1,prof=0,debut=true;
+  const err=(t,m)=>{throw new PE(t,m,l);},tok=(t,v,x)=>T.push(Object.assign({t,v,l},x));
+  const chaine=pre=>{const q=s.startsWith(s[i].repeat(3),i)?s[i].repeat(3):s[i],brut=/r/i.test(pre);i+=q.length;let v="";
+    for(;;){if(i>=s.length)err("SyntaxError","unterminated string literal");
+      if(s.startsWith(q,i)){i+=q.length;return v;}
+      const c=s[i];
+      if(c==="\n"){if(q.length===1)err("SyntaxError","unterminated string literal");v+=c;i++;l++;continue;}
+      if(c==="\\"){const d=s[i+1];if(d==="\n"){i+=2;l++;if(brut)v+="\\\n";continue;}
+        if(brut){v+=c+d;i+=2;continue;}
+        const E={n:"\n",t:"\t",r:"\r","\\":"\\","'":"'",'"':'"',"0":"\0",a:"\x07",b:"\b",f:"\f",v:"\v"};
+        if(d in E){v+=E[d];i+=2;}else{v+=c;i++;}continue;}
+      v+=c;i++;}};
+  while(i<s.length){
+    if(debut){let w=0,j=i;while(s[j]===" "||s[j]==="\t"){w=s[j]==="\t"?(w>>3<<3)+8:w+1;j++;}
+      if(s[j]==="\n"||s[j]==="#"){while(s[j]!=="\n")j++;i=j+1;l++;continue;}
+      if(s[j]==="\\"&&s[j+1]==="\n"){i=j+2;l++;continue;}
+      i=j;debut=false;const h=pile[pile.length-1];
+      if(w>h){pile.push(w);tok("indent");}
+      else if(w<h){while(w<pile[pile.length-1]){pile.pop();tok("dedent");}if(w!==pile[pile.length-1])err("IndentationError","unindent does not match any outer indentation level");}
+      continue;}
+    const c=s[i];
+    if(c==="\n"){if(!prof){tok("nl");debut=true;}i++;l++;continue;}
+    if(c===" "||c==="\t"||c==="\f"){i++;continue;}
+    if(c==="#"){while(s[i]!=="\n")i++;continue;}
+    if(c==="\\"&&s[i+1]==="\n"){i+=2;l++;continue;}
+    if(c==="'"||c==='"'){const l0=l;tok("str",chaine(""),{l:l0});continue;}
+    const id=/^[\p{L}_][\p{L}\p{N}_]*/u.exec(s.slice(i,i+80));
+    if(id){const w=id[0];i+=w.length;
+      if((s[i]==="'"||s[i]==='"')&&/^(r|f|b|u|rf|fr|br|rb)$/i.test(w)){const l0=l,v=chaine(w);if(/b/i.test(w))nonPris("Les octets (b\"…\") ne servent pas dans ces exercices : écris une chaîne normale.");tok(/f/i.test(w)?"fstr":"str",v,{l:l0});continue;}
+      tok("name",w);continue;}
+    const n=/^(?:\d[\d_]*(?:\.[\d_]*)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)/.exec(s.slice(i,i+60));
+    if(n){const w=n[0].replace(/_/g,"");i+=n[0].length;if(/^[\p{L}_]/u.test(s[i]||""))err("SyntaxError","invalid decimal literal");
+      if(/^0\d/.test(w)&&!/[.eE]/.test(w)&&+w!==0)err("SyntaxError","leading zeros in decimal integer literals are not permitted");
+      tok("num",/[.eE]/.test(w)?new Fl(parseFloat(w)):parseInt(w,10));continue;}
+    const o=["**=","//=",">>=","<<=","...","**","//","==","!=","<=",">=","+=","-=","*=","/=","%=","&=","|=","^=","->","<<",">>",":="].find(x=>s.startsWith(x,i))||("+-*/%<>=()[]{},:.;@&|^~".includes(c)?c:null);
+    if(!o)err("SyntaxError",c==="!"?"invalid syntax":`invalid character '${c}' (U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4,"0")})`);
+    if("([{".includes(o))prof++;else if(")]}".includes(o)){if(!prof)err("SyntaxError",`unmatched '${o}'`);prof--;}
+    tok("op",o);i+=o.length;}
+  if(prof)err("SyntaxError","'(' was never closed");
+  if(T.length&&T[T.length-1].t!=="nl")tok("nl");
+  while(pile.length>1){pile.pop();tok("dedent");}
+  tok("eof");return T;
+}
+
+function portee8(body,P){const loc=new Set(P.map(x=>x.n)),glob=new Set(),nonloc=new Set();
+  const cib=e=>{if(!e)return;if(e.k==="nom")loc.add(e.n);else if(e.k==="tuple"||e.k==="list")e.L.forEach(cib);else if(e.k==="par")cib(e.e);};
+  const va=S=>{for(const s of S)switch(s.k){
+    case "assign":s.tg.forEach(cib);break;case "aug":cib(s.tg);break;
+    case "for":cib(s.tg);va(s.body);if(s.orelse)va(s.orelse);break;
+    case "while":va(s.body);if(s.orelse)va(s.orelse);break;
+    case "if":s.tests.forEach(x=>va(x[1]));if(s.orelse)va(s.orelse);break;
+    case "with":if(s.as)cib(s.as);va(s.body);break;
+    case "try":va(s.body);s.H.forEach(h=>{if(h.as)loc.add(h.as);va(h.body);});if(s.orelse)va(s.orelse);if(s.fin)va(s.fin);break;
+    case "def":loc.add(s.n);break;
+    case "import":s.N.forEach(([m,a])=>loc.add(a||m.split(".")[0]));break;
+    case "from":s.N.forEach(([n,a])=>loc.add(a||n));break;
+    case "global":s.N.forEach(n=>(s.non?nonloc:glob).add(n));break;
+    case "del":cib(s.tg);break;}};
+  va(body);for(const g of [...glob,...nonloc])loc.delete(g);return {loc,glob,nonloc};}
+
+function parsePy(T,exprSeule){let p=0,nf=0,nb=0;
+  const est=t=>T[p].t===t,op=v=>T[p].t==="op"&&T[p].v===v,kw=v=>T[p].t==="name"&&T[p].v===v,va=()=>T[p++];
+  const synt=m=>{throw new PE("SyntaxError",m||"invalid syntax",T[p].l);};
+  const attend=v=>{if(op(v))return va();if(v===":"&&op("="))synt("invalid syntax. Maybe you meant '==' or ':=' instead of '='?");if(v===":")synt("expected ':'");synt(`'${v}' was expected`);};
+  const nom=()=>{if(!est("name")||MOTS8.has(T[p].v))synt();return va().v;};
+  const AUG=["+=","-=","*=","/=","//=","%=","**="];
+  const verif=e=>{if(e.k==="nom"||e.k==="sub"||e.k==="attr")return;if(e.k==="tuple"||e.k==="list"){e.L.forEach(verif);return;}if(e.k==="par"){verif(e.e);return;}
+    synt(e.k==="call"?"cannot assign to function call here. Maybe you meant '==' instead of '='?":e.k==="cst"?"cannot assign to literal here. Maybe you meant '==' instead of '='?":"cannot assign to expression here. Maybe you meant '==' instead of '='?");};
+  const bloc=quoi=>{if(!est("nl"))return simples();va();
+    if(!est("indent"))throw new PE("IndentationError",`expected an indented block after ${quoi}`,T[p].l);
+    va();const S=[];while(!est("dedent")&&!est("eof"))S.push(...instr());if(est("dedent"))va();return S;};
+  function instr(){const t=T[p];
+    if(t.t==="indent")throw new PE("IndentationError","unexpected indent",t.l);
+    if(t.t==="nl"){va();return [];}
+    if(t.t==="name")switch(t.v){
+      case "if":{va();const c=expr();attend(":");const tests=[[c,bloc(`'if' statement on line ${t.l}`)]];let orelse=null;
+        while(kw("elif")){const l=va().l;const c2=expr();attend(":");tests.push([c2,bloc(`'elif' statement on line ${l}`)]);}
+        if(kw("else")){const l=va().l;attend(":");orelse=bloc(`'else' statement on line ${l}`);}
+        return [{k:"if",tests,orelse,l:t.l}];}
+      case "while":{va();const c=expr();attend(":");nb++;const body=bloc(`'while' statement on line ${t.l}`);nb--;let orelse=null;if(kw("else")){va();attend(":");orelse=bloc("'else' statement");}return [{k:"while",c,body,orelse,l:t.l}];}
+      case "for":{va();const tg=cibles();if(!kw("in"))synt();va();const it=liste();attend(":");nb++;const body=bloc(`'for' statement on line ${t.l}`);nb--;let orelse=null;if(kw("else")){va();attend(":");orelse=bloc("'else' statement");}return [{k:"for",tg,it,body,orelse,l:t.l}];}
+      case "def":{va();const n=nom();attend("(");const P=[];
+        while(!op(")")){if(op("*")||op("**"))nonPris("Les paramètres *args et **kwargs ne servent pas dans ces exercices.");const q={n:nom(),d:null};if(op(":")){va();expr();}if(op("=")){va();q.d=expr();}P.push(q);if(!op(","))break;va();}
+        attend(")");if(op("->")){va();expr();}attend(":");const nb0=nb;nb=0;nf++;const body=bloc(`function definition on line ${t.l}`);nf--;nb=nb0;return [Object.assign({k:"def",n,P,body,l:t.l},portee8(body,P))];}
+      case "with":{va();const e=expr();let as=null;if(kw("as")){va();as={k:"nom",n:nom()};}if(op(","))nonPris("Ouvre un seul fichier par with.");attend(":");return [{k:"with",e,as,body:bloc(`'with' statement on line ${t.l}`),l:t.l}];}
+      case "try":{va();attend(":");const body=bloc(`'try' statement on line ${t.l}`),H=[];
+        while(kw("except")){va();let ty=null,as=null;if(!op(":")){ty=expr();if(kw("as")){va();as=nom();}}attend(":");H.push({ty,as,body:bloc("'except' statement")});}
+        let orelse=null,fin=null;if(kw("else")){va();attend(":");orelse=bloc("'else' statement");}if(kw("finally")){va();attend(":");fin=bloc("'finally' statement");}
+        if(!H.length&&!fin)synt("expected 'except' or 'finally' block");return [{k:"try",body,H,orelse,fin,l:t.l}];}
+      case "class":nonPris("Les classes ne servent pas dans ces exercices : écris des fonctions avec def.");
+      case "elif":case "else":case "except":case "finally":synt();
+    }
+    return simples();}
+  function simples(){const S=[simple()];while(op(";")){va();if(est("nl"))break;S.push(simple());}if(!est("nl")&&!est("eof"))synt();if(est("nl"))va();return S;}
+  function simple(){const t=T[p];
+    if(t.t==="name")switch(t.v){
+      case "pass":va();return {k:"pass",l:t.l};
+      case "break":if(!nb)synt("'break' outside loop");va();return {k:"break",l:t.l};
+      case "continue":if(!nb)synt("'continue' not properly in loop");va();return {k:"continue",l:t.l};
+      case "return":{if(!nf)synt("'return' outside function");va();return {k:"return",e:est("nl")||op(";")||est("eof")?null:liste(),l:t.l};}
+      case "import":{va();const N=[];for(;;){let m=nom();while(op(".")){va();m+="."+nom();}let a=null;if(kw("as")){va();a=nom();}N.push([m,a]);if(!op(","))break;va();}return {k:"import",N,l:t.l};}
+      case "from":{va();let m=nom();while(op(".")){va();m+="."+nom();}if(!kw("import"))synt();va();const N=[];
+        if(op("*")){va();N.push(["*",null]);}else{const par=op("(");if(par)va();for(;;){const n=nom();let a=null;if(kw("as")){va();a=nom();}N.push([n,a]);if(!op(","))break;va();if(par&&op(")"))break;}if(par)attend(")");}
+        return {k:"from",m,N,l:t.l};}
+      case "global":case "nonlocal":{va();const N=[nom()];while(op(",")){va();N.push(nom());}return {k:"global",N,non:t.v==="nonlocal",l:t.l};}
+      case "del":{va();const tg=liste();verif(tg);return {k:"del",tg,l:t.l};}
+      case "raise":{va();return {k:"raise",e:est("nl")?null:expr(),l:t.l};}
+      case "assert":{va();const e=expr();let m=null;if(op(",")){va();m=expr();}return {k:"assert",e,m,l:t.l};}
+    }
+    const e=liste();
+    if(e.k==="nom"&&e.n==="print"&&!est("nl")&&!est("eof")&&!op("=")&&!op(";")&&!AUG.some(op))synt("Missing parentheses in call to 'print'. Did you mean print(...)?");
+    if(op("=")){const tg=[e];let v;for(;;){va();v=liste();if(op("="))tg.push(v);else break;}tg.forEach(verif);return {k:"assign",tg,e:v,l:t.l};}
+    const a=AUG.find(op);
+    if(a){va();if(e.k==="tuple"||e.k==="list")synt(`'${e.k}' is an illegal expression for augmented assignment`);verif(e);return {k:"aug",tg:e,o:a.slice(0,-1),e:liste(),l:t.l};}
+    if(op(":="))nonPris("L'opérateur := ne sert pas dans ces exercices : écris l'affectation sur sa propre ligne.");
+    return {k:"expr",e,l:t.l};}
+  function liste(){const e=expr();if(!op(","))return e;const L=[e];while(op(",")){va();if(est("nl")||est("eof")||op("=")||op(")")||op(":")||op(";")||AUG.some(op))break;L.push(expr());}return {k:"tuple",L};}
+  function cibles(){const L=[ou_(true)];while(op(",")){va();if(kw("in"))break;L.push(ou_(true));}const e=L.length===1?L[0]:{k:"tuple",L};verif(e);return e;}
+  function expr(){
+    if(kw("lambda")){va();const P=[];while(!op(":")){P.push({n:nom(),d:null});if(op(","))va();}va();return {k:"lambda",P,b:expr()};}
+    const e=ou_();if(kw("if")){va();const c=ou_();if(!kw("else"))synt("expected 'else' after 'if' expression");va();return {k:"ifexp",c,a:e,b:expr()};}return e;}
+  function ou_(cible){if(cible)return bin(0);let e=et_();while(kw("or")){va();e={k:"or",a:e,b:et_()};}return e;}
+  function et_(){let e=non_();while(kw("and")){va();e={k:"and",a:e,b:non_()};}return e;}
+  function non_(){if(kw("not")){va();return {k:"not",a:non_()};}return comp();}
+  function comp(){const E=[bin(0)],O=[];for(;;){let o=null;
+      if(["<",">","==","!=","<=",">="].some(op))o=va().v;
+      else if(kw("in")){va();o="in";}
+      else if(kw("not")&&T[p+1].t==="name"&&T[p+1].v==="in"){p+=2;o="not in";}
+      else if(kw("is")){va();o="is";if(kw("not")){va();o="is not";}}
+      else break;
+      O.push(o);E.push(bin(0));}
+    return O.length?{k:"cmp",O,E}:E[0];}
+  const NIV=[["|"],["^"],["&"],["<<",">>"],["+","-"],["*","/","//","%","@"]];
+  function bin(n){if(n===NIV.length)return unaire();let e=bin(n+1);while(NIV[n].some(op)){const o=va().v;e={k:"bin",o,a:e,b:bin(n+1)};}return e;}
+  function unaire(){if(op("-")||op("+")||op("~")){const o=va().v;return {k:"un",o,a:unaire()};}return puiss();}
+  function puiss(){const a=postfixe();if(op("**")){va();return {k:"bin",o:"**",a,b:unaire()};}return a;}
+  function postfixe(){let e=atome();for(;;){
+      if(op("(")){const l=va().l,A=[],K=[];
+        while(!op(")")){
+          if(op("**"))nonPris("**kwargs ne sert pas dans ces exercices.");
+          if(op("*")){va();A.push({k:"etoile",e:expr()});}
+          else if(est("name")&&T[p+1].t==="op"&&T[p+1].v==="="){const n=va().v;va();K.push([n,expr()]);}
+          else{const x=expr();A.push(kw("for")?compr("list",x,null):x);}
+          if(!op(","))break;va();}
+        attend(")");e={k:"call",f:e,A,K,l};}
+      else if(op("[")){va();const i=indice();attend("]");e={k:"sub",o:e,i};}
+      else if(op(".")){va();e={k:"attr",o:e,n:nom()};}
+      else return e;}}
+  function indice(){const part=()=>op(":")||op("]")?null:expr();const a=part();
+    if(!op(":")){if(a===null)synt();if(op(",")){const L=[a];while(op(",")){va();if(op("]"))break;L.push(expr());}return {k:"tuple",L};}return a;}
+    va();const b=part();let c=null;if(op(":")){va();c=part();}return {k:"slice",a,b,c};}
+  function fstring(u){const s=u.v,P=[];let i=0,lit="";
+    while(i<s.length){const c=s[i];
+      if(c==="{"&&s[i+1]==="{"){lit+="{";i+=2;continue;}
+      if(c==="}"&&s[i+1]==="}"){lit+="}";i+=2;continue;}
+      if(c==="}")throw new PE("SyntaxError","f-string: single '}' is not allowed",u.l);
+      if(c!=="{"){lit+=c;i++;continue;}
+      if(lit)P.push({k:"cst",v:lit});lit="";
+      let j=i+1,d=0,q=null;
+      for(;j<s.length;j++){const x=s[j];if(q){if(x===q)q=null;continue;}if(x==="'"||x==='"')q=x;else if("([{".includes(x))d++;else if(")]}".includes(x)){if(x==="}"&&!d)break;d--;}else if((x===":"||x==="!"&&s[j+1]!=="=")&&!d)break;}
+      const src=s.slice(i+1,j);let conv=null,spec="";
+      if(s[j]==="!"){conv=s[j+1];j+=2;}
+      if(s[j]===":"){const k=s.indexOf("}",j);if(k<0)throw new PE("SyntaxError","f-string: expecting '}'",u.l);spec=s.slice(j+1,k);j=k;}
+      if(s[j]!=="}")throw new PE("SyntaxError","f-string: expecting '}'",u.l);
+      if(!src.trim())throw new PE("SyntaxError","f-string: valid expression required before '}'",u.l);
+      let e;try{e=parsePy(lexPy("("+src+")"),true);}catch(x){if(x instanceof PE)x.l=u.l;throw x;}
+      P.push({k:"fmt",e,conv,spec});i=j+1;}
+    if(lit)P.push({k:"cst",v:lit});return {k:"concat",P};}
+  function compr(kind,a,b){const G=[];while(kw("for")){va();const tg=cibles();if(!kw("in"))synt();va();const it=ou_(),C=[];while(kw("if")){va();C.push(ou_());}G.push({tg,it,C});}return {k:"compr",kind,a,b,G};}
+  function atome(){const t=T[p];
+    if(t.t==="num"){va();return {k:"cst",v:t.v};}
+    if(t.t==="str"||t.t==="fstr"){const P=[];while(est("str")||est("fstr")){const u=va();P.push(u.t==="str"?{k:"cst",v:u.v}:fstring(u));}return P.length===1?P[0]:{k:"concat",P};}
+    if(t.t==="name"){va();if(t.v==="True")return {k:"cst",v:true};if(t.v==="False")return {k:"cst",v:false};if(t.v==="None")return {k:"cst",v:null};
+      if(MOTS8.has(t.v)){p--;synt();}return {k:"nom",n:t.v,l:t.l};}
+    if(op("(")){va();if(op(")")){va();return {k:"tuple",L:[]};}const e=expr();
+      if(kw("for")){const g=compr("list",e,null);attend(")");return g;}
+      if(op(",")){const L=[e];while(op(",")){va();if(op(")"))break;L.push(expr());}attend(")");return {k:"tuple",L};}
+      attend(")");return {k:"par",e};}
+    if(op("[")){va();if(op("]")){va();return {k:"list",L:[]};}const e=expr();
+      if(kw("for")){const g=compr("list",e,null);attend("]");return g;}
+      const L=[e];while(op(",")){va();if(op("]"))break;L.push(expr());}attend("]");return {k:"list",L};}
+    if(op("{")){va();if(op("}")){va();return {k:"dict",P:[]};}const a=expr();
+      if(op(":")){va();const b=expr();if(kw("for")){const g=compr("dict",a,b);attend("}");return g;}
+        const P=[[a,b]];while(op(",")){va();if(op("}"))break;const k=expr();attend(":");P.push([k,expr()]);}attend("}");return {k:"dict",P};}
+      nonPris("Les ensembles (set, entre accolades) ne servent pas dans ces exercices : utilise une liste ou un dictionnaire.");}
+    if(t.t==="indent")throw new PE("IndentationError","unexpected indent",t.l);
+    synt();}
+  if(exprSeule){const e=expr();if(!est("nl")&&!est("eof"))synt();return e;}
+  const S=[];while(!est("eof"))S.push(...instr());return S;
+}
+
+const estInt8=v=>typeof v==="number"||typeof v==="boolean",estNum8=v=>estInt8(v)||v instanceof Fl,nv8=v=>v instanceof Fl?v.v:+v;
+function tn8(v){if(v===null)return "NoneType";if(typeof v==="boolean")return "bool";if(typeof v==="number")return "int";if(typeof v==="string")return "str";if(Array.isArray(v))return "list";
+  if(v instanceof Fl)return "float";if(v instanceof Tu)return "tuple";if(v instanceof Di)return "dict";if(v instanceof Rg)return "range";if(v instanceof Vu)return "dict_"+v.k;
+  if(v instanceof Fn)return "function";if(v instanceof Bi)return "builtin_function_or_method";if(v instanceof Mo)return "module";if(v instanceof Fi)return "_io.TextIOWrapper";if(v instanceof Ma)return "re.Match";if(v instanceof Ex)return "type";
+  if(v&&v.exc)return v.exc;return "object";}
+function frepr8(x){if(x===Infinity)return "inf";if(x===-Infinity)return "-inf";if(Number.isNaN(x))return "nan";
+  if(Object.is(x,-0))return "-0.0";const a=Math.abs(x);
+  if(a!==0&&(a<1e-4||a>=1e16)){const [m,e]=x.toExponential().split("e"),n=+e;return m+"e"+(n<0?"-":"+")+String(Math.abs(n)).padStart(2,"0");}
+  const s=String(x);return /[.e]/.test(s)?s:s+".0";}
+function srepr8(s){const q=s.includes("'")&&!s.includes('"')?'"':"'";let r=q;
+  for(const c of s){const k=c.codePointAt(0);
+    if(c==="\\")r+="\\\\";else if(c===q)r+="\\"+q;else if(c==="\n")r+="\\n";else if(c==="\t")r+="\\t";else if(c==="\r")r+="\\r";
+    else if(k<32||k===127)r+="\\x"+k.toString(16).padStart(2,"0");else r+=c;}
+  return r+q;}
+function repr8(v,vus){if(v===null)return "None";if(v===true)return "True";if(v===false)return "False";if(typeof v==="number")return String(v);if(typeof v==="string")return srepr8(v);
+  if(v instanceof Fl)return frepr8(v.v);vus=vus||new Set();
+  if(Array.isArray(v)){if(vus.has(v))return "[...]";vus.add(v);const r="["+v.map(x=>repr8(x,vus)).join(", ")+"]";vus.delete(v);return r;}
+  if(v instanceof Tu)return "("+v.a.map(x=>repr8(x,vus)).join(", ")+(v.a.length===1?",":"")+")";
+  if(v instanceof Di){if(vus.has(v))return "{...}";vus.add(v);const r="{"+[...v.m.values()].map(([k,x])=>repr8(k,vus)+": "+repr8(x,vus)).join(", ")+"}";vus.delete(v);return r;}
+  if(v instanceof Rg)return `range(${v.a}, ${v.b}${v.s!==1?", "+v.s:""})`;
+  if(v instanceof Vu)return `dict_${v.k}(${repr8(vuListe8(v),vus)})`;
+  if(v instanceof Fn)return `<function ${v.def.n}>`;if(v instanceof Bi)return `<built-in function ${v.n}>`;if(v instanceof Mo)return `<module '${v.n}'>`;
+  if(v instanceof Ex)return `<class '${v.n}'>`;if(v instanceof Fi)return `<_io.TextIOWrapper name='${v.nom}' mode='${v.mode}' encoding='UTF-8'>`;
+  if(v instanceof Ma)return `<re.Match object; span=(${v.m.index}, ${v.m.index+v.m[0].length}), match=${srepr8(v.m[0])}>`;
+  if(v&&v.exc)return `${v.exc}(${v.m===""?"":srepr8(v.m)})`;return "<object>";}
+const str8=v=>typeof v==="string"?v:v&&v.exc?v.m:repr8(v);
+const vrai8=v=>{if(v===null||v===false)return false;if(v===true)return true;if(typeof v==="number")return v!==0;if(typeof v==="string"||Array.isArray(v))return v.length>0;
+  if(v instanceof Fl)return v.v!==0;if(v instanceof Tu)return v.a.length>0;if(v instanceof Di)return v.m.size>0;if(v instanceof Rg)return lenRg8(v)>0;if(v instanceof Vu)return v.d.m.size>0;return true;};
+const lenRg8=r=>Math.max(0,Math.ceil((r.b-r.a)/r.s));
+function dk8(k){if(estNum8(k)){const v=nv8(k);return Number.isInteger(v)?"n"+v:"f"+v;}if(typeof k==="string")return "s"+k;if(k===null)return "N";
+  if(k instanceof Tu)return "t"+k.a.map(dk8).join("\u0001");if(k instanceof Fn||k instanceof Bi||k instanceof Mo)return "o"+tn8(k);
+  pe("TypeError",`unhashable type: '${tn8(k)}'`);}
+const dset8=(d,k,v)=>{const c=dk8(k),x=d.m.get(c);if(x)x[1]=v;else d.m.set(c,[k,v]);};
+const dget8=(d,k)=>{const x=d.m.get(dk8(k));if(!x)pe("KeyError",repr8(k));return x[1];};
+const dhas8=(d,k)=>d.m.has(dk8(k));
+const vuListe8=v=>[...v.d.m.values()].map(([k,x])=>v.k==="keys"?k:v.k==="values"?x:new Tu([k,x]));
+function eq8(a,b){if(a===b)return true;if(estNum8(a)&&estNum8(b))return nv8(a)===nv8(b);if(typeof a==="string"||typeof b==="string")return false;
+  if(Array.isArray(a)&&Array.isArray(b))return a.length===b.length&&a.every((x,i)=>eq8(x,b[i]));
+  if(a instanceof Tu&&b instanceof Tu)return a.a.length===b.a.length&&a.a.every((x,i)=>eq8(x,b.a[i]));
+  if(a instanceof Di&&b instanceof Di){if(a.m.size!==b.m.size)return false;for(const [c,[,x]] of a.m){const y=b.m.get(c);if(!y||!eq8(x,y[1]))return false;}return true;}
+  if(a instanceof Rg&&b instanceof Rg)return eq8([...iter8(a)],[...iter8(b)]);
+  if(a instanceof Ex&&b instanceof Ex)return a.n===b.n;return false;}
+function ordre8(o,a,b){
+  if(estNum8(a)&&estNum8(b)){const x=nv8(a),y=nv8(b);return x<y?-1:x>y?1:0;}
+  if(typeof a==="string"&&typeof b==="string")return a<b?-1:a>b?1:0;
+  const L=x=>Array.isArray(x)?x:x instanceof Tu?x.a:null,A=L(a),B=L(b);
+  if(A&&B&&Array.isArray(a)===Array.isArray(b)){for(let k=0;k<Math.min(A.length,B.length);k++)if(!eq8(A[k],B[k]))return ordre8(o,A[k],B[k]);return A.length-B.length;}
+  pe("TypeError",`'${o}' not supported between instances of '${tn8(a)}' and '${tn8(b)}'`);}
+function dans8(x,c){
+  if(typeof c==="string"){if(typeof x!=="string")pe("TypeError",`'in <string>' requires string as left operand, not ${tn8(x)}`);return c.includes(x);}
+  if(Array.isArray(c))return c.some(y=>eq8(x,y));if(c instanceof Tu)return c.a.some(y=>eq8(x,y));
+  if(c instanceof Di){dk8(x);return dhas8(c,x);}if(c instanceof Vu){if(c.k==="keys")return dhas8(c.d,x);return vuListe8(c).some(y=>eq8(x,y));}
+  if(c instanceof Rg)return estNum8(x)&&Number.isInteger(nv8(x))&&[...iter8(c)].includes(nv8(x));
+  if(c instanceof Fi)return [...iter8(c)].some(y=>eq8(x,y));
+  pe("TypeError",`argument of type '${tn8(c)}' is not iterable`);}
+function cmp8(o,a,b){switch(o){case "==":return eq8(a,b);case "!=":return !eq8(a,b);case "in":return dans8(a,b);case "not in":return !dans8(a,b);
+  case "is":return a===b;case "is not":return a!==b;
+  case "<":return ordre8(o,a,b)<0;case ">":return ordre8(o,a,b)>0;case "<=":return ordre8(o,a,b)<=0;case ">=":return ordre8(o,a,b)>=0;}}
+function* iter8(v){
+  if(Array.isArray(v)){for(let k=0;k<v.length;k++)yield v[k];return;}
+  if(typeof v==="string"){yield* v;return;}
+  if(v instanceof Tu){yield* v.a;return;}
+  if(v instanceof Di){const L=[...v.m.values()].map(x=>x[0]),n=v.m.size;for(const k of L){yield k;if(v.m.size!==n)pe("RuntimeError","dictionary changed size during iteration");}return;}
+  if(v instanceof Rg){for(let k=v.a;v.s>0?k<v.b:k>v.b;k+=v.s)yield k;return;}
+  if(v instanceof Vu){yield* vuListe8(v);return;}
+  if(v instanceof Fi){let l;while((l=ligneFi8(v))!=="")yield l;return;}
+  pe("TypeError",`'${tn8(v)}' object is not iterable`);}
+const tout8=v=>[...iter8(v)];
+function binop8(o,a,b){
+  if(estNum8(a)&&estNum8(b)){const F=a instanceof Fl||b instanceof Fl,x=nv8(a),y=nv8(b),r=v=>F?new Fl(v):v;
+    switch(o){
+      case "+":return r(x+y);case "-":return r(x-y);case "*":return r(x*y);
+      case "/":if(y===0)pe("ZeroDivisionError","division by zero");return new Fl(x/y);
+      case "//":if(y===0)pe("ZeroDivisionError",F?"float floor division by zero":"integer division or modulo by zero");return r(Math.floor(x/y));
+      case "%":if(y===0)pe("ZeroDivisionError",F?"float modulo by zero":"integer modulo by zero");{const m=x-Math.floor(x/y)*y;return r(m);}
+      case "**":if(!F&&y<0)return new Fl(Math.pow(x,y));return r(Math.pow(x,y));
+      case "&":case "|":case "^":case "<<":case ">>":if(F)break;return o==="&"?x&y:o==="|"?x|y:o==="^"?x^y:o==="<<"?x<<y:x>>y;}}
+  if(o==="+"){
+    if(typeof a==="string"&&typeof b==="string")return a+b;
+    if(Array.isArray(a)&&Array.isArray(b))return a.concat(b);
+    if(a instanceof Tu&&b instanceof Tu)return new Tu(a.a.concat(b.a));
+    if(typeof a==="string")pe("TypeError",`can only concatenate str (not "${tn8(b)}") to str`);
+    if(Array.isArray(a))pe("TypeError",`can only concatenate list (not "${tn8(b)}") to list`);}
+  if(o==="*"){const [s,n]=estInt8(b)&&!(typeof a==="number")?[a,+b]:estInt8(a)?[b,+a]:[null,0];
+    if(typeof s==="string")return n>0?s.repeat(n):"";
+    if(Array.isArray(s)){let q=[];for(let k=0;k<n;k++)q=q.concat(s);return q;}
+    if(s instanceof Tu){let q=[];for(let k=0;k<n;k++)q=q.concat(s.a);return new Tu(q);}
+    if(typeof s==="string"||Array.isArray(s))pe("TypeError",`can't multiply sequence by non-int of type '${tn8(a===s?b:a)}'`);}
+  if(o==="*"&&(typeof a==="string"||Array.isArray(a))&&!estInt8(b))pe("TypeError",`can't multiply sequence by non-int of type '${tn8(b)}'`);
+  if(o==="%"&&typeof a==="string")return pourcent8(a,b);
+  pe("TypeError",`unsupported operand type(s) for ${o}: '${tn8(a)}' and '${tn8(b)}'`);}
+function spec8(v,spec){if(!spec)return str8(v);
+  const m=/^(?:(.)?([<>^=]))?([+ -])?(0)?(\d+)?([,_])?(?:\.(\d+))?([bcdeEfFgGnosxX%])?$/.exec(spec);
+  if(!m)pe("ValueError",`Invalid format specifier '${spec}' for object of type '${tn8(v)}'`);
+  let [,fill,align,signe,zero,larg,,prec,type]=m;let s;
+  const num=estNum8(v);
+  if(type==="f"||type==="F"||type==="%"){if(!num)pe("ValueError",`Unknown format code '${type}' for object of type '${tn8(v)}'`);const x=nv8(v)*(type==="%"?100:1);s=x.toFixed(prec===undefined?6:+prec)+(type==="%"?"%":"");}
+  else if(type==="d"){if(!estInt8(v))pe("ValueError",`Unknown format code 'd' for object of type '${tn8(v)}'`);s=String(+v);}
+  else if(type==="s"||type===undefined&&!num){if(num&&type==="s")pe("ValueError",`Unknown format code 's' for object of type '${tn8(v)}'`);s=str8(v);if(prec!==undefined)s=s.slice(0,+prec);}
+  else if(type===undefined){s=prec!==undefined&&v instanceof Fl?String(Number(nv8(v).toPrecision(+prec))):str8(v);}
+  else nonPris(`Le format :${spec} ne sert pas dans ces exercices : écris str(x) ou f"{x}".`);
+  if(signe==="+"&&num&&nv8(v)>=0)s="+"+s;
+  const w=larg?+larg:0;if(s.length>=w)return s;
+  if(zero&&!align){fill="0";align="=";}
+  fill=fill||" ";align=align||(num?">":"<");const pad=fill.repeat(w-s.length);
+  if(align==="<")return s+pad;if(align===">")return pad+s;if(align==="=")return /^[+-]/.test(s)?s[0]+pad+s.slice(1):pad+s;
+  const g=Math.floor((w-s.length)/2);return fill.repeat(g)+s+fill.repeat(w-s.length-g);}
+function pourcent8(f,b){const A=b instanceof Tu?b.a.slice():[b];let k=0;
+  const r=f.replace(/%(\.\d+)?([sdifr%])/g,(t,p,c)=>{if(c==="%")return "%";if(k>=A.length)pe("TypeError","not enough arguments for format string");const v=A[k++];
+    if(c==="s")return str8(v);if(c==="r")return repr8(v);if(!estNum8(v))pe("TypeError",`%${c} format: a real number is required, not ${tn8(v)}`);
+    if(c==="f")return nv8(v).toFixed(p?+p.slice(1):6);return String(Math.trunc(nv8(v)));});
+  if(k<A.length)pe("TypeError","not all arguments converted during string formatting");return r;}
+function indice8(n,i,quoi){if(!estInt8(i))pe("TypeError",`${quoi} indices must be integers or slices, not ${tn8(i)}`);let k=+i;if(k<0)k+=n;return k;}
+function getItem8(o,i){
+  if(Array.isArray(o)||typeof o==="string"||o instanceof Tu){const L=o instanceof Tu?o.a:o,q=tn8(o),k=indice8(L.length,i,q==="str"?"string":q);
+    if(k<0||k>=L.length)pe("IndexError",`${q==="str"?"string":q} index out of range`);return L[k];}
+  if(o instanceof Di)return dget8(o,i);
+  if(o instanceof Rg){const L=tout8(o),k=indice8(L.length,i,"range");if(k<0||k>=L.length)pe("IndexError","range object index out of range");return L[k];}
+  if(o instanceof Ma){const g=o.m[+i];return g===undefined?null:g;}
+  pe("TypeError",`'${tn8(o)}' object is not subscriptable`);}
+function setItem8(o,i,v){
+  if(Array.isArray(o)){const k=indice8(o.length,i,"list");if(k<0||k>=o.length)pe("IndexError","list assignment index out of range");o[k]=v;return;}
+  if(o instanceof Di){dset8(o,i,v);return;}
+  pe("TypeError",`'${tn8(o)}' object does not support item assignment`);}
+function bornes8(n,a,b,s){s=s===null?1:s;for(const x of [a,b,s])if(x!==null&&!estInt8(x))pe("TypeError","slice indices must be integers or None or have an __index__ method");
+  s=+s;if(s===0)pe("ValueError","slice step cannot be zero");
+  const fix=(x,def)=>{if(x===null)return def;x=+x;if(x<0){x+=n;if(x<0)x=s<0?-1:0;}else if(x>=n)x=s<0?n-1:n;return x;};
+  const d=fix(a,s<0?n-1:0),f=fix(b,s<0?-1:n),I=[];if(s>0)for(let k=d;k<f;k+=s)I.push(k);else for(let k=d;k>f;k+=s)I.push(k);return I;}
+function tranche8(o,a,b,s){
+  if(typeof o==="string"){const C=[...o];return bornes8(C.length,a,b,s).map(k=>C[k]).join("");}
+  if(Array.isArray(o))return bornes8(o.length,a,b,s).map(k=>o[k]);
+  if(o instanceof Tu)return new Tu(bornes8(o.a.length,a,b,s).map(k=>o.a[k]));
+  if(o instanceof Rg){const L=tout8(o);return bornes8(L.length,a,b,s).map(k=>L[k]);}
+  pe("TypeError",`'${tn8(o)}' object is not subscriptable`);}
+const ESP8=" \t\n\r\x0b\x0c";
+const coupe8=(s,ch,g,d)=>{const C=ch===null?ESP8:ch;let i=0,j=s.length;if(g)while(i<j&&C.includes(s[i]))i++;if(d)while(j>i&&C.includes(s[j-1]))j--;return s.slice(i,j);};
+const ligneFi8=f=>{if(!f.ouvert)pe("ValueError","I/O operation on closed file.");if(f.mode!=="r")pe("io.UnsupportedOperation","not readable");const c=f.x.c,k=c.indexOf("\n",f.pos),fin=k<0?c.length:k+1,l=c.slice(f.pos,fin);f.pos=fin;return l;};
+const args8=(A,K,noms,quoi)=>{const r=A.slice();for(const [n,v] of K){const k=noms.indexOf(n);if(k<0)pe("TypeError",`${quoi}() got an unexpected keyword argument '${n}'`);r[k]=v;}return r;};
+const nb8=(A,a,b,quoi)=>{if(A.length<a||A.length>b)pe("TypeError",a===b?`${quoi}() takes exactly ${a===1?"one argument":a+" arguments"} (${A.length} given)`:A.length<a?`${quoi}() takes at least ${a} argument${a>1?"s":""} (${A.length} given)`:`${quoi}() takes at most ${b} argument${b>1?"s":""} (${A.length} given)`);};
+const cle8=(v,K,X)=>{const f=K.find(x=>x[0]==="key");return f&&f[1]!==null?appel8(f[1],[v],[],X):v;};
+function trie8(L,K,X){const rev=K.find(x=>x[0]==="reverse"),inv=rev&&vrai8(rev[1]),C=L.map(v=>[cle8(v,K,X),v]);
+  C.sort((x,y)=>inv?ordre8("<",y[0],x[0]):ordre8("<",x[0],y[0]));return C.map(x=>x[1]);}
+const METH8={
+  str:{
+    split:(s,A,K)=>{const [sep,max]=args8(A,K,["sep","maxsplit"],"split");const m=max===undefined?-1:+max;
+      if(sep===undefined||sep===null){const P=[];let r=s.replace(/^[ \t\n\r\x0b\x0c]+/,"");while(r!==""){if(m>=0&&P.length===m){P.push(r.replace(/[ \t\n\r\x0b\x0c]+$/,""));break;}const k=r.search(/[ \t\n\r\x0b\x0c]/);if(k<0){P.push(r);break;}P.push(r.slice(0,k));r=r.slice(k).replace(/^[ \t\n\r\x0b\x0c]+/,"");}return P;}
+      if(typeof sep!=="string")pe("TypeError",`must be str or None, not ${tn8(sep)}`);if(sep==="")pe("ValueError","empty separator");
+      const P=s.split(sep);if(m>=0&&P.length>m+1)return P.slice(0,m).concat([P.slice(m).join(sep)]);return P;},
+    rsplit:(s,A,K)=>{const [sep,max]=args8(A,K,["sep","maxsplit"],"rsplit");if(max===undefined||+max<0)return METH8.str.split(s,[sep===undefined?null:sep],[]);
+      if(sep===undefined||sep===null)nonPris("rsplit sans séparateur ne sert pas ici : écris split().");const P=s.split(sep),m=+max;return P.length>m+1?[P.slice(0,P.length-m).join(sep)].concat(P.slice(P.length-m)):P;},
+    strip:(s,A)=>coupe8(s,A[0]===undefined?null:A[0],1,1),lstrip:(s,A)=>coupe8(s,A[0]===undefined?null:A[0],1,0),rstrip:(s,A)=>coupe8(s,A[0]===undefined?null:A[0],0,1),
+    join:(s,A)=>{nb8(A,1,1,"join");return tout8(A[0]).map((x,i)=>{if(typeof x!=="string")pe("TypeError",`sequence item ${i}: expected str instance, ${tn8(x)} found`);return x;}).join(s);},
+    upper:s=>s.toUpperCase(),lower:s=>s.toLowerCase(),capitalize:s=>s.slice(0,1).toUpperCase()+s.slice(1).toLowerCase(),
+    title:s=>s.toLowerCase().replace(/(^|[^\p{L}])(\p{L})/gu,(t,a,b)=>a+b.toUpperCase()),swapcase:s=>[...s].map(c=>c===c.toUpperCase()?c.toLowerCase():c.toUpperCase()).join(""),
+    startswith:(s,A)=>{const p=A[0];return p instanceof Tu?p.a.some(x=>s.startsWith(x)):(typeof p!=="string"?pe("TypeError",`startswith first arg must be str or a tuple of str, not ${tn8(p)}`):s.startsWith(p));},
+    endswith:(s,A)=>{const p=A[0];return p instanceof Tu?p.a.some(x=>s.endsWith(x)):(typeof p!=="string"?pe("TypeError",`endswith first arg must be str or a tuple of str, not ${tn8(p)}`):s.endsWith(p));},
+    replace:(s,A)=>{nb8(A,2,3,"replace");const [a,b,n]=A;if(typeof a!=="string"||typeof b!=="string")pe("TypeError",`replace() argument 1 must be str, not ${tn8(typeof a!=="string"?a:b)}`);
+      if(n===undefined||+n<0)return a===""?b+[...s].join(b)+b:s.split(a).join(b);let r="",k=0,c=0;for(;c<+n;c++){const j=s.indexOf(a,k);if(j<0)break;r+=s.slice(k,j)+b;k=j+a.length;}return r+s.slice(k);},
+    find:(s,A)=>s.indexOf(A[0],A[1]===undefined?0:+A[1]),rfind:(s,A)=>s.lastIndexOf(A[0]),
+    index:(s,A)=>{const k=s.indexOf(A[0],A[1]===undefined?0:+A[1]);if(k<0)pe("ValueError","substring not found");return k;},
+    count:(s,A)=>{const a=A[0];if(typeof a!=="string")pe("TypeError",`must be str, not ${tn8(a)}`);if(a==="")return [...s].length+1;return s.split(a).length-1;},
+    isdigit:s=>/^\p{Nd}+$/u.test(s),isnumeric:s=>/^\p{N}+$/u.test(s),isdecimal:s=>/^\p{Nd}+$/u.test(s),isalpha:s=>/^\p{L}+$/u.test(s),isalnum:s=>/^[\p{L}\p{N}]+$/u.test(s),isspace:s=>/^\s+$/.test(s),
+    isupper:s=>/\p{Lu}/u.test(s)&&!/\p{Ll}/u.test(s),islower:s=>/\p{Ll}/u.test(s)&&!/\p{Lu}/u.test(s),
+    splitlines:s=>s===""?[]:s.replace(/\n$/,"").split("\n"),
+    zfill:(s,A)=>{const w=+A[0];if(s.length>=w)return s;const g=/^[+-]/.test(s)?s[0]:"";return g+"0".repeat(w-s.length)+s.slice(g.length);},
+    ljust:(s,A)=>s.length>=+A[0]?s:s+(A[1]||" ").repeat(+A[0]-s.length),rjust:(s,A)=>s.length>=+A[0]?s:(A[1]||" ").repeat(+A[0]-s.length)+s,
+    center:(s,A)=>{const w=+A[0];if(s.length>=w)return s;const t=w-s.length,g=Math.floor(t/2)+(t&w&1);return (A[1]||" ").repeat(g)+s+(A[1]||" ").repeat(t-g);},
+    format:(s,A,K)=>{let k=0;return s.replace(/\{\{|\}\}|\{([^{}]*)\}/g,(t,x)=>{if(t==="{{")return "{";if(t==="}}")return "}";const [n,sp]=x.split(":");
+      let v;if(n==="")v=A[k++];else if(/^\d+$/.test(n))v=A[+n];else{const f=K.find(y=>y[0]===n);v=f?f[1]:pe("KeyError",srepr8(n));}if(v===undefined)pe("IndexError","Replacement index out of range for positional args tuple");return spec8(v,sp||"");});}},
+  list:{
+    append:(l,A)=>{nb8(A,1,1,"list.append");l.push(A[0]);return null;},extend:(l,A)=>{l.push(...tout8(A[0]));return null;},
+    insert:(l,A)=>{nb8(A,2,2,"insert");let k=+A[0];if(k<0)k=Math.max(0,k+l.length);l.splice(Math.min(k,l.length),0,A[1]);return null;},
+    pop:(l,A)=>{if(!l.length)pe("IndexError","pop from empty list");let k=A[0]===undefined?l.length-1:indice8(l.length,A[0],"list");if(k<0||k>=l.length)pe("IndexError","pop index out of range");return l.splice(k,1)[0];},
+    remove:(l,A)=>{const k=l.findIndex(x=>eq8(x,A[0]));if(k<0)pe("ValueError","list.remove(x): x not in list");l.splice(k,1);return null;},
+    index:(l,A)=>{const k=l.findIndex(x=>eq8(x,A[0]));if(k<0)pe("ValueError",`${repr8(A[0])} is not in list`);return k;},
+    count:(l,A)=>l.filter(x=>eq8(x,A[0])).length,
+    sort:(l,A,K,X)=>{if(A.length)pe("TypeError","sort() takes no positional arguments");const r=trie8(l,K,X);l.splice(0,l.length,...r);return null;},
+    reverse:l=>{l.reverse();return null;},copy:l=>l.slice(),clear:l=>{l.length=0;return null;}},
+  dict:{
+    keys:d=>new Vu("keys",d),values:d=>new Vu("values",d),items:d=>new Vu("items",d),
+    get:(d,A)=>{nb8(A,1,2,"get");const x=d.m.get(dk8(A[0]));return x?x[1]:A[1]===undefined?null:A[1];},
+    pop:(d,A)=>{const c=dk8(A[0]),x=d.m.get(c);if(!x){if(A.length>1)return A[1];pe("KeyError",repr8(A[0]));}d.m.delete(c);return x[1];},
+    setdefault:(d,A)=>{const x=d.m.get(dk8(A[0]));if(x)return x[1];const v=A[1]===undefined?null:A[1];dset8(d,A[0],v);return v;},
+    update:(d,A)=>{const o=A[0];if(o instanceof Di)for(const [k,v] of o.m.values())dset8(d,k,v);else for(const p of iter8(o)){const L=tout8(p);dset8(d,L[0],L[1]);}return null;},
+    copy:d=>{const e=new Di();for(const [c,x] of d.m)e.m.set(c,[x[0],x[1]]);return e;},clear:d=>{d.m.clear();return null;}},
+  "_io.TextIOWrapper":{
+    read:f=>{if(!f.ouvert)pe("ValueError","I/O operation on closed file.");if(f.mode!=="r")pe("io.UnsupportedOperation","not readable");const r=f.x.c.slice(f.pos);f.pos=f.x.c.length;return r;},
+    readline:f=>ligneFi8(f),readlines:f=>{const L=[];let l;while((l=ligneFi8(f))!=="")L.push(l);return L;},
+    write:(f,A)=>{if(!f.ouvert)pe("ValueError","I/O operation on closed file.");if(f.mode==="r")pe("io.UnsupportedOperation","not writable");if(typeof A[0]!=="string")pe("TypeError",`write() argument must be str, not ${tn8(A[0])}`);f.x.c+=A[0];return [...A[0]].length;},
+    writelines:(f,A)=>{for(const x of iter8(A[0]))METH8["_io.TextIOWrapper"].write(f,[x]);return null;},
+    close:f=>{f.ouvert=false;return null;}},
+  "re.Match":{group:(m,A)=>{const k=A.length?+A[0]:0;if(k>=m.m.length)pe("IndexError","no such group");return m.m[k]===undefined?null:m.m[k];},groups:m=>new Tu(m.m.slice(1).map(x=>x===undefined?null:x)),start:m=>m.m.index,end:m=>m.m.index+m.m[0].length}};
+function attr8(o,n){
+  if(o instanceof Mo){if(n in o.a)return o.a[n];nonPris(o.non(n));}
+  const M=METH8[tn8(o)];if(M&&M[n])return new Bi(n,(A,K,X)=>M[n](o,A,K,X));
+  pe("AttributeError",`'${tn8(o)}' object has no attribute '${n}'`);}
+const chemin8=(X,p)=>{if(typeof p!=="string")pe("TypeError",`expected str, bytes or os.PathLike object, not ${tn8(p)}`);return absolu(p===""?".":p);};
+function ouvre8(X,A,K){const [nom,mode0]=args8(A,K,["file","mode","buffering","encoding"],"open"),mode=(mode0===undefined?"r":mode0).replace(/[bt+]/g,"");
+  if(/b/.test(mode0||""))nonPris("Ouvre le fichier en mode texte : \"r\", \"w\" ou \"a\".");
+  const a=chemin8(X,nom),x=noeud(X.T,a);
+  if(mode==="r"){if(!x)pe("FileNotFoundError",`[Errno 2] No such file or directory: ${srepr8(nom)}`);if(x.d)pe("IsADirectoryError",`[Errno 21] Is a directory: ${srepr8(nom)}`);return new Fi(x,"r",nom);}
+  if(mode!=="w"&&mode!=="a")pe("ValueError",`invalid mode: '${mode0}'`);
+  const k=a.lastIndexOf("/"),par=noeud(X.T,a.slice(0,k)||"/");if(!par||!par.d)pe("FileNotFoundError",`[Errno 2] No such file or directory: ${srepr8(nom)}`);
+  if(x&&x.d)pe("IsADirectoryError",`[Errno 21] Is a directory: ${srepr8(nom)}`);
+  let f=x;if(!f){f={n:a.slice(k+1),c:""};par.d.push(f);}else if(mode==="w")f.c="";return new Fi(f,mode,nom);}
+function modules8(X){
+  const bi=(n,f)=>new Bi(n,f),dir=p=>{const x=noeud(X.T,chemin8(X,p));return x&&x.d?x:null;};
+  const path=new Mo("posixpath",{
+    join:bi("join",A=>{let r=A[0];for(const p of A.slice(1)){if(typeof p!=="string")pe("TypeError",`join() argument must be str, bytes, or os.PathLike object, not '${tn8(p)}'`);r=p.startsWith("/")?p:r===""||r.endsWith("/")?r+p:r+"/"+p;}return r;}),
+    isdir:bi("isdir",A=>!!dir(A[0])),isfile:bi("isfile",A=>{const x=noeud(X.T,chemin8(X,A[0]));return !!x&&!x.d;}),exists:bi("exists",A=>!!noeud(X.T,chemin8(X,A[0]))),
+    basename:bi("basename",A=>A[0].slice(A[0].lastIndexOf("/")+1)),dirname:bi("dirname",A=>{const k=A[0].lastIndexOf("/");return k<0?"":A[0].slice(0,k)||"/";}),
+    splitext:bi("splitext",A=>{const p=A[0],b=p.lastIndexOf("/")+1,base=p.slice(b),k=base.lastIndexOf("."),s=base.replace(/^\.+/,"").length;return k<=base.length-s||k<0?new Tu([p,""]):new Tu([p.slice(0,b+k),base.slice(k)]);}),
+    getsize:bi("getsize",A=>{const x=noeud(X.T,chemin8(X,A[0]));if(!x)pe("FileNotFoundError",`[Errno 2] No such file or directory: ${srepr8(A[0])}`);return x.d?4096:new TextEncoder().encode(x.c||"").length;}),
+    sep:"/"},n=>`os.path.${n} ne sert pas dans ces exercices : il suffit de os.path.isdir, os.path.isfile et os.path.join.`);
+  const os=new Mo("os",{
+    listdir:bi("listdir",A=>{const p=A.length?A[0]:".",x=noeud(X.T,chemin8(X,p));if(!x)pe("FileNotFoundError",`[Errno 2] No such file or directory: ${srepr8(p)}`);if(!x.d)pe("NotADirectoryError",`[Errno 20] Not a directory: ${srepr8(p)}`);return x.d.map(y=>y.n).sort();}),
+    getcwd:bi("getcwd",()=>COURANT),sep:"/",path,linesep:"\n"},
+    n=>/^(walk|popen|system|scandir)$/.test(n)?`os.${n} est interdit aux examens (« les fonctions popen() et walk() ne peuvent pas être utilisées ») : écris toi-même la fonction récursive avec os.listdir.`:`os.${n} ne sert pas dans ces exercices : il suffit de os.listdir, os.path.isdir, os.path.isfile et os.sep.`);
+  const sys=new Mo("sys",{argv:X.argv,exit:bi("exit",A=>{X.code=A.length?A[0]:null;throw SORTIE8;})},n=>`sys.${n} ne sert pas dans ces exercices : il suffit de sys.argv et sys.exit().`);
+  const rx=(p,fl)=>{if(typeof p!=="string")pe("TypeError","first argument must be string or compiled pattern");try{return new RegExp(p.replace(/\(\?P</g,"(?<").replace(/\\Z/g,"$"),fl||"");}catch(e){pe("re.error",String(e.message));}};
+  const re=new Mo("re",{
+    search:bi("search",A=>{const m=rx(A[0]).exec(A[1]);return m?new Ma(m):null;}),
+    match:bi("match",A=>{const m=rx(A[0],"y").exec(A[1]);return m?new Ma(m):null;}),
+    fullmatch:bi("fullmatch",A=>{const m=rx("(?:"+A[0]+")$","y").exec(A[1]);return m?new Ma(m):null;}),
+    findall:bi("findall",A=>[...A[1].matchAll(rx(A[0],"g"))].map(m=>m.length===1?m[0]:m.length===2?m[1]:new Tu(m.slice(1)))),
+    sub:bi("sub",A=>A[2].replace(rx(A[0],"g"),A[1].replace(/\\(\d)/g,"$$$1"))),split:bi("split",A=>A[1].split(rx(A[0],"g")))},
+    n=>`re.${n} ne sert pas dans ces exercices : re.search(motif, chaine) suffit.`);
+  return {os,"os.path":path,sys,re};}
+const EXC8="Exception ValueError KeyError IndexError TypeError ZeroDivisionError FileNotFoundError NameError OSError IOError AttributeError RuntimeError LookupError ArithmeticError".split(" ");
+const PARENT8={KeyError:"LookupError",IndexError:"LookupError",ZeroDivisionError:"ArithmeticError",FileNotFoundError:"OSError",IsADirectoryError:"OSError",NotADirectoryError:"OSError",IOError:"OSError"};
+const attrape8=(t,e)=>{if(t instanceof Tu)return t.a.some(x=>attrape8(x,e));if(!(t instanceof Ex))pe("TypeError","catching classes that do not inherit from BaseException is not allowed");
+  if(t.n==="Exception")return !/^(SystemExit|KeyboardInterrupt)$/.test(e);let x=e;while(x){if(x===t.n||t.n==="OSError"&&x==="IOError")return true;x=PARENT8[x];}return false;};
+function builtins8(X){const B=Object.create(null),bi=(n,f)=>{B[n]=new Bi(n,f);};
+  bi("print",(A,K)=>{let sep=" ",end="\n";for(const [n,v] of K){if(n==="sep")sep=v===null?" ":v;else if(n==="end")end=v===null?"\n":v;else if(n==="file")nonPris("print(…, file=…) ne sert pas dans ces exercices : pour écrire dans un fichier, fd.write(texte).");else if(n!=="flush")pe("TypeError",`'${n}' is an invalid keyword argument for print()`);}
+    X.out+=A.map(str8).join(sep)+end;if(X.out.length>200000)throw BOUCLE8;return null;});
+  bi("len",A=>{nb8(A,1,1,"len");const v=A[0];if(typeof v==="string")return [...v].length;if(Array.isArray(v))return v.length;if(v instanceof Tu)return v.a.length;if(v instanceof Di)return v.m.size;if(v instanceof Rg)return lenRg8(v);if(v instanceof Vu)return v.d.m.size;pe("TypeError",`object of type '${tn8(v)}' has no len()`);});
+  bi("range",A=>{if(!A.length||A.length>3)pe("TypeError",`range expected at ${A.length?"most 3":"least 1"} argument${A.length?"s":""}, got ${A.length}`);for(const x of A)if(!estInt8(x))pe("TypeError",`'${tn8(x)}' object cannot be interpreted as an integer`);
+    const [a,b,s]=A.length===1?[0,+A[0],1]:[+A[0],+A[1],A.length>2?+A[2]:1];if(s===0)pe("ValueError","range() arg 3 must not be zero");return new Rg(a,b,s);});
+  bi("int",A=>{if(!A.length)return 0;const v=A[0];if(A.length>1)nonPris("int(texte, base) ne sert pas dans ces exercices.");
+    if(typeof v==="string"){const t=coupe8(v,null,1,1);if(!/^[+-]?\d+(_\d+)*$/.test(t))pe("ValueError",`invalid literal for int() with base 10: ${srepr8(v)}`);return parseInt(t.replace(/_/g,""),10);}
+    if(v instanceof Fl){if(!isFinite(v.v))pe(Number.isNaN(v.v)?"ValueError":"OverflowError","cannot convert float to integer");return Math.trunc(v.v);}if(estInt8(v))return +v;
+    pe("TypeError",`int() argument must be a string, a bytes-like object or a real number, not '${tn8(v)}'`);});
+  bi("float",A=>{if(!A.length)return new Fl(0);const v=A[0];if(typeof v==="string"){const t=coupe8(v,null,1,1).toLowerCase();
+      if(/^[+-]?(inf|infinity)$/.test(t))return new Fl(t[0]==="-"?-Infinity:Infinity);if(/^[+-]?nan$/.test(t))return new Fl(NaN);
+      if(!/^[+-]?(\d+(_\d+)*\.?(\d+(_\d+)*)?|\.\d+(_\d+)*)(e[+-]?\d+)?$/.test(t))pe("ValueError",`could not convert string to float: ${srepr8(v)}`);return new Fl(parseFloat(t.replace(/_/g,"")));}
+    if(estNum8(v))return new Fl(nv8(v));pe("TypeError",`float() argument must be a string or a real number, not '${tn8(v)}'`);});
+  bi("str",A=>A.length?str8(A[0]):"");bi("repr",A=>repr8(A[0]));bi("bool",A=>A.length?vrai8(A[0]):false);
+  bi("list",A=>A.length?tout8(A[0]):[]);bi("tuple",A=>new Tu(A.length?tout8(A[0]):[]));
+  bi("dict",(A,K)=>{const d=new Di();if(A.length)METH8.dict.update(d,[A[0]]);for(const [n,v] of K)dset8(d,n,v);return d;});
+  bi("set",()=>nonPris("Les ensembles (set) ne servent pas dans ces exercices : utilise une liste (in, not in, append) ou un dictionnaire."));
+  bi("frozenset",()=>nonPris("Les ensembles ne servent pas dans ces exercices : utilise une liste."));
+  bi("sorted",(A,K)=>{nb8(A,1,1,"sorted");return trie8(tout8(A[0]),K,X);});
+  bi("reversed",A=>{const v=A[0];if(v instanceof Di||v instanceof Fi||!(typeof v==="string"||Array.isArray(v)||v instanceof Tu||v instanceof Rg))pe("TypeError",`'${tn8(v)}' object is not reversible`);return tout8(v).reverse();});
+  bi("sum",A=>{nb8(A,1,2,"sum");let s=A.length>1?A[1]:0;if(typeof s==="string")pe("TypeError","sum() can't sum strings [use ''.join(seq) instead]");for(const v of iter8(A[0]))s=binop8("+",s,v);return s;});
+  const extr=(n,signe)=>(A,K)=>{const L=A.length===1?tout8(A[0]):A.slice(),def=K.find(x=>x[0]==="default");if(!A.length)pe("TypeError",`${n} expected at least 1 argument, got 0`);
+    if(!L.length){if(def)return def[1];pe("ValueError",`${n}() iterable argument is empty`);}let m=L[0],km=cle8(m,K,X);for(const v of L.slice(1)){const kv=cle8(v,K,X);if(ordre8(signe>0?">":"<",kv,km)*signe>0){m=v;km=kv;}}return m;};
+  bi("max",extr("max",1));bi("min",extr("min",-1));
+  bi("abs",A=>{const v=A[0];if(v instanceof Fl)return new Fl(Math.abs(v.v));if(estInt8(v))return Math.abs(+v);pe("TypeError",`bad operand type for abs(): '${tn8(v)}'`);});
+  bi("round",A=>{const v=A[0],n=A.length>1&&A[1]!==null?+A[1]:null;if(!estNum8(v))pe("TypeError",`type ${tn8(v)} doesn't define __round__ method`);const x=nv8(v);
+    if(n===null){const f=Math.floor(x),d=x-f;return d>0.5||d===0.5&&f%2!==0?f+1:f;}if(estInt8(v))return +v;return new Fl(Number(x.toFixed(Math.max(0,Math.min(n,20)))));});
+  bi("enumerate",(A,K)=>{const d=A.length>1?+A[1]:K.length?+K[0][1]:0;return tout8(A[0]).map((v,i)=>new Tu([i+d,v]));});
+  bi("zip",A=>{const L=A.map(tout8),n=L.length?Math.min(...L.map(x=>x.length)):0;return Array.from({length:n},(_,i)=>new Tu(L.map(x=>x[i])));});
+  bi("any",A=>tout8(A[0]).some(vrai8));bi("all",A=>tout8(A[0]).every(vrai8));
+  bi("ord",A=>{if(typeof A[0]!=="string"||[...A[0]].length!==1)pe("TypeError","ord() expected a character");return A[0].codePointAt(0);});
+  bi("chr",A=>{if(!estInt8(A[0]))pe("TypeError",`'${tn8(A[0])}' object cannot be interpreted as an integer`);return String.fromCodePoint(+A[0]);});
+  bi("open",(A,K)=>ouvre8(X,A,K));
+  bi("input",()=>pe("EOFError","EOF when reading a line"));
+  bi("isinstance",A=>{const t=A[1],ok=x=>x instanceof Bi&&tn8(A[0])===x.n||x instanceof Bi&&x.n==="int"&&typeof A[0]==="boolean";return t instanceof Tu?t.a.some(ok):ok(t);});
+  bi("type",A=>{const t=tn8(A[0]);return B[t]||new Bi(t,()=>nonPris("type(…) ne sert pas dans ces exercices."));});
+  bi("exit",A=>{X.code=A.length?A[0]:null;throw SORTIE8;});B.quit=B.exit;
+  bi("format",A=>spec8(A[0],A[1]||""));
+  bi("divmod",A=>new Tu([binop8("//",A[0],A[1]),binop8("%",A[0],A[1])]));
+  bi("pow",A=>binop8("**",A[0],A[1]));
+  for(const n of [...EXC8,"IsADirectoryError","NotADirectoryError","EOFError","RecursionError","UnboundLocalError","AssertionError"])B[n]=new Ex(n);
+  return B;}
+const PILE8=[];
+function lit8(env,n){let e=env;while(e.compr){if(n in e.V)return e.V[n];e=e.up;}
+  for(let f=e;f&&f.loc;f=f.clo){if(f.loc.has(n)){if(n in f.V)return f.V[n];pe(f===e?"UnboundLocalError":"NameError",f===e?`cannot access local variable '${n}' where it is not associated with a value`:`cannot access free variable '${n}' where it is not associated with a value in enclosing scope`);}if(f.glob.has(n))break;}
+  const G=e.G;if(n in G.V)return G.V[n];if(n in G.B)return G.B[n];pe("NameError",`name '${n}' is not defined`);}
+function range8(env,n,v){if(env.compr||!env.loc){env.V[n]=v;return;}if(env.glob.has(n)){env.G.V[n]=v;return;}
+  if(env.nonloc.has(n))for(let f=env.clo;f&&f.loc;f=f.clo)if(f.loc.has(n)){f.V[n]=v;return;}
+  env.V[n]=v;}
+const base8=env=>{while(env.compr)env=env.up;return env.loc?env:null;};
+function affecte8(t,v,env,X){
+  switch(t.k){
+    case "nom":range8(env,t.n,v);return;
+    case "par":affecte8(t.e,v,env,X);return;
+    case "sub":{const o=ev8(t.o,env,X);if(t.i.k==="slice")nonPris("Remplacer une tranche (liste[a:b] = …) ne sert pas dans ces exercices.");setItem8(o,ev8(t.i,env,X),v);return;}
+    case "attr":{const o=ev8(t.o,env,X);pe("AttributeError",`'${tn8(o)}' object attribute '${t.n}' is read-only`);}
+    case "tuple":case "list":{const L=tout8(v);if(L.length>t.L.length)pe("ValueError",`too many values to unpack (expected ${t.L.length})`);if(L.length<t.L.length)pe("ValueError",`not enough values to unpack (expected ${t.L.length}, got ${L.length})`);t.L.forEach((c,i)=>affecte8(c,L[i],env,X));return;}}}
+const pas8=X=>{if(++X.pas>PAS8)throw BOUCLE8;};
+function execS8(S,env,X){for(const s of S){const r=exec8(s,env,X);if(r)return r;}return null;}
+function boucle8(env,X,suivant,corps,orelse){for(;;){pas8(X);if(!suivant())break;const r=execS8(corps,env,X);if(r){if(r.k==="break")return null;if(r.k==="continue")continue;return r;}}return orelse?execS8(orelse,env,X):null;}
+const BRK8={k:"break"},CNT8={k:"continue"};
+function exec8(s,env,X){X.ligne=s.l||X.ligne;pas8(X);
+  switch(s.k){
+    case "expr":ev8(s.e,env,X);return null;
+    case "assign":{const v=ev8(s.e,env,X);for(const t of s.tg)affecte8(t,v,env,X);return null;}
+    case "aug":{const t=s.tg;
+      if(t.k==="sub"){const o=ev8(t.o,env,X);if(t.i.k==="slice")nonPris("Remplacer une tranche ne sert pas dans ces exercices.");const i=ev8(t.i,env,X),x=getItem8(o,i);setItem8(o,i,aug8(s.o,x,ev8(s.e,env,X)));return null;}
+      if(t.k==="attr")pe("AttributeError",`'${tn8(ev8(t.o,env,X))}' object attribute '${t.n}' is read-only`);
+      const x=lit8(env,t.n);affecte8(t,aug8(s.o,x,ev8(s.e,env,X)),env,X);return null;}
+    case "if":{for(const [c,b] of s.tests)if(vrai8(ev8(c,env,X)))return execS8(b,env,X);return s.orelse?execS8(s.orelse,env,X):null;}
+    case "while":return boucle8(env,X,()=>{X.ligne=s.l;return vrai8(ev8(s.c,env,X));},s.body,s.orelse);
+    case "for":{const it=iter8(ev8(s.it,env,X));return boucle8(env,X,()=>{const n=it.next();if(n.done)return false;affecte8(s.tg,n.value,env,X);return true;},s.body,s.orelse);}
+    case "def":range8(env,s.n,new Fn(s,s.P.map(q=>q.d?ev8(q.d,env,X):undefined),base8(env)));return null;
+    case "return":return {k:"return",v:s.e?ev8(s.e,env,X):null};
+    case "break":return BRK8;case "continue":return CNT8;case "pass":return null;
+    case "global":return null;
+    case "import":for(const [m,a] of s.N){const M=module8(X,m);range8(env,a||m.split(".")[0],a?M:module8(X,m.split(".")[0]));}return null;
+    case "from":{const M=module8(X,s.m);for(const [n,a] of s.N){if(n==="*"){for(const k in M.a)range8(env,k,M.a[k]);continue;}if(!(n in M.a)){if(M.non)nonPris(M.non(n));pe("ImportError",`cannot import name '${n}' from '${s.m}'`);}range8(env,a||n,M.a[n]);}return null;}
+    case "with":{const v=ev8(s.e,env,X);if(s.as)affecte8(s.as,v,env,X);try{return execS8(s.body,env,X);}finally{if(v instanceof Fi)v.ouvert=false;}}
+    case "try":{let r;
+      try{r=execS8(s.body,env,X);}
+      catch(e){if(!(e instanceof PE)||e.t==="SyntaxError"||e.t==="IndentationError")throw e;const h=s.H.find(h=>!h.ty||attrape8(ev8(h.ty,env,X),e.t));
+        if(!h){if(s.fin)execS8(s.fin,env,X);throw e;}if(h.as)range8(env,h.as,{exc:e.t,m:e.m});r=execS8(h.body,env,X);if(s.fin){const r2=execS8(s.fin,env,X);if(r2)return r2;}return r;}
+      if(!r&&s.orelse)r=execS8(s.orelse,env,X);if(s.fin){const r2=execS8(s.fin,env,X);if(r2)return r2;}return r;}
+    case "raise":{if(!s.e)pe("RuntimeError","No active exception to reraise");const v=ev8(s.e,env,X);if(v instanceof Ex)pe(v.n,"");if(v&&v.exc)pe(v.exc,v.m);pe("TypeError","exceptions must derive from BaseException");}
+    case "assert":if(!vrai8(ev8(s.e,env,X)))pe("AssertionError",s.m?str8(ev8(s.m,env,X)):"");return null;
+    case "del":{const d=t=>{if(t.k==="nom"){if(!(t.n in env.V))pe("NameError",`name '${t.n}' is not defined`);delete env.V[t.n];}
+      else if(t.k==="sub"){const o=ev8(t.o,env,X),i=ev8(t.i,env,X);if(o instanceof Di){const c=dk8(i);if(!o.m.has(c))pe("KeyError",repr8(i));o.m.delete(c);}else if(Array.isArray(o)){const k=indice8(o.length,i,"list");if(k<0||k>=o.length)pe("IndexError","list assignment index out of range");o.splice(k,1);}else pe("TypeError",`'${tn8(o)}' object doesn't support item deletion`);}
+      else if(t.k==="tuple")t.L.forEach(d);};d(s.tg);return null;}}}
+function aug8(o,x,y){if(o==="+"&&Array.isArray(x)){x.push(...tout8(y));return x;}return binop8(o,x,y);}
+function module8(X,m){const M=X.M[m];if(M)return M;
+  nonPris(/^(collections|itertools|functools|pathlib|glob|subprocess|shutil|fnmatch)$/.test(m)?`Le module ${m} n'est pas permis aux examens : écris-le avec os.listdir, une boucle et un dictionnaire.`:`Le module ${m} ne sert pas dans ces exercices : les examens n'utilisent que os, sys et re.`);}
+function appel8(f,A,K,X){
+  if(f instanceof Bi){const l=X.ligne,r=f.f(A,K,X);X.ligne=l;return r===undefined?null:r;}
+  if(f instanceof Fn){const d=f.def,P=d.P;if(X.prof>=PROF8)pe("RecursionError","maximum recursion depth exceeded");
+    const env={V:Object.create(null),loc:d.loc,glob:d.glob,nonloc:d.nonloc,G:X.G,clo:f.clo};
+    if(A.length>P.length)pe("TypeError",`${d.n}() takes ${P.length} positional argument${P.length===1?"":"s"} but ${A.length} ${A.length===1?"was":"were"} given`);
+    A.forEach((v,i)=>{env.V[P[i].n]=v;});
+    for(const [n,v] of K){const q=P.find(x=>x.n===n);if(!q)pe("TypeError",`${d.n}() got an unexpected keyword argument '${n}'`);if(n in env.V)pe("TypeError",`${d.n}() got multiple values for argument '${n}'`);env.V[n]=v;}
+    P.forEach((q,i)=>{if(!(q.n in env.V)&&f.dv[i]!==undefined)env.V[q.n]=f.dv[i];});
+    const manque=P.filter(q=>!(q.n in env.V));if(manque.length)pe("TypeError",`${d.n}() missing ${manque.length} required positional argument${manque.length>1?"s":""}: ${manque.map(q=>`'${q.n}'`).join(manque.length>2?", ":" and ")}`);
+    const l=X.ligne;X.prof++;try{const r=execS8(d.body,env,X);return r&&r.k==="return"?r.v:null;}finally{X.prof--;X.ligne=l;}}
+  if(f instanceof Ex)return {exc:f.n,m:A.length?str8(A[0]):""};
+  pe("TypeError",`'${tn8(f)}' object is not callable`);}
+function ev8(e,env,X){switch(e.k){
+  case "cst":return e.v;
+  case "nom":return lit8(env,e.n);
+  case "par":return ev8(e.e,env,X);
+  case "concat":return e.P.map(q=>q.k==="fmt"?(q.conv==="r"?spec8(repr8(ev8(q.e,env,X)),q.spec):spec8(ev8(q.e,env,X),q.spec)):str8(ev8(q,env,X))).join("");
+  case "tuple":return new Tu(etale8(e.L,env,X));
+  case "list":return etale8(e.L,env,X);
+  case "dict":{const d=new Di();for(const [a,b] of e.P){const k=ev8(a,env,X);dset8(d,k,ev8(b,env,X));}return d;}
+  case "compr":{const sub={V:Object.create(null),compr:true,up:env,G:X.G},R=e.kind==="dict"?new Di():[];
+    const va=k=>{if(k===e.G.length){if(e.kind==="dict"){const c=ev8(e.a,sub,X);dset8(R,c,ev8(e.b,sub,X));}else R.push(ev8(e.a,sub,X));return;}
+      const g=e.G[k];for(const v of tout8(ev8(g.it,k?sub:env,X))){pas8(X);affecte8(g.tg,v,sub,X);if(g.C.every(c=>vrai8(ev8(c,sub,X))))va(k+1);}};
+    va(0);return R;}
+  case "or":{const a=ev8(e.a,env,X);return vrai8(a)?a:ev8(e.b,env,X);}
+  case "and":{const a=ev8(e.a,env,X);return vrai8(a)?ev8(e.b,env,X):a;}
+  case "not":return !vrai8(ev8(e.a,env,X));
+  case "ifexp":return vrai8(ev8(e.c,env,X))?ev8(e.a,env,X):ev8(e.b,env,X);
+  case "cmp":{let a=ev8(e.E[0],env,X);for(let k=0;k<e.O.length;k++){const b=ev8(e.E[k+1],env,X);if(!cmp8(e.O[k],a,b))return false;a=b;}return true;}
+  case "bin":return binop8(e.o,ev8(e.a,env,X),ev8(e.b,env,X));
+  case "un":{const a=ev8(e.a,env,X);if(e.o==="+"&&estNum8(a))return a instanceof Fl?a:+a;if(e.o==="-"){if(a instanceof Fl)return new Fl(-a.v);if(estInt8(a))return -a;}if(e.o==="~"&&estInt8(a))return ~a;
+    pe("TypeError",`bad operand type for unary ${e.o}: '${tn8(a)}'`);}
+  case "call":{const f=ev8(e.f,env,X),A=[];for(const a of e.A){if(a.k==="etoile")A.push(...tout8(ev8(a.e,env,X)));else A.push(ev8(a,env,X));}
+    const K=e.K.map(([n,v])=>[n,ev8(v,env,X)]);return appel8(f,A,K,X);}
+  case "sub":{const o=ev8(e.o,env,X);if(e.i.k==="slice"){const q=x=>x===null?null:ev8(x,env,X);return tranche8(o,q(e.i.a),q(e.i.b),q(e.i.c));}return getItem8(o,ev8(e.i,env,X));}
+  case "attr":return attr8(ev8(e.o,env,X),e.n);
+  case "lambda":return new Fn({n:"<lambda>",P:e.P,body:[{k:"return",e:e.b}],loc:new Set(e.P.map(q=>q.n)),glob:new Set(),nonloc:new Set()},e.P.map(()=>undefined),base8(env));
+  case "slice":pe("TypeError","unhashable type: 'slice'");
+}}
+function etale8(L,env,X){const r=[];for(const x of L){if(x.k==="etoile")r.push(...tout8(ev8(x.e,env,X)));else r.push(ev8(x,env,X));}return r;}
+/* lance le programme src, dans l'arborescence T0, avec les paramètres A : ce qu'il affiche, l'erreur de Python (type, message, ligne), l'arborescence après */
+function lancePy(src,T0,A,nom){
+  const X={T:clone7(T0),out:"",pas:0,prof:0,ligne:1,argv:[nom,...(A||[])],code:null};
+  X.G={V:Object.create(null),loc:null,B:null};X.G.G=X.G;X.G.B=builtins8(X);X.G.V.__name__="__main__";X.M=modules8(X);
+  let err=null;
+  try{const S=parsePy(lexPy(src));execS8(S,X.G,X);}
+  catch(e){
+    if(e instanceof NonPris)return {inconnu:e.m};
+    if(e===BOUCLE8)return {boucle:true,sortie:null,err:{t:"boucle",m:"",l:X.ligne}};
+    if(e===SORTIE8){}
+    else if(e instanceof PE)err={t:e.t,m:e.m,l:e.l||X.ligne};
+    else if(e instanceof RangeError)err={t:"RecursionError",m:"maximum recursion depth exceeded",l:X.ligne};
+    else throw e;}
+  const s=X.out,sortie=s===""?[]:s.replace(/\n$/,"").split("\n");
+  if(err&&(err.t==="SyntaxError"||err.t==="IndentationError"))return {sortie:[],err,T:X.T,syntaxe:true};
+  return {sortie,err,T:X.T};}
+const vuePy=r=>r.err?(r.err.t==="RecursionError"?["#erreur RecursionError"]:r.sortie.concat(["#erreur "+r.err.t])):r.sortie;
+const BANC8=[
+'liste = [4, 7, 9]\nprint(liste[-1], liste[0], liste[1:3], liste[::-1], liste[::2])\nprint(len(liste), 7 in liste, 8 not in liste)',
+'mot = "radar"\nprint(mot[::-1] == mot, mot.upper(), mot[1:-1], mot * 2)\nprint("a,b,,c".split(","), " x  y ".split(), "x".join(["1", "2"]))',
+'d = {}\nfor m in "le chat et le chien et le rat".split():\n    if m in d:\n        d[m] += 1\n    else:\n        d[m] = 1\nprint(d)\nprint(d.get("le"), d.get("zz"), d.get("zz", 0), len(d))',
+'d = {"b": 2, "a": 1}\nfor k, v in d.items():\n    print(k, v)\nprint(list(d.keys()), list(d.values()), d.items())\nprint(sorted(d), sorted(d.items()))',
+'print(7 / 2, 7 // 2, -7 // 2, 7 % 3, -7 % 3, 2 ** 10, 10 / 5, 1 / 3, 0.1 + 0.2)\nprint(1e-05, 123456789012345678.0, 2.5e20, round(2.5), round(3.5), round(-2.5), abs(-3), abs(-2.5))',
+'print(int("12") + 1, int(" 7\\n"), float("2.5"), str(4) + "2", int(3.9), int(-3.9))\nprint(int("abc"))',
+'total = 0\nfor i in range(1, 11):\n    if i % 2 == 0:\n        continue\n    if i > 7:\n        break\n    total += i\nprint(total)\nfor i in range(10, 0, -3):\n    print(i, end=" ")\nprint()',
+'i = 0\nwhile i < 5:\n    i += 2\nelse:\n    print("fini", i)\nprint(list(range(5)), list(range(2, 8, 2)), list(range(5, 0, -1)))',
+'def f(x, y=10):\n    return x * y\nprint(f(2), f(2, 3), f(y=1, x=5))\nprint(f())',
+'def fact(n):\n    if n <= 1:\n        return 1\n    return n * fact(n - 1)\nprint(fact(0), fact(5), fact(10))',
+'def boucle(n):\n    return boucle(n + 1)\nprint("avant")\nboucle(0)',
+'compte = 0\ndef plus():\n    compte += 1\nplus()\nprint(compte)',
+'compte = 0\ndef plus():\n    global compte\n    compte += 1\nplus()\nplus()\nprint(compte)',
+'d = {}\nd["png"] += 1',
+'liste = [1, 2]\nprint(liste[2])',
+'print("total : " + 3)',
+'print(3 + "a")',
+'print(nombre)',
+'x = [3, 1, 2]\nx.sort()\nprint(x, x.pop(), x, x.index(2), x.count(1))\nx.append([5])\nx.extend((6, 7))\nx.insert(0, 9)\nprint(x)\nx.remove(6)\nprint(x, sorted([3, 1, 2], reverse=True))',
+'with open("notes.txt") as fd:\n    for ligne in fd:\n        print(repr(ligne), int(ligne))\nprint(fd.closed if False else "ferme")',
+'fd = open("notes.txt", "r")\nlignes = fd.readlines()\nfd.close()\nprint(lignes, len(lignes))\nprint([int(l) for l in lignes if int(l) >= 10])',
+'with open("data.csv") as fd:\n    for ligne in fd:\n        data = ligne.strip().split(",")\n        print(data[0], data[1:])',
+'with open("absent.txt") as fd:\n    print(fd.read())',
+'import os\nprint(os.listdir("photos"))\nprint(os.listdir("."))\nprint(os.path.isdir("photos"), os.path.isdir("vac"), os.path.isdir("photos/vac"), os.path.isfile("notes.txt"), os.path.isfile("photos"))',
+'import os, sys\ndef parcours(dossier):\n    for nom in os.listdir(dossier):\n        chemin = dossier + os.sep + nom\n        if os.path.isdir(chemin):\n            parcours(chemin)\n        else:\n            print(chemin)\nparcours("photos")\nprint(os.path.join("a", "b", "c.txt"), os.path.join("a/", "b"), os.path.splitext("x/y.tar.gz"), os.path.basename("x/y.txt"))',
+'import os\ndef parcours(dossier):\n    for nom in os.listdir(dossier):\n        if os.path.isdir(nom):\n            parcours(nom)\n        else:\n            print(nom)\nparcours("photos")',
+'import os\nprint(os.listdir("notes.txt"))',
+'import sys\nprint(sys.argv, len(sys.argv))\nif len(sys.argv) < 3:\n    print("Donne deux fichiers")\n    sys.exit()\nprint("jamais")',
+'nom = "zoé"\nn = 3\nprint(f"{nom} a {n} ans", f"{n * 2:>4}|", f"{2 / 3:.2f}", f"{nom!r}", f"{{x}}", "{} et {}".format(1, "a"), "%d %s" % (5, "b"))',
+'a, b = 1, 2\na, b = b, a\nprint(a, b)\nc, d = "xy"\nprint(c, d)\nfor (i, v) in enumerate(["a", "b"], 1):\n    print(i, v)\nprint(list(zip([1, 2], "ab")))',
+'x, y = [1, 2, 3]',
+'print(max([3, 9, 2]), min(4, 1, 7), max(["bb", "a", "ccc"], key=len), sum([1, 2, 3]), sum([0.5, 0.25]))\nprint(max([]))',
+'print([x * x for x in range(6) if x % 2 == 1], {k: len(k) for k in ["aa", "b"]}, [c for c in "abc"])\nprint(sum(x for x in range(4)), "".join(c.upper() for c in "ok"))',
+'print(True + True, True and 0, 0 or "x", not [], None is None, 1 == 1.0, "a" < "b", [1, 2] < [1, 3], 3 if 2 > 1 else 4)',
+'print("a" < 3)',
+'if x = 3:\n    print(x)',
+'for i in range(3):\nprint(i)',
+'def f():\n    print("a")\n  print("b")',
+'print "bonjour"',
+'liste = [1, 2, 3\nprint(liste)',
+'texte = "bonjour\nprint(texte)',
+'print("Coucou" .upper(), "abc".replace("b", "X"), "a-b-c".split("-", 1), "  ok ".strip(), "xxhixx".strip("x"), "Bonjour".startswith("Bon"), "f.txt".endswith((".txt", ".py")))\nprint("abcabc".find("c"), "abc".find("z"), "banane".count("an"), "42".isdigit(), "a1".isdigit(), "Abc".lower(), "le chat".title())',
+'mots = ["chat", "chien", "oie"]\nprint(sorted(mots, key=len), sorted(mots, key=len, reverse=True), mots[::-1], list(reversed(mots)))\nprint(mots.index("oie"), "chat" in mots, len(mots[1]))',
+'x = 5\ndef f():\n    print(x)\n    x = 3\nf()',
+'def ajoute(liste, x):\n    liste.append(x)\nl = []\najoute(l, 1)\najoute(l, 2)\nprint(l)\nm = l\nm.append(3)\nprint(l, l is m, l == [1, 2, 3])',
+'def compte(n):\n    if n == 0:\n        return\n    print(n)\n    compte(n - 1)\nr = compte(3)\nprint(r)',
+'notes = {"ada": [12, 15], "zoe": [9]}\nnotes["zoe"].append(14)\nnotes["leo"] = [10]\nfor nom in notes:\n    print(nom, sum(notes[nom]) / len(notes[nom]))',
+'fd = open("sortie.txt", "w")\nfd.write("ligne 1\\n")\nfd.write("ligne 2")\nfd.close()\nwith open("sortie.txt") as f:\n    print(f.read().split("\\n"))\nwith open("sortie.txt", "a") as f:\n    f.write("\\nfin")\nprint(open("sortie.txt").readlines())',
+'import re\nprint(re.search("\\\\.csv$", "parc.csv") is not None, re.search("^a", "ba"), bool(re.search("[0-9]+", "x42")))\nprint(re.findall("[0-9]+", "a1b22c333"))',
+'print(10 / 0)',
+'liste = [5, 3]\nprint(liste.split(","))',
+'def f(a, b):\n    return a + b\nprint(f(1))',
+'mot = "abc"\nmot[0] = "z"',
+'try:\n    n = int("x2")\nexcept ValueError:\n    n = -1\nprint(n)\ntry:\n    print({}["a"])\nexcept KeyError as e:\n    print("clé absente", e)',
+'i = 0\nwhile i < 3:\n    print(i)\n    i = i + 1\nprint("i vaut", i)\nl = [0] * 3 + [1]\nprint(l, "ab" * 3, 3 * [2])',
+'n = 1234\ns = 0\nwhile n > 0:\n    s += n % 10\n    n //= 10\nprint(s)\nprint(str(1234)[::-1], int("0012"), 17 // 5 * 5 + 17 % 5)',
+'liste = [2, 23, 23, 7, 7, 7, 4, 9, 9, 7]\nnliste = []\nmem = -1\nfor n in liste:\n    if n != mem:\n        nliste.append(n)\n        mem = n\nprint(nliste)',
+'stats = {"jpg": 0}\nfor f in ["a.jpg", "b.png", "c", "d.e.jpg"]:\n    data = f.split(".")\n    if len(data) > 1 and data[-1] in stats:\n        stats[data[-1]] += 1\nprint(stats, "c".split("."), ".bashrc".split("."))',
+'print(type(3) == int, isinstance("a", str), isinstance(2, (int, float)), str(None), repr("l\'eau"), repr(\'dit "oui"\'), [None, True, 1.0, "a\\tb"])',
+'x = 3\nif x > 2: print("grand")\nelif x > 1: print("moyen")\nelse: print("petit")\nfor c in "ab": print(c)',
+'import os\nfor nom in sorted(os.listdir("photos/vac")):\n    print(nom, os.path.getsize("photos/vac/" + nom))',
+'def f(n):\n    if n > 0:\n        return n\nprint(f(2), f(-1))\nprint(f(2) + f(-1))'
+];
+const blocp=t=>d36(window.W&&window.W.code?window.W.code(t,"py"):`<pre>${esc(t)}</pre>`);
+const q8=s=>'"'+s+'"',ls8=L=>"["+L.map(x=>typeof x==="string"?q8(x):String(x)).join(", ")+"]",rang8=k=>k===1?"1er":k+"e";
+const uniq8=(R,n,a,b)=>{const L=[];for(let g=0;L.length<n&&g<500;g++){const x=R.ent(a,b);if(!L.includes(x))L.push(x);}return L;};
+const PRE8="ada alan anna emma hugo ines jade karim lea lina louis malo nina noah sami theo yanis zoe".split(" ");
+const ANI8="chat chien lapin oie rat poule".split(" ");
+const MOT8="bonjour python radar maison soleil clavier fenetre jardin".split(" ");
+const ARBO8=arboDe([{n:"notes.txt",c:"12\n7\n15\n"},{n:"data.csv",c:"PC1,windows11,ubuntu\nPC2,ubuntu\n"},dos7("photos",[{n:"a.jpg",c:""},{n:"b.png",c:"xx"},dos7("vac",[{n:"c.jpg",c:"abc"},{n:"d.txt",c:"bonjour toi\n"}])]),dos7("vide",[])]);
+
+/* palier 1 : lire un programme */
+const PY1=[
+ ["indices","indices et tranches",R=>{const L=uniq8(R,R.ent(5,6),1,60),n=L.length,i=R.ent(1,n-2),a=R.ent(0,2),b=R.ent(a+2,n-1);
+   const V=R.mel([[`print(liste[${i}])`,`Les indices commencent à 0 : liste[${i}] est le ${rang8(i+1)} élément, ${L[i]}.`],
+     ["print(liste[-1])",`liste[-1] est le dernier élément : ${L[n-1]}.`],
+     [`print(liste[${a}:${b}])`,`liste[${a}:${b}] va de l'indice ${a} inclus à l'indice ${b} exclu : ${b-a} éléments, ${ls8(L.slice(a,b))}.`],
+     ["print(len(liste))",`len donne le nombre d'éléments : ${n}.`]]).slice(0,3);
+   return {pas:[[`liste = ${ls8(L)}`,"La liste est créée ; rien ne s'affiche."],...V],
+     mut:[["indices comptés à partir de 1",`liste[${i}]`,`liste[${i-1}]`,`En Python, le premier élément est liste[0] : liste[${i}] est le ${rang8(i+1)}.`],
+       ["fin de la tranche comprise",`liste[${a}:${b}]`,`liste[${a}:${b+1}]`,`liste[${a}:${b}] s'arrête juste avant l'indice ${b} : l'élément d'indice ${b} n'y est pas.`],
+       ["début de la tranche décalé",`liste[${a}:${b}]`,`liste[${a+1}:${b+1}]`,`Les indices commencent à 0 : liste[${a}:${b}] commence au ${rang8(a+1)} élément.`],
+       ["dernier élément mal lu","liste[-1]","liste[-2]","liste[-1] est le dernier élément (liste[-2] est l'avant-dernier)."]]};}],
+ ["split","chaînes et split",R=>{const sep=R.choix([",",";",":"]),W=R.mel(PRE8).slice(0,R.ent(3,4)),k=R.ent(1,W.length-1),j=R.choix(["-","/","+"]);
+   const V=R.mel([[`print(champs[${k}])`,`champs[${k}] est le ${rang8(k+1)} morceau : ${W[k]}.`],
+     ["print(len(champs))",`len(champs) compte les morceaux : ${W.length}.`],
+     [`print("${j}".join(champs))`,`join recolle les morceaux en mettant ${j} entre eux.`],
+     ["print(champs[-1].upper())",`champs[-1] est le dernier morceau, ${W[W.length-1]} ; upper() le met en majuscules.`],
+     ["print(champs)","Une liste de chaînes s'affiche entre crochets, chaque chaîne entre apostrophes."]]).slice(0,3);
+   return {pas:[[`ligne = "${W.join(sep)}\\n"`,"Une ligne comme celles qu'on lit dans un fichier : elle finit par un retour à la ligne, \\n."],
+       [`champs = ligne.strip().split("${sep}")`,`strip() enlève le \\n de la fin, puis split("${sep}") coupe à chaque ${sep} : champs vaut ${ls8(W)}.`],...V],
+     mut:[["indices comptés à partir de 1",`champs[${k}]`,`champs[${k-1}]`,`Le premier morceau est champs[0] : champs[${k}] est le ${rang8(k+1)}.`],
+       ["longueur de la ligne au lieu du nombre de morceaux","len(champs)","len(ligne)",`len(champs) compte les morceaux de la liste (${W.length}), pas les caractères de la ligne.`]]};}],
+ ["accumulateur","somme ou compte dans une boucle",R=>{const s=R.choix([8,10,12]),N=uniq8(R,R.ent(4,6),3,19);if(!N.includes(s))N[R.ent(0,N.length-1)]=s;
+   const o=R.choix([">=",">"]),somme=R.ent(0,1)===0,dans=R.ent(0,2)===0,v=somme?"total":"nombre",inc=somme?`${v} += n`:`${v} += 1`;
+   return {pas:[[`notes = ${ls8(N)}`,"La liste des notes."],[`${v} = 0`,`${v} part de 0, avant la boucle.`],["for n in notes:","n prend tour à tour chaque valeur de la liste."],
+       [`    if n ${o} ${s}:`,o===">="?`On ne garde que les notes d'au moins ${s} : >= veut dire « supérieur ou égal », donc ${s} compte.`:`On ne garde que les notes de plus de ${s} : > est strict, donc ${s} ne compte pas.`],
+       [`        ${inc}`,somme?"On ajoute la note gardée.":"On compte une note de plus."],
+       dans?[`    print(${v})`,"Ce print est décalé sous le for : il fait partie de la boucle et s'affiche à chaque tour, même quand la note n'est pas gardée."]:[`print(${v})`,"Ce print n'est pas décalé : il se fait une seule fois, après la boucle."]],
+     mut:[["> et >= confondus",`n ${o} ${s}`,`n ${o===">="?">":">="} ${s}`,o===">="?`>= garde aussi la note égale à ${s}.`:`> est strict : la note égale à ${s} n'est pas gardée.`],
+       dans?["un seul affichage au lieu d'un par tour",`    print(${v})`,`print(${v})`,"Le print est décalé sous le for : il fait partie de la boucle, donc il s'affiche à chaque tour."]:["un affichage à chaque tour",`print(${v})`,`    print(${v})`,"Le print n'est pas décalé : il vient après la boucle et ne s'affiche qu'une fois, à la fin."],
+       ["test oublié",`    if n ${o} ${s}:`,"    if True:","Le if ne garde que certaines notes : les autres ne comptent pas."]]};}],
+ ["while","boucle while",R=>{const a=R.ent(0,3),p=R.ent(2,3),n=R.ent(2,4),b=a+p*n,o=R.choix(["<","<="]),fin=o==="<"?b:b+p;
+   return {pas:[[`i = ${a}`,`i part de ${a}.`],[`while i ${o} ${b}:`,`Le test est refait avant chaque tour ; dès qu'il est faux, la boucle s'arrête.${o==="<="?` Avec <=, le tour où i vaut ${b} se fait.`:` Avec <, le tour où i vaut ${b} ne se fait pas.`}`],
+       ["    print(i)","Affiché à chaque tour, avant l'augmentation."],[`    i += ${p}`,`i augmente de ${p} à chaque tour.`],
+       ['print("fin :", i)',`Après la boucle, i vaut la première valeur pour laquelle le test est faux : ${fin}. print sépare ses deux valeurs par une espace.`]],
+     mut:[["< et <= confondus",`i ${o} ${b}`,`i ${o==="<"?"<=":"<"} ${b}`,o==="<"?`< est strict : quand i vaut ${b}, le test est faux et la boucle s'arrête.`:`<= laisse passer i = ${b} : ce tour-là se fait.`],
+       ["valeur de i à la sortie",'print("fin :", i)',`print("fin :", i - ${p})`,"La boucle s'arrête quand le test devient faux : i vaut alors la valeur d'après la dernière affichée."],
+       ["affichage après l'augmentation",`    print(i)\n    i += ${p}`,`    i += ${p}\n    print(i)`,`Le print vient avant i += ${p} : chaque tour affiche la valeur, puis l'augmente.`]]};}],
+ ["dictionnaire","dictionnaire qui compte",R=>{const A=R.mel(ANI8).slice(0,3),M=Array.from({length:R.ent(5,7)},()=>R.choix(A));if(new Set(M).size<2)return null;
+   const x=R.choix(M),D=[];for(const m of M){const e=D.find(y=>y[0]===m);if(e)e[1]++;else D.push([m,1]);}
+   const fin=R.choix([[`print(compte["${x}"])`,`compte["${x}"] est la valeur de la clé ${q8(x)} : ${x} apparaît ${D.find(y=>y[0]===x)[1]} fois.`],["print(len(compte))",`len(compte) est le nombre de clés, donc de mots différents : ${D.length}.`]]);
+   return {pas:[[`mots = ${ls8(M)}`,"La liste des mots."],["compte = {}","Un dictionnaire vide."],["for m in mots:","Un tour par mot, dans l'ordre de la liste."],
+       ["    if m in compte:\n        compte[m] += 1","Si le mot est déjà une clé, on ajoute 1 à sa valeur."],["    else:\n        compte[m] = 1","Sinon, on crée la clé avec la valeur 1."],
+       ["print(compte)","Un dictionnaire s'affiche entre accolades, clé: valeur, dans l'ordre où les clés ont été créées."],fin],
+     mut:[["clés rangées dans l'ordre alphabétique","print(compte)","print(dict(sorted(compte.items())))","Un dictionnaire garde l'ordre où les clés ont été créées : le premier mot rencontré vient en premier, pas dans l'ordre alphabétique."],
+       ["compteur remis à 1","        compte[m] += 1","        compte[m] = 1","compte[m] += 1 ajoute 1 à la valeur déjà là : un mot vu trois fois vaut 3."],
+       ["len compte les mots de la liste","print(len(compte))","print(len(mots))","len(compte) est le nombre de clés, donc de mots différents, pas la longueur de la liste."]]};}],
+ ["fonction","fonction et return",R=>{const T=R.choix([["x % 2 == 0","x // 2","3 * x + 1",x=>x%2===0?Math.floor(x/2):3*x+1],["x > 10","x - 10","x * 2",x=>x>10?x-10:x*2],["x % 3 == 0","x // 3","x + 2",x=>x%3===0?x/3:x+2]]);
+   const [c,r1,r2,f]=T,a=R.ent(2,15),b=R.ent(2,15),fb=f(b);
+   if(R.ent(0,1)){const x=R.ent(2,6),y=R.ent(2,6),z=R.ent(2,6),w=R.ent(2,6);
+     return {pas:[["def calcule(a, b):","On définit calcule : rien ne s'affiche tant qu'on ne l'appelle pas."],["    print(a + b)","À chaque appel, la fonction affiche a + b…"],["    return a * b","… puis renvoie a * b à celui qui l'a appelée."],
+         [`r = calcule(${x}, ${y})`,`L'appel affiche ${x+y}, et r reçoit ${x*y}.`],["print(r)",`Affiche r : ${x*y}.`],[`print(calcule(${z}, ${w}) + 1)`,`L'appel affiche d'abord ${z+w}, puis renvoie ${z*w} ; on affiche ${z*w} + 1 = ${z*w+1}.`]],
+       mut:[["affichage dans la fonction oublié","    print(a + b)\n","","Chaque appel fait le print de la fonction : il affiche a + b avant de renvoyer a * b."],
+         ["valeur renvoyée confondue avec l'affichage","    return a * b","    return a + b","print affiche a + b, mais la fonction renvoie a * b : r vaut le produit."]]};}
+   return {pas:[["def f(x):","On définit f : rien ne s'affiche tant qu'on ne l'appelle pas."],[`    if ${c}:\n        return ${r1}`,`Si ${c}, f renvoie ${r1} et s'arrête là.`],[`    return ${r2}`,`Sinon, f renvoie ${r2}.`],
+       [`print(f(${a}))`,`f(${a}) = ${f(a)}.`],[`print(f(f(${b})))`,`D'abord f(${b}) = ${fb}, puis f(${fb}) = ${f(fb)}.`]],
+     mut:[["un seul appel au lieu de deux",`print(f(f(${b})))`,`print(f(${b}))`,`f(f(${b})) : on calcule d'abord f(${b}), puis f de ce résultat.`],
+       ["return n'arrête pas la fonction",`        return ${r1}`,`        ${r1}`,`return renvoie la valeur et arrête la fonction : quand ${c}, la ligne return ${r2} n'est pas faite.`]]};}],
+ ["mot","tranches d'une chaîne",R=>{const m=R.choix(MOT8),n=m.length,a=R.ent(1,3),b=R.ent(a+2,n-1);
+   const V=R.mel([["print(mot[0] + mot[-1])",`mot[0] est la première lettre, mot[-1] la dernière : ${m[0]}${m[n-1]}.`],["print(mot[::-1])","[::-1] parcourt la chaîne à l'envers : c'est le mot retourné."],
+     [`print(mot[${a}:${b}])`,`De l'indice ${a} inclus à l'indice ${b} exclu : ${m.slice(a,b)}.`],["print(mot.upper())","upper() met tout en majuscules."],["print(len(mot) * 2)",`len(mot) vaut ${n}, fois 2 : ${2*n}.`],["print(mot * 2)","Une chaîne fois 2 : la chaîne répétée deux fois, collée."]]).slice(0,R.ent(3,4));
+   return {pas:[[`mot = "${m}"`,`Une chaîne de ${n} lettres, d'indices 0 à ${n-1}.`],...V],
+     mut:[["indices comptés à partir de 1",`mot[${a}:${b}]`,`mot[${a-1}:${b-1}]`,`La première lettre est mot[0] : mot[${a}:${b}] commence à la ${rang8(a+1)} lettre.`],
+       ["fin de la tranche comprise",`mot[${a}:${b}]`,`mot[${a}:${b+1}]`,`mot[${a}:${b}] s'arrête juste avant l'indice ${b}.`],
+       ["[::-1] mal lu","mot[::-1]","mot[::1]","[::-1] avance d'un pas de -1, depuis la fin : la chaîne est lue à l'envers."],
+       ["dernière lettre mal lue","mot[-1]","mot[-2]","mot[-1] est la dernière lettre."]]};}],
+ ["construire","construire une liste",R=>{const N=uniq8(R,R.ent(5,6),1,20),C=R.choix([["n % 2 == 0","pairs","n % 2 == 1"],["n % 2 == 1","impairs","n % 2 == 0"],[`n > ${R.ent(6,12)}`,"plus grands",null]]),k=R.ent(2,5),t=R.choix([`n * ${k}`,`n + ${k}`,"n"]);
+   if(!N.some(n=>C[0].includes("%")?n%2===(C[0].includes("== 0")?0:1):n>+C[0].split(" ")[2]))return null;
+   return {pas:[[`nombres = ${ls8(N)}`,"La liste de départ."],["resultat = []","Une liste vide, avant la boucle."],["for n in nombres:","Un tour par nombre."],
+       [`    if ${C[0]}:`,C[0].includes("%")?`n % 2 est le reste de la division par 2 : 0 pour un nombre pair, 1 pour un impair.`:`On ne garde que les nombres ${C[0].replace("n ","")}.`],
+       [`        resultat.append(${t})`,t==="n"?"append ajoute le nombre à la fin de resultat.":`append ajoute ${t} à la fin de resultat, dans l'ordre des tours.`],
+       ["print(resultat)","La liste construite."],["print(len(resultat))","Son nombre d'éléments."]],
+     mut:[["test oublié",`    if ${C[0]}:`,"    if True:","Le if trie : seuls les nombres qui vérifient le test sont ajoutés."],
+       ...(C[2]?[["pairs et impairs confondus",C[0],C[2],"n % 2 == 0 est vrai pour un nombre pair (le reste de la division par 2 est 0)."]]:[]),
+       ...(t!=="n"?[["valeur ajoutée sans le calcul",`resultat.append(${t})`,"resultat.append(n)",`On ajoute ${t}, pas n.`]]:[])]};}],
+ ["range","range",R=>{const a=R.ent(1,4),b=a+R.ent(2,4),n=R.ent(2,4),k=R.ent(2,5),S=Array.from({length:b-a},(_,i)=>a+i);
+   return {pas:[["total = 0","total part de 0."],[`for i in range(${a}, ${b}):\n    total += i`,`range(${a}, ${b}) donne ${S.join(", ")} : ${b} n'y est pas.`],["print(total)",`${S.join(" + ")} = ${S.reduce((x,y)=>x+y,0)}.`],
+       [`for i in range(${n}):\n    print(i * ${k})`,`range(${n}) donne 0 à ${n-1} : ${n} tours, et le premier i vaut 0.`]],
+     mut:[["fin du range comprise",`range(${a}, ${b})`,`range(${a}, ${b+1})`,`range(${a}, ${b}) s'arrête juste avant ${b}.`],
+       ["range(n) commence à 1",`range(${n})`,`range(1, ${n+1})`,`range(${n}) commence à 0 et finit à ${n-1}.`]]};}]
+];
+
+/* palier 2 : écrire une petite fonction */
+const ret8=(fn,v)=>["return dans la boucle",`\n    return ${v}`,`\n        return ${v}`,`Le return est dans la boucle : la fonction s'arrête au premier tour. Il va après la boucle, au même retrait que le for.`];
+const prt8=v=>["print au lieu de return",`    return ${v}`,`    print(${v})`,`print affiche la valeur, mais ne la renvoie pas : celui qui appelle la fonction reçoit None. Il faut return ${v}.`];
+const raz8=(init,boucle)=>["valeur de départ remise à chaque tour",`    ${init}\n    ${boucle}`,`    ${boucle}\n        ${init}`,`${init} est dans la boucle : on repart de zéro à chaque tour. Cette ligne se met avant la boucle.`];
+const PY2=[
+ ["maximum","maximum ou minimum sans max()",R=>{const mx=R.ent(0,1)===0,fn=mx?"maximum":"minimum",o=mx?">":"<",bi=mx?"max":"min";
+   const L1=uniq8(R,R.ent(4,5),1,40),L2=uniq8(R,R.ent(3,4),1,30).map(x=>mx?-x:x+50),L3=uniq8(R,4,1,50).sort((a,b)=>mx?b-a:a-b),L4=L3.slice().reverse(),L5=[R.ent(1,20)],L6=uniq8(R,5,-20,20);
+   return {fn,sig:`${fn}(liste)`,dit:`renvoie le ${mx?"plus grand":"plus petit"} élément d'une liste de nombres non vide, sans utiliser ${bi}()`,
+     appels:[L1,L2,L3,L4,L5,L6].map(l=>`${fn}(${ls8(l)})`),montre:2,
+     pas:[[`def ${fn}(liste):`,"La fonction reçoit la liste.",0.5],["    m = liste[0]",`m retient le ${mx?"plus grand":"plus petit"} vu jusqu'ici. On part du premier élément, pas de 0 : avec des nombres tous ${mx?"négatifs":"plus grands que 0"}, 0 serait faux.`],
+       ["    for v in liste:","On regarde chaque valeur."],[`        if v ${o} m:\n            m = v`,`Une valeur ${mx?"plus grande":"plus petite"} que m devient le nouveau m.`],["    return m","Après la boucle, au même retrait que le for : on renvoie m.",1]],
+     sans:[[/\b(max|min)\s*\(/,`L'énoncé interdit ${bi}() : écris la boucle toi-même.`],[/\bsort(ed)?\s*\(/,"Écris la boucle toi-même, sans trier : c'est ce que le sujet note."]],
+     mut:[["départ à 0","    m = liste[0]","    m = 0",`Avec m = 0 au départ, une liste de nombres tous ${mx?"négatifs":"plus grands que 0"} donne 0 : pars du premier élément, liste[0].`],ret8(fn,"m"),
+       [mx?"plus petit au lieu de plus grand":"plus grand au lieu de plus petit",`v ${o} m`,`v ${mx?"<":">"} m`,"Le test garde la mauvaise valeur : la comparaison est dans l'autre sens."],prt8("m")],
+     oracle:`def ${fn}(liste):\n    return ${bi}(liste)`};}],
+ ["moyenne","moyenne sans sum()",R=>{const A=[[R.ent(8,16),R.ent(8,16)],uniq8(R,3,5,19),uniq8(R,4,0,20),[R.ent(0,20)],uniq8(R,5,1,20),[10,R.ent(11,19)]];
+   return {fn:"moyenne",sig:"moyenne(liste)",dit:"renvoie la moyenne d'une liste de nombres non vide, sans utiliser sum()",appels:A.map(l=>`moyenne(${ls8(l)})`),montre:2,
+     pas:[["def moyenne(liste):","La fonction reçoit la liste.",0.5],["    somme = 0","La somme part de 0, avant la boucle."],["    for v in liste:\n        somme += v","On ajoute chaque valeur."],
+       ["    return somme / len(liste)","Après la boucle : la somme divisée par le nombre d'éléments. / donne un nombre à virgule (12.0, 12.5…).",1.5]],
+     sans:[[/\bsum\s*\(/,"Écris la boucle toi-même, sans sum()."]],
+     mut:[["division entière","somme / len(liste)","somme // len(liste)","// est la division entière : 12.5 deviendrait 12. La moyenne se calcule avec /."],raz8("somme = 0","for v in liste:"),ret8("moyenne","somme / len(liste)"),prt8("somme / len(liste)")],
+     oracle:"def moyenne(liste):\n    return sum(liste) / len(liste)"};}],
+ ["palindrome","palindrome, comme en janvier 2024",R=>{const P=R.mel(["radar","kayak","ressasser","elle","non","rotor","sagas","stats"]).slice(0,3),N=R.mel(["python","rare","maison","kayaks","radars","abca","ete"]).slice(0,3);
+   const m=P[0],faux=m.slice(0,1)+(m[1]==="z"?"y":"z")+m.slice(2);
+   const A=[P[0],N[0],P[1],N[1],faux,R.choix(["a",""]),P[2],N[2]];
+   return {fn:"palindrome",sig:"palindrome(chaine)",dit:"renvoie True si la chaîne se lit pareil dans les deux sens, et False sinon, sans utiliser reverse()",appels:A.map(s=>`palindrome(${q8(s)})`),montre:2,
+     pas:[["def palindrome(chaine):","La fonction reçoit la chaîne.",0.5],["    for pos in range(len(chaine)):","pos parcourt les indices de la chaîne, de 0 à len(chaine) - 1."],
+       ["        if chaine[pos] != chaine[len(chaine) - pos - 1]:\n            return False","La lettre en face de pos est à l'indice len(chaine) - pos - 1. Une seule différence suffit pour répondre False.",1.5],
+       ["    return True","Après la boucle : aucune différence, c'est un palindrome."]],
+     alt:["def palindrome(chaine):\n    return chaine == chaine[::-1]"],
+     sans:[[/\breverse(d)?\s*\(/,"L'énoncé interdit reverse() : compare les lettres toi-même (ou avec chaine[::-1])."]],
+     mut:[["indice qui sort de la chaîne","len(chaine) - pos - 1","len(chaine) - pos","La lettre en face de pos est chaine[len(chaine) - pos - 1] : sans le - 1, au premier tour on lit chaine[len(chaine)], qui n'existe pas."],
+       ["return True dans la boucle","\n    return True","\n        return True","La fonction répond True dès que la première lettre est égale à la dernière : on ne peut dire True qu'après avoir tout comparé, donc après la boucle."],
+       ["test à l'envers","chaine[pos] != chaine","chaine[pos] == chaine","Le test doit chercher une différence : dès que deux lettres en face sont différentes, ce n'est pas un palindrome."]],
+     oracle:"def palindrome(chaine):\n    return list(chaine) == list(reversed(chaine))"};}],
+ ["intersection","intersection, comme en janvier 2023",R=>{const paire=()=>{const C=uniq8(R,R.ent(1,3),1,30),A=uniq8(R,R.ent(2,4),31,60),B=uniq8(R,R.ent(2,3),61,90),l1=R.mel([...C,...A,C[0]]),l2=R.mel([...C,...B]);return [l1,l2];};
+   const P=[paire(),paire(),[uniq8(R,3,1,20),uniq8(R,3,21,40)],paire(),[[R.ent(1,9)],[]],paire()];
+   return {fn:"intersection",sig:"intersection(liste1, liste2)",dit:"renvoie la liste des éléments présents à la fois dans liste1 et dans liste2, sans doublon, dans l'ordre de liste1",
+     appels:P.map(([a,b])=>`intersection(${ls8(a)}, ${ls8(b)})`),montre:2,
+     pas:[["def intersection(liste1, liste2):","La fonction reçoit les deux listes.",0.5],["    encommun = []","La liste résultat, vide au départ."],["    for v in liste1:","On parcourt liste1 : le résultat suit son ordre."],
+       ["        if v in liste2 and v not in encommun:\n            encommun.append(v)","On garde v s'il est aussi dans liste2 ; not in encommun évite de l'ajouter deux fois.",1.5],["    return encommun","Après la boucle."]],
+     alt:["def intersection(liste1, liste2):\n    encommun = []\n    for v in liste1:\n        if v in liste2:\n            if v not in encommun:\n                encommun.append(v)\n    return encommun"],
+     mut:[["doublons gardés"," and v not in encommun","","Un élément présent deux fois dans liste1 serait ajouté deux fois : and v not in encommun l'évite."],ret8("intersection","encommun"),raz8("encommun = []","for v in liste1:"),prt8("encommun")],
+     oracle:"def intersection(liste1, liste2):\n    return [v for v in dict.fromkeys(liste1) if v in liste2]"};}],
+ ["repetitions","enlever les répétitions, comme en janvier 2022",R=>{const liste=()=>{const V=uniq8(R,R.ent(3,4),1,30),L=[];V.forEach(v=>{for(let k=R.ent(1,3);k;k--)L.push(v);});const r=V[R.ent(0,V.length-2)];L.push(r,r);return L;};
+   const A=[[2,23,23,7,7,7,4,9,9,7],liste(),liste(),[],[R.ent(1,9)],liste()];
+   return {fn:"sans_repetitions",sig:"sans_repetitions(liste)",dit:"renvoie une nouvelle liste où chaque suite de valeurs égales qui se suivent n'est gardée qu'une fois (les nombres sont des entiers positifs)",
+     appels:A.map(l=>`sans_repetitions(${ls8(l)})`),montre:2,
+     pas:[["def sans_repetitions(liste):","La fonction reçoit la liste.",0.5],["    nliste = []\n    mem = -1","nliste est le résultat ; mem retient la dernière valeur gardée. -1 ne peut pas être dans la liste (entiers positifs)."],
+       ["    for n in liste:","Un tour par valeur."],["        if n != mem:\n            nliste.append(n)\n            mem = n","On garde n s'il est différent de la valeur d'avant, et il devient la nouvelle mémoire.",1.5],["    return nliste","Après la boucle."]],
+     alt:["def sans_repetitions(liste):\n    nliste = []\n    for n in liste:\n        if len(nliste) == 0 or n != nliste[-1]:\n            nliste.append(n)\n    return nliste"],
+     mut:[["toutes les répétitions enlevées","if n != mem:","if n not in nliste:","Avec not in, une valeur qui revient plus loin serait perdue (le dernier 7 de l'exemple) : on compare seulement à la valeur d'avant. Le corrigé officiel le dit."],
+       ["mémoire jamais mise à jour","\n            mem = n","","mem doit retenir la dernière valeur gardée : sans mem = n, elle reste -1 et tout passe."],
+       ["nliste[-1] sur une liste vide","if n != mem:","if n != nliste[-1]:","Au premier tour, nliste est vide : nliste[-1] n'existe pas. D'où la variable mem (ou le test len(nliste) == 0 d'abord)."],prt8("nliste")],
+     oracle:"def sans_repetitions(liste):\n    return [v for i, v in enumerate(liste) if i == 0 or v != liste[i - 1]]"};}],
+ ["compter","compter sans count()",R=>{
+   if(R.ent(0,1)){const W=R.mel(["python","banane","rythme","oiseau","bcd","informatique","lit","aeiouy"]).slice(0,5).concat([""]);
+     return {fn:"nb_voyelles",sig:"nb_voyelles(mot)",dit:"renvoie le nombre de voyelles (a, e, i, o, u, y) du mot, écrit en minuscules sans accent",appels:W.map(m=>`nb_voyelles(${q8(m)})`),montre:2,
+       pas:[["def nb_voyelles(mot):","La fonction reçoit le mot.",0.5],["    n = 0","Le compteur part de 0, avant la boucle."],["    for lettre in mot:","Une boucle for sur une chaîne donne ses lettres une par une."],
+         ['        if lettre in "aeiouy":\n            n += 1',"in sur une chaîne teste si la lettre en fait partie.",1.5],["    return n","Après la boucle."]],
+       mut:[["une lettre comparée à toute la chaîne",'lettre in "aeiouy"','lettre == "aeiouy"','lettre == "aeiouy" compare une lettre à la chaîne entière, jamais égales : il faut in.'],raz8("n = 0","for lettre in mot:"),ret8("nb_voyelles","n"),["compteur jamais augmenté","            n += 1","            n = 1","n += 1 ajoute 1 ; n = 1 remet le compteur à 1."]],
+       oracle:'def nb_voyelles(mot):\n    return sum(1 for c in mot if c in "aeiouy")'};}
+   const x=R.ent(1,9),L=()=>Array.from({length:R.ent(4,7)},()=>R.choix([x,x,R.ent(1,9),R.ent(1,9)]));
+   const A=[[L(),x],[L(),x],[[x,x,x],x],[[x+1,x+2],x],[[],x],[L(),x+1]];
+   return {fn:"compter",sig:"compter(liste, x)",dit:"renvoie le nombre de fois où x apparaît dans la liste, sans utiliser count()",appels:A.map(([l,v])=>`compter(${ls8(l)}, ${v})`),montre:2,
+     pas:[["def compter(liste, x):","La fonction reçoit la liste et la valeur cherchée.",0.5],["    n = 0","Le compteur part de 0, avant la boucle."],["    for v in liste:","Un tour par valeur."],
+       ["        if v == x:\n            n += 1","== compare ; une valeur égale à x compte une fois de plus.",1.5],["    return n","Après la boucle."]],
+     sans:[[/\.count\s*\(/,"L'énoncé interdit count() : écris la boucle toi-même."]],
+     mut:[["test à l'envers","v == x","v != x","On compte les valeurs égales à x : ==."],raz8("n = 0","for v in liste:"),ret8("compter","n"),prt8("n")],
+     oracle:"def compter(liste, x):\n    return liste.count(x)"};}],
+ ["filtrer","construire la liste de ceux qui vérifient un test",R=>{const C=R.choix([["pairs","nombres pairs","x % 2 == 0","x % 2 == 1"],["positifs","nombres strictement positifs","x > 0","x < 0"],["impairs","nombres impairs","x % 2 == 1","x % 2 == 0"]]);
+   const L=()=>uniq8(R,R.ent(4,6),-9,20),A=[L(),L(),L(),[],[R.choix([1,3,-5])],L()];
+   return {fn:C[0],sig:`${C[0]}(liste)`,dit:`renvoie la liste des ${C[1]} de la liste, dans le même ordre`,appels:A.map(l=>`${C[0]}(${ls8(l)})`),montre:2,
+     pas:[[`def ${C[0]}(liste):`,"La fonction reçoit la liste.",0.5],["    resultat = []","Le résultat, vide au départ, avant la boucle."],["    for x in liste:","Un tour par valeur."],
+       [`        if ${C[2]}:\n            resultat.append(x)`,C[2].includes("%")?"x % 2 est le reste de la division par 2 : 0 si x est pair, 1 s'il est impair (en Python, même pour un négatif).":"On ne garde que les x qui vérifient le test.",1.5],["    return resultat","Après la boucle."]],
+     mut:[["test à l'envers",C[2],C[3],"La condition garde les mauvais éléments."],raz8("resultat = []","for x in liste:"),ret8(C[0],"resultat"),["liste remplacée au lieu d'agrandie","resultat.append(x)","resultat = [x]","resultat = [x] remplace toute la liste ; append(x) ajoute à la fin."]],
+     oracle:`def ${C[0]}(liste):\n    return [x for x in liste if ${C[2]}]`};}],
+ ["inverse","inverser une liste sans reverse()",R=>{const L=()=>uniq8(R,R.ent(3,6),1,50),A=[L(),L(),[R.ent(1,9)],[],L(),["a","b","c"]];
+   return {fn:"inverse",sig:"inverse(liste)",dit:"renvoie une nouvelle liste avec les éléments de la liste dans l'ordre inverse, sans utiliser reverse(), reversed() ni [::-1]",appels:A.map(l=>`inverse(${ls8(l)})`),montre:2,
+     pas:[["def inverse(liste):","La fonction reçoit la liste.",0.5],["    resultat = []","Le résultat, vide au départ."],
+       ["    for i in range(len(liste) - 1, -1, -1):","i va du dernier indice, len(liste) - 1, jusqu'à 0 : range s'arrête juste avant -1, et le pas -1 fait descendre.",1.5],
+       ["        resultat.append(liste[i])","On ajoute les éléments en partant de la fin."],["    return resultat","Après la boucle."]],
+     alt:["def inverse(liste):\n    resultat = []\n    for x in liste:\n        resultat.insert(0, x)\n    return resultat"],
+     sans:[[/\breverse(d)?\s*\(|\[\s*:\s*:\s*-\s*1\s*\]/,"L'énoncé interdit reverse(), reversed() et [::-1] : écris la boucle toi-même."]],
+     mut:[["premier élément oublié","range(len(liste) - 1, -1, -1)","range(len(liste) - 1, 0, -1)","range s'arrête juste avant la borne de fin : avec 0, l'indice 0 n'est jamais atteint. Pour descendre jusqu'à 0, la borne est -1."],
+       ["indice qui sort de la liste","range(len(liste) - 1, -1, -1)","range(len(liste), -1, -1)","Le dernier indice est len(liste) - 1 : liste[len(liste)] n'existe pas."],ret8("inverse","resultat")],
+     oracle:"def inverse(liste):\n    return liste[::-1]"};}],
+ ["plus_long","le mot le plus long",R=>{const W=()=>{const L=R.mel("chat chien oie lapin cheval rat poule souris".split(" ")).slice(0,R.ent(3,5));return L;};
+   const A=[W(),W(),["ab","cd","e"],["un"],W(),["zz","aaa","bbb"]];
+   return {fn:"plus_long",sig:"plus_long(mots)",dit:"renvoie le mot le plus long d'une liste de mots non vide (le premier rencontré s'il y en a plusieurs de la même longueur)",appels:A.map(l=>`plus_long(${ls8(l)})`),montre:2,
+     pas:[["def plus_long(mots):","La fonction reçoit la liste.",0.5],["    meilleur = mots[0]","Le plus long vu jusqu'ici : on part du premier mot."],["    for m in mots:","Un tour par mot."],
+       ["        if len(m) > len(meilleur):\n            meilleur = m","On compare les longueurs ; > strict garde le premier en cas d'égalité.",1.5],["    return meilleur","Après la boucle."]],
+     sans:[[/\b(max|sorted|sort)\s*\(/,"Écris la boucle toi-même, sans max() ni tri."]],
+     mut:[["le dernier gardé en cas d'égalité","len(m) > len(meilleur)","len(m) >= len(meilleur)","Avec >=, un mot de même longueur remplace le précédent : on garderait le dernier, pas le premier."],
+       ["mots comparés par ordre alphabétique","len(m) > len(meilleur)","m > meilleur","m > meilleur compare les mots dans l'ordre alphabétique ; on veut comparer len(m) et len(meilleur)."],ret8("plus_long","meilleur")],
+     oracle:"def plus_long(mots):\n    return max(mots, key=len)"};}],
+ ["arithmetique","factorielle ou nombre premier",R=>{
+   if(R.ent(0,1)){const A=R.mel([0,1,3,5,6,7,8,10]).slice(0,6);
+     return {fn:"factorielle",sig:"factorielle(n)",dit:"renvoie n! = 1 × 2 × … × n pour un entier n positif ou nul (0! vaut 1)",appels:A.map(n=>`factorielle(${n})`),montre:2,
+       pas:[["def factorielle(n):","La fonction reçoit n.",0.5],["    resultat = 1","Le produit part de 1 (avec 0, tout resterait à 0)."],["    for i in range(2, n + 1):\n        resultat *= i","i va de 2 à n : range(2, n + 1) s'arrête juste avant n + 1.",1.5],["    return resultat","Après la boucle. Pour n = 0 ou 1, la boucle ne fait aucun tour : 1."]],
+       alt:["def factorielle(n):\n    if n <= 1:\n        return 1\n    return n * factorielle(n - 1)"],
+       mut:[["n oublié dans le produit","range(2, n + 1)","range(2, n)","range(2, n) s'arrête avant n : il manque le dernier facteur."],["produit qui part de 0","    resultat = 1","    resultat = 0","Un produit part de 1 : 0 × … donne toujours 0."],ret8("factorielle","resultat")],
+       oracle:"import math\ndef factorielle(n):\n    return math.factorial(n)"};}
+   const A=R.mel([1,2,7,9,15,17,21,25,29,31]).slice(0,7);if(!A.includes(1))A[R.ent(0,6)]=1;
+   return {fn:"est_premier",sig:"est_premier(n)",dit:"renvoie True si l'entier n est premier (il a exactement deux diviseurs, 1 et lui-même), et False sinon",appels:A.map(n=>`est_premier(${n})`),montre:2,
+     pas:[["def est_premier(n):","La fonction reçoit n.",0.5],["    if n < 2:\n        return False","0 et 1 ne sont pas premiers."],["    for d in range(2, n):\n        if n % d == 0:\n            return False","Un diviseur d entre 2 et n - 1 suffit pour répondre False : n % d == 0 veut dire que d divise n.",1.5],["    return True","Après la boucle : aucun diviseur trouvé."]],
+     mut:[["1 compté comme premier","    if n < 2:\n        return False\n","","1 n'a qu'un diviseur : il n'est pas premier. La boucle ne fait aucun tour pour n = 1, d'où le test n < 2."],
+       ["return True dans la boucle","\n    return True","\n        return True","La fonction répond True dès le premier d qui ne divise pas : on ne peut dire True qu'après avoir essayé tous les d, après la boucle."],
+       ["diviseur 1 essayé","range(2, n)","range(1, n)","Tout nombre est divisible par 1 : les diviseurs à essayer commencent à 2."]],
+     oracle:"def est_premier(n):\n    return n > 1 and all(n % d for d in range(2, n))"};}]
+];
+
+/* palier 3 : un fichier et un dictionnaire */
+const lignes8=L=>L.join("\n")+"\n";
+const PY3=[
+ ["mots","compter les mots d'un fichier",R=>{const V=R.mel("le chat la souris un chien mange dort".split(" ")).slice(0,5),txt=()=>Array.from({length:R.ent(2,3)},()=>Array.from({length:R.ent(3,4)},()=>R.choix(V)).join(" "));
+   const F=[txt(),txt(),txt()];
+   return {nom:"mots.py",dit:"lit le fichier dont le nom est passé en paramètre, crée un dictionnaire mots où chaque mot (les mots sont séparés par une espace) a pour valeur son nombre d'apparitions, puis affiche ce dictionnaire",
+     vers:F.map(f=>({A:["texte.txt"],T:arboDe([{n:"texte.txt",c:lignes8(f)}])})),montre:["texte.txt"],
+     pas:[["import sys","Pour lire le paramètre : sys.argv[1].",0.5],["mots = {}","Le dictionnaire, vide au départ.",0.5],["with open(sys.argv[1]) as fd:\n    for ligne in fd:","On ouvre le fichier passé en paramètre et on le lit ligne par ligne."],
+       ['        for mot in ligne.strip().split(" "):',"strip() enlève le retour à la ligne, split(\" \") coupe aux espaces."],["            if mot in mots:\n                mots[mot] += 1\n            else:\n                mots[mot] = 1","Le mot déjà vu gagne 1 ; un mot nouveau devient une clé qui vaut 1.",1.5],["print(mots)","Les clés s'affichent dans l'ordre où elles ont été créées.",0.5]],
+     alt:["import sys\nmots = {}\nfd = open(sys.argv[1])\nfor ligne in fd:\n    for mot in ligne.split():\n        mots[mot] = mots.get(mot, 0) + 1\nfd.close()\nprint(mots)"],
+     mut:[["strip() oublié",'ligne.strip().split(" ")','ligne.split(" ")',"Sans strip(), le dernier mot de chaque ligne garde son retour à la ligne : 'chat\\n' et 'chat' deviennent deux clés différentes."],
+       ["clé pas encore créée","            if mot in mots:\n                mots[mot] += 1\n            else:\n                mots[mot] = 1","            mots[mot] += 1","mots[mot] += 1 lit d'abord mots[mot] : la première fois, la clé n'existe pas (KeyError). Teste if mot in mots, sinon mets mots[mot] = 1."],
+       ["compteur jamais augmenté","mots[mot] += 1","mots[mot] = 1","mots[mot] = 1 remet la valeur à 1 : un mot vu trois fois doit valoir 3."],
+       ["mauvais séparateur",'split(" ")','split(",")',"Les mots sont séparés par des espaces : split(\" \"). Avec split(\",\"), toute la ligne reste un seul morceau."]]};}],
+ ["images","le fichier images.csv, comme en janvier 2026",R=>{const E=["jpg","png","gif","webp","jpeg","bmp"],f=()=>{const e=R.mel(E).slice(0,R.ent(3,4));return [e.join(","),e.map(()=>R.ent(0,30)).join(",")];};
+   const F=[f(),f(),f()];
+   return {nom:"stats.py",dit:"lit le fichier images.csv du dossier courant (première ligne : des extensions ; deuxième ligne : le nombre d'images de chaque extension, séparés par des virgules), crée un dictionnaire statistiques avec les extensions en clés et ces nombres (des entiers) en valeurs, puis l'affiche",
+     vers:F.map(f=>({A:[],T:arboDe([{n:"images.csv",c:lignes8(f)}])})),montre:["images.csv"],
+     pas:[["statistiques = {}","Le dictionnaire, vide au départ.",0.5],['with open("images.csv") as fd:\n    lignes = fd.readlines()',"readlines() donne la liste des lignes : lignes[0] et lignes[1]."],
+       ['    images = lignes[0].strip().split(",")\n    nombres = lignes[1].strip().split(",")',"Chaque ligne, sans son retour à la ligne, coupée aux virgules.",1.5],
+       ["    for i in range(len(images)):\n        statistiques[images[i]] = int(nombres[i])","L'extension d'indice i va avec le nombre d'indice i ; int() parce qu'on lit du texte.",1.5],["print(statistiques)","Le dictionnaire.",0.5]],
+     alt:['statistiques = {}\nfd = open("images.csv")\nimages = fd.readline().strip().split(",")\nnombres = fd.readline().strip().split(",")\nfd.close()\nfor i in range(len(images)):\n    statistiques[images[i]] = int(nombres[i])\nprint(statistiques)'],
+     mut:[["int() oublié","int(nombres[i])","nombres[i]","Ce qu'on lit dans un fichier est du texte : sans int(), la valeur est '10', pas le nombre 10."],
+       ["lignes inversées","images = lignes[0]","images = lignes[1]","La première ligne, lignes[0], porte les extensions ; la deuxième, lignes[1], les nombres."],
+       ["strip() oublié",'lignes[0].strip().split(",")','lignes[0].split(",")',"Sans strip(), la dernière extension garde son retour à la ligne : la clé devient 'gif\\n'."],
+       ["dernier élément oublié","range(len(images))","range(len(images) - 1)","range(len(images)) donne tous les indices, de 0 à len(images) - 1 : avec - 1 en plus, le dernier est oublié."]]};}],
+ ["modeles","les modèles d'ordinateurs, comme en janvier 2024",R=>{const M=R.mel(["DELL Precision","Lenovo M900","HP Elite","Asus Zen","Acer Swift"]).slice(0,3),f=()=>Array.from({length:R.ent(2,3)},()=>R.mel(M).slice(0,R.ent(1,3)).map(m=>m+"="+R.ent(1,30)).join(","));
+   const F=[f(),f(),f()];
+   return {nom:"modeles.py",dit:"lit le fichier passé en paramètre, dont chaque ligne est de la forme « DELL Precision=25,Lenovo M900=15 », crée un dictionnaire dico qui associe à chaque modèle le nombre total d'ordinateurs de ce modèle (toutes lignes confondues), puis l'affiche",
+     vers:F.map(f=>({A:["parc.txt"],T:arboDe([{n:"parc.txt",c:lignes8(f)}])})),montre:["parc.txt"],
+     pas:[["import sys\ndico = {}","Le paramètre, et le dictionnaire vide.",0.5],["with open(sys.argv[1]) as fd:\n    for ligne in fd:","Le fichier, ligne par ligne."],
+       ['        for morceau in ligne.strip().split(","):',"Premier découpage, à la virgule : un morceau par modèle."],
+       ['            ordi = morceau.split("=")[0]\n            nombre = int(morceau.split("=")[1])',"Second découpage, au signe = : le modèle, puis le nombre, en entier pour pouvoir l'additionner.",1.5],
+       ["            if ordi in dico:\n                dico[ordi] += nombre\n            else:\n                dico[ordi] = nombre","On additionne les quantités : on ne compte pas les lignes.",1.5],["print(dico)","Le dictionnaire.",0.5]],
+     alt:['import sys\ndico = {}\nwith open(sys.argv[1]) as fd:\n    for ligne in fd:\n        for morceau in ligne.strip().split(","):\n            ordi, nombre = morceau.split("=")\n            dico[ordi] = dico.get(ordi, 0) + int(nombre)\nprint(dico)'],
+     mut:[["int() oublié",'int(morceau.split("=")[1])','morceau.split("=")[1]',"Sans int(), les nombres restent du texte : '25' + '15' donne '2515', collés."],
+       ["valeur remplacée au lieu d'additionnée","dico[ordi] += nombre","dico[ordi] = nombre","dico[ordi] = nombre remplace la quantité déjà là : il faut l'ajouter, +=."],
+       ["compte des lignes au lieu des quantités","dico[ordi] += nombre","dico[ordi] += 1","On veut le nombre d'ordinateurs : on additionne les nombres écrits dans le fichier."]]};}],
+ ["systemes","les systèmes d'un parc, comme en janvier 2025",R=>{const S=R.mel(["windows11","ubuntu-NobleNumbat","ubuntu-JammyJellyfish","debian12","fedora40"]).slice(0,3),f=()=>{let k=R.ent(1,40);return Array.from({length:R.ent(3,4)},()=>["PC"+(k++),...R.mel(S).slice(0,R.ent(1,2))].join(","));};
+   const F=[f(),f(),f()];
+   return {nom:"parc.py",dit:"lit le fichier parc.csv du dossier courant (sur chaque ligne : un ordinateur, puis ses systèmes, séparés par des virgules), crée un dictionnaire systemes qui associe à chaque système la liste des ordinateurs qui l'ont, puis l'affiche",
+     vers:F.map(f=>({A:[],T:arboDe([{n:"parc.csv",c:lignes8(f)}])})),montre:["parc.csv"],
+     pas:[["systemes = {}","Le dictionnaire, vide au départ.",0.5],['with open("parc.csv") as fd:\n    for ligne in fd:',"Le fichier, ligne par ligne."],
+       ['        data = ligne.strip().split(",")\n        ordi = data[0]',"Le premier champ est l'ordinateur.",1],["        for systeme in data[1:]:","data[1:] : tous les champs à partir du deuxième, les systèmes."],
+       ["            if systeme in systemes:\n                systemes[systeme].append(ordi)\n            else:\n                systemes[systeme] = [ordi]","Système déjà vu : on ajoute l'ordinateur à sa liste ; sinon on crée la liste [ordi].",1.5],["print(systemes)","Le dictionnaire de listes.",0.5]],
+     alt:['systemes = {}\nfd = open("parc.csv")\nfor ligne in fd:\n    data = ligne.strip().split(",")\n    for systeme in data[1:]:\n        if systeme not in systemes:\n            systemes[systeme] = []\n        systemes[systeme].append(data[0])\nfd.close()\nprint(systemes)'],
+     mut:[["l'ordinateur pris pour un système","data[1:]","data","data[1:] saute le premier champ : l'ordinateur n'est pas un système."],
+       ["liste remplacée au lieu d'agrandie","systemes[systeme].append(ordi)","systemes[systeme] = [ordi]","systemes[systeme] = [ordi] remplace la liste : il faut append(ordi) pour ajouter."],
+       ["valeur qui n'est pas une liste","systemes[systeme] = [ordi]","systemes[systeme] = ordi","La valeur doit être une liste, [ordi] : une chaîne n'a pas de append."],
+       ["strip() oublié",'ligne.strip().split(",")','ligne.split(",")',"Sans strip(), le dernier système de chaque ligne garde son retour à la ligne : 'debian12\\n' devient une clé à part."]]};}],
+ ["recus","les reçus d'un fichier de notes",R=>{const f=()=>{const N=R.mel(PRE8).slice(0,R.ent(3,5)).map(n=>n+","+R.choix([R.ent(2,19),R.ent(2,19),10]));if(!N.some(x=>/,10$/.test(x)))N[0]=N[0].replace(/,\d+$/,",10");return N;};
+   const F=[f(),f()];
+   return {nom:"recus.py",dit:"lit le fichier passé en paramètre (sur chaque ligne : un nom et une note entière, séparés par une virgule), affiche le nom de chaque étudiant qui a au moins 10, puis le nombre de reçus suivi du mot reçus. Sans paramètre, il affiche seulement Donne un fichier",
+     vers:[...F.map(f=>({A:["notes.csv"],T:arboDe([{n:"notes.csv",c:lignes8(f)}])})),{A:[],T:arboDe([{n:"notes.csv",c:lignes8(F[0])}])}],montre:["notes.csv"],
+     pas:[["import sys","Pour sys.argv.",0.5],['if len(sys.argv) < 2:\n    print("Donne un fichier")\n    sys.exit()',"sys.argv[0] est le nom du script : sans paramètre, len(sys.argv) vaut 1. sys.exit() arrête le script.",1.5],
+       ["recus = 0","Le compteur, avant la boucle.",0.5],["with open(sys.argv[1]) as fd:\n    for ligne in fd:",'Le fichier, ligne par ligne.'],
+       ['        nom, note = ligne.strip().split(",")',"Les deux champs dans deux variables."],["        if int(note) >= 10:\n            print(nom)\n            recus += 1","int() : la note lue est du texte. >= 10 : 10 est reçu.",1.5],['print(recus, "reçus")',"Après la boucle : le nombre, une espace, reçus.",0.5]],
+     alt:['import sys\nif len(sys.argv) < 2:\n    print("Donne un fichier")\nelse:\n    recus = 0\n    fd = open(sys.argv[1])\n    for ligne in fd:\n        champs = ligne.strip().split(",")\n        if int(champs[1]) >= 10:\n            print(champs[0])\n            recus = recus + 1\n    fd.close()\n    print(recus, "reçus")'],
+     mut:[["int() oublié","if int(note) >= 10:","if note >= 10:","Ce qu'on lit dans un fichier est du texte : Python ne compare pas '12' et 10. int(note) d'abord."],
+       ["> et >= confondus","int(note) >= 10","int(note) > 10","Au moins 10, c'est >= 10 : la note 10 est reçue."],
+       ["le nom du script compté dans sys.argv","len(sys.argv) < 2","len(sys.argv) < 1","sys.argv[0] est le nom du script : sans paramètre, len(sys.argv) vaut déjà 1. Le test est len(sys.argv) < 2."],
+       ["compteur hors du test","            print(nom)\n            recus += 1","            print(nom)\n        recus += 1","recus += 1 doit être dans le if, sous le print : sinon on compte tout le monde."]]};}],
+ ["villes","compter par valeur d'un champ",R=>{const V=R.mel(["Montpellier","Nîmes","Sète","Lunel","Béziers"]).slice(0,3),f=()=>R.mel(PRE8).slice(0,R.ent(4,6)).map(n=>n+","+R.choix(V));
+   const F=[f(),f(),f()];
+   return {nom:"villes.py",dit:"lit le fichier inscrits.csv du dossier courant (sur chaque ligne : un nom et une ville, séparés par une virgule), crée un dictionnaire villes qui associe à chaque ville son nombre d'inscrits, puis l'affiche",
+     vers:F.map(f=>({A:[],T:arboDe([{n:"inscrits.csv",c:lignes8(f)}])})),montre:["inscrits.csv"],
+     pas:[["villes = {}","Le dictionnaire, vide au départ.",0.5],['with open("inscrits.csv") as fd:\n    for ligne in fd:',"Le fichier, ligne par ligne."],
+       ['        ville = ligne.strip().split(",")[1]',"Le deuxième champ, d'indice 1, sans le retour à la ligne.",1.5],["        if ville in villes:\n            villes[ville] += 1\n        else:\n            villes[ville] = 1","On compte comme d'habitude.",1.5],["print(villes)","Le dictionnaire.",0.5]],
+     alt:['villes = {}\nfd = open("inscrits.csv", "r")\nfor ligne in fd.readlines():\n    nom, ville = ligne.strip().split(",")\n    if ville not in villes:\n        villes[ville] = 0\n    villes[ville] += 1\nfd.close()\nprint(villes)'],
+     mut:[["mauvais champ",'split(",")[1]','split(",")[0]',"Le champ d'indice 0 est le nom ; la ville est le champ d'indice 1."],
+       ["clé pas encore créée","        if ville in villes:\n            villes[ville] += 1\n        else:\n            villes[ville] = 1","        villes[ville] += 1","La première fois, la ville n'est pas une clé : villes[ville] += 1 donne KeyError. Teste d'abord if ville in villes."],
+       ["strip() oublié",'ligne.strip().split(",")[1]','ligne.split(",")[1]',"Sans strip(), la ville garde son retour à la ligne : 'Sète\\n' n'est pas 'Sète'."]]};}],
+ ["regrouper","regrouper les notes de chacun",R=>{const N=R.mel(PRE8).slice(0,3),f=()=>Array.from({length:R.ent(4,6)},()=>R.choix(N)+","+R.ent(2,20));
+   const F=[f(),f(),f()];
+   return {nom:"notes.py",dit:"lit le fichier notes.csv du dossier courant (sur chaque ligne : un nom et une note entière, séparés par une virgule ; un même nom revient plusieurs fois), crée un dictionnaire notes qui associe à chaque nom la liste de ses notes (des entiers, dans l'ordre du fichier), puis l'affiche",
+     vers:F.map(f=>({A:[],T:arboDe([{n:"notes.csv",c:lignes8(f)}])})),montre:["notes.csv"],
+     pas:[["notes = {}","Le dictionnaire, vide au départ.",0.5],['with open("notes.csv") as fd:\n    for ligne in fd:',"Le fichier, ligne par ligne."],
+       ['        nom, note = ligne.strip().split(",")',"Les deux champs."],["        if nom in notes:\n            notes[nom].append(int(note))\n        else:\n            notes[nom] = [int(note)]","Nom déjà vu : on ajoute la note à sa liste ; sinon on crée la liste avec cette note. int() : on veut des entiers.",2],["print(notes)","Le dictionnaire de listes.",0.5]],
+     alt:['notes = {}\nfor ligne in open("notes.csv"):\n    champs = ligne.strip().split(",")\n    notes.setdefault(champs[0], []).append(int(champs[1]))\nprint(notes)'],
+     mut:[["liste remplacée au lieu d'agrandie","notes[nom].append(int(note))","notes[nom] = [int(note)]","notes[nom] = [...] remplace la liste : on ne garderait que la dernière note. append ajoute."],
+       ["int() oublié","notes[nom] = [int(note)]","notes[nom] = [note]","Sans int(), la première note de chacun resterait du texte, '12' au lieu de 12."],
+       ["clé pas encore créée","        if nom in notes:\n            notes[nom].append(int(note))\n        else:\n            notes[nom] = [int(note)]","        notes[nom].append(int(note))","La première fois, le nom n'est pas une clé : notes[nom] donne KeyError. Crée d'abord la liste."]]};}]
+];
+
+/* palier 4 : parcours récursif, comme aux examens */
+const SOUS8=["vacances","2024","famille","td","tp","archives","src","old","cours"];
+function foret8(R,exts,autres,prof){const B=R.mel(BASES7),D=R.mel(SOUS8);let b=0,d=0;
+  const f=e=>({n:B[b++%B.length]+(b>B.length?b:"")+"."+e,c:""});
+  const va=k=>{const L=[];for(let i=R.ent(1,2);i;i--)L.push(f(R.choix(exts)));if(R.ent(0,2)===0&&autres.length)L.push(f(R.choix(autres)));
+    if(k<prof)for(let i=k?R.ent(0,1):R.ent(1,2);i;i--)L.push(dos7(D[d++%D.length]+(d>D.length?d:""),va(k+1)));return L;};
+  const L=va(0);if(!L.some(x=>x.d&&x.d.some(y=>y.d)))L.push(dos7("profond",[dos7("dedans",[f(R.choix(exts))])]));return L;}
+const NOTE8="Ici, os.listdir donne les noms dans l'ordre alphabétique.";
+const ARB8={fn:"parcours"};
+const isdir8=["nom seul au lieu du chemin","os.path.isdir(chemin)","os.path.isdir(nom)","os.listdir donne des noms seuls : os.path.isdir(nom) cherche le nom dans le dossier où tourne le script, pas dans le dossier visité, et les sous-dossiers sont pris pour des fichiers. Teste le chemin complet. Le corrigé officiel de 2025 fait cette erreur."];
+const rec8=["appel récursif avec le nom seul","parcours(chemin)","parcours(nom)","L'appel récursif reçoit le chemin du sous-dossier, dossier + os.sep + nom : avec le nom seul, os.listdir ne le trouve pas."];
+const pasrec8=["sous-dossiers pas visités","            parcours(chemin)","            pass","Pour un sous-dossier, la fonction se rappelle elle-même : c'est ce qui fait visiter tous les étages."];
+const sep8=["os.sep oublié","dossier + os.sep + nom","dossier + nom","Sans os.sep, le chemin devient photosvacances au lieu de photos/vacances : il n'existe pas."];
+const PY4=[
+ ["extensions","compter les fichiers par extension",R=>{const E=R.mel(["jpg","png","txt","py","pdf","csv"]).slice(0,3),d=R.choix(["photos","rep","exos"]);
+   const V=[0,1,2].map(()=>({A:[d],T:arboDe([{n:"notes.txt",c:""},dos7(d,foret8(R,E,[],2))])}));
+   return {nom:"stats.py",dit:`parcourt récursivement (sans os.walk) le dossier passé en paramètre et tous ses sous-dossiers, crée un dictionnaire stats qui associe à chaque extension (ce qui suit le dernier point du nom) le nombre de fichiers qui l'ont, puis l'affiche`,
+     vers:V,montre:["arbre"],note:NOTE8,
+     pas:[["import os, sys","os pour listdir, sep et path ; sys pour le paramètre.",0.5],["stats = {}","Le dictionnaire, créé une fois, hors de la fonction.",0.5],
+       ["def parcours(dossier):\n    for nom in os.listdir(dossier):","La fonction récursive visite un dossier ; os.listdir donne les noms qu'il contient.",1.5],
+       ["        chemin = dossier + os.sep + nom","Le chemin complet : sans lui, on ne trouve pas le fichier depuis le dossier du script.",0.5],
+       ["        if os.path.isdir(chemin):\n            parcours(chemin)","Un sous-dossier : la fonction se rappelle sur lui, un étage plus bas.",1],
+       ['        else:\n            ext = nom.split(".")[-1]',"Un fichier : son extension est le dernier morceau après un point.",0.5],
+       ["            if ext in stats:\n                stats[ext] += 1\n            else:\n                stats[ext] = 1","On compte.",1],["parcours(sys.argv[1])\nprint(stats)","L'appel de départ, puis l'affichage, une fois le parcours fini.",0.5]],
+     alt:['import os, sys\nstats = {}\ndef parcours(dossier):\n    for nom in os.listdir(dossier):\n        chemin = os.path.join(dossier, nom)\n        if os.path.isfile(chemin):\n            ext = nom.split(".")[-1]\n            stats[ext] = stats.get(ext, 0) + 1\n        else:\n            parcours(chemin)\nparcours(sys.argv[1])\nprint(stats)'],
+     mut:[isdir8,rec8,pasrec8,sep8,["clé pas encore créée","            if ext in stats:\n                stats[ext] += 1\n            else:\n                stats[ext] = 1","            stats[ext] += 1","La première fois, l'extension n'est pas une clé : stats[ext] += 1 donne KeyError. Teste d'abord if ext in stats."]]};}],
+ ["images","statistiques d'images, comme en janvier 2026",R=>{const E=R.mel(["jpg","png","gif","webp"]).slice(0,3),csv=()=>[E.join(","),E.map(()=>R.ent(0,20)).join(",")];
+   const V=[0,1,2].map(()=>({A:["photos"],T:arboDe([{n:"images.csv",c:lignes8(csv())},dos7("photos",foret8(R,E,["txt","pdf"],2))])}));
+   return {nom:"images.py",dit:"lit le fichier images.csv du dossier courant (première ligne : des extensions ; deuxième ligne : le nombre d'images de chaque extension) dans un dictionnaire statistiques, puis parcourt avec une fonction récursive (sans os.walk) tous les sous-dossiers du dossier passé en paramètre, ajoute 1 à statistiques[ext] pour chaque fichier dont l'extension ext est une clé du dictionnaire, et affiche le dictionnaire",
+     vers:V,montre:["images.csv","arbre"],note:NOTE8+" Les autres extensions (txt, pdf) ne comptent pas.",
+     pas:[["import os, sys\nstatistiques = {}","Les modules et le dictionnaire.",0.5],['with open("images.csv") as fd:\n    lignes = fd.readlines()\n    images = lignes[0].strip().split(",")\n    nombres = lignes[1].strip().split(",")',"Les deux lignes du fichier, coupées aux virgules.",1],
+       ["    for i in range(len(images)):\n        statistiques[images[i]] = int(nombres[i])","L'extension i va avec le nombre i, en entier.",1],
+       ["def parcours(dossier):\n    for fichier in os.listdir(dossier):","La fonction récursive et la liste des noms du dossier.",1],
+       ["        if os.path.isdir(dossier + os.sep + fichier):\n            parcours(dossier + os.sep + fichier)","Un sous-dossier : on le visite, avec son chemin complet.",1],
+       ['        else:\n            data = fichier.split(".")\n            if len(data) > 1 and data[-1] in statistiques:\n                statistiques[data[-1]] += 1',"Un fichier : son extension est le dernier morceau ; on ne compte que les extensions du dictionnaire.",1],
+       ["parcours(sys.argv[1])\nprint(statistiques)","L'appel de départ, puis l'affichage.",0.5]],
+     alt:['import os, sys\nstatistiques = {}\nfd = open("images.csv")\nimages = fd.readline().strip().split(",")\nnombres = fd.readline().strip().split(",")\nfd.close()\nfor i in range(len(images)):\n    statistiques[images[i]] = int(nombres[i])\n\ndef parcours(dossier):\n    for fichier in os.listdir(dossier):\n        chemin = dossier + "/" + fichier\n        if os.path.isdir(chemin):\n            parcours(chemin)\n        elif fichier.split(".")[-1] in statistiques:\n            statistiques[fichier.split(".")[-1]] += 1\n\nparcours(sys.argv[1])\nprint(statistiques)'],
+     mut:[["nom seul au lieu du chemin","os.path.isdir(dossier + os.sep + fichier)","os.path.isdir(fichier)",isdir8[3]],["int() oublié","int(nombres[i])","nombres[i]","Sans int(), la valeur est du texte, '10' : '10' + 1 n'a pas de sens pour Python."],
+       ["extension pas dans le dictionnaire","if len(data) > 1 and data[-1] in statistiques:","if len(data) > 1:","Une extension qui n'est pas une clé (txt, pdf) donnerait KeyError : on ne compte que celles du dictionnaire."],
+       ["appel récursif avec le nom seul","parcours(dossier + os.sep + fichier)","parcours(fichier)",rec8[3]]]};}],
+ ["parcs","les parcs d'ordinateurs, comme en janvier 2025",R=>{const S=R.mel(["windows11","ubuntu-NobleNumbat","ubuntu-JammyJellyfish","debian12"]).slice(0,3);let k=1;
+   const csv=()=>({n:"parc"+(k++)+".csv",c:lignes8(Array.from({length:R.ent(2,3)},()=>["PC"+R.ent(1,60),...R.mel(S).slice(0,R.ent(1,2))].join(",")))});
+   const arbre=()=>{k=1;return [csv(),{n:"lisezmoi.txt",c:"rien\n"},dos7("salles",[csv(),dos7(R.choix(["b1","b2","rdc"]),[csv(),{n:"plan.pdf",c:""}])])];};
+   const V=[0,1,2].map(()=>({A:["parcs"],T:arboDe([dos7("parcs",arbre())])}));
+   return {nom:"systemes.py",dit:`crée un dictionnaire systemes, cherche récursivement (sans os.walk) tous les fichiers ${cr(".csv")} du dossier passé en paramètre et de ses sous-dossiers, et y range chaque système : la clé est le système, la valeur la liste des ordinateurs qui l'ont (sur chaque ligne d'un fichier csv : un ordinateur, puis ses systèmes, séparés par des virgules). Il affiche ensuite le dictionnaire`,
+     vers:V,montre:["arbre"],note:NOTE8,
+     pas:[["import os, sys\nsystemes = {}","Les modules et le dictionnaire.",0.5],["def parcours(rep):\n    for fichier in os.listdir(rep):","La fonction récursive ; os.listdir donne les noms.",1.5],
+       ["        if os.path.isdir(rep + os.sep + fichier):\n            parcours(rep + os.sep + fichier)","Un sous-dossier : on le visite avec son chemin complet."],
+       ['        elif fichier.endswith(".csv"):\n            fd = open(rep + os.sep + fichier)',"Un fichier csv : on l'ouvre, avec son chemin complet.",1],
+       ['            for ligne in fd:\n                data = ligne.strip().split(",")\n                ordi = data[0]',"Chaque ligne, coupée aux virgules : le premier champ est l'ordinateur.",1.5],
+       ["                for systeme in data[1:]:\n                    if systeme in systemes:\n                        systemes[systeme].append(ordi)\n                    else:\n                        systemes[systeme] = [ordi]","Les autres champs sont des systèmes : on ajoute l'ordinateur à leur liste.",1],
+       ["            fd.close()\n\nparcours(sys.argv[1])\nprint(systemes)","On ferme le fichier ; l'appel de départ, puis l'affichage.",0.5]],
+     alt:['import os, sys\nsystemes = {}\n\ndef parcours(rep):\n    liste = os.listdir(rep)\n    for fichier in liste:\n        chemin = os.path.join(rep, fichier)\n        if os.path.isdir(chemin):\n            parcours(chemin)\n        elif ".csv" in fichier:\n            with open(chemin) as fd:\n                for ligne in fd:\n                    data = ligne.strip().split(",")\n                    for systeme in data[1:]:\n                        if systeme not in systemes:\n                            systemes[systeme] = []\n                        systemes[systeme].append(data[0])\n\nparcours(sys.argv[1])\nprint(systemes)'],
+     mut:[["fichier ouvert avec son nom seul","fd = open(rep + os.sep + fichier)","fd = open(fichier)","open(fichier) cherche le fichier dans le dossier où tourne le script : il faut le chemin complet, rep + os.sep + fichier."],
+       ["nom seul au lieu du chemin","os.path.isdir(rep + os.sep + fichier)","os.path.isdir(fichier)",isdir8[3]],
+       ["l'ordinateur pris pour un système","in data[1:]","in data","data[1:] saute le premier champ : l'ordinateur n'est pas un système."],
+       ["liste remplacée au lieu d'agrandie","systemes[systeme].append(ordi)","systemes[systeme] = [ordi]","systemes[systeme] = [ordi] remplace la liste : il faut append(ordi) pour ajouter."]]};}],
+ ["par_dossier","le nombre de fichiers de chaque dossier",R=>{const E=["txt","py","jpg","pdf"],d=R.choix(["rep","projet","docs"]);
+   const V=[0,1,2].map(()=>({A:[d],T:arboDe([dos7(d,foret8(R,E,[],2))])}));
+   return {nom:"compte.py",dit:"parcourt récursivement (sans os.walk) le dossier passé en paramètre et crée un dictionnaire nbFichiers : chaque dossier visité (son chemin, comme rep/td) en clé, le nombre de fichiers qu'il contient directement (sans compter ceux des sous-dossiers) en valeur, puis l'affiche",
+     vers:V,montre:["arbre"],note:NOTE8+" Le dossier de départ est une clé, lui aussi.",
+     pas:[["import os, sys\nnbFichiers = {}","Les modules et le dictionnaire.",0.5],["def parcours(dossier):\n    nbFichiers[dossier] = 0","Chaque dossier visité devient une clé, à 0 au départ : avant la boucle.",1.5],
+       ["    for nom in os.listdir(dossier):\n        chemin = dossier + os.sep + nom","Les noms du dossier, et leur chemin complet.",1],
+       ["        if os.path.isdir(chemin):\n            parcours(chemin)","Un sous-dossier : il aura sa propre clé.",1],["        else:\n            nbFichiers[dossier] += 1","Un fichier compte pour le dossier visité.",1],["parcours(sys.argv[1])\nprint(nbFichiers)","L'appel de départ, puis l'affichage.",0.5]],
+     alt:['import os, sys\nnbFichiers = {}\n\ndef parcours(dossier):\n    n = 0\n    for nom in sorted(os.listdir(dossier)):\n        if os.path.isfile(os.path.join(dossier, nom)):\n            n += 1\n    nbFichiers[dossier] = n\n    for nom in sorted(os.listdir(dossier)):\n        if os.path.isdir(os.path.join(dossier, nom)):\n            parcours(os.path.join(dossier, nom))\n\nparcours(sys.argv[1])\nprint(nbFichiers)'],
+     mut:[isdir8,rec8,sep8,["compteur remis à zéro au mauvais moment","    nbFichiers[dossier] = 0\n    for nom in os.listdir(dossier):","    for nom in os.listdir(dossier):\n        nbFichiers[dossier] = 0","nbFichiers[dossier] = 0 est dans la boucle : le compte repart de 0 à chaque nom. Il se met une fois, avant la boucle."]]};}],
+ ["lister","afficher les chemins d'un type de fichiers",R=>{const e=R.choix(["py","txt","pdf"]),E=[e,e,R.choix(["jpg","csv","md"])],d=R.choix(["projet","code","rep1"]);
+   const V=[0,1,2].map(()=>({A:[d],T:arboDe([dos7(d,foret8(R,E,["sh"],2))])}));
+   return {nom:"liste.py",dit:`parcourt récursivement (sans os.walk) le dossier passé en paramètre et affiche le chemin (comme ${d}/td/a.${e}) de chaque fichier dont le nom finit par ${cr("."+e)}, un par ligne`,
+     vers:V,montre:["arbre"],note:NOTE8+" Dans un dossier, les noms sont traités dans cet ordre, sous-dossiers compris.",
+     pas:[["import os, sys","Les modules.",0.5],["def parcours(dossier):\n    for nom in os.listdir(dossier):","La fonction récursive ; os.listdir donne les noms.",1.5],["        chemin = dossier + os.sep + nom","Le chemin complet, à afficher et à tester.",0.5],
+       ["        if os.path.isdir(chemin):\n            parcours(chemin)","Un sous-dossier : on le visite tout de suite, avant les noms qui suivent.",1],[`        elif nom.endswith(".${e}"):\n            print(chemin)`,`Un fichier ${e} : on affiche son chemin.`,1],["parcours(sys.argv[1])","L'appel de départ.",0.5]],
+     alt:[`import os, sys\n\ndef parcours(dossier):\n    for nom in os.listdir(dossier):\n        chemin = os.path.join(dossier, nom)\n        if os.path.isfile(chemin) and nom.split(".")[-1] == "${e}":\n            print(chemin)\n        elif os.path.isdir(chemin):\n            parcours(chemin)\n\nparcours(sys.argv[1])`],
+     mut:[["nom affiché au lieu du chemin","            print(chemin)","            print(nom)","L'énoncé demande le chemin : chemin, pas nom."],isdir8,rec8,pasrec8,sep8]};}],
+ ["index","l'index des fichiers par extension",R=>{const E=R.mel(["sh","py","txt","java"]).slice(0,3),d=R.choix(["rep1","code","exos"]);
+   const V=[0,1,2].map(()=>({A:[d],T:arboDe([dos7(d,foret8(R,E,[],2))])}));
+   return {nom:"indexation.py",dit:`parcourt récursivement (sans os.walk) le dossier passé en paramètre, crée un dictionnaire index qui associe à chaque extension (avec son point, comme ${cr(".py")}) la liste des chemins des fichiers qui l'ont, dans l'ordre du parcours, puis l'affiche`,
+     vers:V,montre:["arbre"],note:NOTE8,
+     pas:[["import os, sys\nindex = {}","Les modules et le dictionnaire.",0.5],["def parcours(dossier):\n    for nom in os.listdir(dossier):\n        chemin = dossier + os.sep + nom","La fonction récursive, les noms, et leur chemin complet.",1.5],
+       ["        if os.path.isdir(chemin):\n            parcours(chemin)","Un sous-dossier : on le visite.",1],['        else:\n            ext = "." + nom.split(".")[-1]',"L'extension, avec son point.",0.5],
+       ["            if ext in index:\n                index[ext].append(chemin)\n            else:\n                index[ext] = [chemin]","Extension déjà vue : on ajoute le chemin à sa liste ; sinon on crée la liste.",1.5],["parcours(sys.argv[1])\nprint(index)","L'appel de départ, puis l'affichage.",0.5]],
+     alt:['import os, sys\nindex = {}\n\ndef parcours(dossier):\n    for nom in os.listdir(dossier):\n        chemin = os.path.join(dossier, nom)\n        if os.path.isdir(chemin):\n            parcours(chemin)\n        else:\n            ext = os.path.splitext(nom)[1]\n            if ext not in index:\n                index[ext] = []\n            index[ext].append(chemin)\n\nparcours(sys.argv[1])\nprint(index)'],
+     mut:[["liste remplacée au lieu d'agrandie","index[ext].append(chemin)","index[ext] = [chemin]","index[ext] = [chemin] remplace la liste : il faut append(chemin)."],["nom rangé au lieu du chemin","index[ext] = [chemin]","index[ext] = [nom]","L'énoncé demande les chemins : chemin, pas nom."],isdir8,sep8]};}],
+ ["lignes","le total des lignes des fichiers texte",R=>{const d=R.choix(["notes","docs","textes"]),lig=()=>Array.from({length:R.ent(1,4)},(_,i)=>"ligne "+(i+1)).join("\n")+"\n";
+   const fill=L=>L.map(x=>x.d?dos7(x.n,fill(x.d)):x.n.endsWith(".txt")?{n:x.n,c:lig()}:x);
+   const V=[0,1,2].map(()=>({A:[d],T:arboDe([dos7(d,fill(foret8(R,["txt","txt","pdf"],["jpg"],2)))])}));
+   return {nom:"total.py",dit:`parcourt récursivement (sans os.walk) le dossier passé en paramètre, compte les lignes de tous les fichiers ${cr(".txt")} rencontrés, et affiche à la fin ${cr("TOTAL :")} suivi du nombre total de lignes`,
+     vers:V,montre:["arbre"],note:NOTE8+" Les fichiers texte de l'exemple ont chacun de 1 à 4 lignes.",
+     pas:[["import os, sys\ntotal = 0","Les modules et le compteur, hors de la fonction.",0.5],["def parcours(dossier):\n    global total","La fonction modifie total, créé hors d'elle : global total, sinon Python le prend pour une variable de la fonction.",1.5],
+       ["    for nom in os.listdir(dossier):\n        chemin = dossier + os.sep + nom","Les noms du dossier et leur chemin complet.",1],["        if os.path.isdir(chemin):\n            parcours(chemin)","Un sous-dossier : on le visite.",1],
+       ['        elif nom.endswith(".txt"):\n            with open(chemin) as fd:\n                for ligne in fd:\n                    total += 1',"Un fichier texte : on compte ses lignes une par une.",1.5],['parcours(sys.argv[1])\nprint("TOTAL :", total)',"L'appel de départ, puis l'affichage.",0.5]],
+     alt:['import os, sys\n\ndef parcours(dossier):\n    n = 0\n    for nom in os.listdir(dossier):\n        chemin = os.path.join(dossier, nom)\n        if os.path.isdir(chemin):\n            n += parcours(chemin)\n        elif nom.endswith(".txt"):\n            fd = open(chemin)\n            n += len(fd.readlines())\n            fd.close()\n    return n\n\nprint("TOTAL :", parcours(sys.argv[1]))'],
+     mut:[["global oublié","    global total\n","","La fonction fait total += 1 : sans global total, Python prend total pour une variable de la fonction, pas encore créée (UnboundLocalError)."],
+       ["fichier ouvert avec son nom seul","open(chemin)","open(nom)","open(nom) cherche le fichier dans le dossier où tourne le script : il faut le chemin complet."],isdir8,pasrec8]};}]
+];
+const PYP=[PY1,PY2,PY3,PY4];
+function explique8(err,src){const m=err.m,t=err.t,L=src.split("\n"),l=err.l&&err.l<=L.length?L[err.l-1].trim():"";
+  const nomDe=/'([^']+)'/.exec(m),n=nomDe?nomDe[1]:"";
+  const fr=t==="SyntaxError"?(/print/.test(m)&&/parenthes/.test(m)?"En Python 3, print est une fonction : print(...), avec les parenthèses."
+      :/'=='/.test(m)?"Dans un test, l'égalité s'écrit == ; un seul = sert à donner une valeur."
+      :/expected ':'/.test(m)?"Il manque les deux-points à la fin de la ligne : un if, elif, else, for, while ou def se termine par :."
+      :/never closed|unmatched/.test(m)?"Une parenthèse, un crochet ou une accolade n'est pas refermé, ou est fermé en trop."
+      :/unterminated string/.test(m)?"Un guillemet n'est pas refermé."
+      :/outside function/.test(m)?"return ne s'écrit que dans une fonction, sous un def."
+      :/outside loop|not properly in loop/.test(m)?"break et continue ne s'écrivent que dans une boucle."
+      :/invalid character/.test(m)?"Un caractère que Python ne connaît pas : un guillemet ou un tiret de traitement de texte, par exemple. Écris-le au clavier."
+      :/cannot assign/.test(m)?"À gauche d'un =, il faut une variable : pour comparer, ==."
+      :"Python ne comprend pas cette ligne : relis la ponctuation (deux-points, parenthèses, guillemets, virgules).")
+    :t==="IndentationError"?(/expected an indented block/.test(m)?"Après une ligne qui finit par :, le bloc doit être décalé vers la droite (4 espaces)."
+      :/unexpected indent/.test(m)?"Cette ligne est décalée alors qu'elle ne commence pas un bloc : aligne-la sur la ligne d'au-dessus."
+      :"Ce retrait ne correspond à aucun bloc ouvert : aligne la ligne exactement sous le début du bloc.")
+    :t==="NameError"?`Python ne connaît pas ${c(n)} : faute de frappe, variable pas encore créée, ou import oublié (import os, sys).`
+    :t==="UnboundLocalError"?`La fonction modifie ${c(n)}, créé hors d'elle : écris global ${n} au début de la fonction (ou renvoie la valeur avec return).`
+    :t==="KeyError"?`La clé ${c(m)} n'est pas (encore) dans le dictionnaire : pour compter, teste d'abord if cle in d, sinon d[cle] = 1.`
+    :t==="IndexError"?"Un indice sort de la liste ou de la chaîne : les indices vont de 0 à len(...) - 1."
+    :t==="TypeError"?(/concatenate|unsupported operand/.test(m)?"On ne mélange pas un texte et un nombre : int(...) pour calculer, str(...) pour coller."
+      :/not supported between/.test(m)?"Python compare un texte et un nombre : ce qu'on lit dans un fichier est du texte, int(...) d'abord."
+      :/not iterable/.test(m)?"Une boucle for parcourt une liste, une chaîne, un dictionnaire ou un fichier : pour compter, range(n)."
+      :/not subscriptable/.test(m)?"On prend un indice sur une valeur qui n'est ni une liste, ni une chaîne, ni un dictionnaire."
+      :/not callable/.test(m)?"Des parenthèses après une valeur qui n'est pas une fonction."
+      :/positional argument|required/.test(m)?"La fonction n'est pas appelée avec le bon nombre de valeurs."
+      :/indices must be integers/.test(m)?"Un indice de liste ou de chaîne est un entier : int(...) si tu l'as lu dans un fichier."
+      :/expected str instance/.test(m)?"join ne recolle que des chaînes : str(...) sur les nombres d'abord."
+      :"Une opération reçoit une valeur du mauvais type.")
+    :t==="AttributeError"?(/'str' object has no attribute 'append'/.test(m)?"Une chaîne n'a pas de append : pour ajouter des éléments, la valeur doit être une liste, [x]."
+      :`Ce type de valeur n'a pas de ${c(n.split("'").pop()||n)} : vérifie que c'est bien une liste, une chaîne ou un dictionnaire.`)
+    :t==="ValueError"?(/invalid literal for int/.test(m)?"int() reçoit un texte qui n'est pas un nombre entier : un mot, un champ mal choisi, ou un morceau vide."
+      :/unpack/.test(m)?"Le nombre de variables à gauche du = n'est pas le nombre de morceaux à droite."
+      :/not in list/.test(m)?"La valeur cherchée n'est pas dans la liste.":"Une fonction reçoit une valeur qu'elle ne sait pas traiter.")
+    :t==="ZeroDivisionError"?"Une division par 0 : une liste vide, ou un compteur resté à 0 ?"
+    :t==="FileNotFoundError"?"Ce fichier ou ce dossier n'existe pas à cet endroit : os.listdir donne des noms seuls, il faut recoller le chemin, dossier + os.sep + nom."
+    :t==="NotADirectoryError"?"os.listdir reçoit un fichier, pas un dossier : teste os.path.isdir avant de descendre."
+    :t==="IsADirectoryError"?"open reçoit un dossier : teste os.path.isdir avant d'ouvrir."
+    :t==="RecursionError"?"La fonction se rappelle sans fin : l'appel récursif doit recevoir le chemin du sous-dossier, pas le même dossier."
+    :t==="EOFError"?"input() attend le clavier : ici, les valeurs viennent de sys.argv ou du fichier."
+    :t==="ImportError"?"Ce nom n'existe pas dans ce module.":"";
+  const ou=err.l&&err.l<=L.length?`À la ligne ${err.l}${l?` (${c(l)})`:""}, `:err.l>L.length?"Pendant l'appel du site, ":"";
+  return esc(`${ou}Python s'arrête : `)+c(`${t}: ${m}`.slice(0,160))+". "+esc(fr);}
+const normL8=x=>{let t=propre(x);if(/^[[{(]/.test(t))t=t.replace(/"/g,"'").replace(/\s*,\s*/g,", ").replace(/\s*:\s*/g,": ").replace(/([[{(])\s+/g,"$1").replace(/\s+([\]})])/g,"$1");return t;};
+const SYMPY=[[],[[":",":"],["⇥","    "],["[]","[]"],["()","()"],["==","=="],["!=","!="],["+=","+="],["return","return "]],
+  [[":",":"],["⇥","    "],["[]","[]"],["{}","{}"],["==","=="],["+=","+="],["sys.argv[1]","sys.argv[1]"],[".strip()",".strip()"],['.split(",")','.split(",")']],
+  [[":",":"],["⇥","    "],["[]","[]"],["{}","{}"],["+=","+="],["os.listdir","os.listdir("],["os.sep","os.sep"],["isdir","os.path.isdir("],["sys.argv[1]","sys.argv[1]"]]];
+function exoPy(R,p){const [,nat,f]=R.choix(PYP[p]),X=f(R);if(!X)return null;
+  const lire=p===0,fonc=!!X.appels,nom=X.nom||"prog.py",ref=X.pas.map(x=>x[0]).join("\n");
+  const vers=fonc?X.appels.map(a=>({A:[],T:arboDe([]),appel:a})):(X.vers||[{}]).map(v=>({A:v.A||[],T:v.T||arboDe([]),appel:null}));
+  const prog=(src,v)=>v.appel?src+"\nprint(repr("+v.appel+"))":src;
+  const joue=src=>vers.map(v=>lancePy(prog(src,v),v.T,v.A,nom)),vue=r=>{const o=vuePy(r).map(propre);return fonc&&!r.err?o.slice(-1):o;};
+  const S=joue(ref),pb=S.find(s=>s.inconnu||s.boucle||s.err);if(pb)throw new Error("programme de référence refusé : "+ref+" → "+JSON.stringify(pb.err||pb.inconnu||"boucle"));
+  const bon=S.map(vue),att=S[0].sortie;
+  if(lire&&(!att.length||att.length>7))return null;
+  if(!lire&&!fonc&&!att.length)return null;
+  for(const a of X.alt||[]){const Sa=joue(a);if(!Sa.every((s,i)=>!s.inconnu&&!s.boucle&&pareil(vue(s),bon[i])))throw new Error("autre écriture fausse : "+a+" → "+JSON.stringify(Sa.map(s=>s.inconnu||vuePy(s))));}
+  const mut=[];for(const [type,de,en,msg] of X.mut||[]){if(!ref.includes(de))continue;const src=ref.replace(de,en),Sm=joue(src);if(Sm.some(s=>s.inconnu||s.boucle))continue;const O=Sm.map(vue);
+    if(lire?(Sm[0].err||pareil(O[0].map(normL8),bon[0].map(normL8))):O.every((o,i)=>pareil(o,bon[i])))continue;
+    if(mut.some(m=>m.O.every((o,i)=>pareil(o,O[i]))))continue;
+    const k=X.pas.findIndex(x=>x[0].includes(de.split("\n").find(s=>s.trim())||de));mut.push({type,src,O,Sm,msg,k:k<0?X.pas.length:k});}
+  const fausse=mut[0];if(!fausse)return null;
+  const ex=fonc?"":"python3 "+nom+(vers[0].A.length?" "+vers[0].A.join(" "):""),lance=v=>"python3 "+nom+(v.A.length?" "+v.A.join(" "):"");
+  const arb=T=>blocr(dessin(noeud(T,COURANT),".")),fich=(T,x)=>blocr(contenu(noeud(T,absolu(x))).join("\n"));
+  const montre8=(T,i)=>(X.montre||[]).map(x=>x==="arbre"?`<p>${i?"Ce":"Le"} dossier courant&nbsp;:</p>${arb(T)}`:`<p>${i?"Ce":"Le"} fichier ${cr(x)}&nbsp;:</p>${fich(T,x)}`).join("");
+  const res=i=>S[i].sortie[S[i].sortie.length-1],nm=fonc?Math.min(X.montre||2,vers.length):0;
+  const exemples=fonc?vers.slice(0,nm).map((v,i)=>`${cr(v.appel)} renvoie ${cr(res(i))}`).join(", et "):"";
+  const q=lire?"Qu'affiche ce programme Python ?":fonc?`Écris une fonction Python ${cr(X.sig)} qui ${X.dit}.`:`Écris un script Python ${cr(nom)} qui ${X.dit}.`;
+  const corps=lire?blocp(ref):fonc?`<p>Par exemple, ${exemples}.</p>`
+    :montre8(vers[0].T,0)+`<p>Par exemple, ${cr(ex)} affiche&nbsp;:</p>${pave(att)}${X.note?`<p>${esc(X.note)}</p>`:""}`;
+  const E=[...X.pas.map(([code,why,pts])=>({w:blocp(code),why:esc(why),pts:pts===undefined?1:pts})),lire
+    ?{w:`<b>Le programme affiche</b>&nbsp;:${pave(att)}`,why:"Les lignes se font dans l'ordre, de haut en bas ; une boucle refait son bloc à chaque tour, une fonction ne fait rien tant qu'on ne l'appelle pas.",pts:1}
+    :{w:`${fonc?"La fonction entière":"Le script entier"}&nbsp;:${blocp(ref)}`,why:`${fonc?`Par exemple, ${exemples}.`:`${cr(ex)} affiche&nbsp;: ${montre(att)}`}${X.alt&&X.alt.length?` On peut aussi écrire&nbsp;:${blocp(X.alt[0])}`:""}`,pts:0.5}];
+  const fin=E.length-1,faux=(ch,resume)=>(etape,type,titre,msg)=>({ok:false,faux:[ch],resume,diag:etape==null?{type,titre:esc(titre),msg}:{etape,type,titre:esc(titre),msg}});
+  const ecart=(St,i,t)=>{const s=St[i],v=vers[i],apres=i>=nm&&St.slice(0,nm).every((x,k)=>pareil(vue(x),bon[k]));
+    if(fonc){const tete=apres?"Avec les exemples de l'énoncé, ta fonction tombe juste. Mais ":"";
+      if(s.err)return `${tete}${tete?"a":"A"}vec ${cr(v.appel)}&nbsp;: ${explique8(s.err,t)}`;
+      const plus=s.sortie.slice(0,-1);
+      return `${tete}${cr(v.appel)} doit renvoyer ${cr(res(i))} ; ta fonction renvoie ${cr(s.sortie[s.sortie.length-1]||"None")}.${plus.length?` Elle affiche aussi&nbsp;: ${pave(plus)}`:""}`;}
+    const ici=`${cr(lance(v))}${i?`, avec ${(X.montre||[]).map(x=>x==="arbre"?"ce dossier":"ce fichier "+cr(x)).join(" et ")||"ces paramètres"}&nbsp;: ${montre8(v.T,1)}`:""}`;
+    return `${i?`Avec l'exemple de l'énoncé, ton script tombe juste. Mais avec ${ici}`:`Avec ${ici}`}${i?"":","} il affiche&nbsp;: ${pave(s.sortie)}${s.err?` puis ${explique8(s.err,t)}`:""} Il fallait&nbsp;: ${pave(S[i].sortie)}`;};
+  const plat=s=>s.replace(/\s+/g," ").trim();
+  const juge=lire?rep=>{const L0=String(rep.s==null?"":rep.s).split("\n").map(normL8).filter(Boolean),attN=att.map(normL8),non=faux("s","Pas tout à fait : ce n'est pas ce que le programme affiche.");
+      if(!L0.length)return {incomplet:"Écris ce que le programme affiche, ligne par ligne."};
+      if(pareil(L0,attN))return {ok:true};
+      const m=mut.find(m=>pareil(L0,m.O[0].map(normL8)));if(m)return non(m.k,m.type,"Où ça part : "+m.type+".",esc(m.msg));
+      if(pareil(L0.slice().sort(),attN.slice().sort()))return non(fin,"lignes dans le mauvais ordre","Où ça part : l'ordre des lignes.","Ce sont les bonnes lignes, mais pas dans le bon ordre : le programme se lit de haut en bas, et une boucle fait ses tours dans l'ordre.");
+      const j=L0.findIndex((x,k)=>x!==attN[k]);
+      return non(fin,"affichage différent","Où ça part : ce que le programme affiche.",`${j===1?"Ta première ligne est juste. ":j>1?`Tes ${j} premières lignes sont justes. `:""}Reprends le programme ligne par ligne, en notant la valeur de chaque variable : la correction le fait pas à pas.`);}
+    :rep=>{const t=norm7(rep.c).replace(/\s+$/,""),non=faux("c",`Pas tout à fait : ${fonc?"cette fonction":"ce script"} ne fait pas ce que demande l'énoncé.`);
+      if(!t.trim())return {incomplet:fonc?"Écris la fonction.":"Écris le script."};
+      const sansNote=t.replace(/#.*$/gm,"");for(const [re,m] of X.sans||[])if(re.test(sansNote))return {incomplet:m};
+      const St=joue(t),inc=St.find(s=>s.inconnu);if(inc)return {incomplet:esc(inc.inconnu)};
+      if(St.some(s=>s.boucle))return non(null,"programme qui ne s'arrête pas","Où ça part : ton programme ne s'arrête pas.",`Après ${PAS8} instructions, il tourne encore : une boucle while dont la condition reste vraie, ou une fonction qui se rappelle sans fin.`);
+      if(St[0].syntaxe)return non(null,"erreur de syntaxe","Où ça part : Python ne peut pas lire ton programme.",explique8(St[0].err,t));
+      if(fonc){const nf=St.find(s=>s.err&&s.err.t==="NameError"&&s.err.m===`name '${X.fn}' is not defined`);if(nf)return {incomplet:`Le site appelle ta fonction ${cr(X.fn)} : écris-la avec ${cr("def "+X.sig+":")}.`};}
+      const O=St.map(vue);if(O.every((o,i)=>pareil(o,bon[i])))return {ok:true};
+      const i=O.findIndex((o,k)=>!pareil(o,bon[k])),C=mut.filter(m=>m.O.every((o,k)=>pareil(o,O[k]))),m=C.find(m=>plat(m.src)===plat(t))||C[0];
+      if(m)return non(m.k,m.type,"Où ça part : "+m.type+".",`${esc(m.msg)} ${ecart(St,i,t)}`);
+      if(St[i].err)return non(null,"erreur à l'exécution","Où ça part : Python s'arrête sur une erreur.",ecart(St,i,t));
+      if(fonc&&St.every(s=>s.sortie[s.sortie.length-1]==="None"))return non(fin,"rien n'est renvoyé","Où ça part : ta fonction ne renvoie rien.",`Ta fonction renvoie None : il manque return (print affiche une valeur, mais ne la renvoie pas à celui qui appelle la fonction). ${ecart(St,i,t)}`);
+      return non(fin,"résultat différent",`Où ça part : ce que fait ${fonc?"ta fonction":"ton script"}.`,ecart(St,i,t));};
+  const cas=(v,src,a)=>{const r=lancePy(prog(src,v),v.T,v.A,nom);return r.inconnu||r.boucle?null:{arbo:v.T,cmd:prog(src,v),args:v.A,nom,py:true,abs:a||vuePy(r)};};
+  const prem=m=>vers[Math.max(0,m.O.findIndex((o,i)=>!pareil(o,bon[i])))];
+  const bash=[...vers.map(v=>cas(v,ref)),...(X.alt||[]).flatMap(a=>(fonc?vers:[vers[0]]).map(v=>cas(v,a))),...mut.map(m=>cas(prem(m),m.src)),
+    ...(X.oracle?vers.map((v,i)=>cas(v,X.oracle,vuePy(S[i]))):[]),...[0,1].map(()=>cas({A:["x"],T:ARBO8},R.choix(BANC8)))].filter(Boolean);
+  const exTxt=fonc?vers.slice(0,nm).map((v,i)=>v.appel+" → "+res(i)).join(" ; "):"";
+  return {sig:lire?"Y0"+ref:"Y"+p+brut(q)+"|"+(fonc?exTxt:ex+"|"+(X.montre||[]).map(x=>x==="arbre"?etat7(vers[0].T).join(","):contenu(noeud(vers[0].T,absolu(x))).join(",")).join("|")),
+    q,corps,texte:brut(q)+" — "+(lire?ref.replace(/\n/g," ⏎ "):fonc?exTxt:ex),
+    champs:lire?[{k:"code",id:"s",nom:"affichage",label:"Ce que le programme affiche, ligne par ligne&nbsp;:",lignes:Math.max(3,att.length+1)}]
+      :[{k:"code",id:"c",nom:fonc?"fonction":"script",label:fonc?`La fonction ${cr(X.fn)}&nbsp;:`:`Le script ${cr(nom)}&nbsp;:`,lignes:Math.max(6,ref.split("\n").length+2),ex:fonc?`def ${X.sig}:`:ref.split("\n")[0],sym:SYMPY[p],
+        aide:`${fonc?"Ta fonction est appelée avec les exemples de l'énoncé, puis avec d'autres valeurs.":`Ton script est lancé avec l'exemple de l'énoncé, puis avec d'autres ${(X.montre||[]).includes("arbre")?"dossiers":"fichiers"}.`} Le retrait (les espaces en début de ligne) fait les blocs : ⇥ ajoute 4 espaces.`}],
+    juge,etapes:E,bonne:lire?pave(att):blocp(ref),bonneTxt:lire?att.join(" ⏎ "):ref.replace(/\n/g," ⏎ "),repBonne:lire?{s:att.join("\n")}:{c:ref},repFausse:lire?{s:fausse.Sm[0].sortie.join("\n")}:{c:fausse.src},nature:nat,
+    ens:{lire,fonc,fn:X.fn,nom,ref,alt:X.alt||[],pieges:mut.map(m=>({type:m.type,src:m.src,sortie:m.O[0]})),bash}};}
+const tirePy=p=>R=>{for(;;){const e=exoPy(R,p);if(e)return e;}};
+
+
 G.add("usi",[
  {id:"US4",t:"Tubes et filtres",tache:"tubes et filtres",th:"processus",pts:1,lecons:["u-redir"],
   paliers:[
@@ -29314,7 +30468,13 @@ G.add("usi",[
    {t:"ce qu'affiche un script",cc:2,min:240,gen:tireScript(0)},
    {t:"écrire : paramètres, variables et calculs",cc:3,min:200,gen:tireScript(1)},
    {t:"écrire une boucle",cc:4,min:230,gen:tireScript(2)},
-   {t:"une boucle et un test, comme aux examens",cc:6,min:255,gen:tireScript(3)}]}
+   {t:"une boucle et un test, comme aux examens",cc:6,min:255,gen:tireScript(3)}]},
+ {id:"US8",t:"Python",tache:"Python",th:"python",pts:5,lecons:["u-py1","u-py2","u-py3"],
+  paliers:[
+   {t:"ce qu'affiche un programme",cc:2,min:200,gen:tirePy(0)},
+   {t:"écrire une petite fonction, comme en 2022, 2023 et 2024",cc:5,min:200,gen:tirePy(1)},
+   {t:"un fichier et un dictionnaire",cc:8,min:200,gen:tirePy(2)},
+   {t:"le parcours récursif d'un dossier, comme aux examens",cc:15,min:200,gen:tirePy(3)}]}
 ]);
 })();
 
