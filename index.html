@@ -23528,6 +23528,237 @@ const BANQUE_TRI=[
    ["(IM) est la perpendiculaire à (AB) passant par I : c'est Δ (corollaire 2.3.2). Donc M ∈ Δ.","Par un point passe une seule perpendiculaire à une droite donnée : (IM) et Δ sont la même droite.",1]]]];
 function papierTri(R){const b=R.choix(BANQUE_TRI),e=recit("TP"+b[0],b[1],b[2],b[3])();e.ens={sorte:"papier",pts:b[3].reduce((t,l)=>t+l[2],0)};return e;}
 
+/* ---------- GE8 : l'inégalité triangulaire (axiome III (a), (b) et (d), définition 1.2.1, exercice 3 du CC1 2026) ---------- */
+const QUAD4=["ABCD","MNPQ","EFGH","RSTU"],hors=(n,C)=>C.find(c=>!n.includes(c));
+const RAP_IT=`<p>Rappel : pour tous points A, B, M du plan, ${fx("AB ≤ AM + MB")} (inégalité triangulaire, axiome III a). Il y a égalité exactement quand M est sur le segment [AB] (définition 1.2.1).</p>`;
+const RAP_AL=`<p>Rappel (axiome III d) : trois points sont alignés exactement quand la plus grande des trois distances entre eux est la somme des deux autres.</p>`;
+const RAP_MAJ=`<p>Majorer une longueur, c'est écrire « cette longueur ≤ quelque chose ». Dans « a ≤ b », a est le petit côté et b le grand côté.</p>`;
+const champV=(grand,n)=>champL("x",n,`Plus ${grand?"grande":"petite"} valeur de $${n}$ :`,"par exemple 6");
+function itBase(R){const r=R(),[X,Y,Z]=R.mel(R.choix(TRI).split("")),N=[X+Y,Y+Z,X+Z],tiers=n=>[X,Y,Z].find(p=>!n.includes(p));
+  if(r<0.4){const k=R.choix(["non","non","ali","ali","tri","tri","tri"]);let a,b,c,D;
+    do{a=R.ent(2,9);b=R.ent(2,9);const e=Math.abs(a-b);
+      c=k==="tri"?R.ent(e+1,a+b-1):k==="ali"?(e&&R()<0.5?e:a+b):e>1&&R()<0.5?e-R.ent(1,e-1):a+b+R.ent(1,3);
+      D=[a,b,c].map((v,i)=>({n:N[i],v})).sort((u,w)=>w.v-u.v);}while(D[0].v===D[1].v);
+    const [g,o1,o2]=D,s=o1.v+o2.v,m=tiers(g.n);
+    const E=[{w:`La plus grande des trois distances est ${fx(`${g.n} = ${g.v}`)}. La somme des deux autres vaut ${fx(`${o1.v} + ${o2.v} = ${s}`)}.`,why:"L'inégalité triangulaire (axiome III a) dit que chaque distance est inférieure ou égale à la somme des deux autres. Il suffit de le vérifier pour la plus grande : pour les deux autres, c'est alors automatique.",pts:1},
+      k==="non"?{w:`${g.v} est strictement plus grand que ${s} : l'inégalité ${fx(`${g.n} ≤ ${o1.n} + ${o2.n}`)} est fausse. <b>Ces trois mesures sont impossibles.</b>`,why:`Aller de ${g.n[0]} à ${g.n[1]} en passant par ${m} serait plus court que le chemin direct : l'axiome III (a) l'interdit, où que soient les points.`,pts:1}
+      :k==="ali"?{w:`${g.v} est égal à ${s} : la plus grande distance est la somme des deux autres. <b>Les trois points sont alignés</b>, et ${m} est sur le segment [${g.n}].`,why:`Axiome III (d) : trois points sont alignés exactement quand la plus grande des trois distances est la somme des deux autres. Et ${fx(`${g.n[0]}${m} + ${m}${g.n[1]} = ${g.n}`)} est la définition de « ${m} ∈ [${g.n}] » (définition 1.2.1).`,pts:1}
+      :{w:`${g.v} est strictement plus petit que ${s} : l'inégalité triangulaire est vérifiée, sans égalité. <b>Ces mesures sont possibles, et les trois points ne sont pas alignés</b> : ils forment un vrai triangle.`,why:"D'après l'axiome III (d), des points alignés donneraient une égalité : la plus grande distance serait la somme des deux autres. Ce n'est pas le cas ici.",pts:1}];
+    const T={non:{ali:["distance trop grande prise pour un alignement",`${g.v} est strictement plus grand que ${s} : ce n'est pas une égalité. L'inégalité triangulaire interdit qu'une distance dépasse la somme des deux autres.`],
+        tri:["inégalité triangulaire non vérifiée",`Compare la plus grande distance, ${g.v}, à la somme des deux autres, ${s} : elle la dépasse, et l'inégalité triangulaire l'interdit.`]},
+      ali:{non:["cas d'égalité pris pour un cas impossible","L'inégalité triangulaire est large : « inférieur ou égal ». L'égalité est permise, et elle veut dire que les trois points sont alignés (axiome III d)."],
+        tri:["cas d'égalité non reconnu",`${g.v} = ${s} : la plus grande distance est exactement la somme des deux autres. D'après l'axiome III (d), les trois points sont alignés.`]},
+      tri:{non:["mesures possibles prises pour impossibles",`La plus grande distance, ${g.v}, ne dépasse pas la somme des deux autres, ${s} : l'inégalité triangulaire est vérifiée, rien n'est interdit.`],
+        ali:["alignement annoncé sans égalité",`Des points alignés donneraient l'égalité ${g.v} = ${s}. Ici ${g.v} est strictement plus petit que ${s} : pas d'égalité, donc pas d'alignement (axiome III d).`]}};
+    const o=[["non","Impossible : une mesure est fausse"],["ali","Possible : les points sont alignés"],["tri","Possible : les points ne sont pas alignés"]],bonne=o.find(c=>c[0]===k)[1];
+    return {sig:"IE"+JSON.stringify([a,b,c]),q:`Un élève annonce avoir mesuré, entre trois points ${X}, ${Y} et ${Z} du plan : ${fx(`${N[0]} = ${a}`)}, ${fx(`${N[1]} = ${b}`)} et ${fx(`${N[2]} = ${c}`)}. Que peut-on en dire ?`,corps:RAP_IT+RAP_AL,
+      texte:`${N[0]} = ${a}, ${N[1]} = ${b}, ${N[2]} = ${c} : possible ? alignés ?`,nature:"trois mesures : possible ou pas",champs:[champC("x",null,o)],juge:jugeQ({x:k},(id,val)=>[1,T[k][val][0],"Où ça part : la comparaison.",T[k][val][1]]),
+      etapes:E,bonne,bonneTxt:bonne,repBonne:{x:k},repFausse:{x:k==="non"?"tri":"non"},ens:{sorte:"mes",d:[a,b,c],noms:N}};}
+  if(r<0.75){let a,b;do{a=R.ent(1,12);b=R.ent(1,12);}while(a===b);const grand=R()<0.5,XY=X+Y,XZ=X+Z,ZY=Z+Y,e=Math.abs(a-b),V=grand?a+b:e;
+    const G=a>b?{n:XZ,p:Y,ch:`${XZ} ≤ ${XY} + ${Y}${Z}`,dif:`${XZ} − ${ZY} = ${a} − ${b}`}:{n:ZY,p:X,ch:`${ZY} ≤ ${Z}${X} + ${XY}`,dif:`${ZY} − ${XZ} = ${b} − ${a}`};
+    const E=grand?[{w:`D'après l'inégalité triangulaire (axiome III a), en passant par ${Z} : ${fx(`${XY} ≤ ${XZ} + ${ZY}`)}.`,why:`L'axiome vaut pour trois points quelconques : aller de ${X} à ${Y} en faisant un détour par ${Z} n'est jamais plus court que le chemin direct.`,pts:1},
+        {w:`Donc ${fx(`${XY} ≤ ${a} + ${b} = ${V}`)}.`,why:"On remplace les deux distances connues par leurs valeurs.",pts:0.5},
+        {w:`<b>La plus grande valeur possible est ${V}</b> : elle est atteinte quand ${Z} est sur le segment [${XY}].`,why:`Définition 1.2.1 : ${Z} est sur [${XY}] exactement quand ${fx(`${XZ} + ${ZY} = ${XY}`)}. Dans tous les autres cas, la distance ${XY} est strictement plus petite.`,pts:0.5}]
+      :[{w:`On écrit l'inégalité triangulaire pour la plus grande des deux distances connues, ${G.n}, en passant par ${G.p} : ${fx(G.ch)}.`,why:`L'axiome III (a) majore n'importe laquelle des trois distances par la somme des deux autres. Pour minorer ${XY}, c'est-à-dire écrire « ${XY} ≥ quelque chose », on choisit la ligne où ${XY} est à droite.`,pts:1},
+        {w:`Donc ${fx(`${XY} ≥ ${G.dif} = ${V}`)}.`,why:"On retranche des deux côtés la distance connue qui est à droite. L'ordre des deux lettres d'une distance ne compte pas (axiome III b).",pts:0.5},
+        {w:`<b>La plus petite valeur possible est ${V}</b> : elle est atteinte quand ${G.p} est sur le segment [${G.n}].`,why:"Définition 1.2.1 : c'est le cas où l'inégalité triangulaire écrite à la première ligne devient une égalité.",pts:0.5}];
+    const P=grand?[[Q(e),0,"plus petite valeur donnée à la place de la plus grande","Où ça part : la question.",`${e} est la plus petite valeur possible de ${XY}. La plus grande s'obtient avec le détour par ${Z} : ${XZ} + ${ZY}.`],
+        [Q(Math.max(a,b)),1,"une seule des deux distances comptée","Où ça part : la somme.",`Le détour par ${Z} met bout à bout les deux distances : il faut les ajouter.`],
+        [Q(a*b),1,"distances multipliées","Où ça part : l'opération.","Les deux distances du détour s'ajoutent, elles ne se multiplient pas."]]
+      :[[Q(a+b),0,"plus grande valeur donnée à la place de la plus petite","Où ça part : la question.",`${a+b} est la plus grande valeur possible de ${XY}. Pour la plus petite, on retranche : la plus grande distance connue moins l'autre.`],
+        [Q(-e),1,"différence prise dans le mauvais sens","Où ça part : le signe.","Une distance n'est jamais négative : on retranche la plus petite distance de la plus grande."],
+        [Q(0),2,"zéro donné comme plus petite valeur","Où ça part : la valeur 0.",`${XY} = 0 voudrait dire ${X} = ${Y} (axiome III c). Les distances ${XZ} et ${ZY} seraient alors égales, or elles valent ${a} et ${b}.`]];
+    return {sig:"IB"+JSON.stringify([a,b,grand]),q:`${X}, ${Y} et ${Z} sont trois points du plan. On sait seulement que ${fx(`${XZ} = ${a}`)} et ${fx(`${ZY} = ${b}`)}. Quelle est la plus ${grand?"grande":"petite"} valeur possible de la distance ${fx(XY)} ?`,corps:RAP_IT,
+      texte:`${XZ} = ${a}, ${ZY} = ${b} : plus ${grand?"grande":"petite"} valeur de ${XY}`,nature:grand?"la plus grande valeur d'une distance":"la plus petite valeur d'une distance",champs:[champV(grand,XY)],juge:jugeNb(V,E,P,"la valeur"),
+      etapes:E,bonne:fx(String(V)),bonneTxt:`plus ${grand?"grande":"petite"} valeur de ${XY} : ${V}`,repBonne:{x:String(V)},repFausse:{x:String(grand?e:a+b)},ens:{sorte:"borne",a,b,grand}};}
+  const a=R.ent(1,9),b=R.ent(1,9),i=R.ent(0,2),d=[a,b];d.splice(i,0,a+b);const g=N[i],m=tiers(g),o=[X,Y,Z].map(p=>[p,`${p} est sur [${[X,Y,Z].filter(z=>z!==p).join("")}]`]),bonne=o.find(c=>c[0]===m)[1];
+  const E=[{w:`La plus grande des trois distances est ${fx(`${g} = ${a+b}`)}, et c'est la somme des deux autres : ${fx(`${a+b} = ${a} + ${b}`)}.`,why:"C'est ce que dit l'axiome III (d) pour trois points alignés : la plus grande des trois distances est la somme des deux autres.",pts:1},
+    {w:`<b>${m} est sur le segment [${g}]</b> : ${fx(`${g[0]}${m} + ${m}${g[1]} = ${g}`)}.`,why:`Définition 1.2.1 : le segment [${g}] est l'ensemble des points K tels que ${fx(`${g[0]}K + K${g[1]} = ${g}`)}. Les extrémités ${g[0]} et ${g[1]} sont les deux points les plus éloignés l'un de l'autre, et le troisième est entre eux.`,pts:1}];
+  return {sig:"IM"+JSON.stringify(d),q:`Trois points ${X}, ${Y} et ${Z} du plan vérifient ${fx(`${N[0]} = ${d[0]}`)}, ${fx(`${N[1]} = ${d[1]}`)} et ${fx(`${N[2]} = ${d[2]}`)}. Ils sont donc alignés. Lequel des trois est sur le segment formé par les deux autres ?`,corps:RAP_AL,
+    texte:`${N[0]} = ${d[0]}, ${N[1]} = ${d[1]}, ${N[2]} = ${d[2]} : quel point est entre les deux autres ?`,nature:"le point entre les deux autres",champs:[champC("x",null,o)],
+    juge:jugeQ({x:m},()=>[1,"extrémité prise pour le point situé entre les deux autres","Où ça part : les extrémités.",`La plus grande distance, ${g} = ${a+b}, joint ${g[0]} et ${g[1]} : ce sont les deux extrémités. Le point entre les deux est le troisième, ${m}.`]),
+    etapes:E,bonne,bonneTxt:bonne,repBonne:{x:m},repFausse:{x:g[0]},ens:{sorte:"entre",d,noms:N,pts:[X,Y,Z]}};}
+
+function itEcrire(R){const r=R();
+  if(r<0.35){const [X,Y,Z,W]=R.mel(R.choix(QUAD4).split("")),env=R()<0.5,XY=X+Y,o={ok:`${XY} ≤ ${env?Z+X:X+Z} + ${Z}${Y}`,sens:`${XY} ≥ ${X}${Z} + ${Z}${Y}`,autre:`${X}${Z} ≤ ${XY} + ${Y}${Z}`,casse:`${XY} ≤ ${X}${Z} + ${W}${Y}`};
+    const T={sens:[0,"sens de l'inégalité inversé","Où ça part : le sens.","La distance directe est la plus petite : elle s'écrit à gauche du signe ≤. Avec ≥, la ligne dirait qu'un détour raccourcit toujours le chemin."],
+      autre:[1,"inégalité vraie, mais pour une autre distance","Où ça part : la distance à gauche.",`Cette ligne est vraie, mais c'est ${X}${Z} qui est à gauche, et le point de passage est ${Y}. On demande ${XY} à gauche, en passant par ${Z}.`],
+      casse:[1,"deux distances qui ne se suivent pas","Où ça part : le chemin.",`${X}${Z} s'arrête en ${Z} et ${W}${Y} repart de ${W} : ce n'est pas un chemin de ${X} à ${Y}. Le point de passage doit être écrit deux fois.`]};
+    const E=[{w:`L'axiome III (a) : pour tous points A, B, M du plan, ${fx("AB ≤ AM + MB")}.`,why:"À gauche, la distance directe. À droite, le chemin qui fait un détour par M : le point de passage est écrit deux fois, une fois dans chaque distance.",pts:1},
+      {w:`Ici A = ${X}, B = ${Y} et M = ${Z} : <b>${fx(o.ok)}</b>`,why:`On va de ${X} à ${Z}, puis de ${Z} à ${Y}. ${env?`${Z}${X} et ${X}${Z} sont la même distance (axiome III b). `:""}Les extrémités ${X} et ${Y} ne sont écrites qu'une fois à droite, le point de passage ${Z} deux fois.`,pts:1}];
+    return {sig:"EP"+X+Y+Z+W+(env?1:0),q:`${X}, ${Y}, ${Z} et ${W} sont quatre points du plan. Laquelle de ces lignes est l'inégalité triangulaire pour la distance ${fx(XY)}, écrite en passant par le point ${Z} ?`,corps:"",
+      texte:`inégalité triangulaire pour ${XY} en passant par ${Z}`,nature:"reconnaître l'inégalité triangulaire",champs:[champC("x",null,R.mel(Object.keys(o)).map(c=>[c,o[c]]))],juge:jugeQ({x:"ok"},(id,val)=>T[val]),
+      etapes:E,bonne:fx(o.ok),bonneTxt:o.ok,repBonne:{x:"ok"},repFausse:{x:"sens"},ens:{sorte:"passe",pts:[X,Y,Z,W]}};}
+  if(r<0.7){const [X,Y]=R.mel(R.choix(["AB","CD","EF","RS","PQ","IJ"]).split("")),XY=X+Y,t=R.ent(0,3),F3=R.mel([0,1,2,3,4,5,6]).slice(0,3);
+    const V=[[`${XY} ≤ ${X}M + M${Y}`,`C'est l'inégalité triangulaire pour la distance ${XY}, en passant par M.`],
+      [`${X}M ≤ ${XY} + ${Y}M`,`C'est l'inégalité triangulaire pour la distance ${X}M, en passant par ${Y}.`],
+      [`M${Y} ≤ M${X} + ${XY}`,`C'est l'inégalité triangulaire pour la distance M${Y}, en passant par ${X}.`],
+      [`${X}M − M${Y} ≤ ${XY}`,`L'inégalité triangulaire pour ${X}M, en passant par ${Y}, donne ${fx(`${X}M ≤ ${XY} + ${Y}M`)}. On retranche M${Y} des deux côtés.`]][t];
+    const F=[[`${XY} ≥ ${X}M + M${Y}`,`est fausse dès que M n'est pas sur le segment [${XY}] : le détour par M est alors strictement plus long que ${XY}.`,"Elle ressemble à l'axiome, mais avec le signe dans l'autre sens : elle dirait qu'un détour n'est jamais plus long que le chemin direct."],
+      [`${X}M + M${Y} ≤ 2 ${XY}`,`est fausse quand M est très loin de ${X} et de ${Y} : la somme de gauche est alors aussi grande qu'on veut.`,`Aucun nombre fixe ne majore ${X}M + M${Y} pour tous les points M : sur une droite passant par ${X}, il y a des points à n'importe quelle distance de ${X} (axiome III e).`],
+      [`${X}M ≤ M${Y} + 1/2 ${XY}`,`est fausse quand M = ${Y} : elle dirait que ${XY} est inférieur ou égal à sa moitié.`,`Essayer les points les plus simples, M = ${X} puis M = ${Y}, suffit souvent à trouver un contre-exemple.`],
+      [`${X}M ≤ ${XY}`,`est fausse quand M est loin de ${X}, par exemple à une distance double de ${XY}.`,`Sur une droite passant par ${X}, il existe des points à n'importe quelle distance de ${X} (axiome III e).`],
+      [`${XY} ≤ ${X}M`,`est fausse quand M = ${X} : elle dirait que ${XY} est inférieur ou égal à 0, alors que ${X} et ${Y} sont distincts.`,`Quand M = ${X}, la distance ${X}M vaut 0, et ${XY} n'est pas nul car les deux points sont distincts (axiome III c).`],
+      [`${X}M + M${Y} = ${XY}`,`n'est vraie que pour les points M du segment [${XY}] : c'est sa définition (1.2.1).`,"Une égalité demande bien plus qu'une inégalité : celle-ci décrit les points du segment, pas tous les points du plan."],
+      [`${X}M ≤ M${Y}`,`est fausse quand M = ${Y} : elle dirait que ${XY} est inférieur ou égal à 0.`,`Quand M = ${Y}, la distance M${Y} vaut 0 (axiome III c), alors que ${X}M vaut ${XY}, qui n'est pas nul.`]];
+    const E=[{w:`<b>${fx(V[0])}</b> est vraie pour tout point M.`,why:V[1]+" L'axiome III (a) ne pose aucune condition sur les trois points.",pts:1}].concat(F3.map(i=>({w:`${fx(F[i][0])} ${F[i][1]}`,why:F[i][2],pts:0.5})));
+    return {sig:"EV"+X+Y+t+F3.slice().sort().join(""),q:`${X} et ${Y} sont deux points distincts du plan, et M est un point quelconque. Laquelle de ces lignes est vraie pour <b>tout</b> point M ?`,corps:RAP_IT,
+      texte:`${X}, ${Y} distincts, M quelconque : quelle ligne est vraie pour tout M ?`,nature:"vrai pour tout point M",champs:[champC("x",null,R.mel(["ok"].concat(F3.map(i=>"f"+i))).map(c=>[c,(c==="ok"?V[0]:F[+c[1]][0]).replace("1/2","½")]))],
+      juge:jugeQ({x:"ok"},(id,val)=>[1+F3.indexOf(+val[1]),"ligne fausse pour certains points M","Où ça part : « pour tout point M ».",`${fx(F[+val[1]][0])} ${F[+val[1]][1]}`]),
+      etapes:E,bonne:fx(V[0]),bonneTxt:V[0],repBonne:{x:"ok"},repFausse:{x:"f"+F3[0]},ens:{sorte:"vrai",X,Y}};}
+  const [A,B,C,D]=R.choix(QUAD4).split(""),AD=A+D,n3=[A+B,B+C,C+D];
+  if(R()<0.55){const a=R.ent(1,9),b=R.ent(1,9),c=R.ent(1,9),V=a+b+c;
+    const E=[{w:`En passant par ${C} : ${fx(`${AD} ≤ ${A}${C} + ${n3[2]}`)}.`,why:`L'inégalité triangulaire (axiome III a), pour la distance ${AD} et le point de passage ${C}.`,pts:1},
+      {w:`En passant par ${B} : ${fx(`${A}${C} ≤ ${n3[0]} + ${n3[1]}`)}.`,why:`La distance ${A}${C} n'est pas donnée : on la majore à son tour, avec le point de passage ${B}.`,pts:1},
+      {w:`<b>${fx(`${AD} ≤ ${n3.join(" + ")} = ${a} + ${b} + ${c} = ${V}`)}</b>, et cette valeur est atteinte quand les quatre points sont alignés dans l'ordre ${A}, ${B}, ${C}, ${D}.`,why:`On remplace ${A}${C} par quelque chose de plus grand : l'inégalité reste vraie. Un chemin en plusieurs étapes n'est jamais plus court que le chemin direct.`,pts:1}];
+    return {sig:"EC"+JSON.stringify([a,b,c]),q:`${A}, ${B}, ${C} et ${D} sont quatre points du plan, avec ${fx(`${n3[0]} = ${a}`)}, ${fx(`${n3[1]} = ${b}`)} et ${fx(`${n3[2]} = ${c}`)}. Quelle est la plus grande valeur possible de la distance ${fx(AD)} ?`,corps:RAP_IT,
+      texte:`${n3[0]} = ${a}, ${n3[1]} = ${b}, ${n3[2]} = ${c} : plus grande valeur de ${AD}`,nature:"un chemin en plusieurs étapes : la plus grande valeur",champs:[champV(true,AD)],
+      juge:jugeNb(V,E,[[Q(a+b),2,"dernière distance oubliée","Où ça part : la somme.",`${n3[0]} + ${n3[1]} majore seulement ${A}${C}. Pour arriver en ${D}, il reste à ajouter ${n3[2]}.`],
+        [Q(b+c),2,"première distance oubliée","Où ça part : la somme.",`${n3[1]} + ${n3[2]} majore seulement ${B}${D}. Le chemin part de ${A} : il faut aussi ajouter ${n3[0]}.`],
+        [Q(a*b*c),2,"distances multipliées","Où ça part : l'opération.","Les distances d'un chemin s'ajoutent, elles ne se multiplient pas."]],"la valeur"),
+      etapes:E,bonne:fx(String(V)),bonneTxt:`plus grande valeur de ${AD} : ${V}`,repBonne:{x:String(V)},repFausse:{x:String(a+b)},ens:{sorte:"chemin",d:[a,b,c],grand:true}};}
+  const i=R.ent(0,2),s1=R.ent(1,5),s2=R.ent(1,5),big=s1+s2+R.ent(1,6),d=[s1,s2];d.splice(i,0,big);
+  const ch=[`${n3[0]} ≤ ${AD} + ${D}${C} + ${C}${B}`,`${n3[1]} ≤ ${B}${A} + ${AD} + ${D}${C}`,`${n3[2]} ≤ ${C}${B} + ${B}${A} + ${AD}`][i],ordre=[[A,D,C,B],[B,A,D,C],[C,B,A,D]][i],o=n3.filter((_,j)=>j!==i),V=big-s1-s2;
+  const E=[{w:`La plus grande des trois distances connues est ${fx(`${n3[i]} = ${big}`)}. On écrit un chemin de ${n3[i][0]} à ${n3[i][1]} qui passe par les deux autres points : ${fx(ch)}.`,why:`C'est l'inégalité triangulaire appliquée deux fois : un chemin en plusieurs étapes n'est jamais plus court que le chemin direct. On choisit le chemin qui contient l'étape de ${A} à ${D}, pour faire apparaître ${AD}.`,pts:1.5},
+    {w:`<b>${fx(`${AD} ≥ ${n3[i]} − ${o[0]} − ${o[1]} = ${big} − ${s1} − ${s2} = ${V}`)}</b>`,why:`On retranche des deux côtés les deux distances connues ; l'ordre des deux lettres d'une distance ne compte pas (axiome III b). La valeur ${V} est atteinte quand les quatre points sont alignés dans l'ordre ${ordre.join(", ")}.`,pts:1.5}];
+  return {sig:"EC"+JSON.stringify([d,"p"]),q:`${A}, ${B}, ${C} et ${D} sont quatre points du plan, avec ${fx(`${n3[0]} = ${d[0]}`)}, ${fx(`${n3[1]} = ${d[1]}`)} et ${fx(`${n3[2]} = ${d[2]}`)}. Quelle est la plus petite valeur possible de la distance ${fx(AD)} ?`,corps:RAP_IT,
+    texte:`${n3[0]} = ${d[0]}, ${n3[1]} = ${d[1]}, ${n3[2]} = ${d[2]} : plus petite valeur de ${AD}`,nature:"un chemin en plusieurs étapes : la plus petite valeur",champs:[champV(false,AD)],
+    juge:jugeNb(V,E,[[Q(big+s1+s2),0,"plus grande valeur donnée à la place de la plus petite","Où ça part : la question.",`${big+s1+s2} est la plus grande valeur possible de ${AD}, quand les points sont alignés dans l'ordre ${A}, ${B}, ${C}, ${D}. Pour la plus petite, on part de la plus grande distance connue.`],
+      [Q(0),1,"zéro donné comme plus petite valeur","Où ça part : la valeur 0.",`Si ${A} et ${D} étaient confondus, l'inégalité triangulaire donnerait ${fx(`${n3[i]} ≤ ${o[0]} + ${o[1]} = ${s1+s2}`)}, alors que ${fx(`${n3[i]} = ${big}`)}.`],
+      [Q(-V),1,"différence prise dans le mauvais sens","Où ça part : le signe.","Une distance n'est jamais négative : on part de la plus grande distance connue, et on lui retranche les deux autres."]],"la valeur"),
+    etapes:E,bonne:fx(String(V)),bonneTxt:`plus petite valeur de ${AD} : ${V}`,repBonne:{x:String(V)},repFausse:{x:String(big+s1+s2)},ens:{sorte:"chemin",d,grand:false}};}
+
+/* le plan d'une démonstration : n nom de la figure, s(U, V) le côté écrit dans l'ordre du nom, x le point en plus */
+const DIV2="Diviser les deux côtés par un nombre positif ne change pas le sens d'une inégalité.",GRAND="du grand côté de l'inégalité à montrer";
+const IT_PLANS=[
+ ["c1","triM",["M","K"],1,(n,s,M,A,B,C)=>{const AB=s(A,B),AC=s(A,C),BC=s(B,C),MS=[A,B,C].map(p=>M+p),but=`${MS.join(" + ")} ≥ 1/2 (${AB} + ${AC} + ${BC})`;
+   return {hyp:`Soient ${n} un triangle et ${M} un point du plan.`,but,
+    quoi:[`${AB}, ${AC} et ${BC}, en passant par ${M}`,[`${et(MS)}, en passant par un sommet`,`Ces lignes majorent ${et(MS)}. Or leur somme est ${GRAND} : ce sont les côtés du triangle, du petit côté, qu'il faut majorer.`],
+      [`${AB} seulement, en passant par ${M}`,`Une seule ligne ne fait apparaître ni ${AC} ni ${BC}. Il faut une inégalité triangulaire pour chaque longueur du petit côté.`]],
+    lignes:[`${AB} ≤ ${A}${M} + ${M}${B}`,`${AC} ≤ ${A}${M} + ${M}${C}`,`${BC} ≤ ${B}${M} + ${M}${C}`],som:[`${AB} + ${AC} + ${BC}`,MS.map(x=>"2 "+x).join(" + ")],
+    sf:[`${AB} + ${AC} + ${BC} ≤ ${MS.join(" + ")}`,`Chacune des distances ${et(MS)} apparaît dans deux lignes : elle compte deux fois.`],
+    fin:[`On divise par 2 : ${fx(`1/2 (${AB} + ${AC} + ${BC}) ≤ ${MS.join(" + ")}`)}. C'est l'inégalité demandée.`,DIV2+" Et « a ≤ b » dit la même chose que « b ≥ a »."]};}],
+ ["c2","quad",[],2,(n,s,x,A,B,C,D)=>{const AC=s(A,C),AB=s(A,B),BC=s(B,C),CD=s(C,D),DA=s(D,A),but=`${AC} ≤ 1/2 (${AB} + ${BC} + ${CD} + ${DA})`;
+   return {hyp:`Soit ${n} un quadrilatère.`,but,
+    quoi:[`${AC} deux fois, en passant par ${B} puis par ${D}`,[`${AB}, ${BC}, ${CD} et ${DA}, en passant par un sommet`,`Ces lignes majorent les quatre côtés. Or les côtés sont ${GRAND} : c'est ${AC}, du petit côté, qu'il faut majorer.`],
+      [`${AC} une seule fois, en passant par ${B}`,`Cette ligne donne ${AC} ≤ ${AB} + ${BC} : les côtés ${CD} et ${DA} n'apparaissent pas. Il faut aussi passer par ${D}.`]],
+    lignes:[`${AC} ≤ ${AB} + ${BC}`,`${AC} ≤ ${DA} + ${CD}`],som:[`2 ${AC}`,`${AB} + ${BC} + ${CD} + ${DA}`],
+    sf:[`2 ${AC} ≤ ${AB} + ${BC}`,`Les côtés droits des deux lignes s'ajoutent en entier : ${CD} et ${DA} ne disparaissent pas.`],
+    fin:[`On divise par 2 : ${fx(but)}. C'est l'inégalité demandée.`,DIV2]};}],
+ ["c3","quad",[],1,(n,s,x,A,B,C,D)=>{const AC=s(A,C),BD=s(B,D),AB=s(A,B),BC=s(B,C),CD=s(C,D),DA=s(D,A),but=`${AC} + ${BD} ≤ ${AB} + ${BC} + ${CD} + ${DA}`;
+   return {hyp:`Soit ${n} un quadrilatère, de diagonales [${AC}] et [${BD}].`,but,
+    quoi:[`${AC} par ${B} puis par ${D}, et ${BD} par ${A} puis par ${C}`,[`${AC} par ${B}, et ${BD} par ${C}`,`Ces deux lignes donnent ${AC} + ${BD} ≤ ${AB} + 2 ${BC} + ${CD} : le côté ${DA} manque, et ${BC} compte deux fois. Avec les quatre lignes, chaque côté apparaît deux fois.`],
+      [`${AB}, ${BC}, ${CD} et ${DA}, en passant par un sommet`,`Ces lignes majorent les côtés, qui sont ${GRAND}. Ce sont les diagonales ${AC} et ${BD}, du petit côté, qu'il faut majorer.`]],
+    lignes:[`${AC} ≤ ${AB} + ${BC}`,`${AC} ≤ ${DA} + ${CD}`,`${BD} ≤ ${AB} + ${DA}`,`${BD} ≤ ${BC} + ${CD}`],som:[`2 ${AC} + 2 ${BD}`,`2 ${AB} + 2 ${BC} + 2 ${CD} + 2 ${DA}`],
+    sf:[`2 ${AC} + 2 ${BD} ≤ ${AB} + ${BC} + ${CD} + ${DA}`,`Chaque côté apparaît dans deux lignes : une fois pour ${AC}, une fois pour ${BD}. Il compte deux fois.`],
+    fin:[`On divise par 2 : ${fx(but)}. C'est l'inégalité demandée.`,DIV2]};}],
+ ["c4","quadO",["O"],2,(n,s,O1,A,B,C,D)=>{const AC=s(A,C),BD=s(B,D),AB=s(A,B),BC=s(B,C),CD=s(C,D),but=`${AB} + ${CD} ≤ ${AC} + ${BD}`,dr=`${A}${O1} + ${O1}${B} + ${C}${O1} + ${O1}${D}`;
+   return {hyp:`Soit ${n} un quadrilatère dont les diagonales [${AC}] et [${BD}] se coupent en un point ${O1}.`,but,
+    quoi:[`${AB} et ${CD}, en passant par ${O1}`,[`${AC} et ${BD}, en passant par un sommet`,`${AC} et ${BD} sont ${GRAND} : les majorer ne sert à rien. Ce sont ${AB} et ${CD}, du petit côté, qu'il faut majorer.`],
+      [`${AB} par ${C}, et ${CD} par ${B}`,`Ces lignes donnent ${AB} + ${CD} ≤ ${AC} + ${BD} + 2 ${BC} : il reste 2 ${BC} en trop. En passant par ${O1}, les morceaux se recollent exactement en ${AC} et ${BD}.`]],
+    lignes:[`${AB} ≤ ${A}${O1} + ${O1}${B}`,`${CD} ≤ ${C}${O1} + ${O1}${D}`],som:[`${AB} + ${CD}`,dr],
+    sf:[`${AB} + ${CD} = ${dr}`,`Une inégalité triangulaire ne devient une égalité que si le point de passage est sur le segment. En général, ${O1} n'est pas sur [${AB}] : on garde ≤.`],
+    fin:[`${O1} est sur [${AC}] et sur [${BD}], donc ${fx(`${A}${O1} + ${O1}${C} = ${AC}`)} et ${fx(`${B}${O1} + ${O1}${D} = ${BD}`)} (définition 1.2.1). D'où ${fx(but)}.`,`C'est ici que sert l'hypothèse sur les diagonales : pour un point ${O1} quelconque, on aurait seulement ${fx(`${AC} ≤ ${A}${O1} + ${O1}${C}`)}, ce qui ne permet pas de conclure.`]};}],
+ ["c5","triI",["I"],3,(n,s,I,A,B,C)=>{const AB=s(A,B),AC=s(A,C),BC=s(B,C),but=`${AB} + ${AC} ≤ 2 ${A}${I} + ${BC}`;
+   return {hyp:`Soient ${n} un triangle et ${I} le milieu de [${BC}].`,but,
+    quoi:[`${AB} et ${AC}, en passant par ${I}`,[`${A}${I} deux fois, en passant par ${B} puis par ${C}`,`Ces lignes majorent ${A}${I}. Or ${A}${I} est ${GRAND} : ce sont ${AB} et ${AC}, du petit côté, qu'il faut majorer.`],
+      [`${BC}, en passant par ${A}`,`Cette ligne donne ${BC} ≤ ${AB} + ${AC}, où ${A}${I} n'apparaît pas. Les longueurs à majorer sont ${AB} et ${AC}, et le point de passage est ${I}.`]],
+    lignes:[`${AB} ≤ ${A}${I} + ${I}${B}`,`${AC} ≤ ${A}${I} + ${I}${C}`],som:[`${AB} + ${AC}`,`2 ${A}${I} + ${I}${B} + ${I}${C}`],
+    sf:[`${AB} + ${AC} ≤ ${A}${I} + ${I}${B} + ${I}${C}`,`${A}${I} apparaît dans les deux lignes : il compte deux fois.`],
+    fin:[`${I} est le milieu de [${BC}], donc ${fx(`${I}${B} + ${I}${C} = ${BC}`)}. D'où ${fx(but)}.`,`Définition 1.2.2 : le milieu vérifie ${I}${B} = ${I}${C} = ½ ${BC}. La somme des deux moitiés redonne ${BC}.`]};}],
+ ["c6","triSeg",["M","K"],3,(n,s,M,A,B,C)=>{const AB=s(A,B),AC=s(A,C),BC=s(B,C),but=`${A}${M} ≤ 1/2 (${AB} + ${AC} + ${BC})`,dr=`${AB} + ${AC} + ${B}${M} + ${C}${M}`;
+   return {hyp:`Soient ${n} un triangle et ${M} un point du segment [${BC}].`,but,
+    quoi:[`${A}${M} deux fois, en passant par ${B} puis par ${C}`,[`${AB} et ${AC}, en passant par ${M}`,`Ces lignes majorent ${AB} et ${AC}, qui sont ${GRAND}. C'est ${A}${M}, du petit côté, qu'il faut majorer.`],
+      [`${BC}, en passant par ${M}`,`${M} est sur [${BC}] : cette ligne est en fait l'égalité ${B}${M} + ${M}${C} = ${BC}. Elle servira à la fin, mais elle ne majore pas ${A}${M}.`]],
+    lignes:[`${A}${M} ≤ ${AB} + ${B}${M}`,`${A}${M} ≤ ${AC} + ${C}${M}`],som:[`2 ${A}${M}`,dr],
+    sf:[`2 ${A}${M} = ${dr}`,`Une inégalité triangulaire ne devient une égalité que si le point de passage est sur le segment. En général, ${B} n'est pas sur [${A}${M}] : on garde ≤.`],
+    fin:[`${M} est sur [${BC}], donc ${fx(`${B}${M} + ${M}${C} = ${BC}`)} (définition 1.2.1). D'où ${fx(`2 ${A}${M} ≤ ${AB} + ${AC} + ${BC}`)}, puis on divise par 2.`,"C'est la seule fois où l'hypothèse sur le point du segment sert. "+DIV2]};}],
+ ["c8","triM",["P","K"],3,(n,s,P1,A,B,C)=>{const AB=s(A,B),AC=s(A,C),BC=s(B,C),dr=`2 ${A}${P1} + ${P1}${B} + ${P1}${C}`;
+   return {hyp:`Soient ${n} un triangle et ${P1} un point du plan.`,but:`${AB} + ${AC} ≤ ${dr}`,
+    quoi:[`${AB} et ${AC}, en passant par ${P1}`,[`${P1}${B} et ${P1}${C}, en passant par ${A}`,`${P1}${B} et ${P1}${C} sont ${GRAND} : les majorer ne sert à rien. Ce sont ${AB} et ${AC}, du petit côté, qu'il faut majorer.`],
+      [`${BC}, en passant par ${P1}`,`${BC} n'apparaît pas dans l'inégalité à montrer. Les longueurs à majorer sont celles du petit côté : ${AB} et ${AC}.`]],
+    lignes:[`${AB} ≤ ${A}${P1} + ${P1}${B}`,`${AC} ≤ ${A}${P1} + ${P1}${C}`],som:[`${AB} + ${AC}`,dr],
+    sf:[`${AB} + ${AC} ≤ ${A}${P1} + ${P1}${B} + ${P1}${C}`,`${A}${P1} apparaît dans les deux lignes : il compte deux fois.`],
+    fin:["C'est exactement l'inégalité à montrer : il n'y a rien à ajouter.",`Pas de division, pas d'hypothèse à utiliser : le point ${P1} est quelconque, et la preuve vaut pour tous les points du plan.`]};}],
+ ["c10","quadM",["M","K"],1,(n,s,M,A,B,C,D)=>{const AC=s(A,C),BD=s(B,D),MS=[A,B,C,D].map(p=>M+p),but=`${MS.join(" + ")} ≥ ${AC} + ${BD}`,dr=`${A}${M} + ${M}${C} + ${B}${M} + ${M}${D}`;
+   return {hyp:`Soient ${n} un quadrilatère, de diagonales [${AC}] et [${BD}], et ${M} un point du plan.`,but,
+    quoi:[`${AC} et ${BD}, en passant par ${M}`,[`${et(MS)}, en passant par un sommet`,`Ces lignes majorent ${et(MS)}. Or leur somme est ${GRAND} : ce sont ${AC} et ${BD}, du petit côté, qu'il faut majorer.`],
+      [`${et([s(A,B),s(B,C),s(C,D),s(D,A)])}, en passant par ${M}`,`Les côtés n'apparaissent pas dans l'inégalité à montrer : du petit côté, il y a les diagonales ${AC} et ${BD}.`]],
+    lignes:[`${AC} ≤ ${A}${M} + ${M}${C}`,`${BD} ≤ ${B}${M} + ${M}${D}`],som:[`${AC} + ${BD}`,dr],
+    sf:[`${AC} + ${BD} ≤ ${A}${M} + ${M}${C}`,`Les deux lignes s'ajoutent en entier : ${B}${M} + ${M}${D} ne disparaît pas.`],
+    fin:[`C'est l'inégalité demandée, lue de droite à gauche : ${fx(but)}.`,"« a ≤ b » dit la même chose que « b ≥ a ». Et l'ordre des deux lettres d'une distance ne compte pas (axiome III b)."]};}],
+ ["c11","quadM",["M","K"],1,(n,s,M,A,B,C,D)=>{const CO=[s(A,B),s(B,C),s(C,D),s(D,A)],AC=s(A,C),BD=s(B,D),MS=[A,B,C,D].map(p=>M+p),but=`${MS.join(" + ")} ≥ 1/2 (${CO.join(" + ")})`;
+   return {hyp:`Soient ${n} un quadrilatère et ${M} un point du plan.`,but,
+    quoi:[`${et(CO)}, en passant par ${M}`,[`${et(MS)}, en passant par un sommet`,`Ces lignes majorent ${et(MS)}. Or leur somme est ${GRAND} : ce sont les quatre côtés, du petit côté, qu'il faut majorer.`],
+      [`${AC} et ${BD}, en passant par ${M}`,`Ces lignes donnent ${AC} + ${BD} ≤ ${MS.join(" + ")} : une inégalité vraie, mais avec les diagonales. Ici ce sont les quatre côtés qui sont du petit côté.`]],
+    lignes:[`${CO[0]} ≤ ${A}${M} + ${M}${B}`,`${CO[1]} ≤ ${B}${M} + ${M}${C}`,`${CO[2]} ≤ ${C}${M} + ${M}${D}`,`${CO[3]} ≤ ${D}${M} + ${M}${A}`],som:[CO.join(" + "),MS.map(x=>"2 "+x).join(" + ")],
+    sf:[`${CO.join(" + ")} ≤ ${MS.join(" + ")}`,`Chacune des distances ${et(MS)} apparaît dans deux lignes, car chaque sommet est au bout de deux côtés : elle compte deux fois.`],
+    fin:[`On divise par 2 : ${fx(`1/2 (${CO.join(" + ")}) ≤ ${MS.join(" + ")}`)}. C'est l'inégalité demandée.`,DIV2+" Et « a ≤ b » dit la même chose que « b ≥ a »."]};}]];
+function itCompleter(R){const [id,conf,ex,rot,f]=R.choix(IT_PLANS),n=R.choix(conf[0]==="t"?TRI:QUAD4),k=R.ent(0,rot-1),L=(n+n).slice(k,k+n.length).split(""),x=hors(n,ex)||"",
+    p=f(n,(u,v)=>n.indexOf(u)<n.indexOf(v)?u+v:v+u,x,...L),S={ok:`${p.som[0]} ≤ ${p.som[1]}`,sf:p.sf[0],sens:`${p.som[0]} ≥ ${p.som[1]}`},Qo={ok:p.quoi[0],f1:p.quoi[1][0],f2:p.quoi[2][0]};
+  const E=[{w:`On majore les longueurs du petit côté de l'inégalité à montrer : ${Qo.ok}.`,why:"L'inégalité triangulaire se lit « distance directe ≤ détour ». Les distances directes sont les longueurs du petit côté ; les points de passage sont ceux qui apparaissent du grand côté.",pts:1},
+    {w:et(p.lignes.map(l=>fx(l)))+".",why:"Chaque ligne est l'inégalité triangulaire (axiome III a) : elle est vraie sans aucune condition sur les points.",pts:1},
+    {w:`En additionnant ces lignes : <b>${fx(S.ok)}</b>`,why:"Des inégalités de même sens s'additionnent membre à membre : si a ≤ b et c ≤ d, alors a + c ≤ b + d. À droite, chaque distance compte autant de fois qu'elle apparaît.",pts:1},
+    {w:p.fin[0],why:p.fin[1],pts:1}];
+  const tort=(c,v)=>c==="l"?[0,"mauvaises longueurs majorées","Où ça part : le choix des longueurs.",p.quoi[v==="f1"?1:2][1]]
+    :v==="sens"?[2,"sens de l'inégalité inversé en additionnant","Où ça part : le sens.","Additionner des inégalités de même sens garde ce sens : des ≤ donnent un ≤."]:[2,"somme des lignes fausse","Où ça part : l'addition.",p.sf[1]];
+  return {sig:"PL"+id+L.join(""),q:`${p.hyp} On veut montrer que ${fx(p.but)}. Complète le plan de la démonstration.`,corps:RAP_IT+RAP_MAJ,texte:`${p.hyp} Montrer ${p.but} : plan de la démonstration`,nature:"le plan d'une démonstration",
+    champs:[champC("l","Quelles longueurs faut-il majorer avec l'inégalité triangulaire ?",R.mel(["ok","f1","f2"]).map(c=>[c,Qo[c]])),champC("s","Une fois ces lignes écrites et additionnées, on obtient :",R.mel(["ok","sf","sens"]).map(c=>[c,S[c]]))],
+    juge:jugeQ({l:"ok",s:"ok"},tort),etapes:E,bonne:`${Qo.ok} ; ${fx(S.ok)}`,bonneTxt:`${Qo.ok} ; ${S.ok}`,repBonne:{l:"ok",s:"ok"},repFausse:{l:"f1",s:"ok"},ens:{sorte:"plan",conf,L,x,but:p.but,lignes:p.lignes,S}};}
+
+const MODELE="Exercice de moi, sur le modèle de l'exercice 3 du CC1 2026";
+const IT_BANQUE=[
+ ["I1","triM","ABC","M","CC1 du 10 novembre 2026, exercice 3 (4 points). Soient ABC un triangle et M un point du plan. Montrer l'inégalité $MA + MB + MC ≥ 1/2 (AB + AC + BC)$.",OFF,
+  [["D'après l'inégalité triangulaire, on a $AB ≤ AM + MB$,","L'axiome III (a), pour le côté [AB] et le point de passage M. Il vaut pour n'importe quel point M : aucune hypothèse à vérifier.",1],
+   ["$AC ≤ AM + MC$,","La même inégalité pour le côté [AC]. Dans l'inégalité à montrer, les trois côtés sont du petit côté : il faut une ligne pour chacun.",1],
+   ["et $BC ≤ BM + MC$.","La même inégalité pour le côté [BC], toujours en passant par M.",1],
+   ["En sommant ces trois inégalités, on obtient $AB + AC + BC ≤ 2 AM + 2 MB + 2 MC$, d'où $1/2 (AB + AC + BC) ≤ MA + MB + MC$.","Chaque distance AM, MB, MC apparaît dans deux lignes. Puis on divise par 2 : le sens d'une inégalité ne change pas quand on divise par un nombre positif.",1]]],
+ ["I2","quad","ABCD","",MODELE+" (4 points). Soit ABCD un quadrilatère. Montrer que la somme des diagonales ne dépasse pas le périmètre : $AC + BD ≤ AB + BC + CD + DA$.",MOI,
+  [["$AC ≤ AB + BC$ et $AC ≤ AD + DC$.","L'inégalité triangulaire (axiome III a) pour la diagonale [AC], en passant par B, puis en passant par D.",1],
+   ["$BD ≤ BA + AD$ et $BD ≤ BC + CD$.","La même chose pour l'autre diagonale [BD], en passant par A, puis par C.",1],
+   ["En additionnant les quatre lignes : $2 AC + 2 BD ≤ 2 AB + 2 BC + 2 CD + 2 DA$.","Chaque côté apparaît dans deux lignes : une fois pour AC, une fois pour BD. L'ordre des deux lettres d'une distance ne compte pas (axiome III b).",1],
+   ["On divise par 2 : $AC + BD ≤ AB + BC + CD + DA$.","Diviser les deux côtés par un nombre positif garde le sens de l'inégalité.",1]]],
+ ["I3","quadO","ABCD","O",MODELE+" (4 points). Soit ABCD un quadrilatère dont les diagonales [AC] et [BD] se coupent en un point O. Montrer que $AB + CD ≤ AC + BD$.",MOI,
+  [["$AB ≤ AO + OB$.","L'inégalité triangulaire pour le côté [AB], en passant par O : c'est le seul point qui relie les côtés aux diagonales.",1],
+   ["$CD ≤ CO + OD$.","La même inégalité pour le côté [CD], encore en passant par O.",1],
+   ["O est sur [AC], donc $AO + OC = AC$. O est sur [BD], donc $BO + OD = BD$.","C'est la définition du segment (1.2.1) : un point M est sur [AC] exactement quand AM + MC = AC. C'est ici que sert l'hypothèse sur les diagonales.",1],
+   ["En additionnant les deux premières lignes : $AB + CD ≤ AO + OC + BO + OD = AC + BD$.","On additionne, puis on regroupe les deux morceaux de chaque diagonale grâce à la ligne précédente.",1]]],
+ ["I4","triSeg","ABC","M",MODELE+" (4 points). Soient ABC un triangle et M un point du segment [BC]. Montrer que $AM ≤ 1/2 (AB + AC + BC)$.",MOI,
+  [["$AM ≤ AB + BM$.","L'inégalité triangulaire (axiome III a) pour la distance AM, en passant par le sommet B.",1],
+   ["$AM ≤ AC + CM$.","La même inégalité, en passant cette fois par le sommet C : il faut les deux lignes pour faire apparaître les trois côtés.",1],
+   ["M est sur [BC], donc $BM + MC = BC$.","Définition du segment (1.2.1). C'est la seule fois où l'hypothèse « M ∈ [BC] » sert.",1],
+   ["En additionnant les deux premières lignes : $2 AM ≤ AB + AC + BM + CM = AB + AC + BC$, puis on divise par 2.","À droite, BM + CM se regroupe en BC grâce à la ligne précédente. Diviser par 2 garde le sens de l'inégalité.",1]]],
+ ["I5","quadM","ABCD","M",MODELE+" (3 points). Soient ABCD un quadrilatère et M un point du plan. Montrer que $MA + MB + MC + MD ≥ AC + BD$.",MOI,
+  [["$AC ≤ AM + MC$.","L'inégalité triangulaire pour la diagonale [AC], en passant par M. Les diagonales sont du petit côté de l'inégalité à montrer : ce sont elles qu'on majore.",1],
+   ["$BD ≤ BM + MD$.","La même inégalité pour l'autre diagonale [BD], en passant par M.",1],
+   ["En additionnant : $AC + BD ≤ MA + MB + MC + MD$.","C'est l'inégalité demandée, lue de droite à gauche. L'ordre des deux lettres d'une distance ne compte pas (axiome III b).",1]]],
+ ["I6","trois","ABM","",MODELE+" (3 points). Soient A, B et M trois points du plan. Montrer que $MA − MB ≤ AB$ et que $MB − MA ≤ AB$.",MOI,
+  [["$MA ≤ MB + BA$.","L'inégalité triangulaire pour la distance MA, en passant par B. Pour faire apparaître MA − MB, on met MA seul à gauche.",1],
+   ["Donc $MA − MB ≤ AB$.","On retranche MB des deux côtés, et BA = AB par symétrie (axiome III b).",0.5],
+   ["$MB ≤ MA + AB$.","L'inégalité triangulaire pour la distance MB, cette fois en passant par A.",1],
+   ["Donc $MB − MA ≤ AB$.","On retranche MA des deux côtés. Les deux résultats ensemble disent que l'écart entre MA et MB ne dépasse jamais AB.",0.5]]],
+ ["I7","inter","ABCNM","",MODELE+" (4 points). Soient ABC un triangle, N un point du segment [AC] et M un point du segment [BN]. Montrer que $MB + MC ≤ AB + AC$.",MOI,
+  [["$MC ≤ MN + NC$.","L'inégalité triangulaire pour la distance MC, en passant par N : c'est le point qui relie M au côté [AC].",1],
+   ["M est sur [BN], donc $BM + MN = BN$. D'où $MB + MC ≤ BN + NC$.","Définition du segment (1.2.1). On ajoute MB des deux côtés de la première ligne, puis MB + MN se regroupe en BN.",1],
+   ["$BN ≤ BA + AN$.","L'inégalité triangulaire une seconde fois, pour la distance BN, en passant par le sommet A.",1],
+   ["N est sur [AC], donc $AN + NC = AC$. D'où $MB + MC ≤ BA + AN + NC = AB + AC$.","On remplace BN par quelque chose de plus grand, puis AN + NC se regroupe en AC (définition du segment).",1]]],
+ ["I8","seg2","ABMN","","Feuille 1, exercice 1.2, question (3) (barème de moi : 4 points). Soient A et B deux points du plan et M un point du segment [AB]. Montrer que [AM] ⊂ [AB].",SITE,
+  [["Soit N un point de [AM]. Il faut montrer que N ∈ [AB], c'est-à-dire $AN + NB = AB$.","Pour montrer une inclusion, on prend un point quelconque du premier ensemble et on montre qu'il est dans le second. La définition du segment (1.2.1) traduit « N ∈ [AB] » en une égalité.",1],
+   ["N ∈ [AM] donne $AN + NM = AM$, et M ∈ [AB] donne $AM + MB = AB$. Donc $AN + NM + MB = AB$.","Les deux hypothèses, traduites par la définition du segment. Puis on remplace AM dans la seconde égalité.",1],
+   ["Par l'inégalité triangulaire, $NB ≤ NM + MB$, donc $AN + NB ≤ AN + NM + MB = AB$.","L'axiome III (a) pour la distance NB, en passant par M. Puis on ajoute AN des deux côtés.",1],
+   ["Et $AB ≤ AN + NB$, encore par l'inégalité triangulaire. Donc $AN + NB = AB$ : N ∈ [AB].","L'axiome III (a) pour AB, en passant par N, donne l'inégalité dans l'autre sens. Deux inégalités de sens contraires donnent l'égalité.",1]]],
+ ["I9","triI","ABC","I",MODELE+" (4 points). Soient ABC un triangle et I le milieu de [BC]. Montrer que $AI ≥ 1/2 (AB + AC − BC)$.",MOI,
+  [["$AB ≤ AI + IB$.","L'inégalité triangulaire (axiome III a) pour le côté [AB], en passant par I.",1],
+   ["$AC ≤ AI + IC$.","La même inégalité pour le côté [AC], encore en passant par I.",1],
+   ["I est le milieu de [BC], donc $IB + IC = BC$.","Définition 1.2.2 : le milieu de [BC] vérifie IB = IC = ½ BC. La somme des deux moitiés redonne BC.",1],
+   ["En additionnant les deux premières lignes : $AB + AC ≤ 2 AI + BC$, donc $AI ≥ 1/2 (AB + AC − BC)$.","On retranche BC des deux côtés, puis on divise par 2 : aucune de ces deux opérations ne change le sens de l'inégalité.",1]]],
+ ["I10","quadM","ABCD","M",MODELE+" (4 points). Soient ABCD un quadrilatère et M un point du plan. Montrer que $MA + MB + MC + MD ≥ 1/2 (AB + BC + CD + DA)$.",MOI,
+  [["$AB ≤ AM + MB$ et $BC ≤ BM + MC$.","L'inégalité triangulaire pour les côtés [AB] et [BC], en passant par M. Les quatre côtés sont du petit côté de l'inégalité à montrer : il faut une ligne pour chacun.",1],
+   ["$CD ≤ CM + MD$ et $DA ≤ DM + MA$.","La même inégalité pour les deux autres côtés, toujours en passant par M.",1],
+   ["En additionnant les quatre lignes : $AB + BC + CD + DA ≤ 2 MA + 2 MB + 2 MC + 2 MD$.","Chaque distance MA, MB, MC, MD apparaît dans deux lignes, car chaque sommet est au bout de deux côtés.",1],
+   ["On divise par 2 : $1/2 (AB + BC + CD + DA) ≤ MA + MB + MC + MD$.","Diviser les deux côtés par un nombre positif garde le sens de l'inégalité. C'est l'inégalité demandée, lue de droite à gauche.",1]]]];
+function itPapier(R){const b=R.choix(IT_BANQUE),e=recit("IP"+b[0],b[4],b[5],b[6])();e.ens={sorte:"papier",pts:b[6].reduce((t,l)=>t+l[2],0),conf:b[1],L:b[2].split(""),x:b[3]};return e;}
+
 /* ---------- les démonstrations et les énoncés du cours : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
 const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\^\{2\}/g,"²").replace(/\$/g,"").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
   etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
@@ -23613,7 +23844,13 @@ G.add("geo",[
    {t:"médiane, médiatrice, hauteur, bissectrice",cc:1,min:150,gen:droitesTri},
    {t:"le cas d'isométrie, et ce qu'on en déduit",cc:2,gen:casIso},
    {t:"choisir les deux triangles",cc:3,min:70,gen:bonsTriangles},
-   {t:"comme au CC : la démonstration, sur papier",cc:8,min:8,gen:papierTri}]}
+   {t:"comme au CC : la démonstration, sur papier",cc:8,min:8,gen:papierTri}]},
+ {id:"GE8",t:"Inégalité triangulaire",tache:"inégalité triangulaire",th:"triangles",ex:"cc2",lecons:["g2-bases"],
+  paliers:[
+   {t:"possible ou pas, aligné ou pas",cc:1,min:200,gen:itBase},
+   {t:"écrire la bonne inégalité",cc:2,min:200,gen:itEcrire},
+   {t:"le plan d'une démonstration",cc:3,min:60,gen:itCompleter},
+   {t:"comme au CC : la démonstration, sur papier",cc:6,min:10,gen:itPapier}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,ex:"cc2",fixe:true,seuil:1,pages:[],lecons:r.lecons,paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
