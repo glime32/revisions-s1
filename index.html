@@ -460,6 +460,7 @@ svg .arrow-ok{fill:var(--vert)}
 .fc .acts{margin-top:auto}
 .kbd{font-size:.8rem;color:var(--graphite)}
 .filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters>.btn{max-width:100%;min-width:0}
 
 /* quiz, TD, annales */
 .qbox{background:var(--feuille);border:2px solid var(--trait);border-radius:18px;padding:20px;display:grid;gap:14px;min-width:0}
@@ -669,6 +670,8 @@ h1 .mi,h2 .mi,h3 .mi{font-size:1em;font-weight:700}
 .fr>.fn{padding:0 .22em .08em}
 .fr>.fd{padding:.08em .22em 0;border-top:.07em solid currentColor;align-self:stretch;text-align:center}
 .fr>.fs{font-size:0;line-height:0;height:0;overflow:hidden}
+.fr>.fd:has(>sup,>i>sup,>.mi>sup){padding-top:.36em}
+.fr>.fn:has(>sub,>i>sub,>.mi>sub){padding-bottom:.3em}
 sup .fr,sub .fr{font-size:1em}
 sup,sub{line-height:0}
 .formula{font-family:var(--f-math);font-size:1.08rem;background:var(--voile);border:1px solid var(--trait);border-radius:10px;padding:8px 12px;margin:6px 0}
@@ -1513,34 +1516,36 @@ function genre(brut,avant,apres){
   return "x";
 }
 /* exposants et indices écrits en caractères (x², e⁻ˣ, v₁) : remis en vraies balises, pour que les lettres puissent être en italique */
-const HAUT={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁺":"+","⁻":"−","⁼":"=","⁽":"(","⁾":")","ⁿ":"n","ⁱ":"i","ˣ":"x","ʸ":"y","ᵘ":"u","ᵉ":"e","ᵏ":"k","ᵗ":"t","ᵃ":"a","ᵇ":"b","ᶜ":"c","ᵈ":"d","ᵐ":"m","ᵖ":"p","ʳ":"r","ˢ":"s","ᵛ":"v","ʷ":"w","ᶻ":"z","ʰ":"h","ʲ":"j","ˡ":"l","ᵒ":"o","ᶠ":"f","ᵍ":"g","ᶿ":"θ","′":"′","″":"′′"};
+const HAUT={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁺":"+","⁻":"−","⁼":"=","⁽":"(","⁾":")","ⁿ":"n","ⁱ":"i","ˣ":"x","ʸ":"y","ᵘ":"u","ᵉ":"e","ᵏ":"k","ᵗ":"t","ᵃ":"a","ᵇ":"b","ᶜ":"c","ᵈ":"d","ᵐ":"m","ᵖ":"p","ʳ":"r","ˢ":"s","ᵛ":"v","ʷ":"w","ᶻ":"z","ʰ":"h","ʲ":"j","ˡ":"l","ᵒ":"o","ᶠ":"f","ᵍ":"g","ᶿ":"θ","ᵅ":"α","′":"′","″":"′′"};
 const BAS={"₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9","₊":"+","₋":"−","₌":"=","₍":"(","₎":")","ₐ":"a","ₑ":"e","ₒ":"o","ₓ":"x","ₕ":"h","ₖ":"k","ₗ":"l","ₘ":"m","ₙ":"n","ₚ":"p","ₛ":"s","ₜ":"t","ᵢ":"i","ⱼ":"j","ᵣ":"r","ᵤ":"u","ᵥ":"v"};
 const DROIT=new Set("ln log exp cos sin tan cotan ch sh th lim arg max min sup inf det ker im Re Im Vect Card Mat Id rg dim Tr mod pgcd ppcm et ou si donc sur pour avec CC TD TP".split(" "));
 const ATOME=/[0-9A-Za-zÀ-ÿα-ωΑ-Ω′″∞√-]/;
 const textes=el=>{const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),L=[];let n;while((n=w.nextNode()))L.push(n);return L;};
 function unGroupe(x){if(x[0]!=="("||x[x.length-1]!==")")return false;let p=0;for(let k=0;k<x.length;k++){if(x[k]==="(")p++;else if(x[k]===")"&&--p===0&&k<x.length-1)return false;}return p===0;}
-/* coupe « a/b » en numérateur et dénominateur : un opérande est une suite collée de lettres, chiffres et groupes entre parenthèses */
-function fractions(t){
+/* coupe « a/b » en numérateur et dénominateur : un opérande est une suite collée de lettres, chiffres et groupes entre parenthèses ;
+   ℓ et la factorielle en font partie (« ℓ²/4 », « 1/n! ») ; hb : les marques d'un exposant ou d'un indice, qui ne commencent jamais un opérande */
+const at=c=>ATOME.test(c)||c==="ℓ"||c==="!";
+function fractions(t,hb){
   const out=[];let debut=0;
   const chiffre=(k,d)=>(t[k]===","||t[k]===".")&&/\d/.test(t[k-1]||"")&&/\d/.test(t[k+1]||"");
   for(let k=1;k<t.length-1;k++){
     if(t[k]!=="/")continue;
     let a=k-1;
     while(a>=debut){const c=t[a];
-      if(ATOME.test(c)||chiffre(a))a--;
+      if(at(c)||chiffre(a))a--;
       else if(c===")"){let p=1,m=a-1;while(m>=debut&&p){if(t[m]===")")p++;else if(t[m]==="(")p--;m--;}if(p)break;a=m;}
       else break;}
     let b=k+1;
     while(b<t.length){const c=t[b];
-      if(ATOME.test(c)||chiffre(b))b++;
+      if(at(c)||chiffre(b))b++;
       else if(c==="("){let p=1,m=b+1;while(m<t.length&&p){if(t[m]==="(")p++;else if(t[m]===")")p--;m++;}if(p)break;b=m;}
       else break;}
     let n=t.slice(a+1,k),d=t.slice(k+1,b);
-    if(!n||!d||n.includes("/")||t[b]==="/"||t[a]==="/")continue;
+    if(!n||!d||n.includes("/")||t[b]==="/"||t[a]==="/"||hb&&(hb.has(n[0])||hb.has(d[0])))continue;
     if(unGroupe(n))n=n.slice(1,-1);if(unGroupe(d))d=d.slice(1,-1);
     /* « (2/3) u » : la fraction empilée n'a plus besoin de ses parenthèses, sauf après un nom de fonction */
     if(t[a]==="("&&t[b]===")"&&!(a>0&&ATOME.test(t[a-1]))){a--;b++;}
-    out.push(t.slice(debut,a+1),{n:fractions(n),d:fractions(d)});debut=b;k=b-1;}
+    out.push(t.slice(debut,a+1),{n:fractions(n,hb),d:fractions(d,hb)});debut=b;k=b-1;}
   out.push(t.slice(debut));return out;
 }
 /* mise en forme d'une formule déjà repérée : exposants, fractions, lettres en italique */
@@ -1548,7 +1553,7 @@ function orne(span){
   textes(span).forEach(nd=>{if(!nd.nodeValue.includes("≠")||nd.parentNode.closest(".ne"))return;const f=document.createDocumentFragment();
     nd.nodeValue.split("≠").forEach((x,k)=>{if(k){const e=document.createElement("span");e.className="ne";e.textContent="≠";f.appendChild(e);}if(x)f.appendChild(document.createTextNode(x));});
     nd.parentNode.replaceChild(f,nd);});
-  textes(span).forEach(nd=>{const v=nd.nodeValue;if(!/[′″⁰¹²³⁴-⁹⁺⁻⁼⁽⁾ⁿⁱˣʸᵘᵉᵏᵗᵃᵇᶜᵈᵐᵖʳˢᵛʷᶻʰʲˡᵒᶠᵍᶿ₀-₉₊₋₌₍₎ₐₑₒₓₕₖₗₘₙₚₛₜᵢⱼᵣᵤᵥ]/.test(v))return;
+  textes(span).forEach(nd=>{const v=nd.nodeValue;if(!/[′″⁰¹²³⁴-⁹⁺⁻⁼⁽⁾ⁿⁱˣʸᵘᵉᵏᵗᵃᵇᶜᵈᵐᵖʳˢᵛʷᶻʰʲˡᵒᶠᵍᶿᵅ₀-₉₊₋₌₍₎ₐₑₒₓₕₖₗₘₙₚₛₜᵢⱼᵣᵤᵥ]/.test(v))return;
     const f=document.createDocumentFragment();let cur=null,genre="";
     for(const c of v){const g=HAUT[c]?"sup":BAS[c]?"sub":"";
       if(g!==genre||!cur){cur=g?document.createElement(g):document.createTextNode("");f.appendChild(cur);genre=g;}
@@ -1556,7 +1561,7 @@ function orne(span){
     nd.parentNode.replaceChild(f,nd);});
   if(span.textContent.includes("/")&&!span.closest("sup,sub")){
     const E=[];let t="";span.childNodes.forEach(c=>{if(c.nodeType===3)t+=c.nodeValue;else{t+=String.fromCharCode(0xE000+E.length);E.push(c);}});
-    const P=fractions(t);
+    const P=fractions(t,new Set(E.map((e,k)=>/^SU[PB]$/.test(e.nodeName)?String.fromCharCode(0xE000+k):"").filter(Boolean)));
     if(P.length>1){
       const pose=(hote,L)=>L.forEach(x=>{if(typeof x==="string"){let tx="";const vide=()=>{if(tx){hote.appendChild(document.createTextNode(tx));tx="";}};
           for(const c of x){const k=c.charCodeAt(0)-0xE000;if(k>=0&&k<E.length){vide();hote.appendChild(E[k]);}else tx+=c;}vide();return;}
