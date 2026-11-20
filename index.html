@@ -19757,8 +19757,8 @@ const lignesLues=(rep,pre,n,k)=>{const X=[];for(let i=0;i<n;i++){const l=liste(r
 const egalM=(X,C)=>X.length===C.length&&X.every((l,i)=>l.length===C[i].length&&l.every((x,j)=>egal(x,C[i][j])));
 const premierFaux=(X,C)=>{for(let i=0;i<C.length;i++)for(let j=0;j<C[0].length;j++)if(!egal(X[i][j],C[i][j]))return [i,j];return null;};
 const sommeH=(A,B,i,j)=>A[i].map((x,t)=>`${par(x)} × ${par(B[t][j])}`).join(" + ");
-const lignesProduit=(A,B,X)=>{const C=prod(A,B);return A.map((l,i)=>({w:`Ligne ${i+1} de ${X} :<br>${C[0].map((_,j)=>`(${X})<sub>${i+1}${j+1}</sub> = ${sommeH(A,B,i,j)} = ${nb(C[i][j])}`).join("<br>")}`,
-  why:i?`Même chose avec la ligne ${i+1} de ${X[0]}, fois chaque colonne de ${X[1]}.`:`On multiplie la ligne 1 de ${X[0]} par chaque colonne de ${X[1]} : premier terme fois premier terme, deuxième fois deuxième, et ainsi de suite, puis on additionne. La colonne 1 de ${X[1]} donne le coefficient de la colonne 1, et ainsi de suite.`,pts:1}));};
+const lignesProduit=(A,B,X,g=X[0],d=X[1])=>{const C=prod(A,B);return A.map((l,i)=>({w:`Ligne ${i+1} de ${X} :<br>${C[0].map((_,j)=>`(${X})<sub>${i+1}${j+1}</sub> = ${sommeH(A,B,i,j)} = ${nb(C[i][j])}`).join("<br>")}`,
+  why:i?`Même chose avec la ligne ${i+1} de ${g}, fois chaque colonne de ${d}.`:`On multiplie la ligne 1 de ${g} par chaque colonne de ${d} : premier terme fois premier terme, deuxième fois deuxième, et ainsi de suite, puis on additionne. La colonne 1 de ${d} donne le coefficient de la colonne 1, et ainsi de suite.`,pts:1}));};
 const etapeTaille=(X,Y,MX,MY)=>{const c=MX[0].length,l=MY.length;return c===l
   ?{w:`${X} a ${plu(c,"colonne")} et ${Y} a ${plu(l,"ligne")} : c'est le même nombre, donc <b>${X}${Y} est défini, de taille ${MX.length} × ${MY[0].length}</b>.`,why:`Pour ${X}${Y}, on multiplie chaque ligne de ${X} par chaque colonne de ${Y} : il faut que ${X} ait autant de colonnes que ${Y} a de lignes. Le résultat garde les lignes de ${X} (${MX.length}) et les colonnes de ${Y} (${MY[0].length}).`,pts:1}
   :{w:`${X} a ${plu(c,"colonne")} et ${Y} a ${plu(l,"ligne")} : ${c} ≠ ${l}, donc <b>${X}${Y} n'est pas défini</b>.`,why:`Une ligne de ${X} a ${c} terme${c>1?"s":""}, une colonne de ${Y} en a ${l} : on ne peut pas les multiplier terme à terme.`,pts:1};};
@@ -19834,6 +19834,73 @@ function abBa(R){for(;;){const n=R()<0.6?2:3,h=n===2?3:2,z=n===2?.1:.35,A=matAle
     champs,juge,etapes:E,bonne:`AB = ${matH(C)}, BA = ${matH(D)}, ${com?"AB = BA":"AB ≠ BA"}`,bonneTxt:`AB = ${C.map(rangeeT).join(" ; ")} ; BA = ${D.map(rangeeT).join(" ; ")} ; ${com?"AB = BA":"AB ≠ BA"}`,
     repBonne,repFausse,nature:com?"commutent":"differents",ens:{k:"deux",A,B,C,D,com}};}}
 
+/* ---------- AL10 : inverse grâce à une relation ---------- */
+const nomI=n=>n===2?"I₂":"I₃";
+const coefsLus=(rep,ids)=>{const X=ids.map(k=>nombre(rep[k]));return X.some(x=>!x)?null:X;};
+const puis=["I","A","A²","A³"];
+/* relation c[0]A^d + … + c[d]I = 0, écrite comme dans le poly ; avec c[d] ≠ 0, A⁻¹ = −(c[0]A^(d−1) + … + c[d−1]I)/c[d] */
+const polyT=(c,I)=>comb(c,c.map((_,i)=>i===c.length-1?I:puis[c.length-1-i]));
+const invRel=c=>c.slice(0,-1).map(x=>div(Q(-x),Q(c[c.length-1])));
+const fracE=x=>[q(x).n,q(x).d];
+function etapesRel(c,I,sansIso){const d=c[c.length-1],X=invRel(c),fac=polyT(c.slice(0,-1),I),dr=comb([-d],[I]),E=[];
+  if(!sansIso)E.push({w:`On isole le terme en ${I} : ${polyT(c.slice(0,-1).concat([0]),I)} = ${dr}.`,why:`Le terme en ${I} passe de l'autre côté du signe égal, et change de signe.`,pts:1});
+  const iFact=E.length;E.push({w:`On met A en facteur à gauche : A(${fac}) = ${dr}.`,why:`Chaque terme commence par A : A² = A × A, A³ = A × A², et A = A × ${I}. Devant le dernier terme, on garde ${I} : « A + 3 » n'a pas de sens, on n'ajoute pas un nombre à une matrice.`,pts:1});
+  if(d!==-1)E.push({w:`On divise par ${nb(-d)} : A(${polyT(X,I)}) = ${I}.`,why:`Diviser une matrice par un nombre, c'est diviser chacun de ses coefficients. À droite, il reste ${I}.`,pts:1});
+  const iDiv=E.length-1;E.push({w:`<b>A est inversible et A⁻¹ = ${polyT(X,I)}</b>.`,why:`On a trouvé une matrice B telle que AB = ${I}. Pour une matrice carrée, cela suffit : A est inversible et A⁻¹ = B. Ici B s'écrit avec A et ${I}, qui commutent avec A, donc BA = ${I} aussi.`,pts:1});
+  return {E,X,iFact,iDiv,iFin:E.length-1};}
+/* juge les coefficients de A⁻¹ ; o.dec : numéro de la première étape de la relation dans la correction */
+function jugeRel(rep,o){const ids=o.ids,Y=coefsLus(rep,ids),S=o.S;if(!Y)return {incomplet:`Écris ${et(o.noms)} : ${ids.length} nombres, par exemple −1/2, 3${ids.length>2?" et 0":""}.`};
+  const F=ids.filter((_,i)=>!egal(Y[i],S.X[i]));if(!F.length)return {ok:true};
+  const d=o.c[o.c.length-1],fac=`A(${polyT(o.c.slice(0,-1),o.I)}) = ${comb([-d],[o.I])}`,resume=`Pas tout à fait : ${et(F.map(k=>o.noms[ids.indexOf(k)]))} ${F.length>1?"sont faux":"est faux"}.`,r=(etape,type,titre,msg)=>({ok:false,faux:F,resume,diag:{etape:o.dec+etape,type,titre,msg}});
+  if(o.bin&&Y.slice(1).every(y=>egal(y,0)))return r(0,"développement incomplet","Où ça part : le développement.",`(${comb([1,o.bin],["A",o.I])})³ n'est pas A³ ${o.bin>0?"+":"−"} ${nb(Math.abs(o.bin**3))}${o.I} : comme pour (a + b)³, il y a aussi les termes 3a²b et 3ab², ici ${comb([3*o.bin],["A²"])} et ${comb([3*o.bin*o.bin],["A"])}.`);
+  if(Y.every((y,i)=>egal(y,sub(0,S.X[i]))))return r(S.iFact,"signe en changeant de côté","Où ça part : le terme qui change de côté.",`Tous tes signes sont inversés. ${comb([d],[o.I])} passe de l'autre côté et devient ${comb([-d],[o.I])} : ${fac}.`);
+  if(Math.abs(d)!==1&&(Y.every((y,i)=>egal(y,o.c[i]))||Y.every((y,i)=>egal(y,-o.c[i]))))return r(S.iDiv,"division oubliée","Où ça part : la division.",`Ton calcul s'arrête à ${fac}. Il reste à diviser par ${nb(-d)} pour avoir ${o.I} à droite.`);
+  if(ids.length===2&&egal(Y[0],S.X[1])&&egal(Y[1],S.X[0]))return r(S.iFin,"α et β échangés","Où ça part : la lecture du résultat.",`α est le nombre devant A, β celui devant ${o.I}.`);
+  return r(S.iFin,"calcul de A⁻¹","Où ça part : la fin du calcul.",`${fac}, donc A⁻¹ = ${polyT(S.X,o.I)} : on divise chaque coefficient par ${nb(-d)}.`);}
+const champsRel=ids=>ids.map((k,i)=>({k:"champ",id:k,nom:["α","β","γ"][i],label:["α","β","γ"][i]+" =",ex:["par exemple −1/2","par exemple 3","par exemple 0"][i]}));
+function relationDonnee(R){const n=R.choix([2,3]),I=nomI(n),forme=R.ent(0,1),a=forme?R.choix([1,1,1,2]):R.choix([1,1,1,2,-1]),p=R.choix([-5,-4,-3,-2,-1,0,1,2,3,4,5]),d=R.choix([-6,-5,-4,-3,-2,-1,1,2,3,4,6]),c=[a,p,d];
+  const rel=forme?`${comb([a],["A²"])} = ${comb([-p,-d],["A",I])}`:`${polyT(c,I)} = 0`,S=etapesRel(c,I),pre=forme?[{w:`On met tout du même côté : ${polyT(c,I)} = 0.`,why:`Ce qui change de côté change de signe.`,pts:1}]:[],ids=["al","be"];
+  return {sig:"RD"+JSON.stringify([n,c,forme]),q:`Une matrice carrée A de taille ${n} × ${n} vérifie ${rel}. Montre que A est inversible, et écris A⁻¹ sous la forme αA + β${I} : que valent α et β ?`,corps:"",texte:`A vérifie ${rel} ; A⁻¹ = αA + β${I}, α et β ?`,
+    champs:champsRel(ids),juge:rep=>jugeRel(rep,{ids,noms:["α","β"],S,c,I,dec:pre.length}),etapes:pre.concat(S.E),bonne:`A⁻¹ = ${polyT(S.X,I)} : α = ${nb(S.X[0])} et β = ${nb(S.X[1])}`,bonneTxt:`A⁻¹ = ${polyT(S.X,I)}`,
+    repBonne:{al:brut(S.X[0]),be:brut(S.X[1])},repFausse:{al:brut(sub(0,S.X[0])),be:brut(sub(0,S.X[1]))},nature:forme?"a-ranger":"rangee",ens:{k:"rel",c,X:S.X.map(fracE)}};}
+/* une matrice qui vérifie A² − kA = cI : une 2 × 2 quelconque (k = trace, c = −déterminant), ou λI + uv en 3 × 3 */
+function matRel(R){for(;;){let A;if(R()<0.5)A=matAlea(R,2,2,3,.1);else{const l=R.choix([1,-1,2,-2]),u=[0,1,2].map(()=>R.ent(-1,2)),v=[0,1,2].map(()=>R.ent(-1,2));A=u.map((x,i)=>v.map((y,j)=>x*y+(i===j?l:0)));}
+  if(A.every((l,i)=>l.every((x,j)=>i===j?x===A[0][0]:!x))||A.flat().some(x=>Math.abs(x)>4))continue;
+  const A2=prod(A,A);let k=null,c=null;
+  for(let kk=-8;kk<=8&&k===null;kk++){const M=A2.map((l,i)=>l.map((x,j)=>x-kk*A[i][j]));if(M.every((l,i)=>l.every((x,j)=>i===j?x===M[0][0]:!x))){k=kk;c=M[0][0];}}
+  if(!k||!c||A2.flat().some(x=>Math.abs(x)>20))continue;
+  return {A,A2,k,c,n:A.length,M:A2.map((l,i)=>l.map((x,j)=>x-k*A[i][j])),I:nomI(A.length),ex:polyT([1,-k,0],"I")};}}
+function etapesCarre(T){const {A,A2,k,M,I,ex}=T,E=lignesProduit(A,A,"A²","A","A");
+  E.push({w:`<b>A² = ${matH(A2)}</b>`,why:`A² = A × A : les lignes de A fois les colonnes de A.`,pts:1});
+  E.push({w:`${comb([k],["A"])} = ${matH(A.map(l=>l.map(x=>k*x)))}`,why:`Multiplier une matrice par un nombre, c'est multiplier chacun de ses coefficients.`,pts:1});
+  E.push({w:`<b>${ex} = ${matH(M)} = ${comb([T.c],[I])}</b>`,why:`On soustrait coefficient par coefficient. Hors de la diagonale, tout s'annule ; sur la diagonale, le même nombre partout : c'est ${comb([T.c],[I])}.`,pts:1});
+  return E;}
+function calculRel(R){const T=matRel(R),{A,A2,k,M,n,I,ex}=T,E=etapesCarre(T),noms=M.map((_,i)=>"l"+(i+1)),eg=`par exemple (${[1,-2,0].slice(0,n).join(", ")})`;
+  function juge(rep){const X=lignesLues(rep,"l",n,n);if(!X)return {incomplet:`Écris les ${n} lignes de ${ex}, chacune avec ${n} nombres, ${eg}.`};
+    const f=premierFaux(X,M);if(!f)return {ok:true};
+    const F=noms.filter((_,i)=>X[i].some((x,j)=>!egal(x,M[i][j]))),resume=`Pas tout à fait : ${F.length>1?"les lignes":"la ligne"} ${et(F.map(s=>s.slice(1)))} ${F.length>1?"sont fausses":"est fausse"}.`,r=(etape,type,titre,msg)=>({ok:false,faux:F,resume,diag:{etape,type,titre,msg}});
+    if(egalM(X,A2))return r(n+1,"kA oublié","Où ça part : la soustraction.",`Ta matrice est A², juste. Il reste à lui enlever ${comb([k],["A"])}.`);
+    if(egalM(X,A2.map((l,i)=>l.map((x,j)=>x+k*A[i][j]))))return r(n+2,"signe de la soustraction","Où ça part : la soustraction.",`Tu as ajouté ${comb([k],["A"])} au lieu de l'enlever.`);
+    const [i,j]=f;return r(i,"calcul d'un coefficient",`Où ça part : la ligne ${i+1}.`,`(A²)<sub>${i+1}${j+1}</sub> = ${sommeH(A,A,i,j)} = ${nb(A2[i][j])}, puis on enlève ${k} × ${par(A[i][j])} : ${nb(A2[i][j])} − ${par(k*A[i][j])} = ${nb(M[i][j])}.`);}
+  return {sig:"RM"+JSON.stringify(A),q:`Calcule ${ex}.`,corps:`<p>$A =$ ${matH(A)}</p>`,texte:`A = ${JSON.stringify(A)} ; calculer ${ex}`,
+    champs:noms.map((s,i)=>({k:"champ",id:s,nom:"ligne "+(i+1),label:`Ligne ${i+1} de ${ex} :`,ex:eg})),juge,etapes:E,bonne:`${ex} = ${matH(M)} = ${comb([T.c],[I])}`,bonneTxt:`${ex} = ${M.map(rangeeT).join(" ; ")}`,
+    repBonne:Object.fromEntries(noms.map((s,i)=>[s,rangeeT(M[i])])),repFausse:Object.fromEntries(noms.map((s,i)=>[s,rangeeT(A2[i])])),nature:n===2?"2x2":"3x3",ens:{k:"mat",A,kk:k,cc:T.c,M}};}
+function relationCC(R){const T=matRel(R),{A,k,n,I,ex}=T,c=[1,-k,-T.c],E=etapesCarre(T),S=etapesRel(c,I,true),dec=E.length,ids=["al","be"];
+  function juge(rep){const x=nombre(rep.c);if(!x)return {incomplet:`Écris d'abord le nombre c tel que ${ex} = c${I}.`};
+    if(!egal(x,T.c))return {ok:false,faux:["c"],resume:"Pas tout à fait : c est faux.",diag:{etape:dec-1,type:"calcul de A² − kA",titre:`Où ça part : le calcul de ${ex}.`,msg:egal(x,-T.c)?`Le signe de c est faux : ${ex} = ${comb([T.c],[I])}. Regarde les coefficients de la diagonale.`:`${ex} = ${comb([T.c],[I])} : les coefficients de la diagonale valent ${nb(T.c)}. Refais A², puis la soustraction.`}};
+    return jugeRel(rep,{ids,noms:["α","β"],S,c,I,dec});}
+  return {sig:"RC"+JSON.stringify(A),q:`Calcule ${ex} : tu trouves un multiple de ${I}, c${I}. En déduire, sans autre calcul, que A est inversible, et écris A⁻¹ = αA + β${I}.`,corps:`<p>$A =$ ${matH(A)}</p>`,texte:`A = ${JSON.stringify(A)} ; ${ex} = c${I} ; A⁻¹ = αA + β${I}`,
+    champs:[{k:"champ",id:"c",nom:"c",label:`${ex} = c${I}, avec c =`,ex:"par exemple −2"},...champsRel(ids)],juge,etapes:E.concat(S.E),bonne:`${ex} = ${comb([T.c],[I])}, donc A⁻¹ = ${polyT(S.X,I)}`,bonneTxt:`c = ${nb(T.c)} ; A⁻¹ = ${polyT(S.X,I)}`,
+    repBonne:{c:brut(T.c),al:brut(S.X[0]),be:brut(S.X[1])},repFausse:{c:brut(T.c),al:brut(sub(0,S.X[0])),be:brut(sub(0,S.X[1]))},nature:n===2?"2x2":"3x3",ens:{k:"mat",A,kk:k,cc:T.c,c,X:S.X.map(fracE)}};}
+function relationCube(R){const forme=R.choix(["bin","gen","gen","iso"]),I="I₃";let c,rel,m=null;
+  if(forme==="bin"){m=R.choix([1,-1,2,-2]);c=[1,3*m,3*m*m,m*m*m];rel=`(${comb([1,m],["A",I])})³ = 0`;}
+  else{do c=[1,R.ent(-4,4),R.ent(-4,4),R.choix([-4,-3,-2,-1,1,2,3,4])];while(!c[1]&&!c[2]);rel=forme==="gen"?`${polyT(c,I)} = 0`:`A³ = ${comb(c.slice(1).map(x=>-x),["A²","A",I])}`;}
+  const S=etapesRel(c,I),pre=forme==="bin"?[{w:`A et ${I} commutent, donc on développe comme (a + b)³ = a³ + 3a²b + 3ab² + b³ : ${polyT(c,I)} = 0.`,why:`Les identités remarquables ne marchent que pour des matrices qui commutent. Ici A × ${I} = ${I} × A = A, et ${I}² = ${I}³ = ${I}.`,pts:1}]
+    :forme==="iso"?[{w:`On met tout du même côté : ${polyT(c,I)} = 0.`,why:`Ce qui change de côté change de signe.`,pts:1}]:[],ids=["al","be","ga"];
+  return {sig:"R3"+JSON.stringify([c,forme]),q:`Une matrice A de taille 3 × 3 vérifie ${rel}. Montre que A est inversible, et écris A⁻¹ = αA² + βA + γ${I} : que valent α, β et γ ?`,corps:"",texte:`A vérifie ${rel} ; A⁻¹ = αA² + βA + γ${I}`,
+    champs:champsRel(ids),juge:rep=>jugeRel(rep,{ids,noms:["α","β","γ"],S,c,I,dec:pre.length,bin:m}),etapes:pre.concat(S.E),bonne:`A⁻¹ = ${polyT(S.X,I)}`,bonneTxt:`A⁻¹ = ${polyT(S.X,I)}`,
+    repBonne:{al:brut(S.X[0]),be:brut(S.X[1]),ga:brut(S.X[2])},repFausse:{al:brut(sub(0,S.X[0])),be:brut(sub(0,S.X[1])),ga:brut(sub(0,S.X[2]))},nature:forme,ens:{k:"rel",c,X:S.X.map(fracE),m}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -19889,7 +19956,13 @@ G.add("lin",[
    {t:"AB et BA : défini ou pas, et leur taille",cc:1,gen:tailleProduit},
    {t:"un coefficient de AB",cc:1,gen:coefProduit},
    {t:"calculer AB en entier",cc:3,gen:produitEntier},
-   {t:"comme au CC2 : AB et BA, puis AB = BA ?",cc:6,gen:abBa}]}
+   {t:"comme au CC2 : AB et BA, puis AB = BA ?",cc:6,gen:abBa}]},
+ {id:"AL10",t:"Inverser grâce à une relation",tache:"inverser une matrice grâce à une relation (A² − 3A = −2I)",th:"matrices",ex:"cc2",pts:2,apres:["AL9"],lecons:["l2-relation"],
+  paliers:[
+   {t:"la relation est donnée : A⁻¹ = αA + βI",cc:2,gen:relationDonnee},
+   {t:"calculer A² − kA",cc:4,gen:calculRel},
+   {t:"comme au CC2 : calculer A² − kA, puis A⁻¹",cc:6,gen:relationCC},
+   {t:"une relation de degré 3, comme (A + I₃)³ = 0",cc:4,min:170,gen:relationCube}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
