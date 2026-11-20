@@ -19562,6 +19562,72 @@ function tireNonLin(R,n){const [i,j]=R.mel(n===2?[0,1]:[0,1,2]),lo=Math.min(i,j)
   if(r<0.85||n===3)return {n,k:"para",i,j,a:R.choix([1,1,2,-1,3,-2])};
   return R()<0.5?{n:2,k:"cercle",r:R.choix([1,4,2,9])}:{n:2,k:"carres"};}
 
+/* AL8 (CC2) : inverser une matrice par la double matrice, (A | Iₙ) → (Iₙ | A⁻¹), comme aux CC2 de 2022 à 2024 */
+const idn=n=>Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>+(i===j)));
+const dblH=M=>{const c=M[0].length;return `<div class="mrow"><span class="mat" style="--n:${c}">${M.map(r=>r.map((x,j)=>`<span${j===c/2?' class="au"':""}>${nb(x)}</span>`).join("")).join("")}</span></div>`;};
+const matH=M=>`<span class="mat" style="--n:${M[0].length}">${M.map(r=>r.map(x=>`<span>${nb(x)}</span>`).join("")).join("")}</span>`;
+const coefL=k=>{k=q(k);return egal(k,1)?"":egal(k,-1)?"−":k.d===1?nb(k):(k.n<0?"−":"")+"("+nb(abs(k))+")";};
+function doubleMat(A){const n=A.length,M=A.map((r,i)=>r.map(q).concat(idn(n)[i].map(q))),bas=[],haut=[],uns=[];let r=0;
+  for(let j=0;j<n&&r<n;j++){let p=-1;for(let i=r;i<n;i++)if(!nul(M[i][j])){p=i;break;}
+    if(p<0)continue;const ops=[];
+    if(p!==r){[M[r],M[p]]=[M[p],M[r]];ops.push(`L_{${r+1}} ↔ L_{${p+1}}`);}
+    for(let i=r+1;i<n;i++){if(nul(M[i][j]))continue;const m=div(M[i][j],M[r][j]);M[i]=M[i].map((x,t)=>sub(x,mul(m,M[r][t])));ops.push(ligne(i+1,m,r+1));}
+    if(ops.length)bas.push({ops,M:M.map(x=>x.slice()),col:j});r++;}
+  if(r<n)return {n,bas,rang:r,M};
+  for(let i=0;i<n;i++)if(!egal(M[i][i],1)){const p=M[i][i];M[i]=M[i].map(x=>div(x,p));uns.push(`L_{${i+1}} ← ${coefL(div(1,p))}L_{${i+1}}`);}
+  const apresUns=M.map(x=>x.slice());
+  for(let j=n-1;j>0;j--){const ops=[];for(let i=0;i<j;i++){if(nul(M[i][j]))continue;const m=M[i][j];M[i]=M[i].map((x,t)=>sub(x,mul(m,M[j][t])));ops.push(ligne(i+1,m,j+1));}
+    if(ops.length)haut.push({ops,M:M.map(x=>x.slice()),col:j});}
+  return {n,bas,uns,apresUns,haut,rang:n,M,inv:M.map(l=>l.slice(n))};}
+const detEnt=A=>A.length===2?A[0][0]*A[1][1]-A[0][1]*A[1][0]:A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])-A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])+A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]);
+const petiteInv=(J,h)=>[...J.bas.map(p=>p.M),J.apresUns||[],...J.haut.map(p=>p.M)].flat(2).every(x=>x.d===1&&Math.abs(x.n)<=Math.max(h,9))&&J.inv.flat().every(x=>x.d===1&&Math.abs(x.n)<=h);
+function inv2(R){for(;;){const a=R.choix([1,-1]),c=R.ent(-6,6),b=R.ent(-6,6),dt=R.choix([1,-1]);
+  const d=(dt+b*c)/a;if(Math.abs(d)>12||!b||!c)continue;
+  const A=[[a,b],[c,d]];if(detEnt(A)!==dt)continue;const J=doubleMat(A);if(petiteInv(J,12))return A;}}
+function invUnite(R){for(;;){const L=idn(3),U=idn(3);for(let i=0;i<3;i++)for(let j=0;j<3;j++){if(j<i)L[i][j]=R.ent(-2,2);if(j>i)U[i][j]=R.ent(-3,3);}
+  const A=prod(L,U),f=A.flat(),hors=[L[1][0],L[2][0],L[2][1],U[0][1],U[0][2],U[1][2]].filter(x=>x).length;
+  if(hors<3||f.some(x=>Math.abs(x)>7))continue;const J=doubleMat(A);if(petiteInv(J,12))return A;}}
+function invPiege(R){for(;;){const A=[0,1,2].map(()=>[0,1,2].map(()=>R.ent(-3,3))),dt=detEnt(A);if(dt!==1&&dt!==-1)continue;
+  const J=doubleMat(A),ech=J.bas.some(p=>p.ops.some(o=>o.includes("↔"))),pv=J.uns.length>0;
+  if((ech||pv)&&A.flat().filter(x=>!x).length<=3&&petiteInv(J,9))return A;}}
+function invNon(R){for(;;){const u=[0,1,2].map(()=>R.ent(-3,3)),v=[0,1,2].map(()=>R.ent(-3,3)),a=R.choix([1,-1,2,1]),b=R.choix([1,-1,2,-2]);
+  const w=u.map((x,i)=>a*x+b*v[i]);if(w.some(x=>Math.abs(x)>7)||u[0]*v[1]-u[1]*v[0]===0&&u[1]*v[2]-u[2]*v[1]===0&&u[0]*v[2]-u[2]*v[0]===0)continue;
+  if([u,v,w].some(l=>l.every(x=>!x)))continue;const A=R.mel([u,v,w]);if(doubleMat(A).bas.every(p=>p.M.flat().every(x=>x.d===1&&Math.abs(x.n)<=12)))return A;}}
+function inverser(A,o){o=o||{};const n=A.length,J=doubleMat(A),In=n===2?"I₂":"I₃",ok=J.rang===n,inv=ok?J.inv:null;
+  const E=[{w:`On écrit la double matrice (A | ${In}) : ${dblH(A.map((r,i)=>r.concat(idn(n)[i])))}`,why:`À gauche A, à droite ${In}. Chaque opération sur les lignes se fait sur la ligne entière, des deux côtés du trait.`,pts:1}];
+  J.bas.forEach((p,k)=>E.push({w:`${p.ops.map(fx).join(" ; ")}${dblH(p.M)}`,why:p.ops.every(x=>x.includes("↔"))?`On descend comme dans le pivot de Gauss. Le pivot de la colonne ${p.col+1} serait 0 : on échange deux lignes. Sous le nouveau pivot, il y a déjà des zéros.`:k===0?`On descend comme dans le pivot de Gauss : sous le pivot de la colonne ${p.col+1}, on met des zéros${p.ops.some(x=>x.includes("↔"))?", après avoir échangé deux lignes pour avoir un pivot non nul":""}.`:`Même chose sous le pivot de la colonne ${p.col+1}${p.ops.some(x=>x.includes("↔"))?", après un échange de lignes":""}.`,pts:1}));
+  const iBas=E.length-1;
+  if(!ok)E.push({w:`<b>La ligne ${J.rang+1} est nulle à gauche du trait : A n'est pas inversible.</b>`,why:`À gauche, il reste une ligne de zéros : on ne pourra jamais obtenir ${In}. Une matrice carrée est inversible si et seulement si la descente donne un pivot dans chaque colonne (ici ${J.rang} pivots pour ${n} colonnes).`,pts:1});
+  else{if(J.uns.length)E.push({w:`${J.uns.map(fx).join(" ; ")}${dblH(J.apresUns)}`,why:`On divise chaque ligne par son pivot pour avoir des 1 sur la diagonale. Toujours sur la ligne entière.`,pts:1});
+    J.haut.forEach(p=>E.push({w:`${p.ops.map(fx).join(" ; ")}${dblH(p.M)}`,why:`On remonte : avec le 1 de la ligne ${p.col+1}, on met des zéros au-dessus de lui, dans la colonne ${p.col+1}.`,pts:1}));
+    const v0=A[0].map((x,k)=>`${par(x)} × ${par(inv[k][0])}`).join(" + ");
+    E.push({w:`<b>A est inversible et A⁻¹ = ${matH(inv)}</b>`,why:`À gauche on lit ${In}, donc à droite on lit A⁻¹. Vérification au brouillon : la ligne 1 de A fois la colonne 1 de A⁻¹ donne ${v0} = 1.`,pts:1});}
+  const iFin=E.length-1,noms=A.map((_,i)=>"l"+(i+1)),txt=x=>nb(x).replace(/−/g,"-"),rangee=l=>"("+l.map(txt).join(", ")+")";
+  function juge(rep){
+    if(o.choix){if(!rep.inv)return {incomplet:"Choisis d'abord : A est inversible, ou pas."};
+      if(!ok&&rep.inv==="non")return {ok:true};
+      if(!ok)return {ok:false,faux:["inv"],resume:"Non : A n'est pas inversible.",diag:{etape:iBas+1,type:"ligne nulle non vue",titre:"Où ça part : la fin de la descente.",msg:`Après la descente, une ligne est nulle à gauche du trait : il n'y a que ${J.rang} pivots pour ${n} colonnes. Les lignes de A sont liées : l'une est une combinaison des deux autres.`}};
+      if(rep.inv==="non")return {ok:false,faux:["inv"],resume:"Non : A est inversible.",diag:{etape:iBas,type:"inversible lue comme non inversible",titre:"Où ça part : la descente.",msg:`La descente donne un pivot dans chacune des ${n} colonnes, donc A est inversible. Si tu as trouvé une ligne de zéros, refais le calcul de la dernière opération.`}};}
+    const X=noms.map(k=>liste(rep[k],n));
+    if(X.some(l=>!l))return {incomplet:`Écris les ${n} lignes de A⁻¹, chacune avec ${n} nombres, par exemple (${[1,-2,0].slice(0,n).join(", ")}). Les fractions s'écrivent 1/2.`};
+    const F=noms.filter((_,i)=>X[i].some((x,j)=>!egal(x,inv[i][j])));if(!F.length)return {ok:true};
+    const res=`Pas tout à fait : ${F.length>1?"les lignes":"la ligne"} ${et(F.map(k=>k.slice(1)))} ${F.length>1?"sont fausses":"est fausse"}.`;
+    if(X.every((l,i)=>l.every((x,j)=>egal(x,inv[j][i]))))return {ok:false,faux:noms,resume:res,diag:{etape:iFin,type:"lignes et colonnes inversées",titre:"Où ça part : la lecture du résultat.",msg:"Tu as écrit les colonnes de A⁻¹ à la place de ses lignes. Lis la partie droite ligne par ligne."}};
+    if(F.every(k=>{const i=+k.slice(1)-1;return X[i].every((x,j)=>egal(x,sub(0,inv[i][j])));}))return {ok:false,faux:F,resume:res,diag:{etape:J.uns.length?iBas+1:iFin,type:"signe d'une ligne",titre:"Où ça part : le signe d'une ligne.",msg:`${F.length>1?"Ces lignes ont":"Cette ligne a"} tous les signes inversés. As-tu oublié de diviser par un pivot égal à −1 ?`}};
+    const P=A.map(r=>X[0].map((_,j)=>r.reduce((s,x,k)=>add(s,mul(x,X[k][j])),Q(0))));let ii=0,jj=0;
+    outer:for(ii=0;ii<n;ii++)for(jj=0;jj<n;jj++)if(!egal(P[ii][jj],+(ii===jj)))break outer;
+    return {ok:false,faux:F,resume:res,diag:{etape:iBas,type:"calcul dans la double matrice",titre:"Vérifie ta réponse avec A.",msg:`La ligne ${ii+1} de A fois la colonne ${jj+1} de ta matrice donne ${nb(P[ii][jj])}, alors qu'il faut ${ii===jj?1:0} (le produit A × A⁻¹ doit donner ${In}). Refais une à une les opérations, sur toute la ligne, des deux côtés du trait.`}};}
+  const champs=[];if(o.choix)champs.push({k:"choix",id:"inv",o:[["oui","A est inversible"],["non","A n'est pas inversible"]]});
+  noms.forEach((k,i)=>champs.push({k:"champ",id:k,nom:"ligne "+(i+1),si:o.choix?{inv:"oui"}:undefined,label:`Ligne ${i+1} de A⁻¹ :`,ex:`par exemple (${[1,-2,0].slice(0,n).join(", ")})`}));
+  if(o.choix)champs.forEach(c=>{if(!c.si)delete c.si;});else champs.forEach(c=>delete c.si);
+  const repBonne=ok?Object.fromEntries(noms.map((k,i)=>[k,rangee(inv[i])])):{},repFausse=ok?Object.fromEntries(noms.map((k,i)=>[k,rangee(i?inv[i]:inv[i].map((x,j)=>j?x:add(x,1)))])):{};
+  if(o.choix){repBonne.inv=ok?"oui":"non";repFausse.inv=ok?"non":"oui";}
+  const guide=o.guide?`<p>Fais dans l'ordre, sur la double matrice (A | ${In}) : ${[...J.bas.flatMap(p=>p.ops),...J.uns,...J.haut.flatMap(p=>p.ops)].map(x=>`$${x}$`).join(", puis ")}.</p>`:"";
+  return {sig:"IV"+JSON.stringify(A),q:o.choix?`La matrice A est-elle inversible ? Si oui, calcule A⁻¹ par la méthode de la double matrice.`:o.guide?`Calcule l'inverse de A par la méthode de la double matrice, en suivant les opérations données.`:`Montre que A est inversible et calcule A⁻¹ par la méthode de la double matrice.`,
+    corps:`<p>$A =$ ${matH(A)}</p>${guide}`,texte:`A = ${JSON.stringify(A)}${o.choix?" ; inversible ? si oui, A⁻¹":" ; calculer A⁻¹"}`,
+    champs,juge,etapes:E,bonne:ok?`A⁻¹ = ${matH(inv)}`:"A n'est pas inversible",bonneTxt:ok?"A⁻¹ = "+inv.map(rangee).join(" ; "):"A n'est pas inversible",
+    repBonne,repFausse,nature:ok?"inv":"non",ens:{A,inv:ok?inv.map(l=>l.map(x=>[x.n,x.d])):null}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -19605,7 +19671,13 @@ G.add("lin",[
   paliers:[
    {t:"dans ℝ² : une équation, une inégalité, un produit ou un paramètre",cc:2,min:100,gen:R=>{const r=R();return sevOuPas(r<0.3?tireEq(R,2,true):r<0.4?tirePar(R,2,"lin"):r<0.58?tireEq(R,2,false):r<0.78?tireDemi(R,2):tireNonLin(R,2));}},
    {t:"dans ℝ³ : des équations ou des paramètres",cc:3,gen:R=>{const r=R();return sevOuPas(r<0.25?tireEq(R,3,true):r<0.45?tireEq(R,3,false):r<0.72?tirePar(R,3,"lin"):tirePar(R,3,"aff"));}},
-   {t:"comme aux anciens CC : tout mélangé, avec les pièges",cc:4,gen:R=>{const r=R(),n=R()<0.4?2:3;return sevOuPas(r<0.18?tireEq(R,n,true):r<0.32?tireEq(R,n,false):r<0.5?tirePar(R,n,"lin"):r<0.66?tirePar(R,n,"aff"):r<0.76?tirePar(R,n,"piege"):r<0.88?tireNonLin(R,n):tireDemi(R,n));}}]}
+   {t:"comme aux anciens CC : tout mélangé, avec les pièges",cc:4,gen:R=>{const r=R(),n=R()<0.4?2:3;return sevOuPas(r<0.18?tireEq(R,n,true):r<0.32?tireEq(R,n,false):r<0.5?tirePar(R,n,"lin"):r<0.66?tirePar(R,n,"aff"):r<0.76?tirePar(R,n,"piege"):r<0.88?tireNonLin(R,n):tireDemi(R,n));}}]},
+ {id:"AL8",t:"Inverser une matrice : la double matrice",tache:"inverser une matrice (double matrice)",th:"pivotinv",ex:"cc2",pts:3.5,apres:["AL1"],lecons:["l2-gauss-inv"],
+  paliers:[
+   {t:"2 × 2, en suivant les opérations données",cc:3,min:180,gen:R=>inverser(inv2(R),{guide:true})},
+   {t:"3 × 3, pivots égaux à 1",cc:6,gen:R=>inverser(invUnite(R))},
+   {t:"3 × 3, avec un échange de lignes ou un pivot différent de 1",cc:7,gen:R=>inverser(invPiege(R))},
+   {t:"comme au CC2 : inversible ou pas, puis A⁻¹",cc:8,gen:R=>{const r=R();return inverser(r<0.3?invNon(R):r<0.65?invUnite(R):invPiege(R),{choix:true});}}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
