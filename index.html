@@ -32865,9 +32865,9 @@ function home(){
   const tb=P.blocks.filter(b=>b.day===t0);
   const nextT=nextTask(P);
   const doneToday=[];SIDS.forEach(id=>SUBJ[id].tasks.forEach(t=>{if(isDone(id,t)&&doneOn(id,t)===t0)doneToday.push({sid:id,t});}));
-  const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0&&examStart(S)>n);
-  const nx=up[0]?SUBJ[up[0]]:null,mixed=A.hub.mixOn===t0;
-  let h=`<div class="page wide home">${ttl(dayName(t0,true),nx?`${exW(nx)==="CC"?"Prochain CC":"Prochain "+exW(nx).toLowerCase()} : <b>${nx.name}</b>, ${examLine(nx)} (${jx(nx)}).`:"Tous les CC sont passés.")}`;
+  const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0&&!exam(S).report&&examStart(S)>n);
+  const nx=up.length?SUBJ[up.find(id=>!exam(SUBJ[id]).report)||up[0]]:null,mixed=A.hub.mixOn===t0;
+  let h=`<div class="page wide home">${ttl(dayName(t0,true),nx?`${exW(nx)==="CC"?"Prochain CC":"Prochain "+exW(nx).toLowerCase()} : <b>${nx.name}</b>, ${examLine(nx)}${exam(nx).report?"":` (${jx(nx)})`}.`:"Tous les CC sont passés.")}`;
   if(exToday.length)h+=`<div class="examday">${exToday.map(S=>`<p><b>${exW(S)} ${W.de(S.name)} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, <span class="nf">${exam(S).place}</span>. ${S.examMorning||""}</p>`).join("")}</div>`;
   if(window.ENT&&ENT.recap)h+=ENT.recap();
   const nS=nextT?SUBJ[nextT.sid]:null,nL=nextT&&nextT.t.lesson?BYL[nextT.sid][nextT.t.lesson]:null;
@@ -32908,7 +32908,7 @@ function home(){
   if(nbC)pg=`<div class="blk" style="--sc:var(--cornflower)"><div class="blk-h"><b>Cartes de Réviser</b><a href="#/reviser">commencer</a><span class="muted">environ ${dureeTxt(mC)} · ${nbC} ${plural(nbC,"carte")}</span></div></div>`+pg;
   h+=tiroir(`Ton programme d'aujourd'hui${tb.length||nbC?" · "+hm(tot+mC)+" de travail":""}`,pg,"prog");
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
-  if(days.length)h+=tiroir("Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d),ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
+  if(days.length)h+=tiroir("Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d),ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d&&!exam(S).report);
     return dayBox(dayName(d,true),`${ex.length?`<span class="r">${ex.every(S=>exW(S)==="CC")?"CC":ex.length>1?"Épreuves":exW(ex[0])} : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${hm(L.reduce((a,b)=>a+b.end-b.start,0))}`,`<div style="padding:0 12px 12px;display:grid;gap:12px">${A.coucheTxt(d)?`<p class="muted" style="margin:0">${A.coucheTxt(d)}</p>`:""}${L.map(b=>blockHTML(b,false)).join("")}</div>`);}).join(""));
   const bon=Object.entries(P.bonus);
   if(bon.length)h+=tiroir("Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes passent après les autres : fais-les quand tu as fini en avance, ou passe au rythme « intensif » dans <a href="#/examens">Examens et rythme</a>.</p>${bon.map(([sid,L])=>dayBox(SUBJ[sid].name,`${L.length} ${plural(L.length,"étape")}`,todoBox(sid,L.map(id=>SUBJ[sid].TB[id])))).join("")}`);
@@ -32928,7 +32928,7 @@ function apprendre(){
       const pg=dn?null:progGet(id,L.id);
       const meta=pg?`En cours · écran ${pg.i+1} sur ${pg.n}`:dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${S.TB["L-"+L.id].p>1?" · si tu as le temps":""}`;
       return `<li class="slot"><a class="piece lpiece${cls}" href="#/lecon/${id}/${L.id}">${isNext?`<span class="tag">Maintenant</span>`:""}${spark}<span class="lnum">${dn?"✓":redo?"!":i+1}</span><span class="piece__text"><span class="piece__title">${esc(L.t)}</span><span class="piece__meta">${meta}</span>${isNext&&L.goal?`<span class="lgoal">${L.goal}</span>`:""}</span></a></li>`;}).join("");
-    h+=`<section class="ecrin s-${id}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">${exW(S)} ${shortDay(S)} · ${jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul></div></div></section>`;});
+    h+=`<section class="ecrin s-${id}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">${exW(S)} ${shortDay(S)}${exam(S).report?"":" · "+jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul></div></div></section>`;});
   $("#main").innerHTML=h+`</div>`;badges();}
 
 /* ================= une matière : tout ce qu'il y a dedans ================= */
@@ -32936,7 +32936,7 @@ function subject(sid){
   const S=SUBJ[sid],st=ST[sid],P=plan(),t0=today(),e=exam(S),Ls=lesOf(sid),d=lessonsDone(sid);
   const nextL=Ls.find(L=>!isDone(sid,S.TB["L-"+L.id])&&S.TB["L-"+L.id].p===1)||Ls.find(L=>!isDone(sid,S.TB["L-"+L.id]));
   const inProg=S.ORDER.filter(c=>!c.out),red=S.ORDER.filter(c=>st.review[c.id]).length,known=inProg.filter(c=>st.known[c.id]).length,tdk=S.td.filter(x=>st.td[x.id]).length,c="s-"+sid;
-  let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`${exW(S)} <b>${examLine(S)}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}. Documents : ${e.docs||S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${e.prog||S.prog}</p>`;
+  let h=`<div class="page wide"><a class="back" href="#/">‹ Aujourd'hui</a>${ttl(S.name,`${exW(S)} <b>${examLine(S)}</b>${e.report?"":` (${jx(S)})`}, <span class="nf">${e.place}</span>, ${e.dur}. Documents : ${e.docs||S.docs}.${e.unsure?` <span class="r">${e.unsure}</span>`:""}`)}<p class="muted" style="margin-top:-12px;max-width:72ch">${e.prog||S.prog}</p>`;
   h+=`<ul class="swatches lead1">`
    +sw({href:nextL?`#/lecon/${sid}/${nextL.id}`:"#/apprendre",c,size:"big",tile:`${d}/${Ls.length}`,kicker:`Apprendre · ${d} ${plural(d,"leçon faite","leçons faites")} sur ${Ls.length}`,name:nextL?esc(nextL.t):"Toutes les leçons sont faites",sub:nextL?`La prochaine leçon pas à pas, environ ${hm(S.TB["L-"+nextL.id].min)}`:"Refais celles qui t'ont posé problème",done:!nextL})
    +(A.themesOf(S).length?sw({href:`#/${sid}/niveau`,c,tile:"✓",kicker:"Choisir quoi réviser",name:"Où j'en suis",sub:"Coche ce que tu maîtrises, fais le mini-contrôle : le planning se refait"}):"")
@@ -32973,7 +32973,7 @@ function entrainer(){
     const L=[[`#/${id}/annales`,"Annales et chrono",ico("i-doc")],[`#/${id}/td`,S.tdTitle||"Exercices de TD",ico("i-pen")]];
     if(S.quiz.length)L.push([`#/${id}/quiz`,"Quiz de cours","?"]);
     S.pages.filter(p=>/recettes|feuille|types|formulaire/.test(p.id)).forEach(p=>L.push([`#/${id}/p/${p.id}`,p.t,ico("i-star")]));
-    h+=`<section class="ecrin ${c}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${exW(S)} ${shortDay(S)} · ${jx(S)}</span></div><p class="muted" style="margin:-8px 0 14px">Documents autorisés : ${S.docs}.</p><ul class="minis">${L.map(l=>sw({href:l[0],c,size:"small",tile:l[2],name:esc(l[1]),ext:!!l[3]})).join("")}</ul></div><ol class="todo">${T.map(t=>taskHTML(id,t,false)).join("")}</ol></div></section>`;});
+    h+=`<section class="ecrin ${c}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${exW(S)} ${shortDay(S)}${exam(S).report?"":" · "+jx(S)}</span></div><p class="muted" style="margin:-8px 0 14px">Documents autorisés : ${S.docs}.</p><ul class="minis">${L.map(l=>sw({href:l[0],c,size:"small",tile:l[2],name:esc(l[1]),ext:!!l[3]})).join("")}</ul></div><ol class="todo">${T.map(t=>taskHTML(id,t,false)).join("")}</ol></div></section>`;});
   $("#main").innerHTML=h+`</div>`;bindTicks($("#main"),entrainer);fixLinks($("#main"),null);badges();}
 
 /* ================= Plus ================= */
@@ -33447,7 +33447,7 @@ function rapport(){$("#main").className="";
     let txt=`RAPPORT D'ENTRAÎNEMENT, ${A.dayName(A.today())}\n(site de révision, partie « Entraînement » : exercices tirés au hasard, réponse tapée ou cochée sur papier)\n`,h="";
     if(!R.length&&!XR.h&&!BL.h){box.innerHTML=`<p class="muted">Aucun exercice d'entraînement pour l'instant.</p>`;TXT=txt+"\nAucun exercice fait.";return;}
     matieres().concat(A.SIDS.filter(s=>!matieres().includes(s))).forEach(sid=>{const Rs=R.filter(r=>r.s===sid);if(!Rs.length)return;const S=SUBJ[sid];
-      txt+=`\n=== ${S.name} (${A.exam(S).label} ${A.dayName(A.exam(S).day)}) ===\n`;h+=`<section class="sec"><h2><span>${S.name}</span></h2>`;
+      txt+=`\n=== ${S.name} (${A.exam(S).label} ${A.exam(S).report?"reporté, date à venir":A.dayName(A.exam(S).day)}) ===\n`;h+=`<section class="sec"><h2><span>${S.name}</span></h2>`;
       (GEN.defs[sid]||[]).forEach(d=>{const X=Rs.filter(r=>r.g===d.id);if(!X.length)return;const g=etat(d.id),N=d.paliers.length,ok=X.filter(r=>r.ok).length,fx=X.filter(r=>!r.ok&&!r.aide),just=X.filter(r=>r.ok),moy=just.length?just.reduce((s,r)=>s+r.ms,0)/just.length:0,lents=X.filter(r=>r.lent).length;
         const types={};fx.forEach(r=>{const k=r.erreur||(r.reponse==="(je ne sais pas)"?"pas de réponse":r.papier?"copie incomplète":"erreur non reconnue");types[k]=(types[k]||0)+1;});
         const tl=Object.entries(types).sort((a,b)=>b[1]-a[1]),ou=g.val?`réussie le ${A.dayName(g.val,false,true)}, prochain passage ${quand(echeance(d,g)||g.du)}`:`palier ${g.lv+1} sur ${N}${g.trav?" (à retravailler après un passage raté)":""}`;
@@ -34534,18 +34534,18 @@ function blockHTML(B,full){const S=SUBJ[B.sid];return `<div class="blk" style="-
 function hubHome(){
   const P=plan(),t0=today(),n=NOW();
   const tb=P.blocks.filter(b=>b.day===t0);
-  const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0);
+  const exToday=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===t0&&!exam(S).report);
   let body="";
   if(exToday.length)body+=`<div class="examday">${exToday.map(S=>`<p><b>${exW(S)} ${W.de(S.name)} aujourd'hui à ${exam(S).start.replace(":","h")}</b>, <span class="nf">${exam(S).place}</span>. ${S.examMorning||"Relis seulement tes fiches en rouge."}</p>`).join("")}</div>`;
   body+=`<div class="examcard" style="--sc:var(--cobalt)"><div><b>Mini-contrôle mélangé</b> : 12 questions de toutes tes matières, surtout tes prochains CC et ce que tu rates, environ 10 minutes. ${hub.mixOn===t0?`Fait aujourd'hui : ${hub.mixScore} sur ${hub.mixSur}.`:"Pas encore fait aujourd'hui."}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn pri" href="#/mix">Commencer</a><a class="btn" href="#/methode">Pourquoi ça marche</a></div></div>`;
   body+=sec(1,"Aujourd'hui",tb.length?`<p class="muted">${tb.length} créneau(x), environ ${hm(tb.reduce((s,b)=>s+b.end-b.start,0))} de révision, placés autour de tes cours. Les étapes de fiches se cochent toutes seules quand tu marques les fiches « Je sais ».</p>${tb.map(b=>blockHTML(b,true)).join("")}`:`<p class="muted">Aucun créneau de révision prévu aujourd'hui. ${P.blocks.length?"Regarde les jours suivants.":"Tout est fait, ou tous les CC sont passés."}</p>`);
   const days=[...new Set(P.blocks.map(b=>b.day))].filter(d=>d>t0);
-  if(days.length)body+=sec(2,"Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d);const ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d);
+  if(days.length)body+=sec(2,"Les jours suivants",days.map(d=>{const L=P.blocks.filter(b=>b.day===d);const ex=SIDS.map(id=>SUBJ[id]).filter(S=>exam(S).day===d&&!exam(S).report);
     return `<details class="day"><summary><b>${dayName(d,true)}</b><span>${ex.length?`<span class="r">${ex.every(S=>exW(S)==="CC")?"CC":ex.length>1?"Épreuves":exW(ex[0])} : ${ex.map(S=>S.name).join(", ")}</span>, `:""}${L.length} créneau(x), ${hm(L.reduce((s,b)=>s+b.end-b.start,0))}</span></summary><div style="padding:0 12px 12px;display:grid;gap:10px">${L.map(b=>blockHTML(b,false)).join("")}</div></details>`;}).join(""));
   const bon=Object.entries(P.bonus);
   if(bon.length)body+=sec(days.length?3:2,"Si tu as encore du temps",`<p class="muted">Il reste plus de travail que de créneaux. Ces étapes rapportent le moins : elles passent après. Fais-les quand un créneau est fini en avance.</p>${bon.map(([sid,L])=>`<details class="day"><summary><b>${SUBJ[sid].name}</b><span>${L.length} étape(s)</span></summary><ol class="todo" style="padding:0 12px 12px">${L.map(id=>taskHTML(sid,SUBJ[sid].TB[id],false)).join("")}</ol></details>`).join("")}`);
   const cards=SIDS.map(id=>{const S=SUBJ[id],T=S.tasks,d=T.filter(t=>isDone(id,t)).length,r=S.ORDER.filter(c=>ST[id].review[c.id]).length,e=exam(S);
-    return `<a class="mcard" href="#/${id}" style="--sc:${S.color}"><span class="mname">${S.name}</span><span class="muted">${S.code}</span><span>${exW(S)} ${quandEp(e,true)}, <b>${jx(S)}</b></span><span class="muted">Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % : poids ${String(weight(S).toFixed(2)).replace(".",",")}</span><div class="bar"><i style="width:${d/T.length*100}%;background:${S.color}"></i></div><span class="muted">${d} étape(s) sur ${T.length}${r?`, <span class="r">${r} en rouge</span>`:""}</span></a>`;}).join("");
+    return `<a class="mcard" href="#/${id}" style="--sc:${S.color}"><span class="mname">${S.name}</span><span class="muted">${S.code}</span><span>${exW(S)} ${quandEp(e,true)}${e.report?"":`, <b>${jx(S)}</b>`}</span><span class="muted">Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % : poids ${String(weight(S).toFixed(2)).replace(".",",")}</span><div class="bar"><i style="width:${d/T.length*100}%;background:${S.color}"></i></div><span class="muted">${d} étape(s) sur ${T.length}${r?`, <span class="r">${r} en rouge</span>`:""}</span></a>`;}).join("");
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${dayName(t0,true)}</h1><span class="muted">4 CC cette semaine. Le plan se recalcule chaque matin avec ce qu'il reste.</span></div>
    <section class="mcards">${cards}</section>${body}
    <p class="muted" style="font-size:.9rem">Créneaux pris entre 8h et 22h30, hors cours, repas et trajets, au rythme « ${{leger:"léger",normal:"normal",intensif:"intensif"}[hub.rythme||"normal"]} » (modifiable dans <a href="#/examens">Examens et coefficients</a>). <a href="#/edt">Voir l'emploi du temps</a> <button class="btn" id="replan">Recalculer maintenant</button></p></div>`;
@@ -34757,7 +34757,7 @@ function subjHome(sid){
   if(bon.length)body+=sec(k++,"Si tu as encore du temps",`<ol class="todo">${bon.map(id=>taskHTML(sid,S.TB[id],false)).join("")}</ol>`);
   if(done.length)body+=sec(k++,"Déjà fait",`<details class="day"><summary><b>${done.length} étape(s) terminée(s)</b><span>clique pour voir</span></summary><ol class="todo" style="padding:0 12px 12px">${done.map(t=>taskHTML(sid,t,false)).join("")}</ol></details>`);
   $("#main").innerHTML=`<div class="page"><div class="today-h"><h1>${S.name}</h1><span class="muted">${S.code}</span></div>
-   <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${quandEp(e)}</b> (${jx(S)}), <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""} <span class="muted">Source de la date : ${srcDe(S,e)}</span></div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
+   <div class="examcard" style="--sc:${S.color}"><div><b>${exW(S)} ${quandEp(e)}</b>${e.report?"":` (${jx(S)})`}, <span class="nf">${e.place}</span>, ${e.dur}.${e.unsure?` <span class="r">${e.unsure}</span>`:""} <span class="muted">Source de la date : ${srcDe(S,e)}</span></div><div class="muted">${e.prog||S.prog}</div><div class="muted">Documents : ${e.docs||S.docs}. Coef ${S.coef}, ${exW(S)==="CC"?"ce CC":"cet examen"} compte pour ${Math.round((e.share!=null?e.share:S.share)*100)} % de la note.</div></div>
    ${carteNotes(sid)}
    ${body}</div>`;
   bindTicks($("#main"),()=>subjHome(sid));fixLinks($("#main"),sid);
