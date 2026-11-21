@@ -1163,6 +1163,11 @@ html.xb-ouvert{overflow:hidden}
 .av-fin{display:grid;gap:12px;margin:22px 0;text-align:left;min-width:0}
 .av-fin .acts{justify-content:flex-start}
 .trou{display:inline-block;min-width:2.5em;border-bottom:2px solid var(--graphite);text-align:center}
+.lp-bar.xp-reperes{position:relative;overflow:visible;margin-bottom:24px}
+.xp-trait{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1px;background:#fff;border-radius:2px}
+.xp-num{position:absolute;top:20px;transform:translateX(-50%);font-size:.75rem;font-weight:800;color:var(--icy);white-space:nowrap}
+.lp-bar.xp-ligne{display:block;margin-top:6px;height:12px}
+.xp-notes{margin-top:16px}
 
 </style>
 <link rel="manifest" href="manifest.webmanifest">
@@ -32490,9 +32495,13 @@ function stepMins(L,sid){const F=flow(L),est=(SUBJ[sid].TB["L-"+L.id]||{}).min||
 function parts(L,sid){const F=flow(L),m=stepMins(L,sid),st=[0];let cur=0,rest=m.reduce((a,b)=>a+b,0);
   F.forEach((x,j)=>{const isB=x.k==="pre"||x.k==="steps"||x.k==="demo"||x.k==="paper"||(x.k==="learn"&&!(F[j-1]&&F[j-1].k==="pre"));
     if(j>0&&isB&&cur>=10&&rest>=8){st.push(j);cur=0;}cur+=m[j];rest-=m[j];});return st;}
+/* la dernière leçon ouverte : c'est elle, et elle seule, que « Continuer » propose de reprendre (son détail du 21/11 sur la réponse 70) */
+const LKEY="rev-s1-derniere-lecon";
+const derniere=()=>{try{const o=JSON.parse(localStorage.getItem(LKEY)||"null");return o&&o.sid&&o.lid?o:null;}catch(e){return null;}};
 function lessonRoute(args){
   const sid=args[0],lid=args[1];
   if(!BYL[sid]||!BYL[sid][lid]){$("#main").innerHTML=`<div class="page"><h1>Leçon introuvable</h1><p><a class="btn pri" href="#/apprendre">Voir toutes les leçons</a></p></div>`;return;}
+  try{localStorage.setItem(LKEY,JSON.stringify({sid,lid,t:A.stamp()}));}catch(e){}
   if(!LP||LP.sid!==sid||LP.id!==lid){const p=progGet(sid,lid),vue=(A.ST[sid].les||{})[lid];LP=newLP(sid,lid);if(p){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;}else if(vue&&vue.n)LP.rap=1;else if(window.ENT&&ENT.avant)LP.av=ENT.avant(sid,lid);}
   else{LP.last=Date.now();const p=progGet(sid,lid);if(p&&p.ts>(LP.saved||0)&&p.i!==LP.i){LP.i=p.i;LP.got=p.got||{};LP.t=p.t||0;LP.ss=p.ss||{};LP.resumed=true;LP.saved=p.ts;LP.cp=null;LP.rap=0;}}
   if(LP.rap===1)return rappel(sid,lid);
@@ -32691,7 +32700,7 @@ function rvLead(){const n={l:0,q:0,m:0,c:0,e:0},vu=new Set(),veille=[];
   const cc=veille.map(id=>{const S=SUBJ[id];return ` ${exam(S).label} ${/^[aeiouéè]/i.test(S.name)?"d'":"de "}${S.name} ${quand(S)} : toutes ses cartes sont là, même celles prévues plus tard.`;}).join("");
   const nb=RV?RV.total:0,T=A.tempsCarte();
   const tps=nb?`<b>${nb} ${plural(nb,"carte")} aujourd'hui, environ ${dureeCartes(nb)}</b> à ton rythme (${T.n>=20?`${secTxt(T.ms)} par carte, mesuré sur tes ${Math.min(300,T.n)} dernières cartes`:`environ ${secTxt(T.ms)} par carte pour l'instant : le site mesure ton temps à chaque carte`}). `:"";
-  return `${tps}${liste?`Aujourd'hui : ${liste}.`:""}${cc} Réponds de mémoire (à voix haute ou sur une feuille) <b>avant</b> de retourner la carte. Une carte ratée revient plus loin dans la séance. « Jamais vu » retire la carte et met la leçon qui l'explique en tête de ton planning.`;}
+  return `${tps}${liste?`Aujourd'hui : ${liste}.`:""}${cc} Réponds de mémoire <b>avant</b> de retourner la carte.`;}
 function jvMsg(sid,l){const L=l&&BYL[sid][l];
   if(!L)return "Carte retirée. Aucune leçon ne l'explique : elle ne reviendra que si tu rates encore cette question.";
   const b=plan().blocks.find(B=>B.sid===sid&&(B.tasks||[]).includes("L-"+l)),t=today();
@@ -32710,7 +32719,7 @@ function reviser(){
   drawCard();}
 function drawCard(){
   const top=ttl("Réviser",rvLead());
-  if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts">${(()=>{let nt=null;try{nt=nextTask();}catch(e){}return nt?`<a class="btn pri" href="${hrefTask(nt.sid,nt.t)}">Continuer : ${esc(nt.t.t)}</a>`:`<a class="btn pri" href="#/apprendre">Faire une leçon</a>`;})()}<a class="btn" href="#/mix">Mini-contrôle mélangé (12 questions)</a></div></div></div>`;RV.end=true;return;}
+  if(!RV.q.length){$("#main").innerHTML=`<div class="page">${top}<div class="empty"><p class="score">0 carte</p><p>Rien à revoir pour l'instant. Les cartes arrivent quand tu termines des leçons, et reviennent le lendemain.</p><div class="acts">${(()=>{let nt=null;try{nt=nextTask();}catch(e){}return nt?`<a class="btn pri" href="${hrefTask(nt.sid,nt.t)}">${nt.resume?"Continuer":"À faire ensuite"} : ${esc(nt.t.t)}</a>`:`<a class="btn pri" href="#/apprendre">Faire une leçon</a>`;})()}<a class="btn" href="#/mix">Mini-contrôle mélangé (12 questions)</a></div></div></div>`;RV.end=true;return;}
   if(RV.i>=RV.q.length){RV.end=true;A.seanceFin("cartes",RV.run);const more=dueCards().length;$("#main").innerHTML=`<div class="page">${top}<div class="empty">${RV.n?`<p class="score">${RV.ok} / ${RV.n}</p>`:""}${RV.msg?`<p class="muted">${RV.msg}</p>`:""}<p>Session terminée. ${!RV.n?"":RV.ok<RV.n?"Chaque carte ratée est revenue jusqu'à ce que tu la retrouves (3 fois au plus) ; elle reviendra aussi demain : c'est voulu.":"Tout est su : bravo."}</p><div class="acts">${more?`<button class="btn pri" id="rvmore">Encore ${more} ${plural(more,"carte")}</button>`:""}<a class="btn pri" href="#/">Retour à aujourd'hui</a><a class="btn" href="#/mix">Mini-contrôle mélangé</a></div></div></div>`;const m=$("#rvmore");if(m)m.addEventListener("click",()=>{RV=null;reviser();});badges();return;}
   const it=RV.q[RV.i],S=SUBJ[it.sid],c=cardOf(it.sid,it.cid);
   if(!c||ST[it.sid].jv[it.cid]){if(c)A.seanceRep("cartes",RV,rvDebut,RV.i,-1);RV.i++;return drawCard();}
@@ -32773,7 +32782,10 @@ document.addEventListener("keydown",e=>{
 function nextTask(P){
   const t0=today(),n=NOW();P=P||plan();
   const keys=new Set(Object.keys(progAll()));SIDS.forEach(sid=>Object.keys((ST[sid]||{}).pos||{}).forEach(lid=>keys.add(sid+"/"+lid)));
-  let best=null;keys.forEach(k=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n||!BYL[sid][lid]||!A.inScope(SUBJ[sid],BYL[sid][lid]))return;const g=progGet(sid,lid);if(g&&(!best||g.ts>best.ts))best={sid,lid,ts:g.ts,g};});
+  /* une autre leçon commencée ne revient que si elle a avancé après l'ouverture de la dernière (sur un autre appareil) */
+  const D=derniere(),dk=D?D.sid+"/"+D.lid:null;
+  let best=null;keys.forEach(k=>{const [sid,lid]=k.split("/");if(!SUBJ[sid]||examStart(SUBJ[sid])<=n||!BYL[sid][lid]||!A.inScope(SUBJ[sid],BYL[sid][lid]))return;const g=progGet(sid,lid);if(!g)return;
+    const ts=k===dk?Math.max(g.ts,D.t):g.ts;if(D&&k!==dk&&g.ts<=D.t)return;if(!best||ts>best.ts)best={sid,lid,ts,g};});
   if(best&&SUBJ[best.sid].TB["L-"+best.lid])return {sid:best.sid,t:SUBJ[best.sid].TB["L-"+best.lid],resume:best.g,today:true};
   const triedToday=(sid,t)=>t.lesson&&(ST[sid].les[t.lesson]||{}).on===t0;
   for(const b of P.blocks.filter(b=>b.day===t0)){const t=b.tasks.map(id=>SUBJ[b.sid].TB[id]).find(t=>t&&!isDone(b.sid,t)&&!triedToday(b.sid,t));if(t)return {sid:b.sid,t,today:true};}
@@ -32921,7 +32933,7 @@ function home(){
 
 /* ================= Apprendre : toutes les leçons ================= */
 function apprendre(){
-  let h=`<div class="page wide">${ttl("Apprendre","Des leçons courtes, dans l'ordre de tes CC. Une question à chaque écran, la correction tout de suite. L'étoile marque la prochaine leçon ; celles ratées reviennent dans ton programme.")}`;
+  let h=`<div class="page wide">${ttl("Apprendre","Une question à chaque écran, la correction tout de suite.")}`;
   ordered().forEach((id,k)=>{const S=SUBJ[id],Ls=lesOf(id),st=ST[id],d=lessonsDone(id);let firstTodo=null;
     const items=Ls.map((L,i)=>{const r=st.les[L.id],dn=isDone(id,S.TB["L-"+L.id]),redo=!dn&&!!r,isNext=!dn&&!firstTodo&&(S.TB["L-"+L.id].p===1||!Ls.some(M=>!isDone(id,S.TB["L-"+M.id])&&S.TB["L-"+M.id].p===1));if(isNext)firstTodo=L;
       const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":S.TB["L-"+L.id].p>1?" is-later":"";
@@ -32968,7 +32980,7 @@ function subject(sid){
 
 /* ================= S'entraîner : sur papier, comme au CC ================= */
 function entrainer(){
-  let h=`<div class="page wide">${ttl("S'entraîner","Tes épreuves sont sur papier, en temps limité : rien ne remplace un sujet fait en temps réel. Fais au moins une annale par matière avec le chrono, puis corrige-toi avec la grille « Avant de rendre ta copie » des pages Recettes.")}${window.ENT?ENT.bloc():""}`;
+  let h=`<div class="page wide">${ttl("S'entraîner","Tes épreuves sont sur papier, en temps limité : entraîne-toi comme le jour J.")}${window.ENT?ENT.bloc():""}`;
   ordered().forEach((id,k)=>{const S=SUBJ[id],T=S.tasks.filter(t=>!t.lesson&&!t.train),c="s-"+id;
     const L=[[`#/${id}/annales`,"Annales et chrono",ico("i-doc")],[`#/${id}/td`,S.tdTitle||"Exercices de TD",ico("i-pen")]];
     if(S.quiz.length)L.push([`#/${id}/quiz`,"Quiz de cours","?"]);
@@ -33768,7 +33780,10 @@ function bouton(){const p=(location.hash||"").slice(2).split("/"),main=$("#main"
   if(SUBJ[p[0]]&&p[1]==="p"){const d=defs(p[0]).find(x=>(x.pages||[]).includes(p[2])),pg=main.querySelector(".page");if(d&&pg)pg.insertAdjacentHTML("beforeend",`<p class="en-lien"><a class="btn pri" href="#/entrainer/${d.sid}/${d.id}">M'entraîner sur cette méthode</a></p>`);}
   else if(p[0]==="lecon"&&SUBJ[p[1]]){const acts=main.querySelector(".lp-end .acts");if(!acts)return;
     const D=defs(p[1]).filter(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2])&&!x.fixe;});
-    D.forEach(d=>acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">${D.length>1?"M'entraîner : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)):"M'entraîner sur cette méthode"}</a>`));}}
+    /* choix 71a : à la fin d'une leçon, un exercice tout de suite, pendant que c'est frais */
+    if(D.length&&main.querySelector("#lsc")){acts.insertAdjacentHTML("beforebegin",`<section class="el-recap en-encore"><p class="prekick">Encore 5 minutes ?</p><p>Un exercice du niveau ${duCC(SUBJ[p[1]])} sur ce que tu viens d'apprendre, pendant que c'est frais : +5 points, et ta série tient.</p><div class="acts"><a class="btn pri big en-lien" href="#/entrainer/${D[0].sid}/${D[0].id}">Un exercice tout de suite</a></div></section>`);
+      acts.querySelectorAll(".btn.pri").forEach(b=>b.classList.remove("pri","big"));D.shift();}
+    D.forEach(d=>acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">${D.length>1||main.querySelector(".en-encore")?"M'entraîner : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)):"M'entraîner sur cette méthode"}</a>`));}}
 function brancher(A0,ext){A=A0;
   ext.routes.progres=()=>{stop();pageElan();};
   const liste=ext.routes.entrainer;LISTE=liste;ext.routes.entrainer=parts=>parts&&parts.length?route(parts):(stop(),liste());
@@ -34112,9 +34127,10 @@ function lance(sid,ep){if(!CH||CH.sid!==sid||CH.ep!==ep){arrete();CH={sid,ep,t:D
   clearInterval(TIC);TIC=setInterval(()=>{const el=$("#xp-ch");if(!el){arrete();return;}el.textContent=horloge(posDe(sid,ep).ms+Date.now()-CH.t);},1000);}
 const ecoule=(sid,ep)=>posDe(sid,ep).ms+(CH&&CH.sid===sid&&CH.ep===ep?Date.now()-CH.t:0);
 
-function jauge(C,pts,cls){const P=prochainPalier(C,pts),R=palier(C,pts);
-  return `<div class="lp-bar${cls?" "+cls:""}" role="progressbar" aria-label="Points ${C.du} assurés" aria-valuemin="0" aria-valuemax="20" aria-valuenow="${pts}"><i style="width:${Math.min(100,pts/20*100)}%"></i></div>
-   <p class="el-pt">${R?`<b>${R[1]}</b> · `:""}${P?`${P[1]} à ${P[0]} points (encore ${virg(P[0]-pts)})`:"Tous les points du CC sont à ta portée."}</p>`;}
+/* la jauge des points du CC, avec les repères des paliers (choix 72a) ; dans la barre du haut d'un écran, sans repères */
+function jauge(C,pts,cls){const P=prochainPalier(C,pts),R=palier(C,pts),rep=cls!=="xp-j";
+  return `<div class="lp-bar${cls?" "+cls:""}${rep?" xp-reperes":""}" role="progressbar" aria-label="Points ${C.du} assurés" aria-valuemin="0" aria-valuemax="20" aria-valuenow="${pts}"><i style="width:${Math.min(100,pts/20*100)}%"></i>${rep?C.paliers.map(p=>`<span class="xp-trait" style="left:${p[0]*5}%"></span><span class="xp-num" style="left:${p[0]*5}%">${p[0]}</span>`).join(""):""}</div>
+   <p class="el-pt">${C.paliers.map(p=>`<b>${p[0]}</b> : ${p[1].charAt(0).toLowerCase()+p[1].slice(1)}`).join(" · ")} · ${P?`encore ${virg(P[0]-pts)} point${P[0]-pts>1?"s":""} pour ${P===C.paliers[0]?"la moyenne":P[1].charAt(0).toLowerCase()+P[1].slice(1)}`:R?`${R[1]} !`:""}</p>`;}
 
 function accueil(sid,ep){arrete();const C=X(sid,ep),S=SUBJ[sid],B=bilan(sid,ep),p=posDe(sid,ep),N=C.notions.length,min=prevu(C),passe=Math.round(p.ms/60e3);
   const ou=p.i<N?`Reprendre : ${C.notions[p.i].t}`:"Reprendre : le sujet express";
@@ -34218,13 +34234,24 @@ function route(sid,ep,parts){const C=X(sid,ep);if(!C||!SUBJ[sid]){location.repla
 /* l'entrée : une carte en haut d'Aujourd'hui, de S'entraîner et de la page de la matière, les jours qui précèdent l'épreuve */
 function proche(){const L=[];Object.keys(window.EXPRESS||{}).forEach(sid=>{const S=SUBJ[sid];if(!S)return;const E=A.exam(S);if(!E||!window.EXPRESS[sid][E.id])return;
   const j=(new Date(E.day+"T12:00")-new Date(A.today()+"T12:00"))/864e5;if(j>=0&&j<=10)L.push({sid,ep:E.id,E,j});});return L;}
-function carte(){const main=$("#main");if(!main||main.querySelector(".xp-carte"))return;const h=(location.hash||"#/").slice(2).split("/").filter(Boolean);
+/* choix 70a : sur Aujourd'hui, la note que tu sais déjà aller chercher à chaque épreuve proche (estimation du site, ou le CC en 1 h si c'est plus) */
+function notes(pg){if(pg.querySelector(".xp-notes"))return "";const t0=A.today(),L=[];
+  A.SIDS.forEach(sid=>{const S=SUBJ[sid],E=A.exam(S);if(!E||E.off||!E.day)return;if(A.examStart(S)<=A.NOW())return;const j=(new Date(E.day+"T12:00")-new Date(t0+"T12:00"))/864e5;if(j<0||j>21)return;
+    let v=null;try{const e=A.estime(sid);if(e)v=e.note;}catch(x){}const C=X(sid,E.id);if(C){const b=bilan(sid,E.id).pts;if(v==null||b>v)v=b;}L.push({sid,S,E,j,v});});
+  if(!L.length)return "";L.sort((a,b)=>a.j-b.j);
+  const ligne=x=>{const n=x.v==null?null:Math.round(x.v*2)/2;
+    return `<div class="s-${x.sid}"><span>${x.S.name} · ${x.E.label} ${x.E.report?"reporté":A.dayName(x.E.day,false,true)}<small>${n==null?`à estimer : <a href="#/${x.sid}/niveau">Où j'en suis en ${x.S.name}</a>`:n>=14?"Bonne note":n>=10?"Moyenne assurée":`moyenne à 10 (encore ${virg(10-n)})`}</small><span class="lp-bar xp-ligne"><i style="width:${n==null?0:Math.min(100,n*5)}%"></i></span></span><b>${n==null?"?":virg(n)} / 20</b></div>`;};
+  return `<section class="el-recap xp-notes"><p class="prekick">Tes notes, d'après ce que tu sais faire</p><div class="el-bar">${L.slice(0,4).map(ligne).join("")}</div></section>`;}
+function carte(){const main=$("#main");if(!main)return;const pg0=main.querySelector(".page");
+  if(pg0&&(location.hash||"#/").replace(/^#\/?/,"")===""&&!pg0.querySelector(".xp-notes")){const h=notes(pg0);if(h){const c=pg0.querySelector(".xp-carte:last-of-type"),h1=pg0.querySelector("h1");let ap=h1&&h1.nextElementSibling&&h1.nextElementSibling.matches(".hlead,.lead")?h1.nextElementSibling:h1;if(c)c.insertAdjacentHTML("afterend",h);else if(ap)ap.insertAdjacentHTML("afterend",h);}}
+  if(main.querySelector(".xp-carte"))return;const h=(location.hash||"#/").slice(2).split("/").filter(Boolean);
   const pg=main.querySelector(".page");if(!pg)return;
   const L=proche().filter(x=>!h.length||h[0]==="entrainer"&&h.length===1||h[0]===x.sid&&h.length===1);if(!L.length)return;
   const html=L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
     return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}/go">${p.ms?"Reprendre":"Commencer · 1 h chrono"}</a><a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a></div></section>`;}).join("");
   const h1=pg.querySelector("h1");let apres=h1;if(apres&&apres.nextElementSibling&&apres.nextElementSibling.matches(".hlead,.lead"))apres=apres.nextElementSibling;
-  if(apres)apres.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);}
+  if(apres)apres.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);
+  const nt=pg.querySelector(".xp-notes"),der=[...pg.querySelectorAll(".xp-carte")].pop();if(nt&&der)der.after(nt);}
 
 const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);A=A0;
