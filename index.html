@@ -33791,8 +33791,8 @@ EXT.init=function(A0){const ext=init0.call(EXT,A0);try{brancher(A0,ext);}catch(e
    rejoués depuis le journal, rien n'est gardé à part. La règle de la série : un jour compte s'il n'y a plus d'entretien dû
    (ou 3 entretiens faits) et qu'une chose a fait progresser, ou si c'est un jour d'épreuve ; le premier jour sans de la semaine
    est le repos ; deux jours sans de suite cassent la série, sauf si l'un des deux est le repos ; trois de suite la cassent toujours. */
-const BAREME={pal:["Exercice juste au palier en cours",5],pl:["Placement réussi",5],monte:["Palier validé",25],val:["Méthode validée",60],rep:["Raté, puis réussi",15],eok:["Entretien dû, fait à temps et juste",20],eko:["Entretien dû, fait mais raté",5],xb:["Examen blanc",0],les:["Leçon finie",15],quiz:["Quiz réussi",10],mix:["Mini-contrôle mélangé",0]};
-const PROGRES={monte:1,val:1,rep:1,xb:1,les:1},RANGS=["D","C","B","A","A+"],RCOUL=["#FFD3DB","#FFE7C2","#DCE2FF","#C5F9FC","#CFF9DF"];
+const BAREME={cch:["Notion du CC réussie",10],cchb:["Sujet express",0],pal:["Exercice juste au palier en cours",5],pl:["Placement réussi",5],monte:["Palier validé",25],val:["Méthode validée",60],rep:["Raté, puis réussi",15],eok:["Entretien dû, fait à temps et juste",20],eko:["Entretien dû, fait mais raté",5],xb:["Examen blanc",0],les:["Leçon finie",15],quiz:["Quiz réussi",10],mix:["Mini-contrôle mélangé",0]};
+const PROGRES={monte:1,val:1,rep:1,xb:1,les:1,cch:1,cchb:1},RANGS=["D","C","B","A","A+"],RCOUL=["#FFD3DB","#FFE7C2","#DCE2FF","#C5F9FC","#CFF9DF"];
 const FL=`<svg class="el-fl" viewBox="0 0 16 18" aria-hidden="true"><path d="M8 1c1 3 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 1 1 2 2 2 4 1-2 1-5 1-8z" fill="var(--ambre)"/></svg>`;
 const lundiDe=x=>{const[y,m,d]=x.split("-").map(Number);return A.addDays(x,-((new Date(y,m-1,d).getDay()+6)%7));};
 const nb=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
@@ -33822,6 +33822,8 @@ function elan(){const J=A.journal(),der=J.length?J[J.length-1].i:"";if(EL.n===J.
     else if(e.k==="les"){j.act=true;if(!debut)debut=x;j.min+=e.dur||0;const k=e.s+"/"+e.l;
       if((e.sc||0)>=0.5&&!lesOk[k]){lesOk[k]=1;const L=((A.LES||{})[e.s]||[]).find(l=>l.id===e.l);gagne(j,"les",L?L.t:e.l,null,e.t);}}
     else if(e.k==="quiz"&&e.goal&&SUBJ[e.s]){j.act=true;if(!debut)debut=x;gagne(j,"quiz",SUBJ[e.s].name,null,e.t);}
+    else if(e.k==="cch"&&SUBJ[e.s]){j.act=true;if(!debut)debut=x;j.ms+=e.ms||0;const k="cch|"+e.s+"|"+e.ep+"|"+e.n;if(e.ok&&!lesOk[k]){lesOk[k]=1;gagne(j,"cch",e.nt||e.n,null,e.t);}}
+    else if(e.k==="cchb"&&SUBJ[e.s]){j.act=true;if(!debut)debut=x;j.ms+=e.ms||0;gagne(j,"cchb",`${virg(e.note||0)} sur 20`,Math.round(5*(e.note||0)),e.t);}
     else if(e.k==="mix"){j.act=true;if(!debut)debut=x;j.min+=10;if(e.n)gagne(j,"mix",`${e.n} sur ${e.sur||12}`,2*e.n,e.t);}
     else if(e.k==="task"&&e.v&&SUBJ[e.s]&&!/^en-/.test(e.x)){const T=SUBJ[e.s].TB[e.x];if(T)j.min+=T.min||0;}
     else if(e.k==="pj"&&e.d===x)j.prevu=Math.max(j.prevu||0,e.min||0);});
@@ -33941,6 +33943,30 @@ function avantEcran(info,L,suite){stop();clearInterval(AVT);const d=GEN.par[info
   if(!pap)ecoute(b,e,()=>false,()=>fini(false));
   $("#av-ok").addEventListener("click",()=>fini(false));$("#av-nsp").addEventListener("click",()=>fini(true));
   longues(b);queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);}
+/* un exercice d'un générateur dans un cadre (le CC en 1 h) : réponse jugée, ou sur papier avec le barème ligne par ligne, puis la correction ;
+   fin({part,ok,ms}) : part = la part des points obtenue */
+function exoDans(host,info,fin,o){o=o||{};const d=GEN.par[info.g];let e;try{e=GEN.tire(d,info.lv,info.gr);}catch(x){host.innerHTML=`<p class="verdict info">Cet exercice n'a pas pu être tiré.</p>`;return null;}
+  const pap=!!e.papier,t0=Date.now();let fait=false;
+  host.innerHTML=tx(`<p class="lq">${e.q}</p><div>${pap&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${pap?`<div class="paper"><b>Sur ta feuille</b>, rédige comme ${auCC(SUBJ[d.sid])}, puis compare ligne par ligne.</div>`:`<div class="en-rep" id="xd-rep">${champsHTML(e)}</div>`}<div class="acts" id="xd-acts">${pap?`<button class="btn pri" id="xd-p">J'ai fini sur ma feuille</button>`:`<button class="btn pri" id="xd-v">Valider</button>`}<button class="btn" id="xd-c">Je ne sais pas : la correction</button></div><div class="en-rep" id="xd-fb" aria-live="polite"></div>`);
+  const fb=host.querySelector("#xd-fb"),acts=host.querySelector("#xd-acts"),fige=()=>fait;
+  const bout=(part,rep,j)=>{fait=true;acts.remove();host.querySelectorAll("#xd-rep input,#xd-rep textarea,#xd-rep button").forEach(x=>{x.disabled=true;});
+    const ok=part>=0.8-1e-9,ms=Date.now()-t0;
+    A.logRep({o:o.origine||"le CC en 1 h",s:d.sid,g:d.id,methode:d.t,palier:info.lv+1,enonce:e.texte,reponse:rep?repTexte(e,rep):pap?"(sur papier)":"(correction lue)",ok:ok?1:0,ms});
+    if(!ok)genreErreur(fb,d,e);longues(host);fin({part,ok,ms,e});};
+  const montre=(j,rep)=>{if(fait)return;
+    fb.innerHTML=tx(`${j?`<div class="verdict ${j.ok?"ok":"no"}">${j.ok?"Juste.":j.resume||"Pas encore tout à fait."}</div>`:""}<h3>La correction</h3>${pap?"":`<p><b>La bonne réponse :</b> ${e.bonne}</p>`}${etapesHTML(e,j&&j.diag?j.diag.etape:-1)}`);bout(j&&j.ok?1:0,rep,j);};
+  const valide=()=>{if(fait)return;const rep=lire(e,host),j=e.juge(rep);if(j.incomplet){fb.innerHTML=`<div class="verdict info">${j.incomplet}</div>`;return;}montre(j,rep);};
+  const papier=()=>{if(fait)return;const tot=e.etapes.reduce((s,x)=>s+x.pts,0);
+    fb.innerHTML=tx(`<h3>La correction : coche ce que tu as écrit</h3><div class="pcheck">${e.etapes.map((x,k)=>`<label><input type="checkbox" data-k="${k}"><span>${x.w}</span><b>${virg(x.pts)}</b></label>`).join("")}</div><div class="verdict info" id="xd-note"></div><div class="acts"><button class="btn pri" id="xd-n">Enregistrer ma note</button></div>`);
+    acts.hidden=true;const note=()=>[...fb.querySelectorAll(".pcheck input")].reduce((s,i)=>s+(i.checked?e.etapes[+i.dataset.k].pts:0),0);
+    const maj=()=>{fb.querySelector("#xd-note").textContent=`Note estimée : ${virg(note())} sur ${virg(tot)}.`;};fb.querySelector(".pcheck").addEventListener("change",maj);maj();longues(fb);
+    fb.querySelector("#xd-n").addEventListener("click",()=>{if(fait)return;const n=note();fb.querySelectorAll(".pcheck input").forEach(i=>{i.disabled=true;});fb.querySelector("#xd-n").parentNode.remove();
+      const z=fb.querySelector("#xd-note");z.className="verdict "+(n>=tot*0.8-1e-9?"ok":"no");z.textContent=`Note estimée : ${virg(n)} sur ${virg(tot)}.`;
+      fb.insertAdjacentHTML("beforeend",tx(`<details class="ex"><summary><span><span class="h">Voir l'explication de chaque étape</span></span></summary><div class="body">${etapesHTML(e,-1)}</div></details>`));bout(tot?n/tot:0,null,null);});};
+  if(pap)host.querySelector("#xd-p").addEventListener("click",papier);
+  else{ecoute(host,e,fige,valide);host.querySelector("#xd-v").addEventListener("click",valide);}
+  host.querySelector("#xd-c").addEventListener("click",()=>{if(fait)return;if(pap){fb.innerHTML=tx(`<h3>La correction</h3>${etapesHTML(e,-1)}`);bout(0,null,null);}else montre(null,null);});
+  longues(host);return e;}
 function avantFin(host,sid,lid){const k=sid+"/"+lid,o=avLit(),info=o[k],d=info&&GEN.par[info.g];if(!host||!d)return;let e;try{e=GEN.tire(d,info.lv,info.gr);}catch(x){return;}const pap=!!e.papier;
   host.innerHTML=tx(`<section class="av-fin"><p class="prekick">La question du début</p><p class="muted">Avant la leçon, tu avais répondu : ${esc(info.txt||"")}. Maintenant ?</p><p class="lq">${e.q}</p><div>${pap&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${pap?`<div class="paper">Sur ta feuille, refais-la, puis regarde la correction.</div>`:`<div class="en-rep" id="av-rep">${champsHTML(e)}</div>`}<div class="acts">${pap?"":`<button class="btn pri" id="av-v">Valider</button>`}<button class="btn" id="av-c">Voir la correction</button></div><div class="en-rep" id="av-fb" aria-live="polite"></div></section>`);
   const z=host.querySelector(".av-fin"),fb=host.querySelector("#av-fb"),fige=()=>!!z.dataset.fait;
@@ -33953,8 +33979,262 @@ function avantFin(host,sid,lid){const k=sid+"/"+lid,o=avLit(),info=o[k],d=info&&
 
 /* choix 67a : une matière de maths reçoit « Entraînement en plus » quand une de ses méthodes est prête (une de ses leçons vue, ou déjà commencée) */
 const plusPret=sid=>defs(sid).some(d=>{if(d.fixe)return false;if(etat(d.id).n)return true;const S=SUBJ[sid],L=(d.lecons||(theme(d)||{}).les||[]).map(l=>S.TB["L-"+l]).filter(t=>t&&A.inScope(S,t));return L.some(t=>A.isDone(sid,t));});
-window.ENT={plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
+window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastille,prevu,recap:recapBloc,shot,bloc,tuile,jour,etat,etats,entretien,echeance,longues,couvre,encours:()=>P,examen:()=>X,exoExamen:k=>xExo(k),/* encours, rendu et longues : pour les essais */
   rendu:e=>tx(`<p class="lq">${e.q}</p><div>${e.corps}</div><div class="en-rep" id="en-rep">${champsHTML(e)}</div><div class="en-rep" id="en-fb"><div class="verdict no">Pas tout à fait.</div><h3>La correction</h3><p><b>La bonne réponse :</b> ${e.bonne}</p>${etapesHTML(e,0)}</div>`)};
+})();
+
+</script>
+<script>
+/* Le CC1 d'Analyse en 1 h (lundi 23/11, 15 h) : le programme des feuilles de TD 1 à 3, dans l'ordre de ce qui rapporte le plus
+   aux CC1 de 2024 et 2025 (même forme les deux années : cours 2 points, exercice 1 sur 4, exercice 2 sur 6, partie 2 : vrai/faux 4 et tableau 4).
+   Les points des notions font 20 : ce que le CC donne à qui sait faire ce type d'exercice. Les exercices sont tirés de gen-ana.js. */
+(window.EXPRESS=window.EXPRESS||{}).ana={cc1:{
+ t:"Le CC1 d'Analyse en 1 h",du:"du CC",au:"au CC",
+ lead:"Tout le programme du CC1 (feuilles de TD 1 à 3), dans l'ordre de ce qui a rapporté le plus aux CC1 de 2024 et 2025. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
+ carte:"tout le programme en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions dans l'ordre du CC1 : la question de cours, l'exercice 1, l'exercice 2, puis les deux questions de la partie 2. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"tableau",t:"Le tableau inf, min, max, sup",pts:4,ou:"partie 2, tous les ans",lect:2,exo:{g:"AN1",lv:4},
+  ess:`<ul><li>Un <b>majorant</b> M de A : $∀a ∈ A, a ≤ M$. Le <b>max</b> est un majorant qui est <b>dans</b> A.</li>
+<li>La <b>borne sup</b> est le plus petit des majorants. Elle existe dès que A est non vide et majoré, mais elle n'est pas forcément dans A : $sup [0 ; 1[ = 1$, et [0 ; 1[ n'a pas de max.</li>
+<li>Pareil par en dessous : minorant, min, inf.</li>
+<li>A est un <b>intervalle</b> s'il n'a pas de trou : si a et b sont dans A, tout ce qui est entre a et b aussi.</li>
+<li>Les outils : $|x − a| ≤ r ⇔ a − r ≤ x ≤ a + r$ ; $|x − a| &gt; r ⇔ x &lt; a − r$ ou $x &gt; a + r$ ; la partie entière E(x) est l'entier tel que $E(x) ≤ x &lt; E(x) + 1$.</li></ul>`,
+  piege:`Un ensemble non majoré n'a pas de sup : dans le tableau, on écrit « non », jamais « +∞ ». Et une réponse fausse peut enlever des points : ne remplis pas au hasard.`,
+  meth:`<ol><li>Écris A simplement : résous l'inéquation ($|x − 6| ≤ 5 ⇔ 1 ≤ x ≤ 11$, donc A = [1 ; 11]), ou calcule les premiers termes de la suite.</li>
+<li><b>Intervalle ?</b> Oui s'il n'y a pas de trou. Une réunion séparée comme [0 ; 1] ∪ [2 ; 3] n'en est pas un.</li>
+<li>Pour chaque bord : l'<b>inf</b> (ou le sup) existe si A est minoré (ou majoré) ; c'est un <b>min</b> (ou un max) seulement si ce nombre est dans A (crochet fermé, ou terme atteint).</li>
+<li>Les termes $1 − 1/n$ (n ≥ 1) montent vers 1 sans l'atteindre : sup = 1, pas de max ; le premier terme, 0, est le min.</li></ol>`},
+ {id:"lim-suite",t:"Limite d'une suite avec ε",pts:2,ou:"exercice 1 (CC1 2024)",lect:2,exo:{g:"AN2",lv:2},
+  ess:`<p>$uₙ → ℓ ⇔ ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε$</p>
+<p>En clair : quelle que soit la précision ε, à partir d'un rang N, tous les termes sont à moins de ε de ℓ. N dépend de ε : plus ε est petit, plus N est grand.</p>
+<p>Vers +∞ : $∀A ∈ ℝ, ∃N ∈ ℕ, ∀n ≥ N, uₙ ≥ A$.</p>`,
+  piege:`N doit être un entier : d'où le « E(…) + 1 ». Et on majore |uₙ − ℓ| ; le minorer ne prouve rien.`,
+  meth:`<p>L'exercice 1 du CC1 2024 : montrer que $n·sin(n)/(n² + 2) → 0$.</p>
+<ol><li><b>Brouillon</b> : majore $|uₙ − ℓ|$ par quelque chose de simple. Ici, comme $|sin(n)| ≤ 1$, pour n ≥ 1 : $|uₙ| ≤ n/(n² + 2) ≤ n/n² = 1/n$.</li>
+<li>« Soit ε &gt; 0. Posons $N = E(1/ε) + 1$. » Alors N est un entier, N ≥ 1 et $N &gt; 1/ε$.</li>
+<li>« Pour tout n ≥ N : $|uₙ − 0| ≤ 1/n ≤ 1/N &lt; ε$. »</li>
+<li>Conclus en recopiant la définition : « donc $∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − 0| ≤ ε$, c'est-à-dire $uₙ → 0$. »</li></ol>`},
+ {id:"lim-fonction",t:"Limite d'une fonction avec ε",pts:2,ou:"exercice 1 (CC1 2025)",lect:1.5,exo:{g:"AN3",lv:1},
+  ess:`<p>En +∞ : $lim_{x→+∞} f(x) = ℓ ⇔ ∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ I, x &gt; α ⇒ |f(x) − ℓ| &lt; ε$</p>
+<p>En un point x₀ : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε$</p>
+<p>Même idée que pour les suites : α (ou η) joue le rôle de N, et il dépend de ε.</p>`,
+  piege:`L'ordre : ε d'abord, puis α ou η, qui dépend de ε ; les échanger donne une autre phrase (piège du vrai/faux 2024). Et f(n) → ℓ sur les entiers ne prouve pas f(x) → ℓ : sin(πn) = 0 pour tout entier n, mais sin(πx) n'a pas de limite en +∞.`,
+  meth:`<p>L'exercice 1 du CC1 2025 : $f(x) = (2x + 1)/x$ tend vers 2 en +∞.</p>
+<ol><li>Simplifie $f(x) − ℓ$ : $(2x + 1)/x − 2 = 1/x$.</li>
+<li>Pour $x &gt; 0$ : $|f(x) − 2| = 1/x$. On veut $1/x &lt; ε$, c'est-à-dire $x &gt; 1/ε$.</li>
+<li>« Soit ε &gt; 0. Posons $α = 1/ε$, donc α &gt; 0. Pour tout $x &gt; α$ : $|f(x) − 2| = 1/x &lt; 1/α = ε$. »</li>
+<li>Conclus avec la définition : $lim_{x→+∞} f(x) = 2$.</li></ol>`},
+ {id:"calcul",t:"Calculer une limite",pts:2,ou:"vrai/faux et exercice 2",lect:1.5,exo:{g:"AN4",lv:4},
+  ess:`<ul><li><b>Quotient de polynômes</b> : factorise par le plus haut degré. $(3n² + 1)/(2n² − n) → 3/2$, car on peut l'écrire $(3 + 1/n²)/(2 − 1/n)$.</li>
+<li><b>Racines</b> : la quantité conjuguée. $√(n + 1) − √n = 1/(√(n + 1) + √n) → 0$.</li>
+<li><b>Puissances</b> : $qⁿ → 0$ si $|q| &lt; 1$, $qⁿ → +∞$ si $q &gt; 1$. Factorise par la plus grande : $(2ⁿ + 3ⁿ)/3ⁿ = (2/3)ⁿ + 1 → 1$.</li>
+<li><b>Terme borné</b> : $−1 ≤ cos(n) ≤ 1$ donne $−1/n ≤ cos(n)/n ≤ 1/n$, puis les gendarmes : $cos(n)/n → 0$.</li>
+<li><b>Pas de limite</b> : deux suites extraites aux limites différentes. $(−1)ⁿ$ vaut 1 aux rangs pairs et −1 aux rangs impairs : pas de limite.</li></ul>`,
+  piege:`« ∞/∞ » ou « 0 × ∞ » ne sont pas des résultats : factorise d'abord. Et « tend vers +∞ » ne veut pas dire « converge » : converger, c'est avoir une limite finie.`,
+  meth:`<ol><li>Repère la forme : quotient, racines, puissances, terme borné (sin, cos, (−1)ⁿ).</li>
+<li>Applique la règle de cette forme, sans sauter d'étape : factorise, ou multiplie par la quantité conjuguée, ou encadre.</li>
+<li>Conclus par les opérations sur les limites (ou les gendarmes), en écrivant la limite de chaque morceau.</li></ol>`},
+ {id:"recurrente",t:"Suite récurrente",pts:3,ou:"exercice 2 (CC1 2024)",lect:2,exo:{g:"AN6",lv:2},
+  ess:`<p>Une suite $uₙ₊₁ = f(uₙ)$ se traite toujours dans le même ordre (le plan de l'exercice 2 du CC1 2024) :</p>
+<ol><li>les premiers termes ;</li><li>un encadrement $a ≤ uₙ ≤ b$, par récurrence ;</li><li>le sens de variation : le signe de $uₙ₊₁ − uₙ$ ;</li><li>croissante et majorée (ou décroissante et minorée) : elle converge ;</li><li>la limite ℓ vérifie $ℓ = f(ℓ)$, et l'encadrement choisit la bonne solution.</li></ol>
+<p>Cas du premier degré, $uₙ₊₁ = auₙ + b$ (a ≠ 1) : $ℓ = aℓ + b$ donne $ℓ = b/(1 − a)$. Si a &lt; 0, la suite oscille autour de ℓ : ni croissante ni décroissante (sauf si u₀ = ℓ, elle est alors constante).</p>`,
+  piege:`Le théorème dit que la limite existe, pas ce qu'elle vaut. Et on n'écrit ℓ = f(ℓ) qu'une fois la convergence prouvée.`,
+  meth:`<p>Rédige chaque récurrence en trois temps : <b>initialisation</b> (P(0) est vraie), <b>hérédité</b> (si P(n) est vraie, alors P(n + 1) l'est), <b>conclusion</b> (P(n) est vraie pour tout n).</p>
+<p>Exemple du sujet blanc B : $u₀ = 5$, $uₙ₊₁ = √(2uₙ + 3)$. Une fois la convergence prouvée, $ℓ = √(2ℓ + 3)$ donne $ℓ² − 2ℓ − 3 = 0$, soit $(ℓ − 3)(ℓ + 1) = 0$ : ℓ = 3 ou ℓ = −1. Or uₙ ≥ 0 pour tout n, donc ℓ ≥ 0 et ℓ = 3.</p>`},
+ {id:"adjacentes",t:"Suites adjacentes",pts:3,ou:"exercice 2 (CC1 2025)",lect:1.5,exo:{g:"AN5",lv:1},
+  ess:`<p>Si (uₙ) est <b>croissante</b>, (vₙ) <b>décroissante</b>, $uₙ ≤ vₙ$ pour tout n, et $vₙ − uₙ → 0$, alors (uₙ) et (vₙ) convergent vers <b>la même limite</b> ℓ, et $uₙ ≤ ℓ ≤ vₙ$ pour tout n. On dit qu'elles sont adjacentes.</p>`,
+  piege:`Les quatre conditions sont nécessaires : cite-les toutes. Avec seulement « l'écart tend vers 0 », rien ne converge forcément : uₙ = n et vₙ = n + 1/n tendent toutes les deux vers +∞.`,
+  meth:`<ol><li>$uₙ₊₁ − uₙ ≥ 0$ : (uₙ) est croissante.</li><li>$vₙ₊₁ − vₙ ≤ 0$ : (vₙ) est décroissante.</li><li>Calcule $vₙ − uₙ$ : il est positif et tend vers 0.</li><li>Cite le théorème avec ses quatre conditions.</li>
+<li>Pour la valeur de ℓ, cherche ce qui ne bouge pas. Au CC1 2025, $uₙ₊₁ + vₙ₊₁ = uₙ + vₙ$, donc $uₙ + vₙ = u₀ + v₀ = 4$ ; à la limite, 2ℓ = 4, donc ℓ = 2.</li></ol>`},
+ {id:"quantif",t:"Quantificateurs et négation",pts:2,ou:"partie 2, vrai/faux",lect:1.5,exo:{g:"AN7",lv:2},
+  ess:`<ul><li>∀ : « pour tout » ; ∃ : « il existe ». L'<b>ordre</b> compte : dans « ∀x, ∃y », y peut dépendre de x. $∀x ∈ ℝ, ∃y ∈ ℝ, x + y = 0$ est vraie ; $∃y ∈ ℝ, ∀x ∈ ℝ, x + y = 0$ est fausse.</li>
+<li><b>Nier</b> : on échange ∀ et ∃, on garde les domaines, et on nie la fin. La négation de a &lt; b est a ≥ b ; celle de « P ⇒ Q » est « P et non Q ».</li>
+<li>La négation de $∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε$ est $∃ε &gt; 0, ∀N ∈ ℕ, ∃n ≥ N, |uₙ − ℓ| &gt; ε$.</li></ul>`,
+  piege:`« ε &gt; 0 » ne se nie pas : la négation commence par « ∃ε &gt; 0 », pas par « ∃ε ≤ 0 ».`,
+  meth:`<p>Au vrai/faux :</p><ol><li>Lis la phrase en français.</li><li>Une phrase en ∀ : un seul contre-exemple la rend fausse. Essaie 0, 1, −1, 1/2, $(−1)ⁿ$, $1/n$.</li><li>Une phrase en ∃ : un seul exemple la rend vraie.</li><li>Pas sûr ? Laisse vide : une réponse fausse peut enlever des points.</li></ol>`},
+ {id:"cours",t:"La question de cours : borne sup, point adhérent",pts:2,ou:"question de cours, tous les ans",lect:1.5,
+  rappel:{min:2,q:`Écris la caractérisation de la borne supérieure d'une partie A de ℝ non vide et majorée, puis la définition de « x est adhérent à A ».`,
+   r:`<p>m = sup(A) ⇔ m majore A et $∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a$.</p><p>x est adhérent à A ⇔ $∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε$ (ou : une suite d'éléments de A converge vers x).</p>`},
+  ess:`<p><b>Caractérisation de la borne sup</b> (CC1 2025). Pour A une partie non vide et majorée de ℝ :</p><p>m = sup(A) ⇔ m majore A et $∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a$.</p>
+<p><b>Point adhérent</b> (CC1 2024) : x est adhérent à A ⇔ $∀ε &gt; 0, ∃a ∈ A, |x − a| &lt; ε$ ⇔ une suite d'éléments de A converge vers x.</p>`,
+  piege:`On demande la caractérisation (avec ε), pas la définition « le plus petit des majorants » : le CC1 2025 la demandait.`,
+  meth:`<p>La partie b) : montrer que 1 = sup [0 ; 1[ (ou que 1 est adhérent à [0 ; 1[).</p>
+<ol><li>1 majore [0 ; 1[ : tout x de [0 ; 1[ vérifie x &lt; 1.</li><li>Soit ε &gt; 0. La suite $aₙ = 1 − 1/n$ (n ≥ 1) est dans [0 ; 1[ ; pour $n &gt; 1/ε$, $aₙ &gt; 1 − ε$.</li><li>Donc 1 = sup [0 ; 1[. La même suite tend vers 1 : 1 est adhérent à [0 ; 1[.</li></ol>`}],
+ blanc:[
+  {t:"Question de cours : caractériser la borne sup",ou:"connaissance du cours",pts:2,g:"AQ1",lv:0},
+  {t:"Limite d'une suite : trouver un rang N",ou:"exercice 1",pts:4,g:"AN2",lv:1},
+  {t:"Le sens de variation de deux suites",ou:"exercice 2",pts:6,g:"AN5",lv:0},
+  {t:"Nier une phrase à quantificateurs",ou:"partie 2, question 1",pts:4,g:"AN7",lv:1},
+  {t:"Le tableau inf, min, max, sup",ou:"partie 2, question 2",pts:4,g:"AN1",lv:1}]
+}};
+
+</script>
+<script>
+/* Le CC en 1 h (sa demande du 21/11) : tout le programme d'une épreuve en 60 minutes au plus, ce qui rapporte le plus de points d'abord.
+   Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice tiré d'un générateur, à faire soi-même avant la correction.
+   À la fin, un sujet express noté sur 20. Le contenu est dans express-<matière>.js (window.EXPRESS[sid][épreuve]).
+   Ce qui est réussi vient du journal (événements cch et cchb, donc synchronisé) ; la position et le chrono restent sur l'appareil. */
+(function(){
+"use strict";
+const EXT=window.EXT,GEN=window.GEN,SUBJ=window.SUBJ;if(!EXT||!GEN)return;
+let A=null;
+const $=s=>document.querySelector(s);
+const tx=h=>window.W.tx(h);
+const virg=x=>String(Math.round(x*100)/100).replace(".",",");
+const horloge=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+const KEY="rev-s1-express",MAXMIN=60,PRESSE=45;
+const lit=()=>{try{const o=JSON.parse(localStorage.getItem(KEY)||"{}");return o&&typeof o==="object"?o:{};}catch(x){return {};}};
+const ecrit=o=>{try{localStorage.setItem(KEY,JSON.stringify(o));}catch(x){}};
+const X=(sid,ep)=>(window.EXPRESS||{})[sid]&&window.EXPRESS[sid][ep]||null;
+const base=(sid,ep)=>"#/express/"+sid+"/"+ep;
+const graine=(...k)=>parseInt(GEN.outils.hache(k.join("|")),36);
+const exoMin=x=>x.exo?(GEN.par[x.exo.g].paliers[x.exo.lv].cc||4):x.rappel?x.rappel.min||2:0;
+const minNotion=n=>n.lect+exoMin(n),minBlanc=C=>C.blanc.reduce((s,q)=>s+exoMin({exo:q}),0);
+const prevu=C=>C.notions.reduce((s,n)=>s+minNotion(n),0)+minBlanc(C);
+const surBlanc=C=>C.blanc.reduce((s,q)=>s+q.pts,0);
+
+function bilan(sid,ep){const C=X(sid,ep),ok={},essais={},blancs=[];
+  A.journal().forEach(e=>{if(e.s!==sid||e.ep!==ep)return;if(e.k==="cch"){essais[e.n]=(essais[e.n]||0)+1;if(e.ok)ok[e.n]=1;}else if(e.k==="cchb")blancs.push(e);});
+  const pts=C.notions.reduce((s,n)=>s+(ok[n.id]?n.pts:0),0);
+  return {ok,essais,pts,blancs,meilleur:blancs.length?Math.max(...blancs.map(b=>b.note||0)):null,dernier:blancs.length?blancs[blancs.length-1]:null};}
+const posDe=(sid,ep)=>Object.assign({i:0,st:0,k:0,ms:0,bq:0,bres:[],bk:0},lit()[sid+"/"+ep]||{});
+const garde=(sid,ep,p)=>{const o=lit();o[sid+"/"+ep]=p;ecrit(o);};
+const palier=(C,pts)=>{let r=null;C.paliers.forEach(p=>{if(pts>=p[0])r=p;});return r;};
+const prochainPalier=(C,pts)=>C.paliers.find(p=>pts<p[0])||null;
+
+/* le chrono : le temps passé sur les écrans du parcours, gardé avec la position */
+let CH=null,TIC=0;
+function tic(){if(!CH)return;const p=posDe(CH.sid,CH.ep),now=Date.now();p.ms=(p.ms||0)+Math.max(0,Math.min(now-CH.t,10*60e3));CH.t=now;garde(CH.sid,CH.ep,p);}
+function arrete(){tic();CH=null;clearInterval(TIC);}
+function lance(sid,ep){if(!CH||CH.sid!==sid||CH.ep!==ep){arrete();CH={sid,ep,t:Date.now()};}
+  clearInterval(TIC);TIC=setInterval(()=>{const el=$("#xp-ch");if(!el){arrete();return;}el.textContent=horloge(posDe(sid,ep).ms+Date.now()-CH.t);},1000);}
+const ecoule=(sid,ep)=>posDe(sid,ep).ms+(CH&&CH.sid===sid&&CH.ep===ep?Date.now()-CH.t:0);
+
+function jauge(C,pts,cls){const P=prochainPalier(C,pts),R=palier(C,pts);
+  return `<div class="lp-bar${cls?" "+cls:""}" role="progressbar" aria-label="Points ${C.du} assurés" aria-valuemin="0" aria-valuemax="20" aria-valuenow="${pts}"><i style="width:${Math.min(100,pts/20*100)}%"></i></div>
+   <p class="el-pt">${R?`<b>${R[1]}</b> · `:""}${P?`${P[1]} à ${P[0]} points (encore ${virg(P[0]-pts)})`:"Tous les points du CC sont à ta portée."}</p>`;}
+
+function accueil(sid,ep){arrete();const C=X(sid,ep),S=SUBJ[sid],B=bilan(sid,ep),p=posDe(sid,ep),N=C.notions.length,min=prevu(C),passe=Math.round(p.ms/60e3);
+  const ou=p.i<N?`Reprendre : ${C.notions[p.i].t}`:"Reprendre : le sujet express";
+  const neuf=!p.ms&&!Object.keys(B.essais).length&&!B.blancs.length;
+  const lignes=C.notions.map((n,k)=>`<div${B.ok[n.id]?"":` class="zero"`}><span>${k+1}. ${n.t}<small>${n.ou} · ${Math.round(minNotion(n))} min</small></span><b>${B.ok[n.id]?"✓ ":""}${virg(n.pts)} pt${n.pts>1?"s":""}</b></div>`).join("")+
+    `<div${B.blancs.length?"":` class="zero"`}><span>${N+1}. Le sujet express, noté sur 20<small>${C.blanc.length} questions comme ${C.au} · ${minBlanc(C)} min</small></span><b>${B.meilleur!=null?virg(B.meilleur)+" / 20":"—"}</b></div>`;
+  $("#main").className="s-"+sid;
+  $("#main").innerHTML=`<div class="page s-${sid}"><a class="back" href="#/${sid}">‹ ${S.name}</a><h1 class="stitle">${C.t}</h1>
+   <p class="hlead">${C.lead} Temps prévu : ${virg(min)} min.</p>
+   <section class="el-recap"><p class="el-gros"><span class="el-n">${virg(B.pts)}</span> points ${C.du} sur 20 que tu sais aller chercher</p>${jauge(C,B.pts)}${B.dernier?`<p class="el-pt">Dernier sujet express : ${virg(B.dernier.note)} sur 20${B.meilleur>B.dernier.note?` (meilleur : ${virg(B.meilleur)})`:""}.</p>`:""}</section>
+   <div class="acts"><a class="btn pri big" href="${base(sid,ep)}/go">${neuf?"Commencer · 1 h chrono":ou}</a>${neuf?"":`<button class="btn" id="xp-zero">Tout recommencer</button>`}${p.i<N?`<a class="btn" href="${base(sid,ep)}/sujet">Aller au sujet express</a>`:""}</div>
+   ${neuf?"":`<p class="muted">Chrono : ${passe} min sur ${MAXMIN}.</p>`}
+   <h2>Le parcours, ce qui rapporte le plus d'abord</h2><div class="el-bar">${lignes}</div></div>`;
+  const z=$("#xp-zero");if(z)z.addEventListener("click",()=>{garde(sid,ep,{i:0,st:0,k:(p.k||0)+1,ms:0,bq:0,bres:[],bk:(p.bk||0)+1});accueil(sid,ep);});}
+
+/* une étiquette qui monte, comme les points de l'entraînement */
+function etiquette(txt,or){const v=document.querySelector("#xp-fb .verdict")||document.querySelector(".lp-bar");if(!v)return;const r=v.getBoundingClientRect();
+  const box=document.createElement("div");box.className="el-shots";box.setAttribute("aria-hidden","true");box.style.top=Math.max(8,Math.min(innerHeight-120,r.bottom-8))+"px";box.style.right=Math.max(8,innerWidth-r.right+6)+"px";
+  box.innerHTML=`<div class="el-shot${or?" or":""}">${txt}</div>`;document.body.appendChild(box);setTimeout(()=>box.remove(),2600);}
+
+function cadre(sid,ep,kicker,pts){const C=X(sid,ep);
+  $("#main").className="s-"+sid;
+  $("#main").innerHTML=`<div class="lp s-${sid}"><div class="lp-top"><a class="lp-x" href="${base(sid,ep)}" aria-label="Quitter (tu reprendras ici)">✕</a>${jauge(C,pts,"xp-j").split("</div>")[0]}</div><span class="lp-n" id="xp-ch">${horloge(ecoule(sid,ep))}</span></div>
+   <div class="lp-kicker">${kicker}</div><div class="lp-body" id="lpb"></div><div class="lp-foot" id="xp-pied"></div></div>`;
+  queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);lance(sid,ep);}
+const pied=h=>{$("#xp-pied").innerHTML=h;};
+const presse=(sid,ep)=>ecoule(sid,ep)>PRESSE*60e3?`<a class="btn" href="${base(sid,ep)}/sujet">Passer au sujet express</a>`:"";
+
+function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(p.i>=N)return sujet(sid,ep);
+  const n=C.notions[p.i],B=bilan(sid,ep),S=SUBJ[sid];
+  cadre(sid,ep,`Notion ${p.i+1} sur ${N} · ${virg(n.pts)} point${n.pts>1?"s":""} ${C.du} · ${n.ou}`,B.pts);const b=$("#lpb");
+  const va=st=>{tic();const q=posDe(sid,ep);q.st=st;garde(sid,ep,q);notion(sid,ep);};
+  if(p.st===0){b.innerHTML=tx(`<p class="prekick">L'essentiel · ${n.lect>=2?Math.round(n.lect):1} min</p><h2>${n.t}</h2>${n.ess}${n.piege?`<div class="piege"><b>Le piège.</b> ${n.piege}</div>`:""}`);
+    pied(`${presse(sid,ep)}<button class="btn pri big" id="xp-go">La méthode ${C.du}</button>`);$("#xp-go").addEventListener("click",()=>va(1));return;}
+  if(p.st===1){b.innerHTML=tx(`<p class="prekick">La méthode ${C.du}</p><h2>${n.t}</h2>${n.meth}`);
+    pied(`<button class="btn" id="xp-av">Revoir l'essentiel</button><button class="btn pri big" id="xp-go">À toi : l'exercice</button>`);
+    $("#xp-av").addEventListener("click",()=>va(0));$("#xp-go").addEventListener("click",()=>va(2));return;}
+  const fini=r=>{const nouveau=r.ok&&!B.ok[n.id];
+    const ev={k:"cch",s:sid,ep,n:n.id,nt:n.t,ok:r.ok?1:0,part:Math.round(r.part*100)/100,ms:r.ms};A.emit(ev);
+    if(window.ENT){try{ENT.shot(ev);ENT.pastille();}catch(x){}}
+    tic();const q=posDe(sid,ep);q.k=(q.k||0)+1;if(r.ok){q.i=p.i+1;q.st=0;}else q.st=2;garde(sid,ep,q);
+    if(nouveau){const av=palier(C,B.pts),ap=palier(C,B.pts+n.pts);setTimeout(()=>etiquette(`+${virg(n.pts)} pt${n.pts>1?"s":""} ${C.du}`),300);
+      if(ap&&ap!==av)setTimeout(()=>etiquette(ap[1]+" !",true),1300);
+      const bar=$(".xp-j i");if(bar)setTimeout(()=>{bar.style.width=Math.min(100,(B.pts+n.pts)/20*100)+"%";},200);}
+    const suite=p.i+1<N?`Notion suivante : ${C.notions[p.i+1].t}`:"Le sujet express";
+    const msg=r.ok?(nouveau?`<p class="muted">${virg(B.pts+n.pts)} points ${C.du} sur 20 assurés.</p>`:""):`<p class="muted">Refais-en un tout de suite, avec d'autres nombres : c'est là que ça rentre.</p>`;
+    $("#xp-fb").insertAdjacentHTML("beforeend",msg);
+    pied(r.ok?`<button class="btn" id="xp-re">Encore un, pour être sûr</button><button class="btn pri big" id="xp-go">${suite}</button>`
+      :`<button class="btn" id="xp-go">Passer à la suite</button><button class="btn pri big" id="xp-re">Refais-en un</button>`);
+    $("#xp-go").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i+1;q.st=0;garde(sid,ep,q);notion(sid,ep);});
+    $("#xp-re").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i;q.st=2;garde(sid,ep,q);notion(sid,ep);});};
+  b.innerHTML=tx(`<p class="prekick">À toi · ${exoMin(n)} min ${C.au}, sans regarder la méthode</p><div id="xp-ex"></div><div id="xp-fb"></div>`);
+  pied(presse(sid,ep));
+  if(n.rappel)rappel($("#xp-ex"),n.rappel,r=>{$("#xp-fb").innerHTML=`<div class="verdict ${r.ok?"ok":"no"}">${r.ok?"Bien : tu l'as.":"Pas encore : relis-la, puis réécris-la de mémoire."}</div>`;fini(r);});
+  else{const e=ENT.exoDans($("#xp-ex"),{g:n.exo.g,lv:n.exo.lv,gr:graine(sid,ep,n.id,p.k||0)},r=>{$("#xp-fb").innerHTML=`<div class="verdict ${r.ok?"ok":"no"}">${r.ok?"Notion réussie.":"Notion pas encore réussie."}</div>`;fini(r);},{origine:C.t});
+    if(!e)pied(`<button class="btn pri big" id="xp-go">Passer à la suite</button>`),$("#xp-go").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i+1;q.st=0;garde(sid,ep,q);notion(sid,ep);});}}
+
+/* une question de cours à réécrire de mémoire, puis comparée */
+function rappel(host,R,fin){const t0=Date.now();
+  host.innerHTML=tx(`<p class="lq">${R.q}</p><div class="paper"><b>Sur ta feuille</b>, de mémoire, puis compare.</div><div class="acts"><button class="btn pri" id="xr-v">Voir la réponse</button></div><div id="xr-r"></div>`);
+  host.querySelector("#xr-v").addEventListener("click",()=>{host.querySelector("#xr-v").parentNode.remove();
+    host.querySelector("#xr-r").innerHTML=tx(`<h3>La réponse</h3>${R.r}<div class="acts"><button class="btn" id="xr-n">Pas tout à fait</button><button class="btn pri" id="xr-o">Je l'avais, tout</button></div>`);
+    const fait=ok=>{host.querySelectorAll("#xr-r .acts").forEach(x=>x.remove());A.logRep({o:"le CC en 1 h",s:R.sid||"",enonce:A.brut(R.q),reponse:ok?"je l'avais":"pas tout à fait",ok:ok?1:0,ms:Date.now()-t0});fin({ok,part:ok?1:0,ms:Date.now()-t0});};
+    host.querySelector("#xr-o").addEventListener("click",()=>fait(true));host.querySelector("#xr-n").addEventListener("click",()=>fait(false));});}
+
+function sujet(sid,ep,depart){const C=X(sid,ep),N=C.notions.length;let p=posDe(sid,ep);
+  if(depart&&p.i<N){p.i=N;p.st=0;p.bq=0;p.bres=[];garde(sid,ep,p);}
+  const B=bilan(sid,ep),Q=C.blanc,sur=surBlanc(C);
+  if(p.st===0||p.bq>=Q.length&&!p.bres.length){cadre(sid,ep,`Le sujet express · ${Q.length} questions · noté sur ${sur}`,B.pts);
+    $("#lpb").innerHTML=tx(`<p class="prekick">Comme ${C.au} · ${minBlanc(C)} min</p><h2>Le sujet express</h2><p>${C.blancLead}</p><div class="el-bar">${Q.map((q,k)=>`<div><span>${k+1}. ${q.t}<small>${q.ou}</small></span><b>${virg(q.pts)} pts</b></div>`).join("")}</div>`);
+    pied(`<button class="btn pri big" id="xp-go">Commencer le sujet</button>`);
+    $("#xp-go").addEventListener("click",()=>{tic();const q=posDe(sid,ep);q.i=N;q.st=1;q.bq=0;q.bres=[];garde(sid,ep,q);sujet(sid,ep);});return;}
+  if(p.bq>=Q.length)return note(sid,ep);
+  const q=Q[p.bq];
+  cadre(sid,ep,`Le sujet express · question ${p.bq+1} sur ${Q.length} · ${virg(q.pts)} points · ${q.ou}`,B.pts);
+  $("#lpb").innerHTML=`<p class="prekick">${q.t} · ${exoMin({exo:q})} min</p><div id="xp-ex"></div><div id="xp-fb"></div>`;pied("");
+  ENT.exoDans($("#xp-ex"),{g:q.g,lv:q.lv,gr:graine(sid,ep,"blanc",p.bk||0,p.bq)},r=>{tic();const z=posDe(sid,ep);z.bres[p.bq]=Math.round(r.part*100)/100;z.bq=p.bq+1;garde(sid,ep,z);
+    $("#xp-fb").innerHTML=`<div class="verdict ${r.ok?"ok":"no"}">${virg(r.part*q.pts)} sur ${virg(q.pts)}</div>`;
+    pied(`<button class="btn pri big" id="xp-go">${p.bq+1<Q.length?"Question suivante":"Voir ma note"}</button>`);$("#xp-go").addEventListener("click",()=>sujet(sid,ep));},{origine:C.t+" : le sujet express"});}
+
+function note(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),Q=C.blanc,sur=surBlanc(C),B0=bilan(sid,ep);
+  const brut=Q.reduce((s,q,k)=>s+(p.bres[k]||0)*q.pts,0),n=Math.round(brut/sur*20*4)/4;
+  tic();const ms=p.ms;A.emit({k:"cchb",s:sid,ep,note:n,ms,res:p.bres.slice()});if(window.ENT){try{ENT.pastille();}catch(x){}}
+  const res=p.bres.slice();garde(sid,ep,Object.assign({},p,{bq:0,bres:[],bk:(p.bk||0)+1,st:0}));arrete();
+  const R=palier(C,n),rates=C.notions.filter(x=>!bilan(sid,ep).ok[x.id]),mn=Math.round(ms/60e3);
+  $("#main").className="s-"+sid;document.body.classList.remove("in-lesson");
+  $("#main").innerHTML=`<div class="page lp-end s-${sid}"><p class="kick">${C.t}</p><h1>${R?R[1]:"Pas encore la moyenne"}</h1>
+   <p class="score">${virg(n)} / 20</p><p class="lead">La note que tu aurais eue avec ce sujet express${B0.meilleur!=null&&n>B0.meilleur?`, ta meilleure jusqu'ici (avant : ${virg(B0.meilleur)})`:""}. Chrono du parcours : ${mn} min${mn>MAXMIN?` (prévu : ${prevu(C)} min)`:""}.</p>
+   <div class="el-bar">${Q.map((q,k)=>`<div${res[k]?"":` class="zero"`}><span>${q.t}<small>${q.ou}</small></span><b>${virg((res[k]||0)*q.pts)} / ${virg(q.pts)}</b></div>`).join("")}</div>
+   ${rates.length?`<p>À reprendre d'abord : ${rates.slice(0,3).map(x=>x.t).join(", ")}${rates.length>3?"…":"."}</p>`:""}
+   <div class="acts"><a class="btn pri big" href="${base(sid,ep)}/sujet">Un autre sujet express (d'autres nombres)</a>${rates.length?`<a class="btn" href="${base(sid,ep)}/notion/${rates[0].id}">Reprendre : ${rates[0].t}</a>`:""}<a class="btn" href="#/">Retour à aujourd'hui</a></div></div>`;}
+
+function route(sid,ep,parts){const C=X(sid,ep);if(!C||!SUBJ[sid]){location.replace("#/entrainer");return;}
+  const a=parts[0];
+  if(!a)return accueil(sid,ep);
+  if(a==="go"){const p=posDe(sid,ep);return p.i>=C.notions.length?sujet(sid,ep):notion(sid,ep);}
+  if(a==="sujet"){const p=posDe(sid,ep);if(p.i<C.notions.length||p.st===0||p.bq>=C.blanc.length){p.i=C.notions.length;p.st=0;p.bq=0;p.bres=[];garde(sid,ep,p);}return sujet(sid,ep);}
+  if(a==="notion"&&parts[1]){const k=C.notions.findIndex(n=>n.id===parts[1]);if(k>=0){const p=posDe(sid,ep);p.i=k;p.st=0;garde(sid,ep,p);}return notion(sid,ep);}
+  accueil(sid,ep);}
+
+/* l'entrée : une carte en haut d'Aujourd'hui, de S'entraîner et de la page de la matière, les jours qui précèdent l'épreuve */
+function proche(){const L=[];Object.keys(window.EXPRESS||{}).forEach(sid=>{const S=SUBJ[sid];if(!S)return;const E=A.exam(S);if(!E||!window.EXPRESS[sid][E.id])return;
+  const j=(new Date(E.day+"T12:00")-new Date(A.today()+"T12:00"))/864e5;if(j>=0&&j<=10)L.push({sid,ep:E.id,E,j});});return L;}
+function carte(){const main=$("#main");if(!main||main.querySelector(".xp-carte"))return;const h=(location.hash||"#/").slice(2).split("/").filter(Boolean);
+  const pg=main.querySelector(".page");if(!pg)return;
+  const L=proche().filter(x=>!h.length||h[0]==="entrainer"&&h.length===1||h[0]===x.sid&&h.length===1);if(!L.length)return;
+  const html=L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
+    return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}${p.ms?"/go":""}">${p.ms?"Reprendre":"Commencer · 1 h chrono"}</a>${p.ms?`<a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a>`:""}</div></section>`;}).join("");
+  const h1=pg.querySelector("h1");let apres=h1;if(apres&&apres.nextElementSibling&&apres.nextElementSibling.matches(".hlead,.lead"))apres=apres.nextElementSibling;
+  if(apres)apres.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);}
+
+const init0=EXT.init;
+EXT.init=function(A0){const ext=init0.call(EXT,A0);A=A0;
+  try{ext.routes=ext.routes||{};ext.routes.express=parts=>route(parts[0],parts[1],parts.slice(2));
+    window.addEventListener("hashchange",()=>{if(!/^#\/express\//.test(location.hash))arrete();});
+    window.addEventListener("pagehide",()=>{try{tic();}catch(e){}});
+    document.addEventListener("visibilitychange",()=>{if(!CH)return;if(document.hidden)tic();else CH.t=Date.now();});
+    setTimeout(()=>{try{new MutationObserver(carte).observe($("#main"),{childList:true});carte();}catch(e){console.error(e);}},0);}catch(e){console.error(e);}
+  return ext;};
+window.EXPRESS_OUTILS={bilan,prevu,minNotion,minBlanc,surBlanc,posDe,proche};/* pour les essais */
 })();
 
 </script>
@@ -34507,7 +34787,7 @@ function plan(){return buildPlan();}
 /* ---------- liens internes des contenus de chaque matière ---------- */
 const LOCAL=location.protocol==="file:"||/^(localhost|127\.)/.test(location.hostname);
 function fixLinks(root,sid){if(!LOCAL)root.querySelectorAll('a[href^="../"]').forEach(a=>{const sp=document.createElement("span");sp.className="muted";sp.textContent=a.textContent+" (PDF sur ton ordinateur)";a.replaceWith(sp);});
-  root.querySelectorAll('a[href^="#/"]').forEach(a=>{const h=a.getAttribute("href"),seg=h.slice(2).split("/")[0];if(h==="#/"||SIDS.includes(seg)||["edt","examens","mix","methode","lecon","apprendre","reviser","entrainer","plus","synchro"].includes(seg))return;
+  root.querySelectorAll('a[href^="#/"]').forEach(a=>{const h=a.getAttribute("href"),seg=h.slice(2).split("/")[0];if(h==="#/"||SIDS.includes(seg)||["edt","examens","mix","methode","lecon","apprendre","reviser","entrainer","express","plus","synchro"].includes(seg))return;
   if(seg==="mix"||seg==="methode")return;const map={redaction:"p/redaction",notations:"p/notations",infos:"p/infos"};a.setAttribute("href",`#/${sid}/`+(map[seg]&&h.slice(2)===seg?map[seg]:h.slice(2)));});}
 
 /* ---------- plus de barre latérale : tout passe par les pages ---------- */
@@ -35132,7 +35412,7 @@ addEventListener("pageshow",e=>{if(e.persisted)closeZoom();});
 
 /* ---------- routage ---------- */
 function tabOf(parts){const first=parts[0]||"";if(SIDS.includes(first))return ["quiz","td","annales"].includes(parts[1])?"entrainer":"apprendre";
-  return ({"":"today",apprendre:"apprendre",lecon:"apprendre",reviser:"reviser",mix:"reviser",entrainer:"entrainer"})[first]||"plus";}
+  return ({"":"today",apprendre:"apprendre",lecon:"apprendre",reviser:"reviser",mix:"reviser",entrainer:"entrainer",express:"entrainer"})[first]||"plus";}
 /* une erreur n'affiche plus une page vide : elle s'écrit dans la page, les onglets restent, et elle est notée dans le journal,
    qui la porte jusqu'à l'autre appareil (au plus 8 par jour, jamais deux fois la même au même endroit) */
 function noteErr(err,ou){try{const m=String(err&&err.message||err).slice(0,200),j=today(),D=J.filter(e=>e.k==="err"&&ymd(new Date(e.t))===j);
