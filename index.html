@@ -34087,6 +34087,116 @@ window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastil
 
 </script>
 <script>
+/* Le CC2 d'Algo en 1 h (jeudi 26/11, 15 h) : preuves et complexité (TD 6 à 8), dans l'ordre de ce qui rapporte le plus,
+   d'après la forme des anciens sujets (CC1 2022 et 2024, examen de janvier 2023) et du sujet blanc du CC2 : cours 3 points,
+   trace, invariant et complexité 6, arrêt d'un tant que 3, récursivité et master theorem 6, ordinateur plus rapide 2.
+   Les exemples des méthodes sont exécutés par tools/verif-express-algo.js. Les exercices sont tirés de gen-algo.js. */
+(window.EXPRESS=window.EXPRESS||{}).algo={cc2:{
+ t:"Le CC2 d'Algo en 1 h",du:"du CC",au:"au CC",
+ lead:"Le programme du CC2 (preuves et complexité, TD 6 à 8), dans l'ordre de ce qui rapporte le plus d'après les anciens sujets et le sujet blanc. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le CC2 peut aussi reprendre le CC1 : tes cartes de Réviser s'en occupent.",
+ carte:"preuves et complexité en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions dans l'ordre du sujet blanc : la question de cours, la trace, l'arrêt, le master theorem, puis l'ordinateur plus rapide. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"trace",t:"Faire la trace d'une boucle",pts:3,ou:"exercice 2, tous les sujets",lect:1.5,exo:{g:"AG1",lv:4},
+  ess:`<ul><li>Une <b>trace</b> est un tableau : une colonne par variable, une ligne par itération, plus la ligne « avant la boucle ».</li>
+<li>On écrit les valeurs <b>à la fin</b> de chaque itération, dans l'ordre des lignes du code.</li>
+<li>Après la trace, on devine ce que calcule la fonction en regardant la dernière colonne : 1, 4, 9, 16… ce sont des carrés.</li></ul>`,
+  piege:`Une boucle « pour i de 1 à n » fait n tours, avec i = 1 au premier. Et une variable modifiée deux fois dans le même tour s'écrit avec sa valeur de la fin du tour.`,
+  meth:`<p>Exemple : la trace de F(4).</p>
+<pre class="code">Fonction F(n : entier) : entier
+  s ← 0
+  pour i de 1 à n faire
+    s ← s + 2i − 1
+  fin pour
+  renvoyer s</pre>
+<ol><li>Avant la boucle : s = 0.</li>
+<li>Les tours : i = 1, s = 1 ; i = 2, s = 4 ; i = 3, s = 9 ; i = 4, s = 16.</li>
+<li>F(4) renvoie 16. La colonne s donne 0, 1, 4, 9, 16 : F(n) calcule n².</li></ol>`},
+ {id:"invariant",t:"Équations d'itération et invariant",pts:2,ou:"exercice 2 (CC1 2022, sujet blanc)",lect:2,exo:{g:"AG2",lv:1},
+  ess:`<p>La méthode du cours, en 4 étapes :</p><ol>
+<li><b>Équations d'itération</b> (c'est ce que fait le code) : la valeur avant la boucle, puis la valeur au tour i à partir de celle du tour i − 1.</li>
+<li><b>Invariant</b> (ce qu'on veut prouver) : une formule pour la valeur au tour i, lue sur la trace.</li>
+<li><b>Récurrence</b> : l'initialisation (tour 0), puis « si c'est vrai au tour i − 1, c'est vrai au tour i ».</li>
+<li><b>Fin</b> : au dernier tour, i = n ; la fonction renvoie la bonne valeur.</li></ol>`,
+  piege:`L'équation d'itération vient du code, l'invariant vient de la trace : ne les mélange pas. Et l'invariant doit valoir aussi au tour 0, avant la boucle.`,
+  meth:`<p>La fonction F de la notion d'avant, qui calcule n².</p>
+<ol><li>Équations : s₀ = 0 et sᵢ = sᵢ₋₁ + 2i − 1.</li>
+<li>Invariant : « sᵢ = i² ».</li>
+<li>Initialisation : s₀ = 0 = 0². Récurrence : si sᵢ₋₁ = (i − 1)², alors sᵢ = (i − 1)² + 2i − 1 = i² − 2i + 1 + 2i − 1 = i².</li>
+<li>Fin : après le dernier tour, i = n, donc F renvoie sₙ = n². F est valide.</li></ol>`},
+ {id:"compter",t:"Compter les opérations d'une boucle",pts:1,ou:"exercice 2, dernière question",lect:1.5,exo:{g:"AG5",lv:1},
+  ess:`<ul><li>On compte 1 pour chaque affectation, calcul, comparaison, appel ou case de tableau lue.</li>
+<li>Une ligne dans un « pour i de 1 à n » compte n fois. Le test d'un « tant que » est fait une fois de plus que le nombre de tours.</li>
+<li>Les sommes à connaître : 1 + 2 + … + n = n(n + 1)/2 et 1² + 2² + … + n² = n(n + 1)(2n + 1)/6.</li></ul>`,
+  piege:`Dans deux boucles imbriquées « pour j de 1 à i », la ligne du milieu ne compte pas n × n fois : elle compte 1 + 2 + … + n fois.`,
+  meth:`<pre class="code">pour i de 1 à n faire
+  pour j de 1 à i faire
+    c ← c + 1</pre>
+<ol><li>Pour un i donné, la ligne du milieu est faite i fois.</li>
+<li>En tout : 1 + 2 + … + n = n(n + 1)/2 fois. Pour n = 10, c'est 55.</li>
+<li>Le plus gros terme est n²/2 : c'est θ(n²).</li></ol>`},
+ {id:"recursif",t:"Un algorithme récursif : valeur, preuve, équation",pts:3,ou:"exercice 4 (examen 2023, sujet blanc)",lect:1.5,exo:{g:"AG4",lv:0},
+  ess:`<ul><li><b>La valeur</b> : on déroule les appels jusqu'au cas de base, puis on remonte.</li>
+<li><b>La preuve</b> est une récurrence sur n. Base : F(0) se termine et renvoie la bonne valeur. Hérédité : si F(n − 1) se termine et renvoie la bonne valeur, alors F(n) aussi.</li>
+<li><b>L'équation de complexité</b> : T₀ = le coût du cas de base, et Tₙ = (les opérations à côté) + le coût des appels. Tₙ = c + Tₙ₋₁ donne Tₙ = T₀ + c·n. Tₙ = 2Tₙ₋₁ + c : on pose Uₙ = Tₙ + c, qui est géométrique de raison 2.</li></ul>`,
+  piege:`Un appel récursif placé avant un affichage inverse l'ordre des affichages. Et deux appels F(n − 1) dans le même code coûtent 2Tₙ₋₁, pas Tₙ₋₁.`,
+  meth:`<pre class="code">Fonction R(n : entier) : entier
+  si n = 0 alors renvoyer 1
+  sinon renvoyer 2 × R(n − 1)</pre>
+<ol><li>Valeur : R(3) = 2 × R(2) = 2 × 2 × R(1) = 2 × 2 × 2 × R(0) = 8. Il y a 4 appels. R(n) calcule 2ⁿ.</li>
+<li>Preuve : R(0) renvoie 1 = 2⁰. Si R(n − 1) renvoie 2ⁿ⁻¹, R(n) renvoie 2 × 2ⁿ⁻¹ = 2ⁿ.</li>
+<li>Complexité : avec T₀ = 2 et Tₙ = 3 + Tₙ₋₁, on trouve Tₙ = 2 + 3n : θ(n).</li>
+<li>Avec deux appels, Tₙ = 2Tₙ₋₁ + 1 et T₀ = 1 : Uₙ = Tₙ + 1 vaut 2 × 2ⁿ, donc Tₙ = 2ⁿ⁺¹ − 1.</li></ol>`},
+ {id:"master",t:"Le master theorem",pts:3,ou:"exercice 4 (CC1 2022, examen 2023)",lect:1.5,exo:{g:"AG7",lv:1},
+  ess:`<p>Si T(n) ≤ a·T(n/b) + O(nᵈ) : a appels, sur une taille divisée par b, et nᵈ opérations à côté.</p>
+<ul><li>bᵈ &gt; a : O(nᵈ).</li><li>bᵈ = a : O(nᵈ log n).</li><li>bᵈ &lt; a : O(n^(log a / log b)).</li></ul>`,
+  piege:`d est l'exposant du travail à côté des appels, pas le nombre d'appels. Une boucle simple à côté, c'est d = 1 ; rien qu'un test, c'est d = 0.`,
+  meth:`<ol><li>Lis a, b et d dans l'équation.</li><li>Calcule bᵈ et compare-le à a.</li><li>Conclus avec la bonne ligne.</li></ol>
+<ul><li>T(n) = 2T(n/2) + O(n) (tri fusion) : a = 2, b = 2, d = 1, bᵈ = 2 = a : O(n log n).</li>
+<li>T(n) = T(n/2) + O(1) (dichotomie) : a = 1, b = 2, d = 0, bᵈ = 1 = a : O(log n).</li>
+<li>T(n) = 4T(n/2) + O(n) : bᵈ = 2 &lt; 4 : O(n^(log 4 / log 2)) = O(n²).</li></ul>`},
+ {id:"arret",t:"L'arrêt d'une boucle tant que",pts:3,ou:"exercice 3 (examen 2023, sujet blanc)",lect:1.5,exo:{g:"AG3",lv:0},
+  ess:`<p>Pour prouver qu'un « tant que » s'arrête, on trouve un <b>entier qui décroît strictement</b> à chaque tour et qui ne peut pas descendre indéfiniment.</p>
+<p>La phrase du cours : « L'entier … vaut … au début et décroît strictement à chaque itération. Le tant que s'arrête quand … : au plus … itérations, donc un nombre fini : il s'arrête. »</p>`,
+  piege:`« Il décroît » ne suffit pas : il faut un entier, et une borne (la boucle s'arrête quand il passe sous une valeur).`,
+  meth:`<pre class="code">Fonction D(n : entier ≥ 1) : entier
+  k ← 0
+  tant que n &gt; 1 faire
+    n ← n div 2
+    k ← k + 1
+  renvoyer k</pre>
+<ol><li>Fais-la tourner : D(20) donne n = 20, 10, 5, 2, 1 et renvoie k = 4.</li>
+<li>Arrêt : n est un entier, il vaut n au début, et n div 2 &lt; n quand n &gt; 1 : il décroît strictement. La boucle s'arrête quand n ≤ 1 : au plus n itérations, donc elle s'arrête.</li>
+<li>Le nombre de tours : n est divisé par 2 à chaque tour, donc D(n) fait log₂(n) tours (arrondi en dessous).</li></ol>`},
+ {id:"cours",t:"La question de cours : o, θ, ω et l'ordre des complexités",pts:3,ou:"exercice 1, tous les sujets",lect:1,
+  rappel:{min:2,q:`Écris quand Tₙ = θ(Rₙ), Tₙ = o(Rₙ) et Tₙ = ω(Rₙ), avec la limite du quotient. Puis range 2ⁿ, n log n, 1, n², log n, n, n³ de la plus lente à la plus rapide à grandir.`,
+   r:`<p>Si Tₙ/Rₙ tend vers un nombre a &gt; 0 : θ(Rₙ). Vers 0 : o(Rₙ). Vers +∞ : ω(Rₙ). O veut dire o ou θ ; Ω veut dire ω ou θ.</p><p>1, log n, n, n log n, n², n³, 2ⁿ.</p>`},
+  ess:`<ul><li>Tₙ/Rₙ tend vers a &gt; 0 : Tₙ = θ(Rₙ). Vers 0 : o(Rₙ). Vers +∞ : ω(Rₙ).</li>
+<li>O = o ou θ ; Ω = ω ou θ.</li>
+<li>De la plus lente à la plus rapide : 1, log n, n, n log n, n², n³, 2ⁿ, n!.</li>
+<li>3n² + 5n = θ(n²) : on garde le plus gros terme, sans le nombre devant. 1 000 000·n³ = θ(n³) aussi.</li></ul>`,
+  piege:`θ demande une limite <b>finie et non nulle</b>. n log n n'est pas θ(n²) : n log n / n² tend vers 0, donc c'est o(n²).`,
+  meth:`<ol><li>Écris le quotient Tₙ/Rₙ.</li><li>Garde le plus gros terme en haut et en bas.</li><li>Conclus avec la limite : (3n² + 5n)/n² tend vers 3, donc θ(n²) ; n log n / n² tend vers 0, donc o(n²) ; 2ⁿ/n³ tend vers +∞, donc ω(n³).</li></ol>`},
+ {id:"rapide",t:"Un ordinateur plus rapide",pts:2,ou:"exercice 5 (examen 2023, sujet blanc)",lect:1,exo:{g:"AG7",lv:3},
+  ess:`<p>Un ordinateur k fois plus rapide fait k fois plus d'opérations dans le même temps. On cherche la taille m qu'il traite dans le temps où l'ancien traitait n.</p>
+<ul><li>Pour nᵈ opérations : mᵈ = k·nᵈ, donc m = n × (racine d-ième de k).</li>
+<li>Pour 2ⁿ opérations : 2ᵐ = k·2ⁿ, donc m = n + log₂(k).</li></ul>`,
+  piege:`Pour 2ⁿ, on ne multiplie pas n : on ajoute seulement log₂(k). C'est pour ça qu'un algorithme exponentiel reste lent sur une machine plus rapide.`,
+  meth:`<p>Le sujet blanc : un ordinateur 64 fois plus rapide.</p>
+<ol><li>n³ opérations : m³ = 64·n³ = (4n)³, donc m = 4n : une entrée 4 fois plus grande.</li>
+<li>2ⁿ opérations : 2ᵐ = 64 × 2ⁿ = 2ⁿ⁺⁶, donc m = n + 6 : seulement 6 de plus.</li>
+<li>Avec 1 000 fois plus rapide et n³ : m = 10n.</li></ol>`}],
+ blanc:[
+  {t:"Question de cours : o, θ, ω",ou:"exercice 1",pts:3,g:"AGQ2",lv:0},
+  {t:"La trace d'une boucle",ou:"exercice 2",pts:6,g:"AG1",lv:1},
+  {t:"L'arrêt d'un tant que",ou:"exercice 3",pts:3,g:"AG3",lv:0},
+  {t:"Le master theorem",ou:"exercice 4",pts:6,g:"AG7",lv:1},
+  {t:"Un ordinateur plus rapide",ou:"exercice 5",pts:2,g:"AG7",lv:3}]
+}};
+
+</script>
+<script>
 /* Le CC en 1 h (sa demande du 21/11) : tout le programme d'une épreuve en 60 minutes au plus, ce qui rapporte le plus de points d'abord.
    Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice tiré d'un générateur, à faire soi-même avant la correction.
    À la fin, un sujet express noté sur 20. Le contenu est dans express-<matière>.js (window.EXPRESS[sid][épreuve]).
