@@ -33057,7 +33057,7 @@ async function sync(){
       else if(p==="lecon"&&LP){const q=progGet(LP.sid,LP.id);if(q&&q.ts>(LP.saved||0)&&q.i!==LP.i)lessonRoute([LP.sid,LP.id]);}}
   }catch(e){if(SY){SY.err=String(e&&e.message||e);saveSY();}}
   finally{syncing=false;syncBadge();if(pending){pending=false;setTimeout(sync,1500);}}}
-function syncBadge(t){const b=$("#syncb");if(!b)return;if(!SY||!SY.token){b.hidden=true;return;}b.hidden=false;
+function syncBadge(t){const b=$("#syncb");if(!b)return;b.hidden=false;if(!SY||!SY.token){b.textContent="Pas synchro";b.classList.add("err");return;}
   const ago=SY.last?Math.round((Date.now()-SY.last)/60000):null;
   b.textContent=t?`Synchro ${t}`:SY.err?"Synchro : erreur":ago===null?"Synchro…":ago<1?"Synchronisé":`Synchronisé il y a ${ago} min`;
   b.classList.toggle("err",!!(SY.err&&!t));}
