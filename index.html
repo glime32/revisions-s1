@@ -33053,7 +33053,7 @@ async function sync(){
     SY.last=Date.now();SY.err=null;saveSY();
     if(added){const p=A.cur().page;A.seanceArrivee();
       if(p==="reviser"&&RV&&!RV.debute&&!RV.end){const s=A.seanceGet("cartes");if(s&&s.run!==RV.run){RV=null;reviser();}}
-      if(p!=="lecon"&&p!=="reviser"&&p!=="mix"&&p!=="quiz")A.route();
+      if(p!=="lecon"&&p!=="reviser"&&p!=="mix"&&p!=="quiz"&&!(p==="express"&&/^#\/express\/[^/]+\/[^/]+\/./.test(location.hash)))A.route();
       else if(p==="lecon"&&LP){const q=progGet(LP.sid,LP.id);if(q&&q.ts>(LP.saved||0)&&q.i!==LP.i)lessonRoute([LP.sid,LP.id]);}}
   }catch(e){if(SY){SY.err=String(e&&e.message||e);saveSY();}}
   finally{syncing=false;syncBadge();if(pending){pending=false;setTimeout(sync,1500);}}}
@@ -34090,7 +34090,8 @@ window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastil
 /* Le CC en 1 h (sa demande du 21/11) : tout le programme d'une épreuve en 60 minutes au plus, ce qui rapporte le plus de points d'abord.
    Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice tiré d'un générateur, à faire soi-même avant la correction.
    À la fin, un sujet express noté sur 20. Le contenu est dans express-<matière>.js (window.EXPRESS[sid][épreuve]).
-   Ce qui est réussi vient du journal (événements cch et cchb, donc synchronisé) ; la position et le chrono restent sur l'appareil. */
+   Ce qui est réussi vient du journal (événements cch et cchb). La position et le chrono sont gardés sur l'appareil et envoyés
+   aussi dans le journal (événement xp) : on reprend la plus récente, d'où qu'elle vienne. */
 (function(){
 "use strict";
 const EXT=window.EXT,GEN=window.GEN,SUBJ=window.SUBJ;if(!EXT||!GEN)return;
@@ -34114,8 +34115,15 @@ function bilan(sid,ep){const C=X(sid,ep),ok={},essais={},blancs=[];
   A.journal().forEach(e=>{if(e.s!==sid||e.ep!==ep)return;if(e.k==="cch"){essais[e.n]=(essais[e.n]||0)+1;if(e.ok)ok[e.n]=1;}else if(e.k==="cchb")blancs.push(e);});
   const pts=C.notions.reduce((s,n)=>s+(ok[n.id]?n.pts:0),0);
   return {ok,essais,pts,blancs,meilleur:blancs.length?Math.max(...blancs.map(b=>b.note||0)):null,dernier:blancs.length?blancs[blancs.length-1]:null};}
-const posDe=(sid,ep)=>Object.assign({i:0,st:0,k:0,ms:0,bq:0,bres:[],bk:0},lit()[sid+"/"+ep]||{});
-const garde=(sid,ep,p)=>{const o=lit();o[sid+"/"+ep]=p;ecrit(o);};
+let XJ={n:-1,m:{}};
+const xpJournal=()=>{const J=A.journal();if(J.length!==XJ.n){const m={};J.forEach(e=>{if(e.k==="xp"&&e.p){const c=e.s+"/"+e.ep;if(!m[c]||e.t>=m[c].t)m[c]=e;}});XJ={n:J.length,m};}return XJ.m;};
+const posDe=(sid,ep)=>{const c=sid+"/"+ep,l=lit()[c],e=xpJournal()[c];
+  const p=e&&(!l||!l.ts||e.t>l.ts+1000)?Object.assign({},e.p,{ts:e.t}):l;
+  return Object.assign({i:0,st:0,k:0,ms:0,bq:0,bres:[],bk:0},p||{});};
+let XP=null,XPT=0;
+const envoie=()=>{clearTimeout(XPT);if(!XP)return;const e=XP;XP=null;const p=Object.assign({},e.p);delete p.ts;A.emit({k:"xp",s:e.sid,ep:e.ep,p});};
+const garde=(sid,ep,p)=>{const o=lit();p.ts=Date.now();o[sid+"/"+ep]=p;ecrit(o);
+  if(XP&&(XP.sid!==sid||XP.ep!==ep))envoie();XP={sid,ep,p};clearTimeout(XPT);XPT=setTimeout(envoie,4000);};
 const palier=(C,pts)=>{let r=null;C.paliers.forEach(p=>{if(pts>=p[0])r=p;});return r;};
 const prochainPalier=(C,pts)=>C.paliers.find(p=>pts<p[0])||null;
 
@@ -34257,8 +34265,8 @@ const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);A=A0;
   try{ext.routes=ext.routes||{};ext.routes.express=parts=>route(parts[0],parts[1],parts.slice(2));
     window.addEventListener("hashchange",()=>{if(!/^#\/express\//.test(location.hash))arrete();});
-    window.addEventListener("pagehide",()=>{try{tic();}catch(e){}});
-    document.addEventListener("visibilitychange",()=>{if(!CH)return;if(document.hidden)tic();else CH.t=Date.now();});
+    window.addEventListener("pagehide",()=>{try{tic();envoie();}catch(e){}});
+    document.addEventListener("visibilitychange",()=>{if(document.hidden){if(CH)tic();envoie();}else if(CH)CH.t=Date.now();},true);
     setTimeout(()=>{try{new MutationObserver(carte).observe($("#main"),{childList:true});carte();}catch(e){console.error(e);}},0);}catch(e){console.error(e);}
   return ext;};
 window.EXPRESS_OUTILS={bilan,prevu,minNotion,minBlanc,surBlanc,posDe,proche};/* pour les essais */
