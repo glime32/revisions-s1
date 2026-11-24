@@ -35336,6 +35336,218 @@ window.EXPRESS.pf.ct.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
 
 </script>
 <script>
+/* L'examen d'USI en 2 h (vendredi 15/01, date supposée, 100 % de la note, aucun document).
+   Moitié Pompidor (10 points) : la forme de ses sujets de 2023 à 2026, regex et find 2 à 3 points, Bash 2 à 2,5,
+   Python (CSV, dictionnaire, parcours récursif) 4,5 à 6. Moitié Meynard (10 points) : aucun ancien sujet, points
+   estimés d'après la place de chaque chapitre dans son cours et ses TD (thèmes de matiere-usi.js).
+   Les exemples des méthodes sont exécutés par tools/verif/express/usi.js (vrais bash, python3 et gcc).
+   Les exercices sont tirés de gen-usi.js. */
+(()=>{
+const d36=h=>String(h).replace(/\$/g,"&#36;");
+const bloc=l=>(s,...v)=>d36(W.code(String.raw(s,...v),l)),SH=bloc("sh"),PY=bloc("py"),CC=bloc("c");
+const K=(s,...v)=>"<code>"+d36(W.esc(String.raw(s,...v)))+"</code>";
+(window.EXPRESS=window.EXPRESS||{}).usi={exam:{
+ t:"L'examen d'USI en 2 h",du:"de l'examen",au:"à l'examen",duree:120,
+ lead:"Tout le programme de l'examen de janvier, sans document, dans l'ordre de ce qui rapporte le plus. La moitié de Pompidor (10 points) suit ses sujets de 2023 à 2026 : le Python avec un fichier CSV, un dictionnaire et le parcours récursif d'un dossier, puis le script Bash, les expressions régulières et find. La moitié de Meynard (10 points) n'a aucun ancien sujet : ses points sont estimés d'après son cours et ses TD. Pour chaque notion : l'essentiel, la méthode sur un exemple, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
+ carte:"tout l'examen en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Les deux moitiés de l'examen : d'abord celle de Pompidor, dans l'ordre de ses sujets (regex, find, Bash, Python), puis celle de Meynard (chemins, droits, liens, taille, processus, tubes, C). Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"csv",t:"Python : un fichier CSV dans un dictionnaire",pts:2,ou:"Pompidor, dernière question, tous les ans",lect:2,exo:{g:"US8",lv:2},
+  ess:`<ul><li>On ouvre avec ${K`with open("images.csv") as fd:`}, puis on lit les lignes : ${K`fd.readlines()`} (une liste) ou ${K`for ligne in fd:`}.</li>
+<li>Chaque ligne se découpe : ${K`ligne.strip().split(",")`} donne la liste des champs.</li>
+<li>${K`d[cle] = valeur`} crée ou remplace une entrée. Pour une liste par clé : ${K`if cle in d: d[cle].append(x)`}, sinon ${K`d[cle] = [x]`}.</li></ul>`,
+  piege:`Sans ${K`strip()`}, le dernier champ garde son retour à la ligne (${K`"12\n"`}). Et un nombre lu dans un fichier est du texte : ${K`int("12")`} pour compter avec.`,
+  meth:`<p>Janvier 2026 : le dictionnaire ${K`statistiques`}, avec ce fichier images.csv.</p>${SH`jpg,png,gif,webp
+10,25,0,12`}${PY`statistiques = {}
+with open("images.csv") as fd:
+    lignes = fd.readlines()
+    images = lignes[0].strip().split(",")
+    nombres = lignes[1].strip().split(",")
+    for i in range(len(images)):
+        statistiques[images[i]] = int(nombres[i])
+print(statistiques)`}
+<ol><li>Deux lignes : la première donne les clés, la seconde les nombres, à la même place.</li>
+<li>${K`range(len(images))`} parcourt les places 0, 1, 2, 3.</li>
+<li>Affichage : ${K`{'jpg': 10, 'png': 25, 'gif': 0, 'webp': 12}`}.</li></ol>`},
+ {id:"parcours",t:"Python : le parcours récursif d'un dossier",pts:3,ou:"Pompidor, dernière question, tous les ans",lect:2,exo:{g:"US8",lv:3},
+  ess:`<ul><li>${K`os.listdir(dossier)`} donne les <b>noms</b> de ce qu'il y a dans le dossier, sans le chemin.</li>
+<li>Le chemin complet : ${K`dossier + os.path.sep + nom`} (ou ${K`dossier + "/" + nom`}).</li>
+<li>${K`os.path.isdir(chemin)`} : si c'est un dossier, la fonction <b>s'appelle elle-même</b> dessus ; sinon on traite le fichier.</li>
+<li>Le dossier donné au script : ${K`sys.argv[1]`}. En haut : ${K`import os, sys`}.</li></ul>`,
+  piege:`Écrire ${K`os.path.isdir(nom)`} teste le nom depuis le dossier où tu as lancé le script, pas dans le sous-dossier : passe toujours le chemin complet. Et l'extension, c'est ${K`nom.split(".")[-1]`}, seulement si le nom contient un point.`,
+  meth:`<p>Janvier 2026, suite : compter dans ${K`statistiques`} les images trouvées dans tous les sous-dossiers.</p>${PY`def parcours(dossier):
+    for fichier in os.listdir(dossier):
+        chemin = dossier + os.path.sep + fichier
+        if os.path.isdir(chemin):
+            parcours(chemin)
+        else:
+            data = fichier.split(".")
+            if len(data) > 1 and data[-1] in statistiques:
+                statistiques[data[-1]] += 1
+
+parcours(sys.argv[1])
+print(statistiques)`}
+<ol><li>Un dossier : on descend dedans, avec le chemin complet.</li>
+<li>Un fichier : on prend son extension ; si c'est une clé du dictionnaire, on ajoute 1.</li>
+<li>Avec a.jpg, s1/b.png, s1/s2/c.jpg et notes.txt : ${K`{'jpg': 12, 'png': 26, 'gif': 0, 'webp': 12}`}. notes.txt est ignoré : txt n'est pas une clé.</li></ol>`},
+ {id:"bash",t:"Un script Bash : une boucle et un test",pts:2.5,ou:"Pompidor, question 2 ou 3, tous les ans",lect:2,exo:{g:"US7",lv:3},
+  ess:`<ul><li>${K`for f in *.txt`} : bash remplace ${K`*.txt`} par les fichiers du dossier courant qui finissent par .txt. ${K`for f in $(ls $1)`} : les noms du dossier passé en paramètre.</li>
+<li>${K`$1`} est le premier paramètre, ${K`$#`} le nombre de paramètres.</li>
+<li>Un test : ${K`if [ $# -ne 1 ]`} ou ${K`if [[ $f == *.txt ]]`}, puis ${K`then … fi`}. Une boucle : ${K`do … done`}.</li></ul>`,
+  piege:`La commande ${K`ls $1`} donne des noms seuls : pour agir sur le fichier, il faut le chemin ${K`$1/$f`}. Et des espaces partout dans les crochets : ${K`[ $# -eq 1 ]`}.`,
+  meth:`<p>Janvier 2026 (2 points) : ajouter le préfixe old à tous les fichiers .txt du dossier courant.</p>${SH`for fichier in *.txt
+do
+    mv "$fichier" "old$fichier"
+done`}
+<ol><li>Renommer, c'est ${K`mv ancien nouveau`}.</li>
+<li>Avec a.txt, b.txt et c.sh : il reste olda.txt, oldb.txt et c.sh.</li></ol>
+<p>Janvier 2025 (2,5 points) : supprimer les .txt du dossier passé en paramètre, avec une boucle.</p>${SH`for f in $(ls $1)
+do
+    if [[ $1/$f == *.txt ]]
+    then
+        rm $1/$f
+    fi
+done`}`},
+ {id:"c",t:"Le C : passage par valeur, pointeurs et static",pts:2,ou:"Meynard, estimé (cours et TD, aucun ancien sujet)",lect:2,exo:{g:"US9",lv:2},
+  ess:`<ul><li>En C, une fonction reçoit une <b>copie</b> de ses paramètres : la modifier ne change pas la variable de l'appelant.</li>
+<li>Pour changer une variable de l'appelant, on passe son <b>adresse</b> ${K`&a`}, et la fonction écrit ${K`*p = …`}.</li>
+<li>Une variable locale disparaît à la fin de la fonction. Une variable ${K`static`} garde sa valeur d'un appel à l'autre.</li></ul>`,
+  piege:`La fonction ${K`void plus1(int x) { x = x + 1; }`} ne change rien dans main : x est une copie.`,
+  meth:`${CC`#include <stdio.h>
+void plus1(int x) { x = x + 1; }
+void plus1p(int *p) { *p = *p + 1; }
+int compte(void) { static int n = 0; n = n + 1; return n; }
+int main(void) {
+  int a = 5;
+  plus1(a);
+  printf("%d\n", a);
+  plus1p(&a);
+  printf("%d\n", a);
+  compte(); compte();
+  printf("%d\n", compte());
+  return 0;
+}`}
+<ol><li>${K`plus1(a)`} travaille sur une copie : on affiche 5.</li>
+<li>${K`plus1p(&a)`} écrit à l'adresse de a : on affiche 6.</li>
+<li>n est static : 1, puis 2, puis 3. On affiche 3.</li></ol>`},
+ {id:"droits",t:"Les droits : qui peut faire quoi, et le umask",pts:1.5,ou:"Meynard, estimé (TD ex. 16, 17 et 25)",lect:2,exo:{g:"US1",lv:3},
+  ess:`<ul><li>Trois groupes de trois lettres : le propriétaire, le groupe, les autres. r = 4, w = 2, x = 1 : rwxr-x--- s'écrit 750.</li>
+<li>Sur un fichier : r pour le lire, w pour le modifier. Sur un répertoire : r pour lister, w pour y créer ou supprimer, x pour y entrer ou le traverser.</li>
+<li>Supprimer un fichier demande w sur le <b>répertoire</b>, pas sur le fichier.</li>
+<li>Le umask retire des droits : un nouveau fichier part de 666, un nouveau répertoire de 777.</li></ul>`,
+  piege:`Le umask enlève des bits, il ne se soustrait pas : 666 avec umask 033 donne 644, pas 633.`,
+  meth:`${SH`chmod 750 projet
+umask 027
+touch f
+mkdir d`}
+<ol><li>${K`chmod 750 projet`} : 7 = rwx, 5 = r-x, 0 = --- ; projet devient rwxr-x---.</li>
+<li>Avec umask 027 : le fichier f naît en 640 (rw-r-----), le répertoire d en 750 (rwxr-x---).</li>
+<li>Avec umask 033 : un fichier naît en 644. 6 = 110 et 3 = 011 : on barre le dernier bit, il reste 100 = 4.</li></ol>`},
+ {id:"regex",t:"Les expressions régulières avec grep -E",pts:1.5,ou:"Pompidor, question 1 (2025, 2026)",lect:1.5,exo:{g:"US6",lv:2},
+  ess:`<ul><li>${K`^`} colle au début, ${K`$`} à la fin. ${K`.`} est n'importe quel caractère, ${K`\.`} un vrai point.</li>
+<li>${K`[0-9]`} un chiffre, ${K`[a-z]`} une minuscule. Après un morceau : ${K`+`} une fois ou plus, ${K`*`} zéro fois ou plus, ${K`?`} facultatif.</li>
+<li>${K`(jpg|jpeg)`} : l'un ou l'autre. Ces signes demandent ${K`grep -E`}.</li></ul>`,
+  piege:`Sans ${K`^`} ni ${K`$`}, l'expression trouve un morceau n'importe où : ${K`\.jpg`} garde aussi photo.jpg.bak.`,
+  meth:`<p>Janvier 2026 (2 points) : les fichiers du dossier courant qui finissent par .jpg ou .jpeg.</p>${SH`ls | grep -E "\.jpe?g$"`}
+<ol><li>${K`\.`} pour le vrai point, ${K`e?`} pour le e facultatif, ${K`$`} pour la fin du nom.</li>
+<li>Parmi a.jpg, b.jpeg, c.jpg.bak, d.png et xjpg, il garde a.jpg et b.jpeg.</li>
+<li>Janvier 2025 : « deux entiers séparés par un point », c'est ${K`^[0-9]+\.[0-9]+$`}. 12.5 passe ; 12.5.3 et .5 ne passent pas.</li></ol>`},
+ {id:"processus",t:"Les processus, et l'enchaînement des commandes",pts:1.5,ou:"Meynard, estimé (cours et TD ex. 30 à 39)",lect:1.5,exo:{g:"US10",lv:1},
+  ess:`<ul><li>Pour une commande externe, bash crée un processus : il se clone (fork), le clone devient la commande (exec), bash attend (wait). Les commandes internes (cd, echo, export, exit) n'en créent pas.</li>
+<li>${K`a ; b`} : les deux. ${K`a && b`} : b seulement si a réussit. ${K`a || b`} : b seulement si a échoue.</li>
+<li>${K`$?`} est le code de retour de la dernière commande : 0 veut dire réussite.</li></ul>`,
+  piege:`La commande ${K`echo`} est interne : aucun processus. Et un code de retour 0 est une réussite, pas un échec.`,
+  meth:`${SH`ls /inexistant ; echo $?
+false && echo A || echo B
+true && echo A || echo B`}
+<ol><li>ls échoue (le dossier n'existe pas) : ${K`$?`} vaut 2, et echo affiche 2.</li>
+<li>false échoue : echo A est sauté, || lance echo B. On lit B.</li>
+<li>true réussit : A s'affiche ; echo A réussit, donc echo B est sauté.</li>
+<li>${K`ls | grep txt | wc -l`} crée 3 processus, qui tournent en même temps.</li></ol>`},
+ {id:"tubes",t:"Tubes et filtres",pts:1.5,ou:"Meynard, estimé (TD ex. 36 et 39)",lect:1.5,exo:{g:"US4",lv:2},
+  ess:`<ul><li>${K`a | b`} : ce que a affiche devient l'entrée de b.</li>
+<li>Les filtres : ${K`sort`} (tri en texte ; ${K`-n`} en nombres, ${K`-r`} à l'envers), ${K`head -n 3`}, ${K`tail -n 2`}, ${K`cut -d: -f1`} (le 1<sup>er</sup> champ, séparé par :), ${K`grep motif`}, ${K`wc -l`} (le nombre de lignes).</li>
+<li>${K`>`} écrit dans un fichier (en l'écrasant), ${K`>>`} ajoute à la fin, ${K`<`} lit un fichier.</li></ul>`,
+  piege:`La commande ${K`sort`} sans ${K`-n`} trie comme des mots : 10 passe avant 9.`,
+  meth:`<p>Le fichier notes.txt :</p>${SH`alice:12
+bob:9
+chloe:15
+david:10`}${SH`cut -d: -f2 notes.txt | sort -n | head -n 1
+cut -d: -f2 notes.txt | sort | head -n 1`}
+<ol><li>${K`cut -d: -f2`} garde les notes : 12, 9, 15, 10.</li>
+<li>${K`sort -n`} les range en nombres : 9, 10, 12, 15 ; la première ligne est 9.</li>
+<li>Sans -n, le tri est celui des mots : 10, 12, 15, 9 ; la première ligne est 10.</li></ol>`},
+ {id:"find",t:"find : chercher des fichiers",pts:1,ou:"Pompidor, question 1 (2025)",lect:1,exo:{g:"US5",lv:3},
+  ess:`<ul><li>${K`find départ -name "motif"`} : le départ est ${K`.`} (ici), ${K`..`} (le dossier parent) ou ${K`~`} (ta maison) ; le motif utilise ${K`*`}.</li>
+<li>${K`-type f`} pour les fichiers, ${K`-type d`} pour les répertoires.</li>
+<li>${K`-exec commande {} \;`} lance la commande sur chaque fichier trouvé.</li></ul>`,
+  piege:`Le motif se met entre guillemets, sinon bash remplace ${K`*.txt`} avant find. Et ${K`-name DATA`} ne trouve que le nom exact DATA.`,
+  meth:`${SH`find .. -name "*DATA*"
+find . -type f -name "*.txt" -exec wc -l {} \;`}
+<ol><li>Janvier 2025 (1 point) : les fichiers dont le nom contient DATA, à partir du dossier parent.</li>
+<li>La 2<sup>e</sup> ligne affiche le nombre de lignes de chaque fichier .txt, dans tous les sous-dossiers.</li></ol>`},
+ {id:"liens",t:"Inodes et liens : ln, ln -s, rm",pts:1,ou:"Meynard, estimé (TD ex. 21 à 29)",lect:1.5,exo:{g:"US3",lv:1},
+  ess:`<ul><li>Un <b>lien dur</b> (${K`ln a b`}) est un deuxième nom pour le même inode : le compteur de liens passe à 2.</li>
+<li>Un <b>lien symbolique</b> (${K`ln -s a c`}) est un petit fichier qui contient le chemin a.</li>
+<li>${K`rm`} enlève un nom ; les données disparaissent quand le compteur arrive à 0.</li>
+<li>Un répertoire a 2 + (nombre de ses sous-répertoires) liens : son nom, son ${K`.`} et le ${K`..`} de chaque sous-répertoire.</li></ul>`,
+  piege:`Après ${K`rm a`}, le lien symbolique c est cassé, mais le lien dur b marche toujours.`,
+  meth:`${SH`echo bonjour > a
+ln a b
+ln -s a c
+rm a
+cat b
+cat c`}
+<ol><li>Après ${K`ln a b`}, a et b sont le même inode, avec 2 liens.</li>
+<li>${K`rm a`} : il reste 1 lien, b. ${K`cat b`} affiche bonjour.</li>
+<li>c contient le chemin a, qui n'existe plus : ${K`cat c`} donne une erreur.</li></ol>`},
+ {id:"taille",t:"La taille maximale d'un fichier",pts:1,ou:"Meynard, estimé (exercices de son cours)",lect:1.5,exo:{g:"US3",lv:2},
+  ess:`<ul><li>L'inode garde 10 adresses directes de blocs, puis une simple indirecte (un bloc rempli d'adresses), une double et une triple.</li>
+<li>n = taille d'un bloc ÷ taille d'une adresse : le nombre d'adresses dans un bloc.</li>
+<li>Taille maximale = (10 + n + n² + n³) × taille d'un bloc. Calcule en puissances de 2 : 1 Kio = 2¹⁰ octets.</li></ul>`,
+  piege:`Si le champ « taille » de l'inode n'a que 32 bits, un fichier ne dépasse pas 2³² octets = 4 Gio, même quand les blocs permettraient plus.`,
+  meth:`<p>Blocs de 1 Kio, adresses de 4 octets.</p>
+<ol><li>n = 2¹⁰ ÷ 2² = 2⁸ = 256 adresses par bloc.</li>
+<li>Blocs atteints : 10 + 2⁸ + 2¹⁶ + 2²⁴.</li>
+<li>Fois 1 Kio : 10 Kio + 256 Kio + 64 Mio + 16 Gio, environ 16 Gio.</li></ol>`},
+ {id:"chemins",t:"Les chemins : absolus, relatifs, cd",pts:1,ou:"Meynard, estimé (TD ex. 7 à 11)",lect:1,exo:{g:"US2",lv:1},
+  ess:`<ul><li>Un chemin <b>absolu</b> commence par ${K`/`}, la racine. Un chemin <b>relatif</b> part du dossier où tu es.</li>
+<li>${K`.`} est le dossier courant, ${K`..`} le parent, ${K`~`} ta maison. ${K`cd`} tout seul ramène à la maison ; ${K`pwd`} affiche où tu es.</li></ul>`,
+  piege:`Un chemin relatif change de sens quand tu changes de dossier : refais le trajet un cd à la fois.`,
+  meth:`<p>Tu es dans /home/alice/l1.</p>${SH`cd ../docs
+pwd
+cd ../../bob/./src/..
+pwd`}
+<ol><li>${K`..`} remonte à /home/alice, puis on entre dans docs : /home/alice/docs.</li>
+<li>Deux .. : /home ; puis bob, ${K`.`} ne bouge pas, src, et .. ressort : /home/bob.</li></ol>`},
+ {id:"systeme",t:"Le système d'exploitation : le vocabulaire",pts:0.5,ou:"Meynard, estimé (introduction du cours)",lect:1,
+  rappel:{min:2,q:`Qu'est-ce qu'un système d'exploitation ? Donne les couches d'Unix, du matériel jusqu'à toi, et ce que font fork, exec et wait quand bash lance ls.`,
+   r:`<p>Un système d'exploitation est la couche logicielle qui sert d'interface entre la machine matérielle et les utilisateurs. Unix est écrit en C.</p><p>Les couches : le matériel, le noyau, les bibliothèques, puis les applications et bash.</p><p>fork : bash se clone. exec : le clone se remplace par le code de ls. wait : bash attend la fin du clone et range son code de retour dans ${K`$?`}.</p>`},
+  ess:`<ul><li>Le système d'exploitation est la couche logicielle entre la machine et les utilisateurs. Il partage le processeur et la mémoire entre les programmes, et gère les utilisateurs et les périphériques.</li>
+<li>Unix, en couches : le matériel, le noyau, les bibliothèques, les applications et bash.</li>
+<li>Une application appelle la bibliothèque C (${K`printf`}, ${K`man 3`}) et le noyau (${K`fork`}, ${K`man 2`}).</li></ul>`,
+  piege:`La racine s'écrit ${K`/`}, pas l'anti-slash.`,
+  meth:`<p>Quand tu tapes ${K`ls`} dans bash :</p>
+<ol><li>bash se clone (fork) ;</li><li>le clone se remplace par le code de /bin/ls (exec), et affiche dans le terminal dont il a hérité ;</li><li>bash attend sa fin (wait) et lit son code de retour.</li></ol>`}],
+ blanc:[
+  {t:"La commande grep -E entière",ou:"Pompidor, question 1",pts:2,g:"US6",lv:3},
+  {t:"Une commande find",ou:"Pompidor, question 1",pts:1,g:"US5",lv:1},
+  {t:"Un script Bash avec une boucle et un test",ou:"Pompidor, question 2",pts:2.5,g:"US7",lv:3},
+  {t:"Le parcours récursif en Python",ou:"Pompidor, question 3",pts:4.5,g:"US8",lv:3},
+  {t:"Une suite de cd",ou:"Meynard",pts:1,g:"US2",lv:1},
+  {t:"Le umask",ou:"Meynard",pts:1.5,g:"US1",lv:2},
+  {t:"ln, ln -s, rm",ou:"Meynard",pts:1.5,g:"US3",lv:1},
+  {t:"La taille maximale d'un fichier",ou:"Meynard",pts:1,g:"US3",lv:2},
+  {t:"L'enchaînement des commandes et le code de retour",ou:"Meynard",pts:1.5,g:"US10",lv:1},
+  {t:"Deux filtres à enchaîner",ou:"Meynard",pts:1.5,g:"US4",lv:2},
+  {t:"Passage par valeur et portée en C",ou:"Meynard",pts:2,g:"US9",lv:2}]
+}};
+window.EXPRESS.usi.exam.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
+})();
+
+</script>
+<script>
 /* Le CC1 d'Algèbre en 1 h (reporté, date à venir) : la liste de dix points annoncée par le prof le 11/11 (chapitres 1 à 4 du poly).
    Aucun barème connu : les points sont ceux des thèmes de matiere-lin.js (estimés d'après la longueur des exercices de la liste).
    Le sujet sera pris parmi ces exercices : les exemples des méthodes sont donc les exercices de la liste eux-mêmes.
@@ -35527,7 +35739,7 @@ function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(
   const n=C.notions[p.i],B=bilan(sid,ep),S=SUBJ[sid];
   cadre(sid,ep,`Notion ${p.i+1} sur ${N} · ${virg(n.pts)} point${n.pts>1?"s":""} ${C.du} · ${n.ou}`,B.pts);const b=$("#lpb");
   const va=st=>{tic();const q=posDe(sid,ep);q.st=st;garde(sid,ep,q);notion(sid,ep);};
-  if(p.st===0){b.innerHTML=tx(`<p class="prekick">L'essentiel · ${n.lect>=2?Math.round(n.lect):1} min</p><h2>${n.t}</h2>${n.ess}${n.piege?`<div class="piege"><b>Le piège.</b> ${n.piege}</div>`:""}`);
+  if(p.st===0){b.innerHTML=tx(`<p class="prekick">L'essentiel · ${n.lect>=2?Math.round(n.lect):1} min</p><h2>${n.t}</h2>${n.ess}${n.piege?`<div class="piege"><b>Le piège.</b>${/^\s*<(p|ul|ol)[ >]/.test(n.piege)?n.piege:`<p>${n.piege}</p>`}</div>`:""}`);
     pied(`${presse(sid,ep)}<button class="btn pri big" id="xp-go">La méthode ${C.du}</button>`);$("#xp-go").addEventListener("click",()=>va(1));return;}
   if(p.st===1){b.innerHTML=tx(`<p class="prekick">La méthode ${C.du}</p><h2>${n.t}</h2>${n.meth}`);
     pied(`<button class="btn" id="xp-av">Revoir l'essentiel</button><button class="btn pri big" id="xp-go">À toi : l'exercice</button>`);
