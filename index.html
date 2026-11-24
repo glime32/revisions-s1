@@ -35133,6 +35133,313 @@ window.EXPRESS.calc.ccf={
 
 </script>
 <script>
+/* L'examen de Prog. fonctionnelle en 2 h (lundi 11/01, date supposée, 67 % de la note, une feuille A4 recto-verso).
+   Les trois anciens sujets (janvier 2022, juin 2022, janvier 2024) ont la même forme : un type somme à manipuler
+   (7 points, 13 en 2024), un exercice d'arithmétique avec une fonction auxiliaire et une exception (7), une fonction
+   « de trois façons » (6 ou 7). Les notions suivent cet ordre. Les exemples des méthodes sont exécutés par
+   tools/verif/express/pf.js. Les exercices sont tirés de gen-pf.js. */
+(()=>{
+const ml=s=>W.code(s,"ml"),k=s=>"<code>"+W.esc(s)+"</code>";
+(window.EXPRESS=window.EXPRESS||{}).pf={ct:{
+ t:"L'examen de Prog. fonctionnelle en 2 h",du:"de l'examen",au:"à l'examen",duree:120,
+ lead:"Tout le programme de l'examen de janvier, dans l'ordre de ce qui rapporte le plus aux trois anciens sujets (janvier 2022, juin 2022, janvier 2024) : le type somme, puis l'arithmétique avec une fonction auxiliaire, puis la fonction « de trois façons ». Pour chaque notion : l'essentiel, la méthode de l'examen sur un vrai exemple, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Ta feuille A4 est permise : ce qui est marqué « sur ta feuille » mérite d'y être recopié.",
+ carte:"tout l'examen en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Trois exercices dans l'ordre des anciens sujets : l'arithmétique et son exception, le type somme, puis la fonction de trois façons. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"valeur",t:"Écrire une valeur d'un type somme",pts:1,ou:"exercice 2, tous les ans",lect:1.5,exo:{g:"PF5",lv:0},
+  ess:`<ul><li>Un type somme donne la liste de ses cas : ${k("type nombre = Ent of int | Rat of (int * int)")}. Chaque cas a son <b>constructeur</b> (une majuscule) et, après ${k("of")}, ce qu'il contient.</li>
+<li>Une valeur, c'est un constructeur suivi de son contenu : ${k("Ent 3")}, ${k("Rat (1, 2)")}.</li>
+<li>Un type <b>récursif</b> se contient lui-même : ${k("type my_string = Empty | Cons of char * my_string")}. On emboîte les constructeurs et on finit par le cas qui ne contient rien : « L1 » s'écrit ${k("Cons ('L', Cons ('1', Empty))")}.</li></ul>`,
+  piege:`Un nombre négatif après un constructeur se met entre parenthèses : ${k("Ent (-3)")}. Un caractère s'écrit entre apostrophes, ${k("'L'")}, pas entre guillemets.`,
+  meth:`<p>Janvier 2024, exercice 3 : l'ensemble {1, 2, 3} avec ce type.</p>${ml(`type 'a set =
+  | Empty
+  | Add of 'a * 'a set`)}
+<ol><li>On part de l'ensemble vide : ${k("Empty")}.</li>
+<li>On ajoute 3, puis 2 : ${k("Add (3, Empty)")}, puis ${k("Add (2, Add (3, Empty))")}.</li>
+<li>On ajoute 1 : ${k("Add (1, Add (2, Add (3, Empty)))")}. C'est la valeur du sujet, avec une parenthèse fermante par ${k("Add")}.</li></ol>`},
+ {id:"somme",t:"Une fonction par filtrage sur un type somme",pts:2,ou:"exercice 2 (add_rat, inverse_nombre en 2024)",lect:2,exo:{g:"PF5",lv:1},
+  ess:`<ul><li>Une fonction sur un type somme est un ${k("match")} (ou un ${k("function")}) avec <b>une branche par constructeur</b>.</li>
+<li>Le motif donne un nom à ce que contient le constructeur : dans ${k("| Rat (p, q) -> …")}, on peut se servir de p et de q.</li>
+<li>Avec deux arguments, on filtre le couple : ${k("match x, y with | Rat (a, b), Rat (c, d) -> … | _ -> …")}.</li></ul>`,
+  piege:`Le motif ${k("_")} attrape tous les cas qui restent : mets-le en dernier, sinon les branches d'après ne servent jamais. Et ${k("Rat (1, 2) + Rat (3, 4)")} est une erreur : + ne marche que sur des int.`,
+  meth:`<p>Janvier 2024, exercice 2, question 1 : add_rat, la somme de deux rationnels, sinon l'exception Failure "add_rat".</p>${ml(`let add_rat x y = match x, y with
+  | Rat (a, b), Rat (c, d) -> Rat (a * d + c * b, b * d)
+  | _ -> failwith "add_rat"`)}
+<ol><li>Le cas utile : deux ${k("Rat")}. On applique a/b + c/d = (ad + cb)/(bd).</li>
+<li>Tous les autres cas : l'exception demandée, en une seule branche ${k("_")}.</li>
+<li>On vérifie sur l'exemple du sujet : ${k("add_rat (Rat (1, 2)) (Rat (3, 4))")} = Rat (1 × 4 + 3 × 2, 2 × 4) = ${k("Rat (10, 8)")}. Le sujet ne demande pas de simplifier.</li></ol>`},
+ {id:"recursif",t:"Une fonction récursive sur un type récursif",pts:2.5,ou:"exercices 2 et 3 (my_length, mem, union)",lect:2,exo:{g:"PF5",lv:2},
+  ess:`<ul><li>Même schéma que sur les listes : un <b>cas de base</b> pour le constructeur qui ne contient pas le type (${k("Empty")}), et un <b>cas récursif</b> qui rappelle la fonction sur la partie du même type.</li>
+<li>${k("Cons (c, r)")} se lit comme ${k("x :: r")} : c est le premier caractère, r la suite.</li>
+<li>Pour un arbre ${k("Node (x, g, d)")}, il y a deux appels : un sur g, un sur d.</li></ul>`,
+  piege:`L'appel récursif se fait sur r, la partie plus petite, jamais sur la valeur entière : sinon le calcul ne s'arrête pas. Et pour un arbre, il faut les deux fils.`,
+  meth:`<p>Janvier 2024, exercice 3 : mem, puis union.</p>${ml(`let rec mem x e = match e with
+  | Empty -> false
+  | Add (y, r) -> x = y || mem x r
+
+let rec union e1 e2 = match e1 with
+  | Empty -> e2
+  | Add (x, r) ->
+    if mem x e2 then union r e2
+    else Add (x, union r e2)`)}
+<ol><li>mem, cas de base : rien n'est dans l'ensemble vide, donc ${k("false")}. Cas ${k("Add (y, r)")} : x est y, ou x est dans le reste r.</li>
+<li>Le type de mem (le sujet le demande) : ${k("'a -> 'a set -> bool")}. x est comparé à y, donc ils ont le même type 'a.</li>
+<li>union : on prend les éléments de e1 un par un, et on n'ajoute à e2 que ceux qui n'y sont pas encore.</li>
+<li>${k("union (Add (1, Add (2, Empty))) (Add (2, Empty))")} : 1 n'est pas dans e2, on le garde ; 2 y est déjà. Résultat : ${k("Add (1, Add (2, Empty))")}.</li></ol>`},
+ {id:"chaine",t:"Passer d'une string au type maison, et retour",pts:1,ou:"exercice 2 (janvier 2022), exercice 3 (juin 2022)",lect:1.5,
+  rappel:{min:3,q:`Avec ${k("type my_string = Empty | Cons of char * my_string")}, écris to_my_string, qui passe d'une string à un my_string (avec String.length, String.get et String.sub), puis from_my_string, qui fait l'inverse (avec Char.escaped et ^).`,
+   r:ml(`let rec to_my_string s =
+  if String.length s = 0 then Empty
+  else Cons (String.get s 0,
+             to_my_string (String.sub s 1 (String.length s - 1)))
+
+let rec from_my_string s = match s with
+  | Empty -> ""
+  | Cons (c, r) -> Char.escaped c ^ from_my_string r`)},
+  ess:`<ul><li>${k("String.length s")} : le nombre de caractères. ${k("String.get s 0")} : le premier caractère, un char.</li>
+<li>${k("String.sub s 1 (String.length s - 1)")} : la chaîne sans son premier caractère.</li>
+<li>${k("Char.escaped c")} : la string qui contient seulement c. ${k("^")} colle deux strings.</li>
+<li>Le sujet donne ces fonctions, mais pas la façon de s'en servir : le schéma de to_my_string mérite d'être sur ta feuille.</li></ul>`,
+  piege:`Le 3<sup>e</sup> argument de String.sub est une <b>longueur</b>, pas une position de fin : ${k('String.sub "bonjour" 3 4')} vaut ${k('"jour"')}. Le cas de base est la chaîne vide, testée par ${k("String.length s = 0")}.`,
+  meth:`<p>${k('to_my_string "L1"')}, l'exemple du sujet de 2022.</p>
+<ol><li>« L1 » n'est pas vide : premier caractère ${k("'L'")}, reste ${k('String.sub "L1" 1 1')} = ${k('"1"')}.</li>
+<li>« 1 » : premier caractère ${k("'1'")}, reste ${k('String.sub "1" 1 0')} = ${k('""')}.</li>
+<li>La chaîne vide donne ${k("Empty")}. Résultat : ${k("Cons ('L', Cons ('1', Empty))")}, comme dans le sujet.</li>
+<li>Retour : ${k("from_my_string")} de cette valeur donne ${k('"L" ^ ("1" ^ "")')} = ${k('"L1"')}.</li></ol>`},
+ {id:"auxiliaire",t:"Arithmétique : la fonction auxiliaire « à partir du rang n »",pts:2.5,ou:"exercice 1 (Fermat 2022, Mersenne juin 2022, Pythagore 2024)",lect:2,exo:{g:"PF8",lv:1},
+  ess:`<ul><li>Pour savoir si p est un nombre de Mersenne, on ne sait pas jusqu'à quel rang chercher. Le sujet fait donc écrire d'abord ${k("estMersenneRec p n")} : « existe-t-il un Mₖ égal à p avec k ≥ n ? ».</li>
+<li>Trois cas : Mₙ = p, c'est ${k("true")} ; Mₙ > p, c'est ${k("false")}, car les suivants sont encore plus grands ; sinon, on essaie le rang n + 1.</li>
+<li>Puis la fonction demandée appelle l'auxiliaire au premier rang : ${k("estMersenne p = estMersenneRec p 1")}.</li></ul>`,
+  piege:`Sans le cas « Mₙ > p », la fonction ne s'arrête jamais quand p n'est pas un nombre de Mersenne. Ce cas marche parce que la suite des Mₙ est croissante.`,
+  meth:`<p>Juin 2022, exercice 2, question 3.</p>${ml(`let rec estMersenneRec p n =
+  let m = nbMersenne n in
+  if m = p then true
+  else if m > p then false
+  else estMersenneRec p (n + 1)
+
+let estMersenne p = estMersenneRec p 1`)}
+<ol><li>${k("estMersenneRec 15 3")} : M₃ = 7 &lt; 15, on passe au rang 4 ; M₄ = 15 : ${k("true")}, comme dans le sujet.</li>
+<li>${k("estMersenneRec 15 5")} : M₅ = 31 &gt; 15 : ${k("false")}.</li>
+<li>Même idée en 2024 : trouve_pytha x z essaie y = 1, 2, 3… et lève ${k("Not_found")} dès que y × y ≥ z × z. ${k("trouve_pytha 3 5")} vaut 4.</li></ol>
+<p>L'exercice qui suit : une fonction récursive sur un entier, du niveau de l'exercice 1.</p>`},
+ {id:"puissance",t:"La puissance avec ** et les conversions",pts:1,ou:"exercice 1, question 1 (2022 et juin 2022)",lect:1,
+  rappel:{min:2,q:`Écris puis2 n, qui calcule 2ⁿ en int, avec ${k("**")} (qui ne prend que des float), float_of_int et int_of_float. Puis nbMersenne n, qui vaut 2ⁿ − 1.`,
+   r:ml(`let puis2 n = int_of_float (2. ** float_of_int n)
+let nbMersenne n = puis2 n - 1`)+`<p>${k("nbMersenne 3")} vaut 7.</p>`},
+  ess:`<ul><li>${k("**")} prend deux float et rend un float : ${k("2. ** 3.")} vaut ${k("8.")}.</li>
+<li>${k("float_of_int 3")} vaut ${k("3.")} et ${k("int_of_float 8.")} vaut ${k("8")}.</li>
+<li>Donc la puissance de deux entiers : ${k("int_of_float (float_of_int x ** float_of_int y)")}.</li></ul>`,
+  piege:`${k("2 ** n")} est une erreur de type : 2 et n sont des int. Écris ${k("2.")} avec un point, et convertis n. Les opérations sur les float ont aussi un point : +. -. *. /.`,
+  meth:`<p>Janvier 2022 : Fₙ = 2<sup>2ⁿ</sup> + 1.</p>${ml(`let pow x y = int_of_float (float_of_int x ** float_of_int y)
+let fermat_nbr n = pow 2 (pow 2 n) + 1`)}
+<ol><li>${k("fermat_nbr 2")} = pow 2 (pow 2 2) + 1 = pow 2 4 + 1 = 17.</li>
+<li>${k("fermat_nbr 3")} = pow 2 8 + 1 = 257. Ce sont bien F₂ et F₃ du sujet.</li></ol>`},
+ {id:"liste-n",t:"Fabriquer la liste des n premiers",pts:1.5,ou:"exercice 1, dernière question (tous les ans)",lect:1.5,
+  rappel:{min:3,q:`Écris fermat_list n, la liste des n premiers nombres de Fermat (F₀ à Fₙ₋₁, dans l'ordre que tu veux), avec fermat_nbr.`,
+   r:ml(`let rec fermat_list n =
+  if n <= 0 then []
+  else fermat_nbr (n - 1) :: fermat_list (n - 1)`)+`<p>${k("fermat_list 3")} vaut ${k("[17; 5; 3]")} : les 3 premiers sont F₀, F₁ et F₂, donc le dernier ajouté est de rang n − 1.</p>`},
+  ess:`<ul><li>Une liste se fabrique avec ${k("::")} : l'élément de rang n devant la liste des précédents.</li>
+<li>Le cas de base : n ≤ 0 donne ${k("[]")}.</li>
+<li>La liste sort dans l'ordre décroissant : le sujet accepte les deux ordres.</li></ul>`,
+  piege:`${k("listeMersenne (n - 1) :: nbMersenne n")} est une erreur de type : à gauche de ${k("::")} un élément, à droite une liste. Et compte les rangs : les n premiers nombres de Fermat vont de F₀ à Fₙ₋₁.`,
+  meth:`<p>Juin 2022 : listeMersenne n, avec M₁ = 1, M₂ = 3…</p>${ml(`let rec listeMersenne n =
+  if n <= 0 then []
+  else nbMersenne n :: listeMersenne (n - 1)`)}
+<ol><li>${k("listeMersenne 3")} = 7 :: listeMersenne 2 = 7 :: 3 :: listeMersenne 1 = 7 :: 3 :: 1 :: [].</li>
+<li>Résultat : ${k("[7; 3; 1]")}.</li>
+<li>En 2024 (genere_pytha 50), même schéma avec un rang qui monte et un arrêt dès qu'un nombre dépasse m : ${k("[(3, 4, 5); (5, 12, 13); (7, 24, 25); (9, 40, 41)]")}.</li></ol>`},
+ {id:"exceptions",t:"Lever une exception",pts:1.5,ou:"exercices 1 et 2 (Not_found, Failure, Inversion, Invalid_argument)",lect:1.5,exo:{g:"PF7",lv:0},
+  ess:`<ul><li>${k("raise Not_found")} lève une exception d'OCaml ; ${k('failwith "add_rat"')} lève ${k('Failure "add_rat"')} ; ${k('invalid_arg "my_get"')} lève ${k('Invalid_argument "my_get"')}.</li>
+<li>Une exception à toi : ${k("exception Inversion of nombre")}, puis ${k("raise (Inversion (Ent 0))")}.</li>
+<li>Une exception arrête tout le calcul : il n'y a pas de valeur. ${k("try e with Not_found -> 0")} la rattrape : si e lève Not_found, le tout vaut 0.</li></ul>`,
+  piege:`${k("raise Inversion (Ent 0)")} est une erreur : il faut les parenthèses, ${k("raise (Inversion (Ent 0))")}.`,
+  meth:`<p>Janvier 2024, exercice 2, question 3 : inverser chaque nombre, et lever Inversion avec le nombre nul.</p>${ml(`exception Inversion of nombre
+
+let rec inverse_nombre l = match l with
+  | [] -> []
+  | Ent 0 :: _ -> raise (Inversion (Ent 0))
+  | Ent e :: r -> Rat (1, e) :: inverse_nombre r
+  | Rat (0, d) :: _ -> raise (Inversion (Rat (0, d)))
+  | Rat (n, d) :: r -> Rat (d, n) :: inverse_nombre r`)}
+<ol><li>Les cas nuls d'abord, avant les cas généraux : ${k("Ent 0")} avant ${k("Ent e")}.</li>
+<li>${k("inverse_nombre [Ent 2; Rat (1, 2); Rat (3, 4)]")} vaut ${k("[Rat (1, 2); Rat (2, 1); Rat (4, 3)]")}, l'exemple du sujet.</li>
+<li>${k("inverse_nombre [Ent 1; Ent 0]")} lève ${k("Inversion (Ent 0)")} : pas de liste en résultat.</li></ol>`},
+ {id:"trois",t:"« De trois façons » : List.hd et List.tl, puis le filtrage",pts:2,ou:"exercice 3 (2022), exercice 1 (juin 2022)",lect:2,exo:{g:"PF6",lv:0},
+  ess:`<ul><li>Version 1, avec les accesseurs : ${k("if l = [] then … else … List.hd l … (List.tl l)")}.</li>
+<li>Version 2, avec le filtrage : ${k("function | [] -> … | e :: tl -> …")}. C'est le même calcul : List.hd l devient e, List.tl l devient tl.</li>
+<li>La fonction f est un argument comme les autres : on l'applique, ${k("f e")}, et on la repasse à l'appel récursif.</li></ul>`,
+  piege:`Le cas de base d'un produit vaut 1, pas 0. Et sans le test ${k("l = []")}, ${k("List.hd []")} lève ${k('Failure "hd"')}.`,
+  meth:`<p>Janvier 2022, exercice 3 : map_sum f [a1; …; an] = (f a1) + … + (f an).</p>${ml(`let rec map_sum f l =
+  if l = [] then 0
+  else f (List.hd l) + map_sum f (List.tl l)
+
+let rec map_sum2 f = function
+  | [] -> 0
+  | e :: tl -> f e + map_sum2 f tl`)}
+<ol><li>Le cas de base : la somme de rien vaut 0.</li>
+<li>Le cas général : f appliquée au premier, plus la somme du reste, avec le même f.</li>
+<li>${k("map_sum (fun x -> x * x) [1; 2; 3]")} = 1 + 4 + 9 = 14, avec les deux versions.</li></ol>`},
+ {id:"signature",t:"La signature d'une fonction qui prend une fonction",pts:1,ou:"« Quelle est sa signature ? » (2022, juin 2022), le type de mem (2024)",lect:1.5,exo:{g:"PF1",lv:4},
+  ess:`<ul><li>On lit le corps et on note ce que chaque opération impose : ${k("x + 1")} force un int, ${k("f e")} force f à être une fonction.</li>
+<li>Ce qui n'est contraint par rien reste un type quelconque : ${k("'a")}, ${k("'b")}.</li>
+<li>Les flèches suivent l'ordre des arguments, et le dernier type est le résultat. Une fonction passée en argument se met entre parenthèses.</li></ul>`,
+  piege:`${k("('a -> int) -> 'a list -> int")} et ${k("'a -> int -> 'a list -> int")} ne veulent pas dire la même chose : sans les parenthèses, f ne serait plus un seul argument.`,
+  meth:`<p>Juin 2022 : la signature de prodFonc, dont le cas général est ${k("f (List.hd l) * prodFonc f (List.tl l)")}.</p>
+<ol><li>${k("*")} impose : ${k("f (List.hd l)")} est un int, et le résultat aussi.</li>
+<li>Les éléments de l ne sont contraints par rien : l est une ${k("'a list")}, et f reçoit un 'a. Donc f : ${k("'a -> int")}.</li>
+<li>Signature : ${k("('a -> int) -> 'a list -> int")}.</li></ol>`},
+ {id:"fold",t:"List.fold_left et List.fold_right",pts:2.5,ou:"3e version de « trois façons » (2022, juin 2022), simplifie_nombre (2024)",lect:2,exo:{g:"PF6",lv:2},
+  ess:`<ul><li>${k("List.fold_left f init [a1; …; an]")} = f (… (f (f init a1) a2) …) an. La fonction reçoit <b>l'accumulateur, puis l'élément</b> : ${k("fun acc e -> …")}.</li>
+<li>${k("List.fold_right f [a1; …; an] init")} = f a1 (f a2 (… (f an init))). La fonction reçoit <b>l'élément, puis l'accumulateur</b> : ${k("fun e acc -> …")}, et la liste vient <b>avant</b> init.</li>
+<li>init est le cas de base de la version récursive : 0 pour une somme, 1 pour un produit, ${k("[]")} pour une liste.</li></ul>`,
+  piege:`L'ordre des arguments s'inverse entre les deux : c'est l'erreur la plus courante. Ces deux lignes méritent d'être sur ta feuille A4.`,
+  meth:`${ml(`let map_sum3 f l = List.fold_left (fun acc e -> acc + f e) 0 l
+let prodFonc3 f l = List.fold_right (fun e acc -> f e * acc) l 1`)}
+<ol><li>${k("map_sum3 (fun x -> x * x) [1; 2; 3]")} : acc part de 0, puis 0 + 1 = 1, 1 + 4 = 5, 5 + 9 = 14.</li>
+<li>${k("prodFonc3 (fun x -> x + 1) [1; 2; 3]")} = f 1 * (f 2 * (f 3 * 1)) = 2 × 3 × 4 = 24.</li>
+<li>Pour garder ou enlever des éléments (simplifie_nombre en 2024) : ${k("fun e acc -> if … then acc else e :: acc")}, avec ${k("[]")} pour init.</li></ol>`},
+ {id:"deux-args",t:"Une liste et un autre argument",pts:1,ou:"my_get (2022), union et inter (2024)",lect:1.5,exo:{g:"PF8",lv:3},
+  ess:`<ul><li>On filtre la liste, et l'autre argument suit : ${k("match li with | [] -> … | x :: r -> … f r (n - 1) …")}.</li>
+<li>Souvent les deux diminuent ensemble : on avance dans la liste et le rang baisse de 1.</li>
+<li>Deux cas de base possibles : la liste est vide, ou l'autre argument est arrivé à 0.</li></ul>`,
+  piege:`N'oublie pas l'autre argument à l'appel récursif : ${k("prefLong r (n - 1)")}, pas ${k("prefLong r")}.`,
+  meth:`<p>Janvier 2022, exercice 2, question 4 : le caractère d'indice i, sinon Invalid_argument.</p>${ml(`let rec my_get s i = match s with
+  | Empty -> invalid_arg "my_get"
+  | Cons (c, r) -> if i = 0 then c else my_get r (i - 1)`)}
+<ol><li>${k("my_get (Cons ('L', Cons ('1', Empty))) 1")} : i n'est pas 0, on passe à ${k("Cons ('1', Empty)")} avec i = 0, donc ${k("'1'")}.</li>
+<li>Avec i = 2, on arrive à ${k("Empty")} : l'exception ${k('Invalid_argument "my_get"')}, comme le veut le sujet.</li></ol>`},
+ {id:"terminal",t:"La récursivité terminale, avec un accumulateur",pts:0.5,ou:"au programme (TD), jamais une question à part",lect:1.5,exo:{g:"PF6",lv:1},
+  ess:`<ul><li>Une fonction est <b>terminale</b> quand l'appel récursif est la toute dernière opération : rien n'est calculé après lui.</li>
+<li>On ajoute un accumulateur acc, qui porte le résultat partiel : ${k("let rec aux acc l = match l with | [] -> acc | x :: r -> aux (acc + x) r in aux 0 li")}.</li>
+<li>Le cas de base renvoie acc, et acc part du cas de base de la version récursive.</li></ul>`,
+  piege:`${k("x + somme r")} n'est pas terminale : le + se fait après l'appel. Et un accumulateur de liste est à l'envers : on finit par ${k("List.rev acc")}.`,
+  meth:`${ml(`let rec factI n a =
+  if n = 0 then a
+  else factI (n - 1) (n * a)`)}
+<ol><li>${k("factI 4 1")} : (4, 1), puis (3, 4), (2, 12), (1, 24), (0, 24).</li>
+<li>n vaut 0 : on renvoie a = 24 = 4!. Rien n'attend après les appels.</li></ol>`}],
+ blanc:[
+  {t:"Un test sans récursivité",ou:"exercice 1, question 1",pts:2,g:"PF8",lv:0},
+  {t:"Une fonction récursive sur un entier",ou:"exercice 1",pts:3.5,g:"PF8",lv:1},
+  {t:"Lever une exception",ou:"exercice 1, question 2",pts:1.5,g:"PF7",lv:0},
+  {t:"Écrire une valeur du type somme",ou:"exercice 2",pts:1.5,g:"PF5",lv:0},
+  {t:"Ce que renvoie une fonction sur le type",ou:"exercice 2",pts:2.5,g:"PF5",lv:1},
+  {t:"La branche qui manque",ou:"exercice 2",pts:3,g:"PF5",lv:2},
+  {t:"La version récursive",ou:"exercice 3, question 1",pts:2,g:"PF6",lv:0},
+  {t:"La signature",ou:"exercice 3, question 1",pts:1.5,g:"PF1",lv:4},
+  {t:"La version avec un itérateur",ou:"exercice 3, question 3",pts:2.5,g:"PF6",lv:2}]
+}};
+})();
+
+</script>
+<script>
+/* Le CC1 d'Algèbre en 1 h (reporté, date à venir) : la liste de dix points annoncée par le prof le 11/11 (chapitres 1 à 4 du poly).
+   Aucun barème connu : les points sont ceux des thèmes de matiere-lin.js (estimés d'après la longueur des exercices de la liste).
+   Le sujet sera pris parmi ces exercices : les exemples des méthodes sont donc les exercices de la liste eux-mêmes.
+   Tous les calculs sont refaits par tools/verif/lin-express.js. Les exercices sont tirés de gen-lin.js. */
+(()=>{
+const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
+(window.EXPRESS=window.EXPRESS||{}).lin={cc1:{
+ t:"Le CC1 d'Algèbre en 1 h",du:"du CC",au:"au CC",
+ lead:"Le programme annoncé par le prof le 11/11 : le sujet sera fait d'exercices pris dans une liste de dix points (les 2 questions de cours, TD 1 ex. 1 et 7, TD 2 ex. 10, 12 et 13, TD 3 ex. 3, 4 et 5). Le CC1 a été reporté : si le prof change ce programme, ce parcours changera. Pour chaque notion : l'essentiel, la méthode sur l'exercice même de la liste, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20 (barème inconnu : les points sont estimés par moi).",
+ carte:"la liste annoncée par le prof en 1 h, le pivot de Gauss d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Quatre questions, comme un CC pris dans la liste : la définition, un pivot de Gauss, une condition sur a, b, c, puis une combinaison linéaire. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue (barème estimé par moi).",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"pivot",t:"Résoudre un système par le pivot de Gauss",pts:4,ou:"TD 2, ex. 10 (dans la liste)",lect:2,exo:{g:"AL1",lv:3},
+  ess:`<ul><li>On écrit la <b>matrice augmentée</b> : une ligne par équation, une colonne par inconnue, puis les seconds membres après le trait.</li>
+<li>On <b>échelonne</b> : avec le pivot de la ligne 1, on fait des zéros en dessous (L₂ ← L₂ − 2L₁…), puis on recommence avec la ligne 2. Chaque opération s'écrit sur la copie.</li>
+<li>On <b>lit</b> : une ligne (0 … 0 | b) avec b ≠ 0 se lit 0 = b, donc aucune solution : S = ∅. Sinon, les inconnues des colonnes qui ont un pivot sont <b>principales</b>, les autres sont <b>libres</b>.</li>
+<li>On <b>remonte</b> de bas en haut. Aucune inconnue libre : une seule solution. Au moins une libre : une infinité, écrite avec les inconnues libres.</li></ul>`,
+  piege:`Une ligne (0 … 0 | 0) se lit 0 = 0 : elle ne gêne pas. C'est 0 = b avec b ≠ 0 qui rend le système impossible. Et un pivot n'est jamais 0 : échange deux lignes avant.`,
+  meth:`<p>TD 2, ex. 10, système 1 : x + 2y − z = 3, 2x + 5y + z = 4, 3x + 7y = 2.</p>
+<ol><li>L₂ ← L₂ − 2L₁ et L₃ ← L₃ − 3L₁ : les lignes 2 et 3 deviennent (0 1 3 | −2) et (0 1 3 | −7).</li>
+<li>L₃ ← L₃ − L₂ : la ligne 3 devient (0 0 0 | −5), c'est-à-dire 0 = −5. Le système est incompatible : S = ∅.</li></ol>
+<p>Système 4 : x + y − 2z + 3t = 1, 2x + 3y + z − t = 4.</p>
+<ol><li>L₂ ← L₂ − 2L₁ : la ligne 2 devient (0 1 5 −7 | 2). Pivots en colonnes 1 et 2 : x et y sont principales, z et t sont libres.</li>
+<li>On remonte : y = 2 − 5z + 7t, puis x = 1 − y + 2z − 3t = −1 + 7z − 10t.</li>
+<li>S = {(−1 + 7z − 10t, 2 − 5z + 7t, z, t) | z, t ∈ ℝ} : une infinité de solutions.</li></ol>`},
+ {id:"param",t:"Seconds membres a, b, c et paramètre m",pts:4,ou:"TD 2, ex. 12 et 13 (dans la liste)",lect:2,exo:{g:"AL2",lv:2},
+  ess:`<ul><li><b>Seconds membres a, b, c</b> : on fait le pivot en gardant a, b, c en lettres dans la dernière colonne. La dernière ligne devient (0 0 0 | une expression en a, b, c) : le système a des solutions si et seulement si cette expression vaut 0.</li>
+<li><b>Paramètre m</b> : on ne divise jamais par une expression qui peut être nulle. On met en haut une ligne dont le pivot est un nombre (1 si possible), on échelonne, puis on factorise le coefficient qui reste : 1 − m² = (1 − m)(1 + m).</li>
+<li>On <b>discute</b> : d'abord le cas où ce coefficient n'est pas nul, puis chaque valeur de m qui l'annule, une par une.</li></ul>`,
+  piege:`Avec m, la conclusion doit couvrir tous les réels : « si m ≠ 1 et m ≠ −1… ; si m = 1… ; si m = −1… ». Oublier un cas, c'est perdre une bonne partie des points.`,
+  meth:`<p>TD 2, ex. 12 : x + 2y − 3z = a, 3x + 8y − 14z = b, 2x + 4z = c.</p>
+<ol><li>L₂ ← L₂ − 3L₁ et L₃ ← L₃ − 2L₁ : (0 2 −5 | b − 3a) et (0 −4 10 | c − 2a).</li>
+<li>L₃ ← L₃ + 2L₂ : (0 0 0 | −8a + 2b + c).</li>
+<li>Le système a au moins une solution si et seulement si −8a + 2b + c = 0, c'est-à-dire c = 8a − 2b.</li></ol>
+<p>TD 2, ex. 13 : mx + y = 1, x + my = m.</p>
+<ol><li>m peut être nul : L₁ ↔ L₂, puis L₂ ← L₂ − mL₁. On obtient x + my = m et (1 − m²)y = 1 − m².</li>
+<li>Si m ≠ 1 et m ≠ −1 : on divise par 1 − m², y = 1, puis x = m − m × 1 = 0. Une seule solution : S = {(0, 1)}.</li>
+<li>Si m = 1 : il reste x + y = 1, S = {(1 − y, y) | y ∈ ℝ}. Si m = −1 : il reste x − y = −1, S = {(y − 1, y) | y ∈ ℝ}.</li></ol>`},
+ {id:"cours",t:"Les 2 questions de cours : la définition et la proposition 37",pts:3,ou:"les 2 questions de cours de la liste",lect:1,
+  rappel:{min:4,q:`Sur une feuille, sans regarder : écris la définition d'un sous-espace vectoriel de ℝⁿ, puis démontre la proposition 37 : si v₁, …, vₖ ∈ ℝⁿ, alors Vect(v₁, …, vₖ) est un sous-espace vectoriel de ℝⁿ.`,
+   r:`<p>Soit F un sous-ensemble de ℝⁿ. F est un sous-espace vectoriel de ℝⁿ si : ${Z} ∈ F ; ∀x, y ∈ F, x + y ∈ F ; ∀x ∈ F, ∀λ ∈ ℝ, λx ∈ F.</p>
+<p>Proposition 37. On vérifie les trois conditions. 1. ${Z} = 0v₁ + … + 0vₖ ∈ Vect(v₁, …, vₖ). 2. Soient x, y ∈ Vect(v₁, …, vₖ) : x = λ₁v₁ + … + λₖvₖ et y = μ₁v₁ + … + μₖvₖ, donc x + y = (λ₁ + μ₁)v₁ + … + (λₖ + μₖ)vₖ ∈ Vect(v₁, …, vₖ). 3. Soient x = λ₁v₁ + … + λₖvₖ et α ∈ ℝ : αx = (αλ₁)v₁ + … + (αλₖ)vₖ ∈ Vect(v₁, …, vₖ).</p>`},
+  ess:`<p>La <b>définition 36</b> du poly. Soit F un sous-ensemble de ℝⁿ. On dit que F est un sous-espace vectoriel de ℝⁿ si :</p>
+<ul><li>${Z} ∈ F ;</li><li>∀x, y ∈ F, x + y ∈ F ;</li><li>∀x ∈ F, ∀λ ∈ ℝ, λx ∈ F.</li></ul>
+<p>La <b>proposition 37</b> : si v₁, …, vₖ ∈ ℝⁿ (k ≥ 1), alors Vect(v₁, …, vₖ) est un sous-espace vectoriel de ℝⁿ. Vect(v₁, …, vₖ) est l'ensemble des combinaisons linéaires λ₁v₁ + … + λₖvₖ. On la démontre en vérifiant les trois conditions de la définition.</p>`,
+  piege:`Sans les « ∀ », la définition ne dit rien. Dans la démonstration, x et y ont chacun leurs coefficients (λᵢ pour x, μᵢ pour y). Et le poly écrit « λx » au point 3 : c'est une coquille, le nombre s'appelle α.`,
+  meth:`<p>La démonstration de la proposition 37, à écrire telle quelle :</p>
+<ol><li>${Z} = 0v₁ + … + 0vₖ : c'est une combinaison linéaire de v₁, …, vₖ, donc ${Z} ∈ Vect(v₁, …, vₖ).</li>
+<li>Soient x, y ∈ Vect(v₁, …, vₖ). Il existe des réels λ₁, …, λₖ et μ₁, …, μₖ tels que x = λ₁v₁ + … + λₖvₖ et y = μ₁v₁ + … + μₖvₖ. Alors x + y = (λ₁ + μ₁)v₁ + … + (λₖ + μₖ)vₖ, donc x + y ∈ Vect(v₁, …, vₖ).</li>
+<li>Soient x ∈ Vect(v₁, …, vₖ) et α ∈ ℝ, avec x = λ₁v₁ + … + λₖvₖ. Alors αx = (αλ₁)v₁ + … + (αλₖ)vₖ, donc αx ∈ Vect(v₁, …, vₖ).</li>
+<li>Les trois conditions sont vraies : Vect(v₁, …, vₖ) est un sous-espace vectoriel de ℝⁿ.</li></ol>`},
+ {id:"demo",t:"Les démonstrations courtes : λx = 0 et les propriétés de Vect",pts:3.5,ou:"TD 1, ex. 7 et TD 3, ex. 4 (dans la liste)",lect:1.5,
+  rappel:{min:4,q:`Sur une feuille, sans regarder : démontre que λx = ${Z} si et seulement si x = ${Z} ou λ = 0 (TD 1, ex. 7). Puis, avec x, y ∈ Vect(u, v) et α, β ∈ ℝ, montre que αx + βy ∈ Vect(u, v) (TD 3, ex. 4).`,
+   r:`<p>Avec x = (x₁, …, xₙ). Sens ⇐ : si λ = 0, λx = (0x₁, …, 0xₙ) = ${Z} ; si x = ${Z}, λx = (λ × 0, …, λ × 0) = ${Z}. Sens ⇒ : si λx = ${Z}, alors λxᵢ = 0 pour tout i. Si λ = 0, c'est fini. Sinon, on divise par λ : xᵢ = 0 pour tout i, donc x = ${Z}.</p>
+<p>Il existe des réels a, b, c, d tels que x = au + bv et y = cu + dv. Alors αx + βy = (αa + βc)u + (αb + βd)v : c'est une combinaison linéaire de u et v, donc αx + βy ∈ Vect(u, v).</p>`},
+  ess:`<ul><li><b>« Si et seulement si »</b> : deux sens à démontrer, ⇐ puis ⇒.</li>
+<li><b>Une égalité entre vecteurs</b>, c'est une égalité pour chaque composante.</li>
+<li><b>Être dans Vect(u, v)</b>, c'est s'écrire au + bv : on écrit les coefficients, on calcule, puis on regroupe ce qui est devant u et devant v.</li>
+<li><b>Une inclusion A ⊆ B</b> : on prend un élément quelconque de A et on montre qu'il est dans B. Une égalité, ce sont deux inclusions.</li></ul>`,
+  piege:`On ne divise que par un nombre non nul : dans λx = ${Z}, on traite le cas λ = 0 à part avant de diviser par λ. Et chaque démonstration finit par sa conclusion écrite.`,
+  meth:`<p>TD 1, ex. 7, avec x = (x₁, …, xₙ) :</p>
+<ol><li>⇐ : si λ = 0, λx = (0x₁, …, 0xₙ) = ${Z}. Si x = ${Z}, λx = (λ × 0, …, λ × 0) = ${Z}.</li>
+<li>⇒ : si λx = ${Z}, alors λxᵢ = 0 pour tout i. Si λ = 0, c'est fini. Sinon, on divise par λ : xᵢ = 0 pour tout i, donc x = ${Z}.</li></ol>
+<p>TD 3, ex. 4 :</p>
+<ol><li>${Z} = 0u + 0v + 0w et u = 1u + 0v + 0w (de même pour v et w) : tous sont dans Vect(u, v, w).</li>
+<li>x = au + bv et y = cu + dv, donc αx + βy = (αa + βc)u + (αb + βd)v ∈ Vect(u, v).</li>
+<li>Vect((2, −1, 3)) = {(2t, −t, 3t) | t ∈ ℝ}.</li>
+<li>Un élément de Vect(λu) s'écrit μ(λu) = (μλ)u ∈ Vect(u) : Vect(λu) ⊆ Vect(u). Si λ ≠ 0, tu = (t/λ)(λu) donne l'autre inclusion. Si λ = 0, Vect(λu) = {${Z}}. Il y a égalité si et seulement si λ ≠ 0 ou u = ${Z}.</li></ol>`},
+ {id:"cl",t:"Combinaison linéaire ou pas",pts:2,ou:"TD 3, ex. 3 (dans la liste)",lect:1,exo:{g:"AL4",lv:1},
+  ess:`<ul><li>w est combinaison linéaire de u et v s'il existe des réels α, β tels que w = αu + βv.</li>
+<li>Composante par composante, c'est un <b>système</b> dont les inconnues sont α et β. Sa matrice augmentée a <b>une colonne par vecteur</b>, et w après le trait.</li>
+<li>Pivot de Gauss : si le système est compatible, la réponse est oui. Aucune inconnue libre : l'écriture est unique ; sinon, il y en a une infinité.</li></ul>`,
+  piege:`Les vecteurs vont en colonnes, pas en lignes. Et finis par la vérification : remets tes coefficients dans αu + βv et retrouve w.`,
+  meth:`<p>TD 3, ex. 3, question 1 : (−4, 5) est-il combinaison linéaire de (1, 2) et (2, 3) ?</p>
+<ol><li>(−4, 5) = α(1, 2) + β(2, 3) donne α + 2β = −4 et 2α + 3β = 5.</li>
+<li>L₂ ← L₂ − 2L₁ : −β = 13. Pas de ligne 0 = b avec b ≠ 0, et aucune inconnue libre.</li>
+<li>β = −13, puis α = −4 − 2β = 22. Oui, et l'écriture est unique : (−4, 5) = 22(1, 2) − 13(2, 3). Vérification : 22 − 26 = −4 et 44 − 39 = 5.</li></ol>`},
+ {id:"vect",t:"Quels vecteurs enlever d'un Vect",pts:2,ou:"TD 3, ex. 5 (dans la liste)",lect:1.5,exo:{g:"AL3",lv:2},
+  ess:`<ul><li>La <b>proposition 35</b> : Vect(v₁, …, vₖ, v) = Vect(v₁, …, vₖ) si et seulement si v ∈ Vect(v₁, …, vₖ).</li>
+<li>Donc on peut enlever un vecteur sans changer le sous-espace engendré si et seulement s'il est <b>combinaison linéaire des autres</b>.</li>
+<li>Pour chaque vecteur, on cherche s'il s'écrit avec les autres (un petit système). Avec deux vecteurs, on regarde s'ils sont colinéaires.</li></ul>`,
+  piege:`On enlève un vecteur à la fois. Si w = u + v, on peut enlever u, v ou w, mais un seul : les deux qui restent ne sont pas colinéaires.`,
+  meth:`<ol><li>Dans ℝ², u = (1, 2) et v = (−2, −4) : v = −2u. On peut enlever u ou v, un seul : Vect(u, v) = Vect(u) = Vect(v).</li>
+<li>u = (1, 0, 1), v = (0, 1, 1), w = (1, 1, 2) : w = u + v. On peut enlever n'importe lequel des trois, mais un seul.</li>
+<li>u = (1, 1, 0), v = (0, 1, 1), w = (1, 0, 1) : w = au + bv s'écrit (a, a + b, b) = (1, 0, 1), donc a = 1, b = 1 et a + b = 0 : impossible. Les deux autres essais échouent de la même façon : on ne peut enlever aucun vecteur.</li></ol>`},
+ {id:"repere",t:"Changer de repère",pts:1.5,ou:"TD 1, ex. 1 (dans la liste)",lect:1,exo:{g:"AL6",lv:0},
+  ess:`<ul><li>(O ; ${V("u")}, ${V("v")}) est un <b>repère</b> du plan quand ${V("u")} et ${V("v")} ne sont pas colinéaires. Avec leurs coordonnées (a, b) et (c, d) : ad − bc ≠ 0 (proposition 32).</li>
+<li><b>Du nouveau repère vers l'ancien</b> : si M a pour coordonnées (x′, y′) dans le nouveau, on développe ${V("OM")} = x′${V("u")} + y′${V("v")} avec les coordonnées de ${V("u")} et ${V("v")}.</li>
+<li><b>De l'ancien vers le nouveau</b> : on résout ce système en x′ et y′.</li></ul>`,
+  piege:`Les coordonnées dans un repère sont uniques : c'est ce qui permet d'égaler les nombres devant ${V("i")} et devant ${V("j")}.`,
+  meth:`<p>TD 1, ex. 1 : le repère (O ; ${V("i")} + ${V("j")}, ${V("i")} − ${V("j")}).</p>
+<ol><li>Coordonnées (1, 1) et (1, −1) : 1 × (−1) − 1 × 1 = −2 ≠ 0, les vecteurs ne sont pas colinéaires : c'est un repère.</li>
+<li>Du nouveau vers l'ancien : ${V("OM")} = x′(${V("i")} + ${V("j")}) + y′(${V("i")} − ${V("j")}) = (x′ + y′)${V("i")} + (x′ − y′)${V("j")}. Dans le premier repère, M a pour coordonnées (x′ + y′, x′ − y′).</li>
+<li>De l'ancien vers le nouveau : x = x′ + y′ et y = x′ − y′. En additionnant, x′ = (x + y)/2 ; en soustrayant, y′ = (x − y)/2.</li></ol>`}],
+ blanc:[
+  {t:"Question de cours : la définition d'un sous-espace vectoriel",ou:"question de cours de la liste",pts:3,g:"AC1",lv:0},
+  {t:"Résoudre un système par le pivot de Gauss",ou:"TD 2, ex. 10",pts:7,g:"AL1",lv:4},
+  {t:"La condition sur a, b, c",ou:"TD 2, ex. 12",pts:6,g:"AL2",lv:1},
+  {t:"Combinaison linéaire ou pas",ou:"TD 3, ex. 3",pts:4,g:"AL4",lv:0}]
+}};
+})();
+
+</script>
+<script>
 /* Le CC en 1 h (sa demande du 21/11) : tout le programme d'une épreuve en 60 minutes au plus, ce qui rapporte le plus de points d'abord.
    Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice tiré d'un générateur, à faire soi-même avant la correction.
    À la fin, un sujet express noté sur 20. Le contenu est dans express-<matière>.js (window.EXPRESS[sid][épreuve]).
