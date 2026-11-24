@@ -11705,6 +11705,43 @@ SUBJ.usi={name:"USI",code:"HAI103I",color:"#5BF29A",coef:4,share:1,key:"rev-usi-
 
 </script>
 <script>
+/* Automates : « Jouons aux automates » (HAI104I, Anne-Élisabeth Baert).
+   Un seul examen écrit en janvier, 1 h, aucun document ni matériel, 100 % de la note, coefficient 3 du bloc info (MCC 2026-2027).
+   Sujets : janvier 2026 (1 h, sujet et corrigé officiels), janvier 2023 et 2024, juin 2023 et 2024 (2 h) dans Moodle-S1/HAI104I.
+   Pour l'instant : la page de la matière, l'examen en 1 h (express-aut.js) et les générateurs (gen-aut.js) ; pas encore de leçons.
+   Couleur provisoire, en attendant son choix (question dans ~/claude/point/questions/peche.md). */
+(function(){
+window.SUBJ=window.SUBJ||{};
+const infos=`<p><b>L'examen</b> : 1 h, aucun document ni matériel, 100 % de la note de l'UE (coefficient 3 du bloc informatique). Session 1 entre le 4 et le 15 janvier ; le jour n'est pas encore publié. Seconde chance : un écrit d'1 h en juin.</p>
+<p><b>La forme du sujet de janvier 2026</b> (même enseignante), barème indicatif :</p>
+<ul><li>QCM, 5 points : un sous-mot, deux questions d'expressions régulières, les mots acceptés par un automate. Une mauvaise case coûte 0,5 point.</li>
+<li>Exercice 1, 1 point : un automate complet à 3 états pour un langage décrit.</li>
+<li>Exercice 2, 2 points : une expression régulière et un automate pour un langage décrit.</li>
+<li>Exercice 3, 3 points : déterminiser un automate.</li>
+<li>Exercice 4, 9 points : les quotients à gauche L<sub>u</sub> = { v | uv ∈ L } : sur des exemples, tous les quotients d'un langage et l'automate qu'ils forment, la preuve que L<sub>u</sub> est reconnaissable, les règles, le quotient d'une expression.</li></ul>
+<p><b>Les sujets de 2023 et 2024</b> (en 2 h) avaient la même forme avec une autre opération à la place du quotient (enlever la première lettre L<sup>−p</sup>, la dernière L<sup>−d</sup>, le miroir, a⁻¹L), plus le complémentaire d'un automate non déterministe et les équations de langages. Les équations ne sont pas tombées en 2026.</p>
+<p class="muted">Date de l'examen supposée : le premier jour de la session (lundi 4/01), pour que les révisions soient prêtes quel que soit le jour. Elle sera corrigée quand elle paraîtra dans Prose.</p>`;
+SUBJ.aut={name:"Automates",code:"HAI104I",color:"#FF9470",coef:3,share:1,key:"rev-aut-v1",from:"2026-12-18",
+ exams:[{id:"exam",label:"Examen",day:"2027-01-04",start:"09:00",end:"10:00",place:"salle à confirmer",dur:"1 h",share:1,unsure:"Date supposée : la session 1 va du 4 au 15 janvier et le jour n'est pas encore publié. J'ai pris le premier jour, pour que tout soit prêt à temps. Je la corrigerai quand elle sera dans Prose."}],
+ docs:"aucun",examMinutes:30,examMorning:"Refais de tête une déterminisation et les quotients de a*b* avec leur automate, puis relis la preuve « Lu est reconnaissable ».",
+ prog:"Tout le cours : mots et langages (préfixe, suffixe, facteur, sous-mot, ordre lexicographique), expressions régulières, automates déterministes et non déterministes, déterminisation, complémentaire, automates standards, union, produit et étoile, langages reconnaissables et opérations sur les langages (quotient, miroir, préfixes), équations de langages.",
+ chapters:{1:"1. Mots et langages",2:"2. Expressions régulières",3:"3. Automates, déterminisation",4:"4. Opérations sur les langages"},
+ concepts:[],quiz:[],td:[],ann:[],
+ tdTitle:"Exercices corrigés",tdPrefix:"Ex.",
+ pages:[{id:"infos",t:"L'examen en bref",html:infos}],
+ /* thèmes : points du sujet de janvier 2026 (1 h), le modèle de l'examen */
+ themes:[
+  {id:"quotients",t:"Quotients à gauche et opérations sur les langages",pts:9,src:"exercice 4 en 2026 (9 points) ; une opération sur les langages tous les ans (9 à 11 points sur 20 en 2023 et 2024)"},
+  {id:"er",t:"Expressions régulières",pts:3.5,src:"QCM 2 et 3 (2,5 points) et exercice 2 (1 point) en 2026"},
+  {id:"det",t:"Déterminiser un automate (et le complémentaire)",pts:3,src:"exercice 3 en 2026 ; 3 à 4 points en 2023 et 2024"},
+  {id:"construire",t:"Construire un automate pour un langage décrit",pts:2,src:"exercice 1 et exercice 2 en 2026 ; question 1 en 2023 et 2024"},
+  {id:"lire",t:"Lire un automate : les mots acceptés",pts:1.25,src:"QCM 4 en 2026"},
+  {id:"mots",t:"Mots : préfixe, suffixe, facteur, sous-mot",pts:1.25,src:"QCM 1 en 2026 ; l'ordre lexicographique en 2024"}],
+ tasks:[]};
+})();
+
+</script>
+<script>
 /* Leçons pas à pas de géométrie (HAX104X, CC1 du mardi 10 novembre).
    Programme : poly jusqu'à la fin du §3.2, feuille de TD 1, les 12 démos exigibles.
    Ordre choisi pour rapporter le plus de points d'abord (définitions, Thalès, symétrie centrale). */
@@ -33030,6 +33067,466 @@ G.add("usi",[
 
 </script>
 <script>
+/* Générateurs d'Automates (HAI104I, examen de janvier en 1 h, sujets d'A.-E. Baert).
+   Les réponses sont jugées par le calcul : un automate ou une expression tapés sont comparés au langage attendu,
+   et le premier mot (le plus court) qui les sépare est montré. */
+(function(){
+"use strict";
+const G=window.GEN,O=G.outils;
+const AB=["a","b"];
+const mot=w=>w===""?"ε":w;
+const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
+const nbA=(w,c)=>[...w].filter(x=>x===c).length;
+
+/* ---------- automates : états 0..n-1, d[q][lettre] = liste des états d'arrivée ---------- */
+function auto(noms,init,fin,T){noms=noms.map(String);const ix=x=>noms.indexOf(String(x)),d=noms.map(()=>({}));
+  T.forEach(([p,c,q])=>{const L=d[ix(p)][c]=d[ix(p)][c]||[];if(!L.includes(ix(q)))L.push(ix(q));});
+  return {n:noms.length,noms,init:init.map(ix),fin:noms.map(x=>fin.map(String).includes(x)),d};}
+const tri=E=>[...new Set(E)].sort((x,y)=>x-y);
+function clos(A,E){const S=new Set(E),P=[...E];while(P.length){const q=P.pop();(A.d[q]["ε"]||[]).forEach(r=>{if(!S.has(r)){S.add(r);P.push(r);}});}return tri([...S]);}
+const pas=(A,E,c)=>clos(A,E.flatMap(q=>A.d[q][c]||[]));
+function lit(A,w,E){E=E||clos(A,A.init);for(const c of w)E=pas(A,E,c);return E;}
+const accepte=(A,w)=>lit(A,w).some(q=>A.fin[q]);
+/* déterminisation par les ensembles d'états, dans l'ordre où on les découvre (lettre a d'abord) */
+function det(A,dep){const k=E=>E.join(","),d0=dep||clos(A,A.init),V=new Map([[k(d0),0]]),E=[d0],T=[];
+  for(let i=0;i<E.length;i++){T.push({});AB.forEach(c=>{const F=pas(A,E[i],c);if(!V.has(k(F))){V.set(k(F),E.length);E.push(F);}T[i][c]=V.get(k(F));});}
+  return {E,T,fin:E.map(S=>S.some(q=>A.fin[q]))};}
+/* le plus court mot sur lequel deux automates ne sont pas d'accord, ou null s'ils reconnaissent le même langage */
+function difference(A,B,depA,depB){const k=(x,y)=>x.join(",")+"|"+y.join(","),a0=depA||clos(A,A.init),b0=depB||clos(B,B.init),vu=new Set([k(a0,b0)]),F=[[a0,b0,""]];
+  for(let i=0;i<F.length;i++){const [x,y,w]=F[i],ax=x.some(q=>A.fin[q]),by=y.some(q=>B.fin[q]);if(ax!==by)return {w,dansA:ax};
+    for(const c of AB){const nx=pas(A,x,c),ny=pas(B,y,c),kk=k(nx,ny);if(!vu.has(kk)){vu.add(kk);F.push([nx,ny,w+c]);}}}
+  return null;}
+/* l'automate déterministe complet minimal, états dans l'ordre du parcours depuis l'état initial, avec un mot qui mène à chacun */
+function minimal(A,dep){const D=det(A,dep);let cl=D.fin.map(f=>f?1:0),nb=new Set(cl).size;
+  for(;;){const m=new Map(),ncl=D.E.map((_,i)=>{const s=cl[i]+"/"+AB.map(c=>cl[D.T[i][c]]).join("/");if(!m.has(s))m.set(s,m.size);return m.get(s);});
+    if(m.size===nb){cl=ncl;break;}nb=m.size;cl=ncl;}
+  const num=new Map([[cl[0],0]]),rep=[0],acces=[""];
+  for(let i=0;i<rep.length;i++)AB.forEach(c=>{const j=D.T[rep[i]][c];if(!num.has(cl[j])){num.set(cl[j],rep.length);rep.push(j);acces.push(acces[i]+c);}});
+  return {n:rep.length,T:rep.map(r=>({a:num.get(cl[D.T[r].a]),b:num.get(cl[D.T[r].b])})),fin:rep.map(r=>D.fin[r]),acces};}
+const versAuto=(M,noms)=>auto(noms,[noms[0]],noms.filter((_,i)=>M.fin[i]),M.T.flatMap((t,i)=>AB.map(c=>[noms[i],c,noms[t[c]]])));
+const qn=n=>[...Array(n)].map((_,i)=>"q"+i);
+
+/* ---------- expressions régulières : + union, juxtaposition, * étoile, ⁺, ε, ∅ ---------- */
+function lisER(src){const s=String(src==null?"":src).toLowerCase().replace(/\^\s*\{?\s*\+\s*\}?|⁺/g,"⁺").replace(/\^\s*\{?\s*\*\s*\}?|[∗⋆*]/g,"*")
+    .replace(/∅|ø|vide|\{\s*\}/g,"∅").replace(/epsilon|eps|ϵ|ε|e|\(\s*\)/g,"ε").replace(/[·.\s]/g,"").replace(/\|/g,"+");
+  let p=0;if(!s)return null;
+  function atome(){const c=s[p];
+    if(c==="a"||c==="b"){p++;return {t:"c",c};}
+    if(c==="ε"){p++;return {t:"e"};}
+    if(c==="∅"){p++;return {t:"0"};}
+    if(c==="("){p++;const x=union();if(!x||s[p]!==")")return null;p++;return x;}
+    return null;}
+  function facteur(){let x=atome();while(x&&(s[p]==="*"||s[p]==="⁺")){x={t:s[p]==="*"?"s":"+",x};p++;}return x;}
+  function produit(){let x=facteur();while(x&&p<s.length&&s[p]!=="+"&&s[p]!==")"){const y=facteur();x=y&&{t:"p",l:x,r:y};}return x;}
+  function union(){let x=produit();while(x&&s[p]==="+"){p++;const y=produit();x=y&&{t:"u",l:x,r:y};}return x;}
+  const r=union();return r&&p===s.length?r:null;}
+function deER(T){const d=[],nv=()=>{d.push({});return d.length-1;},arc=(p,c,q)=>{(d[p][c]=d[p][c]||[]).push(q);};
+  function f(t){const i=nv(),o=nv();
+    if(t.t==="c")arc(i,t.c,o);else if(t.t==="e")arc(i,"ε",o);
+    else if(t.t==="u"||t.t==="p"){const L=f(t.l),R=f(t.r);arc(i,"ε",L[0]);if(t.t==="u"){arc(i,"ε",R[0]);arc(L[1],"ε",o);}else arc(L[1],"ε",R[0]);arc(R[1],"ε",o);}
+    else if(t.t!=="0"){const X=f(t.x);arc(i,"ε",X[0]);arc(X[1],"ε",o);arc(X[1],"ε",X[0]);if(t.t==="s")arc(i,"ε",o);}
+    return [i,o];}
+  const [i,o]=f(T);return {n:d.length,noms:d.map((_,k)=>String(k)),init:[i],fin:d.map((_,k)=>k===o),d};}
+const erA=s=>{const t=lisER(s);return t?deER(t):null;};
+function ecrit(t,html,p){p=p||0;let s,q;
+  if(t.t==="c"){s=t.c;q=3;}else if(t.t==="e"){s="ε";q=3;}else if(t.t==="0"){s="∅";q=3;}
+  else if(t.t==="u"){s=ecrit(t.l,html,0)+" + "+ecrit(t.r,html,0);q=0;}
+  else if(t.t==="p"){s=ecrit(t.l,html,1)+ecrit(t.r,html,1);q=1;}
+  else {s=ecrit(t.x,html,3)+(html?(t.t==="s"?"<sup>∗</sup>":"<sup>+</sup>"):(t.t==="s"?"*":"⁺"));q=2;}
+  return q<p?"("+s+")":s;}
+const erH=s=>`<span class="nf">${ecrit(lisER(s),true)}</span>`,erT=s=>ecrit(lisER(s),false);
+const SYM=[["ε","ε"],["∅","∅"],["*","*"],["⁺","⁺"],["+"," + "],["(","("],[")",")"]];
+const AIDE_ER="Tape + pour « ou », * pour l'étoile, ⁺ (ou ^+) pour « au moins une fois », e ou ε pour le mot vide, ∅ pour le langage vide. Par exemple : (a + b)*bb.";
+
+/* ---------- dessin d'un automate (états en ligne, arcs courbes) ---------- */
+function dessin(A){const n=A.n,dx=88,R=17,X=i=>40+dx*i,Y=0,arcs=new Map();
+  A.d.forEach((t,p)=>Object.keys(t).forEach(c=>t[c].forEach(q=>{const k=p+">"+q;arcs.set(k,(arcs.get(k)||[]).concat(c));})));
+  let haut=-30,bas=30;const P=[],pt=(x,y)=>Math.round(x*10)/10+","+Math.round(y*10)/10;
+  const fleche=(x,y,ux,uy)=>{const L=8,W=4.5;return `<path d="M${pt(x,y)} L${pt(x-L*ux-W*uy,y-L*uy+W*ux)} L${pt(x-L*ux+W*uy,y-L*uy-W*ux)} Z" fill="currentColor" stroke="none"/>`;};
+  arcs.forEach((L,k)=>{const [p,q]=k.split(">").map(Number),lab=L.slice().sort().join(", ");
+    if(p===q){const x=X(p),y=Y-R;P.push(`<path d="M${pt(x-8,y+3)} C${pt(x-22,y-30)} ${pt(x+22,y-30)} ${pt(x+8,y+3)}" fill="none" stroke="currentColor" stroke-width="1.4"/>`+fleche(x+8,y+3,0.35,0.94)+`<text x="${x}" y="${y-27}" text-anchor="middle">${lab}</text>`);haut=Math.min(haut,y-42);return;}
+    const ret=arcs.has(q+">"+p),dist=Math.abs(q-p),x1=X(p),x2=X(q);
+    const hgt=dist===1&&!ret?0:(q>p?-1:1)*(dist===1?20:(q>p&&A.d.slice(Math.min(p,q)+1,Math.max(p,q)).some((t,k)=>Object.values(t).some(L=>L.includes(Math.min(p,q)+1+k)))?44:24)+18*dist);
+    const cx=(x1+x2)/2,cy=Y+2*hgt;
+    const vx=cx-x1,vy=cy-Y,nv=Math.hypot(vx,vy),wx=x2-cx,wy=Y-cy,nw=Math.hypot(wx,wy);
+    const sx=x1+R*vx/nv,sy=Y+R*vy/nv,ex=x2-R*wx/nw,ey=Y-R*wy/nw;
+    const mx=(sx+2*cx+ex)/4,my=(sy+2*cy+ey)/4,ly=hgt<0?my-6:hgt>0?my+15:Y-7;
+    P.push(`<path d="M${pt(sx,sy)} Q${pt(cx,cy)} ${pt(ex,ey)}" fill="none" stroke="currentColor" stroke-width="1.4"/>`+fleche(ex,ey,wx/nw,wy/nw)+`<text x="${Math.round(mx)}" y="${Math.round(ly)}" text-anchor="middle">${lab}</text>`);
+    haut=Math.min(haut,my-22);bas=Math.max(bas,my+22);});
+  const etats=A.noms.map((nm,i)=>`<circle cx="${X(i)}" cy="${Y}" r="${R}" fill="var(--bg, transparent)" stroke="currentColor" stroke-width="1.5"/>${A.fin[i]?`<circle cx="${X(i)}" cy="${Y}" r="${R-4}" fill="none" stroke="currentColor" stroke-width="1.2"/>`:""}<text x="${X(i)}" y="${Y+5}" text-anchor="middle">${nm}</text>`).join("");
+  const init=A.init.map(i=>`<path d="M${X(i)-R-22},${Y} L${X(i)-R},${Y}" stroke="currentColor" stroke-width="1.4"/>`+fleche(X(i)-R,Y,1,0)).join("");
+  const W=X(n-1)+40,H=bas-haut;
+  return `<svg class="aut-dessin" viewBox="0 ${Math.round(haut)} ${W} ${Math.round(H)}" width="${W}" style="max-width:100%;height:auto;font-size:14px;display:block;margin:8px 0" role="img" aria-label="Automate dessiné : ${et(A.noms)}">${P.join("")}${etats}${init}</svg>`;}
+function tableau(A){const cel=(p,c)=>{const L=(A.d[p][c]||[]).map(q=>A.noms[q]);return L.length?L.join(", "):"—";};
+  return `<details class="aut-tab"><summary>Le même automate en tableau</summary><table class="tbl"><thead><tr><th>état</th><th>a</th><th>b</th></tr></thead><tbody>${A.noms.map((nm,p)=>`<tr><td>${A.init.includes(p)?"→ ":""}${nm}${A.fin[p]?" (acceptant)":""}</td><td>${cel(p,"a")}</td><td>${cel(p,"b")}</td></tr>`).join("")}</tbody></table></details>`;}
+const montre=A=>dessin(A)+tableau(A);
+
+/* ---------- lire ce qui est tapé ---------- */
+const nettoie=s=>String(s==null?"":s).normalize("NFC").trim();
+function lisMots(src){let s=nettoie(src);if(!s)return null;if(/^(∅|ø|vide|\{\s*\}|aucun)$/i.test(s))return [];
+  s=s.replace(/^\{|\}$/g,"").trim();if(!s)return [];
+  const P=s.split(/[\s,;]+/).filter(Boolean).map(x=>/^(ε|ϵ|e|eps|epsilon)$/i.test(x)?"":x.toLowerCase());
+  return P.every(x=>/^[ab]*$/.test(x))?[...new Set(P)].sort():null;}
+const ensMots=L=>L.length?"{"+L.slice().sort((x,y)=>x.length-y.length||(x<y?-1:1)).map(mot).join(", ")+"}":"∅";
+const OUI=/^(oui|o|x|✓|✔|1|v|vrai|y|yes|acc|acceptant|f|final|terminal|t)$/i,NON=/^(non|n|0|-|—|faux|)$/i;
+function lisEns(src,noms){const s=nettoie(src);if(!s)return null;if(/^(∅|ø|vide|\{\s*\}|aucun|puits)$/i.test(s))return [];
+  const c=s.replace(/^\{|\}$/g,"").trim();if(!c)return [];
+  const P=/[\s,;]/.test(c)?c.split(/[\s,;]+/).filter(Boolean):c.split("");
+  const I=P.map(x=>noms.indexOf(x.toLowerCase().replace(/^q/,"")));return I.some(i=>i<0)?null:tri(I);}
+const ensE=(E,noms)=>E.length?"{"+E.map(q=>noms[q]).join(", ")+"}":"∅";
+
+/* ---------- les langages des sujets et des TD, sur {a, b} ---------- */
+const L_={
+ pa:["les mots ayant un nombre pair de a","b*(ab*ab*)*","On retient la parité du nombre de a lus : deux états, pair (acceptant) et impair."],
+ ia:["les mots ayant un nombre impair de a","b*ab*(ab*ab*)*","On retient la parité du nombre de a lus : deux états, pair et impair (acceptant)."],
+ m3:["les mots dont le nombre de a est un multiple de 3","b*(ab*ab*ab*)*","On retient le reste du nombre de a dans la division par 3 : trois états 0, 1, 2 ; seul 0 est acceptant."],
+ a3:["les mots contenant au moins trois a","(a + b)*a(a + b)*a(a + b)*a(a + b)*","On compte les a jusqu'à trois : 0, 1, 2, puis « 3 ou plus », qui boucle sur a et b."],
+ b2:["les mots contenant au moins deux b, pas forcément consécutifs","(a + b)*b(a + b)*b(a + b)*","On compte les b jusqu'à deux : q0 (aucun b), q1 (un b), q2 (deux b ou plus, acceptant, boucle sur a et b)."],
+ u1a:["les mots ayant au plus un a","b*(ε + a)b*","On compte les a : 0, 1, puis un état puits dès le deuxième a."],
+ x2a:["les mots ayant exactement deux a","b*ab*ab*","On compte les a : 0, 1, 2 (acceptant), puis un puits au troisième a."],
+ da:["les mots commençant par a","a(a + b)*","La première lettre décide : a mène à un état acceptant qui boucle, b mène au puits."],
+ fb:["les mots se terminant par b","(a + b)*b","On retient seulement la dernière lettre lue : l'état « dernière lettre b » est acceptant."],
+ aa:["les mots contenant le facteur aa","(a + b)*aa(a + b)*","On retient le début du facteur déjà lu : rien, « a », puis « aa trouvé » (acceptant, boucle sur tout)."],
+ abf:["les mots contenant le facteur ab","(a + b)*ab(a + b)*","On retient le début du facteur déjà lu : rien, « a », puis « ab trouvé » (acceptant, boucle sur tout). Un b lu après rien ne fait pas avancer."],
+ nab:["les mots ne contenant pas le facteur ab","b*a*","Des b, puis des a : dès qu'un b suit un a, c'est perdu (puits)."],
+ bbs:["les mots ayant bb comme suffixe","(a + b)*bb","On retient la fin du mot : rien d'utile, « b », « bb » (acceptant). Un a ramène au début."],
+ aea:["les mots commençant et terminant par a","a + a(a + b)*a","Le mot a seul compte. Après un premier a, on retient la dernière lettre ; un mot qui commence par b va au puits."],
+ pre:["les mots ayant ab ou ba comme préfixe","(ab + ba)(a + b)*","On lit les deux premières lettres : ab ou ba mènent à un état acceptant qui boucle, aa ou bb au puits."],
+ lp:["les mots de longueur paire","((a + b)(a + b))*","On retient la parité de la longueur : deux états, chaque lettre fait changer d'état."],
+ li:["les mots de longueur impaire","(a + b)((a + b)(a + b))*","On retient la parité de la longueur : deux états, chaque lettre fait changer d'état."],
+ asb:["les mots dont chaque a est suivi immédiatement d'un b","(b + ab)*","Après un a, on attend un b : un a de plus ou la fin du mot font perdre."],
+ nbb:["les mots ne contenant pas deux b consécutifs","(a + ba)*(ε + b)","On retient si la dernière lettre est un b : un second b de suite mène au puits."],
+ ab1:["les mots contenant au moins un a et au moins un b","(a + b)*(ab + ba)(a + b)*","On retient les lettres déjà vues : aucune, seulement des a, seulement des b, puis les deux (acceptant)."],
+ f2:["les mots se terminant par ab ou par ba","(a + b)*(ab + ba)","On retient les deux dernières lettres lues : il suffit qu'elles soient différentes."],
+ imp:["les mots où, entre deux b successifs, il y a un nombre impair de a (exemple de janvier 2026 : aabaaa et baaababaaaa sont dans L, bb et baaabaab n'y sont pas)","a*(ε + b(a(aa)*b)*)a*","Avant le premier b, tout va. Après un b, on retient la parité des a lus depuis ce b : un b après un nombre pair de a mène au puits."],
+ un:["les mots contenant une et une seule fois le facteur ab","b*a⁺b⁺a*","Des b, puis des a, puis des b, puis des a : un second « ab » mène au puits."],
+ abba:["les mots commençant par ab et se terminant par ba","aba + ab(a + b)*ba","On vérifie le début ab, puis on retient les deux dernières lettres. Attention : aba est dans L (le a du milieu sert deux fois)."],
+ lex:["les mots inférieurs ou égaux à baba dans l'ordre du dictionnaire","ε + b + ba + bab + baba + (a + baa)(a + b)*","On suit baba lettre à lettre : une lettre plus petite (a au lieu de b) mène à un état acceptant qui boucle, une lettre plus grande au puits. Les préfixes de baba sont acceptés."]};
+const LANG=id=>({id,d:L_[id][0],er:L_[id][1],idee:L_[id][2]});
+const A_=new Map();const autoDe=er=>{if(!A_.has(er))A_.set(er,erA(er));return A_.get(er);};
+const minDe=er=>minimal(autoDe(er));
+
+G.aut={AB,auto,clos,pas,lit,accepte,det,difference,minimal,versAuto,qn,lisER,deER,erA,ecrit,erH,erT,dessin,tableau,lisMots,ensMots,lisEns,ensE,L_,LANG,mot};
+
+/* ---------- AU1 : mots ---------- */
+function motHasard(R,n,S){let w="";for(let i=0;i<n;i++)w+=R.choix(S||AB);return w;}
+const facteurs=w=>{const F=new Set();for(let i=0;i<=w.length;i++)for(let j=i;j<=w.length;j++)F.add(w.slice(i,j));return F;};
+function sousMot(u,w){let i=0;for(const c of w)if(i<u.length&&u[i]===c)i++;return i===u.length;}
+const RELS={pre:["préfixes",(u,w)=>w.startsWith(u),"Un préfixe est un début du mot : on compare lettre à lettre depuis la gauche."],suf:["suffixes",(u,w)=>w.endsWith(u),"Un suffixe est une fin du mot : on compare lettre à lettre depuis la droite."],
+  fac:["facteurs",(u,w)=>w.includes(u),"Un facteur est un morceau d'un seul tenant : les lettres doivent se suivre dans le mot."],sm:["sous-mots",sousMot,"Un sous-mot s'obtient en effaçant des lettres sans changer l'ordre : on cherche chaque lettre plus loin que la précédente."]};
+function choixMots(o){const ok=o.C.filter(u=>o.vrai(u)),juge=rep=>{const T=(rep.v||[]).map(Number);if(!T.length)return {incomplet:"Coche au moins une case."};
+    const manque=ok.filter(u=>!T.includes(o.C.indexOf(u))),trop=T.map(i=>o.C[i]).filter(u=>!ok.includes(u));if(!manque.length&&!trop.length)return {ok:true};
+    const u=trop[0]!=null?trop[0]:manque[0],i=o.C.indexOf(u);
+    return {ok:false,resume:`Pas tout à fait : ${trop.length?`${et(trop.map(mot))} ${trop.length>1?"ne conviennent pas":"ne convient pas"}`:""}${trop.length&&manque.length?", et ":""}${manque.length?`il manque ${et(manque.map(mot))}`:""}.`,
+      diag:{etape:i,type:trop.includes(u)?o.typeTrop:o.typeManque,titre:`Regarde ${mot(u)}.`,msg:o.pourquoi(u)}};};
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte+" ; choix : "+o.C.map(mot).join(", "),champs:[{k:"multi",id:"v",o:o.C.map((u,i)=>[String(i),mot(u)])}],juge,
+    etapes:o.C.map(u=>({w:`<b>${mot(u)}</b> : ${o.vrai(u)?"oui":"non"}.`,why:o.pourquoi(u),pts:1})),bonne:ok.map(mot).join(" ; "),bonneTxt:ok.map(mot).join(", "),
+    repBonne:{v:ok.map(u=>String(o.C.indexOf(u)))},repFausse:ok.length<o.C.length?{v:o.C.filter(u=>!ok.includes(u)).slice(0,1).map(u=>String(o.C.indexOf(u)))}:undefined,nature:o.nature,ens:o.ens};}
+function presque(R,w,n,S){const C=new Set();let t=0;while(C.size<n&&t++<200){const k=R.ent(0,3),L=R.ent(2,Math.min(5,w.length));let u;
+    if(k===0){const i=R.ent(0,w.length-L);u=w.slice(i,i+L);}
+    else if(k===1){const i=R.ent(0,w.length-L);u=w.slice(i,i+L).split("");const j=R.ent(0,u.length-1);u[j]=R.choix((S||AB).filter(c=>c!==u[j]));u=u.join("");}
+    else if(k===2){const I=R.mel([...Array(w.length).keys()]).slice(0,L).sort((x,y)=>x-y);u=I.map(i=>w[i]).join("");}
+    else u=w.slice(0,R.ent(1,4))+(R()<0.5?"":R.choix(S||AB));
+    if(u&&u!==w)C.add(u);}
+  return [...C];}
+function relMots(R){const w=motHasard(R,R.ent(7,9)),k=R.choix(["pre","suf","fac","sm"]),[nom,f,rappel]=RELS[k];let C;
+  for(let t=0;;t++){C=R.mel(presque(R,w,6));const n=C.filter(u=>f(u,w)).length;if(n>=1&&n<=4||t>50)break;}
+  if(!C.some(u=>f(u,w)))C[0]=k==="pre"?w.slice(0,3):k==="suf"?w.slice(-3):w.slice(2,5);
+  return choixMots({sig:"R"+k+w+C,q:`Parmi ces mots, lesquels sont des ${nom} de <b>${w}</b> ?`,corps:`<p class="muted">${rappel}</p>`,texte:`${nom} de ${w}`,C,vrai:u=>f(u,w),
+    pourquoi:u=>{if(k==="sm"){return sousMot(u,w)?`On trouve les lettres de ${u} dans l'ordre dans ${w}.`:`On ne trouve pas les lettres de ${u} dans cet ordre dans ${w}.`;}
+      const i=w.indexOf(u);return f(u,w)?(k==="pre"?`${w} commence par ${u}.`:k==="suf"?`${w} finit par ${u}.`:`${u} se lit d'un seul tenant dans ${w}, à partir de la lettre ${i+1}.`):
+        k==="fac"&&sousMot(u,w)?`Les lettres de ${u} sont bien dans ${w} dans cet ordre, mais pas collées : c'est un sous-mot, pas un facteur.`:k==="pre"?`${w} ne commence pas par ${u}.`:k==="suf"?`${w} ne finit pas par ${u}.`:`${u} ne se lit pas d'un seul tenant dans ${w}.`;},
+    typeTrop:k==="fac"?"sous-mot pris pour un facteur":"définition mal appliquée",typeManque:"mot oublié",nature:nom,ens:{type:"rel",k,w,C}});}
+function sousMotsQcm(R){const S=R()<0.5?["a","b","c"]:AB,w=S.length===3?R.choix(["abcabcabc","abcbacabc","acbacbacb","abacabcab","cabcabcab"]):motHasard(R,9);let C;
+  for(let t=0;;t++){C=[];while(C.length<4){const k=R.ent(0,2),L=R.ent(5,7);let u;
+      if(k===0){const I=R.mel([...Array(w.length).keys()]).slice(0,L).sort((x,y)=>x-y);u=I.map(i=>w[i]).join("");}
+      else if(k===1){u=[...w].sort().join("").slice(0,L);u=R.mel(u.split("")).join("");}
+      else {const I=R.mel([...Array(w.length).keys()]).slice(0,L).sort((x,y)=>x-y);u=I.map(i=>w[i]).join("");const j=R.ent(0,u.length-2);u=u.slice(0,j)+u[j+1]+u[j]+u.slice(j+2);}
+      if(!C.includes(u)&&u!==w)C.push(u);}
+    const n=C.filter(u=>sousMot(u,w)).length;if(n>=1&&n<=2||t>60)break;}
+  if(!C.some(u=>sousMot(u,w)))C[0]=w.slice(0,2)+w.slice(4,8);
+  return choixMots({sig:"S"+w+C,q:`Lesquels de ces mots sont des sous-mots de <b>${w}</b> ?`,corps:`<p class="muted">Comme au QCM de janvier 2026 (question 1).</p>`,texte:`sous-mots de ${w}`,C,vrai:u=>sousMot(u,w),
+    pourquoi:u=>{let i=0,P=[];for(let k=0;k<w.length&&i<u.length;k++)if(w[k]===u[i]){P.push(k+1);i++;}
+      return i===u.length?`On prend dans ${w} les lettres n° ${P.join(", ")} : elles donnent ${u}, dans l'ordre.`:`En cherchant les lettres de ${u} de gauche à droite dans ${w}, on trouve ${u.slice(0,i)||"rien"} (lettres n° ${P.join(", ")||"—"}), puis plus de ${u[i]} après : impossible.`;},
+    typeTrop:"ordre des lettres pas respecté",typeManque:"sous-mot pas reconnu",nature:S.length===3?"abc":"ab",ens:{type:"rel",k:"sm",w,C}});}
+const lexInf=(u,v)=>{for(let i=0;i<Math.min(u.length,v.length);i++)if(u[i]!==v[i])return u[i]<v[i];return u.length<v.length;};
+function ordreLex(R){let C;do{C=[...new Set([...Array(5)].map(()=>motHasard(R,R.ent(1,5))))];}while(C.length<5||!C.some((u,i)=>C.some((v,j)=>i!==j&&v.startsWith(u))));
+  const T=C.slice().sort((u,v)=>lexInf(u,v)?-1:1);
+  function juge(rep){const L=nettoie(rep.o).split(/[\s,;<≺]+/).filter(Boolean).map(x=>x.toLowerCase());if(!L.length)return {incomplet:"Écris les cinq mots, du plus petit au plus grand, séparés par des espaces."};
+    if(L.length!==5||!L.every(x=>C.includes(x))||new Set(L).size!==5)return {incomplet:"Écris exactement les cinq mots de l'énoncé, chacun une fois, séparés par des espaces."};
+    const i=L.findIndex((x,k)=>x!==T[k]);if(i<0)return {ok:true};
+    return {ok:false,resume:`Pas tout à fait : à la place ${i+1}, il faut ${T[i]}.`,diag:{etape:Math.min(i,3),type:T[i].length<L[i].length&&L[i].startsWith(T[i])?"le préfixe n'est pas mis avant":"comparaison à la première lettre différente",titre:`Compare ${T[i]} et ${L[i]}.`,msg:pourquoi(T[i],L[i])}};}
+  const pourquoi=(u,v)=>{let i=0;while(i<u.length&&i<v.length&&u[i]===v[i])i++;return i===u.length?`${u} est un préfixe de ${v} : le plus court passe avant.`:`${u} et ${v} ont ${i?`le même début ${u.slice(0,i)}, puis`:"pour première lettre"} ${u[i]} et ${v[i]} : a passe avant b.`;};
+  return {sig:"O"+C,q:`Range ces mots dans l'ordre lexicographique (celui du dictionnaire, avec a avant b) : <b>${C.join(", ")}</b>.`,corps:`<p class="muted">On compare à la première lettre différente ; si un mot est le début de l'autre, le plus court passe avant (TD 1, exercice 5).</p>`,texte:"ordre de "+C.join(", "),
+    champs:[{k:"champ",id:"o",label:"Du plus petit au plus grand :",ex:"ab abb b …",aide:"Les cinq mots séparés par des espaces."}],juge,
+    etapes:[0,1,2,3].map(k=>({w:`${T[k]} avant ${T[k+1]}.`,why:pourquoi(T[k],T[k+1]),pts:1})),bonne:T.join(" ≺ "),bonneTxt:T.join(" "),repBonne:{o:T.join(" ")},repFausse:{o:T.slice().reverse().join(" ")},nature:"ordre",ens:{type:"lex",C,T}};}
+
+/* ---------- AU2 : lire un automate ---------- */
+function auHasard(R,n,deterministe){const noms=[...Array(n)].map((_,i)=>String(i+1));
+  for(let t=0;t<500;t++){const T=[];
+    for(let p=0;p<n;p++)for(const c of AB){if(deterministe)T.push([noms[p],c,noms[R.ent(0,n-1)]]);
+      else {const k=R()<0.25?0:R()<0.7?1:2;R.mel(noms).slice(0,k).forEach(q=>T.push([noms[p],c,q]));}}
+    const F=noms.filter(()=>R()<0.4);if(!F.length||F.length===n)continue;
+    const A=auto(noms,["1"],F,T),acc=new Set([0]),P=[0];while(P.length){const p=P.pop();AB.forEach(c=>(A.d[p][c]||[]).forEach(q=>{if(!acc.has(q)){acc.add(q);P.push(q);}}));}
+    if(acc.size<n)continue;
+    if(!deterministe&&!A.d.some(t=>AB.some(c=>(t[c]||[]).length>1)))continue;
+    return A;}
+  return auto(noms,["1"],[noms[n-1]],noms.flatMap((x,i)=>AB.map(c=>[x,c,noms[(i+(c==="a"?1:0))%n]])));}
+function chemin(A,w){let E=clos(A,A.init);const L=[ensE(E,A.noms)];for(const c of w){E=pas(A,E,c);L.push(ensE(E,A.noms));}return {E,L};}
+function motsAcceptes(R,deterministe){const n=R.ent(3,4);let A,C;
+  for(let t=0;;t++){A=auHasard(R,n,deterministe);const vus=new Set();C=[];while(C.length<6){const w=motHasard(R,R.ent(0,5));if(!vus.has(w)){vus.add(w);C.push(w);}}
+    const k=C.filter(w=>accepte(A,w)).length;if(k>=2&&k<=4||t>40)break;}
+  if(!C.some(w=>accepte(A,w))){const M=minimal(A),w=M.acces.find((_,i)=>M.fin[i]);if(w!=null&&!C.includes(w))C[0]=w;}
+  return choixMots({sig:"M"+deterministe+JSON.stringify(A.d)+A.fin+C,q:`Quels mots sont acceptés par cet automate${deterministe?"":" (il n'est pas déterministe)"} ?`,corps:montre(A),texte:"mots acceptés ; automate "+JSON.stringify(A.d),C,vrai:w=>accepte(A,w),
+    pourquoi:w=>{const c=chemin(A,w),ok=accepte(A,w);return w===""?`Le mot vide ne fait pas bouger : on reste sur l'état initial ${ensE(clos(A,A.init),A.noms)}, qui ${ok?"est":"n'est pas"} acceptant.`:
+      deterministe?`On suit les flèches : ${c.L.map(x=>x.replace(/[{}]/g,"")).join(" → ")}. On finit en ${c.L[c.L.length-1].replace(/[{}]/g,"")}, qui ${ok?"est":"n'est pas"} acceptant.`:
+      `Les états possibles, lettre après lettre : ${c.L.join(" → ")}. ${ok?"Il y a un état acceptant à la fin : un chemin réussit.":c.E.length?"Aucun de ces états n'est acceptant.":"Plus aucun chemin possible : le mot est refusé."}`;},
+    typeTrop:deterministe?"flèche mal suivie":"un seul chemin essayé",typeManque:deterministe?"flèche mal suivie":"un seul chemin essayé",nature:deterministe?"déterministe":"non déterministe",ens:{type:"lire",A,C}});}
+function etatsAtteints(R){let A,w;
+  for(let t=0;;t++){A=auHasard(R,R.ent(3,4),false);w=motHasard(R,R.ent(3,4));if(lit(A,w).length>=1||t>30)break;}
+  const c=chemin(A,w),noms=A.noms;
+  function juge(rep){const E=lisEns(rep.e,noms);if(E===null)return {incomplet:`Écris un ensemble d'états entre accolades, par exemple {1, 3}, ou ∅.`};
+    if(E.join()===c.E.join())return {ok:true};
+    return {ok:false,resume:`Pas tout à fait : on arrive dans ${ensE(c.E,noms)}.`,diag:{etape:w.length-1,type:E.length===1&&c.E.length>1?"un seul chemin suivi":"flèche oubliée",titre:"Refais le calcul lettre à lettre.",msg:`Lettre après lettre : ${c.L.join(" → ")}. À chaque lettre, on part de tous les états de l'ensemble à la fois.`}};}
+  return {sig:"E"+JSON.stringify(A.d)+w,q:`Dans quels états peut-on être après avoir lu <b>${w}</b> depuis l'état initial 1 ?`,corps:montre(A)+`<p class="muted">C'est le calcul de la déterminisation : à chaque lettre, on part de tous les états de l'ensemble à la fois.</p>`,texte:`états après ${w} ; automate ${JSON.stringify(A.d)}`,
+    champs:[{k:"champ",id:"e",label:"Ensemble des états :",ex:"{1, 3}",aide:"Entre accolades, avec des virgules. Aucun état : ∅."}],juge,
+    etapes:[...w].map((ch,k)=>({w:`Après ${w.slice(0,k+1)} : ${c.L[k+1]}.`,why:`Depuis ${c.L[k]}, on suit toutes les flèches ${ch}.`,pts:1})),bonne:ensE(c.E,noms),bonneTxt:ensE(c.E,noms),repBonne:{e:ensE(c.E,noms)},repFausse:{e:c.E.length?"∅":"{1}"},nature:"ensemble",ens:{type:"atteint",A,w,E:c.E}};}
+
+/* ---------- AU3 : expressions régulières ---------- */
+const QCM_ER={
+ b2:["(a + b)*(ba*b)*","(a + b)*b(a + ε)*b(a + b)*","(ba*b)*","(b*a*b*)*","(a + b)*b(a + b)*b(a + b)*","(a + b)*ba*b(a + b)*"],
+ lp:["(a + b)*","(a + b)(a + b)","(aa + ab + ba + bb)*","((a + b)(a + b))*","(a + b)(a + b)*"],
+ aea:["a(a + b)*a","a + a(a + b)*a","a(a + b)* + (a + b)*a","a((a + b)*a + ε)","a*(a + b)*a*"],
+ aa:["(a + b)*aa(a + b)*","(b + ab)*aa(a + b)*","(a + b)*a(a + b)*a(a + b)*","(aa)*","(a + b)*a⁺a(a + b)*"],
+ pa:["b*(ab*ab*)*","(b + ab*a)*","(aa)*b*","(b*ab*a)*","(a + b)*aa(a + b)*"],
+ nbb:["(a + ba)*(ε + b)","(ε + b)(a + ab)*","(a + ba)*","(ab + a)*","a*(ba⁺)*(ε + b)"],
+ asb:["(b + ab)*","(ab)*","(a + b)*b","b*(abb*)*","(b*ab)*"],
+ ab1:["(a + b)*(ab + ba)(a + b)*","(a + b)*a(a + b)*b(a + b)*","a⁺b⁺","(a + b)*a(a + b)*b(a + b)* + (a + b)*b(a + b)*a(a + b)*","(a + b)⁺"],
+ fb:["(a + b)*b","b*","(a*b)⁺","(a + b)⁺b","(a + b)*b(a + b)*"],
+ da:["a(a + b)*","a⁺b*","a(a* + b*)","(a + b)*a","a + a(a + b)⁺"]};
+const memeL=(e,f)=>!difference(autoDe(e),autoDe(f));
+function motsER(R){const L=R.choix(Object.keys(QCM_ER)),er=R.choix(QCM_ER[L]),A=autoDe(er);let C;
+  for(let t=0;;t++){const vus=new Set();C=[];while(C.length<6){const w=motHasard(R,R.ent(0,6));if(!vus.has(w)){vus.add(w);C.push(w);}}const k=C.filter(w=>accepte(A,w)).length;if(k>=1&&k<=4||t>60)break;}
+  if(!C.some(w=>accepte(A,w))){const M=minimal(A),w=M.acces.find((_,i)=>M.fin[i]);if(w!=null&&!C.includes(w))C[0]=w;}
+  return choixMots({sig:"W"+er+C,q:`Quels mots sont décrits par l'expression ${erH(er)} ?`,corps:`<p class="muted">+ veut dire « ou », l'étoile « autant de fois qu'on veut, même zéro », ⁺ « au moins une fois ».</p>`,texte:`mots de ${erT(er)}`,C,vrai:w=>accepte(A,w),
+    pourquoi:w=>accepte(A,w)?`${mot(w)} se découpe selon l'expression.`:`Aucun découpage de ${mot(w)} ne suit l'expression.`,typeTrop:"étoile ou union mal lue",typeManque:"étoile ou union mal lue",nature:L,ens:{type:"er",er,C}});}
+function qcmER(R){const id=R.choix(Object.keys(QCM_ER)),G0=LANG(id);let C;
+  for(let t=0;;t++){C=R.mel(QCM_ER[id]).slice(0,R.ent(4,Math.min(6,QCM_ER[id].length)));const k=C.filter(e=>memeL(e,G0.er)).length;if(k>=1&&k<C.length||t>40)break;}
+  const ok=C.filter(e=>memeL(e,G0.er));
+  const juge=rep=>{const T=(rep.v||[]).map(Number);if(!T.length)return {incomplet:"Coche au moins une expression."};
+    const trop=T.filter(i=>!ok.includes(C[i])),manque=C.map((_,i)=>i).filter(i=>ok.includes(C[i])&&!T.includes(i));if(!trop.length&&!manque.length)return {ok:true};
+    const i=trop.length?trop[0]:manque[0],d=difference(autoDe(C[i]),autoDe(G0.er));
+    return {ok:false,resume:`Pas tout à fait : l'expression ${i+1} ${trop.length?"ne décrit pas":"décrit bien"} ce langage.`,diag:{etape:i,type:trop.length?"expression trop large ou trop étroite":"expression juste écartée",titre:`Expression ${i+1}.`,msg:raison(C[i],d)}};};
+  const raison=(e,d)=>!d?`${erH(e)} décrit bien ${G0.d}.`:d.dansA?`${erH(e)} contient ${mot(d.w)}, qui n'est pas dans le langage : elle est trop large.`:`${erH(e)} ne contient pas ${mot(d.w)}, qui est dans le langage : elle est trop étroite.`;
+  return {sig:"Q"+id+C,q:`Sur l'alphabet {a, b}, quelles expressions décrivent ${G0.d} ?`,corps:`<ol>${C.map(e=>`<li>${erH(e)}</li>`).join("")}</ol><p class="muted">Comme aux questions 2 et 3 du QCM de janvier 2026. Pour écarter une expression, il suffit d'un mot de trop ou d'un mot qui manque.</p>`,texte:`ER de ${G0.d} parmi ${C.map(erT).join(" | ")}`,
+    champs:[{k:"multi",id:"v",o:C.map((_,i)=>[String(i),"Expression "+(i+1)])}],juge,
+    etapes:C.map((e,i)=>({w:`Expression ${i+1} : ${ok.includes(e)?"oui":"non"}.`,why:raison(e,difference(autoDe(e),autoDe(G0.er))),pts:1})),bonne:ok.map(e=>"expression "+(C.indexOf(e)+1)).join(", "),bonneTxt:ok.map(e=>erT(e)).join(" ; "),
+    repBonne:{v:ok.map(e=>String(C.indexOf(e)))},repFausse:{v:C.filter(e=>!ok.includes(e)).slice(0,1).map(e=>String(C.indexOf(e)))},nature:id,ens:{type:"qcmER",id,C}};}
+/* juge une expression tapée contre un automate de référence (ou une expression) */
+function jugeER(src,ref,dep,quoi){const t=lisER(src);if(!t)return {incomplet:"Cette expression ne se lit pas. "+AIDE_ER};
+  const d=difference(deER(t),ref,null,dep);if(!d)return {ok:true};
+  return {ok:false,d,msg:d.dansA?`ton expression contient ${mot(d.w)}, qui n'est pas dans ${quoi} : elle est trop large`:`ton expression ne contient pas ${mot(d.w)}, qui est dans ${quoi} : elle est trop étroite`};}
+const Maj=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const BANQUE_ER=["pa","ia","m3","b2","u1a","x2a","da","fb","aa","abf","nab","bbs","aea","pre","lp","li","asb","nbb","ab1","f2","imp","un"];
+function ecrireER(R,banque){const L=LANG(R.choix(banque||BANQUE_ER)),ref=autoDe(L.er);
+  const juge=rep=>{const j=jugeER(rep.e,ref,null,"le langage");if(j.ok||j.incomplet)return j;return {ok:false,resume:"Pas tout à fait : "+j.msg+".",diag:{etape:0,type:j.d.dansA?"expression trop large":"expression trop étroite",titre:`Essaie ton expression sur ${mot(j.d.w)}.`,msg:Maj(j.msg)+"."}};};
+  return {sig:"X"+L.id,q:`Donne une expression régulière pour ${L.d}.`,corps:"",texte:"ER de "+L.d,champs:[{k:"champ",id:"e",label:"L =",sym:SYM,apercu:false,ex:"(a + b)*bb",aide:AIDE_ER}],juge,
+    etapes:[{w:`Par exemple ${erH(L.er)}.`,why:L.idee+" Une autre expression juste est acceptée : le site compare les deux langages mot par mot.",pts:1}],bonne:erH(L.er),bonneTxt:erT(L.er),repBonne:{e:erT(L.er)},repFausse:{e:"(a + b)*"},nature:L.id,ens:{type:"ecrireER",id:L.id,er:L.er}};}
+
+/* ---------- AU4 : construire un automate déterministe complet ---------- */
+const VARS_AFD=["état","avec a","avec b","acceptant ?"];
+const AIDE_AFD="Une ligne par état ; la première ligne est l'état initial. Dans « avec a » et « avec b », le nom de l'état d'arrivée. Acceptant : oui ou non. L'automate doit être complet : aucune case vide (ajoute un état puits s'il le faut).";
+function lisAFD(T){const L=(T||[]).filter(r=>r.some(x=>nettoie(x)));if(!L.length)return {incomplet:"Remplis au moins une ligne du tableau."};
+  const noms=L.map(r=>nettoie(r[0]).toLowerCase());if(noms.some(x=>!x))return {incomplet:"Chaque ligne commence par le nom de son état."};
+  if(new Set(noms).size<noms.length)return {incomplet:"Deux lignes ont le même nom d'état."};
+  const T2=[],F=[];for(let i=0;i<L.length;i++){for(let k=1;k<=2;k++){const x=nettoie(L[i][k]).toLowerCase();
+      if(!x)return {incomplet:`Ligne ${i+1} (${noms[i]}) : la case « avec ${AB[k-1]} » est vide. L'automate doit être complet : envoie-la vers un état puits.`};
+      if(!noms.includes(x))return {incomplet:`Ligne ${i+1} : l'état « ${x} » n'a pas de ligne dans le tableau.`};T2.push([noms[i],AB[k-1],x]);}
+    const a=nettoie(L[i][3]);if(OUI.test(a))F.push(noms[i]);else if(!NON.test(a))return {incomplet:`Ligne ${i+1} : écris oui ou non dans « acceptant ? ».`};}
+  return {A:auto(noms,[noms[0]],F,T2)};}
+function jugeAFD(rep,ref,dep,o){const r=lisAFD(rep.t);if(r.incomplet)return r;
+  const d=difference(r.A,ref,null,dep);
+  if(d)return {ok:false,resume:`Pas tout à fait : ton automate ${d.dansA?"accepte":"refuse"} ${mot(d.w)}.`,diag:{etape:0,type:d.dansA?"automate trop large":"automate trop étroit",titre:`Lis ${mot(d.w)} dans ton automate.`,
+    msg:`${mot(d.w)} ${d.dansA?"n'est pas":"est"} dans ${o.quoi}, mais ton automate ${d.dansA?"l'accepte":"le refuse"} (chemin : ${chemin(r.A,d.w).L.map(x=>x.replace(/[{}]/g,"")).join(" → ")}).`}};
+  if(o.max&&r.A.n>o.n)return {ok:false,resume:`Ton automate reconnaît le bon langage, mais il a ${r.A.n} états : ${o.max?"l'énoncé en demande":"il en suffit de"} ${o.n}.`,diag:{etape:0,type:"états en trop",titre:"Deux de tes états font le même travail.",msg:o.trop||`Cherche deux états qui ont le même avenir (les mêmes mots les mènent à l'acceptation) : on peut les fusionner.`}};
+  return {ok:true};}
+function etapesAFD(M,noms,pourquoi){return [{w:`Un automate qui convient (${M.n} états, ${noms[0]} initial) :`+dessin(versAuto(M,noms)),why:pourquoi,pts:1},
+  ...M.T.map((t,i)=>({w:`${noms[i]}${M.fin[i]?" (acceptant)":""} : avec a → ${noms[t.a]}, avec b → ${noms[t.b]}.`,why:i?`On arrive en ${noms[i]} par ${M.acces[i]}.`:"C'est l'état initial : rien n'est encore lu.",pts:1}))];}
+function construire(R,banque,avecN){const L=LANG(R.choix(banque)),M=minDe(L.er),noms=qn(M.n),ref=autoDe(L.er);
+  return {sig:"C"+L.id+avecN,q:`Donne un automate déterministe et complet${avecN?` avec ${M.n} états`:""} qui reconnaît ${L.d}.`,corps:`<p class="muted">${AIDE_AFD}</p>`,texte:"AFD de "+L.d,
+    champs:[{k:"trace",id:"t",vars:VARS_AFD,rangs:true,serre:true,lignes:Math.min(3,M.n)}],juge:rep=>jugeAFD(rep,ref,null,{quoi:"le langage",n:M.n,max:avecN}),etapes:etapesAFD(M,noms,L.idee),
+    bonne:"voir l'automate de la correction",bonneTxt:M.T.map((t,i)=>`${noms[i]}: a→${noms[t.a]} b→${noms[t.b]}${M.fin[i]?" acceptant":""}`).join(" ; "),
+    repBonne:{t:M.T.map((t,i)=>[noms[i],noms[t.a],noms[t.b],M.fin[i]?"oui":"non"])},repFausse:{t:M.T.map((t,i)=>[noms[i],noms[t.a],noms[t.b],M.fin[i]?"non":"oui"])},nature:L.id,ens:{type:"afd",id:L.id,er:L.er,n:M.n}};}
+
+/* ---------- AU5 : déterminiser ---------- */
+const VARS_DET=["ensemble","avec a","avec b","acceptant ?"];
+function afnDet(R,n,lo,hi){for(let t=0;;t++){const A=auHasard(R,n,false),D=det(A);if(D.E.length>=lo&&D.E.length<=hi&&D.fin.some(Boolean)&&!D.fin.every(Boolean)||t>300)return {A,D};}}
+function determiniser(R,n,compl){const {A,D}=afnDet(R,n,n===3?4:5,n===3?6:8),noms=A.noms,F=D.fin.map(f=>compl?!f:f),E=S=>ensE(S,noms);
+  function juge(rep){const L=(rep.t||[]).filter(r=>r.some(x=>nettoie(x)));if(!L.length)return {incomplet:"Remplis au moins la première ligne : l'état initial."};
+    const P=[];for(let i=0;i<L.length;i++){const r=[0,1,2].map(k=>lisEns(L[i][k],noms));const k=r.indexOf(null);
+      if(k>=0)return {incomplet:`Ligne ${i+1}, case « ${VARS_DET[k]} » : écris un ensemble d'états, par exemple {1, 2}, ou ∅.`};
+      const a=nettoie(L[i][3]);if(!OUI.test(a)&&!NON.test(a))return {incomplet:`Ligne ${i+1} : écris oui ou non dans « acceptant ? ».`};P.push({S:r[0],a:r[1],b:r[2],f:OUI.test(a)});}
+    const ix=S=>D.E.findIndex(x=>x.join()===S.join()),faute=(i,type,titre,msg)=>({ok:false,resume:"Pas tout à fait : "+titre,diag:{etape:Math.max(0,i),type,titre,msg}});
+    if(ix(P[0].S)!==0)return faute(0,"état initial","la première ligne est l'état initial.",`L'état initial du déterminisé est l'ensemble des états initiaux : ${E(D.E[0])}.`);
+    for(const p of P){const i=ix(p.S);
+      if(i<0)return faute(0,"ensemble pas atteint",`${E(p.S)} n'est pas atteint.`,`On ne garde que les ensembles qu'on atteint depuis ${E(D.E[0])} en suivant a et b. ${E(p.S)} n'en fait pas partie.`);
+      for(const c of AB){const v=D.E[D.T[i][c]];if(p[c].join()!==v.join())return faute(i,"flèche oubliée dans un ensemble",`depuis ${E(p.S)} avec ${c}, on arrive dans ${E(v)}.`,`Depuis ${E(p.S)}, on réunit les arrivées par ${c} de chaque état : ${p.S.map(q=>`${noms[q]} → ${E((A.d[q][c]||[]).slice().sort())}`).join(", ")||"aucun état"}. Total : ${E(v)}.`);}}
+    if(new Set(P.map(p=>p.S.join())).size<P.length)return faute(0,"ligne en double","un ensemble est écrit deux fois.","Chaque ensemble n'a qu'une ligne.");
+    const manque=D.E.filter(S=>!P.some(p=>p.S.join()===S.join()));
+    if(manque.length){const i=ix(manque[0]),j=D.T.findIndex((t,k)=>AB.some(c=>t[c]===i)&&P.some(p=>p.S.join()===D.E[k].join())),c=j>=0?AB.find(c=>D.T[j][c]===i):"a";
+      return faute(i,manque[0].length?"ensemble oublié":"état puits ∅ oublié",`il manque la ligne de ${E(manque[0])}.`,`On atteint ${E(manque[0])} depuis ${j>=0?E(D.E[j]):"un autre ensemble"} avec ${c} : il lui faut sa ligne${manque[0].length?"":" (c'est l'état puits : il boucle sur lui-même)"}.`);}
+    for(const p of P){const i=ix(p.S);if(p.f!==F[i])return faute(D.E.length,"états acceptants",`${E(p.S)} ${F[i]?"est":"n'est pas"} acceptant.`,compl?`Pour le complémentaire, on échange acceptant et non acceptant dans le déterminisé complet : ${E(p.S)} ${D.fin[i]?"contient":"ne contient pas"} d'état acceptant de A, donc il ${F[i]?"devient acceptant":"ne l'est plus"}.`:`Un ensemble est acceptant s'il contient au moins un état acceptant de l'automate (${et(noms.filter((_,q)=>A.fin[q]))}).`);}
+    return {ok:true};}
+  const fins=noms.filter((_,q)=>A.fin[q]);
+  const etapes=D.E.map((S,i)=>({w:`${E(S)} : avec a → ${E(D.E[D.T[i].a])}, avec b → ${E(D.E[D.T[i].b])}.`,why:S.length?`On réunit les arrivées de chaque état de ${E(S)}. ${AB.map(c=>S.map(q=>`${noms[q]} —${c}→ ${E((A.d[q][c]||[]).slice().sort())}`).join(", ")).join(" ; ")}.`:"L'ensemble vide est l'état puits : il reste vide.",pts:1}));
+  etapes.push({w:`États acceptants : ${et(D.E.filter((_,i)=>F[i]).map(E))}.`,why:compl?`Dans le déterminisé complet, ce sont les ensembles qui ne contiennent aucun état acceptant de A (${et(fins)}) : on a échangé acceptant et non acceptant. Le puits ∅ devient donc acceptant.`:`Ce sont les ensembles qui contiennent un état acceptant de l'automate (${et(fins)}).`,pts:1});
+  const MD={n:D.E.length,T:D.T,fin:F},nomsD=D.E.map(E);
+  etapes.push({w:"Le dessin de l'automate obtenu :"+dessin(versAuto(MD,nomsD)),why:"C'est le tableau dessiné, avec "+E(D.E[0])+" comme état initial.",pts:0.5});
+  return {sig:"D"+compl+JSON.stringify(A.d)+A.fin,q:compl?`Donne un automate déterministe complet qui reconnaît le complémentaire du langage de cet automate : déterminise-le (tableau des ensembles d'états), puis dis quels états sont acceptants pour le complémentaire.`:`Déterminise cet automate : écris le tableau des ensembles d'états atteints depuis l'état initial, avec leurs transitions, et dis lesquels sont acceptants.`,
+    corps:montre(A)+`<p class="muted">Une ligne par ensemble ; la première est l'état initial ${E(D.E[0])}. Écris les ensembles entre accolades : {1, 2}. L'ensemble vide (le puits) s'écrit ∅ et a sa ligne.</p>`,texte:`déterminiser ${JSON.stringify(A.d)} finaux ${fins}`,
+    champs:[{k:"trace",id:"t",vars:VARS_DET,rangs:true,serre:true,lignes:3}],juge,etapes,bonne:"voir le tableau de la correction",bonneTxt:D.E.map((S,i)=>`${E(S)}: a→${E(D.E[D.T[i].a])} b→${E(D.E[D.T[i].b])}${F[i]?" acceptant":""}`).join(" ; "),
+    repBonne:{t:D.E.map((S,i)=>[E(S),E(D.E[D.T[i].a]),E(D.E[D.T[i].b]),F[i]?"oui":"non"])},repFausse:{t:D.E.slice(0,-1).map((S,i)=>[E(S),E(D.E[D.T[i].a]),E(D.E[D.T[i].b]),F[i]?"oui":"non"])},nature:compl?"complémentaire":n+" états",ens:{type:"det",A,compl,D}};}
+
+/* ---------- AU6 : quotients à gauche ---------- */
+const Lu=u=>u?`L<sub>${u}</sub>`:"L";
+const quotFini=(L,u)=>L.filter(w=>w.startsWith(u)).map(w=>w.slice(u.length)).sort();
+function quotientsFinis(R,deux){let L,U;
+  for(let t=0;;t++){L=[...new Set([...Array(R.ent(4,5))].map(()=>motHasard(R,R.ent(0,4))))];
+    U=deux?R.mel(["aa","ab","ba","bb"]).slice(0,2):["a","b"];const Q=U.map(u=>quotFini(L,u));if(L.length>=4&&Q.some(x=>x.length)&&Q.reduce((s,x)=>s+x.length,0)>=2||t>80)break;}
+  const Q=U.map(u=>quotFini(L,u)),ids=U.map(u=>"L"+u);
+  function juge(rep){const T=ids.map(k=>lisMots((rep.c||{})[k]));const k=T.indexOf(null);if(k>=0)return {incomplet:`${Lu(U[k])} : écris un ensemble de mots entre accolades, par exemple {bb, ε}, ou ∅.`};
+    const i=T.findIndex((x,j)=>x.join()!==Q[j].join());if(i<0)return {ok:true};
+    const manque=Q[i].filter(w=>!T[i].includes(w)),trop=T[i].filter(w=>!Q[i].includes(w));
+    return {ok:false,resume:`Pas tout à fait : ${Lu(U[i])} = ${ensMots(Q[i])}.`,diag:{etape:i,type:trop.some(w=>L.includes(w))?"mot de L recopié sans enlever le début":manque.includes("")?"ε oublié":"mot oublié ou en trop",titre:`Regarde ${Lu(U[i])}.`,
+      msg:`${manque.length?`Il manque ${et(manque.map(mot))}${manque.includes("")?` : ${U[i]} est lui-même dans L, et ${U[i]}·ε = ${U[i]}`:""}. `:""}${trop.length?`${et(trop.map(mot))} ${trop.length>1?"sont":"est"} en trop : ${U[i]}${trop[0]} n'est pas dans L. `:""}On garde les mots de L qui commencent par ${U[i]}, et on enlève ce début.`}};}
+  return {sig:"F"+L+U,q:`On pose L = ${ensMots(L)}. Calcule ${et(U.map(Lu))}.`,corps:`<p class="muted">Le quotient à gauche : ${Lu("u")} = { v | uv ∈ L }. On garde les mots de L qui commencent par u, et on enlève ce début (janvier 2026, exercice 4).</p>`,texte:`L = ${ensMots(L)} ; quotients par ${U.join(", ")}`,
+    champs:[{k:"cases",id:"c",noms:ids,large:true,aide:"Des mots entre accolades, séparés par des virgules : {bb, ε}. Le mot vide : ε (ou e). Aucun mot : ∅."}],juge,
+    etapes:U.map((u,i)=>({w:`${Lu(u)} = ${ensMots(Q[i])}.`,why:L.filter(w=>w.startsWith(u)).length?`Les mots de L qui commencent par ${u} : ${et(L.filter(w=>w.startsWith(u)))}. On enlève ${u} : ${et(Q[i].map(mot))}.`:`Aucun mot de L ne commence par ${u} : le quotient est vide.`,pts:1})),
+    bonne:U.map((u,i)=>`${Lu(u)} = ${ensMots(Q[i])}`).join(" ; "),bonneTxt:U.map((u,i)=>`L${u} = ${ensMots(Q[i])}`).join(" ; "),
+    repBonne:{c:Object.fromEntries(ids.map((k,i)=>[k,ensMots(Q[i])]))},repFausse:{c:Object.fromEntries(ids.map((k,i)=>[k,i?ensMots(Q[i]):ensMots(L)]))},nature:deux?"deux lettres":"une lettre",ens:{type:"qfini",L,U,Q}};}
+/* langages décrits, avec leurs quotients écrits à la main (comparés au calcul par le contrôle) */
+const QUOT_D={
+ abf:{a:"(a + b)*b(a + b)*",b:"(a + b)*ab(a + b)*",dit:{a:"Après un a, il suffit de lire un b plus loin : le premier b du reste suit forcément un a.",b:"Un b au début ne commence pas de facteur ab : il reste à trouver ab."}},
+ aea:{a:"ε + (a + b)*a",b:"∅",dit:{a:"av commence par a ; il faut encore que av finisse par a : v est vide (le mot a) ou finit par a.",b:"Aucun mot de L ne commence par b."}},
+ da:{a:"(a + b)*",b:"∅",dit:{a:"Tout mot qui commence par a est dans L : v est quelconque.",b:"Aucun mot de L ne commence par b."}},
+ fb:{a:"(a + b)*b",b:"ε + (a + b)*b",dit:{a:"av finit par b si et seulement si v finit par b (v ne peut pas être vide).",b:"bv finit par b si v est vide, ou si v finit par b."}},
+ pa:{a:"b*ab*(ab*ab*)*",b:"b*(ab*ab*)*",dit:{a:"Le a du début compte : il faut un nombre impair de a dans v.",b:"Un b ne change pas le nombre de a : Lb = L."}},
+ b2:{a:"(a + b)*b(a + b)*b(a + b)*",b:"(a + b)*b(a + b)*",dit:{a:"Un a ne compte pas : La = L.",b:"Il reste un seul b à trouver."}},
+ aa:{a:"a(a + b)* + (a + b)*aa(a + b)*",b:"(a + b)*aa(a + b)*",dit:{a:"Soit v commence par a (le facteur aa est déjà là), soit v contient aa.",b:"Un b ne commence pas de facteur aa : Lb = L."}},
+ lp:{a:"(a + b)((a + b)(a + b))*",b:"(a + b)((a + b)(a + b))*",dit:{a:"Il faut une longueur impaire pour v.",b:"Il faut une longueur impaire pour v."}},
+ nab:{a:"a*",b:"b*a*",dit:{a:"Après un a, plus de b possible : v n'a que des a.",b:"Un b au début ne gêne pas : Lb = L."}},
+ u1a:{a:"b*",b:"b*(ε + a)b*",dit:{a:"Le seul a permis est déjà lu : v n'a que des b.",b:"Un b ne compte pas : Lb = L."}},
+ bbs:{a:"(a + b)*bb",b:"b + (a + b)*bb",dit:{a:"av finit par bb si et seulement si v finit par bb.",b:"bv finit par bb si v = b, ou si v finit lui-même par bb."}}};
+const QUOT_E=[
+ {L:"(b + aba)*",q:{a:"ba(b + aba)*",ab:"a(b + aba)*",b:"(b + aba)*",aba:"(b + aba)*"},src:"janvier 2026, exercice 4, question 8"},
+ {L:"(ab)*",q:{a:"b(ab)*",b:"∅",ab:"(ab)*",aa:"∅"}},
+ {L:"a*b*",q:{a:"a*b*",b:"b*",ab:"b*",ba:"∅"}},
+ {L:"(ab + b)*a",q:{a:"ε + b(ab + b)*a",b:"(ab + b)*a",ab:"(ab + b)*a"}},
+ {L:"(a + bb)*",q:{a:"(a + bb)*",b:"b(a + bb)*",bb:"(a + bb)*",ba:"∅"}},
+ {L:"a(a + b)*b",q:{a:"(a + b)*b",b:"∅",ab:"ε + (a + b)*b",aa:"(a + b)*b"}},
+ {L:"(ba)*b",q:{b:"(ab)*",a:"∅",ba:"(ba)*b",bb:"∅"}},
+ {L:"(aa + b)*a",q:{a:"ε + a(aa + b)*a",b:"(aa + b)*a",aa:"(aa + b)*a"}}];
+function quotientsER(R,o){const champs=[],att=[];let qs,src="";
+  if(o.decrit){const id=R.choix(Object.keys(QUOT_D)),L=LANG(id);qs=AB.map(u=>({u,er:QUOT_D[id][u],dit:QUOT_D[id].dit[u]}));o.L=L;o.enonce=`On note L l'ensemble des ${L.d.replace(/^les /,"")}. Décris ${et(AB.map(Lu))} par des expressions régulières.`;o.er=L.er;o.sig="Q"+id;}
+  else {const B=R.choix(QUOT_E),U=R.mel(Object.keys(B.q)).slice(0,2).sort((x,y)=>x.length-y.length);qs=U.map(u=>({u,er:B.q[u]}));o.er=B.L;o.enonce=`Soit L le langage décrit par l'expression ${erH(B.L)}. Décris ${et(U.map(Lu))} par des expressions régulières.`;o.sig="E"+B.L+U;src=B.src||"";}
+  const A=autoDe(o.er);
+  qs.forEach(x=>{x.dep=lit(A,x.u);champs.push({k:"champ",id:"L"+x.u,label:Lu(x.u)+" =",sym:SYM,apercu:false,ex:"(a + b)*b"});});
+  champs[champs.length-1].aide=AIDE_ER;
+  function juge(rep){for(let i=0;i<qs.length;i++){const j=jugeER(rep["L"+qs[i].u],A,qs[i].dep,Lu(qs[i].u));if(j.incomplet)return {incomplet:`${Lu(qs[i].u)} : ${j.incomplet}`};
+      if(!j.ok)return {ok:false,resume:`Pas tout à fait pour ${Lu(qs[i].u)} : ${j.msg}.`,diag:{etape:i,type:j.d.dansA?"quotient trop large":"quotient trop étroit",titre:`Essaie ${mot(j.d.w)} : ${qs[i].u}${j.d.w} est-il dans L ?`,msg:`${Maj(j.msg)}. En effet, ${qs[i].u}${j.d.w} ${j.d.dansA?"n'est pas":"est"} dans L.`}};}
+    return {ok:true};}
+  return {sig:o.sig,q:o.enonce,corps:`<p class="muted">${Lu("u")} = { v | uv ∈ L } : ce qui peut suivre u pour former un mot de L.${src?` (${src}.)`:""}</p>`,texte:o.enonce.replace(/<[^>]+>/g,""),champs,juge,
+    etapes:qs.map(x=>({w:`${Lu(x.u)} = ${erH(x.er)}.`,why:(x.dit||`On cherche les v tels que ${x.u}v soit dans L : on découpe ${x.u}v selon l'expression de L.`)+" Une autre expression du même langage est acceptée.",pts:1})),
+    bonne:qs.map(x=>`${Lu(x.u)} = ${erH(x.er)}`).join(" ; "),bonneTxt:qs.map(x=>`L${x.u} = ${erT(x.er)}`).join(" ; "),repBonne:Object.fromEntries(qs.map(x=>["L"+x.u,erT(x.er)])),repFausse:Object.fromEntries(qs.map(x=>["L"+x.u,o.decrit?erT(o.er):"∅ + a"])),nature:o.decrit?"décrit":"expression",ens:{type:"quotER",er:o.er,qs:qs.map(x=>({u:x.u,er:x.er}))}};}
+/* tous les quotients et l'automate qu'ils forment */
+const QUOT_TOUS=[
+ [{L:"a*b*",q:[["ε","a*b*"],["b","b*"],["ba","∅"]],src:"janvier 2026, exercice 4, question 3"},{L:"(ab)*",q:[["ε","(ab)*"],["a","b(ab)*"],["b","∅"]]},{L:"a(a + b)*",q:[["ε","a(a + b)*"],["a","(a + b)*"],["b","∅"]]},
+  {L:"(a + b)*a",q:[["ε","(a + b)*a"],["a","ε + (a + b)*a"]]},{L:"b*a",q:[["ε","b*a"],["a","ε"],["aa","∅"]]},{L:"(a + b)*b(a + b)*",q:[["ε","(a + b)*b(a + b)*"],["b","(a + b)*"]]}],
+ [{L:"(a + b)*ab",q:[["ε","(a + b)*ab"],["a","b + (a + b)*ab"],["ab","ε + (a + b)*ab"]]},{L:"aa*b",q:[["ε","aa*b"],["a","a*b"],["ab","ε"],["b","∅"]]},
+  {L:"a*ba*",q:[["ε","a*ba*"],["b","a*"],["bb","∅"]]},{L:"(aa)*b",q:[["ε","(aa)*b"],["a","a(aa)*b"],["b","ε"],["bb","∅"]]},{L:"b(a + b)*a",q:[["ε","b(a + b)*a"],["a","∅"],["b","(a + b)*a"],["ba","ε + (a + b)*a"]]},
+  {L:"(ab + ba)*",q:[["ε","(ab + ba)*"],["a","b(ab + ba)*"],["b","a(ab + ba)*"],["aa","∅"]]}]];
+function tousQuotients(R,k){const B=R.choix(QUOT_TOUS[k]),A=autoDe(B.L),M=minimal(A),noms=B.q.map((_,i)=>"q"+i);
+  const ordre=M.acces.map(w=>B.q.findIndex(x=>!difference(autoDe(x[1]),A,null,lit(A,w)))),Mq=ordre.every(i=>i>=0)&&new Set(ordre).size===B.q.length&&M.n===B.q.length;
+  const nomDe=i=>noms[ordre[i]];
+  return {sig:"T"+B.L,q:`Soit L = ${erH(B.L)}. Détermine tous ses quotients à gauche ${Lu("u")} distincts, associe un état à chacun, et donne le tableau de l'automate déterministe complet qu'ils forment.`,
+    corps:`<p class="muted">L'état du quotient ${Lu("u")} va, avec la lettre x, vers l'état du quotient ${Lu("ux")}. Il est acceptant si ε ∈ ${Lu("u")}. Le premier état est L lui-même (${Lu("ε")} = L).${B.src?` (${B.src}.)`:""}</p><p class="muted">${AIDE_AFD}</p>`,texte:"automate des quotients de "+erT(B.L),
+    champs:[{k:"trace",id:"t",vars:VARS_AFD,rangs:true,serre:true,lignes:Math.min(3,M.n)}],
+    juge:rep=>jugeAFD(rep,A,null,{quoi:"L",n:M.n,max:true,trop:`L a ${M.n} quotients distincts : un état par quotient. Deux de tes états ont le même quotient (les mêmes mots les mènent à l'acceptation).`}),
+    etapes:[{w:`Les quotients distincts : ${B.q.map((x,i)=>`${noms[i]} = ${Lu(x[0])} = ${erH(x[1])}`).join(" ; ")}.`,why:`On calcule ${Lu("a")}, ${Lu("b")}, puis les quotients de ceux-là, jusqu'à ne plus en trouver de nouveau. Les autres sont égaux à l'un d'eux.`,pts:1},
+      ...M.T.map((t,i)=>({w:`${nomDe(i)}${M.fin[i]?" (acceptant)":""} : avec a → ${nomDe(t.a)}, avec b → ${nomDe(t.b)}.`,why:`${M.fin[i]?"ε est dans ce quotient : l'état est acceptant.":"ε n'est pas dans ce quotient."} ${i?`On y arrive par ${M.acces[i]}.`:""}`,pts:1})),
+      {w:"Le graphe de l'automate :"+dessin(versAuto(M,M.T.map((_,i)=>nomDe(i)))),why:"Le tableau dessiné : un état par quotient.",pts:0.5}],
+    bonne:"voir le tableau de la correction",bonneTxt:M.T.map((t,i)=>`${nomDe(i)}: a→${nomDe(t.a)} b→${nomDe(t.b)}${M.fin[i]?" acceptant":""}`).join(" ; "),
+    repBonne:{t:M.T.map((t,i)=>[nomDe(i),nomDe(t.a),nomDe(t.b),M.fin[i]?"oui":"non"])},repFausse:{t:M.T.map((t,i)=>[nomDe(i),nomDe(t.a),nomDe(t.b),M.fin[i]!==(i===0)?"oui":"non"])},nature:"quotients",ens:{type:"tousQ",L:B.L,q:B.q,n:M.n,ok:Mq}};}
+/* les démonstrations des sujets : l'opération garde les langages reconnaissables */
+const PREUVES=[
+ {op:"le quotient à gauche",def:`${Lu("u")} = { v ∈ A* | uv ∈ L }`,src:"janvier 2026, exercice 4, questions 6 et 7 (corrigé officiel)",
+  auto:"le même automate, avec q<sub>u</sub> = δ*(q<sub>0</sub>, u) comme état initial : A<sub>u</sub> = ⟨A, Q, q<sub>u</sub>, F, δ⟩",
+  eq:"v ∈ L(A<sub>u</sub>) ⟺ δ*(q<sub>u</sub>, v) ∈ F ⟺ δ*(q<sub>0</sub>, uv) ∈ F ⟺ uv ∈ L ⟺ v ∈ L<sub>u</sub>",
+  regles:"(L<sub>1</sub> ∪ L<sub>2</sub>)<sub>u</sub> = (L<sub>1</sub>)<sub>u</sub> ∪ (L<sub>2</sub>)<sub>u</sub> ; (L<sub>1</sub> ∩ L<sub>2</sub>)<sub>u</sub> = (L<sub>1</sub>)<sub>u</sub> ∩ (L<sub>2</sub>)<sub>u</sub> ; (complémentaire de L)<sub>u</sub> = complémentaire de L<sub>u</sub>",cle:"Lire u depuis q<sub>0</sub>, c'est arriver en q<sub>u</sub> : on démarre directement là."},
+ {op:"a⁻¹L (les fins des mots de L qui commencent par a)",def:"a⁻¹L = { m | a·m ∈ L }",src:"juin 2024, questions 5 et 6 (corrigé écrit par moi, sur le modèle de 2026)",
+  auto:"le même automate, avec δ(q<sub>d</sub>, a) comme état initial",eq:"m ∈ L(A′) ⟺ δ*(δ(q<sub>d</sub>, a), m) ∈ A ⟺ δ*(q<sub>d</sub>, am) ∈ A ⟺ am ∈ L ⟺ m ∈ a⁻¹L",
+  regles:"a⁻¹(L<sub>1</sub> ∪ L<sub>2</sub>) = a⁻¹L<sub>1</sub> ∪ a⁻¹L<sub>2</sub> ; a⁻¹(L*) = (a⁻¹L)·L* ; a⁻¹(L<sub>1</sub>L<sub>2</sub>) = (a⁻¹L<sub>1</sub>)L<sub>2</sub> si ε ∉ L<sub>1</sub>, et (a⁻¹L<sub>1</sub>)L<sub>2</sub> ∪ a⁻¹L<sub>2</sub> si ε ∈ L<sub>1</sub>",cle:"C'est le quotient par le mot u = a."},
+ {op:"L<sup>−p</sup> (enlever la première lettre)",def:"L<sup>−p</sup> = { m | am ∈ L ou bm ∈ L }",src:"janvier 2023, questions 6 et 7 (corrigé officiel)",
+  auto:"mêmes états, mêmes états d'arrivée, mêmes transitions ; seuls les états de départ changent : D = {δ(q<sub>d</sub>, a), δ(q<sub>d</sub>, b)} (l'automate peut ne plus être déterministe)",
+  eq:"m ∈ L(A′) ⟺ δ*(δ(q<sub>d</sub>, a), m) ∈ A ou δ*(δ(q<sub>d</sub>, b), m) ∈ A ⟺ am ∈ L ou bm ∈ L ⟺ m ∈ L<sup>−p</sup>",
+  regles:"(L<sub>1</sub> ∪ L<sub>2</sub>)<sup>−p</sup> = L<sub>1</sub><sup>−p</sup> ∪ L<sub>2</sub><sup>−p</sup> ; (L*)<sup>−p</sup> = L<sup>−p</sup>·L* ; (L<sub>1</sub>L<sub>2</sub>)<sup>−p</sup> = L<sub>1</sub><sup>−p</sup>L<sub>2</sub> si ε ∉ L<sub>1</sub>, et L<sub>1</sub><sup>−p</sup>L<sub>2</sub> ∪ L<sub>2</sub><sup>−p</sup> si ε ∈ L<sub>1</sub>",cle:"Deux départs possibles : après un a, ou après un b."},
+ {op:"le miroir mir(L)",def:"mir(L) = { m<sup>R</sup> | m ∈ L }",src:"janvier 2024, questions 5 et 6 (corrigé officiel)",
+  auto:"mêmes états ; on inverse le sens de toutes les transitions ; les états initiaux sont les états d'arrivée de A, et le seul état d'arrivée est q<sub>d</sub> (l'automate peut ne plus être déterministe)",
+  eq:"un chemin de q<sub>d</sub> à un état d'arrivée qui lit m dans A, c'est, à l'envers, un chemin de cet état à q<sub>d</sub> qui lit m<sup>R</sup> dans A′ : m ∈ L ⟺ m<sup>R</sup> ∈ L(A′)",
+  regles:"mir(L<sub>1</sub> ∪ L<sub>2</sub>) = mir(L<sub>1</sub>) ∪ mir(L<sub>2</sub>) ; mir(L<sub>1</sub>L<sub>2</sub>) = mir(L<sub>2</sub>)·mir(L<sub>1</sub>) ; mir(L*) = mir(L)*",cle:"On lit le mot à l'envers en suivant les flèches à l'envers."},
+ {op:"L<sup>−d</sup> (enlever la dernière lettre)",def:"L<sup>−d</sup> = { m | ma ∈ L ou mb ∈ L }",src:"juin 2023, questions 5 et 6 (pas de corrigé officiel : corrigé écrit par moi)",
+  auto:"mêmes états, même état initial, mêmes transitions ; les nouveaux états d'arrivée sont les états q tels que δ(q, a) ∈ A ou δ(q, b) ∈ A",
+  eq:"m ∈ L(A′) ⟺ δ*(q<sub>d</sub>, m) = q avec δ(q, a) ∈ A ou δ(q, b) ∈ A ⟺ ma ∈ L ou mb ∈ L ⟺ m ∈ L<sup>−d</sup>",
+  regles:"(L<sub>1</sub> ∪ L<sub>2</sub>)<sup>−d</sup> = L<sub>1</sub><sup>−d</sup> ∪ L<sub>2</sub><sup>−d</sup> ; (L*)<sup>−d</sup> = L*·L<sup>−d</sup> ; (L<sub>1</sub>L<sub>2</sub>)<sup>−d</sup> = L<sub>1</sub>L<sub>2</sub><sup>−d</sup> si ε ∉ L<sub>2</sub>, et L<sub>1</sub>L<sub>2</sub><sup>−d</sup> ∪ L<sub>1</sub><sup>−d</sup> si ε ∈ L<sub>2</sub>",cle:"Un mot est accepté s'il ne lui manque qu'une lettre pour arriver."}];
+function preuve(R){const P=R.choix(PREUVES);
+  return {sig:"P"+P.op,q:`Montre que si L est un langage reconnaissable, alors ${P.op.replace(/ \(.*\)$/,"")} est aussi reconnaissable. Puis exprime les règles de calcul.`,
+    corps:`<p>Définition : ${P.def}. L est reconnu par un automate déterministe A = ⟨Σ, Q, q<sub>d</sub>, A, δ⟩ : définis précisément l'automate qui reconnaît le nouveau langage, puis justifie par une suite d'équivalences.</p><p class="muted">Sur ta feuille, puis compare avec la correction (${P.src}).</p>`,
+    texte:"preuve : "+P.op.replace(/<[^>]+>/g,""),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+    etapes:[{w:`On part d'un automate déterministe A qui reconnaît L (il existe, car L est reconnaissable).`,why:"C'est la définition de « reconnaissable » : un automate fini reconnaît L.",pts:0.5},
+      {w:`L'automate A′ : ${P.auto}.`,why:P.cle,pts:1.5},{w:`Pour tout mot : ${P.eq}.`,why:"Chaque équivalence se justifie par une seule chose : la définition de δ*, puis celle du langage.",pts:1.5},
+      {w:"Donc le nouveau langage est reconnu par A′ : il est reconnaissable.",why:"La phrase de conclusion est attendue.",pts:0.5},{w:`Les règles : ${P.regles}.`,why:"À savoir par cœur ; pour le produit, le cas ε ∈ L₁ (ou L₂) est celui qu'on oublie.",pts:1}],
+    bonne:"voir la correction",bonneTxt:"à écrire sur papier (voir la correction)",repBonne:{},nature:P.op.replace(/<[^>]+>/g,""),ens:{type:"preuve",op:P.op}};}
+
+G.add("aut",[
+ {id:"AU6",t:"Quotients à gauche (et les autres opérations sur les langages)",tache:"quotients à gauche",th:"quotients",pts:9,
+  paliers:[
+   {t:"un langage fini : La et Lb",cc:3,gen:R=>quotientsFinis(R,false)},
+   {t:"un langage décrit en français : La et Lb en expressions",cc:4,gen:R=>quotientsER(R,{decrit:true}),min:11},
+   {t:"le quotient d'une expression régulière",cc:3,gen:R=>quotientsER(R,{}),min:30},
+   {t:"tous les quotients, puis l'automate qu'ils forment",cc:5,gen:R=>tousQuotients(R,0),min:6},
+   {t:"la démonstration « reconnaissable » et les règles, sur papier",cc:5,gen:preuve,min:5},
+   {t:"un langage fini : quotients par deux lettres",cc:3,gen:R=>quotientsFinis(R,true)},
+   {t:"tous les quotients, d'autres langages",cc:5,gen:R=>tousQuotients(R,1),min:6}]},
+ {id:"AU5",t:"Déterminiser un automate",tache:"déterminisation",th:"det",pts:3,
+  paliers:[
+   {t:"trois états, comme en janvier 2026",cc:5,gen:R=>determiniser(R,3,false)},
+   {t:"quatre états",cc:6,gen:R=>determiniser(R,4,false)},
+   {t:"déterminiser, puis le complémentaire",cc:6,gen:R=>determiniser(R,R.ent(3,4),true)}]},
+ {id:"AU3",t:"Expressions régulières",tache:"expressions régulières",th:"er",pts:3.5,
+  paliers:[
+   {t:"les mots d'une expression",cc:2,gen:motsER},
+   {t:"QCM : quelles expressions décrivent ce langage ?",cc:3,gen:qcmER},
+   {t:"écrire l'expression d'un langage décrit",cc:3,gen:R=>ecrireER(R),min:22}]},
+ {id:"AU4",t:"Construire un automate déterministe complet",tache:"construire un automate",th:"construire",pts:2,
+  paliers:[
+   {t:"un langage simple",cc:3,gen:R=>construire(R,["pa","ia","da","fb","aa","abf","bbs","lp","nab","asb"],false),min:10},
+   {t:"avec le nombre d'états imposé",cc:3,gen:R=>construire(R,["b2","m3","a3","x2a","u1a","aea","nbb","li"],true),min:8},
+   {t:"les langages des sujets (2023 à 2026)",cc:5,gen:R=>construire(R,["imp","un","abba","lex","ab1","pre","f2"],false),min:7}]},
+ {id:"AU2",t:"Lire un automate",tache:"lire un automate",th:"lire",pts:1.25,
+  paliers:[
+   {t:"les mots acceptés par un automate déterministe",cc:2,gen:R=>motsAcceptes(R,true)},
+   {t:"les mots acceptés par un automate non déterministe",cc:3,gen:R=>motsAcceptes(R,false)},
+   {t:"les états atteints en lisant un mot",cc:2,gen:etatsAtteints}]},
+ {id:"AU1",t:"Mots : préfixe, suffixe, facteur, sous-mot, ordre",tache:"mots",th:"mots",pts:1.25,
+  paliers:[
+   {t:"préfixes, suffixes, facteurs, sous-mots",cc:2,gen:relMots},
+   {t:"QCM : les sous-mots, comme en janvier 2026",cc:2,gen:sousMotsQcm},
+   {t:"l'ordre lexicographique",cc:2,gen:ordreLex}]}
+]);
+})();
+
+</script>
+<script>
 /* Apprendre : les leçons pas à pas, la révision espacée, la synchronisation entre appareils,
    et les pages pensées pour le téléphone (Aujourd'hui, Apprendre, Réviser, S'entraîner, Plus).
    Principes (voir la page « Comment réviser ») : se tester plutôt que relire, espacer,
@@ -36513,6 +37010,111 @@ ct:{
 const L=window.EXPRESS.lin;
 L.ct.notions.push(Object.assign({},L.cc2.notions.find(n=>n.id==="inverse"),{pts:1,ou:"CC2 2022 à 2024, ex. 2 (pas tombé aux examens de 2024 et 2026)",exo:{g:"AL8",lv:2}}));
 })();
+
+</script>
+<script>
+/* L'examen d'Automates en 1 h (session 1, entre le 4 et le 15/01, date pas encore publiée ; 100 % de la note, aucun document).
+   Modèle : le sujet de janvier 2026 de la même enseignante (A.-E. Baert), 1 h : QCM 5 points (sous-mot, deux questions
+   d'expressions régulières, mots acceptés), ex. 1 automate complet à 3 états (1), ex. 2 expression et automate (2),
+   ex. 3 déterminisation (3), ex. 4 quotients à gauche (9). Les sujets de 2023 et 2024 (2 h) posent la même chose avec
+   une autre opération (L−p, miroir, a⁻¹L, L−d), plus le complémentaire et les équations de langages.
+   Les exemples sont refaits par tools/verif/express/aut.js ; les exercices sont tirés de gen-aut.js. */
+(()=>{
+const U=window.GEN&&window.GEN.aut;if(!U)return;
+const E=s=>U.erH(s),D=(noms,init,fin,T)=>U.dessin(U.auto(noms,init,fin,T));
+const Lu=u=>`L<sub>${u}</sub>`;
+const tab=(tete,L)=>`<table class="tbl"><thead><tr>${tete.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>${L.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+(window.EXPRESS=window.EXPRESS||{}).aut={exam:{
+ t:"L'examen d'Automates en 1 h",du:"de l'examen",au:"à l'examen",
+ lead:"Tout l'examen de janvier, sans document, dans l'ordre de ce qui rapporte le plus au sujet de janvier 2026 (même enseignante, 1 h, barème QCM 5, exercices 1, 2, 3 et 9 points). Les sujets de 2023 et 2024 (en 2 h) posent les mêmes questions avec une autre opération que le quotient : le parcours les signale. Les équations de langages, tombées en 2023 et 2024 mais pas en 2026, n'y sont pas. Pour chaque notion : l'essentiel, la méthode sur l'exercice du sujet, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
+ carte:"tout l'examen en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions dans l'ordre du sujet de janvier 2026 : une question du QCM, la déterminisation, un automate pour un langage décrit, puis deux questions de quotients. Fais-les sans revenir aux notions. La note qui sort est une estimation.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"qfini",t:"Le quotient à gauche sur des exemples",pts:4,ou:"exercice 4, questions 1, 2 et 8 (janvier 2026)",lect:2,exo:{g:"AU6",lv:0},
+  ess:`<ul><li>${Lu("u")} = { v | uv ∈ L } : les mots qu'on peut écrire <b>après u</b> pour obtenir un mot de L.</li>
+<li>L fini : on garde les mots de L qui commencent par u, et on <b>enlève</b> ce début u.</li>
+<li>L décrit par une phrase : on se demande ce qu'il faut encore à v, sachant que u est déjà lu.</li>
+<li>Par deux lettres : ${Lu("ab")} = (${Lu("a")})<sub>b</sub>.</li></ul>`,
+  meth:`<p>Janvier 2026, L = {abb, bbab} : ${Lu("a")} = {bb}, ${Lu("b")} = {bab}, ${Lu("ab")} = {b}.</p>
+<p>L = les mots contenant le facteur ab :</p>
+<ol><li>${Lu("b")} = L : un b au début ne commence pas de ab, il faut encore trouver ab dans v.</li>
+<li>${Lu("a")} : il suffit que v contienne un b. Le premier b de v suit un a (celui de u ou un a de v). Donc ${Lu("a")} = ${E("(a + b)*b(a + b)*")}. Le corrigé écrit ${E("b(a + b)* + (a + b)*ab(a + b)*")} : c'est le même langage.</li>
+<li>${Lu("ab")} = ${E("(a + b)*")} : le facteur ab est déjà lu.</li></ol>
+<p>L = les mots commençant et terminant par a : ${Lu("a")} = ${E("ε + (a + b)*a")} (ε, car le mot a est dans L), et ${Lu("b")} = ∅.</p>
+<p>L = {aⁿbⁿ | n > 0} : ${Lu("a")} = {aᵏbᵏ⁺¹ | k ≥ 0} (il manque un a, donc un b de plus que de a) et ${Lu("b")} = ∅.</p>
+<p>Question 8, L = ${E("(b + aba)*")} : un mot qui commence par a commence par le bloc aba. Donc ${Lu("a")} = ${E("ba(b + aba)*")} et ${Lu("ab")} = ${E("a(b + aba)*")}.</p>`,
+  piege:`Si u est lui-même dans L, alors ε ∈ ${Lu("u")} : c'est l'oubli le plus fréquent. Et ${Lu("u")} n'est pas « les mots de L qui commencent par u » : on enlève u.`},
+ {id:"qtous",t:"Tous les quotients, puis l'automate qu'ils forment",pts:3,ou:"exercice 4, questions 3 à 5 (janvier 2026)",lect:2,exo:{g:"AU6",lv:3},
+  ess:`<ol><li>On part de L = ${Lu("ε")}. On calcule ${Lu("a")} et ${Lu("b")}.</li>
+<li>Pour chaque quotient nouveau, on calcule ses deux quotients, jusqu'à ne plus rien trouver de nouveau. ∅ compte comme un quotient.</li>
+<li>Un état par quotient distinct. L'état de ${Lu("u")} va, avec la lettre x, vers l'état de ${Lu("ux")}.</li>
+<li>Un état est acceptant quand ε est dans son quotient. L'état initial est celui de L.</li></ol>`,
+  meth:`<p>Janvier 2026, L = ${E("a*b*")} :</p>
+<ol><li>${Lu("a")} = ${E("a*b*")} = L (après un a, on peut encore lire des a puis des b) ; ${Lu("b")} = ${E("b*")} (après un b, plus de a).</li>
+<li>Les quotients de ${E("b*")} : par b, ${E("b*")} ; par a, ∅. Ceux de ∅ : ∅.</li>
+<li>Trois quotients : q0 = ${E("a*b*")}, q1 = ${E("b*")}, q2 = ∅. ε est dans q0 et q1, pas dans q2.</li></ol>
+${tab(["état","a","b","acceptant ?"],[["q0","q0","q1","oui"],["q1","q2","q1","oui"],["q2","q2","q2","non"]])}
+${D(["q0","q1","q2"],["q0"],["q0","q1"],[["q0","a","q0"],["q0","b","q1"],["q1","a","q2"],["q1","b","q1"],["q2","a","q2"],["q2","b","q2"]])}`,
+  piege:`Ne pas oublier le quotient ∅ : sans lui, l'automate n'est pas complet. Et un état est acceptant si ε est dans son quotient (ici q1 = ${E("b*")} contient ε), pas seulement l'état initial.`},
+ {id:"det",t:"Déterminiser un automate",pts:3,ou:"exercice 3 (janvier 2026) ; complémentaire en 2023 et 2024",lect:2,exo:{g:"AU5",lv:0},
+  ess:`<ol><li>Les états du nouvel automate sont des <b>ensembles</b> d'états. Le premier est l'ensemble des états initiaux.</li>
+<li>Pour un ensemble et une lettre : on réunit les arrivées de chacun de ses états par cette lettre.</li>
+<li>Chaque ensemble nouveau a sa ligne ; on s'arrête quand il n'y en a plus. L'ensemble vide ∅ est le puits : il a sa ligne aussi.</li>
+<li>Un ensemble est acceptant s'il contient au moins un état acceptant.</li></ol>`,
+  meth:`<p>Janvier 2026 : 1 initial, 2 acceptant.</p>
+${D(["1","2","3"],["1"],["2"],[["1","a","1"],["1","a","2"],["2","b","1"],["1","b","3"],["2","b","3"],["3","a","2"]])}
+${tab(["état","a","b","acceptant ?"],[["{1}","{1, 2}","{3}","non"],["{1, 2}","{1, 2}","{1, 3}","oui"],["{3}","{2}","∅","non"],["{1, 3}","{1, 2}","{3}","non"],["{2}","∅","{1, 3}","oui"],["∅","∅","∅","non"]])}
+<p>Par exemple {1, 2} avec b : 1 va en 3, 2 va en 1 et en 3, donc {1, 3}. Les acceptants sont ceux qui contiennent 2 : {1, 2} et {2}.</p>`,
+  piege:`On n'écrit que les ensembles atteints depuis {1}, pas toutes les parties. Pour le <b>complémentaire</b> (2023, 2024) : d'abord déterminiser et compléter (la ligne ∅), ensuite seulement échanger acceptant et non acceptant ; échanger sur l'automate non déterministe donne un faux résultat.`},
+ {id:"qcmer",t:"QCM : quelles expressions décrivent ce langage ?",pts:2.5,ou:"QCM, questions 2 et 3 (janvier 2026)",lect:1.5,exo:{g:"AU3",lv:1},
+  ess:`<ul><li>Une expression est fausse si elle produit un mot de trop (trop large) ou s'il lui manque un mot du langage (trop étroite) : un seul mot suffit pour l'écarter.</li>
+<li>On essaie les petits mots : ε, a, b, puis les mots limites (ici, deux b collés, deux b séparés).</li>
+<li>Une mauvaise case coûte 0,5 point : ne coche que ce que tu as vérifié.</li></ul>`,
+  meth:`<p>Longueur paire : ${E("(a + b)*")} contient a, non ; ${E("(a + b)(a + b)")} ne donne que la longueur 2, non ; ${E("(aa + ab + ba + bb)*")} oui.</p>
+<p>Au moins deux b :</p><ul><li>oui : ${E("(a + b)*b(a + b)*b(a + b)*")}, ${E("(a + b)*b(a + ε)*b(a + b)*")} (car ${E("(a + ε)*")} = ${E("a*")}) et ${E("(a + b)*ba*b(a + b)*")} (on regarde les deux derniers b) ;</li>
+<li>non : ${E("(a + b)*(ba*b)*")} et ${E("(ba*b)*")} contiennent ε ; ${E("(b*a*b*)*")} donne tous les mots.</li></ul>`,
+  piege:`Une étoile autour de tout, <span class="nf">(…)<sup>∗</sup></span>, contient toujours ε : si ε n'est pas dans le langage, l'expression est fausse.`},
+ {id:"preuve",t:"Démontrer que l'opération garde « reconnaissable », et les règles",pts:2,ou:"exercice 4, questions 6 et 7 (janvier 2026) ; même question tous les ans",lect:1.5,
+  rappel:{min:2,q:`Montre que si L est reconnaissable, alors ${Lu("u")} est reconnaissable : quel automate, et quelle suite d'équivalences ? Puis exprime (L₁ ∪ L₂)<sub>u</sub>, (L₁ ∩ L₂)<sub>u</sub> et le quotient du complémentaire de L.`,
+   r:`<p>L est reconnu par un automate déterministe A = ⟨A, Q, q<sub>0</sub>, F, δ⟩. Soit q<sub>u</sub> = δ*(q<sub>0</sub>, u). L'automate A<sub>u</sub> = ⟨A, Q, q<sub>u</sub>, F, δ⟩ est le même, avec q<sub>u</sub> comme état initial. Pour tout mot v :</p>
+<p>v ∈ L(A<sub>u</sub>) ⟺ δ*(q<sub>u</sub>, v) ∈ F ⟺ δ*(q<sub>0</sub>, uv) ∈ F ⟺ uv ∈ L ⟺ v ∈ ${Lu("u")}. Donc ${Lu("u")} est reconnaissable.</p>
+<p>(L₁ ∪ L₂)<sub>u</sub> = (L₁)<sub>u</sub> ∪ (L₂)<sub>u</sub> ; (L₁ ∩ L₂)<sub>u</sub> = (L₁)<sub>u</sub> ∩ (L₂)<sub>u</sub> ; le quotient du complémentaire est le complémentaire de ${Lu("u")}.</p>
+<p class="muted">Corrigé officiel de janvier 2026. Les autres années, la même preuve avec une autre opération : L<sup>−p</sup> (2023 : départs en δ(q<sub>d</sub>, a) et δ(q<sub>d</sub>, b)), le miroir (janvier 2024 : flèches retournées, départs et arrivées échangés), a⁻¹L (juin 2024), L<sup>−d</sup> (juin 2023 : nouveaux acceptants q tels que δ(q, a) ou δ(q, b) est acceptant). L'entraînement AU6, palier 5, les fait toutes.</p>`},
+  ess:`<ul><li>On part d'un automate <b>déterministe</b> A qui reconnaît L, et on dit précisément ce qu'on change : l'état initial, les états acceptants ou le sens des flèches.</li>
+<li>Puis une chaîne d'équivalences, chacune justifiée par la définition de δ* ou celle du langage.</li>
+<li>La clé du quotient : δ*(q<sub>0</sub>, uv) = δ*(δ*(q<sub>0</sub>, u), v). Lire u, c'est arriver en q<sub>u</sub>.</li></ul>`,
+  meth:`<p>La rédaction attendue est dans la réponse ci-dessous. Pour les règles : le quotient passe à travers l'union, l'intersection et le complémentaire. Les sujets de 2 h demandaient aussi l'étoile et le produit, avec deux cas pour le produit (selon que ε ∈ L₁ ou non).</p>`,
+  piege:`Pour L<sup>−p</sup> et le miroir, l'automate obtenu a plusieurs états initiaux : il n'est plus déterministe, et c'est permis. Écris-le, au lieu de chercher à le rendre déterministe.`},
+ {id:"lang",t:"Un langage décrit : son expression et son automate",pts:3,ou:"exercices 1 et 2 (janvier 2026) ; question 1 tous les ans",lect:2,exo:{g:"AU3",lv:2},
+  ess:`<ul><li>L'expression : on découpe le mot en blocs qui se répètent. « Un nombre impair de a » s'écrit ${E("a(aa)*")}.</li>
+<li>L'automate : chaque état retient ce qu'il faut savoir du début du mot (combien de b, la dernière lettre…). Complet : une flèche a et une flèche b sur chaque état, avec un puits si besoin.</li>
+<li>Vérifie avec les exemples de l'énoncé : ceux qui sont dans L et ceux qui n'y sont pas.</li></ul>`,
+  meth:`<p>Exercice 1, au moins deux b, complet à 3 états : on compte les b jusqu'à deux.</p>
+${D(["q0","q1","q2"],["q0"],["q2"],[["q0","a","q0"],["q0","b","q1"],["q1","a","q1"],["q1","b","q2"],["q2","a","q2"],["q2","b","q2"]])}
+<p>Exercice 2 : entre deux b successifs, un nombre impair de a. Entre deux b, le bloc est ${E("a(aa)*b")}. Le corrigé : ${E("a*(ε + b(a(aa)*b)*)a*")}. Le premier ${E("a*")} et le dernier ${E("a*")} servent aux mots sans b ou à un seul b (aabaaa).</p>
+<p>L'automate du corrigé retient la parité des a lus depuis le dernier b ; ⊥ est le puits, tous les autres états sont acceptants :</p>
+${D(["q0","q1","q2","q3","⊥"],["q0"],["q0","q1","q2","q3"],[["q0","a","q0"],["q0","b","q1"],["q1","a","q2"],["q1","b","⊥"],["q2","a","q3"],["q2","b","q1"],["q3","a","q2"],["q3","b","⊥"],["⊥","a","⊥"],["⊥","b","⊥"]])}
+<p>q1 et q3 font le même travail (un nombre pair de a depuis le dernier b) : on peut les fusionner, 4 états suffisent.</p>`,
+  piege:`N'oublie pas les mots courts : ε, les mots sans b, les mots à un seul b. Une expression qui commence par un b obligatoire perd aabaaa.`},
+ {id:"qcm",t:"QCM : mots acceptés, sous-mots",pts:2.5,ou:"QCM, questions 1 et 4 (janvier 2026)",lect:1.5,exo:{g:"AU2",lv:1},
+  ess:`<ul><li>Un mot est accepté s'il existe <b>un</b> chemin de l'état initial à un état acceptant qui le lit. Dans un automate non déterministe, on suit l'ensemble des états possibles, lettre après lettre. Une flèche absente : ce chemin meurt.</li>
+<li>Le mot vide ε est accepté si l'état initial est acceptant.</li>
+<li>Un sous-mot s'obtient en effaçant des lettres sans changer l'ordre ; un facteur est un morceau d'un seul tenant.</li></ul>`,
+  meth:`<p>Question 4 : l'état initial 1 est acceptant, 4 est un puits.</p>
+${D(["1","2","3","4"],["1"],["1","3"],[["1","a","2"],["1","b","2"],["2","a","1"],["2","b","3"],["1","b","3"],["1","a","4"],["3","a","3"],["4","a","4"],["4","b","4"]])}
+<ul><li>ε : 1 est acceptant, oui. ab : 1 → 2 → 3, oui.</li>
+<li>babb : {1} → {2, 3} → {1, 3} → {2, 3} → {3}, oui. aaba : {1} → {2, 4} → {1, 4} → {2, 3, 4} → {1, 3, 4}, oui.</li>
+<li>bbab : {1} → {2, 3} → {3} → {3} → ∅, non.</li></ul>
+<p>Question 1, sous-mot de abcabcabc : acbac (lettres 1, 3, 5, 7, 9), oui. aabbcc, abcbba, abacbab : non, on tombe à court de lettres.</p>`,
+  piege:`Dans un automate non déterministe, un chemin qui échoue ne prouve rien : il faut que tous échouent pour refuser le mot.`}],
+ blanc:[
+  {t:"QCM : les sous-mots",ou:"QCM, question 1 (janvier 2026)",pts:2,g:"AU1",lv:1},
+  {t:"Déterminiser un automate à quatre états",ou:"exercice 3 (janvier 2026)",pts:5,g:"AU5",lv:1},
+  {t:"Un automate pour un langage des sujets",ou:"exercice 2 (janvier 2026) ; question 1 (2023, 2024)",pts:4,g:"AU4",lv:2},
+  {t:"Les quotients d'un langage décrit",ou:"exercice 4, question 1 (janvier 2026)",pts:5,g:"AU6",lv:1},
+  {t:"Quotients par deux lettres",ou:"exercice 4, question 2 (janvier 2026)",pts:4,g:"AU6",lv:5}]
+}};})();
 
 </script>
 <script>
