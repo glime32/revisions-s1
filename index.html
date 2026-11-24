@@ -460,7 +460,7 @@ svg .arrow-ok{fill:var(--vert)}
 /* cartes de fiche (par matière) */
 .fc{background:var(--feuille);border:2px solid color-mix(in srgb,var(--sc) 40%,transparent);border-radius:18px;padding:22px;display:grid;gap:14px;min-height:280px;min-width:0}
 .fc .front{font:650 1.2rem/1.4 var(--f-sans);color:var(--head)}
-.fc .back{display:grid;gap:10px;border-top:2px dashed var(--trait);padding-top:14px;animation:flip-in .35s var(--snap)}
+.fc .verso{display:grid;gap:10px;border-top:2px dashed var(--trait);padding-top:14px;animation:flip-in .35s var(--snap)}
 .fc .acts{margin-top:auto}
 .kbd{font-size:.8rem;color:var(--graphite)}
 .filters{display:flex;gap:8px;flex-wrap:wrap}
@@ -1168,6 +1168,48 @@ html.xb-ouvert{overflow:hidden}
 .xp-num{position:absolute;top:20px;transform:translateX(-50%);font-size:.75rem;font-weight:800;color:var(--icy);white-space:nowrap}
 .lp-bar.xp-ligne{display:block;margin-top:6px;height:12px}
 .xp-notes{margin-top:16px}
+.lead-plus{max-width:68ch}
+.lead-plus>summary{list-style:none;cursor:pointer;font-size:1.05rem;line-height:1.5;color:var(--icy)}
+.lead-plus>summary::-webkit-details-marker{display:none}
+.voir-plus{color:var(--cornflower);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lead-plus[open] .voir-plus{display:none}
+.lead-plus>.lead{margin:8px 0 0}
+details.filtre>summary{list-style:none;cursor:pointer}
+details.filtre>summary::-webkit-details-marker{display:none}
+details.filtre>.filters{margin-top:10px}
+.ecrin.replie .lessons>li:not(.slot-next){display:none}
+.voir-tout{margin-top:14px}
+.tiroir>details.ex>.todo{padding:0 10px 10px}
+.loupe{display:none}
+.mat-rappel{display:none}
+@media (max-width:980px){
+  #card{padding-bottom:84px}
+  #card .fc-acts{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:45;justify-content:center;margin:0;padding:10px;background:#05060E;border:2px solid var(--trait);border-radius:16px}
+}
+@media (max-width:700px){
+  .topbar{position:relative}
+  .search{flex:0 0 auto;width:auto;margin-left:auto}
+  .search input{display:none}
+  .loupe{display:grid;place-items:center;width:40px;height:40px;min-height:0;padding:0}
+  .search.ouverte{position:absolute;left:6px;right:6px;top:50%;translate:0 -50%;z-index:5}
+  .search.ouverte .loupe{display:none}
+  .search.ouverte input{display:block;height:40px}
+  .results{left:0;right:0;width:auto}
+}
+@media (max-width:600px){
+  .filters[data-th]{flex-wrap:nowrap;gap:6px}
+  .filters[data-th]>.btn{flex:1;padding:8px 2px;font-size:.84rem;white-space:nowrap}
+  table.fiches,table.fiches tbody,table.fiches tr,table.fiches td{display:block}
+  table.fiches thead{display:none}
+  table.fiches tr{border:2px solid var(--trait);border-radius:14px;padding:12px;margin:0 0 12px}
+  table.fiches td{border:0;padding:2px 0}
+  table.fiches td[data-label]::before{content:attr(data-label);display:block;margin-top:8px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--sc)}
+  table.fiches td[rowspan],table.fiches .mat-rappel{display:block;font-weight:700;font-size:1.05rem}
+}
+#elan .el-s::after{content:" j"}
+#elan .el-pt::after{content:" pt"}
+@media (max-width:340px){.topbar{gap:4px}.loupe{width:36px;height:36px}.brand__tile{width:32px;height:32px}.el-p{padding:0 6px;gap:4px}.syncb{padding:1px 5px}}
+@media (max-width:300px){#elan .el-s::after,#elan .el-pt::after{content:none}}
 
 </style>
 <link rel="manifest" href="manifest.webmanifest">
@@ -1187,7 +1229,7 @@ html.xb-ouvert{overflow:hidden}
    <a href="#/entrainer" data-tab="entrainer">S'entraîner</a>
    <a href="#/plus" data-tab="plus">Plus</a>
   </nav>
-  <div class="search"><input id="q" type="search" placeholder="Chercher : Thalès, filtrage, IPP…" aria-label="Chercher une notion" autocomplete="off"><div class="results" id="res" hidden></div></div>
+  <div class="search"><button class="btn loupe" id="loupe" type="button" aria-label="Chercher une notion" aria-expanded="false"><svg width="20" height="20" aria-hidden="true"><use href="#i-loupe"/></svg></button><input id="q" type="search" placeholder="Chercher : Thalès, filtrage, IPP…" aria-label="Chercher une notion" autocomplete="off"><div class="results" id="res" hidden></div></div>
   <a class="el-p" id="elan" href="#/progres" hidden></a>
   <span class="jx" id="jx"></span>
   <a class="syncb" id="syncb" href="#/synchro" hidden>Synchro</a>
@@ -1218,7 +1260,7 @@ html.xb-ouvert{overflow:hidden}
  <symbol id="i-star8" viewBox="0 0 100 100"><polygon points="50,3 54.2,39.8 68.4,31.6 60.2,45.8 97,50 60.2,54.2 68.4,68.4 54.2,60.2 50,97 45.8,60.2 31.6,68.4 39.8,54.2 3,50 39.8,45.8 31.6,31.6 45.8,39.8" style="fill:var(--s8-fill,#C5F9FC);stroke:var(--s8-stroke,#1B2CC1);stroke-width:3.5;stroke-linejoin:round"/></symbol>
  <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M9 7h8v8"/></symbol>
  <symbol id="i-cards" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="7" width="13" height="14" rx="2.5"/><path d="M8 4h10.5A2.5 2.5 0 0 1 21 6.5V17"/></g></symbol>
- <symbol id="i-pen" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></g></symbol>
+ <symbol id="i-loupe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M16 16l5 5"/></g></symbol><symbol id="i-pen" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></g></symbol>
  <symbol id="i-mix" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/></g></symbol>
  <symbol id="i-cal" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></g></symbol>
  <symbol id="i-sync" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14 5.3M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></g></symbol>
@@ -33393,9 +33435,10 @@ function apprendre(){
       const cls=dn?" is-done":isNext?" is-next":redo?" is-redo":S.TB["L-"+L.id].p>1?" is-later":"";
       const pg=dn?null:progGet(id,L.id);
       const meta=pg?`En cours · écran ${pg.i+1} sur ${pg.n}`:dn?`Fait · ${Math.round(r.best*100)} %`:redo?`À refaire · ${Math.round(r.best*100)} % la première fois`:`environ ${hm(S.TB["L-"+L.id].min)}${S.TB["L-"+L.id].p>1?" · si tu as le temps":""}`;
-      return `<li class="slot"><a class="piece lpiece${cls}" href="#/lecon/${id}/${L.id}">${isNext?`<span class="tag">Maintenant</span>`:""}${spark}<span class="lnum">${dn?"✓":redo?"!":i+1}</span><span class="piece__text"><span class="piece__title">${esc(L.t)}</span><span class="piece__meta">${meta}</span>${isNext&&L.goal?`<span class="lgoal">${L.goal}</span>`:""}</span></a></li>`;}).join("");
-    h+=`<section class="ecrin s-${id}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">${exW(S)} ${shortDay(S)}${exam(S).report?"":" · "+jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul></div></div></section>`;});
-  $("#main").innerHTML=h+`</div>`;badges();}
+      return `<li class="slot${isNext?" slot-next":""}"><a class="piece lpiece${cls}" href="#/lecon/${id}/${L.id}">${isNext?`<span class="tag">Maintenant</span>`:""}${spark}<span class="lnum">${dn?"✓":redo?"!":i+1}</span><span class="piece__text"><span class="piece__title">${esc(L.t)}</span><span class="piece__meta">${meta}</span>${isNext&&L.goal?`<span class="lgoal">${L.goal}</span>`:""}</span></a></li>`;}).join("");
+    h+=`<section class="ecrin s-${id}${k?" replie":""}">${k===0?ruler:""}<div class="ecrin__velvet"><div class="group"><div class="group__head"><span class="group__tile" aria-hidden="true">${ico("i-star")}</span><h2 class="group__name">${S.name}</h2><span class="group__count">${d}/${Ls.length} faites</span><span class="group__count">${exW(S)} ${shortDay(S)}${exam(S).report?"":" · "+jx(S)}</span><a class="group__more" href="#/${id}">Fiches, TD, annales</a></div><ul class="group__grid lessons">${items}</ul>${k&&Ls.length>1?`<button class="btn voir-tout" type="button">Voir les ${Ls.length} leçons</button>`:""}</div></div></section>`;});
+  $("#main").innerHTML=h+`</div>`;
+  $("#main").querySelectorAll(".voir-tout").forEach(b=>b.addEventListener("click",()=>{b.closest(".ecrin").classList.remove("replie");b.remove();}));badges();}
 
 /* ================= une matière : tout ce qu'il y a dedans ================= */
 function subject(sid){
@@ -33660,7 +33703,9 @@ const liens=sid=>`<p class="gomore">${sid?`<a href="#/entrainer/examen/une/${sid
 function bloc(){const M=matieres();if(!M.length)return "";const J=jour();let h="";
   if(J)h+=`<section class="tiroir"><h2 class="tiroir__title">Entretien du jour</h2><ol class="todo"><li class="task"><button class="tick" disabled aria-label="Se coche toute seule"></button><div><div class="tt">${J.n} ${plur(J.n,"exercice")} ${plur(J.n,"mélangé")}</div><div class="meta">Environ ${J.min} min · ${J.noms.join(", ")}</div></div><a class="btn pri go" href="#/entrainer/jour">Commencer</a></li></ol></section>`;
   h+=xBloc();
-  M.forEach(sid=>{h+=`<section class="tiroir s-${sid}"><h2 class="tiroir__title">Entraînement · ${SUBJ[sid].name}</h2><ol class="todo">${ordre(sid).map(rangee).join("")}</ol></section>`;});
+  const n=A.NOW(),ouv=M.find(sid=>A.examStart(SUBJ[sid])>n)||M[0];
+  M.forEach(sid=>{const S=SUBJ[sid],e=A.exam(S),L=ordre(sid),ep=e.report?(estCC(S)?"CC reporté":"examen reporté"):A.examStart(S)>n?`${estCC(S)?"CC":"examen"} ${quand(e.day)}`:"";
+    h+=`<section class="tiroir s-${sid}"><details class="ex"${sid===ouv?" open":""}><summary><span><span class="h">${S.name}</span> <span class="muted">· ${L.length} ${plur(L.length,"méthode")}${ep?" · "+ep:""}</span></span></summary><ol class="todo">${L.map(rangee).join("")}</ol></details></section>`;});
   return h+liens()+`<section class="tiroir"><h2 class="tiroir__title">Sujets, TD et quiz</h2></section>`;}
 function tuile(sid,sw,c){const L=defs(sid);if(!L.length)return "";const t0=A.today(),k=L.filter(d=>{const du=echeance(d,etat(d.id));return du&&du<=t0;}).length;
   return sw({href:"#/entrainer/"+sid,c,tile:String(L.length),kicker:"Refaire vite, sans erreur",name:"Entraînement",sub:`${L.length} ${plur(L.length,"méthode")}${k?` · ${k} à refaire aujourd'hui`:""}`});}
@@ -36951,7 +36996,7 @@ function examens(){
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Examens et coefficients</h1></div>
    <p class="lead">D'après le document officiel des modalités de contrôle 2026-2027 et les pages Moodle. Le poids d'un CC dans ta moyenne du semestre, c'est le coefficient de la matière multiplié par la part de ce CC dans sa note.</p>
    <section class="check" id="bilan">${bilanHTML()}</section>
-   <div style="overflow-x:auto"><table class="tbl" id="extbl"><thead><tr><th>Matière</th><th>Épreuve</th><th>Date et heure</th><th>Part de la note</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
+   <div style="overflow-x:auto"><table class="tbl fiches" id="extbl"><thead><tr><th>Matière</th><th>Épreuve</th><th>Date et heure</th><th>Part de la note</th><th>Poids</th><th>Documents</th></tr></thead><tbody>${rows}</tbody></table></div>
    <section class="check"><h2 style="font-size:1.1rem">Ton rythme de révision</h2><p class="muted">Le temps de révision prévu au maximum par jour. Le plan se recalcule tout de suite.</p><div class="filters" id="ry">${[["leger","Léger : 3 h de travail les jours libres, 1 h 30 les jours de cours"],["normal","Normal : 4 h 30 et 2 h 30"],["intensif","Intensif : 6 h et 3 h 30"]].map(r=>`<button class="btn" data-ry="${r[0]}" aria-pressed="${(hub.rythme||"normal")===r[0]}">${r[1]}</button>`).join("")}</div><p class="muted" id="ryout"></p><p class="muted" style="font-size:.9rem">Sans compter les pauses : 15 min au milieu de chaque séance de plus d'une heure, et 20 min entre deux séances.</p></section>
    <section class="check"><h2 style="font-size:1.1rem">Ta vitesse</h2><p class="muted">Combien de fois plus de temps qu'indiqué au départ une leçon te prend. Par défaut, le site la mesure sur tes leçons (pause comprise jusqu'à 20 min par écran). Tu peux la fixer toi-même si la mesure te semble fausse.</p><div class="filters" id="vi">${[["auto",(SIDS.some(id=>measured(id)==="mesuré")?"Mesurée : ×":"Automatique (estimée pour l'instant) : ×")+String(factor().toFixed(1)).replace(".",",")],["2","×2"],["3","×3"],["4","×4"],["5","×5"]].map(r=>`<button class="btn" data-vi="${r[0]}" aria-pressed="${(hub.vitesse||"auto")===r[0]}">${r[1]}</button>`).join("")}</div></section>
    <section class="usage"><h2>Ce que ça change</h2><p>Les coefficients ne sont pas tous égaux : l'algorithmique et la programmation fonctionnelle (coef 5) pèsent plus que la géométrie (coef 4) et le calculus (coef 3). Le planificateur s'en sert pour départager deux matières aussi urgentes, et pour choisir quoi laisser tomber s'il manque du temps.</p><p>Si une heure de CC change, corrige-la dans le tableau : le plan se recalcule tout seul. Si un CC n'a pas lieu, appuie sur « Cette épreuve n'a pas lieu » sous sa date : ses révisions passent au CC suivant de la matière. Le même bouton le remet.</p><p>Tes notes comptent aussi : tape-les dans la case « Ma note » d'une épreuve passée. Quand un CC1 s'efface par la seconde chance, les épreuves qui restent pèsent plus dans le planning, et une matière où il te faut plus de 10 passe devant.</p></section>
@@ -36963,6 +37008,9 @@ function examens(){
     <p><b>USI et Automates</b> (examen seul) : la seconde chance est un examen de la même durée en seconde session.</p>
     <p><b>Compensation</b> : le document marque l'année et les semestres « non compensables », et chacun des deux blocs « compensable » : le bloc maths (coefficients 19 au premier semestre, 18 au second) et le bloc informatique (17 et 14). Les matières se compensent donc à l'intérieur d'un bloc, sur l'année, et il te faut la moyenne dans chacun des deux.</p>
     <p class="muted">Ce que le document ne dit pas en toutes lettres : que la meilleure des deux notes est gardée (c'est le principe d'une seconde chance), et si la moyenne de la seconde chance est simple ou pondérée. À confirmer auprès des enseignants.</p></section></div>`;
+  {const t=$("#extbl"),H=[...t.tHead.rows[0].cells].map(x=>x.textContent);let mat="";
+    [...t.tBodies[0].rows].forEach(r=>{const C=[...r.cells],d=H.length-C.length;C.forEach((c,i)=>{if(i+d)c.dataset.label=H[i+d];});
+      if(d)r.insertAdjacentHTML("afterbegin",`<td class="mat-rappel" aria-hidden="true">${mat}</td>`);else mat=C[0].innerHTML.split("<br>")[0];});}
   const ryOut=()=>{const P=plan(),tot=P.blocks.reduce((s,b)=>s+work(b.end-b.start),0),nb=Object.values(P.bonus).reduce((s,L)=>s+L.length,0);$("#ryout").textContent=`Avec ce rythme et cette vitesse : ${hm(tot)} de travail prévues jusqu'au dernier CC. Il faudrait ${hm(P.need||0)} pour l'essentiel (leçons et un examen blanc par matière)${nb?` : ${nb} étape(s) restent facultatives, faute de temps`:""}.`;};ryOut();
   $("#ry").addEventListener("click",e=>{const b=e.target.closest("[data-ry]");if(!b)return;emit({k:"set",key:"rythme",v:b.dataset.ry});document.querySelectorAll("#ry [data-ry]").forEach(x=>x.setAttribute("aria-pressed",x===b));ryOut();});
   $("#vi").addEventListener("click",e=>{const b=e.target.closest("[data-vi]");if(!b)return;emit({k:"set",key:"vitesse",v:b.dataset.vi});document.querySelectorAll("#vi [data-vi]").forEach(x=>x.setAttribute("aria-pressed",x===b));ryOut();});
@@ -37031,14 +37079,16 @@ function demo(sid,c){
 
 /* ---------- cartes ---------- */
 let deck=[],di=0,flip=false,dfilter="todo";
+const enBref=(t,c)=>{t=t.trim();let r=t;if(!c){const m=t.match(/^(.+?[.!?])\s+(.+)$/s);if(!m)return `<p class="lead">${t}</p>`;c=m[1];r=m[2];}
+  return `<details class="lead-plus"><summary><span>${c}</span> <span class="voir-plus">En savoir plus</span></summary><p class="lead">${r}</p></details>`;};
 function cards(sid,f){
   const S=SUBJ[sid];if(f)dfilter=f;else if(!["todo","due","rouge","all"].includes(dfilter))dfilter="todo";
   const types=[...new Set(S.ORDER.map(c=>c.type))];
   const FIL=[["todo","Pas encore sues"],["due","Révision du jour"],["rouge","En rouge"],["all","Toutes"]].concat(types.map(t=>[t,(TYPE[t]||[t])[0]+"s"]));
   const build=()=>{deck=S.ORDER.filter(c=>dfilter==="all"||(dfilter==="todo"?!ST[sid].known[c.id]&&!c.out:dfilter==="due"?ST[sid].review[c.id]||(ST[sid].known[c.id]&&(ST[sid].knownOn[c.id]||"")<today()):dfilter==="rouge"?ST[sid].review[c.id]:c.type===dfilter&&!c.out));di=0;flip=false;};build();
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Cartes de révision</h1></div><p class="lead">Lis le titre, réponds de mémoire (à voix haute ou sur une feuille), puis retourne la carte. « Révision du jour » ressort les cartes en rouge et celles que tu savais hier ou avant : les revoir à quelques jours d'écart les fait tenir jusqu'au CC. Raccourcis : espace pour retourner, 1 pour « Je sais », 2 pour « À revoir ».</p>
-   <div class="filters" id="ff">${FIL.map(x=>`<button class="btn" data-f="${x[0]}" aria-pressed="${x[0]===dfilter}">${x[1]}</button>`).join("")}<button class="btn" id="shuf">Mélanger</button></div><div id="card"></div></div>`;
-  $("#ff").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){dfilter=b.dataset.f;document.querySelectorAll("#ff [data-f]").forEach(x=>x.setAttribute("aria-pressed",x===b));build();drawCard(sid);}});
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Cartes de révision</h1></div>${enBref(`Lis le titre, réponds de mémoire (à voix haute ou sur une feuille), puis retourne la carte. « Révision du jour » ressort les cartes en rouge et celles que tu savais hier ou avant : les revoir à quelques jours d'écart les fait tenir jusqu'au CC. Raccourcis : espace pour retourner, 1 pour « Je sais », 2 pour « À revoir ».`,"Réponds de mémoire, puis retourne la carte.")}
+   <details class="filtre"><summary class="btn">Filtrer : <span id="ffcur">${((FIL.find(x=>x[0]===dfilter)||FIL[0])[1]).toLowerCase()}</span> ▾</summary><div class="filters" id="ff">${FIL.map(x=>`<button class="btn" data-f="${x[0]}" aria-pressed="${x[0]===dfilter}">${x[1]}</button>`).join("")}<button class="btn" id="shuf">Mélanger</button></div></details><div id="card"></div></div>`;
+  $("#ff").addEventListener("click",e=>{const b=e.target.closest("[data-f]");if(b){dfilter=b.dataset.f;document.querySelectorAll("#ff [data-f]").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#ffcur").textContent=b.textContent.toLowerCase();b.closest("details").open=false;build();drawCard(sid);}});
   $("#shuf").addEventListener("click",()=>{for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}di=0;flip=false;drawCard(sid);});
   drawCard(sid);
 }
@@ -37048,8 +37098,8 @@ function drawCard(sid){
   if(di>=deck.length){const r=deck.filter(c=>ST[sid].review[c.id]).length;box.innerHTML=`<div class="fc"><p class="front">Paquet terminé.</p><p>${r?`${r} carte(s) en rouge dans ce paquet.`:"Aucune carte en rouge dans ce paquet."}</p><div class="acts"><button class="btn pri" id="again">Recommencer</button>${r?`<a class="btn rev" href="#/${sid}/cartes/rouge">Revoir les cartes en rouge</a>`:""}</div></div>`;$("#again").addEventListener("click",()=>cards(sid,dfilter));return;}
   const c=deck[di];
   box.innerHTML=`<div class="fc"><span class="muted">Carte ${di+1} sur ${deck.length}. ${(TYPE[c.type]||["Fiche"])[0]}, ${c.ref} ${pill(sid,c.id)}</span><p class="front">${c.t}</p>
-   ${flip?`<div class="back"><p>${c.type==="demo"?`<b>Énoncé :</b> si ${c.hyp.replace(/\.$/,"")}, alors ${c.concl.charAt(0).toLowerCase()+c.concl.slice(1)}</p><p><b>L'idée :</b> ${c.idea}`:c.plain}</p>${c.type==="demo"?"":`<div class="cours" style="border-left-width:3px">${c.formal}</div>`}<p><a href="#/${sid}/c/${c.id}">Ouvrir la fiche complète</a></p></div>`:""}
-   <div class="acts">${flip?`<button class="btn ok" data-k="1">Je sais (1)</button><button class="btn rev" data-k="0">À revoir (2)</button>`:`<button class="btn pri" data-flip>Retourner (espace)</button>`}</div></div>`;
+   ${flip?`<div class="verso"><p>${c.type==="demo"?`<b>Énoncé :</b> si ${c.hyp.replace(/\.$/,"")}, alors ${c.concl.charAt(0).toLowerCase()+c.concl.slice(1)}</p><p><b>L'idée :</b> ${c.idea}`:c.plain}</p>${c.type==="demo"?"":`<div class="cours" style="border-left-width:3px">${c.formal}</div>`}<p><a href="#/${sid}/c/${c.id}">Ouvrir la fiche complète</a></p></div>`:""}
+   <div class="acts fc-acts">${flip?`<button class="btn ok" data-k="1">Je sais (1)</button><button class="btn rev" data-k="0">À revoir (2)</button>`:`<button class="btn pri" data-flip>Retourner (espace)</button>`}</div></div>`;
   box.querySelector("[data-flip]")?.addEventListener("click",()=>{flip=true;drawCard(sid);});
   box.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",()=>cardAnswer(sid,b.dataset.k==="1")));fixLinks(box,sid);
 }
@@ -37065,7 +37115,7 @@ const perm=n=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.
 const missHTML=L=>L.length?`<h2 style="font-size:1.15rem;margin:8px 0 0">Tes erreurs (${L.length})</h2><p class="muted" style="margin:0">Relis chaque correction, puis recommence : les réponses changent de place à chaque fois.</p>${L.map(m=>`<div class="expl no"><p class="qtxt" style="font-size:1rem;margin:0 0 4px">${m.q.q}</p>${m.q.code?W.code(m.q.code,m.q.lang||SUBJ[m.sid].lang):""}<p style="margin:0"><span class="r">Ta réponse : ${m.q.o[m.a]}</span><br><span style="color:var(--vert);font-weight:700">La bonne réponse : ${m.q.o[m.q.a]}</span></p><p class="muted" style="margin:4px 0 0">${m.q.e||""}${m.q.link&&SUBJ[m.sid].BY[m.q.link]?` <a href="#/${m.sid}/c/${m.q.link}">Voir la fiche</a>`:""}</p></div>`).join("")}`:"";
 function quiz(sid,neuf){
   const S=SUBJ[sid],tq=S.tasks.find(t=>t.quiz),goal=tq?quizGoal(S,tq):null;
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Quiz de cours</h1></div><p class="lead">${S.quizIntro||"Des questions dans le style des questions de cours du CC."}${goal?` Objectif du plan : au moins ${goal} sur ${activeQuiz(S).length}.`:""}</p><div class="qbox" id="qbox" aria-live="polite"></div></div>`;
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Quiz de cours</h1></div>${enBref(`${S.quizIntro||"Des questions dans le style des questions de cours du CC."}${goal?` Objectif du plan : au moins ${goal} sur ${activeQuiz(S).length}.`:""}`)}<div class="qbox" id="qbox" aria-live="polite"></div></div>`;
   qOrder=S.quiz.map((_,i)=>i).filter(i=>activeQuiz(S).includes(S.quiz[i]));for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}qi=0;qScore=0;qAns=null;qPerm={};qMiss=[];qRepris=false;qS={run:nouvRun()};
   if(APP.ext.sync)APP.ext.sync();
   if(neuf===true)seanceFin("quiz:"+sid);
@@ -37095,7 +37145,7 @@ function drawQ(sid){
 let tdf="all";
 function td(sid){
   const S=SUBJ[sid];
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>${S.tdTitle||"Exercices de TD"}</h1></div><p class="lead">${S.tdIntro||"Cherche sur papier avant d'ouvrir l'indice, puis le corrigé."}</p>
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>${S.tdTitle||"Exercices de TD"}</h1></div>${enBref(S.tdIntro||"Cherche sur papier avant d'ouvrir l'indice, puis le corrigé.")}
    ${S.tdBox||""}<div class="filters" id="tdf">${[["all","Tous"],["3","★★★ seulement"],["todo","Pas encore sus"]].map(x=>`<button class="btn" data-f="${x[0]}" aria-pressed="${x[0]===tdf}">${x[1]}</button>`).join("")}</div><div id="tdl" style="display:grid;gap:10px"></div></div>`;
   const draw=()=>{const st=ST[sid];const L=S.td.filter(x=>tdf==="all"||(tdf==="3"?x.s===3&&!x.out:!st.td[x.id]&&!x.out));
     $("#tdl").innerHTML=L.length?L.map(x=>{const k=!!st.td[x.id],n=S.td.indexOf(x);return `<details class="ex"><summary><span><span class="sub">${S.tdPrefix||"TD"} ${x.id}, ${"★".repeat(x.s)}${x.note?", "+x.note:""}${x.out?`, <span class="r">${x.out===true?"pas au CC1":x.out}</span>`:""}${x.paper?", sur papier":""}<span class="tdst">${k?", su":""}</span></span><br><span class="h">${x.t}</span></span></summary>
@@ -37126,7 +37176,7 @@ function sujetsDe(sid){
 }
 function annales(sid){
   const S=SUBJ[sid],len=S.examMinutes||60;if(tm.len!==len&&!tm.int)tm={left:len*60,end:0,int:null,warn:false,len};
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Annales et examen blanc</h1></div><p class="lead">Fais un sujet en temps réel, puis corrige-toi. ${S.annIntro||""} Coche ensuite le sujet que tu as fait : s'il est dans ton plan, l'étape se coche aussi.</p>
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Annales et examen blanc</h1></div>${enBref(`Fais un sujet en temps réel, puis corrige-toi. ${S.annIntro||""} Coche ensuite le sujet que tu as fait : s'il est dans ton plan, l'étape se coche aussi.`)}
    <section class="check"><h2 style="font-size:1.1rem">Chrono de ${len} minutes</h2><p class="muted">${S.docs?`Documents autorisés ${exW(S)==="CC"?"au CC":"à l'examen"} : ${S.docs}.`:""} Ne regarde aucun corrigé avant la fin.</p><div class="timer"><span class="score" id="tm"></span><button class="btn pri" id="tmgo">Lancer</button><button class="btn" id="tmre">Remettre à zéro</button><span class="muted" id="tmmsg" aria-live="polite"></span></div></section>
    <div id="ann" style="display:grid;gap:16px"></div></div>`;
   const AN=annOf(S),plus=S.ann.length-AN.length,G=sujetsDe(sid),st=ST[sid];let i=-1;
@@ -37148,7 +37198,7 @@ function annales(sid){
 
 /* ---------- où j'en suis : ce que je pense maîtriser, mini-contrôle, priorités ---------- */
 let DG=null;
-const NIV=["Pas compris ou oublié","Moyen","Je maîtrise"];
+const NIV=["Pas compris","Moyen","Maîtrisé"];
 const demi=x=>String(Math.round(x*2)/2).replace(".",",");
 const nbQ=T=>T.pts>=4?3:T.pts>=2?2:T.pts>=1?1:0;/* rien sur un thème qui ne tombe presque jamais */
 function diagPool(sid,T){const S=SUBJ[sid],out=[];S.quiz.forEach(q=>{if(q.link&&q.diag!==false&&(T.fiches||[]).includes(q.link))out.push(q);});
@@ -37166,14 +37216,15 @@ function niveau(sid){
      <div class="muted">${d.self==null&&T.self0!=null?(T.self0src||"Coché d'après ce que tu m'as dit")+" : change-le si c'est faux. ":""}Tes réponses récentes sur ce thème (mini-contrôles, quiz, cartes, erreurs en leçon) : ${d.n?`${Math.round(d.ok/d.n*100)} % justes, la dernière ${dayName(d.on,false,true)}`:"aucune pour l'instant"}. Leçons faites : ${(T.les||[]).filter(l=>st.les[l]&&st.les[l].n).length} sur ${(T.les||[]).length}. Reste à gagner : environ <b>${demi(g)}</b> point(s). ${pr==null?"":pr===1?`<b>En priorité dans ton planning.</b>`:"Passe en « si tu as le temps »."}</div></section>`;};
   const nq=TH.reduce((s,T)=>s+Math.min(diagPool(sid,T).length,nbQ(T)),0);
   $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Où j'en suis</h1></div>
-   <p class="lead">Dis ce que tu penses maîtriser, puis fais le mini-contrôle. Le planning met en avant les thèmes où il te reste le plus de points à gagner, et range en « si tu as le temps » ce que tu sais déjà.</p>
+   ${enBref(`Dis ce que tu penses maîtriser, puis fais le mini-contrôle. Le planning met en avant les thèmes où il te reste le plus de points à gagner, et range en « si tu as le temps » ce que tu sais déjà.`)}
    <h2 style="font-size:1.15rem;margin:0">1. Ce que je pense maîtriser</h2><p class="muted" style="margin:0">Les thèmes sont rangés par points qu'il te reste à gagner. Les points viennent du barème des anciens sujets.</p>
    ${TH.slice().sort((x,y)=>gainTheme(sid,y)-gainTheme(sid,x)).map(carte).join("")}
    <h2 style="font-size:1.15rem;margin:0">2. Mini-contrôle</h2>
    <section class="check"><p class="muted">${nq} questions, environ ${Math.max(3,Math.round(nq*0.6))} minutes. Plus un thème rapporte de points, plus il a de questions. Si tu ne sais pas, dis-le : deviner fausse le résultat. Plus tu réponds à des questions d'un thème, plus elles comptent face à ce que tu as coché. Tes réponses ailleurs comptent aussi : <a href="#/mix">mini-contrôle mélangé</a>, quiz de cours, cartes de « Réviser », questions ratées dans les leçons. Une réponse ancienne compte moins qu'une récente.</p><div class="qbox" id="dq" aria-live="polite"><button class="btn pri" id="dgo" style="justify-self:start">${TH.some(T=>(st.diag[T.id]||{}).tn)?"Refaire le mini-contrôle":"Commencer le mini-contrôle"}</button></div></section>
    <section class="usage"><h2>Comment c'est calculé</h2><p>Pour chaque thème : points au ${X} × ce que tu ne maîtrises pas encore = points à gagner. Un thème maîtrisé, ou qui rapporte moins d'un demi-point, passe en « si tu as le temps ». Entre deux matières, celle où il te reste le plus à gagner reçoit plus de temps.</p><p><a class="btn pri" href="#/">Voir mon planning</a></p></section></div>`;
   $("#main .page").addEventListener("click",e=>{
-    const b=e.target.closest("[data-self]");if(b){emit({k:"diag",s:sid,th:b.parentNode.dataset.th,self:+b.dataset.self});niveau(sid);renderSide();return;}
+    const b=e.target.closest("[data-self]");if(b){const th=b.parentNode.dataset.th,T=TH.find(x=>x.id===th),sc=b.closest(".check");emit({k:"diag",s:sid,th,self:+b.dataset.self});
+      sc.insertAdjacentHTML("afterend",carte(T));sc.remove();const nb=$(`#main [data-th="${th}"] [data-self="${b.dataset.self}"]`);if(nb)nb.focus();renderSide();return;}
     if(e.target.closest("#dgo")){const L=[];TH.forEach(T=>{const P=diagPool(sid,T);perm(P.length).slice(0,Math.min(P.length,nbQ(T))).forEach(i=>L.push({th:T.id,q:P[i]}));});
       DG={sid,L:perm(L.length).map(i=>L[i]),i:0,ans:null,ok:0,ord:{},run:nouvRun()};diagDraw();return;}
     if(e.target.closest("#dgnew")){seanceFin("niv:"+sid);DG=null;niveau(sid);return;}
@@ -37250,7 +37301,7 @@ function mix(neuf){
   const Q=perm(pick.length).map(i=>pick[i]);Q.forEach(it=>{it.ord=perm(it.q.o.length);});
   mx={q:Q,i:0,score:0,ans:null,miss:[],par:{},run:nouvRun()};mixPage();}
 function mixPage(){const Q=mx.q;
-  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div><p class="lead">${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat. Les thèmes que tu travailles déjà à l'entraînement n'ont pas de question ici : leur exercice à taper est dans l'entretien du jour.</p><div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
+  $("#main").innerHTML=`<div class="page"><div class="title-row"><h1>Mini-contrôle mélangé</h1></div>${enBref(`${Q.length} questions de toutes tes matières : surtout les CC les plus proches, les thèmes qui valent le plus de points et ceux que tu n'as pas testés depuis longtemps. Chaque réponse met à jour « Où j'en suis » dans sa matière, et le planning se refait. Si tu ne sais pas, dis-le : deviner fausse le résultat. Les thèmes que tu travailles déjà à l'entraînement n'ont pas de question ici : leur exercice à taper est dans l'entretien du jour.`,`${Q.length} questions de toutes tes matières, pour savoir quoi réviser.`)}<div class="qbox" id="mxbox" aria-live="polite"></div></div>`;
   drawMix();
   $("#mxbox").addEventListener("click",e=>{const o=e.target.closest("[data-o]"),ns=e.target.closest("#mxs");
     if((o||ns)&&mx.ans===null){const it=mx.q[mx.i],ok=o&&+o.dataset.o===it.q.a,p=mx.par[it.sid]||(mx.par[it.sid]={ok:0,n:0});mx.ans=o?+o.dataset.o:-1;p.n++;
@@ -37322,6 +37373,11 @@ function search(){const q=strip(si.value.trim());if(!q){res.hidden=true;return;}
 si.addEventListener("input",search);
 si.addEventListener("keydown",e=>{if(e.key==="Enter"&&rl[ri]){location.hash=rl[ri].h;si.value="";res.hidden=true;si.blur();}else if(e.key==="Escape"){si.value="";res.hidden=true;}else if((e.key==="ArrowDown"||e.key==="ArrowUp")&&rl.length){e.preventDefault();ri=(ri+(e.key==="ArrowDown"?1:-1)+rl.length)%rl.length;res.querySelectorAll("a").forEach((a,i)=>a.classList.toggle("on",i===ri));}});
 res.addEventListener("click",()=>{si.value="";res.hidden=true;});document.addEventListener("click",e=>{if(!e.target.closest(".search"))res.hidden=true;});
+{const lp=$("#loupe"),bx=si.parentNode,ouvre=o=>{bx.classList.toggle("ouverte",o);lp.setAttribute("aria-expanded",o);};
+  lp.addEventListener("click",()=>{ouvre(true);si.focus();});
+  si.addEventListener("blur",()=>setTimeout(()=>{if(!bx.contains(document.activeElement)&&res.hidden)ouvre(false);},150));
+  si.addEventListener("keydown",e=>{if(e.key==="Escape"){ouvre(false);lp.focus();}});
+  res.addEventListener("click",()=>ouvre(false));}
 
 /* ---------- animations : le volet entre deux rubriques, les cartes qui arrivent, la carte qui s'agrandit ---------- */
 const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
