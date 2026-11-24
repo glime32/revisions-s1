@@ -35230,7 +35230,7 @@ let nbMersenne n = puis2 n - 1`)+`<p>${k("nbMersenne 3")} vaut 7.</p>`},
   ess:`<ul><li>${k("**")} prend deux float et rend un float : ${k("2. ** 3.")} vaut ${k("8.")}.</li>
 <li>${k("float_of_int 3")} vaut ${k("3.")} et ${k("int_of_float 8.")} vaut ${k("8")}.</li>
 <li>Donc la puissance de deux entiers : ${k("int_of_float (float_of_int x ** float_of_int y)")}.</li></ul>`,
-  piege:`${k("2 ** n")} est une erreur de type : 2 et n sont des int. Écris ${k("2.")} avec un point, et convertis n. Les opérations sur les float ont aussi un point : +. -. *. /.`,
+  piege:`Écrire ${k("2 ** n")} est une erreur de type : 2 et n sont des int. Écris ${k("2.")} avec un point, et convertis n. Les opérations sur les float ont aussi un point : +. -. *. /.`,
   meth:`<p>Janvier 2022 : Fₙ = 2<sup>2ⁿ</sup> + 1.</p>${ml(`let pow x y = int_of_float (float_of_int x ** float_of_int y)
 let fermat_nbr n = pow 2 (pow 2 n) + 1`)}
 <ol><li>${k("fermat_nbr 2")} = pow 2 (pow 2 2) + 1 = pow 2 4 + 1 = 17.</li>
@@ -35243,7 +35243,7 @@ let fermat_nbr n = pow 2 (pow 2 n) + 1`)}
   ess:`<ul><li>Une liste se fabrique avec ${k("::")} : l'élément de rang n devant la liste des précédents.</li>
 <li>Le cas de base : n ≤ 0 donne ${k("[]")}.</li>
 <li>La liste sort dans l'ordre décroissant : le sujet accepte les deux ordres.</li></ul>`,
-  piege:`${k("listeMersenne (n - 1) :: nbMersenne n")} est une erreur de type : à gauche de ${k("::")} un élément, à droite une liste. Et compte les rangs : les n premiers nombres de Fermat vont de F₀ à Fₙ₋₁.`,
+  piege:`Écrire ${k("listeMersenne (n - 1) :: nbMersenne n")} est une erreur de type : à gauche de ${k("::")} un élément, à droite une liste. Et compte les rangs : les n premiers nombres de Fermat vont de F₀ à Fₙ₋₁.`,
   meth:`<p>Juin 2022 : listeMersenne n, avec M₁ = 1, M₂ = 3…</p>${ml(`let rec listeMersenne n =
   if n <= 0 then []
   else nbMersenne n :: listeMersenne (n - 1)`)}
@@ -35254,7 +35254,7 @@ let fermat_nbr n = pow 2 (pow 2 n) + 1`)}
   ess:`<ul><li>${k("raise Not_found")} lève une exception d'OCaml ; ${k('failwith "add_rat"')} lève ${k('Failure "add_rat"')} ; ${k('invalid_arg "my_get"')} lève ${k('Invalid_argument "my_get"')}.</li>
 <li>Une exception à toi : ${k("exception Inversion of nombre")}, puis ${k("raise (Inversion (Ent 0))")}.</li>
 <li>Une exception arrête tout le calcul : il n'y a pas de valeur. ${k("try e with Not_found -> 0")} la rattrape : si e lève Not_found, le tout vaut 0.</li></ul>`,
-  piege:`${k("raise Inversion (Ent 0)")} est une erreur : il faut les parenthèses, ${k("raise (Inversion (Ent 0))")}.`,
+  piege:`Écrire ${k("raise Inversion (Ent 0)")} est une erreur : il faut les parenthèses, ${k("raise (Inversion (Ent 0))")}.`,
   meth:`<p>Janvier 2024, exercice 2, question 3 : inverser chaque nombre, et lever Inversion avec le nombre nul.</p>${ml(`exception Inversion of nombre
 
 let rec inverse_nombre l = match l with
@@ -35285,7 +35285,7 @@ let rec map_sum2 f = function
   ess:`<ul><li>On lit le corps et on note ce que chaque opération impose : ${k("x + 1")} force un int, ${k("f e")} force f à être une fonction.</li>
 <li>Ce qui n'est contraint par rien reste un type quelconque : ${k("'a")}, ${k("'b")}.</li>
 <li>Les flèches suivent l'ordre des arguments, et le dernier type est le résultat. Une fonction passée en argument se met entre parenthèses.</li></ul>`,
-  piege:`${k("('a -> int) -> 'a list -> int")} et ${k("'a -> int -> 'a list -> int")} ne veulent pas dire la même chose : sans les parenthèses, f ne serait plus un seul argument.`,
+  piege:`Les types ${k("('a -> int) -> 'a list -> int")} et ${k("'a -> int -> 'a list -> int")} ne veulent pas dire la même chose : sans les parenthèses, f ne serait plus un seul argument.`,
   meth:`<p>Juin 2022 : la signature de prodFonc, dont le cas général est ${k("f (List.hd l) * prodFonc f (List.tl l)")}.</p>
 <ol><li>${k("*")} impose : ${k("f (List.hd l)")} est un int, et le résultat aussi.</li>
 <li>Les éléments de l ne sont contraints par rien : l est une ${k("'a list")}, et f reçoit un 'a. Donc f : ${k("'a -> int")}.</li>
@@ -35314,7 +35314,7 @@ let prodFonc3 f l = List.fold_right (fun e acc -> f e * acc) l 1`)}
   ess:`<ul><li>Une fonction est <b>terminale</b> quand l'appel récursif est la toute dernière opération : rien n'est calculé après lui.</li>
 <li>On ajoute un accumulateur acc, qui porte le résultat partiel : ${k("let rec aux acc l = match l with | [] -> acc | x :: r -> aux (acc + x) r in aux 0 li")}.</li>
 <li>Le cas de base renvoie acc, et acc part du cas de base de la version récursive.</li></ul>`,
-  piege:`${k("x + somme r")} n'est pas terminale : le + se fait après l'appel. Et un accumulateur de liste est à l'envers : on finit par ${k("List.rev acc")}.`,
+  piege:`La version ${k("x + somme r")} n'est pas terminale : le + se fait après l'appel. Et un accumulateur de liste est à l'envers : on finit par ${k("List.rev acc")}.`,
   meth:`${ml(`let rec factI n a =
   if n = 0 then a
   else factI (n - 1) (n * a)`)}
@@ -35331,6 +35331,7 @@ let prodFonc3 f l = List.fold_right (fun e acc -> f e * acc) l 1`)}
   {t:"La signature",ou:"exercice 3, question 1",pts:1.5,g:"PF1",lv:4},
   {t:"La version avec un itérateur",ou:"exercice 3, question 3",pts:2.5,g:"PF6",lv:2}]
 }};
+window.EXPRESS.pf.ct.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
 })();
 
 </script>
