@@ -34195,6 +34195,141 @@ window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastil
   {t:"Un ordinateur plus rapide",ou:"exercice 5",pts:2,g:"AG7",lv:3}]
 }};
 
+/* Le CC3 d'Algo en 1 h (supposé lundi 14/12 à 15 h) : recherche et tris (TD 9 et 10, diapos 88 à 114). Ni la date ni le programme
+   ne sont annoncés : partage supposé d'après le mail du 24/9 et l'ordre du cours, comme dans matiere-algo.js. Pas encore de CC3 aux
+   annales : l'ordre suit les questions déjà tombées (CC1 2024 q. 2 et 3, janvier 2023 ex. 4, PEIP mai 2023 ex. 4) et les TD.
+   Les exemples sont exécutés par tools/verif/algo-express.js. Les exercices sont tirés de gen-algo.js. */
+window.EXPRESS.algo.cc3={
+ t:"Le CC3 d'Algo en 1 h",du:"du CC",au:"au CC",
+ lead:"Le programme supposé du CC3 (recherche et tris, TD 9 et 10 : ni la date ni le programme ne sont encore annoncés), dans l'ordre de ce qui est déjà tombé : les questions 2 et 3 du CC1 de 2024, l'exercice 4 de janvier 2023 et celui de mai 2023. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le CC3 peut aussi reprendre les CC1 et CC2 : tes cartes de Réviser s'en occupent.",
+ carte:"recherche et tris en 1 h, ce qui est déjà tombé d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions comme celles des anciens sujets et des TD 9 et 10 : la question de cours, le nombre d'essais, la recherche dichotomique, reconnaître un tri, la fusion. Le barème du CC3 n'est pas annoncé : celui-ci est le mien. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"dicho",t:"La recherche dichotomique : la trace et l'arrêt",pts:3,ou:"TD 9, diapos 91 à 98",lect:2,exo:{g:"AG9",lv:1},
+  ess:`<ul><li>RechDic cherche e dans un tableau <b>trié</b>, entre les indices deb et fin. À chaque tour, elle regarde la case du milieu, mil = (deb + fin) div 2.</li>
+<li>Si T[mil] &lt; e, e est à droite : deb ← mil + 1. Sinon : fin ← mil − 1.</li>
+<li>La boucle s'arrête quand deb &gt; fin. RechDic renvoie deb si T[deb] = e, sinon −1 : c'est le plus petit indice qui contient e.</li>
+<li><b>L'arrêt</b> : fin − deb + 1, le nombre de cases où on cherche encore, est un entier qui décroît strictement à chaque tour. La boucle s'arrête quand il vaut 0 ou moins.</li>
+<li><b>La complexité</b> : θ(log n), contre θ(n) pour la recherche linéaire.</li></ul>`,
+  piege:`Quand T[mil] = e, la boucle ne s'arrête pas : elle fait fin ← mil − 1 et continue à gauche, pour trouver le plus petit indice. Dans ta trace, ne t'arrête pas à la première case égale à e.`,
+  meth:`<pre class="code">deb, fin ← 0, taille(T)-1
+tant que deb≤fin faire
+    mil ← (deb+fin) div 2
+    si T[mil]&lt;e alors deb ← mil+1
+    sinon fin ← mil-1
+fin tq;
+Renvoyer cond(deb&lt;taille(T) et T[deb]=e, deb, -1)</pre>
+<p>Exemple : RechDic(12, T) avec T = [2, 5, 7, 9, 12, 15, 20].</p>
+<ol><li>Au départ : deb = 0, fin = 6.</li>
+<li>Tour 1 : mil = 3, T[3] = 9 &lt; 12, donc deb = 4.</li>
+<li>Tour 2 : mil = 5, T[5] = 15 n'est pas &lt; 12, donc fin = 4.</li>
+<li>Tour 3 : mil = 4, T[4] = 12 n'est pas &lt; 12, donc fin = 3.</li>
+<li>deb = 4 &gt; fin = 3 : la boucle s'arrête. T[4] = 12, donc RechDic renvoie 4, après 3 tours. Les cases où on cherche encore : 7, puis 3, 1, 0.</li></ol>`},
+ {id:"essais",t:"Combien de mesures, combien d'essais",pts:2,ou:"CC1 2024, question 3",lect:1,exo:{g:"AG9",lv:2},
+  ess:`<ul><li>Chaque essai d'une recherche dichotomique divise par 2 le nombre de cases où chercher.</li>
+<li>Pour n cases, le nombre d'essais est le nombre de fois qu'on divise n par 2 pour arriver à 1, à peu près log₂(n). 128 = 2⁷ : 7 mesures pour les 128 chevaux de Sarah (corrigé officiel).</li>
+<li>Doubler le nombre de cases n'ajoute qu'<b>un</b> essai : c'est ce que veut dire θ(log n).</li></ul>`,
+  piege:`Deux fois plus de légos, ce n'est pas deux fois plus d'essais : 24 000 légos demandent 15 essais, pas 28. Pour justifier, écris la phrase du corrigé : « après le premier essai, il en reste … ».`,
+  meth:`<p>CC1 de 2024 : les 12 000 légos de Mr Bricks sont rangés par taille, il lui faut au plus 14 essais. Combien avec 24 000 légos ?</p>
+<ol><li>Après le premier essai, il reste 12 000 légos où chercher.</li>
+<li>Pour 12 000 légos, il faut au plus 14 essais.</li>
+<li>En tout : 1 + 14 = 15 essais au plus.</li></ol>
+<p>De même, 1 000 livres demandent 10 essais (2¹⁰ = 1 024), et 4 000 livres en demandent 12 : 4 000, puis 2 000, puis 1 000, deux essais de plus.</p>`},
+ {id:"insertion",t:"Le tri par insertion",pts:3,ou:"examen de mai 2023, ex. 4 ; TD 10, ex. 43",lect:1.5,exo:{g:"AG11",lv:1},
+  ess:`<p>Pour k de 1 à n − 1, on insère tab[k] parmi tab[0] à tab[k − 1], qui sont déjà triés : on décale d'une case vers la droite les valeurs plus grandes, puis on pose la valeur dans le trou.</p>
+<pre class="code">pour k de 1 à n-1 faire
+    a ← tab[k]
+    j ← k-1
+    tant que j≥0 et tab[j]&gt;a faire
+        tab[j+1] ← tab[j]
+        j ← j-1
+    fin tq;
+    tab[j+1] ← a
+fin pour;</pre>
+<p>θ(n²) dans le pire cas (un tableau rangé à l'envers), mais très rapide sur un tableau presque trié (diapo 114).</p>`,
+  piege:`À la fin du tant que, la place libre est <b>j + 1</b>, pas j : la boucle s'est arrêtée sur une case plus petite que a, ou égale (ou à j = −1). C'est le trou ❷ du tri de John (mai 2023), et le trou ❶ est i − 1.`,
+  meth:`<p>Le tableau après chaque itération, pour [5, 2, 4, 1, 3] :</p>
+<ol><li>k = 1, a = 2 : 5 est décalé. [2, 5, 4, 1, 3].</li>
+<li>k = 2, a = 4 : 5 est décalé. [2, 4, 5, 1, 3].</li>
+<li>k = 3, a = 1 : 5, 4 et 2 sont décalés. [1, 2, 4, 5, 3].</li>
+<li>k = 4, a = 3 : 5 et 4 sont décalés. [1, 2, 3, 4, 5].</li></ol>
+<p>En tout 1 + 1 + 3 + 2 = 7 décalages. Sur un tableau déjà trié, aucun : le test tab[j] &gt; a est faux tout de suite.</p>`},
+ {id:"selection",t:"Le tri par sélection",pts:2,ou:"TD 10, ex. 42 ; diapo 114",lect:1,exo:{g:"AG11",lv:0},
+  ess:`<p>Pour i de 0 à n − 2, on cherche la plus petite valeur parmi tab[i] à tab[n − 1], puis on l'échange avec tab[i]. Il y a un seul échange par itération, après la boucle sur j.</p>
+<pre class="code">pour i de 0 à n-2 faire
+    m ← i
+    pour j de i+1 à n-1 faire
+        si tab[j] &lt; tab[m] alors
+            m ← j
+        fin si;
+    fin pour;
+    échanger tab[i] et tab[m]
+fin pour;</pre>
+<p>Il fait toujours n(n − 1)/2 comparaisons : θ(n²) dans tous les cas, même sur un tableau déjà trié.</p>`,
+  piege:`m est un <b>indice</b>, pas une valeur. Et quand la plus petite valeur est déjà à sa place, l'échange ne change rien : recopie le même tableau dans ta trace.`,
+  meth:`<p>Le tableau après chaque itération, pour [5, 2, 4, 1, 3] :</p>
+<ol><li>i = 0 : la plus petite des cinq valeurs est 1, en case 3. On échange les cases 0 et 3 : [1, 2, 4, 5, 3].</li>
+<li>i = 1 : la plus petite parmi tab[1..4] est 2, déjà en case 1. Rien ne change : [1, 2, 4, 5, 3].</li>
+<li>i = 2 : la plus petite parmi tab[2..4] est 3, en case 4. On échange les cases 2 et 4 : [1, 2, 3, 5, 4].</li>
+<li>i = 3 : 4 est en case 4. On échange les cases 3 et 4 : [1, 2, 3, 4, 5].</li></ol>
+<p>Comparaisons : 4 + 3 + 2 + 1 = 10 = n(n − 1)/2 pour n = 5.</p>`},
+ {id:"bulles",t:"Le tri à bulles",pts:2,ou:"CC1 2024, question 2 ; diapo 105",lect:1,exo:{g:"AG10",lv:0},
+  ess:`<p>Pour i de 0 à n − 2, j recule de la fin jusqu'à i + 1 : chaque fois que T[j] &lt; T[j − 1], on échange ces deux voisines. La plus petite valeur qui reste remonte jusqu'à la case i.</p>
+<pre class="code">pour i de 0 à n-2 faire
+    pour j de n-1 à i+1 par pas de -1 faire
+        si T[j]&lt;T[j-1] alors
+            échanger T[j] et T[j-1]
+        fin si;
+    fin pour;
+fin pour;</pre>
+<ul><li>θ(n²). Il est <b>en place</b> et <b>stable</b> (diapo 105).</li>
+<li>Il n'échange que deux voisines : c'est le tri de Luc au CC1 de 2024, quand sa seule action est de permuter deux vaisseaux voisins.</li></ul>`,
+  piege:`Le j du cours part de la fin et recule : après le premier tour, c'est la plus petite valeur qui est en case 0, pas la plus grande en dernière case.`,
+  meth:`<p>Le tableau après chaque itération, pour [5, 2, 4, 1, 3] :</p>
+<ol><li>i = 0 : 1 remonte jusqu'à la case 0 : [1, 5, 2, 4, 3].</li>
+<li>i = 1 : 3 passe devant 4, puis 2 devant 5 : [1, 2, 5, 3, 4].</li>
+<li>i = 2 : 3 passe devant 5 : [1, 2, 3, 5, 4].</li>
+<li>i = 3 : 4 passe devant 5 : [1, 2, 3, 4, 5].</li></ol>
+<p>En tout 3 + 2 + 1 + 1 = 7 échanges et 4 + 3 + 2 + 1 = 10 comparaisons.</p>`},
+ {id:"fusion",t:"La fusion et le tri fusion",pts:3,ou:"diapos 107 à 113 ; CC1 2024, question 2",lect:1.5,exo:{g:"AG12",lv:0},
+  ess:`<ul><li><b>La fusion</b> range dans T deux moitiés déjà triées, T1 et T2 : à chaque case, on prend la plus petite des deux premières valeurs qui restent ; quand une moitié est vide, on recopie l'autre.</li>
+<li><b>Le tri fusion</b> coupe au milieu, mil = (deb + fin) div 2, trie la moitié gauche, puis la droite, puis les fusionne. Une case seule (deb = fin) est déjà triée.</li>
+<li>Complexité : T(n) = 2T(n/2) + θ(n), donc θ(n log n) par le master theorem (a = 2, b = 2, d = 1). Il est stable, mais <b>pas en place</b> : la fusion a besoin des tableaux T1 et T2.</li></ul>`,
+  piege:`À égalité, la fusion du cours prend dans T1 (le test est T1[i] ≤ T2[j]) : c'est ce qui la rend stable. Et pour « le tableau après chaque fusion », on finit toute la moitié gauche avant de toucher à la droite.`,
+  meth:`<p>La fusion de T1 = [2, 5, 8] et T2 = [1, 6, 9] :</p>
+<ol><li>1 &lt; 2 : on prend 1, dans T2. Puis 2 (T1), 5 (T1), 6 (T2), 8 (T1) et 9 (T2).</li>
+<li>Résultat : [1, 2, 5, 6, 8, 9].</li></ol>
+<p>Le tri fusion de [6, 3, 8, 1] : la moitié gauche [6, 3] devient [3, 6], donc [3, 6, 8, 1] ; puis la droite : [3, 6, 1, 8] ; puis les deux moitiés : [1, 3, 6, 8]. Il y a 3 fusions et 7 appels à triFusionAux. Pour n cases : n − 1 fusions et 2n − 1 appels.</p>`},
+ {id:"valeurs",t:"Le tri par valeurs",pts:2,ou:"examen de janvier 2023, ex. 4 ; diapos 101 et 102",lect:1.5,exo:{g:"AG13",lv:0},
+  ess:`<p>Quand les valeurs de T sont des entiers de ⟦0 ; p − 1⟧ :</p>
+<ol><li>On compte : Cpt[v] est le nombre de fois où v est dans T.</li>
+<li>On réécrit T dans l'ordre : Cpt[0] fois la valeur 0, puis Cpt[1] fois la valeur 1, et ainsi de suite.</li></ol>
+<p>Complexité θ(n + p), donc θ(n) quand p est petit (pour des chiffres, p = 10). Ce n'est pas un tri par comparaison : c'est pour ça qu'il fait mieux que n log n.</p>`,
+  piege:`Le tant que fait un tour par case écrite (j ← j + 1) <b>et</b> un tour à chaque k ← k + 1 : n plus la plus grande valeur, pas n. Et il ne marche que pour des entiers d'un petit intervalle.`,
+  meth:`<p>T = [2, 0, 2, 1, 0, 2], avec p = 3 :</p>
+<ol><li>Le comptage : Cpt = [2, 1, 3] (deux 0, un 1, trois 2).</li>
+<li>La réécriture : T = [0, 0, 1, 2, 2, 2].</li>
+<li>Le tant que fait 6 tours qui écrivent une case, plus 2 tours où k ← k + 1 (de 0 à 1, puis de 1 à 2) : 8 tours.</li></ol>`},
+ {id:"cours",t:"La question de cours : quel tri, quelles complexités",pts:3,ou:"examen de janvier 2023, ex. 4 ; CC1 2024, question 2",lect:1,
+  rappel:{min:2,q:`Donne la complexité du tri par valeurs, des tris à bulles, par sélection et par insertion, et du tri fusion. Dis lesquels sont stables, et lequel n'est pas en place. Puis donne les deux bornes inférieures : pour tout tri, et pour un tri par comparaison.`,
+   r:`<p>Par valeurs : θ(n + p), soit θ(n). À bulles, par sélection, par insertion : θ(n²). Fusion : θ(n log n).</p><p>Stables : le tri à bulles et le tri fusion (le cours le dit), et aussi le tri par insertion, avec son test tab[j] &gt; a. Pas en place : le tri fusion.</p><p>Tout tri est en Ω(n), car il faut lire chaque case. Un tri par comparaison est en Ω(n log n), et le tri fusion l'atteint.</p>`},
+  ess:`<ul><li>Par valeurs : θ(n + p). À bulles, par sélection, par insertion : θ(n²). Fusion : θ(n log n). Recherche linéaire : θ(n) ; dichotomique : θ(log n).</li>
+<li>Bornes : tout tri est en Ω(n), il faut lire chaque case, donc θ(1) est impossible. Un tri par comparaison est en Ω(n log n).</li>
+<li><b>Quel tri choisir</b> : peu de valeurs différentes (des chiffres, 5 modèles) : le tri par valeurs, en θ(n). Seulement permuter deux voisins : le tri à bulles. Permuter deux éléments quelconques : à bulles ou par sélection. Des valeurs toutes différentes, et de la place : le tri fusion, en θ(n log n).</li></ul>`,
+  piege:`En janvier 2023, proposer θ(n log n) comme meilleur ordre pour trier des chiffres coûtait 0,5 point : avec seulement 10 valeurs possibles, le tri par valeurs fait θ(n).`,
+  meth:`<p>Janvier 2023 : on veut trier un tableau de n chiffres. Anakin dit θ(n²), Leia θ(n log n), Chewbacca θ(n) et Luke θ(1).</p>
+<ol><li>Luke : impossible, car tout tri est en Ω(n).</li>
+<li>Chewbacca : possible, car un chiffre n'a que 10 valeurs. C'est le tri par valeurs, en θ(n), et c'est le meilleur.</li>
+<li>Anakin et Leia : possibles, mais moins bons.</li></ol>`}],
+ blanc:[
+  {t:"Question de cours : quel tri, quelles complexités",ou:"janvier 2023, CC1 2024",pts:4,g:"AGQ6",lv:0},
+  {t:"Combien d'essais",ou:"CC1 2024, question 3",pts:3,g:"AG9",lv:2},
+  {t:"La recherche dichotomique",ou:"TD 9",pts:5,g:"AG9",lv:1},
+  {t:"Quel tri a produit ces tableaux ?",ou:"TD 10",pts:4,g:"AG11",lv:2},
+  {t:"La fusion de deux moitiés triées",ou:"diapos 107 à 112",pts:4,g:"AG12",lv:0}]
+};
+
 </script>
 <script>
 /* Le CC en 1 h (sa demande du 21/11) : tout le programme d'une épreuve en 60 minutes au plus, ce qui rapporte le plus de points d'abord.
