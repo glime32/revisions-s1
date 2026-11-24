@@ -34333,11 +34333,401 @@ fin pour;</pre>
 
 </script>
 <script>
+/* Le CC2 de Raisonnement en 1 h (vendredi 4/12, 15 h) : ensembles, applications, quantificateurs, récurrence, logique,
+   dans l'ordre de ce qui a rapporté le plus aux CC2 de 2022, 2023 et 2025 et au CC du 15/11/2024 (les poids des générateurs de gen-rai.js).
+   Les exemples des méthodes sont exécutés par tools/verif-express-rai.js. Les exercices sont tirés de gen-rai.js. */
+(window.EXPRESS=window.EXPRESS||{}).rai={cc2:{
+ t:"Le CC2 de Raisonnement en 1 h",du:"du CC",au:"au CC",
+ lead:"Tout le programme du CC2, dans l'ordre de ce qui a rapporté le plus aux CC2 de 2022, 2023 et 2025. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
+ carte:"tout le programme en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions comme au CC2 : nier, les ensembles, injective ou surjective, les images, puis une récurrence. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"injective",t:"Injective, surjective, bijective",pts:4,ou:"tous les ans (2022 ex. 1, 2023 ex. 4, 2024 ex. 2, 2025 ex. 3)",lect:2,exo:{g:"RA1",lv:1},
+  ess:`<ul><li>f : E → F est <b>injective</b> si deux éléments différents ont deux images différentes : $f(x) = f(x′) ⇒ x = x′$.</li>
+<li>f est <b>surjective</b> si tout élément de F a au moins un antécédent : $∀y ∈ F, ∃x ∈ E, f(x) = y$.</li>
+<li><b>Bijective</b> = injective et surjective : chaque y de F a exactement un antécédent.</li>
+<li>L'ensemble de départ et l'ensemble d'arrivée comptent : x ↦ x² n'est pas surjective de ℝ dans ℝ, mais elle l'est de ℝ dans [0 ; +∞[.</li></ul>`,
+  piege:`Pour dire « pas injective » ou « pas surjective », il faut un contre-exemple précis avec des nombres. « On voit bien que » ne rapporte rien.`,
+  meth:`<p>f : ℤ → ℤ, $f(n) = 2n + 1$.</p>
+<ol><li><b>Injective</b> : on part de $f(n) = f(m)$, donc $2n + 1 = 2m + 1$, donc $n = m$. f est injective.</li>
+<li><b>Surjective ?</b> On cherche un antécédent de 0 : $2n + 1 = 0$ donne $n = −1/2$, qui n'est pas dans ℤ. 0 n'a pas d'antécédent : f n'est pas surjective.</li>
+<li>Pour x ↦ x² sur ℝ : $g(−1) = g(1) = 1$ avec $−1 ≠ 1$, donc pas injective ; −1 n'a pas d'antécédent, donc pas surjective.</li></ol>`},
+ {id:"image",t:"Image directe, image réciproque",pts:3.5,ou:"2022 ex. 2, 2023 ex. 5, 2025 ex. 1",lect:1.5,exo:{g:"RA2",lv:1},
+  ess:`<ul><li>L'<b>image directe</b> $f(A) = \{f(x) : x ∈ A\}$ : les images des éléments de A.</li>
+<li>L'<b>image réciproque</b> $f⁻¹(B) = \{x ∈ E : f(x) ∈ B\}$ : les éléments qui tombent dans B. Elle existe même si f n'est pas bijective.</li>
+<li>Toujours : $A ⊂ f⁻¹(f(A))$ et $f(f⁻¹(B)) ⊂ B$. L'égalité de gauche demande f injective, celle de droite f surjective.</li></ul>`,
+  piege:`Avec x ↦ x², l'image réciproque a souvent deux morceaux : un du côté positif et son symétrique du côté négatif.`,
+  meth:`<p>f : ℝ → ℝ, $f(x) = x²$.</p>
+<ol><li>$f([−1 ; 2])$ : sur [−1 ; 2], x² va de 0 (en x = 0) à 4 (en x = 2). Donc $f([−1 ; 2]) = [0 ; 4]$.</li>
+<li>$f⁻¹([1 ; 4])$ : on résout $1 ≤ x² ≤ 4$, c'est-à-dire $1 ≤ |x| ≤ 2$. Donc $f⁻¹([1 ; 4]) = [−2 ; −1] ∪ [1 ; 2]$.</li>
+<li>$f⁻¹(f([0 ; 1])) = f⁻¹([0 ; 1]) = [−1 ; 1]$, plus grand que [0 ; 1] : f n'est pas injective.</li></ol>`},
+ {id:"ensembles",t:"Ensembles : ∪, ∩, ∖, Δ, ∈ et ⊂",pts:3,ou:"2023 ex. 3, QCM 2022, 2024 ex. 1",lect:1.5,exo:{g:"RA3",lv:1},
+  ess:`<ul><li>$A ∪ B$ : dans l'un ou dans l'autre. $A ∩ B$ : dans les deux. $A ∖ B$ : dans A mais pas dans B.</li>
+<li>La <b>différence symétrique</b> $A Δ B = (A ∖ B) ∪ (B ∖ A)$ : dans un seul des deux.</li>
+<li>Si A a n éléments, $P(A)$ (ses parties) en a $2ⁿ$, et $A × B$ en a $card(A) × card(B)$.</li>
+<li>$x ∈ A$ : x est un élément de A. $C ⊂ A$ : tous les éléments de C sont dans A.</li></ul>`,
+  piege:`$\{1\} ⊂ A$ mais $1 ∈ A$ : un élément n'est pas une partie. Et ∅ est une partie de tout ensemble.`,
+  meth:`<p>$A = \{1, 2, 3, 4\}$ et $B = \{3, 4, 5\}$.</p>
+<ol><li>$A ∪ B = \{1, 2, 3, 4, 5\}$ et $A ∩ B = \{3, 4\}$.</li>
+<li>$A ∖ B = \{1, 2\}$, $B ∖ A = \{5\}$, donc $A Δ B = \{1, 2, 5\}$.</li>
+<li>$P(A)$ a $2⁴ = 16$ éléments ; $A × B$ en a $4 × 3 = 12$.</li></ol>`},
+ {id:"quantif",t:"Quantificateurs : nier, dire si c'est vrai",pts:2.5,ou:"2023 ex. 1 et 2, QCM 2022",lect:1.5,exo:{g:"RA4",lv:1},
+  ess:`<ul><li><b>Nier</b> : on échange ∀ et ∃, on garde les domaines, et on nie la fin. La négation de $x &lt; y$ est $x ≥ y$.</li>
+<li>Une phrase en ∀ est fausse dès qu'on trouve <b>un</b> contre-exemple ; une phrase en ∃ est vraie dès qu'on trouve <b>un</b> exemple.</li>
+<li>L'ordre compte : dans « ∀x, ∃y », y peut dépendre de x ; dans « ∃y, ∀x », c'est le même y pour tous les x.</li></ul>`,
+  piege:`On ne nie pas les domaines : la négation de « ∀x ∈ ℝ » commence par « ∃x ∈ ℝ », pas par « ∃x ∉ ℝ ».`,
+  meth:`<p>Avec $E = \{1, 2, 3\}$ :</p>
+<ol><li>« $∀x ∈ E, ∃y ∈ E, y &gt; x$ » est fausse : pour x = 3, aucun y de E n'est plus grand.</li>
+<li>Sa négation, « $∃x ∈ E, ∀y ∈ E, y ≤ x$ », est donc vraie (x = 3).</li>
+<li>« $∀x ∈ E, ∃y ∈ E, y ≥ x$ » est vraie : on prend y = x. Mais « $∃y ∈ E, ∀x ∈ E, x ≤ y$ » est vraie aussi, avec y = 3 pour tous les x.</li></ol>`},
+ {id:"recurrence",t:"La récurrence",pts:2.5,ou:"2022 ex. 3, 2024 ex. 3",lect:1.5,exo:{g:"RA5",lv:1},
+  ess:`<p>Pour montrer P(n) pour tout n ≥ n₀ :</p><ol><li><b>Initialisation</b> : P(n₀) est vraie.</li>
+<li><b>Hérédité</b> : soit n ≥ n₀ ; on suppose P(n) vraie, et on montre P(n + 1).</li>
+<li><b>Conclusion</b> : P(n) est vraie pour tout n ≥ n₀.</li></ol>`,
+  piege:`Dans l'hérédité, il faut faire apparaître P(n) dans P(n + 1) : pour une divisibilité, on écrit l'expression au rang n + 1 avec celle du rang n.`,
+  meth:`<p>Montrer que 7 divise $8ⁿ − 1$ pour tout n ∈ ℕ.</p>
+<ol><li>Initialisation : $8⁰ − 1 = 0 = 7 × 0$.</li>
+<li>Hérédité : on suppose $8ⁿ − 1 = 7k$. Alors $8ⁿ⁺¹ − 1 = 8 × 8ⁿ − 1 = 8(8ⁿ − 1) + 7 = 7(8k + 1)$.</li>
+<li>Conclusion : 7 divise $8ⁿ − 1$ pour tout n.</li></ol>`},
+ {id:"composer",t:"Composer deux applications",pts:2,ou:"2023 ex. 4, 2024 ex. 2, 2025 ex. 3",lect:1.5,exo:{g:"RA6",lv:1},
+  ess:`<ul><li>$(g ∘ f)(x) = g(f(x))$ : on applique f d'abord, puis g. Il faut que l'arrivée de f soit dans le départ de g.</li>
+<li>Si f et g sont injectives (ou surjectives), g ∘ f l'est aussi.</li>
+<li>Si g ∘ f est injective, alors f est injective. Si g ∘ f est surjective, alors g est surjective.</li></ul>`,
+  piege:`g ∘ f et f ∘ g ne sont pas égales en général. Et g ∘ f injective ne dit rien sur g.`,
+  meth:`<p>$f(x) = 2x$ et $g(x) = x + 3$ sur ℝ.</p>
+<ol><li>$(g ∘ f)(x) = g(2x) = 2x + 3$.</li>
+<li>$(f ∘ g)(x) = f(x + 3) = 2x + 6$.</li>
+<li>En 1 : $(g ∘ f)(1) = 5$ mais $(f ∘ g)(1) = 8$ : elles sont différentes.</li></ol>`},
+ {id:"contraposee",t:"Contraposée, réciproque, absurde",pts:1.5,ou:"2025 ex. 2",lect:1.5,exo:{g:"RA7",lv:1},
+  ess:`<ul><li>Pour « P ⇒ Q » : la <b>contraposée</b> est « non Q ⇒ non P » (elle dit la même chose) ; la <b>réciproque</b> est « Q ⇒ P » (elle dit autre chose) ; la <b>négation</b> est « P et non Q ».</li>
+<li><b>Par l'absurde</b> : on suppose le contraire de ce qu'on veut, et on arrive à quelque chose d'impossible.</li></ul>`,
+  piege:`Prouver la réciproque ne prouve pas la phrase. Et la négation d'une implication n'est pas une implication.`,
+  meth:`<ol><li>« Si n² est pair, alors n est pair. » Contraposée : si n est impair, $n = 2k + 1$, alors $n² = 2(2k² + 2k) + 1$ est impair. Donc la phrase est vraie.</li>
+<li>Le CC2 2025 : une équation sans solution entière. Par exemple, $x² − 4y = 2$ : par l'absurde, x² serait pair, donc x aussi, x = 2k et $4k² − 4y = 2$, donc $2(k² − y) = 1$ : impossible, 1 est impair.</li></ol>`},
+ {id:"tables",t:"Tables de vérité, propositions équivalentes",pts:1,ou:"QCM 2022",lect:1,exo:{g:"RA8",lv:1},
+  ess:`<ul><li>P ⇒ Q est fausse <b>seulement</b> quand P est vraie et Q fausse. Elle a la même table que « (non P) ou Q ».</li>
+<li>$non(P et Q) ≡ (non P) ou (non Q)$ et $non(P ou Q) ≡ (non P) et (non Q)$.</li>
+<li>Deux propositions sont équivalentes si elles ont la même colonne dans la table.</li></ul>`,
+  piege:`P ⇒ Q est équivalente à sa contraposée, pas à sa réciproque : la ligne P faux, Q vrai les sépare.`,
+  meth:`<ol><li>Fais une ligne par cas : 4 lignes pour P et Q, 8 pour P, Q et R.</li><li>Remplis une colonne par morceau de la formule, de l'intérieur vers l'extérieur.</li><li>Compare les colonnes finales : les mêmes partout, c'est équivalent.</li></ol>`}],
+ blanc:[
+  {t:"Nier une phrase à quantificateurs",ou:"exercice 1",pts:3,g:"RA4",lv:0},
+  {t:"Les ensembles",ou:"exercice 2",pts:4,g:"RA3",lv:1},
+  {t:"Injective, surjective",ou:"exercice 3",pts:5,g:"RA1",lv:1},
+  {t:"Image directe, image réciproque",ou:"exercice 4",pts:4,g:"RA2",lv:1},
+  {t:"Une récurrence",ou:"exercice 5",pts:4,g:"RA5",lv:1}]
+}};
+
+</script>
+<script>
+/* Le CC2 de Géométrie en 1 h (vendredi 11/12, 9 h 45, épreuve de 1 h 30). Programme pas encore annoncé : la suite du poly après le CC1,
+   comme dans matiere-geo.js. Ordre et points d'après les CC2 de 2024 et 2025 : triangles isométriques et isocèles 15 points en 2024
+   (avec la rotation), homothéties 5 en 2025, démonstrations du cours 5 en 2024 et 5 en 2025, aire et bissectrice 4, orthocentre 4,
+   énoncés et définitions 2. Les exemples des méthodes sont refaits par tools/verif/express/geo.js. Les exercices sont tirés de gen-geo.js. */
+(()=>{const an=s=>`<span class="ang">${s}</span>`,ab=s=>`<span class="en-nb">|${an(s)}|</span>`,ve=s=>`<span class="vec">${s}</span>`;
+(window.EXPRESS=window.EXPRESS||{}).geo={cc2:{
+ t:"Le CC2 de Géométrie en 1 h",du:"du CC",au:"au CC",
+ lead:"Le programme du CC2 n'est pas encore annoncé : le site prend la suite du poly après le CC1 (translations et homothéties, chapitre 4, chapitre 5), comme aux CC2 de 2024 et 2025. Les notions viennent dans l'ordre de ce qui a rapporté le plus à ces deux sujets. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le vrai CC dure 1 h 30 ; ce parcours tient en 1 h.",
+ carte:"la suite du poly en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions dans l'ordre des CC2 : une démonstration du cours, les triangles isométriques, les homothéties, Al-Kashi, puis la rotation suivie d'une homothétie. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"iso",t:"Triangles isométriques : les bons triangles, le bon cas",pts:3,ou:"CC2 2024, ex. 2 (b) et (c) ; CC1 2026, ex. 1",lect:2,exo:{g:"GE7",lv:2},
+  ess:`<ul><li>Pour montrer que deux longueurs (ou deux angles) sont égales, on cherche <b>deux triangles isométriques</b> : l'un contient la première, l'autre la seconde.</li>
+<li>Les trois cas de l'axiome V : <b>CCC</b> (trois côtés), <b>CAC</b> (deux côtés et l'angle <b>entre</b> eux), <b>ACA</b> (un côté et les deux angles à ses bouts). Avec un côté et deux angles placés autrement, le corollaire 2.4.3 ramène à ACA.</li>
+<li>Les égalités viennent de l'énoncé (isocèle, milieu, bissectrice, angle droit) ou de ce que les deux triangles ont <b>en commun</b> (un côté, un angle).</li></ul>`,
+  piege:`Trois angles égaux ne suffisent pas : les triangles ont la même forme, pas forcément la même taille. Et pour CAC, l'angle doit être celui que forment les deux côtés.`,
+  meth:`<p>CC1 2026, ex. 1 : ABC est isocèle en A, I est le milieu de [AB] et J celui de [AC]. Montrer que BJ = CI.</p>
+<ol><li>BJ est dans le triangle ABJ, CI dans le triangle ACI : on compare ces deux-là, un de chaque côté de la figure.</li>
+<li>AB = AC (isocèle en A) ; AJ = AI (moitiés de deux côtés égaux) ; l'angle en A est commun.</li>
+<li>Deux côtés et l'angle entre eux : ABJ et ACI sont isométriques (CAC), donc BJ = CI.</li></ol>
+<p>CC2 2024, ex. 2 (b) : dans le carré ABCD, ABN et ADM ont un angle droit (en B et en D), AB = AD, et ${ab("DAM")} = π/2 − ${ab("MAB")} = ${ab("BAN")}. Un côté et les deux angles à ses bouts : ACA. Donc AM = AN, et AMN est isocèle en A (question (c)).</p>`},
+ {id:"homothetie",t:"Homothéties : deux de même centre, et leur composée",pts:3,ou:"CC2 2025, ex. 2 (5 points)",lect:1.5,exo:{g:"GE2",lv:3},
+  ess:`<ul><li>L'homothétie h de centre K et de rapport λ envoie M sur le point M′ tel que ${ve("KM′")} = λ${ve("KM")} (définition 3.3.3).</li>
+<li>Deux homothéties de <b>même centre</b> K se composent en une homothétie de centre K, et <b>les rapports se multiplient</b> : h₂ ∘ h₁ a pour rapport λ₂λ₁ (feuille 3, ex. 1). L'ordre ne change donc rien : h₂ ∘ h₁ = h₁ ∘ h₂.</li>
+<li>L'image d'une droite par une homothétie est une droite <b>parallèle</b>.</li></ul>`,
+  piege:`Les rapports se multiplient, ils ne s'ajoutent pas. Et l'homothétie qui défait h (rapport λ) a pour rapport 1/λ, pas −λ.`,
+  meth:`<ol><li>Composée : λ₁ = 2 et λ₂ = −1/3 donnent h₂ ∘ h₁ de rapport 2 × (−1/3) = −2/3.</li>
+<li>Défaire h de rapport 3/2 : μ × 3/2 = 1, donc μ = 2/3.</li>
+<li>Rapport manquant : h₂ ∘ h₁ a pour rapport 6 et λ₁ = −2, donc λ₂ = 6/(−2) = −3.</li></ol>
+<p>Le plan du CC2 2025, ex. 2 : (1) B est sur la droite (KA), donc ${ve("KB")} = λ${ve("KA")} : h₁ de centre K et de rapport λ envoie A sur B ; avec (AB′) // (BA′), Thalès donne aussi h₁(B′) = A′. (2) h₃ = h₂ ∘ h₁ = h₁ ∘ h₂ (même centre), d'où h₃(C′) = h₁(h₂(C′)) = h₁(B′) = A′ et h₃(A) = h₂(B) = C. (3) h₃ envoie la droite (AC′) sur une droite parallèle qui passe par C et A′ : (AC′) // (CA′).</p>`},
+ {id:"pythagore",t:"Démontrer Pythagore et sa réciproque",pts:3,ou:"CC2 2024, question de cours (5 points)",lect:1.5,exo:{g:"GC2",lv:0},
+  ess:`<p><b>Sens direct</b> (si ABC est rectangle en A, alors BC² = AB² + AC²), en 4 temps :</p><ol>
+<li>H est le pied de la hauteur issue de A ; il est sur [BC], car les angles en B et C sont aigus : BH + HC = BC.</li>
+<li>ACB et HAB sont semblables (un angle droit, l'angle en B commun) : BC/BA = BA/BH, donc AB² = BC · BH.</li>
+<li>De même avec ABC et HAC : AC² = BC · HC.</li>
+<li>On additionne : AB² + AC² = BC · (BH + HC) = BC².</li></ol>`,
+  piege:`La réciproque ne se démontre pas en « relisant » le sens direct à l'envers : on fabrique un second triangle, rectangle par construction, et on utilise le sens direct sur lui.`,
+  meth:`<p><b>Réciproque</b> (si BC² = AB² + AC², alors ABC est rectangle en A) :</p><ol>
+<li>On place C′ sur la perpendiculaire à (AB) passant par A, avec AC′ = AC.</li>
+<li>Le sens direct, dans ABC′ rectangle en A : BC′² = AB² + AC′² = AB² + AC² = BC². Donc BC′ = BC (des longueurs sont positives).</li>
+<li>ABC et ABC′ ont leurs trois côtés égaux (AB commun, AC = AC′, BC = BC′) : ils sont isométriques (CCC).</li>
+<li>Leurs angles en A sont donc égaux : ${ab("BAC")} = ${ab("BAC′")} = π/2.</li></ol>`},
+ {id:"aire",t:"L'aire ½ ab sin Ĉ : la démonstration, la hauteur, la bissectrice",pts:3,ou:"CC2 2025, question de cours (3) et ex. 3 (6 points)",lect:1.5,exo:{g:"GE1",lv:3},
+  ess:`<ul><li>Aire(ABC) = ½ ab sin(Ĉ) : la moitié du produit de deux côtés par le sinus de l'angle <b>qu'ils forment</b> (théorème 4.2.6).</li>
+<li>La démonstration : H pied de la hauteur issue de A ; Aire = ½ AH · BC ; dans AHC rectangle en H, AH = AC sin(Ĉ) ; donc Aire = ½ BC · AC sin(Ĉ).</li>
+<li>Pour une hauteur : Aire = ½ × base × hauteur, donc hauteur = 2 × Aire / base.</li>
+<li>Un côté qui manque se calcule avec Al-Kashi : a² = b² + c² − 2bc cos(Â).</li></ul>`,
+  piege:`Sans le sinus, ½ × b × c n'est l'aire que si l'angle est droit. Et en isolant la hauteur, le ½ devient un 2.`,
+  meth:`<ol><li>AB = 6, AC = 4 et ${ab("BAC")} = π/3 : Aire = ½ × 4 × 6 × sin(π/3) = ½ × 24 × √3/2 = 6√3.</li>
+<li>La hauteur issue de B tombe sur (AC) : BH = 2 × 6√3 / 4 = 3√3.</li>
+<li>CC2 2025, ex. 3 : ABC rectangle en A, AB = 3, AC = 4, D le pied de la bissectrice issue de A. L'aire vaut ½ × 3 × 4 = 6, et aussi Aire(ABD) + Aire(ADC) = ½ × 3 × AD × sin(π/4) + ½ × 4 × AD × sin(π/4) = (7/2) AD × √2/2. Donc AD = 12√2/7.</li></ol>`},
+ {id:"hauteurs",t:"Hauteurs, médiatrice et Pythagore",pts:2,ou:"CC2 2025, ex. 1 (4 points)",lect:1.5,exo:{g:"GE1",lv:0},
+  ess:`<ul><li>Pythagore : dans ABC rectangle en A, BC² = AB² + AC². L'hypoténuse est en face de l'angle droit.</li>
+<li>Réciproque : on calcule séparément BC² (le plus grand côté) et AB² + AC². Égaux : rectangle en A. Différents : pas rectangle.</li>
+<li>Une droite perpendiculaire à [BC] qui passe par son milieu est sa médiatrice ; un point de la médiatrice est à la même distance de B et de C.</li></ul>`,
+  piege:`Sur la copie, on écrit le nom du triangle, le sommet de l'angle droit et le nom du théorème : « Le triangle BHH<sub>A</sub> est rectangle en H<sub>A</sub>, d'après le théorème de Pythagore… ».`,
+  meth:`<p>CC2 2025, ex. 1 : H est l'orthocentre de ABC, H<sub>A</sub> le pied de la hauteur issue de A, et BH = CH. Montrer que ABC est isocèle en A.</p>
+<ol><li>Pythagore dans BHH<sub>A</sub> et CHH<sub>A</sub>, rectangles en H<sub>A</sub> : BH<sub>A</sub>² = BH² − HH<sub>A</sub>² = CH² − HH<sub>A</sub>² = CH<sub>A</sub>², donc BH<sub>A</sub> = CH<sub>A</sub>.</li>
+<li>(AH<sub>A</sub>) est perpendiculaire à (BC) et passe par le milieu H<sub>A</sub> de [BC] : c'est la médiatrice de [BC]. A est dessus, donc AB = AC.</li></ol>
+<p>Les calculs : rectangle en A avec AB = 5 et BC = 13 : AC² = 169 − 25 = 144, AC = 12. Côtés 6, 8, 10 : 36 + 64 = 100, rectangle. Côtés 5, 6, 8 : 25 + 36 = 61 ≠ 64, pas rectangle.</p>`},
+ {id:"centre",t:"L'angle au centre et le triangle isocèle",pts:2,ou:"CC2 2025, question de cours (4) (3 points)",lect:1.5,exo:{g:"GE4",lv:1},
+  ess:`<ul><li>Théorème 5.2.1 : si A, B, M sont sur le cercle de centre O (M distinct de A et B), alors ${an("AOB")} = 2${an("AMB")} [2π], en angles orientés.</li>
+<li>Sans orientation : quand M est du même côté de (AB) que O, l'angle au centre ${ab("AOB")} est le double de l'angle inscrit ${ab("AMB")}.</li>
+<li>OA = OB (deux rayons) : le triangle OAB est isocèle en O, ses angles en A et en B sont égaux.</li></ul>`,
+  piege:`Somme des angles de OAB : ${ab("OAB")} = (π − ${ab("AOB")})/2. On oublie souvent de partager en deux.`,
+  meth:`<ol><li>${ab("AMB")} = π/5, avec M du même côté de (AB) que O : ${ab("AOB")} = 2 × π/5 = 2π/5.</li>
+<li>OAB est isocèle en O : ${ab("OAB")} = (π − 2π/5)/2 = 3π/10.</li></ol>
+<p>La démonstration du cours : AMO est isocèle en O, donc ${an("AOM")} = π − 2${an("OMA")} ; de même ${an("BOM")} = π − 2${an("OMB")}. Par Chasles, ${an("AOB")} = ${an("AOM")} − ${an("BOM")} = 2${an("AMO")} + 2${an("OMB")} = 2${an("AMB")}.</p>`},
+ {id:"rotation",t:"Rotations, et une rotation suivie d'une homothétie",pts:2,ou:"CC2 2024, ex. 2 (d)",lect:1.5,exo:{g:"GE5",lv:3},
+  ess:`<ul><li>La rotation r de centre Z et d'angle α envoie M sur r(M) tel que Zr(M) = ZM et ${an("MZr(M)")} = α (définition 4.5.1).</li>
+<li>Deux rotations de même centre : <b>les angles s'ajoutent</b>. On ramène le résultat dans ]−π ; π] en ajoutant ou en retirant 2π.</li>
+<li>f = h ∘ r (r de centre A, puis h de centre A et de rapport k &gt; 0) : AX′ = k × AX et ${an("XAX′")} = α. L'homothétie ne fait pas tourner.</li></ul>`,
+  piege:`AA′ n'est pas égal à ZA : le triangle ZAA′ est isocèle en Z, et AA′ se calcule avec Al-Kashi.`,
+  meth:`<ol><li>ZA = 3 et α = π/2 : AA′² = 9 + 9 − 2 × 3 × 3 × cos(π/2) = 18, donc AA′ = 3√2. Avec α = π/3, ZAA′ est équilatéral : AA′ = ZA.</li>
+<li>Angles π/2 et 2π/3 : π/2 + 2π/3 = 7π/6, qui n'est pas dans ]−π ; π] : 7π/6 − 2π = −5π/6.</li>
+<li>CC2 2024 : r d'angle −π/4, h de rapport 1/√2, AX = 4 : AX′ = 4/√2 = 2√2 et ${an("XAX′")} = −π/4. Dans le carré direct ABCD, AB = AC/√2 et ${an("CAB")} = −π/4 : f(C) = B.</li></ol>`},
+ {id:"cours",t:"Les énoncés et les définitions à connaître",pts:2,ou:"CC2 2025, questions de cours (1) et (2)",lect:1,
+  rappel:{min:3,q:`Écris de mémoire le théorème d'Al-Kashi, puis la définition d'une translation, d'une homothétie et d'une rotation.`,
+   r:`<ol><li>Soit ABC un triangle, alors BC² = AB² + AC² − 2 AC · AB cos(${an("BAC")}).</li>
+<li>La translation de vecteur ${ve("u")} est l'application t : P → P où t(M) est l'unique point M′ tel que ${ve("MM′")} = ${ve("u")}.</li>
+<li>Soit A ∈ P et λ ∈ ℝ. L'homothétie de centre A et de rapport λ est l'application h : P → P qui à M associe l'unique point h(M) tel que ${ve("Ah(M)")} = λ${ve("AM")}.</li>
+<li>Soit Z ∈ P et α ∈ ℝ/2πℤ. La rotation de centre Z et d'angle α est l'application r : P → P qui à M associe l'unique point r(M) tel que ZM = Zr(M) et ${an("MZr(M)")} = α.</li></ol>`},
+  ess:`<ul><li>Un énoncé commence par ses hypothèses (« Soit ABC un triangle »), puis donne la conclusion.</li>
+<li>Une définition d'application dit d'où elle part et où elle arrive (de P dans P), puis ce qu'elle fait d'un point M.</li>
+<li>Translation : ${ve("MM′")} = ${ve("u")}. Homothétie : ${ve("AM′")} = λ${ve("AM")}. Rotation : même distance au centre, et angle orienté α.</li></ul>`,
+  piege:`Al-Kashi met en jeu l'angle <b>entre</b> les deux côtés du second membre : pour BC², c'est l'angle en A.`,
+  meth:`<ol><li>Écris les hypothèses (« Soit… »).</li><li>Écris la formule ou la phrase « l'unique point … tel que … ».</li><li>Relis : chaque lettre de la conclusion doit avoir été introduite.</li></ol>`}],
+ blanc:[
+  {t:"Démontrer le théorème de l'aire",ou:"question de cours (CC2 2025)",pts:4,g:"GC3",lv:0},
+  {t:"Triangles isométriques : le cas et ce qu'on en déduit",ou:"exercice 2 (CC2 2024)",pts:4,g:"GE7",lv:1},
+  {t:"Deux homothéties de même centre",ou:"exercice 2 (CC2 2025)",pts:4,g:"GE2",lv:3},
+  {t:"Al-Kashi : un côté",ou:"question de cours (1) du CC2 2025, appliquée",pts:4,g:"GE1",lv:1},
+  {t:"Une rotation, puis une homothétie",ou:"exercice 2 (d) (CC2 2024)",pts:4,g:"GE5",lv:3}]
+}};})();
+
+</script>
+<script>
+/* Le CC2 de Calculus en 1 h (vendredi 11/12, 13 h 15) : ordre 2 et nombres complexes, dans l'ordre de ce qui rapporte le plus,
+   d'après les anciens sujets : CC2 du 28/11/2025 (ordre 1, complexes jusqu'à cos(π/12), ordre 2 avec conditions initiales),
+   CC2 du 01/12/2023 (ordre 2 avec second membre et conditions initiales) et CC3 du 05/01/2026 (cos(7π/12) par un produit).
+   Programme pas encore annoncé : la suite du cours après le CC1 (TD 2 fin, TD 3). Les exemples sont refaits par
+   tools/verif/calc-express.js. Les exercices sont tirés de gen-calc.js. */
+(window.EXPRESS=window.EXPRESS||{}).calc={cc2:{
+ t:"Le CC2 de Calculus en 1 h",du:"du CC",au:"au CC",
+ lead:"Le programme du CC2 n'est pas encore annoncé (mail du 6/11). Le site prépare la suite du cours après le CC1 : les équations différentielles d'ordre 2 (TD 2) et les nombres complexes (TD 3), comme au CC2 de 2025. Les notions sont rangées dans l'ordre de ce qui rapporte le plus aux anciens sujets (CC2 2025 et 2023, CC3 2025). Pour chacune : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le CC2 de 2025 avait aussi une équation d'ordre 1 : tes cartes de Réviser s'en occupent.",
+ carte:"ordre 2 et complexes en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Quatre questions dans l'ordre du CC2 de 2025 : la forme algébrique, le module et l'argument, une équation d'ordre 2 avec ses conditions initiales, puis le second degré dans ℂ. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"ed2",t:"Ordre 2 sans second membre, avec y(0) et y′(0)",pts:4,ou:"CC2 2025 ex. 3, CC2 2023 ex. 1",lect:1.5,exo:{g:"CA6",lv:3},
+  ess:`<ul><li>Pour y″ + ay′ + by = 0, on cherche y = e<sup>rx</sup> : on trouve l'<b>équation caractéristique</b> r² + ar + b = 0.</li>
+<li>Δ &gt; 0, deux racines r₁ et r₂ : y = C₁e<sup>r₁x</sup> + C₂e<sup>r₂x</sup>.</li>
+<li>Δ = 0, une racine double r : y = (C₁ + C₂x)e<sup>rx</sup>.</li>
+<li>Δ &lt; 0, deux racines α ± iβ : y = e<sup>αx</sup>(C₁cos(βx) + C₂sin(βx)).</li>
+<li>Les conditions y(0) et y′(0) donnent un système de deux équations en C₁ et C₂.</li></ul>`,
+  piege:`Calcule y′ <b>avant</b> de remplacer x par 0, en dérivant les deux termes. Avec une racine double, (C₁ + C₂x)e<sup>rx</sup> a pour dérivée C₂e<sup>rx</sup> + r(C₁ + C₂x)e<sup>rx</sup> : c'est un produit.`,
+  meth:`<p>Le CC2 2025 : y″ − 3y′ + 2y = 0, avec y(0) = 1 et y′(0) = 1.</p>
+<ol><li>Équation caractéristique : r² − 3r + 2 = 0. Δ = 9 − 8 = 1 &gt; 0 : r₁ = 1 et r₂ = 2 (vérification : (r − 1)(r − 2) = r² − 3r + 2).</li>
+<li>Toutes les solutions : y = C₁e<sup>x</sup> + C₂e<sup>2x</sup>, avec C₁ et C₂ réels.</li>
+<li>y′ = C₁e<sup>x</sup> + 2C₂e<sup>2x</sup>. En x = 0 : C₁ + C₂ = 1 et C₁ + 2C₂ = 1.</li>
+<li>On soustrait : C₂ = 0, puis C₁ = 1. La solution est y = e<sup>x</sup>. Vérification : e<sup>x</sup> − 3e<sup>x</sup> + 2e<sup>x</sup> = 0.</li></ol>`},
+ {id:"module",t:"Module, argument, forme exponentielle",pts:3,ou:"CC2 2025 ex. 2 b à d, CC3 2025 ex. 4",lect:1.5,exo:{g:"CA2",lv:1},
+  ess:`<ul><li>Le <b>module</b> de z = a + ib : |z| = √(a² + b²).</li>
+<li>Un <b>argument</b> θ : cos θ = a/|z| et sin θ = b/|z|. On reconnaît un angle connu : π/6, π/4, π/3…</li>
+<li>Alors z = |z|e<sup>iθ</sup> : c'est la forme exponentielle.</li>
+<li>Pour un produit, les modules se multiplient et les arguments s'ajoutent. Pour un quotient, on divise les modules et on soustrait les arguments.</li></ul>`,
+  piege:`Il faut cos θ <b>et</b> sin θ, pas seulement la tangente : −1 − i a pour argument −3π/4, pas π/4. Regarde dans quel quart du plan est le point.`,
+  meth:`<p>Le CC2 2025 : z₁ = 1 + i et z₂ = 1 + i√3.</p>
+<ol><li>|z₁| = √(1 + 1) = √2. cos θ₁ = 1/√2 = √2/2 et sin θ₁ = √2/2 : θ₁ = π/4, donc z₁ = √2e<sup>iπ/4</sup>.</li>
+<li>|z₂| = √(1 + 3) = 2. cos θ₂ = 1/2 et sin θ₂ = √3/2 : θ₂ = π/3, donc z₂ = 2e<sup>iπ/3</sup>.</li>
+<li>z₂/z₁ : module 2/√2 = √2, argument π/3 − π/4 = π/12. Donc z₂/z₁ = √2e<sup>iπ/12</sup>.</li></ol>`},
+ {id:"alg",t:"La forme algébrique : produit et quotient",pts:3,ou:"CC2 2025 ex. 2 a",lect:1,exo:{g:"CA1",lv:1},
+  ess:`<ul><li>On calcule comme avec des réels, puis on remplace i² par −1.</li>
+<li>Pour un <b>quotient</b>, on multiplie en haut et en bas par le <b>conjugué</b> du dénominateur : (c + id)(c − id) = c² + d², un réel.</li>
+<li>On sépare enfin la partie réelle et la partie imaginaire : a + ib.</li></ul>`,
+  piege:`Le conjugué change seulement le signe de la partie imaginaire : celui de 2 − 3i est 2 + 3i, pas −2 + 3i. Et chaque i² devient −1, ce qui change le signe de son terme.`,
+  meth:`<p>Toujours z₁ = 1 + i et z₂ = 1 + i√3.</p>
+<ol><li>z₁ + z₂ = 2 + i(1 + √3).</li>
+<li>z₁z₂ = 1 + i√3 + i + i²√3 = (1 − √3) + i(1 + √3).</li>
+<li>z₂/z₁ = (1 + i√3)(1 − i) / ((1 + i)(1 − i)). En bas : 1 + 1 = 2. En haut : 1 − i + i√3 − i²√3 = (1 + √3) + i(√3 − 1).</li>
+<li>Donc z₂/z₁ = (1 + √3)/2 + i(√3 − 1)/2.</li></ol>`},
+ {id:"pi12",t:"cos(π/12) : le même nombre écrit de deux façons",pts:2,ou:"CC2 2025 ex. 2 e, CC3 2025 ex. 4 d",lect:1,exo:{g:"CA3",lv:4},
+  ess:`<p>Pour trouver cos(π/12) sans calculatrice, on écrit <b>le même nombre de deux façons</b> :</p>
+<ol><li>en forme exponentielle, avec les arguments (π/12 = π/3 − π/4) ;</li>
+<li>en forme algébrique, par le calcul ;</li>
+<li>puis on identifie : même partie réelle, même partie imaginaire.</li></ol>`,
+  piege:`La forme exponentielle a un module devant : z₂/z₁ = √2(cos(π/12) + i sin(π/12)). Il faut diviser la partie réelle par √2 pour avoir cos(π/12).`,
+  meth:`<p>La suite des deux notions d'avant.</p>
+<ol><li>Forme exponentielle : z₂/z₁ = √2e<sup>iπ/12</sup> = √2cos(π/12) + i√2sin(π/12).</li>
+<li>Forme algébrique : z₂/z₁ = (1 + √3)/2 + i(√3 − 1)/2.</li>
+<li>On identifie : √2cos(π/12) = (1 + √3)/2, donc cos(π/12) = (1 + √3)/(2√2) = (√2 + √6)/4. De même, sin(π/12) = (√3 − 1)/(2√2) = (√6 − √2)/4.</li>
+<li>Au CC3 2025, c'est un produit : (1 + i)(1 + i√3) = (1 − √3) + i(1 + √3), de module 2√2 et d'argument π/4 + π/3 = 7π/12. D'où cos(7π/12) = (√2 − √6)/4.</li></ol>`},
+ {id:"sm",t:"Ordre 2 avec un second membre",pts:3,ou:"CC2 2023 ex. 1, TD 2 ex. 4",lect:2,exo:{g:"CA7",lv:2},
+  ess:`<ul><li>Toutes les solutions : y = y<sub>h</sub> + y<sub>p</sub>, les solutions sans second membre plus <b>une</b> solution particulière.</li>
+<li>On cherche y<sub>p</sub> de la même forme que le second membre : une constante pour une constante, Be<sup>kx</sup> pour Ae<sup>kx</sup>, c cos x + d sin x pour a cos x + b sin x.</li>
+<li>On remplace y<sub>p</sub>, y<sub>p</sub>′ et y<sub>p</sub>″ dans l'équation, puis on identifie.</li>
+<li>Les conditions initiales se mettent <b>à la fin</b>, sur y = y<sub>h</sub> + y<sub>p</sub>.</li></ul>`,
+  piege:`Si k est racine de l'équation caractéristique, Be<sup>kx</sup> est déjà solution sans second membre et donne 0 = A. On essaie alors Bxe<sup>kx</sup> (racine simple) ou Bx²e<sup>kx</sup> (racine double).`,
+  meth:`<p>y″ − 3y′ + 2y = 6e<sup>−x</sup>.</p>
+<ol><li>Sans second membre (la notion sur l'ordre 2 sans second membre) : y<sub>h</sub> = C₁e<sup>x</sup> + C₂e<sup>2x</sup>.</li>
+<li>−1 n'est pas racine : on essaie y<sub>p</sub> = Be<sup>−x</sup>. Alors y<sub>p</sub>′ = −Be<sup>−x</sup> et y<sub>p</sub>″ = Be<sup>−x</sup>.</li>
+<li>On remplace : (B + 3B + 2B)e<sup>−x</sup> = 6e<sup>−x</sup>, donc 6B = 6 et B = 1.</li>
+<li>Toutes les solutions : y = C₁e<sup>x</sup> + C₂e<sup>2x</sup> + e<sup>−x</sup>.</li></ol>
+<p>Au CC2 2023, y″ + y′ − 2y = cos x − 3 sin x : y<sub>p</sub> = sin x convient, car −sin x + cos x − 2 sin x = cos x − 3 sin x.</p>`},
+ {id:"cxeq",t:"Le second degré dans ℂ",pts:2,ou:"TD 3, ex. 10 et 11",lect:1,exo:{g:"CA4",lv:0},
+  ess:`<ul><li>az² + bz + c = 0, avec a, b, c réels : Δ = b² − 4ac.</li>
+<li>Si Δ &lt; 0, δ = i√(−Δ) vérifie δ² = Δ. Les solutions z = (−b ± δ)/(2a) sont conjuguées.</li>
+<li>Si Δ est un complexe, on cherche δ = x + iy avec δ² = Δ : x² − y² = Re(Δ), 2xy = Im(Δ) et x² + y² = |Δ|.</li></ul>`,
+  piege:`N'écris jamais √(−16) : écris 4i. Et dans (−b ± δ)/(2a), le 2a divise tout le numérateur.`,
+  meth:`<p>z² − 2z + 5 = 0.</p>
+<ol><li>Δ = 4 − 20 = −16 &lt; 0.</li>
+<li>δ = 4i, car (4i)² = −16.</li>
+<li>z = (2 ± 4i)/2 : z₁ = 1 + 2i et z₂ = 1 − 2i.</li>
+<li>Vérification : (1 + 2i)² − 2(1 + 2i) + 5 = 1 + 4i − 4 − 2 − 4i + 5 = 0.</li></ol>`},
+ {id:"euler",t:"Euler : linéariser",pts:2,ou:"TD 3, ex. 8 et 9",lect:1,exo:{g:"CA3",lv:1},
+  ess:`<ul><li>Euler : cos u = (e<sup>iu</sup> + e<sup>−iu</sup>)/2 et sin u = (e<sup>iu</sup> − e<sup>−iu</sup>)/(2i).</li>
+<li><b>Linéariser</b>, c'est écrire cos²θ, sin³θ… sans puissance : on remplace par Euler, on développe, puis on regroupe e<sup>iku</sup> + e<sup>−iku</sup> = 2cos(ku).</li>
+<li>Moivre : (cos θ + i sin θ)ⁿ = cos(nθ) + i sin(nθ). Développer à gauche donne cos(2θ), cos(3θ)…</li>
+<li>À savoir : cos²θ = (1 + cos 2θ)/2, sin²θ = (1 − cos 2θ)/2 et sin θ cos θ = sin(2θ)/2.</li></ul>`,
+  piege:`Pour sin, le dénominateur est 2i, et (2i)² = −4, pas 4. C'est lui qui donne le signe moins de sin²θ = (1 − cos 2θ)/2.`,
+  meth:`<p>Linéariser sin²θ.</p>
+<ol><li>sin²θ = ((e<sup>iθ</sup> − e<sup>−iθ</sup>)/(2i))² = (e<sup>2iθ</sup> − 2 + e<sup>−2iθ</sup>)/(−4).</li>
+<li>On regroupe : e<sup>2iθ</sup> + e<sup>−2iθ</sup> = 2cos(2θ), donc sin²θ = (2cos(2θ) − 2)/(−4).</li>
+<li>sin²θ = (1 − cos(2θ))/2.</li></ol>`},
+ {id:"racn",t:"Les racines n-ièmes",pts:1,ou:"TD 3, ex. 12",lect:1,
+  rappel:{min:2,q:`Écris les solutions de zⁿ = w quand w = ρe<sup>iφ</sup>, et dis combien il y en a. Puis donne les solutions de z⁴ = 1.`,
+   r:`<p>z<sub>k</sub> = ρ<sup>1/n</sup>e<sup>i(φ + 2kπ)/n</sup>, pour k = 0, 1, …, n − 1 : il y a n solutions (ρ<sup>1/n</sup> est la racine n-ième positive de ρ).</p><p>z⁴ = 1 : 1, i, −1 et −i.</p>`},
+  ess:`<ul><li>On écrit w en forme exponentielle : w = ρe<sup>iφ</sup>.</li>
+<li>On cherche z = re<sup>iθ</sup>, donc zⁿ = rⁿe<sup>inθ</sup>. Mêmes modules : rⁿ = ρ. Mêmes arguments à 2π près : nθ = φ + 2kπ.</li>
+<li>Donc θ<sub>k</sub> = φ/n + 2kπ/n, pour k = 0, 1, …, n − 1 : n solutions, régulièrement espacées sur un cercle.</li></ul>`,
+  piege:`Le « + 2kπ » s'ajoute avant de diviser par n. Sans lui, on ne trouve qu'une solution au lieu de n.`,
+  meth:`<p>z³ = 8i.</p>
+<ol><li>8i = 8e<sup>iπ/2</sup>.</li>
+<li>r³ = 8, donc r = 2. Et 3θ = π/2 + 2kπ, donc θ = π/6 + 2kπ/3 : π/6, 5π/6 et 3π/2.</li>
+<li>Les trois solutions : 2e<sup>iπ/6</sup> = √3 + i, 2e<sup>5iπ/6</sup> = −√3 + i et 2e<sup>3iπ/2</sup> = −2i.</li></ol>`}],
+ blanc:[
+  {t:"La forme algébrique d'un quotient",ou:"CC2 2025 ex. 2 a",pts:4,g:"CA1",lv:1},
+  {t:"Module et argument d'un produit ou d'un quotient",ou:"CC2 2025 ex. 2 b à d",pts:5,g:"CA2",lv:2},
+  {t:"Ordre 2 avec y(0) et y′(0)",ou:"CC2 2025 ex. 3",pts:8,g:"CA6",lv:3},
+  {t:"Le second degré dans ℂ",ou:"TD 3, ex. 10",pts:3,g:"CA4",lv:0}]
+}};
+
+/* Le CC final de Calculus en 2 h (CC intégral, 50 %, date pas encore fixée) : tout le cours, d'après le CC3 du 05/01/2026 (2 h :
+   étude de fonction, changements de variable, intégrations par parties, ordre 1 avec condition initiale, cos(7π/12)), les CC1 de
+   2025 et 2026 et les CC2. Les notions d'ordre 2 sont celles du CC2, reprises telles quelles. */
+(()=>{const C2=window.EXPRESS.calc.cc2.notions,prend=(id,o)=>Object.assign({},C2.find(n=>n.id===id),o);
+window.EXPRESS.calc.ccf={
+ t:"Le CC final de Calculus en 2 h",du:"du CC final",au:"au CC final",duree:120,
+ lead:"Le CC final porte sur tout le cours. Sa date n'est pas encore fixée. Les notions sont rangées dans l'ordre de ce qui rapporte le plus au CC3 de l'an dernier (05/01/2026, 2 h), aux CC1 de 2025 et 2026 et aux CC2. Pour chacune : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express dans l'ordre du CC3, noté sur 20.",
+ carte:"tout le cours en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions dans l'ordre du CC3 de l'an dernier : une étude de fonction, un changement de variable, une intégration par parties, une équation d'ordre 1 avec sa condition initiale, puis cos(π/12) par les complexes. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"ipp",t:"L'intégration par parties",pts:3,ou:"CC3 2025 ex. 2 d et e, CC1 2025 et 2026 ex. 2",lect:2,exo:{g:"CA11",lv:2},
+  ess:`<ul><li>∫<sub>a</sub><sup>b</sup> u(x)v′(x) dx = [u(x)v(x)]<sub>a</sub><sup>b</sup> − ∫<sub>a</sub><sup>b</sup> u′(x)v(x) dx.</li>
+<li>On <b>dérive</b> u pour le simplifier, on prend une <b>primitive</b> v de v′. Pour choisir u, l'ordre « LPET » : <b>L</b>ogarithme, puis <b>P</b>olynôme, puis <b>E</b>xponentielle, puis <b>T</b>rigo.</li>
+<li>ln x tout seul : u = ln x et v′ = 1, donc v = x.</li></ul>`,
+  piege:`C'est « crochet <b>moins</b> intégrale ». Avec v = −cos x, deux signes moins se suivent : mets des parenthèses.`,
+  meth:`<p>Le CC3 2025, exercice 2 d et e.</p>
+<ol><li>∫<sub>1</sub><sup>2</sup> x ln x dx : u = ln x, v′ = x, donc u′ = 1/x et v = x²/2.</li>
+<li>= [(x²/2) ln x]<sub>1</sub><sup>2</sup> − ∫<sub>1</sub><sup>2</sup> x/2 dx = 2 ln 2 − [x²/4]<sub>1</sub><sup>2</sup> = 2 ln 2 − 3/4.</li>
+<li>∫<sub>0</sub><sup>π/4</sup> x sin x dx : u = x, v′ = sin x, donc u′ = 1 et v = −cos x.</li>
+<li>= [−x cos x]<sub>0</sub><sup>π/4</sup> + ∫<sub>0</sub><sup>π/4</sup> cos x dx = −π√2/8 + [sin x]<sub>0</sub><sup>π/4</sup> = √2/2 − π√2/8.</li></ol>`},
+ {id:"etude",t:"Étudier une fonction : domaine, limites, dérivée, signe",pts:3,ou:"CC3 2025 ex. 1, CC1 2025 et 2026 ex. 1",lect:2.5,exo:{g:"CA9",lv:3},
+  ess:`<ol><li><b>Domaine</b> : un dénominateur non nul, sous une racine ≥ 0, dans un ln &gt; 0.</li>
+<li><b>Limites</b> aux bornes du domaine : en ±∞, le terme de plus haut degré ; en une valeur interdite, le signe du dénominateur.</li>
+<li><b>Dérivable</b> : f est faite de fonctions dérivables (somme, produit, quotient dont le dénominateur ne s'annule pas).</li>
+<li><b>f′</b>, puis son <b>signe</b> sur une forme factorisée : f′ &gt; 0, f croît ; f′ &lt; 0, f décroît. On finit par le tableau de variations.</li></ol>`,
+  piege:`Le signe de f′ se lit sur la forme <b>factorisée</b>. Ne développe pas le numérateur : un carré est toujours ≥ 0, sans calcul de Δ.`,
+  meth:`<p>Le CC3 2025 : f(x) = (2 − x)/(x² − 4).</p>
+<ol><li>Domaine : x² − 4 ≠ 0, donc D = ℝ \\ {−2 ; 2}.</li>
+<li>En ±∞ : f(x) se comporte comme −x/x² = −1/x, qui tend vers 0. Les deux limites valent 0.</li>
+<li>f est un quotient de polynômes, dérivable là où le dénominateur ne s'annule pas : sur D.</li>
+<li>f′(x) = (−(x² − 4) − (2 − x) × 2x)/(x² − 4)² = (x² − 4x + 4)/(x² − 4)² = (x − 2)²/(x² − 4)².</li>
+<li>Signe : un carré sur un carré, f′(x) &gt; 0 sur D. f est croissante sur chacun des trois intervalles.</li></ol>`},
+ {id:"ed1",t:"Ordre 1 : la variation de la constante et la condition initiale",pts:3,ou:"CC3 2025 ex. 3, CC2 2025 ex. 1, CC1 2026 ex. 3",lect:2.5,exo:{g:"CA13",lv:5},
+  ess:`<ol><li>y′ + a(x)y = b(x). Sans second membre : y = Ce<sup>−A(x)</sup>, où A est une primitive de a.</li>
+<li>Une solution particulière : une évidente (une constante, un polynôme), ou la <b>variation de la constante</b> : y = C(x)e<sup>−A(x)</sup> donne C′(x) = b(x)e<sup>A(x)</sup>.</li>
+<li>Toutes les solutions : y = y<sub>p</sub> + Ce<sup>−A(x)</sup>.</li>
+<li>La condition y(x₀) = y₀ se met à la fin et donne C.</li></ol>`,
+  piege:`Le signe : pour y′ + a(x)y, c'est e<sup>−A(x)</sup>. Si l'équation s'écrit y′ − a(x)y, alors c'est e<sup>+A(x)</sup>.`,
+  meth:`<p>Le CC3 2025 : y′ − (cos x/(2 + sin x))y = cos x, avec y(0) = 0.</p>
+<ol><li>Une primitive de cos x/(2 + sin x) est ln(2 + sin x) (de la forme u′/u, et 2 + sin x &gt; 0). Sans second membre : y = Ce<sup>ln(2 + sin x)</sup> = C(2 + sin x).</li>
+<li>Variation de la constante : y = C(x)(2 + sin x). En remplaçant, C′(x)(2 + sin x) = cos x, donc C′(x) = cos x/(2 + sin x) et C(x) = ln(2 + sin x).</li>
+<li>Toutes les solutions : y = (C + ln(2 + sin x))(2 + sin x).</li>
+<li>y(0) = 0 : (C + ln 2) × 2 = 0, donc C = −ln 2. La solution : y = (2 + sin x) ln((2 + sin x)/2).</li></ol>`},
+ {id:"chgt",t:"Le changement de variable",pts:2.5,ou:"CC3 2025 ex. 2 a à c et ex. 3 d, CC1 2026 ex. 2 b",lect:2,exo:{g:"CA12",lv:2},
+  ess:`<ul><li>On pose u = φ(x). Trois choses changent : la fonction, le dx (du = φ′(x) dx) et les bornes (φ(a) et φ(b)).</li>
+<li>Pour trouver u : cherche une fonction dont la <b>dérivée est là aussi</b>, en facteur. 4x à côté de 2x² + 1, cos x à côté de sin x.</li></ul>`,
+  piege:`Change les bornes en même temps que la variable. Avec u, on finit avec les bornes en u, sans revenir à x.`,
+  meth:`<p>Le CC3 2025, exercice 2.</p>
+<ol><li>∫<sub>0</sub><sup>1</sup> dx/(5x + 1)² : u = 5x + 1, du = 5 dx, les bornes deviennent 1 et 6. = (1/5)∫<sub>1</sub><sup>6</sup> du/u² = (1/5)[−1/u]<sub>1</sub><sup>6</sup> = (1/5)(1 − 1/6) = 1/6.</li>
+<li>∫<sub>0</sub><sup>2</sup> 4x/(2x² + 1) dx : u = 2x² + 1, du = 4x dx, les bornes deviennent 1 et 9. = ∫<sub>1</sub><sup>9</sup> du/u = ln 9.</li>
+<li>∫<sub>0</sub><sup>π/3</sup> cos x (sin x)² dx : u = sin x, du = cos x dx, les bornes deviennent 0 et √3/2. = [u³/3]<sub>0</sub><sup>√3/2</sup> = √3/8.</li></ol>`},
+ {id:"pi12",t:"Module, argument, et cos(7π/12) par un produit",pts:2.5,ou:"CC3 2025 ex. 4, CC2 2025 ex. 2",lect:2,exo:{g:"CA3",lv:4},
+  ess:`<ul><li>|a + ib| = √(a² + b²) ; un argument θ : cos θ = a/|z| et sin θ = b/|z|.</li>
+<li>Produit : les modules se multiplient, les arguments s'ajoutent. Quotient : on divise les modules, on soustrait les arguments.</li>
+<li>Pour cos(7π/12) : on écrit le même nombre en forme exponentielle et en forme algébrique, puis on identifie.</li></ul>`,
+  piege:`La forme exponentielle a un module devant : uv = 2√2(cos(7π/12) + i sin(7π/12)). Il faut diviser par 2√2.`,
+  meth:`<p>Le CC3 2025 : u = 1 + i et v = 1 + i√3.</p>
+<ol><li>|u| = √2 et un argument de u est π/4. |v| = 2 et un argument de v est π/3.</li>
+<li>z = uv : module 2√2, argument π/4 + π/3 = 7π/12.</li>
+<li>En forme algébrique : z = 1 + i√3 + i + i²√3 = (1 − √3) + i(1 + √3).</li>
+<li>On identifie : cos(7π/12) = (1 − √3)/(2√2) = (√2 − √6)/4 et sin(7π/12) = (1 + √3)/(2√2) = (√2 + √6)/4.</li></ol>`},
+ prend("ed2",{pts:2,lect:1.5,ou:"CC2 2025 ex. 3, CC2 2023 ex. 1"}),
+ {id:"prim",t:"Primitives : reconnaître la forme",pts:1.5,ou:"CC1 2025 ex. 3, CC3 2025 ex. 3 d",lect:1.5,exo:{g:"CA10",lv:3},
+  ess:`<ul><li>u′uⁿ a pour primitive u<sup>n+1</sup>/(n + 1) (n ≠ −1).</li>
+<li>u′/u a pour primitive ln|u|.</li>
+<li>u′e<sup>u</sup> a pour primitive e<sup>u</sup> ; u′cos u a pour primitive sin u ; u′sin u a pour primitive −cos u.</li></ul>`,
+  piege:`Il manque souvent un nombre devant : x e<sup>x²</sup> = (1/2) × 2x e<sup>x²</sup>, donc sa primitive est e<sup>x²</sup>/2. Vérifie toujours en dérivant.`,
+  meth:`<ol><li>f(x) = −8x e<sup>x²</sup> : avec u = x², u′ = 2x, f = −4u′e<sup>u</sup>. Donc F(x) = −4e<sup>x²</sup>.</li>
+<li>g(x) = 6x/(x² + 1) : g = 3u′/u avec u = x² + 1 &gt; 0. Donc G(x) = 3 ln(x² + 1).</li>
+<li>Vérification en dérivant : F′(x) = −4 × 2x e<sup>x²</sup> = −8x e<sup>x²</sup>.</li></ol>`},
+ {id:"lim",t:"Calculer une limite",pts:1,ou:"CC3 2025 ex. 1 b, CC1 2025 et 2026 ex. 1 b",lect:1.5,exo:{g:"CA14",lv:5},
+  ess:`<ul><li>En ±∞, un quotient de polynômes se comporte comme le quotient des termes de plus haut degré.</li>
+<li>Une forme « 0/0 » : on factorise et on simplifie, ou on reconnaît un taux d'accroissement : (e<sup>kx</sup> − 1)/x → k, sin(x)/x → 1, ln(1 + x)/x → 1 en 0.</li>
+<li>Croissances comparées : l'exponentielle l'emporte sur les puissances, qui l'emportent sur ln.</li></ul>`,
+  piege:`« 0/0 » n'est ni 0 ni 1 : c'est une forme indéterminée. Il faut transformer l'écriture avant de conclure.`,
+  meth:`<ol><li>(e<sup>4x</sup> − 1)/(2x) en 0 : = 2 × (e<sup>4x</sup> − 1)/(4x), et (e<sup>X</sup> − 1)/X → 1 quand X = 4x → 0. La limite vaut 2.</li>
+<li>(2 − x)/(x² − 4) en +∞ : comme −x/x² = −1/x, la limite vaut 0.</li></ol>`},
+ prend("sm",{pts:1,lect:1.5}),
+ {id:"cx",t:"Le reste des complexes : second degré, Euler, racines n-ièmes",pts:0.5,ou:"TD 3, ex. 8 à 12",lect:1.5,
+  rappel:{min:3,q:`Résous z² − 2z + 5 = 0 dans ℂ. Linéarise sin²θ. Écris les solutions de zⁿ = ρe<sup>iφ</sup>.`,
+   r:`<p>Δ = −16, δ = 4i : z = 1 + 2i ou z = 1 − 2i.</p><p>sin²θ = (1 − cos(2θ))/2.</p><p>z<sub>k</sub> = ρ<sup>1/n</sup>e<sup>i(φ + 2kπ)/n</sup>, pour k = 0, 1, …, n − 1 : n solutions.</p>`},
+  ess:`<ul><li>Second degré avec Δ &lt; 0 : δ = i√(−Δ), et z = (−b ± δ)/(2a).</li>
+<li>Euler : cos u = (e<sup>iu</sup> + e<sup>−iu</sup>)/2 et sin u = (e<sup>iu</sup> − e<sup>−iu</sup>)/(2i), pour linéariser cos²θ, sin³θ…</li>
+<li>zⁿ = ρe<sup>iφ</sup> : rⁿ = ρ et nθ = φ + 2kπ, soit n solutions.</li></ul>`,
+  piege:`(2i)² = −4 : c'est ce qui donne le signe moins de sin²θ = (1 − cos 2θ)/2.`,
+  meth:`<ol><li>z² − 2z + 5 = 0 : Δ = 4 − 20 = −16, δ = 4i, z = (2 ± 4i)/2 = 1 ± 2i.</li>
+<li>sin²θ = (e<sup>2iθ</sup> − 2 + e<sup>−2iθ</sup>)/(−4) = (2cos(2θ) − 2)/(−4) = (1 − cos(2θ))/2.</li>
+<li>z³ = 8i = 8e<sup>iπ/2</sup> : r = 2 et θ = π/6 + 2kπ/3, d'où √3 + i, −√3 + i et −2i.</li></ol>`}],
+ blanc:[
+  {t:"Étude complète d'une fonction",ou:"CC3 2025 ex. 1",pts:5,g:"CA9",lv:4},
+  {t:"Un changement de variable",ou:"CC3 2025 ex. 2 a à c",pts:3,g:"CA12",lv:2},
+  {t:"Une intégration par parties",ou:"CC3 2025 ex. 2 d et e",pts:4,g:"CA11",lv:2},
+  {t:"Ordre 1 avec une condition initiale",ou:"CC3 2025 ex. 3",pts:4,g:"CA13",lv:5},
+  {t:"cos(π/12) par les complexes",ou:"CC3 2025 ex. 4",pts:4,g:"CA3",lv:4}]
+};})();
+
+</script>
+<script>
 /* Le CC en 1 h (sa demande du 21/11) : tout le programme d'une épreuve en 60 minutes au plus, ce qui rapporte le plus de points d'abord.
    Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice tiré d'un générateur, à faire soi-même avant la correction.
    À la fin, un sujet express noté sur 20. Le contenu est dans express-<matière>.js (window.EXPRESS[sid][épreuve]).
    Ce qui est réussi vient du journal (événements cch et cchb). La position et le chrono sont gardés sur l'appareil et envoyés
-   aussi dans le journal (événement xp) : on reprend la plus récente, d'où qu'elle vienne. */
+   aussi dans le journal (événement xp) : celle d'un autre appareil l'emporte quand elle est plus récente. */
 (function(){
 "use strict";
 const EXT=window.EXT,GEN=window.GEN,SUBJ=window.SUBJ;if(!EXT||!GEN)return;
@@ -34346,7 +34736,9 @@ const $=s=>document.querySelector(s);
 const tx=h=>window.W.tx(h);
 const virg=x=>String(Math.round(x*100)/100).replace(".",",");
 const horloge=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
-const KEY="rev-s1-express",MAXMIN=60,PRESSE=45;
+const KEY="rev-s1-express";
+/* la durée du parcours : 60 min, ou duree dans le contenu (120 pour un examen terminal) ; « Passer au sujet express » aux trois quarts */
+const maxMin=C=>C&&C.duree||60,presseMin=C=>Math.round(maxMin(C)*0.75),dureeTxt=C=>maxMin(C)%60?maxMin(C)+" min":maxMin(C)/60+" h";
 const lit=()=>{try{const o=JSON.parse(localStorage.getItem(KEY)||"{}");return o&&typeof o==="object"?o:{};}catch(x){return {};}};
 const ecrit=o=>{try{localStorage.setItem(KEY,JSON.stringify(o));}catch(x){}};
 const X=(sid,ep)=>(window.EXPRESS||{})[sid]&&window.EXPRESS[sid][ep]||null;
@@ -34362,13 +34754,13 @@ function bilan(sid,ep){const C=X(sid,ep),ok={},essais={},blancs=[];
   const pts=C.notions.reduce((s,n)=>s+(ok[n.id]?n.pts:0),0);
   return {ok,essais,pts,blancs,meilleur:blancs.length?Math.max(...blancs.map(b=>b.note||0)):null,dernier:blancs.length?blancs[blancs.length-1]:null};}
 let XJ={n:-1,m:{}};
-const xpJournal=()=>{const J=A.journal();if(J.length!==XJ.n){const m={};J.forEach(e=>{if(e.k==="xp"&&e.p){const c=e.s+"/"+e.ep;if(!m[c]||e.t>=m[c].t)m[c]=e;}});XJ={n:J.length,m};}return XJ.m;};
+const xpJournal=()=>{const J=A.journal();if(J.length!==XJ.n){const m={},moi=A.device()+"-";J.forEach(e=>{if(e.k==="xp"&&e.p&&String(e.i).indexOf(moi)!==0){const c=e.s+"/"+e.ep;if(!m[c]||e.t>=m[c].t)m[c]=e;}});XJ={n:J.length,m};}return XJ.m;};
 const posDe=(sid,ep)=>{const c=sid+"/"+ep,l=lit()[c],e=xpJournal()[c];
   const p=e&&(!l||!l.ts||e.t>l.ts+1000)?Object.assign({},e.p,{ts:e.t}):l;
   return Object.assign({i:0,st:0,k:0,ms:0,bq:0,bres:[],bk:0},p||{});};
 let XP=null,XPT=0;
 const envoie=()=>{clearTimeout(XPT);if(!XP)return;const e=XP;XP=null;const p=Object.assign({},e.p);delete p.ts;A.emit({k:"xp",s:e.sid,ep:e.ep,p});};
-const garde=(sid,ep,p)=>{const o=lit();p.ts=Date.now();o[sid+"/"+ep]=p;ecrit(o);
+const garde=(sid,ep,p)=>{const o=lit();p.ts=A.stamp();o[sid+"/"+ep]=p;ecrit(o);
   if(XP&&(XP.sid!==sid||XP.ep!==ep))envoie();XP={sid,ep,p};clearTimeout(XPT);XPT=setTimeout(envoie,4000);};
 const palier=(C,pts)=>{let r=null;C.paliers.forEach(p=>{if(pts>=p[0])r=p;});return r;};
 const prochainPalier=(C,pts)=>C.paliers.find(p=>pts<p[0])||null;
@@ -34395,8 +34787,8 @@ function accueil(sid,ep){arrete();const C=X(sid,ep),S=SUBJ[sid],B=bilan(sid,ep),
   $("#main").innerHTML=`<div class="page s-${sid}"><a class="back" href="#/${sid}">‹ ${S.name}</a><h1 class="stitle">${C.t}</h1>
    <p class="hlead">${C.lead} Temps prévu : ${virg(min)} min.</p>
    <section class="el-recap"><p class="el-gros"><span class="el-n">${virg(B.pts)}</span> points ${C.du} sur 20 que tu sais aller chercher</p>${jauge(C,B.pts)}${B.dernier?`<p class="el-pt">Dernier sujet express : ${virg(B.dernier.note)} sur 20${B.meilleur>B.dernier.note?` (meilleur : ${virg(B.meilleur)})`:""}.</p>`:""}</section>
-   <div class="acts"><a class="btn pri big" href="${base(sid,ep)}/go">${neuf?"Commencer · 1 h chrono":ou}</a>${neuf?"":`<button class="btn" id="xp-zero">Tout recommencer</button>`}${p.i<N?`<a class="btn" href="${base(sid,ep)}/sujet">Aller au sujet express</a>`:""}</div>
-   ${neuf?"":`<p class="muted">Chrono : ${passe} min sur ${MAXMIN}.</p>`}
+   <div class="acts"><a class="btn pri big" href="${base(sid,ep)}/go">${neuf?`Commencer · ${dureeTxt(C)} chrono`:ou}</a>${neuf?"":`<button class="btn" id="xp-zero">Tout recommencer</button>`}${p.i<N?`<a class="btn" href="${base(sid,ep)}/sujet">Aller au sujet express</a>`:""}</div>
+   ${neuf?"":`<p class="muted">Chrono : ${passe} min sur ${maxMin(C)}.</p>`}
    <h2>Le parcours, ce qui rapporte le plus d'abord</h2><div class="el-bar">${lignes}</div></div>`;
   const z=$("#xp-zero");if(z)z.addEventListener("click",()=>{garde(sid,ep,{i:0,st:0,k:(p.k||0)+1,ms:0,bq:0,bres:[],bk:(p.bk||0)+1});accueil(sid,ep);});}
 
@@ -34411,7 +34803,7 @@ function cadre(sid,ep,kicker,pts){const C=X(sid,ep);
    <div class="lp-kicker">${kicker}</div><div class="lp-body" id="lpb"></div><div class="lp-foot" id="xp-pied"></div></div>`;
   queueMicrotask(()=>document.body.classList.add("in-lesson"));window.scrollTo(0,0);lance(sid,ep);}
 const pied=h=>{$("#xp-pied").innerHTML=h;};
-const presse=(sid,ep)=>ecoule(sid,ep)>PRESSE*60e3?`<a class="btn" href="${base(sid,ep)}/sujet">Passer au sujet express</a>`:"";
+const presse=(sid,ep)=>ecoule(sid,ep)>presseMin(X(sid,ep))*60e3?`<a class="btn" href="${base(sid,ep)}/sujet">Passer au sujet express</a>`:"";
 
 function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(p.i>=N)return sujet(sid,ep);
   const n=C.notions[p.i],B=bilan(sid,ep),S=SUBJ[sid];
@@ -34438,16 +34830,16 @@ function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(
     $("#xp-re").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i;q.st=2;garde(sid,ep,q);notion(sid,ep);});};
   b.innerHTML=tx(`<p class="prekick">À toi · ${exoMin(n)} min ${C.au}, sans regarder la méthode</p><div id="xp-ex"></div><div id="xp-fb"></div>`);
   pied(presse(sid,ep));
-  if(n.rappel)rappel($("#xp-ex"),n.rappel,r=>{$("#xp-fb").innerHTML=`<div class="verdict ${r.ok?"ok":"no"}">${r.ok?"Bien : tu l'as.":"Pas encore : relis-la, puis réécris-la de mémoire."}</div>`;fini(r);});
+  if(n.rappel)rappel($("#xp-ex"),n.rappel,r=>{$("#xp-fb").innerHTML=`<div class="verdict ${r.ok?"ok":"no"}">${r.ok?"Bien : tu l'as.":"Pas encore : relis-la, puis réécris-la de mémoire."}</div>`;fini(r);},C.t);
   else{const e=ENT.exoDans($("#xp-ex"),{g:n.exo.g,lv:n.exo.lv,gr:graine(sid,ep,n.id,p.k||0)},r=>{$("#xp-fb").innerHTML=`<div class="verdict ${r.ok?"ok":"no"}">${r.ok?"Notion réussie.":"Notion pas encore réussie."}</div>`;fini(r);},{origine:C.t});
     if(!e)pied(`<button class="btn pri big" id="xp-go">Passer à la suite</button>`),$("#xp-go").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i+1;q.st=0;garde(sid,ep,q);notion(sid,ep);});}}
 
 /* une question de cours à réécrire de mémoire, puis comparée */
-function rappel(host,R,fin){const t0=Date.now();
+function rappel(host,R,fin,orig){const t0=Date.now();
   host.innerHTML=tx(`<p class="lq">${R.q}</p><div class="paper"><b>Sur ta feuille</b>, de mémoire, puis compare.</div><div class="acts"><button class="btn pri" id="xr-v">Voir la réponse</button></div><div id="xr-r"></div>`);
   host.querySelector("#xr-v").addEventListener("click",()=>{host.querySelector("#xr-v").parentNode.remove();
     host.querySelector("#xr-r").innerHTML=tx(`<h3>La réponse</h3>${R.r}<div class="acts"><button class="btn" id="xr-n">Pas tout à fait</button><button class="btn pri" id="xr-o">Je l'avais, tout</button></div>`);
-    const fait=ok=>{host.querySelectorAll("#xr-r .acts").forEach(x=>x.remove());A.logRep({o:"le CC en 1 h",s:R.sid||"",enonce:A.brut(R.q),reponse:ok?"je l'avais":"pas tout à fait",ok:ok?1:0,ms:Date.now()-t0});fin({ok,part:ok?1:0,ms:Date.now()-t0});};
+    const fait=ok=>{host.querySelectorAll("#xr-r .acts").forEach(x=>x.remove());A.logRep({o:orig||"le CC en 1 h",s:R.sid||"",enonce:A.brut(R.q),reponse:ok?"je l'avais":"pas tout à fait",ok:ok?1:0,ms:Date.now()-t0});fin({ok,part:ok?1:0,ms:Date.now()-t0});};
     host.querySelector("#xr-o").addEventListener("click",()=>fait(true));host.querySelector("#xr-n").addEventListener("click",()=>fait(false));});}
 
 function sujet(sid,ep,depart){const C=X(sid,ep),N=C.notions.length;let p=posDe(sid,ep);
@@ -34472,7 +34864,7 @@ function note(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),Q=C.blanc,sur=surBlanc(C
   const R=palier(C,n),rates=C.notions.filter(x=>!bilan(sid,ep).ok[x.id]),mn=Math.round(ms/60e3);
   $("#main").className="s-"+sid;document.body.classList.remove("in-lesson");
   $("#main").innerHTML=`<div class="page lp-end s-${sid}"><p class="kick">${C.t}</p><h1>${R?R[1]:"Pas encore la moyenne"}</h1>
-   <p class="score">${virg(n)} / 20</p><p class="lead">La note que tu aurais eue avec ce sujet express${B0.meilleur!=null&&n>B0.meilleur?`, ta meilleure jusqu'ici (avant : ${virg(B0.meilleur)})`:""}. Chrono du parcours : ${mn} min${mn>MAXMIN?` (prévu : ${prevu(C)} min)`:""}.</p>
+   <p class="score">${virg(n)} / 20</p><p class="lead">La note que tu aurais eue avec ce sujet express${B0.meilleur!=null&&n>B0.meilleur?`, ta meilleure jusqu'ici (avant : ${virg(B0.meilleur)})`:""}. Chrono du parcours : ${mn} min${mn>maxMin(C)?` (prévu : ${prevu(C)} min)`:""}.</p>
    <div class="el-bar">${Q.map((q,k)=>`<div${res[k]?"":` class="zero"`}><span>${q.t}<small>${q.ou}</small></span><b>${virg((res[k]||0)*q.pts)} / ${virg(q.pts)}</b></div>`).join("")}</div>
    ${rates.length?`<p>À reprendre d'abord : ${rates.slice(0,3).map(x=>x.t).join(", ")}${rates.length>3?"…":"."}</p>`:""}
    <div class="acts"><a class="btn pri big" href="${base(sid,ep)}/sujet">Un autre sujet express (d'autres nombres)</a>${rates.length?`<a class="btn" href="${base(sid,ep)}/notion/${rates[0].id}">Reprendre : ${rates[0].t}</a>`:""}<a class="btn" href="#/">Retour à aujourd'hui</a></div></div>`;}
@@ -34487,7 +34879,7 @@ function route(sid,ep,parts){const C=X(sid,ep);if(!C||!SUBJ[sid]){location.repla
 
 /* l'entrée : une carte en haut d'Aujourd'hui, de S'entraîner et de la page de la matière, les jours qui précèdent l'épreuve */
 function proche(){const L=[];Object.keys(window.EXPRESS||{}).forEach(sid=>{const S=SUBJ[sid];if(!S)return;const E=A.exam(S);if(!E||!window.EXPRESS[sid][E.id])return;
-  const j=(new Date(E.day+"T12:00")-new Date(A.today()+"T12:00"))/864e5;if(j>=0&&j<=10)L.push({sid,ep:E.id,E,j});});return L;}
+  const j=(new Date(E.day+"T12:00")-new Date(A.today()+"T12:00"))/864e5;if(j>=0&&j<=(E.report?14:10))L.push({sid,ep:E.id,E,j});/* une épreuve reportée est posée à 14 jours */});return L;}
 /* choix 70a : sur Aujourd'hui, la note que tu sais déjà aller chercher à chaque épreuve proche (estimation du site, ou le CC en 1 h si c'est plus) */
 function notes(pg){if(pg.querySelector(".xp-notes"))return "";const t0=A.today(),L=[];
   A.SIDS.forEach(sid=>{const S=SUBJ[sid],E=A.exam(S);if(!E||E.off||!E.day)return;if(A.examStart(S)<=A.NOW())return;const j=(new Date(E.day+"T12:00")-new Date(t0+"T12:00"))/864e5;if(j<0||j>21)return;
@@ -34502,7 +34894,7 @@ function carte(){const main=$("#main");if(!main)return;const pg0=main.querySelec
   const pg=main.querySelector(".page");if(!pg)return;
   const L=proche().filter(x=>!h.length||h[0]==="entrainer"&&h.length===1||h[0]===x.sid&&h.length===1);if(!L.length)return;
   const html=L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
-    return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}/go">${p.ms?"Reprendre":"Commencer · 1 h chrono"}</a><a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a></div></section>`;}).join("");
+    return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}/go">${p.ms?"Reprendre":`Commencer · ${dureeTxt(C)} chrono`}</a><a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a></div></section>`;}).join("");
   const h1=pg.querySelector("h1");let apres=h1;if(apres&&apres.nextElementSibling&&apres.nextElementSibling.matches(".hlead,.lead"))apres=apres.nextElementSibling;
   if(apres)apres.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);
   const nt=pg.querySelector(".xp-notes"),der=[...pg.querySelectorAll(".xp-carte")].pop();if(nt&&der)der.after(nt);}
