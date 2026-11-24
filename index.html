@@ -9744,7 +9744,7 @@ const recettes=({sec})=>`<div class="title-row"><h1>Rédactions modèles</h1></d
 
 SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"rev-ana-v1",lang:"",from:"2026-11-14",
  exams:[{id:"cc1",label:"CC1",day:"2026-11-23",start:"15:00",end:"16:00",place:"amphi 5.02 (double licence)",dur:"1 h",share:0.25,src:"annonce de l'enseignante sur le forum Moodle, le 9/11 (« le CC1 de l'UE HAX103X aura lieu lundi 23 novembre à partir de 15 h ») ; la salle, son annonce du 18/11, « CC1 HAX103X, répartition dans les amphis »."},
-        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"salle à confirmer (au CC1 : amphi 5.02)",dur:"1 h",share:0.25,src:"aucune annonce Moodle ni aucun mail retrouvé ne donne cette date : elle est sur le site depuis le début du semestre. Demande-la à l'enseignante ou en TD.",unsure:"Programme du CC2 pas encore annoncé ; ses leçons viendront après le CC1."}],
+        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"salle à confirmer (au CC1 : amphi 5.02)",dur:"1 h",share:0.25,src:"aucune annonce Moodle ni aucun mail retrouvé ne donne cette date : elle est sur le site depuis le début du semestre. Demande-la à l'enseignante ou en TD.",unsure:"Programme du CC2 pas encore annoncé, et chapitre 4 pas encore sur Moodle : le site suppose la continuité et la dérivabilité, les deux chapitres qui suivent les limites dans le programme du cours."}],
  docs:"aucun, et aucun appareil électronique",examMinutes:60,get examMorning(){const e=window.APP&&window.APP.exam?window.APP.exam(this):null,id=e?e.id:"cc1";
   return id==="cc1"?"Récite les quatre rédactions modèles (page « Rédactions modèles »), relis les fiches « Caractériser la borne sup ; point adhérent » et « Limite d'une suite : la définition », puis les cartes en rouge."
    :"Relis les fiches en rouge, puis fais les cartes de « Réviser » jusqu'à 0.";},
@@ -9764,7 +9764,10 @@ SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"r
   {id:"monotone",t:"Suites monotones et suites récurrentes",pts:3,src:"la suite récurrente de l'exercice 2 de 2024 (environ 4,5 points) et deux vrai ou faux en 2025",les:["a-monotone"],fiches:["ana-monotone"]},
   {id:"quantif",t:"Lire et nier des quantificateurs",pts:1,src:"2 points de vrai ou faux en 2024",les:["a-quantif"],fiches:["ana-quantif"]},
   {id:"outils",t:"Valeur absolue, intervalles, vocabulaire des suites",pts:1,src:"jamais un exercice à part, mais ils servent partout",les:["a-abs","a-intervalles","a-suites"],fiches:["ana-abs","ana-intervalles"]},
-  {id:"plus",t:"Suites extraites, calculs de limites de fonctions",pts:0.5,src:"jamais tombés au CC1",les:["a-extraites","a-lim-calc"],fiches:["ana-extraites","ana-lim-calc"]}],
+  {id:"plus",t:"Suites extraites, calculs de limites de fonctions",pts:0.5,src:"jamais tombés au CC1",les:["a-extraites","a-lim-calc"],fiches:["ana-extraites","ana-lim-calc"]},
+  /* CC2 : programme supposé (chapitre 4 pas encore sur Moodle, aucun ancien CC2) ; poids estimés, moitié-moitié */
+  {id:"continuite",ex:"cc2",t:"Continuité : prolongement, raccord, valeurs intermédiaires, image d'un segment",pts:10,src:"programme supposé, aucun ancien CC2 : poids estimé",les:[],fiches:[]},
+  {id:"derivabilite",ex:"cc2",t:"Dérivabilité : en un point, dérivées, tangente, accroissements finis",pts:10,src:"programme supposé, aucun ancien CC2 : poids estimé",les:[],fiches:[]}],
  tasks:[
  {id:"tdreels",t:"Exercices de TD : intervalles et bornes, comme le tableau du CC, sur papier",min:50,p:1,td:["1.8","1.14","1.15","2.12"],links:[["td","Exercices de TD"]],why:"Le tableau « intervalle, inf, min, max, sup » valait 4 points aux deux derniers CC1, et les exercices du CC1 viendront des feuilles de TD."},
  {id:"tdsuites",t:"Exercices de TD : preuves avec ε et avec la définition, sur papier",min:45,p:1,td:["2.9","3.6","3.21"],links:[["td","Exercices de TD"]],why:"L'exercice 1 des deux derniers CC1 (4 points) demandait une preuve avec la définition."},
@@ -20975,6 +20978,245 @@ function coursAdh(R){const a=R.ent(-9,6),b=a+R.ent(1,6),droite=R()<0.6,I=droite?
     [`Donc ${fx(nb(c))} est adhérent à ${fx(I)}.`,`La conclusion doit être écrite. Avec la définition du a), on écrirait : soit ${fx("ε &gt; 0")}, le nombre ${fx(droite?`max(${nb(Q(2*b-1,2))}, ${nb(b)} − ε/2)`:`min(${nb(Q(2*a+1,2))}, ${nb(a)} + ε/2)`)} est dans l'intervalle, à une distance de ${fx(nb(c))} plus petite que ε.`,0.5]],
     {type:"cours",u:n=>droite?b-1/n:a+1/n,dans:x=>droite?(x>=a&&x<b):(x>a&&x<=b),cible:c},"adhérent");}
 
+/* ---------- CC2 : programme supposé (continuité, dérivabilité), d'après le programme du chapitre 1 ; le chapitre 4 n'est pas encore sur Moodle ---------- */
+const PUX=["","x","x²","x³","x⁴","x⁵"];
+function polyX(c){let s="";for(let i=c.length-1;i>=0;i--){const x=q(c[i]);if(!x.n)continue;const a=Q(Math.abs(x.n),x.d),t=a.d>1?(i?"("+nb(a)+")":nb(a)):String(a.n);s+=sgn(s,x.n)+(i&&t==="1"?"":t)+PUX[i];}return s||"0";}
+const puQ=(x,k)=>{let r=Q(1);for(let i=0;i<k;i++)r=mul(r,x);return r;};
+const evQ=(c,x)=>c.reduce((s,a,i)=>add(s,mul(a,puQ(q(x),i))),Q(0));
+const evN=(c,x)=>c.reduce((s,a,i)=>s+q(a).n/q(a).d*Math.pow(x,i),0);
+const derP=c=>c.slice(1).map((a,i)=>mul(a,i+1));
+const casesDe=(rep,id)=>rep[id]||{};
+const numLu=s=>{if(s==null||!propre(s))return null;const v=O.calcule(String(s).replace(/^[^=]*=/,""),{});return v===null||!Number.isFinite(v)?null:v;};
+const qLu=s=>s==null?null:nombre(String(s).replace(/^[^=]*=/,""));
+const X0=x=>fx(nb(x));
+const sur=(L,M)=>`${fx(`f(x) = ${L}`)} si ${fx(`x ≤ ${M}`)}, et `;
+
+/* AN9 palier 1 : prolonger par continuité */
+function prolong(R){const t=R();let o;
+  if(t<0.32){const r=R.nz(-8,8);let s;do s=R.ent(-8,8);while(s===r);const c=[r*s,-(r+s),1],N=polyX(c),D=moins("x",r),S=moins("x",s);
+    o={sig:"P1,"+[r,s],expr:`(${N})/(${D})`,x0:r,l:Q(r-s),f:x=>(x*x-(r+s)*x+r*s)/(x-r),
+      E:[[`${fx(`${N} = (${D})(${S})`)}`,`En x = ${nb(r)}, le numérateur vaut 0 : ${fx(D)} est donc en facteur. On vérifie en développant ${fx(`(${D})(${S})`)}.`,1],
+        [`Pour ${fx(`x ≠ ${nb(r)}`)} : ${fx(`f(x) = ${S}`)}.`,`On simplifie par ${fx(D)}, qui n'est pas nul quand ${fx(`x ≠ ${nb(r)}`)}.`,1]],lim:`${fx(S)} tend vers ${fx(`${nb(r)} − ${par(s)} = ${nb(r-s)}`)}`};}
+  else if(t<0.5){const r=R.nz(-4,4),c3=r*r*r,N=`x³ ${c3>0?"−":"+"} ${Math.abs(c3)}`,D=moins("x",r),K=polyX([r*r,r,1]);
+    o={sig:"P2,"+r,expr:`(${N})/(${D})`,x0:r,l:Q(3*r*r),f:x=>(x*x*x-c3)/(x-r),
+      E:[[`${fx(`${N} = (${D})(${K})`)}`,`C'est ${fx("a³ − b³ = (a − b)(a² + ab + b²)")}, avec a = x et b = ${nb(r)}, car ${fx(`${par(r)}³ = ${nb(c3)}`)}.`,1],
+        [`Pour ${fx(`x ≠ ${nb(r)}`)} : ${fx(`f(x) = ${K}`)}.`,`On simplifie par ${fx(D)}, qui n'est pas nul quand ${fx(`x ≠ ${nb(r)}`)}.`,1]],lim:`${fx(K)} tend vers ${fx(`${par(r)}² + ${par(r)} × ${par(r)} + ${par(r)}² = ${3*r*r}`)}`};}
+  else if(t<0.66){const k=R.ent(1,9),k2=k*k;
+    o={sig:"P3,"+k,dom:`x ≥ −${k2}`,expr:`(√(x + ${k2}) − ${k})/x`,x0:0,l:Q(1,2*k),f:x=>(Math.sqrt(x+k2)-k)/x,
+      E:[[`${fx(`f(x) = ((x + ${k2}) − ${k2})/(x(√(x + ${k2}) + ${k}))`)}`,`On multiplie en haut et en bas par la quantité conjuguée ${fx(`√(x + ${k2}) + ${k}`)}, qui n'est jamais nulle : en haut, ${fx("(a − b)(a + b) = a² − b²")}.`,1],
+        [`Pour ${fx("x ≠ 0")} : ${fx(`f(x) = 1/(√(x + ${k2}) + ${k})`)}.`,`En haut, il reste x, et on simplifie par x, qui n'est pas nul.`,1]],lim:`${fx(`√(x + ${k2}) + ${k}`)} tend vers ${fx(`√${k2} + ${k} = ${2*k}`)}`};}
+  else if(t<0.8){const k=R.ent(2,12);
+    o={sig:"P4,"+k,expr:`sin(${k}x)/x`,x0:0,l:Q(k),f:x=>Math.sin(k*x)/x,
+      E:[[`Pour ${fx("x ≠ 0")} : ${fx(`f(x) = ${k} × sin(${k}x)/(${k}x)`)}.`,`On fait apparaître ${fx("sin(u)/u")} avec ${fx(`u = ${k}x`)} : on multiplie et on divise par ${k}.`,1],
+        [`Quand x tend vers 0, ${fx(`u = ${k}x`)} tend vers 0, et ${fx("sin(u)/u")} tend vers 1.`,`C'est la limite de référence ${fx("lim_{u→0} sin(u)/u = 1")} (le nombre dérivé de sin en 0), composée avec ${fx(`u = ${k}x`)}.`,1]],lim:`${fx(`${k} × sin(${k}x)/(${k}x)`)} tend vers ${fx(`${k} × 1 = ${k}`)}`};}
+  else{const r=R.nz(-6,6);let c,d;do{c=[R.ent(-9,9),R.ent(-6,6),1];d=evN(c,r);}while(!d||Math.abs(d)>40);const N=polyX(c),D=moins("x",r);
+    o={sig:"P5,"+[r,c],expr:`(${N})/(${D})`,x0:r,l:null,f:x=>evN(c,x)/(x-r),
+      E:[[`En ${fx(`x = ${nb(r)}`)}, le numérateur vaut ${fx(nb(d))}, pas 0.`,`${fx(`${par(r)}² ${c[1]?(c[1]>0?"+ ":"− ")+(Math.abs(c[1])===1?"":Math.abs(c[1])+" × ")+par(r)+" ":""}${c[0]?(c[0]>0?"+ ":"− ")+Math.abs(c[0]):""} = ${nb(d)}`)}. On ne peut donc pas simplifier par ${fx(D)}.`,1],
+        [`Le dénominateur tend vers 0 et le numérateur vers ${fx(nb(d))} : ${fx("|f(x)|")} tend vers +∞.`,`Un nombre non nul divisé par un nombre de plus en plus petit devient aussi grand qu'on veut.`,1]],lim:null};}
+  const pro=!!o.l,X=nb(o.x0),L=pro?nb(o.l):"";
+  const E=o.E.concat([pro?[`<b>${fx(`lim_{x→${X}} f(x) = ${L}`)}</b> : on prolonge f par continuité en posant ${fx(`f(${X}) = ${L}`)}.`,`Quand x tend vers ${X}, ${o.lim}. Une limite finie en ${X} : f se prolonge par continuité, et le prolongement prend cette valeur.`,1]
+    :[`<b>f ne se prolonge pas par continuité en ${X}</b>.`,`Pour prolonger f par continuité, il faut une limite finie en ${X}. Ici il n'y en a pas : les valeurs de f s'en vont vers l'infini.`,1]]);
+  const juge=rep=>{if(!rep.pro)return {incomplet:"Dis si f se prolonge par continuité."};
+    if(rep.pro==="oui"){const v=numLu(casesDe(rep,"c")["ℓ"]);if(v===null)return {incomplet:"Écris la valeur du prolongement : un nombre, par exemple 3 ou 1/4."};
+      if(pro&&Math.abs(v-o.l.n/o.l.d)<1e-9)return {ok:true};
+      if(!pro)return {ok:false,faux:["pro"],resume:"Pas tout à fait : f ne se prolonge pas par continuité.",diag:{etape:0,type:"prolongement sans limite finie",titre:"Où ça part : le numérateur.",msg:`En ${fx(`x = ${X}`)}, le numérateur ne s'annule pas : f n'a pas de limite finie en ${X}.`}};
+      return {ok:false,faux:["ℓ"],resume:"Pas tout à fait : la valeur du prolongement est à revoir.",diag:{etape:E.length-1,type:"calcul de la limite en un point",titre:"Où ça part : la limite.",msg:`Quand x tend vers ${X}, ${o.lim}.`}};}
+    if(!pro)return {ok:true};
+    return {ok:false,faux:["pro"],resume:"Pas tout à fait : f se prolonge par continuité.",diag:{etape:0,type:"forme 0/0 non levée",titre:"Où ça part : la forme 0/0.",msg:`En ${X}, le haut et le bas tendent vers 0 : c'est une forme indéterminée, qu'on lève en simplifiant. ${o.E[0][0]}.`}};};
+  return {sig:"PR"+o.sig,q:`Soit f la fonction définie pour ${o.dom?fx(o.dom)+" et ":""}${fx(`x ≠ ${X}`)} par ${fx(`f(x) = ${o.expr}`)}. Peut-on prolonger f par continuité en ${X} ? Si oui, quelle valeur faut-il donner à ${fx(`f(${X})`)} ?`,corps:"",
+    texte:`f(x) = ${o.expr} pour x ≠ ${X} : se prolonge-t-elle par continuité en ${X}, et avec quelle valeur ?`,
+    champs:[{k:"choix",id:"pro",o:[["oui",`Oui, f se prolonge par continuité en ${X}`],["non","Non"]]},{k:"cases",id:"c",noms:["ℓ"],sym:["√("],aide:"ℓ est la valeur à donner à f("+X+"). Si f ne se prolonge pas, laisse la case vide."}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:pro?`oui, avec ${fx(`f(${X}) = ${L}`)}`:"non : pas de limite finie",bonneTxt:pro?`oui, f(${X}) = ${L}`:"non",repBonne:pro?{pro:"oui",c:{"ℓ":brut(o.l)}}:{pro:"non"},repFausse:pro?{pro:"non"}:{pro:"oui",c:{"ℓ":"0"}},
+    nature:pro?"prolongeable":"pas prolongeable",ens:{type:"prolong",f:o.f,x0:o.x0,l:pro?o.l.n/o.l.d:null}};}
+
+
+/* AN9 palier 2 : une fonction définie par morceaux, le paramètre qui la rend continue */
+const linA=(A,B,v)=>polyX([B,A]).replace(/x/g,v||"a");
+function morceaux(R){const x0=R.nz(-3,3),X=nb(x0),t=R();let G,D,A1,B1,A2,B2,f;
+  if(t<0.7){const Lc=[R.ent(-9,9),R.ent(-5,5),R.nz(-3,3)];G=polyX(Lc);A1=Q(0);B1=evQ(Lc,x0);
+    if(t<0.35){const b=R.ent(-9,9);D=polyX([b,1]).replace("x","ax");A2=Q(x0);B2=Q(b);f=(x,a)=>x<=x0?evN(Lc,x):a*x+b;}
+    else{const m=R.nz(-5,5);D=polyX([0,m])+" + a";A2=Q(1);B2=Q(m*x0);f=(x,a)=>x<=x0?evN(Lc,x):m*x+a;}}
+  else{const be=R.ent(-5,5),ga=R.ent(-9,9),m=R.nz(-5,5),p=R.ent(-9,9),r=polyX([ga,be]);G="ax²"+(r==="0"?"":r[0]==="−"?" − "+r.slice(1):" + "+r);D=polyX([p,m]);
+    A1=Q(x0*x0);B1=Q(be*x0+ga);A2=Q(0);B2=Q(m*x0+p);f=(x,a)=>x<=x0?a*x*x+be*x+ga:m*x+p;}
+  const a=div(sub(B2,B1),sub(A1,A2)),gT=linA(A1,B1),dT=linA(A2,B2),sg=sub(A1,A2).n<0?-1:1,eG=mul(sub(A1,A2),sg),eD=mul(sub(B2,B1),sg);
+  const E=[[`Sur ${fx(`]−∞ ; ${X}[`)} et sur ${fx(`]${X} ; +∞[`)}, f est donnée par un polynôme : elle y est continue. Tout se joue en ${X}.`,`Une fonction polynôme est continue en tout point. Il reste à regarder le raccord des deux morceaux.`,0.5],
+    [`À gauche : ${fx(`lim_{x→${X}⁻} f(x) = f(${X}) = ${gT}`)}.`,`Pour ${fx(`x ≤ ${X}`)}, ${fx(`f(x) = ${G}`)}, qui est continue : on remplace x par ${X}.`,1],
+    [`À droite : ${fx(`lim_{x→${X}⁺} f(x) = ${dT}`)}.`,`Pour ${fx(`x &gt; ${X}`)}, ${fx(`f(x) = ${D}`)} : quand x tend vers ${X}, on remplace x par ${X}.`,1],
+    [`f est continue en ${X} si et seulement si ${fx(`${gT} = ${dT}`)}, c'est-à-dire ${fx(`${linA(eG,0)} = ${nb(eD)}`)} : <b>${fx(`a = ${nb(a)}`)}</b>.`,`La limite à gauche, la limite à droite et ${fx(`f(${X})`)} doivent être égales. On regroupe les a d'un côté et les nombres de l'autre.`,1.5]];
+  const juge=rep=>{const v=qLu(casesDe(rep,"c").a);if(!v)return {incomplet:"Écris la valeur de a : un nombre, par exemple 3, -2 ou 5/4."};if(egal(v,a))return {ok:true};
+    return {ok:false,faux:["a"],resume:"Pas tout à fait : la valeur de a est à revoir.",diag:{etape:3,type:"raccord d'une fonction par morceaux",titre:"Où ça part : l'équation du raccord.",msg:`Les deux morceaux doivent donner la même valeur en ${X} : ${fx(`${gT} = ${dT}`)}, donc ${fx(`a = ${nb(a)}`)}.`}};};
+  return {sig:"MO"+[x0,G,D],q:`Soit a un réel, et f la fonction définie sur ℝ par ${sur(G,X)}${fx(`f(x) = ${D}`)} si ${fx(`x &gt; ${X}`)}. Pour quelle valeur de a la fonction f est-elle continue sur ℝ ?`,corps:"",
+    texte:`f(x) = ${G} si x ≤ ${X}, f(x) = ${D} si x > ${X} : la valeur de a qui rend f continue`,champs:[{k:"cases",id:"c",noms:["a"]}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:fx(`a = ${nb(a)}`),bonneTxt:`a = ${nb(a)}`,repBonne:{c:{a:brut(a)}},repFausse:{c:{a:brut(add(a,1))}},nature:t<0.35?"ax + b":t<0.7?"mx + a":"a à gauche",ens:{type:"morceaux",f,x0,a:a.n/a.d}};}
+
+/* AN10 : le théorème des valeurs intermédiaires, x³ + px + k = 0 */
+function tviF(R){for(;;){const p=R.ent(1,9),k=R.nz(-40,40),c=[k,p,0,1];let n=null,zero=false;for(let i=-6;i<6;i++){const u=evN(c,i),v=evN(c,i+1);if(!u||!v)zero=true;if(u<0&&v>0)n=i;}
+  if(n===null||zero)continue;return {c,p,k,n,fn:evN(c,n),fn1:evN(c,n+1),eq:R()<0.5};}}
+function etapesTVI(T,redac){const {c,p,k,n,fn,fn1}=T,F=polyX(c),val=i=>`${par(i)}³ + ${p===1?"":p+" × "}${par(i)} ${k>0?"+":"−"} ${Math.abs(k)}`;
+  return [[`On pose ${fx(`f(x) = ${F}`)}. ${redac?"L'équation s'écrit f(x) = 0, et ":""}f est continue sur ℝ, car c'est un polynôme.`,`${T.eq?`On ramène tout du même côté : ${fx(`${polyX([0,p,0,1])} = ${nb(-k)}`)} devient ${fx("f(x) = 0")}. `:""}Le théorème des valeurs intermédiaires demande une fonction continue sur un intervalle.`,1],
+    [`${fx(`f(${n}) = ${nb(fn)}`)}, qui est négatif, et ${fx(`f(${n+1}) = ${nb(fn1)}`)}, qui est positif.`,`On essaie des entiers jusqu'à trouver un changement de signe : ${fx(`f(${n}) = ${val(n)}`)} et ${fx(`f(${n+1}) = ${val(n+1)}`)}.`,1],
+    [`f est continue sur ${fx(`[${n} ; ${n+1}]`)} et 0 est entre ${fx(`f(${n})`)} et ${fx(`f(${n+1})`)} : d'après le théorème des valeurs intermédiaires, il existe α dans ${fx(`]${n} ; ${n+1}[`)} tel que ${fx("f(α) = 0")}.`,`f passe d'une valeur négative à une valeur positive sans sauter : elle passe par 0 entre les deux. α n'est ni ${n} ni ${n+1}, car f ne s'y annule pas.`,1],
+    [`f est strictement croissante sur ℝ, donc <b>α est la seule solution</b>, et ${fx(`${n} &lt; α &lt; ${n+1}`)}.`,`${fx("x ↦ x³")} et ${fx(`x ↦ ${polyX([k,p])}`)} sont strictement croissantes, donc leur somme aussi (ou : ${fx(`f′(x) = 3x² + ${p}`)} est strictement positif). Une fonction strictement croissante ne prend jamais deux fois la même valeur : elle ne passe qu'une fois par 0.`,1]];}
+const eqTVI=T=>T.eq?`${polyX([0,T.p,0,1])} = ${nb(-T.k)}`:`${polyX(T.c)} = 0`;
+function tvi(R){const T=tviF(R),{n}=T,E=etapesTVI(T,false),eq=eqTVI(T);
+  const juge=rep=>{const v=qLu(casesDe(rep,"c").n);if(!v||v.d!==1)return {incomplet:"Écris l'entier n : par exemple 2 ou -3."};if(!rep.nb)return {incomplet:"Choisis aussi le nombre de solutions."};
+    const okN=egal(v,Q(n)),okB=rep.nb==="un";if(okN&&okB)return {ok:true};const F=[];if(!okN)F.push("n");if(!okB)F.push("nb");
+    const d=!okN?(egal(v,Q(n+1))?{etape:1,type:"borne du mauvais côté",titre:"Où ça part : l'entier demandé.",msg:`On demande n tel que ${fx("n &lt; α &lt; n + 1")} : c'est l'entier juste avant α. Ici ${fx(`f(${n}) &lt; 0 &lt; f(${n+1})`)}, donc n = ${n}.`}:{etape:1,type:"changement de signe",titre:"Où ça part : le changement de signe.",msg:`${fx(`f(${n}) = ${nb(T.fn)}`)} et ${fx(`f(${n+1}) = ${nb(T.fn1)}`)} : c'est entre ${n} et ${n+1} que f change de signe.`})
+      :{etape:3,type:"unicité par la stricte monotonie",titre:"Où ça part : le nombre de solutions.",msg:"f est strictement croissante : elle ne passe qu'une fois par 0. Il y a exactement une solution."};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"n et le nombre de solutions sont à revoir":F[0]==="n"?"l'entier n est à revoir":"le nombre de solutions est à revoir"}.`,diag:d};};
+  return {sig:"TV"+[T.c,T.eq],q:`On considère l'équation ${fx(eq)}, d'inconnue x réelle. Combien a-t-elle de solutions ? Donne l'entier n tel qu'une solution α vérifie ${fx("n &lt; α &lt; n + 1")}.`,corps:"",
+    texte:`${eq} : nombre de solutions, et l'entier n tel que n < α < n + 1`,champs:[{k:"choix",id:"nb",o:[["un","Exactement une solution"],["plus","Au moins une, peut-être plusieurs"],["zero","Aucune solution"]]},{k:"cases",id:"c",noms:["n"]}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:`exactement une solution α, et ${fx(`${n} &lt; α &lt; ${n+1}`)}`,bonneTxt:`une seule solution, ${n} < α < ${n+1}`,repBonne:{nb:"un",c:{n:String(n)}},repFausse:{nb:"un",c:{n:String(n+1)}},nature:T.eq?"x³ + px = k":"f(x) = 0",ens:{type:"tvi",c:T.c,n}};}
+function redacTVI(R){const T=tviF(R),E=etapesTVI(T,true),eq=eqTVI(T);
+  return {sig:"RT"+[T.c,T.eq],q:`Montre que l'équation ${fx(eq)} admet une unique solution réelle α, puis trouve l'entier n tel que ${fx("n &lt; α &lt; n + 1")}.`,corps:"",
+    texte:`${eq} : une unique solution α, et l'entier n tel que n < α < n + 1 (rédaction)`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:"voir la rédaction",bonneTxt:`une seule solution, ${T.n} < α < ${T.n+1}`,repBonne:{},nature:"papier",ens:{type:"tvi",c:T.c,n:T.n}};}
+
+/* AN11 : image d'un segment par une fonction continue (polynôme du second ou du troisième degré) */
+function imageSeg(R){const t=R();let c,a,d,crit;
+  if(t<0.6){const s=R()<0.5?1:-1,h=R.ent(-4,4),k=R.ent(-9,9);c=[s*h*h+k,-2*s*h,s];a=R.ent(-6,3);d=a+R.ent(2,6);crit=[h];}
+  else{const K=R.choix([1,2]),cst=R.ent(-9,9);c=[cst,-3*K*K,0,1];a=R.ent(-2*K-1,K);d=Math.min(a+R.ent(2,3*K+1),2*K+1);if(d-a<2)a=d-2;crit=[-K,K];}
+  const fp=derP(c),dedans=crit.filter(x=>x>a&&x<d),P=[a,...dedans,d],V=P.map(x=>evN(c,x)),m=Math.min(...V),M=Math.max(...V),I=`[${nb(a)} ; ${nb(d)}]`,vb=[evN(c,a),evN(c,d)],mb=Math.min(...vb),Mb=Math.max(...vb);
+  const z=crit.length>1?`${fx(nb(crit[0]))} et ${fx(nb(crit[1]))}`:fx(nb(crit[0]));
+  const E=[[`f est continue sur le segment ${fx(I)} : elle y est bornée et atteint ses bornes. Donc ${fx(`f(${I}) = [m ; M]`)}, où m est le minimum de f sur ce segment et M son maximum.`,`C'est le théorème du cours : l'image d'un segment par une fonction continue est un segment. Il reste à trouver le plus petit et le plus grand des f(x).`,0.5],
+    [`${fx(`f′(x) = ${polyX(fp)}`)}, qui s'annule en ${z}. ${dedans.length===crit.length?(crit.length>1?"Ces deux nombres sont":"Ce nombre est")+" à l'intérieur du segment.":dedans.length?`Seul ${fx(nb(dedans[0]))} est à l'intérieur du segment.`:(crit.length>1?"Aucun des deux n'est":"Ce nombre n'est pas")+" à l'intérieur du segment : f y est monotone."}`,`Le minimum et le maximum sont atteints soit aux bords du segment, soit là où la dérivée s'annule.`,1],
+    [P.map((x,i)=>fx(`f(${nb(x)}) = ${nb(V[i])}`)).join(", ")+".",`On calcule f aux deux bords et aux points du segment où f′ s'annule.`,1],
+    [`<b>${fx(`m = ${nb(m)}`)} et ${fx(`M = ${nb(M)}`)}</b> : ${fx(`f(${I}) = [${nb(m)} ; ${nb(M)}]`)}.`,`Le plus petit et le plus grand des nombres de l'étape d'avant.`,1.5]];
+  const juge=rep=>{const C=casesDe(rep,"c"),u=qLu(C.m),v=qLu(C.M);if(!u||!v)return {incomplet:"Écris m et M : deux nombres, par exemple -4 et 12."};
+    const ok=[egal(u,Q(m)),egal(v,Q(M))];if(ok[0]&&ok[1])return {ok:true};const F=["m","M"].filter((_,i)=>!ok[i]);
+    const bords=egal(u,Q(mb))&&egal(v,Q(Mb));
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"m et M sont à revoir":F[0]+" est à revoir"}.`,diag:bords&&dedans.length?{etape:1,type:"extremum intérieur oublié",titre:"Où ça part : le point où la dérivée s'annule.",msg:`Tu as pris seulement les bords du segment. Mais f′ s'annule en ${fx(nb(dedans[0]))}${dedans.length>1?` et en ${fx(nb(dedans[1]))}`:""}, à l'intérieur : il faut aussi y calculer f.`}:{etape:2,type:"valeurs aux points remarquables",titre:"Où ça part : les valeurs de f.",msg:P.map((x,i)=>fx(`f(${nb(x)}) = ${nb(V[i])}`)).join(", ")+"."}};};
+  const rf=m!==mb||M!==Mb?{m:String(mb),M:String(Mb)}:{m:String(M),M:String(m)};
+  return {sig:"IM"+[c,a,d],q:`Soit f la fonction définie sur ℝ par ${fx(`f(x) = ${polyX(c)}`)}. Détermine l'image du segment ${fx(I)} par f, sous la forme ${fx("[m ; M]")}.`,corps:"",
+    texte:`f(x) = ${polyX(c)} : l'image de ${I}, sous la forme [m ; M]`,champs:[{k:"cases",id:"c",noms:["m","M"],aide:"m est le minimum de f sur le segment, M son maximum."}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:fx(`f(${I}) = [${nb(m)} ; ${nb(M)}]`),bonneTxt:`f(${I}) = [${nb(m)} ; ${nb(M)}]`,repBonne:{c:{m:String(m),M:String(M)}},repFausse:{c:rf},nature:(c.length>3?"degré 3":"degré 2")+(dedans.length?", extremum intérieur":", monotone"),ens:{type:"image",f:x=>evN(c,x),a,d,m,M}};}
+
+/* AN12 palier 1 : dérivable en un point ? dérivées à gauche et à droite */
+const GD=["à gauche","à droite"];
+function derivPoint(R){const t=R();let o;
+  if(t<0.6){const x0=R.ent(-3,3),Lc=[R.ent(-9,9),R.ent(-6,6),R.nz(-3,3)],gL=evQ(derP(Lc),x0),m=R()<0.5?gL:add(gL,R.nz(-4,4)),L0=evQ(Lc,x0),p=sub(L0,mul(m,x0)),G=polyX(Lc),D=polyX([p,m]),X=nb(x0);
+    o={sig:"D1,"+[x0,Lc,brut(m)],x0,g:gL,d:m,def:`${sur(G,X)}${fx(`f(x) = ${D}`)} si ${fx(`x &gt; ${X}`)}`,txt:`f(x) = ${G} si x ≤ ${X}, ${D} si x > ${X}`,f:x=>x<=x0?evN(Lc,x):evN([p,m],x),
+      E:[[`Les deux morceaux valent ${fx(nb(L0))} en ${X} : f est continue en ${X}, et ${fx(`f(${X}) = ${nb(L0)}`)}.`,`On remplace x par ${X} dans chaque morceau. Une fonction dérivable en un point y est continue : on vérifie d'abord le raccord.`,0.5],
+        [`Pour ${fx(`x &lt; ${X}`)}, le taux d'accroissement ${fx(`(f(x) − f(${X}))/(${moins("x",x0)})`)} se simplifie en ${fx(polyX([Lc[1]+Lc[2]*x0,Lc[2]]))}, qui tend vers <b>${fx(nb(gL))}</b>.`,`${fx(`f(x) − f(${X})`)} s'annule en ${fx(`x = ${X}`)} : on le factorise par ${fx(moins("x",x0))} et on simplifie. On peut aussi dériver le morceau de gauche, ${fx(`${polyX(derP(Lc))}`)}, et le prendre en ${X}.`,1.5],
+        [`Pour ${fx(`x &gt; ${X}`)}, le taux d'accroissement vaut toujours <b>${fx(nb(m))}</b>.`,`Le morceau de droite est une droite de pente ${fx(nb(m))} qui passe par le point ${fx(`(${X} ; ${nb(L0)})`)} : son taux d'accroissement est sa pente.`,1]]};}
+  else{const r=R.ent(-4,4),k=R.ent(-4,4),xa=R()<0.5,X=nb(r),A=`|${moins("x",r)}|`,kx=k?(k>0?" + ":" − ")+(Math.abs(k)===1?"":Math.abs(k))+"x":"",F=(xa?`(${moins("x",r)})${A}`:A)+kx;
+    o={sig:"D2,"+[r,k,xa],x0:r,g:Q(xa?k:k-1),d:Q(xa?k:k+1),def:`${fx(`f(x) = ${F}`)} pour tout réel x`,txt:`f(x) = ${F}`,f:x=>(xa?(x-r)*Math.abs(x-r):Math.abs(x-r))+k*x,
+      E:[[`f est continue en ${X}, et ${fx(`f(${X}) = ${nb(k*r)}`)}.`,`La valeur absolue est continue. En ${X}, ${fx(A)} vaut 0.`,0.5],
+        [`Pour ${fx(`x &lt; ${X}`)}, ${fx(`${A} = −(${moins("x",r)})`)}, et le taux d'accroissement ${fx(`(f(x) − f(${X}))/(${moins("x",r)})`)} vaut ${fx((xa?`−(${moins("x",r)})`:"−1")+(k?` + ${par(k)}`:""))}, qui tend vers <b>${fx(nb(xa?k:k-1))}</b>.`,`${fx(`f(x) − f(${X}) = ${xa?`(${moins("x",r)})${A}`:A}${k?` + ${par(k)}(${moins("x",r)})`:""}`)} : on divise par ${fx(moins("x",r))}.`,1.5],
+        [`Pour ${fx(`x &gt; ${X}`)}, ${fx(`${A} = ${moins("x",r)}`)}, et le taux d'accroissement vaut ${fx((xa?moins("x",r):"1")+(k?` + ${par(k)}`:""))}, qui tend vers <b>${fx(nb(xa?k:k+1))}</b>.`,`Même calcul, avec cette fois ${fx(`${A} = ${moins("x",r)}`)}.`,1]]};}
+  const ok=egal(o.g,o.d),X=nb(o.x0),E=o.E.concat([[ok?`Les deux limites sont égales : <b>f est dérivable en ${X}</b>, et ${fx(`f′(${X}) = ${nb(o.g)}`)}.`:`Les deux limites sont différentes : <b>f n'est pas dérivable en ${X}</b>. Sa courbe y fait un angle.`,`f est dérivable en ${X} quand le taux d'accroissement a une limite finie en ${X}, la même à gauche et à droite.`,1]]);
+  const juge=rep=>{const C=casesDe(rep,"c"),u=qLu(C[GD[0]]),v=qLu(C[GD[1]]);if(!u||!v)return {incomplet:"Écris les deux limites du taux d'accroissement, à gauche et à droite : deux nombres."};if(!rep.der)return {incomplet:"Dis aussi si f est dérivable en "+X+"."};
+    const okG=egal(u,o.g),okD=egal(v,o.d),okR=(rep.der==="oui")===ok;if(okG&&okD&&okR)return {ok:true};const F=[];if(!okG)F.push(GD[0]);if(!okD)F.push(GD[1]);if(!okR)F.push("der");
+    const d=!okG&&!okD&&egal(u,o.d)&&egal(v,o.g)?{etape:1,type:"gauche et droite échangées",titre:"Où ça part : les côtés.",msg:`À gauche, ce sont les x plus petits que ${X} : le taux y tend vers ${fx(nb(o.g))}.`}
+      :!okG?{etape:1,type:"dérivée à gauche",titre:"Où ça part : la limite à gauche.",msg:o.E[1][0]}:!okD?{etape:2,type:"dérivée à droite",titre:"Où ça part : la limite à droite.",msg:o.E[2][0]}
+      :{etape:3,type:"dérivable si les deux limites sont égales",titre:"Où ça part : la conclusion.",msg:ok?"Les deux limites sont égales : f est dérivable.":"Les deux limites sont différentes : f n'est pas dérivable."};
+    return {ok:false,faux:F,resume:"Pas tout à fait : "+et(F.map(x=>x==="der"?"la conclusion":"la limite "+x))+(F.length>1?" sont à revoir.":" est à revoir."),diag:d};};
+  return {sig:"DP"+o.sig,q:`Soit f la fonction définie par ${o.def}. Calcule la limite du taux d'accroissement ${fx(`(f(x) − f(${X}))/(${moins("x",o.x0)})`)} quand x tend vers ${X} à gauche, puis à droite. f est-elle dérivable en ${X} ?`,corps:"",
+    texte:`${o.txt} : dérivées à gauche et à droite en ${X}, dérivable ou pas`,champs:[{k:"cases",id:"c",noms:GD},{k:"choix",id:"der",o:[["oui",`f est dérivable en ${X}`],["non",`f n'est pas dérivable en ${X}`]]}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:`à gauche ${fx(nb(o.g))}, à droite ${fx(nb(o.d))} : ${ok?"dérivable":"pas dérivable"}`,bonneTxt:`à gauche ${nb(o.g)}, à droite ${nb(o.d)} : ${ok?"dérivable":"pas dérivable"}`,
+    repBonne:{c:{[GD[0]]:brut(o.g),[GD[1]]:brut(o.d)},der:ok?"oui":"non"},repFausse:{c:{[GD[0]]:brut(o.g),[GD[1]]:brut(o.d)},der:ok?"non":"oui"},nature:(o.sig[1]==="1"?"morceaux":"valeur absolue")+(ok?", dérivable":", pas dérivable"),ens:{type:"derpt",f:o.f,x0:o.x0,g:o.g.n/o.g.d,d:o.d.n/o.d.d}};}
+
+/* AN12 palier 2 : trouver a et b pour que f soit dérivable en x₀ */
+function abDeriv(R){const t=R();let o;
+  if(t<0.65){const x0=R.ent(-3,3),Lc=[R.ent(-9,9),R.ent(-6,6),R.nz(-3,3)],a=evQ(derP(Lc),x0),L0=evQ(Lc,x0),b=sub(L0,mul(a,x0)),X=nb(x0),G=polyX(Lc),abT=x0?linA(x0,0)+" + b":"b";
+    o={sig:"A1,"+[x0,Lc],x0,a,b,G,D:"ax + b",f:(x,A,B)=>x<=x0?evN(Lc,x):A*x+B,
+      E:[[`Continuité en ${X} : ${fx(`${abT} = ${nb(L0)}`)}.`,`La limite à droite, ${fx(abT)}, doit être égale à ${fx(`f(${X}) = ${nb(L0)}`)}. Une fonction dérivable en un point y est d'abord continue.`,1],
+        [`Dérivée à gauche : la dérivée du morceau de gauche, ${fx(polyX(derP(Lc)))}, prise en ${X}, vaut ${fx(nb(a))}. Dérivée à droite : a.`,`Chaque morceau est un polynôme : sa dérivée en ${X} est la limite du taux d'accroissement de ce côté-là. La droite ${fx("ax + b")} a pour pente a.`,1],
+        [`Dérivable en ${X} : les deux dérivées sont égales, <b>${fx(`a = ${nb(a)}`)}</b>.`,`f est dérivable en ${X} quand le taux d'accroissement a la même limite des deux côtés.`,1],
+        [`Puis ${fx(`b = ${nb(L0)} − ${x0?`${par(x0)} × ${par(a)}`:"0"}`)}, soit <b>${fx(`b = ${nb(b)}`)}</b>.`,`On remplace a par sa valeur dans l'équation de la continuité.`,1]]};}
+  else{const x0=R.nz(-3,3),m=R.nz(-6,6),p=R.ent(-9,9),X=nb(x0),a=Q(m,2*x0),Rv=m*x0+p,b=sub(Rv,mul(a,x0*x0)),D=polyX([p,m]);
+    o={sig:"A2,"+[x0,m,p],x0,a,b,G:"ax² + b",D,f:(x,A,B)=>x<=x0?A*x*x+B:m*x+p,
+      E:[[`Continuité en ${X} : ${fx(`${linA(x0*x0,0)} + b = ${nb(Rv)}`)}.`,`À gauche, ${fx(`f(${X}) = ${linA(x0*x0,0)} + b`)} ; à droite, la limite est ${fx(`${nb(m)} × ${par(x0)}${p?` ${p>0?"+":"−"} ${Math.abs(p)}`:""} = ${nb(Rv)}`)}.`,1],
+        [`Dérivée à gauche : ${fx(`2a × ${par(x0)} = ${linA(2*x0,0)}`)}. Dérivée à droite : ${fx(nb(m))}.`,`La dérivée de ${fx("ax² + b")} est ${fx("2ax")} ; celle de ${fx(D)} est ${fx(nb(m))}.`,1],
+        [`Dérivable en ${X} : ${fx(`${linA(2*x0,0)} = ${nb(m)}`)}, donc <b>${fx(`a = ${nb(a)}`)}</b>.`,`Les dérivées à gauche et à droite doivent être égales.`,1],
+        [`Puis ${fx(`b = ${nb(Rv)} − ${x0*x0} × ${par(a)}`)}, soit <b>${fx(`b = ${nb(b)}`)}</b>.`,`On remplace a par sa valeur dans l'équation de la continuité.`,1]]};}
+  const X=nb(o.x0);
+  const juge=rep=>{const C=casesDe(rep,"c"),u=qLu(C.a),v=qLu(C.b);if(!u||!v)return {incomplet:"Écris a et b : deux nombres, par exemple 4 et -3/2."};
+    const ok=[egal(u,o.a),egal(v,o.b)];if(ok[0]&&ok[1])return {ok:true};const F=["a","b"].filter((_,i)=>!ok[i]);
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"a et b sont à revoir":F[0]+" est à revoir"}.`,diag:!ok[0]?{etape:2,type:"égalité des dérivées à gauche et à droite",titre:"Où ça part : la condition de dérivabilité.",msg:o.E[1][0]+" "+o.E[2][0]}:{etape:3,type:"continuité oubliée",titre:"Où ça part : la continuité.",msg:`a est juste. b vient de la continuité : ${o.E[0][0]}`}};};
+  return {sig:"AB"+o.sig,q:`Soient a et b deux réels, et f la fonction définie sur ℝ par ${sur(o.G,X)}${fx(`f(x) = ${o.D}`)} si ${fx(`x &gt; ${X}`)}. Trouve a et b pour que f soit dérivable en ${X}.`,corps:"",
+    texte:`f(x) = ${o.G} si x ≤ ${X}, ${o.D} si x > ${X} : a et b pour que f soit dérivable en ${X}`,champs:[{k:"cases",id:"c",noms:["a","b"]}],juge,etapes:o.E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:`${fx(`a = ${nb(o.a)}`)} et ${fx(`b = ${nb(o.b)}`)}`,bonneTxt:`a = ${nb(o.a)}, b = ${nb(o.b)}`,repBonne:{c:{a:brut(o.a),b:brut(o.b)}},repFausse:{c:{a:brut(o.a),b:brut(add(o.b,1))}},nature:o.sig.slice(0,2),ens:{type:"ab",f:o.f,x0:o.x0,a:o.a.n/o.a.d,b:o.b.n/o.b.d}};}
+
+/* AN13 : tangente en un point */
+function tangente(R){const t=R();let o;
+  if(t<0.55){const c=[R.ent(-6,6),R.ent(-5,5),R.ent(-3,3),R()<0.5?1:-1],x0=R.ent(-2,2),fp=derP(c);
+    o={sig:"T1,"+[c,x0],x0,F:polyX(c),y:evQ(c,x0),m:evQ(fp,x0),fpT:`${fx(`f′(x) = ${polyX(fp)}`)}`,f:x=>evN(c,x)};}
+  else{let a,b,d,x0;do{a=R.nz(-5,5);b=R.ent(-9,9);d=R.nz(-5,5);x0=R.ent(-3,3);}while(a*d-b===0||x0+d===0);const N=polyX([b,a]),Dn=moins("x",-d);
+    o={sig:"T2,"+[a,b,d,x0],x0,F:`(${N})/(${Dn})`,y:Q(a*x0+b,x0+d),m:Q(a*d-b,(x0+d)*(x0+d)),fpT:`${fx(`f′(x) = (${nb(a)}(${Dn}) − (${N}))/(${Dn})² = ${nb(a*d-b)}/(${Dn})²`)}`,f:x=>(a*x+b)/(x+d)};}
+  const X=nb(o.x0),p=sub(o.y,mul(o.m,o.x0)),eqT=polyX([p,o.m]);
+  const E=[[`La tangente en ${X} a pour équation ${fx(`y = f′(${X})(${moins("x",o.x0)}) + f(${X})`)}.`,`C'est la droite qui passe par le point ${fx(`(${X} ; f(${X}))`)} avec la pente ${fx(`f′(${X})`)}.`,0.5],
+    [`${fx(`f(${X}) = ${nb(o.y)}`)}.`,`On remplace x par ${X} dans ${fx(`f(x)`)}.`,1],
+    [`${o.fpT}, donc ${fx(`f′(${X}) = ${nb(o.m)}`)}.`,o.sig[1]==="1"?"On dérive terme à terme : la dérivée de xⁿ est nxⁿ⁻¹.":`On utilise ${fx("(u/v)′ = (u′v − uv′)/v²")}, puis on remplace x par ${X}.`,1.5],
+    [`<b>${fx(`y = ${eqT}`)}</b>`,`${fx(`y = ${o.m.d>1||o.m.n<0?"("+nb(o.m)+")":nb(o.m)}(${moins("x",o.x0)}) + ${par(o.y)}`)}, puis on développe.`,1]];
+  const juge=rep=>{const C=casesDe(rep,"c"),u=qLu(C.m),v=qLu(C.p);if(!u||!v)return {incomplet:"Écris m et p : deux nombres, par exemple 3 et -5/2."};
+    const ok=[egal(u,o.m),egal(v,p)];if(ok[0]&&ok[1])return {ok:true};const F=["m","p"].filter((_,i)=>!ok[i]);
+    const d=!ok[0]?{etape:2,type:"nombre dérivé",titre:"Où ça part : la pente.",msg:`La pente de la tangente est ${fx(`f′(${X}) = ${nb(o.m)}`)}.`}:egal(v,o.y)&&o.x0?{etape:3,type:"ordonnée à l'origine prise égale à f(x₀)",titre:"Où ça part : le développement.",msg:`p n'est pas ${fx(`f(${X})`)} : il faut développer ${fx(`${nb(o.m)}(${moins("x",o.x0)})`)}. Ici ${fx(`p = ${nb(o.y)} − ${par(o.m)} × ${par(o.x0)} = ${nb(p)}`)}.`}:{etape:3,type:"équation de la tangente",titre:"Où ça part : l'équation.",msg:`${fx(`y = ${nb(o.m)}(${moins("x",o.x0)}) + ${par(o.y)} = ${eqT}`)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"m et p sont à revoir":F[0]+" est à revoir"}.`,diag:d};};
+  return {sig:"TG"+o.sig,q:`Soit f la fonction définie par ${fx(`f(x) = ${o.F}`)}. Donne l'équation de la tangente à la courbe de f au point d'abscisse ${X}, sous la forme ${fx("y = mx + p")}.`,corps:"",
+    texte:`f(x) = ${o.F} : la tangente en ${X}, y = mx + p`,champs:[{k:"cases",id:"c",noms:["m","p"],aide:"La tangente s'écrit y = mx + p : m est sa pente."}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:fx(`y = ${eqT}`),bonneTxt:`y = ${eqT}`,repBonne:{c:{m:brut(o.m),p:brut(p)}},repFausse:{c:{m:brut(o.m),p:brut(add(p,1))}},nature:o.sig.slice(0,2),ens:{type:"tan",f:o.f,x0:o.x0,m:o.m.n/o.m.d,p:p.n/p.d}};}
+
+/* AN14 palier 1 : le c du théorème des accroissements finis */
+function taf(R){const t=R();let c,p,qq,cs,res;
+  if(t<0.4){c=[R.ent(-9,9),R.ent(-6,6),R.nz(-3,3)];p=R.ent(-6,3);qq=p+R.ent(1,6);const v=Q(p+qq,2);cs=[{v:v.n/v.d,t:nb(v),tape:brut(v)}];
+    res=sl=>`${fx(`f′(c) = ${polyX([c[1],2*c[2]]).replace(/x/g,"c")}`)} : ${fx(`${polyX([c[1],2*c[2]]).replace(/x/g,"c")} = ${nb(sl)}`)} donne ${fx(`c = ${nb(v)}`)}.`;}
+  else{let P;do{p=R.ent(-6,4);qq=p+R.ent(1,7);P=p*p+p*qq+qq*qq;}while(P%3);const k=P/3,be=R.ent(-6,6),rt=Math.sqrt(k),ent=Number.isInteger(rt);c=[0,be,0,1];let sq=1;for(let j=2;j*j<=k;j++)if(k%(j*j)===0)sq=j;const rad=(sq>1?sq:"")+"√"+(k/(sq*sq));
+    cs=[1,-1].map(s=>({v:s*rt,t:ent?nb(s*rt):(s<0?"−":"")+rad,tape:ent?String(s*rt):(s<0?"-":"")+(sq>1?sq+"*":"")+"sqrt("+k/(sq*sq)+")"})).filter(z=>z.v>p&&z.v<qq);
+    res=()=>`${fx(`f′(c) = 3c²${be?(be>0?" + ":" − ")+Math.abs(be):""}`)} : l'équation donne ${fx(`3c² = ${P}`)}, soit ${fx(`c² = ${k}`)}, donc ${fx(ent?`c = ${rt}`:`c = ${rad}`)} ou ${fx(ent?`c = −${rt}`:`c = −${rad}`)}.`;}
+  const sl=div(sub(evQ(c,qq),evQ(c,p)),qq-p),I=`]${nb(p)} ; ${nb(qq)}[`,F=polyX(c),fpN=x=>evN(derP(c),x),cT=cs.map(z=>fx(`c = ${z.t}`)).join(" ou ");
+  const E=[[`f est continue sur ${fx(`[${nb(p)} ; ${nb(qq)}]`)} et dérivable sur ${fx(I)}, car c'est un polynôme. Le théorème des accroissements finis donne un c de ${fx(I)} tel que ${fx(`f′(c) = (f(${nb(qq)}) − f(${nb(p)}))/(${nb(qq)} − ${par(p)})`)}.`,`Ce sont les deux hypothèses du théorème. Il dit qu'en un point c au moins, la tangente est parallèle à la corde qui joint les deux bouts de la courbe.`,1],
+    [`${fx(`f(${nb(p)}) = ${nb(evQ(c,p))}`)} et ${fx(`f(${nb(qq)}) = ${nb(evQ(c,qq))}`)}, donc la pente vaut <b>${fx(nb(sl))}</b>.`,`${fx(`(${nb(evQ(c,qq))} − ${par(evQ(c,p))})${qq-p>1?"/"+(qq-p):""} = ${nb(sl)}`)}.`,1],
+    [res(sl),`On résout ${fx(`f′(c) = ${nb(sl)}`)}.`,1],
+    [`<b>${cT}</b>${cs.length>1?" : les deux sont dans l'intervalle, et chacune convient":`, qui est bien dans ${fx(I)}`}.`,`Le théorème demande c strictement entre ${nb(p)} et ${nb(qq)}.${c.length>3&&cs.length<2?" L'autre valeur n'y est pas.":""}`,1]];
+  const juge=rep=>{const C=casesDe(rep,"c"),u=qLu(C.pente),v=numLu(C.c);if(!u)return {incomplet:"Écris la pente : un nombre, par exemple 7 ou 5/2."};if(v===null)return {incomplet:"Écris c : un nombre, par exemple 1/2 ou √3."};
+    const okP=egal(u,sl),okC=v>p&&v<qq&&Math.abs(fpN(v)-sl.n/sl.d)<1e-9*Math.max(1,Math.abs(sl.n/sl.d));if(okP&&okC)return {ok:true};const F=[];if(!okP)F.push("pente");if(!okC)F.push("c");
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"la pente et c sont à revoir":F[0]==="c"?"c est à revoir":"la pente est à revoir"}.`,diag:!okP?{etape:1,type:"pente de la corde",titre:"Où ça part : la pente.",msg:E[1][0]+" "+E[1][1]}:!(v>p&&v<qq)?{etape:3,type:"c hors de l'intervalle",titre:"Où ça part : l'intervalle.",msg:`c doit être strictement entre ${nb(p)} et ${nb(qq)} : ${cT}.`}:{etape:2,type:"résolution de f′(c) = pente",titre:"Où ça part : l'équation en c.",msg:res(sl)}};};
+  return {sig:"AF"+[c,p,qq],q:`Soit f la fonction définie sur ℝ par ${fx(`f(x) = ${F}`)}. Calcule la pente ${fx(`(f(${nb(qq)}) − f(${nb(p)}))/(${nb(qq)} − ${par(p)})`)}, puis trouve un réel c de ${fx(I)} tel que f′(c) soit égal à cette pente.`,corps:"",
+    texte:`f(x) = ${F} sur [${nb(p)} ; ${nb(qq)}] : la pente de la corde, et un c du théorème des accroissements finis`,champs:[{k:"cases",id:"c",noms:["pente","c"],sym:["√("],aide:"Pour c, une valeur qui convient suffit. Tu peux écrire √3 ou sqrt(3)."}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:`pente ${fx(nb(sl))} ; ${cT}`,bonneTxt:`pente ${nb(sl)} ; ${cs.map(z=>"c = "+z.t).join(" ou ")}`,repBonne:{c:{pente:brut(sl),c:cs[0].tape}},repFausse:{c:{pente:brut(sl),c:String(p)}},nature:(c.length>3?"degré 3":"degré 2")+(cs.length>1?", deux c":""),
+    ens:{type:"taf",f:x=>evN(c,x),fp:fpN,p,q:qq,sl:sl.n/sl.d,cs:cs.map(z=>z.v)}};}
+
+/* AN14 palier 2 : une inégalité des accroissements finis, sur papier */
+function iaf(R){const t=R(),k=R.ent(1,6);let o;
+  if(t<0.3)o={sig:"I1,"+k,I:`[${k*k} ; +∞[`,lo:k*k,hi:k*k+50,f:Math.sqrt,fp:x=>1/(2*Math.sqrt(x)),M:1/(2*k),F:"√t",FP:"1/(2√t)",ineg:`|√x − √y| ≤ |x − y|/${2*k}`,maj:`Pour ${fx(`t ≥ ${k*k}`)}, ${fx(`√t ≥ ${k}`)}, donc ${fx(`1/(2√t) ≤ 1/${2*k}`)}.`};
+  else if(t<0.55){const K=Math.min(k,5);o={sig:"I2,"+K,I:`[−${K} ; ${K}]`,lo:-K,hi:K,f:x=>x*x*x,fp:x=>3*x*x,M:3*K*K,F:"t³",FP:"3t²",ineg:`|x³ − y³| ≤ ${3*K*K}|x − y|`,maj:`Pour ${fx(`−${K} ≤ t ≤ ${K}`)}, ${fx(`t² ≤ ${K*K}`)}, donc ${fx(`3t² ≤ ${3*K*K}`)}.`};}
+  else if(t<0.85)o={sig:"I3,"+k,I:`[${k} ; +∞[`,lo:k,hi:k+50,f:x=>1/x,fp:x=>-1/(x*x),M:1/(k*k),F:"1/t",FP:"−1/t²",ineg:`|1/x − 1/y| ≤ |x − y|${k>1?"/"+k*k:""}`,maj:`Pour ${fx(`t ≥ ${k}`)}, ${fx(`t² ≥ ${k*k}`)}, donc ${fx(`|−1/t²| = 1/t² ≤ ${k>1?"1/"+k*k:"1"}`)}.`};
+  else{const s=R()<0.5;o={sig:"I4,"+s,I:"ℝ",lo:-20,hi:20,f:s?Math.sin:Math.cos,fp:s?Math.cos:x=>-Math.sin(x),M:1,F:s?"sin t":"cos t",FP:s?"cos t":"−sin t",ineg:s?"|sin x − sin y| ≤ |x − y|":"|cos x − cos y| ≤ |x − y|",maj:`Pour tout réel t, ${fx(`|${s?"cos t":"−sin t"}| ≤ 1`)}.`};}
+  const L=[[`Soient x et y dans ${fx(o.I)}, avec ${fx("x &lt; y")}. La fonction ${fx(`f : t ↦ ${o.F}`)} est continue sur ${fx("[x ; y]")} et dérivable sur ${fx("]x ; y[")}, avec ${fx(`f′(t) = ${o.FP}`)}.`,`On vérifie les deux hypothèses du théorème des accroissements finis sur l'intervalle entre x et y.`,1],
+    [`D'après le théorème des accroissements finis, il existe c dans ${fx("]x ; y[")} tel que ${fx("f(y) − f(x) = f′(c)(y − x)")}.`,`c dépend de x et de y, mais il est entre les deux, donc dans ${fx(o.I)}.`,1],
+    [o.maj+` Donc ${fx(`|f′(c)| ≤ ${o.M===1?"1":o.M<1?"1/"+Math.round(1/o.M):o.M}`)}.`,`C'est le cœur de l'exercice : majorer la dérivée sur tout l'intervalle.`,1],
+    [`Donc ${fx(`|f(y) − f(x)| = |f′(c)| × |y − x|`)}, ce qui donne <b>${fx(o.ineg)}</b>. Si ${fx("x = y")}, c'est évident, et si ${fx("x &gt; y")} on échange x et y.`,`On prend la valeur absolue de l'égalité du théorème, puis on utilise la majoration.`,1]];
+  return {sig:"IA"+o.sig,q:`Montre que, pour tous x et y de ${fx(o.I)}, on a ${fx(o.ineg)}.`,corps:"",texte:`Pour x, y dans ${o.I} : ${o.ineg} (inégalité des accroissements finis)`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+    etapes:L.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`avec |f′| ≤ ${o.M} sur ${o.I}`,repBonne:{},nature:o.sig.slice(0,2),ens:{type:"iaf",f:o.f,fp:o.fp,lo:o.lo,hi:o.hi,M:o.M}};}
+
+/* AQ3 : la question de cours du CC2 (énoncés écrits de façon classique : le chapitre 4 n'est pas encore sur Moodle) */
+function coursCC2(R){const t=R();
+  if(t<0.25){const m=R.nz(-6,6),p=R.ent(-9,9),x0=R.ent(-5,5),F=polyX([p,m]),M=Math.abs(m),X=nb(x0);
+    return papierQ("Q1"+[m,p,x0],"Connaissance du cours (2 points).",`<ol type="a"><li>Donne la définition, avec ε et η, de « f est continue en x₀ ».</li><li>Montre avec cette définition que ${fx(`f(x) = ${F}`)} est continue en ${X}.</li></ol>`,[
+      [`a) f est continue en x₀ si ${O.f("∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε")}.`,`C'est la définition de la limite en x₀, avec f(x₀) à la place de ℓ : f est continue en x₀ quand ${fx("lim_{x→x₀} f(x) = f(x₀)")}.`,1],
+      [`b) ${fx(`|f(x) − f(${X})| = ${M===1?"":M}|${moins("x",x0)}|`)}.`,`${fx(`f(x) − f(${X}) = ${nb(m)}(${moins("x",x0)})`)}, puis on prend la valeur absolue.`,0.5],
+      [`Soit ${fx("ε &gt; 0")}. On pose ${fx(`η = ${M===1?"ε":"ε/"+M}`)}. Si ${fx(`|${moins("x",x0)}| &lt; η`)}, alors ${fx(`|f(x) − f(${X})| &lt; ${M===1?"":M}η = ε`)}. Donc f est continue en ${X}.`,`On choisit η en fonction de ε, puis on vérifie l'implication.`,0.5]],
+      {type:"cont",f:x=>m*x+p,x0,eta:e=>e/M},"continuité");}
+  if(t<0.5){const T=tviF(R),F=polyX(T.c);
+    return papierQ("Q2"+T.c,"Connaissance du cours (2 points).",`<ol type="a"><li>Énonce le théorème des valeurs intermédiaires.</li><li>Montre que l'équation ${fx(`${F} = 0`)} a au moins une solution dans ${fx(`[${T.n} ; ${T.n+1}]`)}.</li></ol>`,[
+      [`a) Si f est continue sur un intervalle ${fx("[a ; b]")}, alors pour tout réel y compris entre ${fx("f(a)")} et ${fx("f(b)")}, il existe ${fx("c ∈ [a ; b]")} tel que ${fx("f(c) = y")}.`,"Les deux mots clés : « continue » et « intervalle ». Sans l'un des deux, le théorème est faux.",1],
+      [`b) ${fx(`f(x) = ${F}`)} est continue sur ${fx(`[${T.n} ; ${T.n+1}]`)} (polynôme), ${fx(`f(${T.n}) = ${nb(T.fn)}`)} et ${fx(`f(${T.n+1}) = ${nb(T.fn1)}`)}.`,"Un nombre négatif et un nombre positif : 0 est entre les deux.",0.5],
+      [`0 est entre ${fx(`f(${T.n})`)} et ${fx(`f(${T.n+1})`)} : le théorème donne ${fx(`c ∈ [${T.n} ; ${T.n+1}]`)} tel que ${fx("f(c) = 0")}.`,"On applique le théorème avec y = 0.",0.5]],
+      {type:"tvi",c:T.c,n:T.n},"TVI");}
+  if(t<0.75){const be=R.ent(-6,6),p=R.ent(-6,3),qq=p+R.ent(1,6),F=polyX([0,be,1]),cc=Q(p+qq,2);
+    return papierQ("Q3"+[be,p,qq],"Connaissance du cours (2 points).",`<ol type="a"><li>Énonce le théorème de Rolle, puis le théorème des accroissements finis.</li><li>Pour ${fx(`f(x) = ${F}`)}, trouve le réel c que donne le théorème des accroissements finis sur ${fx(`[${nb(p)} ; ${nb(qq)}]`)}.</li></ol>`,[
+      [`a) Rolle : si f est continue sur ${fx("[a ; b]")}, dérivable sur ${fx("]a ; b[")} et ${fx("f(a) = f(b)")}, alors il existe ${fx("c ∈ ]a ; b[")} tel que ${fx("f′(c) = 0")}.`,"Trois hypothèses, et c est strictement entre a et b.",0.5],
+      [`Accroissements finis : si f est continue sur ${fx("[a ; b]")} et dérivable sur ${fx("]a ; b[")}, alors il existe ${fx("c ∈ ]a ; b[")} tel que ${fx("f(b) − f(a) = f′(c)(b − a)")}.`,"C'est Rolle sans l'hypothèse f(a) = f(b).",0.5],
+      [`b) ${fx(`(f(${nb(qq)}) − f(${nb(p)}))/(${nb(qq)} − ${par(p)}) = ${nb(qq+p+be)}`)} et ${fx(`f′(c) = 2c${be?(be>0?" + ":" − ")+Math.abs(be):""}`)}, donc ${fx(`c = ${nb(cc)}`)}, qui est bien dans ${fx(`]${nb(p)} ; ${nb(qq)}[`)}.`,`Pour un polynôme du second degré, c est toujours le milieu de l'intervalle.`,1]],
+      {type:"taf",f:x=>x*x+be*x,fp:x=>2*x+be,p,q:qq,sl:qq+p+be,cs:[cc.n/cc.d]},"TAF");}
+  const a=R.ent(-5,5),be=R.ent(-6,6),F=polyX([0,be,1]),A=nb(a);
+  return papierQ("Q4"+[a,be],"Connaissance du cours (2 points).",`<ol type="a"><li>Donne la définition de « f est dérivable en a ».</li><li>Montre avec cette définition que ${fx(`f(x) = ${F}`)} est dérivable en ${A}, et donne ${fx(`f′(${A})`)}.</li></ol>`,[
+    [`a) f est dérivable en a si le taux d'accroissement ${fx("(f(x) − f(a))/(x − a)")} a une limite finie quand x tend vers a. Cette limite est le nombre dérivé ${fx("f′(a)")}.`,"La limite doit être finie : c'est elle qui donne la pente de la tangente.",1],
+    [`b) Pour ${fx(`x ≠ ${A}`)} : ${fx(`(f(x) − f(${A}))/(${moins("x",a)}) = ${polyX([a+be,1])}`)}.`,`${fx(`f(x) − f(${A}) = x² − ${par(a)}²${be?` + ${par(be)}(${moins("x",a)})`:""}`)}, et ${fx(`x² − ${par(a)}² = (${moins("x",a)})(${moins("x",-a)})`)} : on simplifie par ${fx(moins("x",a))}.`,0.5],
+    [`Quand x tend vers ${A}, ce taux tend vers ${fx(nb(2*a+be))} : f est dérivable en ${A} et ${fx(`f′(${A}) = ${nb(2*a+be)}`)}.`,"Une limite finie : f est dérivable.",0.5]],
+    {type:"derdef",f:x=>x*x+be*x,a,d:2*a+be},"dérivée");}
+
 G.ana={val,rac,pc,unir,dansP,lisEns,memeEns,negation,phraseQ,phraseFr,atome,finPhrase,quantQ,SYMQ,papierQ};/* repris par le Raisonnement */
 G.add("ana",[
  {id:"AN1",t:"Le tableau : intervalle, inf, min, max, sup",tache:"le tableau inf, min, max, sup",th:"bornes",pts:5.5,lecons:["a-bornes"],
@@ -21029,7 +21271,28 @@ G.add("ana",[
    {t:"trois quantificateurs, avec ou sans implication",cc:3,gen:R=>negation(phraseQ(R,3)),min:60},
    {t:"une phrase en français : écrire son contraire",cc:3,gen:R=>negation(phraseFr(R)),min:12}]},
  {id:"AQ1",t:"Connaissance du cours : caractériser la borne supérieure",th:"bornes",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:6,gen:coursSup}]},
- {id:"AQ2",t:"Connaissance du cours : point adhérent",th:"bornes",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:6,gen:coursAdh}]}
+ {id:"AQ2",t:"Connaissance du cours : point adhérent",th:"bornes",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:6,gen:coursAdh}]},
+ {id:"AN9",t:"Continuité en un point : prolongement, raccord",tache:"continuité en un point",th:"continuite",ex:"cc2",pts:3,lecons:[],
+  paliers:[
+   {t:"prolonger par continuité",cc:3,min:150,gen:prolong},
+   {t:"une fonction définie par morceaux : le paramètre qui la rend continue",cc:3,gen:morceaux}]},
+ {id:"AN10",t:"Le théorème des valeurs intermédiaires",tache:"théorème des valeurs intermédiaires",th:"continuite",ex:"cc2",pts:3,lecons:[],
+  paliers:[
+   {t:"situer la solution entre deux entiers",cc:4,gen:tvi},
+   {t:"la rédaction complète, sur papier",cc:8,gen:redacTVI}]},
+ {id:"AN11",t:"Image d'un segment : minimum et maximum",tache:"image d'un segment",th:"continuite",ex:"cc2",pts:2,lecons:[],
+  paliers:[{t:"un polynôme sur un segment",cc:4,gen:imageSeg}]},
+ {id:"AN12",t:"Dérivabilité en un point",tache:"dérivabilité en un point",th:"derivabilite",ex:"cc2",pts:3,lecons:[],
+  paliers:[
+   {t:"dérivées à gauche et à droite",cc:4,gen:derivPoint},
+   {t:"trouver a et b pour qu'elle soit dérivable",cc:4,gen:abDeriv}]},
+ {id:"AN13",t:"Tangente en un point",tache:"tangente en un point",th:"derivabilite",ex:"cc2",pts:2,lecons:[],
+  paliers:[{t:"l'équation y = mx + p",cc:3,gen:tangente}]},
+ {id:"AN14",t:"Rolle et accroissements finis",tache:"accroissements finis",th:"derivabilite",ex:"cc2",pts:2,lecons:[],
+  paliers:[
+   {t:"trouver le c du théorème",cc:3,gen:taf},
+   {t:"une inégalité des accroissements finis, sur papier",cc:6,min:15,gen:iaf}]},
+ {id:"AQ3",t:"Connaissance du cours : continuité et dérivabilité",th:"continuite",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursCC2}]}
 ]);
 })();
 
@@ -34150,6 +34413,87 @@ window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastil
   {t:"Le sens de variation de deux suites",ou:"exercice 2",pts:6,g:"AN5",lv:0},
   {t:"Nier une phrase à quantificateurs",ou:"partie 2, question 1",pts:4,g:"AN7",lv:1},
   {t:"Le tableau inf, min, max, sup",ou:"partie 2, question 2",pts:4,g:"AN1",lv:1}]
+},
+/* Le CC2 d'Analyse en 1 h (date à confirmer : 16/12 sur le site). Programme supposé : le chapitre 4 n'est pas encore sur Moodle et le programme
+   du CC2 n'est pas annoncé ; d'après le programme du cours (chap1-reels.pdf), viennent après les limites la continuité puis la dérivabilité.
+   Aucun ancien CC2 : ordre du cours, points estimés. Exercices de gen-ana.js (AN9 à AN14, AQ3), et CA8 du Calculus pour les dérivées. */
+cc2:{
+ t:"Le CC2 d'Analyse en 1 h",du:"du CC",au:"au CC",
+ lead:"Programme supposé : le chapitre 4 n'est pas encore sur Moodle et le programme du CC2 n'est pas annoncé. D'après le programme du cours, après les limites viennent la continuité puis la dérivabilité : ce parcours couvre ces deux chapitres, avec les exercices classiques de L1, et il sera revu dès que le cours sera en ligne. Pour chaque notion : l'essentiel, la méthode, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
+ carte:"continuité et dérivabilité en 1 h (programme supposé), puis un sujet express noté sur 20.",
+ blancLead:"Cinq questions comme un CC de 1 h : la question de cours, puis quatre exercices. Il n'y a pas d'ancien CC2 sur Moodle : la forme est supposée, sur le modèle du CC1. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"prolong",t:"Continuité en un point, prolongement",pts:3,ou:"chapitre « Continuité »",lect:2,exo:{g:"AN9",lv:0},
+  ess:`<p>f est <b>continue en x₀</b> si $lim_{x→x₀} f(x) = f(x₀)$. Avec ε : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</p>
+<p>Les polynômes, les quotients (là où le bas ne s'annule pas), √, sin et cos sont continus là où ils sont définis. Les sommes, produits, quotients et composées de fonctions continues aussi.</p>
+<p>Si f n'est pas définie en x₀ mais a une <b>limite finie ℓ</b> en x₀, on la <b>prolonge par continuité</b> en posant f(x₀) = ℓ.</p>`,
+  piege:`« 0/0 » n'est pas une réponse : il faut simplifier d'abord. Et si la limite est infinie, ou différente à gauche et à droite, il n'y a pas de prolongement.`,
+  meth:`<p>Exemple : $f(x) = (x² − 5x + 6)/(x − 2)$, en 2.</p>
+<ol><li>Remplace x par 2 en haut : $4 − 10 + 6 = 0$. Haut et bas tendent vers 0 : il faut lever la forme 0/0. (Si le haut ne s'annulait pas, la limite serait infinie : pas de prolongement.)</li>
+<li>Factorise : $x² − 5x + 6 = (x − 2)(x − 3)$.</li>
+<li>Pour x ≠ 2 : $f(x) = x − 3$, qui tend vers −1.</li>
+<li>Conclus : f se prolonge par continuité en posant f(2) = −1.</li></ol>
+<p>Avec une racine, multiplie par la quantité conjuguée : $(√(x + 4) − 2)/x = 1/(√(x + 4) + 2) → 1/4$. Avec sin, utilise $lim_{u→0} sin(u)/u = 1$ : $sin(3x)/x = 3 × sin(3x)/(3x) → 3$.</p>`},
+ {id:"raccord",t:"Fonction définie par morceaux : le raccord",pts:2,ou:"chapitre « Continuité »",lect:1.5,exo:{g:"AN9",lv:1},
+  ess:`<p>f est donnée par une formule pour x ≤ x₀ et une autre pour x &gt; x₀. Chaque morceau est continu de son côté : tout se joue en x₀.</p>
+<p>f est continue en x₀ si et seulement si <b>la limite à gauche, la limite à droite et f(x₀) sont égales</b>.</p>`,
+  piege:`f(x₀) se calcule avec le morceau qui contient x₀ : celui où il y a « ≤ ».`,
+  meth:`<p>Exemple : $f(x) = x² + 1$ si x ≤ 1, et $f(x) = ax + 3$ si x &gt; 1.</p>
+<ol><li>À gauche, et en 1 : $f(1) = 1² + 1 = 2$.</li><li>À droite : $ax + 3$ tend vers $a + 3$.</li><li>Continue en 1 si et seulement si $a + 3 = 2$, donc $a = −1$.</li></ol>`},
+ {id:"tvi",t:"Le théorème des valeurs intermédiaires",pts:3,ou:"chapitre « Continuité »",lect:2,exo:{g:"AN10",lv:0},
+  ess:`<p><b>TVI</b> : si f est continue sur un intervalle [a ; b], alors pour tout y compris entre f(a) et f(b), il existe c ∈ [a ; b] tel que f(c) = y.</p>
+<p>En pratique : f continue sur [a ; b], f(a) et f(b) de signes contraires, donc f s'annule entre a et b.</p>
+<p>Si en plus f est <b>strictement monotone</b>, elle ne prend chaque valeur qu'une fois : la solution est <b>unique</b> (théorème de la bijection).</p>`,
+  piege:`Le TVI dit qu'une solution existe, pas qu'elle est seule : pour l'unicité, il faut la stricte monotonie. Et sans continuité, c'est faux : 1/x change de signe entre −1 et 1 sans jamais s'annuler.`,
+  meth:`<p>Exemple : $x³ + x − 1 = 0$. On pose $f(x) = x³ + x − 1$.</p>
+<ol><li>f est continue sur ℝ (polynôme).</li><li>$f(0) = −1 &lt; 0$ et $f(1) = 1 &gt; 0$ : d'après le TVI, il existe α ∈ ]0 ; 1[ tel que f(α) = 0.</li>
+<li>x ↦ x³ et x ↦ x − 1 sont strictement croissantes, donc f aussi : α est la seule solution.</li>
+<li>Pour la situer mieux (dichotomie) : $f(1/2) = 1/8 + 1/2 − 1 = −3/8 &lt; 0$, donc α ∈ ]1/2 ; 1[.</li></ol>`},
+ {id:"image",t:"Image d'un segment : minimum et maximum",pts:2,ou:"chapitre « Continuité »",lect:1.5,exo:{g:"AN11",lv:0},
+  ess:`<p>Une fonction continue sur un segment [a ; b] est <b>bornée et atteint ses bornes</b> : $f([a ; b]) = [m ; M]$, où m est son minimum et M son maximum.</p>
+<p>Le minimum et le maximum sont atteints aux bords du segment, ou là où f′ s'annule.</p>`,
+  piege:`Ne prends pas seulement les bords : pour $x² − 2x$ sur [−1 ; 2], f(−1) = 3 et f(2) = 0 donneraient [0 ; 3], ce qui est faux.`,
+  meth:`<p>Exemple : $f(x) = x² − 2x$ sur [−1 ; 2].</p>
+<ol><li>$f′(x) = 2x − 2$ s'annule en 1, qui est dans le segment.</li><li>$f(−1) = 3$, $f(1) = −1$, $f(2) = 0$.</li><li>Le plus petit et le plus grand : $f([−1 ; 2]) = [−1 ; 3]$.</li></ol>`},
+ {id:"derpoint",t:"Dérivable en un point : le taux d'accroissement",pts:3,ou:"chapitre « Dérivabilité »",lect:2,exo:{g:"AN12",lv:0},
+  ess:`<p>f est <b>dérivable en x₀</b> si le taux d'accroissement $(f(x) − f(x₀))/(x − x₀)$ a une <b>limite finie</b> quand x tend vers x₀. Cette limite est f′(x₀), la pente de la tangente : $y = f′(x₀)(x − x₀) + f(x₀)$.</p>
+<p>Dérivable en x₀ ⇒ continue en x₀. La réciproque est fausse : |x| est continue en 0, pas dérivable.</p>
+<p>Pour une fonction par morceaux ou une valeur absolue : calcule la limite du taux à gauche et à droite. Dérivable si et seulement si elles sont finies et égales.</p>`,
+  piege:`Pour une fonction par morceaux, vérifie d'abord le raccord : si f n'est pas continue en x₀, elle n'est pas dérivable, même si les dérivées des deux morceaux sont égales.`,
+  meth:`<ol><li>$f(x) = |x|$ en 0. Pour x &lt; 0 : $(|x| − 0)/x = −x/x = −1$. Pour x &gt; 0 : $x/x = 1$. Les limites −1 et 1 sont différentes : pas dérivable en 0.</li>
+<li>$f(x) = x|x|$ en 0 : $(x|x| − 0)/x = |x|$, qui tend vers 0 des deux côtés : dérivable, et f′(0) = 0.</li>
+<li>Par morceaux, avec deux polynômes qui se raccordent : la limite du taux de chaque côté est la dérivée de ce morceau, prise en x₀.</li></ol>`},
+ {id:"derivees",t:"Calculer une dérivée",pts:2,ou:"dans presque tous les exercices",lect:1.5,exo:{g:"CA8",lv:3},
+  ess:`<ul><li>$(uv)′ = u′v + uv′$ ; $(u/v)′ = (u′v − uv′)/v²$.</li>
+<li>$(uⁿ)′ = n u′ uⁿ⁻¹$ ; $(√u)′ = u′/(2√u)$ ; $(eᵘ)′ = u′eᵘ$ ; $(ln u)′ = u′/u$.</li>
+<li>Une composée : on dérive l'extérieur, puis on multiplie par la dérivée de l'intérieur.</li></ul>
+<p>L'exercice vient des générateurs du Calculus : ce sont les mêmes formules.</p>`,
+  piege:`Le plus fréquent : oublier la dérivée de l'intérieur ($(√(x² + 1))′$ n'est pas $1/(2√(x² + 1))$), ou inverser l'ordre du quotient.`,
+  meth:`<ol><li>$f(x) = (2x + 1)/(x − 3)$ : $u′v − uv′ = 2(x − 3) − (2x + 1) = −7$, donc $f′(x) = −7/(x − 3)²$.</li>
+<li>$f(x) = √(x² + 1)$ : $f′(x) = 2x/(2√(x² + 1)) = x/√(x² + 1)$.</li></ol>`},
+ {id:"taf",t:"Rolle et accroissements finis",pts:3,ou:"chapitre « Dérivabilité »",lect:2,exo:{g:"AN14",lv:0},
+  ess:`<p><b>Rolle</b> : f continue sur [a ; b], dérivable sur ]a ; b[ et f(a) = f(b) ⇒ il existe c ∈ ]a ; b[ tel que f′(c) = 0.</p>
+<p><b>Accroissements finis</b> : f continue sur [a ; b] et dérivable sur ]a ; b[ ⇒ il existe c ∈ ]a ; b[ tel que $f(b) − f(a) = f′(c)(b − a)$.</p>
+<p><b>Inégalité</b> : si $|f′| ≤ M$ sur un intervalle I, alors $|f(x) − f(y)| ≤ M|x − y|$ pour tous x, y de I. Et si f′ ≥ 0 sur un intervalle, f est croissante sur cet intervalle.</p>`,
+  piege:`c est strictement entre a et b, et le théorème dit qu'il existe, pas qu'il est seul. Sans les hypothèses, c'est faux : |x| sur [−1 ; 1] vérifie f(−1) = f(1), mais n'est pas dérivable en 0, et sa dérivée ne s'annule jamais.`,
+  meth:`<ol><li>$f(x) = x³$ sur [0 ; 3] : la pente est $(27 − 0)/3 = 9$. $f′(c) = 3c² = 9$ donne $c = √3$ ou $c = −√3$. Seul √3 est dans ]0 ; 3[.</li>
+<li>Inégalité : $|sin x − sin y| ≤ |x − y|$, car $sin′ = cos$ et $|cos t| ≤ 1$. On écrit : soient x &lt; y ; d'après les accroissements finis, $sin y − sin x = cos(c)(y − x)$ avec c ∈ ]x ; y[, puis on majore |cos(c)| par 1.</li></ol>`},
+ {id:"cours",t:"La question de cours : définitions et théorèmes",pts:2,ou:"question de cours (supposée, comme au CC1)",lect:1.5,
+  rappel:{min:2,q:`Écris la définition de « f est continue en x₀ » avec ε et η, puis l'énoncé du théorème des valeurs intermédiaires et celui des accroissements finis.`,
+   r:`<p>f est continue en x₀ ⇔ $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</p><p>TVI : f continue sur [a ; b] et y entre f(a) et f(b) ⇒ ∃c ∈ [a ; b], f(c) = y.</p><p>Accroissements finis : f continue sur [a ; b], dérivable sur ]a ; b[ ⇒ ∃c ∈ ]a ; b[, $f(b) − f(a) = f′(c)(b − a)$.</p>`},
+  ess:`<ul><li>Continue en x₀ : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</li>
+<li>Dérivable en x₀ : $(f(x) − f(x₀))/(x − x₀)$ a une limite finie quand x tend vers x₀.</li>
+<li>TVI, Rolle et accroissements finis : avec leurs hypothèses, « continue sur [a ; b] » et « dérivable sur ]a ; b[ ».</li></ul>`,
+  piege:`Un théorème cité sans ses hypothèses est faux (voir |x| sur [−1 ; 1]). Écris-les toujours.`,
+  meth:`<p>La partie b) applique la définition. Exemple : montrer que $f(x) = 3x − 1$ est continue en 2.</p>
+<ol><li>$|f(x) − f(2)| = |3x − 6| = 3|x − 2|$.</li><li>Soit ε &gt; 0. On pose η = ε/3. Si $|x − 2| &lt; η$, alors $|f(x) − f(2)| &lt; 3η = ε$.</li><li>Donc f est continue en 2.</li></ol>`}],
+ blanc:[
+  {t:"Question de cours : définition et théorème",ou:"connaissance du cours",pts:3,g:"AQ3",lv:0},
+  {t:"Une fonction définie par morceaux : la rendre continue",ou:"exercice 1",pts:4,g:"AN9",lv:1},
+  {t:"Le théorème des valeurs intermédiaires",ou:"exercice 2",pts:4,g:"AN10",lv:0},
+  {t:"Trouver a et b pour qu'elle soit dérivable",ou:"exercice 3",pts:5,g:"AN12",lv:1},
+  {t:"La tangente en un point",ou:"exercice 4",pts:4,g:"AN13",lv:0}]
 }};
 
 </script>
