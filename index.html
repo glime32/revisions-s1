@@ -19978,6 +19978,67 @@ function famille(V,o){const k=V.length,n=V[0].length,C=CL.slice(0,k),G=GV.slice(
     texte:`${V.map((v,i)=>GV[i]+" = "+vt(v)).join(", ")} ; ${o.choix?"libre ou liée ?":"relation ?"}`,champs,juge,etapes:E,bonne:libre?`la famille ${famT(k)} est libre`:`liée : ${fx(comb(co,G)+" = 0")}`,bonneTxt:libre?"libre":`liée : ${comb(co,G)} = 0`,
     repBonne,repFausse,nature:(libre?"libre":"liee")+(k>n?"-trop":""),ens:{k:"fam",V,libre,co}};}
 
+/* ---------- AL12 : application linéaire ou pas, et sa matrice (CC2 2022 ex. 4, 2023 ex. 2, 2024 ex. 3) ---------- */
+const VARS=n=>NOMS.slice(0,n);
+const coordT=(C,n,math)=>{const V=VARS(n);let s=C.a.some(x=>x)?comb(C.a,V):"";
+  if(C.p){const [i,j]=C.p;s=suite(s,C.s<0,i===j?V[i]+"²":V[i]+V[j]);}
+  if(C.c)s=suite(s,C.c<0,String(Math.abs(C.c)));return s||"0";};
+const appT=(nom,F,n,math)=>`${nom}(${VARS(n).join(", ")}) = (${F.map(C=>coordT(C,n,math)).join(", ")})`;
+const valeurApp=(F,X)=>F.map(C=>C.a.reduce((s,x,k)=>s+x*X[k],0)+(C.p?C.s*X[C.p[0]]*X[C.p[1]]:0)+C.c);
+const genreApp=F=>F.some(C=>C.p)?(F.some(C=>C.p&&C.p[0]===C.p[1])?"carre":"produit"):F.some(C=>C.c)?"constante":"lineaire";
+const termeNL=(F,n)=>{const C=F.find(x=>x.p),V=VARS(n),[i,j]=C.p;return i===j?`carré ${V[i]}²`:`produit ${V[i]}${V[j]}`;};
+function tireApp(R,n,m,genre){for(;;){const F=[];
+  for(let i=0;i<m;i++){let a;if(R()<0.25){a=Array(n).fill(0);a[R.ent(0,n-1)]=R.choix([1,1,-1,2]);}else a=Array.from({length:n},()=>R()<0.3?0:R.ent(-3,3));F.push({a,c:0,p:null,s:1});}
+  if(F.some(C=>C.a.every(x=>!x))||new Set(F.map(C=>C.a.join())).size<m||VARS(n).some((_,k)=>F.every(C=>!C.a[k])))continue;
+  if(genre==="constante")R.choix(F).c=R.choix([1,-1,2,3,-2]);
+  else if(genre!=="lineaire"){const C=F[R.ent(0,m-1)],[i,j]=genre==="carre"?[0,0].fill(R.ent(0,n-1)):R.mel(VARS(n).map((_,k)=>k)).slice(0,2).sort((x,y)=>x-y);
+    C.p=[i,j];C.s=R()<0.8?1:-1;if(R()<0.4)C.a=C.a.map(()=>0);}
+  return F;}}
+const repApp=g=>g==="lineaire"?"lin":g==="constante"?"zero":"double";
+const choixApp=(id,nom,titre)=>({k:"choix",id,titre,o:[["lin",`${nom} est linéaire`],["zero",`pas linéaire, car ${nom}(0) ≠ 0`],["double",`pas linéaire, car ${nom}(2X) ≠ 2${nom}(X)`]]});
+function etapeApp(nom,F,n){const V=VARS(n),g=genreApp(F),z=V.map(()=>0),un=V.map(()=>1),deux=V.map(()=>2);
+  if(g==="lineaire"){const A=F.map(C=>C.a);return {w:`Chaque coordonnée de ${fx(nom+"("+V.join(", ")+")")} est une combinaison de ${et(V)}, sans constante, sans produit ni carré. <b>${nom} est linéaire</b>, de matrice ${matH(A)}`,
+    why:`Les lignes de la matrice sont les coefficients de chaque coordonnée, dans l'ordre ${et(V)}, avec 0 pour une variable absente. Alors ${nom}(X) = AX, et X ↦ AX est linéaire.`,pts:1.5};}
+  if(g==="constante"){const C=F.find(x=>x.c);return {w:`${fx(nom+vt(z)+" = "+vt(valeurApp(F,z)))}, qui n'est pas le vecteur nul. <b>${nom} n'est pas linéaire.</b>`,
+    why:`Une application linéaire envoie toujours le vecteur nul sur le vecteur nul. Ici, c'est la constante ${nb(C.c)} qui l'en empêche. Le test ${nom}(2X) ≠ 2${nom}(X) marche aussi, mais celui-ci est plus court.`,pts:1};}
+  const u=valeurApp(F,un),d=valeurApp(F,deux);
+  return {w:`${fx(nom+vt(un)+" = "+vt(u))} et ${fx(nom+vt(deux)+" = "+vt(d))}, alors que ${fx("2"+nom+vt(un)+" = "+vt(u.map(x=>2*x)))}. Donc ${nom}(2X) ≠ 2${nom}(X) pour X = ${vt(un)} : <b>${nom} n'est pas linéaire.</b>`,
+    why:`À cause du ${termeNL(F,n)} : quand on double les variables, ce terme est multiplié par 4, pas par 2. Et ici ${nom}(0) = 0 : le test du vecteur nul ne prouve rien.`,pts:1};}
+function jugeApp(nom,F,n,v,etape){const g=genreApp(F),z=VARS(n).map(()=>0);if(v===repApp(g)||g==="constante"&&v==="double")return null;
+  if(g==="lineaire")return {type:"linéaire lue comme non linéaire",titre:`Où ça part : ${nom}.`,msg:`Chaque coordonnée de ${nom} est une combinaison de ${et(VARS(n))}, sans constante ni produit : ${nom} est linéaire.`,etape};
+  if(g==="constante")return {type:"constante oubliée",titre:`Où ça part : ${nom}.`,msg:`${fx(nom+vt(z)+" = "+vt(valeurApp(F,z)))} n'est pas le vecteur nul : la constante empêche ${nom} d'être linéaire.`,etape};
+  if(v==="lin")return {type:"produit ou carré oublié",titre:`Où ça part : ${nom}.`,msg:`Le ${termeNL(F,n)} n'est pas linéaire : compare ${nom}(2X) et 2${nom}(X).`,etape};
+  return {type:"f(0) = 0 pris pour une preuve",titre:`Où ça part : ${nom}.`,msg:`Ici ${nom}(0) = 0 : ce test ne prouve rien. C'est le ${termeNL(F,n)} qui casse la linéarité : ${nom}(2X) ≠ 2${nom}(X).`,etape};}
+const champsMat=(m,n,qui)=>Array.from({length:m},(_,i)=>({k:"champ",id:"l"+(i+1),nom:"ligne "+(i+1),label:`Ligne ${i+1} de la matrice ${qui} :`,ex:`par exemple (${[1,0,-2].slice(0,n).join(", ")})`}));
+function jugeMat(rep,A,F,n,nom,etape){const m=A.length,V=VARS(n),noms=A.map((_,i)=>"l"+(i+1)),X=lignesLues(rep,"l",m,n);
+  if(!X)return {incomplet:`Écris les ${m} lignes de la matrice, chacune avec ${n} nombres : un par variable, dans l'ordre ${et(V)}, avec 0 pour une variable absente.`};
+  if(egalM(X,A))return null;const F2=noms.filter((_,i)=>!egalM([X[i]],[A[i]])),resume=`Pas tout à fait : ${F2.length>1?"les lignes":"la ligne"} ${et(F2.map(s=>s.slice(1)))} de la matrice ${F2.length>1?"sont fausses":"est fausse"}.`;
+  if(m===n&&egalM(X,A[0].map((_,j)=>A.map(l=>l[j]))))return {ok:false,faux:noms,resume,diag:{etape,type:"matrice transposée",titre:"Où ça part : le sens de la matrice.",msg:`Tu as écrit les coefficients de chaque variable en ligne. C'est l'inverse : la ligne i, ce sont les coefficients de la i-ème coordonnée de ${nom}(X).`}};
+  const i=+F2[0].slice(1)-1;return {ok:false,faux:F2,resume,diag:{etape,type:"ligne de la matrice",titre:`Où ça part : la ligne ${i+1}.`,msg:`La ligne ${i+1}, ce sont les coefficients de ${et(V)} dans la coordonnée ${fx(coordT(F[i],n,true))} : ${vt(A[i])}.`}};}
+function appSeule(R){const n=R.choix([2,3,3]),m=R.choix([2,3,3,4]),g=R.choix(["lineaire","lineaire","constante","produit","produit","carre"]),F=tireApp(R,n,m,g),b=repApp(g);
+  const juge=rep=>{if(!rep.ap)return {incomplet:"Choisis une réponse : linéaire, ou pas linéaire avec sa raison."};const d=jugeApp("f",F,n,rep.ap,0);return d?{ok:false,faux:["ap"],resume:"Non, ce n'est pas la bonne réponse.",diag:d}:{ok:true};};
+  return {sig:"AP"+JSON.stringify(F),q:`Cette application de ${Rn(n)} dans ${Rn(m)} est-elle linéaire ? Si elle ne l'est pas, choisis la raison qui le prouve.`,corps:`<p>${fx(appT("f",F,n,true))}</p>`,texte:appT("f",F,n,false)+" ; linéaire ?",
+    champs:[choixApp("ap","f")],juge,etapes:[etapeApp("f",F,n)],bonne:b==="lin"?"f est linéaire":b==="zero"?"pas linéaire : f(0) ≠ 0":"pas linéaire : f(2X) ≠ 2f(X)",bonneTxt:b==="lin"?"linéaire":"pas linéaire",
+    repBonne:{ap:b},repFausse:{ap:b==="lin"?"double":"lin"},nature:g,ens:{k:"app",apps:[{nom:"f",n,txt:appT("f",F,n,false),id:"ap"}]}};}
+function matApp(R){const n=R.choix([2,3,3]),m=R.choix([2,3,3,4]),F=tireApp(R,n,m,"lineaire"),A=F.map(C=>C.a),V=VARS(n);
+  const E=[{w:F.map((C,i)=>`Ligne ${i+1} : ${fx(coordT(C,n,true))} donne ${vt(A[i])}.`).join("<br>"),why:`Une ligne par coordonnée de f(X), et dans chaque ligne les coefficients de ${et(V)}, dans cet ordre. Une variable absente compte 0.`,pts:1.5},
+    {w:`<b>La matrice de f est ${matH(A)}</b>`,why:`${plu(m,"ligne")}, une par coordonnée de f(X), et ${plu(n,"colonne")}, une par variable. Alors f(X) = AX.`,pts:0.5}];
+  return {sig:"AM"+JSON.stringify(F),q:`Cette application de ${Rn(n)} dans ${Rn(m)} est linéaire. Écris sa matrice, ligne par ligne.`,corps:`<p>${fx(appT("f",F,n,true))}</p>`,texte:appT("f",F,n,false)+" ; matrice ?",
+    champs:champsMat(m,n,"de f"),juge:rep=>jugeMat(rep,A,F,n,"f",0)||{ok:true},etapes:E,bonne:`la matrice de f est ${matH(A)}`,bonneTxt:A.map(rangeeT).join(" ; "),
+    repBonne:Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(l)])),repFausse:Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(i?l:l.map((x,j)=>j?x:x+1))])),nature:m===n?"carree":"rect",ens:{k:"mat",apps:[{nom:"f",n,txt:appT("f",F,n,false),A}]}};}
+function appCC(R){const n=R.choix([2,3,3]),m=R.choix([2,3,3,4]),G3=R.mel(["lineaire","constante",R.choix(["produit","produit","carre"])]),N=["f","g","h"],ids=["cf","cg","chh"];
+  const FS=G3.map(g=>tireApp(R,n,m,g)),L=G3.indexOf("lineaire"),A=FS[L].map(C=>C.a),nomL=N[L];
+  function juge(rep){if(ids.some(id=>!rep[id]))return {incomplet:"Choisis une réponse pour chacune des trois applications."};
+    for(let k=0;k<3;k++){const d=jugeApp(N[k],FS[k],n,rep[ids[k]],k);if(d)return {ok:false,faux:[ids[k]],resume:`Non : ta réponse pour ${N[k]} est fausse.`,diag:d};}
+    return jugeMat(rep,A,FS[L],n,nomL,L)||{ok:true};}
+  return {sig:"AC"+JSON.stringify(FS),q:`Pour chacune de ces trois applications de ${Rn(n)} dans ${Rn(m)}, dis si elle est linéaire, avec la raison qui le prouve quand elle ne l'est pas. Puis écris la matrice de celle qui est linéaire.`,
+    corps:N.map((s,k)=>`<p>${fx(appT(s,FS[k],n,true))}</p>`).join(""),texte:N.map((s,k)=>appT(s,FS[k],n,false)).join(" ; ")+" ; linéaires ? matrice ?",
+    champs:N.map((s,k)=>choixApp(ids[k],s,s+" :")).concat(champsMat(m,n,"de celle qui est linéaire")),juge,etapes:N.map((s,k)=>etapeApp(s,FS[k],n)),
+    bonne:`${nomL} est la seule linéaire, de matrice ${matH(A)}`,bonneTxt:`${nomL} linéaire : `+A.map(rangeeT).join(" ; "),
+    repBonne:Object.assign(Object.fromEntries(ids.map((id,k)=>[id,repApp(G3[k])])),Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(l)]))),
+    repFausse:Object.assign(Object.fromEntries(ids.map((id,k)=>[id,k===L?"double":repApp(G3[k])])),Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(l)]))),
+    nature:"cc",ens:{k:"cc",apps:N.map((s,k)=>Object.assign({nom:s,n,txt:appT(s,FS[k],n,false),id:ids[k]},k===L?{A}:{}))}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -20045,7 +20106,12 @@ G.add("lin",[
    {t:"deux vecteurs : colinéaires ou pas",cc:2,gen:deuxVecteurs},
    {t:"trois vecteurs de ℝ³ : libre ou liée",cc:4,gen:R=>famille(tireFamille(R,3,3,R()<0.5),{choix:true})},
    {t:"une famille liée : trouver une relation",cc:5,gen:R=>{const r=R();return famille(r<0.6?tireFamille(R,3,3,false):tireFamille(R,4,3,false),{rel:true});}},
-   {t:"comme au CC2 : libre ou liée, et la relation",cc:6,gen:R=>{const r=R();return famille(r<0.45?tireFamille(R,3,3,R()<0.5):r<0.8?tireFamille(R,4,3,R()<0.5):tireFamille(R,3,4,false),{choix:true,rel:true});}}]}
+   {t:"comme au CC2 : libre ou liée, et la relation",cc:6,gen:R=>{const r=R();return famille(r<0.45?tireFamille(R,3,3,R()<0.5):r<0.8?tireFamille(R,4,3,R()<0.5):tireFamille(R,3,4,false),{choix:true,rel:true});}}]},
+ {id:"AL12",t:"Application linéaire ou pas, et sa matrice",tache:"application linéaire ou pas, et sa matrice",th:"applin",ex:"cc2",pts:3.5,lecons:["l2-applin"],
+  paliers:[
+   {t:"linéaire ou pas, et la raison",cc:2,gen:appSeule},
+   {t:"la matrice d'une application linéaire",cc:3,gen:matApp},
+   {t:"comme au CC2 : trois applications, puis la matrice de celle qui est linéaire",cc:6,gen:appCC}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
