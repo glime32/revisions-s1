@@ -34416,7 +34416,7 @@ function avantEcran(info,L,suite){stop();clearInterval(AVT);const d=GEN.par[info
    fin({part,ok,ms}) : part = la part des points obtenue */
 function exoDans(host,info,fin,o){o=o||{};const d=GEN.par[info.g];let e;try{e=GEN.tire(d,info.lv,info.gr);}catch(x){host.innerHTML=`<p class="verdict info">Cet exercice n'a pas pu être tiré.</p>`;return null;}
   const pap=!!e.papier,t0=Date.now();let fait=false;
-  host.innerHTML=tx(`<p class="lq">${e.q}</p><div>${pap&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${pap?`<div class="paper"><b>Sur ta feuille</b>, rédige comme ${auCC(SUBJ[d.sid])}, puis compare ligne par ligne.</div>`:`<div class="en-rep" id="xd-rep">${champsHTML(e)}</div>`}<div class="acts" id="xd-acts">${pap?`<button class="btn pri" id="xd-p">J'ai fini sur ma feuille</button>`:`<button class="btn pri" id="xd-v">Valider</button>`}<button class="btn" id="xd-c">Je ne sais pas : la correction</button></div><div class="en-rep" id="xd-fb" aria-live="polite"></div>`);
+  host.innerHTML=tx(`<p class="lq">${e.q}</p><div>${pap&&e.corpsPapier!=null?e.corpsPapier:e.corps}</div>${pap?`<div class="paper"><p><b>Sur ta feuille</b>, rédige comme ${auCC(SUBJ[d.sid])}, puis compare ligne par ligne.</p></div>`:`<div class="en-rep" id="xd-rep">${champsHTML(e)}</div>`}<div class="acts" id="xd-acts">${pap?`<button class="btn pri" id="xd-p">J'ai fini sur ma feuille</button>`:`<button class="btn pri" id="xd-v">Valider</button>`}<button class="btn" id="xd-c">Je ne sais pas : la correction</button></div><div class="en-rep" id="xd-fb" aria-live="polite"></div>`);
   const fb=host.querySelector("#xd-fb"),acts=host.querySelector("#xd-acts"),fige=()=>fait;
   const bout=(part,rep,j)=>{fait=true;acts.remove();host.querySelectorAll("#xd-rep input,#xd-rep textarea,#xd-rep button").forEach(x=>{x.disabled=true;});
     const ok=part>=0.8-1e-9,ms=Date.now()-t0;
@@ -34461,7 +34461,7 @@ window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastil
  t:"Le CC1 d'Analyse en 1 h",du:"du CC",au:"au CC",
  lead:"Tout le programme du CC1 (feuilles de TD 1 à 3), dans l'ordre de ce qui a rapporté le plus aux CC1 de 2024 et 2025. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
  carte:"tout le programme en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Cinq questions dans l'ordre du CC1 : la question de cours, l'exercice 1, l'exercice 2, puis les deux questions de la partie 2. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Cinq questions dans l'ordre du CC1 : la question de cours, l'exercice 1, l'exercice 2, puis les deux questions de la partie 2. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"tableau",t:"Le tableau inf, min, max, sup",pts:4,ou:"partie 2, tous les ans",lect:2,exo:{g:"AN1",lv:4},
@@ -34486,7 +34486,7 @@ window.ENT={exoDans,plusPret,avant,avantEcran,avantFin,genres:GENRES,elan,pastil
 <li>« Pour tout n ≥ N : $|uₙ − 0| ≤ 1/n ≤ 1/N &lt; ε$. »</li>
 <li>Conclus en recopiant la définition : « donc $∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − 0| ≤ ε$, c'est-à-dire $uₙ → 0$. »</li></ol>`},
  {id:"lim-fonction",t:"Limite d'une fonction avec ε",pts:2,ou:"exercice 1 (CC1 2025)",lect:1.5,exo:{g:"AN3",lv:1},
-  ess:`<p>En +∞ : $lim_{x→+∞} f(x) = ℓ ⇔ ∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ I, x &gt; α ⇒ |f(x) − ℓ| &lt; ε$</p>
+  ess:`<p>f est définie sur un intervalle I.</p><p>En +∞ : $lim_{x→+∞} f(x) = ℓ ⇔ ∀ε &gt; 0, ∃α &gt; 0, ∀x ∈ I, x &gt; α ⇒ |f(x) − ℓ| &lt; ε$</p>
 <p>En un point x₀ : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − ℓ| &lt; ε$</p>
 <p>Même idée que pour les suites : α (ou η) joue le rôle de N, et il dépend de ε.</p>`,
   piege:`L'ordre : ε d'abord, puis α ou η, qui dépend de ε ; les échanger donne une autre phrase (piège du vrai/faux 2024). Et f(n) → ℓ sur les entiers ne prouve pas f(x) → ℓ : sin(πn) = 0 pour tout entier n, mais sin(πx) n'a pas de limite en +∞.`,
@@ -34629,7 +34629,7 @@ cc2:{
  t:"Le CC2 d'Algo en 1 h",du:"du CC",au:"au CC",
  lead:"Le programme du CC2 (preuves et complexité, TD 6 à 8), dans l'ordre de ce qui rapporte le plus d'après les anciens sujets et le sujet blanc. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le CC2 peut aussi reprendre le CC1 : tes cartes de Réviser s'en occupent.",
  carte:"preuves et complexité en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Cinq questions dans l'ordre du sujet blanc : la question de cours, la trace, l'arrêt, le master theorem, puis l'ordinateur plus rapide. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Cinq questions dans l'ordre du sujet blanc : la question de cours, la trace, l'arrêt, le master theorem, puis l'ordinateur plus rapide. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"trace",t:"Faire la trace d'une boucle",pts:3,ou:"exercice 2, tous les sujets",lect:1.5,exo:{g:"AG1",lv:4},
@@ -34724,9 +34724,9 @@ cc2:{
  blanc:[
   {t:"Question de cours : o, θ, ω",ou:"exercice 1",pts:3,g:"AGQ2",lv:0},
   {t:"La trace d'une boucle",ou:"exercice 2",pts:6,g:"AG1",lv:1},
-  {t:"L'arrêt d'un tant que",ou:"exercice 3",pts:3,g:"AG3",lv:0},
-  {t:"Le master theorem",ou:"exercice 4",pts:6,g:"AG7",lv:1},
-  {t:"Un ordinateur plus rapide",ou:"exercice 5",pts:2,g:"AG7",lv:3}]
+  {t:"L'arrêt d'un tant que",ou:"exercice 3",pts:3,g:"AG3",lv:1},
+  {t:"Le master theorem, à partir d'une procédure",ou:"exercice 4",pts:6,g:"AG7",lv:2},
+  {t:"Les ordres de grandeur",ou:"exercice 5",pts:2,g:"AG6",lv:0}]
 }};
 
 /* Le CC3 d'Algo en 1 h (supposé lundi 14/12 à 15 h) : recherche et tris (TD 9 et 10, diapos 88 à 114). Ni la date ni le programme
@@ -34873,7 +34873,7 @@ fin pour;</pre>
  t:"Le CC2 de Raisonnement en 1 h",du:"du CC",au:"au CC",
  lead:"Tout le programme du CC2, dans l'ordre de ce qui a rapporté le plus aux CC2 de 2022, 2023 et 2025. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
  carte:"tout le programme en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Cinq questions comme au CC2 : nier, les ensembles, injective ou surjective, les images, puis une récurrence. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Quatre questions comme au CC2 : les ensembles, injective ou surjective, les images, puis une récurrence rédigée sur papier. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"injective",t:"Injective, surjective, bijective",pts:4,ou:"tous les ans (2022 ex. 1, 2023 ex. 4, 2024 ex. 2, 2025 ex. 3)",lect:2,exo:{g:"RA1",lv:1},
@@ -34885,16 +34885,19 @@ fin pour;</pre>
   meth:`<p>f : ℤ → ℤ, $f(n) = 2n + 1$.</p>
 <ol><li><b>Injective</b> : on part de $f(n) = f(m)$, donc $2n + 1 = 2m + 1$, donc $n = m$. f est injective.</li>
 <li><b>Surjective ?</b> On cherche un antécédent de 0 : $2n + 1 = 0$ donne $n = −1/2$, qui n'est pas dans ℤ. 0 n'a pas d'antécédent : f n'est pas surjective.</li>
-<li>Pour x ↦ x² sur ℝ : $g(−1) = g(1) = 1$ avec $−1 ≠ 1$, donc pas injective ; −1 n'a pas d'antécédent, donc pas surjective.</li></ol>`},
- {id:"image",t:"Image directe, image réciproque",pts:3.5,ou:"2022 ex. 2, 2023 ex. 5, 2025 ex. 1",lect:1.5,exo:{g:"RA2",lv:1},
+<li>g : ℕ → ℕ, $g(n) = n/2$ si n est pair, $g(n) = 0$ sinon (CC 2024 ex. 2, CC2 2025 ex. 3) : $g(1) = g(3) = 0$ avec $1 ≠ 3$, donc g n'est pas injective ; tout n a l'antécédent 2n, car $g(2n) = n$ : g est surjective.</li>
+<li>h : ℝ → ℝ, $h(x) = x²$ : $h(−1) = h(1) = 1$ avec $−1 ≠ 1$, donc pas injective ; −1 n'a pas d'antécédent, donc pas surjective.</li></ol>`},
+ {id:"image",t:"Image directe, image réciproque",pts:3.5,ou:"2022 ex. 2, 2023 ex. 5, 2025 ex. 1",lect:2,exo:{g:"RA2",lv:1},
   ess:`<ul><li>L'<b>image directe</b> $f(A) = \{f(x) : x ∈ A\}$ : les images des éléments de A.</li>
 <li>L'<b>image réciproque</b> $f⁻¹(B) = \{x ∈ E : f(x) ∈ B\}$ : les éléments qui tombent dans B. Elle existe même si f n'est pas bijective.</li>
-<li>Toujours : $A ⊂ f⁻¹(f(A))$ et $f(f⁻¹(B)) ⊂ B$. L'égalité de gauche demande f injective, celle de droite f surjective.</li></ul>`,
+<li>Toujours : $A ⊂ f⁻¹(f(A))$ et $f(f⁻¹(B)) ⊂ B$. Il y a égalité à gauche dès que f est injective, et à droite dès que f est surjective.</li></ul>`,
   piege:`Avec x ↦ x², l'image réciproque a souvent deux morceaux : un du côté positif et son symétrique du côté négatif.`,
   meth:`<p>f : ℝ → ℝ, $f(x) = x²$.</p>
 <ol><li>$f([−1 ; 2])$ : sur [−1 ; 2], x² va de 0 (en x = 0) à 4 (en x = 2). Donc $f([−1 ; 2]) = [0 ; 4]$.</li>
 <li>$f⁻¹([1 ; 4])$ : on résout $1 ≤ x² ≤ 4$, c'est-à-dire $1 ≤ |x| ≤ 2$. Donc $f⁻¹([1 ; 4]) = [−2 ; −1] ∪ [1 ; 2]$.</li>
-<li>$f⁻¹(f([0 ; 1])) = f⁻¹([0 ; 1]) = [−1 ; 1]$, plus grand que [0 ; 1] : f n'est pas injective.</li></ol>`},
+<li>$f⁻¹(f([0 ; 1])) = f⁻¹([0 ; 1]) = [−1 ; 1]$, plus grand que [0 ; 1] : f n'est pas injective.</li>
+<li><b>À démontrer</b> (CC2 2025 ex. 1) : $f(f⁻¹(B)) ⊂ B$. Soit $y ∈ f(f⁻¹(B))$ : il existe $x ∈ f⁻¹(B)$ avec $y = f(x)$. Comme $x ∈ f⁻¹(B)$, $f(x) ∈ B$, donc $y ∈ B$.</li>
+<li>L'égalité peut être fausse : avec $B = [−1 ; 1]$, $f⁻¹(B) = [−1 ; 1]$ et $f(f⁻¹(B)) = [0 ; 1] ≠ B$.</li></ol>`},
  {id:"ensembles",t:"Ensembles : ∪, ∩, ∖, Δ, ∈ et ⊂",pts:3,ou:"2023 ex. 3, QCM 2022, 2024 ex. 1",lect:1.5,exo:{g:"RA3",lv:1},
   ess:`<ul><li>$A ∪ B$ : dans l'un ou dans l'autre. $A ∩ B$ : dans les deux. $A ∖ B$ : dans A mais pas dans B.</li>
 <li>La <b>différence symétrique</b> $A Δ B = (A ∖ B) ∪ (B ∖ A)$ : dans un seul des deux.</li>
@@ -34908,12 +34911,13 @@ fin pour;</pre>
  {id:"quantif",t:"Quantificateurs : nier, dire si c'est vrai",pts:2.5,ou:"2023 ex. 1 et 2, QCM 2022",lect:1.5,exo:{g:"RA4",lv:1},
   ess:`<ul><li><b>Nier</b> : on échange ∀ et ∃, on garde les domaines, et on nie la fin. La négation de $x &lt; y$ est $x ≥ y$.</li>
 <li>Une phrase en ∀ est fausse dès qu'on trouve <b>un</b> contre-exemple ; une phrase en ∃ est vraie dès qu'on trouve <b>un</b> exemple.</li>
-<li>L'ordre compte : dans « ∀x, ∃y », y peut dépendre de x ; dans « ∃y, ∀x », c'est le même y pour tous les x.</li></ul>`,
+<li>L'ordre compte : dans « ∀x, ∃y », y peut dépendre de x ; dans « ∃y, ∀x », c'est le même y pour tous les x.</li>
+<li><b>Traduire</b> (CC2 2023, la conjecture de Goldbach) : « tout entier pair au moins égal à 4 est la somme de deux nombres premiers » s'écrit $∀n ∈ ℕ, (n ≥ 4 et n pair) ⇒ ∃p, q premiers, n = p + q$.</li></ul>`,
   piege:`On ne nie pas les domaines : la négation de « ∀x ∈ ℝ » commence par « ∃x ∈ ℝ », pas par « ∃x ∉ ℝ ».`,
   meth:`<p>Avec $E = \{1, 2, 3\}$ :</p>
 <ol><li>« $∀x ∈ E, ∃y ∈ E, y &gt; x$ » est fausse : pour x = 3, aucun y de E n'est plus grand.</li>
 <li>Sa négation, « $∃x ∈ E, ∀y ∈ E, y ≤ x$ », est donc vraie (x = 3).</li>
-<li>« $∀x ∈ E, ∃y ∈ E, y ≥ x$ » est vraie : on prend y = x. Mais « $∃y ∈ E, ∀x ∈ E, x ≤ y$ » est vraie aussi, avec y = 3 pour tous les x.</li></ol>`},
+<li>L'ordre change tout : « $∀x ∈ E, ∃y ∈ E, y ≠ x$ » est vraie (pour x = 1, y = 2 ; sinon y = 1), mais « $∃y ∈ E, ∀x ∈ E, y ≠ x$ » est fausse : pour x = y, on aurait y ≠ y.</li></ol>`},
  {id:"recurrence",t:"La récurrence",pts:2.5,ou:"2022 ex. 3, 2024 ex. 3",lect:1.5,exo:{g:"RA5",lv:1},
   ess:`<p>Pour montrer P(n) pour tout n ≥ n₀ :</p><ol><li><b>Initialisation</b> : P(n₀) est vraie.</li>
 <li><b>Hérédité</b> : soit n ≥ n₀ ; on suppose P(n) vraie, et on montre P(n + 1).</li>
@@ -34921,9 +34925,10 @@ fin pour;</pre>
   piege:`Dans l'hérédité, il faut faire apparaître P(n) dans P(n + 1) : pour une divisibilité, on écrit l'expression au rang n + 1 avec celle du rang n.`,
   meth:`<p>Montrer que 7 divise $8ⁿ − 1$ pour tout n ∈ ℕ.</p>
 <ol><li>Initialisation : $8⁰ − 1 = 0 = 7 × 0$.</li>
-<li>Hérédité : on suppose $8ⁿ − 1 = 7k$. Alors $8ⁿ⁺¹ − 1 = 8 × 8ⁿ − 1 = 8(8ⁿ − 1) + 7 = 7(8k + 1)$.</li>
-<li>Conclusion : 7 divise $8ⁿ − 1$ pour tout n.</li></ol>`},
- {id:"composer",t:"Composer deux applications",pts:2,ou:"2023 ex. 4, 2024 ex. 2, 2025 ex. 3",lect:1.5,exo:{g:"RA6",lv:1},
+<li>Hérédité : on suppose $8ⁿ − 1 = 7k$, avec k entier. Alors $8ⁿ⁺¹ − 1 = 8 × 8ⁿ − 1 = 8(8ⁿ − 1) + 7 = 7(8k + 1)$.</li>
+<li>Conclusion : 7 divise $8ⁿ − 1$ pour tout n.</li></ol>
+<p>Une inégalité (CC2 2022 ex. 3) : pour $x ≥ −1$, $(1 + x)ⁿ ≥ 1 + nx$. Initialisation : $1 ≥ 1$. Hérédité : on multiplie par $1 + x ≥ 0$, donc $(1 + x)ⁿ⁺¹ ≥ (1 + nx)(1 + x) = 1 + (n + 1)x + nx² ≥ 1 + (n + 1)x$, car $nx² ≥ 0$.</p>`},
+ {id:"composer",t:"Composer deux applications",pts:3,ou:"2023 ex. 4, 2024 ex. 2, 2025 ex. 3",lect:2,exo:{g:"RA6",lv:1},
   ess:`<ul><li>$(g ∘ f)(x) = g(f(x))$ : on applique f d'abord, puis g. Il faut que l'arrivée de f soit dans le départ de g.</li>
 <li>Si f et g sont injectives (ou surjectives), g ∘ f l'est aussi.</li>
 <li>Si g ∘ f est injective, alors f est injective. Si g ∘ f est surjective, alors g est surjective.</li></ul>`,
@@ -34931,25 +34936,20 @@ fin pour;</pre>
   meth:`<p>$f(x) = 2x$ et $g(x) = x + 3$ sur ℝ.</p>
 <ol><li>$(g ∘ f)(x) = g(2x) = 2x + 3$.</li>
 <li>$(f ∘ g)(x) = f(x + 3) = 2x + 6$.</li>
-<li>En 1 : $(g ∘ f)(1) = 5$ mais $(f ∘ g)(1) = 8$ : elles sont différentes.</li></ol>`},
- {id:"contraposee",t:"Contraposée, réciproque, absurde",pts:1.5,ou:"2025 ex. 2",lect:1.5,exo:{g:"RA7",lv:1},
+<li>En 1 : $(g ∘ f)(1) = 5$ mais $(f ∘ g)(1) = 8$ : elles sont différentes.</li>
+<li><b>À démontrer</b> (CC2 2023 ex. 4) : si g ∘ f est surjective, alors g est surjective. Soit z dans l'ensemble d'arrivée de g. Comme g ∘ f est surjective, il existe x avec $g(f(x)) = z$. Alors $y = f(x)$ vérifie $g(y) = z$ : z a un antécédent par g.</li></ol>`},
+ {id:"contraposee",t:"Contraposée, absurde, disjonction de cas",pts:1.5,ou:"2025 ex. 2",lect:1.5,exo:{g:"RA7",lv:3},
   ess:`<ul><li>Pour « P ⇒ Q » : la <b>contraposée</b> est « non Q ⇒ non P » (elle dit la même chose) ; la <b>réciproque</b> est « Q ⇒ P » (elle dit autre chose) ; la <b>négation</b> est « P et non Q ».</li>
-<li><b>Par l'absurde</b> : on suppose le contraire de ce qu'on veut, et on arrive à quelque chose d'impossible.</li></ul>`,
+<li><b>Par l'absurde</b> : on suppose le contraire de ce qu'on veut, et on arrive à quelque chose d'impossible.</li>
+<li><b>Disjonction de cas</b> : on traite tous les cas un par un (n pair, n impair), et la conclusion est vraie dans chacun.</li></ul>`,
   piege:`Prouver la réciproque ne prouve pas la phrase. Et la négation d'une implication n'est pas une implication.`,
   meth:`<ol><li>« Si n² est pair, alors n est pair. » Contraposée : si n est impair, $n = 2k + 1$, alors $n² = 2(2k² + 2k) + 1$ est impair. Donc la phrase est vraie.</li>
-<li>Le CC2 2025 : une équation sans solution entière. Par exemple, $x² − 4y = 2$ : par l'absurde, x² serait pair, donc x aussi, x = 2k et $4k² − 4y = 2$, donc $2(k² − y) = 1$ : impossible, 1 est impair.</li></ol>`},
- {id:"tables",t:"Tables de vérité, propositions équivalentes",pts:1,ou:"QCM 2022",lect:1,exo:{g:"RA8",lv:1},
-  ess:`<ul><li>P ⇒ Q est fausse <b>seulement</b> quand P est vraie et Q fausse. Elle a la même table que « (non P) ou Q ».</li>
-<li>$non(P et Q) ≡ (non P) ou (non Q)$ et $non(P ou Q) ≡ (non P) et (non Q)$.</li>
-<li>Deux propositions sont équivalentes si elles ont la même colonne dans la table.</li></ul>`,
-  piege:`P ⇒ Q est équivalente à sa contraposée, pas à sa réciproque : la ligne P faux, Q vrai les sépare.`,
-  meth:`<ol><li>Fais une ligne par cas : 4 lignes pour P et Q, 8 pour P, Q et R.</li><li>Remplis une colonne par morceau de la formule, de l'intérieur vers l'extérieur.</li><li>Compare les colonnes finales : les mêmes partout, c'est équivalent.</li></ol>`}],
+<li>Le CC2 2025 : $9x⁵ − 11x⁴ + 6x − 5 = 0$ n'a pas de solution entière. Disjonction de cas sur la parité de x. Si x est pair, $9x⁵ − 11x⁴ + 6x$ est pair, donc le tout est impair. Si x est impair, $9x⁵$ et $11x⁴$ sont impairs et $6x$ est pair : $9x⁵ − 11x⁴ + 6x$ est pair, et le tout est encore impair. Un nombre impair n'est jamais 0.</li></ol>`}],
  blanc:[
-  {t:"Nier une phrase à quantificateurs",ou:"exercice 1",pts:3,g:"RA4",lv:0},
-  {t:"Les ensembles",ou:"exercice 2",pts:4,g:"RA3",lv:1},
-  {t:"Injective, surjective",ou:"exercice 3",pts:5,g:"RA1",lv:1},
-  {t:"Image directe, image réciproque",ou:"exercice 4",pts:4,g:"RA2",lv:1},
-  {t:"Une récurrence",ou:"exercice 5",pts:4,g:"RA5",lv:1}]
+  {t:"Les ensembles",ou:"exercice 1",pts:4,g:"RA3",lv:3},
+  {t:"Injective, surjective : un contre-exemple",ou:"exercice 2",pts:5,g:"RA1",lv:3},
+  {t:"Image directe, image réciproque",ou:"exercice 3",pts:4,g:"RA2",lv:2},
+  {t:"Une récurrence rédigée",ou:"exercice 4",pts:7,g:"RA5",lv:3}]
 }};
 
 </script>
@@ -35926,9 +35926,9 @@ function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(
   const n=C.notions[p.i],B=bilan(sid,ep),S=SUBJ[sid];
   cadre(sid,ep,`Notion ${p.i+1} sur ${N} · ${virg(n.pts)} point${n.pts>1?"s":""} ${C.du} · ${n.ou}`,B.pts);const b=$("#lpb");
   const va=st=>{tic();const q=posDe(sid,ep);q.st=st;garde(sid,ep,q);notion(sid,ep);};
-  if(p.st===0){b.innerHTML=tx(`<p class="prekick">L'essentiel · ${n.lect>=2?Math.round(n.lect):1} min</p><h2>${n.t}</h2>${n.ess}${n.piege?`<div class="piege"><b>Le piège.</b>${/^\s*<(p|ul|ol)[ >]/.test(n.piege)?n.piege:`<p>${n.piege}</p>`}</div>`:""}`);
+  if(p.st===0){b.innerHTML=tx(`<p class="prekick">L'essentiel · ${virg(Math.max(1,n.lect))} min</p><h2>${n.t}</h2>${n.ess}`);
     pied(`${presse(sid,ep)}<button class="btn pri big" id="xp-go">La méthode ${C.du}</button>`);$("#xp-go").addEventListener("click",()=>va(1));return;}
-  if(p.st===1){b.innerHTML=tx(`<p class="prekick">La méthode ${C.du}</p><h2>${n.t}</h2>${n.meth}`);
+  if(p.st===1){b.innerHTML=tx(`<p class="prekick">La méthode ${C.du}</p><h2>${n.t}</h2>${n.meth}${n.piege?`<div class="piege"><b>Le piège.</b>${/^\s*<(p|ul|ol)[ >]/.test(n.piege)?n.piege:`<p>${n.piege}</p>`}</div>`:""}`);/* le piège après la méthode : il cite souvent son exemple */
     pied(`<button class="btn" id="xp-av">Revoir l'essentiel</button><button class="btn pri big" id="xp-go">À toi : l'exercice</button>`);
     $("#xp-av").addEventListener("click",()=>va(0));$("#xp-go").addEventListener("click",()=>va(2));return;}
   const fini=r=>{const nouveau=r.ok&&!B.ok[n.id];
@@ -35953,7 +35953,7 @@ function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(
 
 /* une question de cours à réécrire de mémoire, puis comparée */
 function rappel(host,R,fin,orig){const t0=Date.now();
-  host.innerHTML=tx(`<p class="lq">${R.q}</p><div class="paper"><b>Sur ta feuille</b>, de mémoire, puis compare.</div><div class="acts"><button class="btn pri" id="xr-v">Voir la réponse</button></div><div id="xr-r"></div>`);
+  host.innerHTML=tx(`<p class="lq">${R.q}</p><div class="paper"><p><b>Sur ta feuille</b>, de mémoire, puis compare.</p></div><div class="acts"><button class="btn pri" id="xr-v">Voir la réponse</button></div><div id="xr-r"></div>`);
   host.querySelector("#xr-v").addEventListener("click",()=>{host.querySelector("#xr-v").parentNode.remove();
     host.querySelector("#xr-r").innerHTML=tx(`<h3>La réponse</h3>${R.r}<div class="acts"><button class="btn" id="xr-n">Pas tout à fait</button><button class="btn pri" id="xr-o">Je l'avais, tout</button></div>`);
     const fait=ok=>{host.querySelectorAll("#xr-r .acts").forEach(x=>x.remove());A.logRep({o:orig||"le CC en 1 h",s:R.sid||"",enonce:A.brut(R.q),reponse:ok?"je l'avais":"pas tout à fait",ok:ok?1:0,ms:Date.now()-t0});fin({ok,part:ok?1:0,ms:Date.now()-t0});};
@@ -35981,7 +35981,7 @@ function note(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),Q=C.blanc,sur=surBlanc(C
   const R=palier(C,n),rates=C.notions.filter(x=>!bilan(sid,ep).ok[x.id]),mn=Math.round(ms/60e3);
   $("#main").className="s-"+sid;document.body.classList.remove("in-lesson");
   $("#main").innerHTML=`<div class="page lp-end s-${sid}"><p class="kick">${C.t}</p><h1>${R?R[1]:"Pas encore la moyenne"}</h1>
-   <p class="score">${virg(n)} / 20</p><p class="lead">La note que tu aurais eue avec ce sujet express${B0.meilleur!=null&&n>B0.meilleur?`, ta meilleure jusqu'ici (avant : ${virg(B0.meilleur)})`:""}. Chrono du parcours : ${mn} min${mn>maxMin(C)?` (prévu : ${prevu(C)} min)`:""}.</p>
+   <p class="score">${virg(n)} / 20</p><p class="lead">Une estimation de ta note avec ce sujet express${B0.meilleur!=null&&n>B0.meilleur?`, ta meilleure jusqu'ici (avant : ${virg(B0.meilleur)})`:""}. Chrono du parcours : ${mn} min${mn>maxMin(C)?` (prévu : ${prevu(C)} min)`:""}.</p>
    <div class="el-bar">${Q.map((q,k)=>`<div${res[k]?"":` class="zero"`}><span>${q.t}<small>${q.ou}</small></span><b>${virg((res[k]||0)*q.pts)} / ${virg(q.pts)}</b></div>`).join("")}</div>
    ${rates.length?`<p>À reprendre d'abord : ${rates.slice(0,3).map(x=>x.t).join(", ")}${rates.length>3?"…":"."}</p>`:""}
    <div class="acts"><a class="btn pri big" href="${base(sid,ep)}/sujet">Un autre sujet express (d'autres nombres)</a>${rates.length?`<a class="btn" href="${base(sid,ep)}/notion/${rates[0].id}">Reprendre : ${rates[0].t}</a>`:""}<a class="btn" href="#/">Retour à aujourd'hui</a></div></div>`;}
