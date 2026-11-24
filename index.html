@@ -60,6 +60,7 @@
 .s-ana{--c:#FFE45C;--c-deep:#6B5800;--tagc:#FFF6C2;--g1:#ffe45c;--g2:#ffb547}
 .s-rai{--c:#C8F560;--c-deep:#3F5A00;--tagc:#EFFFC2;--g1:#c8f560;--g2:#4be08a}
 .s-usi{--c:#5BF29A;--c-deep:#0B5A2E;--tagc:#D2FFE4;--g1:#5bf29a;--g2:#2fd4a8}
+.s-aut{--c:#FF9470;--c-deep:#7A2A0E;--tagc:#FFE0D4;--g1:#ff9470;--g2:#ff7ab8}
 .tbl.tv td,.tbl.tv th{text-align:center}
 .c-bleu{--c:var(--cornflower);--c-deep:var(--persian);--tagc:var(--aqua);--g1:#2ee6ff;--g2:#3a5cff}
 .c-violet{--c:var(--violet-hi);--c-deep:var(--violet);--tagc:var(--violet-pale);--g1:#c04dff;--g2:#3a5cff}
@@ -33919,8 +33920,8 @@ function debut(mode,d,tout,force){stop();P={mode,d:d||null,force:force||null,ses
 const versFormule=t=>esc(String(t).replace(/\$/g,"")).replace(/\^\(([^()]*)\)/g,"^{$1}").replace(/\^(-?[A-Za-z0-9α-ω]+)/g,"^{$1}").replace(/sqrt|racine|rac/g,"√").replace(/\*/g," × ").replace(/-/g,"−").replace(/&lt;=/g,"≤").replace(/&gt;=/g,"≥").replace(/!=/g,"≠");
 const longues=r=>{if(r)r.querySelectorAll(".mx").forEach(m=>{if(m.textContent.length>40&&!m.parentElement.closest(".mx,.en-nb"))m.classList.add("en-coupe");});};
 const symHTML=c=>c.sym?`<div class="filters en-sym">${c.sym.map(x=>{const[l,v]=Array.isArray(x)?x:[x,x];return `<button type="button" class="btn" data-ins="${esc(v)}">${esc(l)}</button>`;}).join("")}</div>`:"";
-const rangTrace=(c,r)=>c.rangs?"ligne "+(r+1):r?"fin du tour "+r:"avant la boucle";
-const ligneTrace=(c,r)=>`<tr><td>${rangTrace(c,r)}</td>${c.vars.map((v,k)=>`<td><input class="en-in${c.rangs?" en-large":""}" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${rangTrace(c,r)}"></td>`).join("")}</tr>`;
+const rangTrace=(c,r)=>c.rangs?(c.serre?String(r+1):"ligne "+(r+1)):r?"fin du tour "+r:"avant la boucle";
+const ligneTrace=(c,r)=>`<tr><td>${rangTrace(c,r)}</td>${c.vars.map((v,k)=>`<td><input class="en-in${c.rangs&&!c.serre?" en-large":""}" data-r="${r}" data-k="${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${esc(v)}, ${rangTrace(c,r)}"></td>`).join("")}</tr>`;
 function champsHTML(e){return e.champs.map(c=>{
   if(c.k==="trace")return `<div data-ch="${c.id}" class="en-rep"><div style="overflow-x:auto"><table class="tbl tr"><thead><tr><th></th>${c.vars.map(v=>`<th class="var">${esc(v)}</th>`).join("")}</tr></thead><tbody>${[...Array(c.lignes||2)].map((_,r)=>ligneTrace(c,r)).join("")}</tbody></table></div><div class="acts"><button type="button" class="btn" data-plus>${c.rangs?"Ajouter une ligne":"Ajouter un tour"}</button><button type="button" class="btn" data-moins>${c.rangs?"Enlever la dernière ligne":"Enlever le dernier tour"}</button></div></div>`;
   if(c.k==="code")return `<div data-ch="${c.id}"${c.si?` data-si="${Object.keys(c.si)[0]}:${Object.values(c.si)[0]}" hidden`:""} class="en-rep">${c.label?`<p>${c.label}</p>`:""}<textarea class="en-in en-code" data-n="${c.id}" rows="${c.lignes||6}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="${esc(c.nom||c.label||c.id)}"${c.ex?` placeholder="${esc(c.ex)}"`:""}></textarea>${symHTML(c)}${c.aide?`<p class="muted">${c.aide}</p>`:""}</div>`;
@@ -36995,7 +36996,7 @@ const MCC={geo:{b:"m",sc:"premex",ep:[["cc1","CC1",0.3],["cc2","CC2",0.3],["fin"
   rai:{b:"m",ep:[["cc2","CC2",0.55],["ligne","Exercices en ligne",0.45,"clos le 2 octobre",1]]},
   algo:{b:"i",sc:"mincex",ep:[["cc1","CC1",0.32],["cc2","CC2",0.34],["cc3","CC3",0.34]]},
   pf:{b:"i",ep:[["cc1","CC",0.3],["tp","TP noté",0.03,"en séance de TP"],["ct","Examen",0.67]]},
-  usi:{b:"i",ep:[["exam","Examen",1]]}};
+  usi:{b:"i",ep:[["exam","Examen",1]]},aut:{b:"i",ep:[["exam","Examen",1]]}};
 const fr=x=>String(Math.round(x*100)/100).replace(".",",");
 const et=L=>L.length>1?L.slice(0,-1).join(", ")+" et "+L[L.length-1]:L[0]||"";
 const nomEp=(x,a,b,c)=>/^Exercices/.test(x.label)?c+" "+x.label.toLowerCase():/^[ÉE]/.test(x.label)?b+x.label.toLowerCase():a+" "+x.label;
@@ -37536,7 +37537,7 @@ const SRC={"algo.cc1":"mail de ton chargé de TD du 5/11.",
   "algo.cc2":"mail du responsable de l'UE du 24/9, « Dates des contrôles continus d'algo 1 » : « CC2 : créneau de TD entre le jeudi 26/11 et le mercredi 2/12 ». Ton TD d'Algo est le jeudi : le jour est déduit, l'heure n'est pas donnée. Le même mail annonçait le CC1 mi-octobre et il a eu lieu le 12/11 : demande à ton chargé de TD si le 26 tient toujours.",
   "algo.cc3":"le même mail du 24/9 : « CC3 : entre le lundi 14/12 et le vendredi 18/12 ». Le jour et l'heure sont supposés.",
   "ana.cc1":"annonce de l'enseignante sur le forum Moodle, le 9/11.","calc.cc2":"mail de l'enseignant du 6/11.","geo.cc2":"mail du 27/10.",
-  "lin.cc1":"mail du prof du 11/11 ; le lieu, mail du 18/11.","rai.cc2":"mail du 3/11.","pf.ct":"date supposée, pas encore officielle.","usi.exam":"date supposée, pas encore officielle."};
+  "lin.cc1":"mail du prof du 11/11 ; le lieu, mail du 18/11.","rai.cc2":"mail du 3/11.","pf.ct":"date supposée, pas encore officielle.","aut.exam":"date supposée, pas encore officielle.","usi.exam":"date supposée, pas encore officielle."};
 const srcDe=(S,e)=>e.src||SRC[S.id+"."+e.id]||"pas encore notée sur le site.";
 function examens(){
   const n0=NOW(),caseNote=(S,x)=>x&&(x.past||x.hors)?`<br><label class="manote">Ma note<br><input type="text" inputmode="decimal" size="4" data-note="${S.id}.${x.id}" value="${x.n!=null?fr(x.n):""}" aria-label="Ma note, ${x.label}, ${S.name}, sur 20"> sur 20</label>`:"";
