@@ -35671,12 +35671,12 @@ window.EXPRESS.usi.exam.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
 
 </script>
 <script>
-/* Le CC1 d'Algèbre en 1 h (reporté, date à venir) : la liste de dix points annoncée par le prof le 11/11 (chapitres 1 à 4 du poly).
+/* Le CC1 d'Algèbre en 1 h (reporté, date à venir), puis le CC2 (jeudi 17/12, sur les CC2 de 2022 à 2024). CC1 : la liste de dix points annoncée par le prof le 11/11 (chapitres 1 à 4 du poly).
    Aucun barème connu : les points sont ceux des thèmes de matiere-lin.js (estimés d'après la longueur des exercices de la liste).
    Le sujet sera pris parmi ces exercices : les exemples des méthodes sont donc les exercices de la liste eux-mêmes.
-   Tous les calculs sont refaits par tools/verif/lin-express.js. Les exercices sont tirés de gen-lin.js. */
+   Tous les calculs sont refaits par tools/verif/express/lin.js. Les exercices sont tirés de gen-lin.js. */
 (()=>{
-const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
+const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`,M=A=>`<span class="mat" style="--n:${A[0].length}">${A.flat().map(x=>`<span>${String(x).replace("-","−")}</span>`).join("")}</span>`;
 (window.EXPRESS=window.EXPRESS||{}).lin={cc1:{
  t:"Le CC1 d'Algèbre en 1 h",du:"du CC",au:"au CC",
  lead:"Le programme annoncé par le prof le 11/11 : le sujet sera fait d'exercices pris dans une liste de dix points (les 2 questions de cours, TD 1 ex. 1 et 7, TD 2 ex. 10, 12 et 13, TD 3 ex. 3, 4 et 5). Le CC1 a été reporté : si le prof change ce programme, ce parcours changera. Pour chaque notion : l'essentiel, la méthode sur l'exercice même de la liste, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20 (barème inconnu : les points sont estimés par moi).",
@@ -35698,9 +35698,9 @@ const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
 <li>On remonte : y = 2 − 5z + 7t, puis x = 1 − y + 2z − 3t = −1 + 7z − 10t.</li>
 <li>S = {(−1 + 7z − 10t, 2 − 5z + 7t, z, t) | z, t ∈ ℝ} : une infinité de solutions.</li></ol>`},
  {id:"param",t:"Seconds membres a, b, c et paramètre m",pts:4,ou:"TD 2, ex. 12 et 13 (dans la liste)",lect:2,exo:{g:"AL2",lv:2},
-  ess:`<ul><li><b>Seconds membres a, b, c</b> : on fait le pivot en gardant a, b, c en lettres dans la dernière colonne. La dernière ligne devient (0 0 0 | une expression en a, b, c) : le système a des solutions si et seulement si cette expression vaut 0.</li>
-<li><b>Paramètre m</b> : on ne divise jamais par une expression qui peut être nulle. On met en haut une ligne dont le pivot est un nombre (1 si possible), on échelonne, puis on factorise le coefficient qui reste : 1 − m² = (1 − m)(1 + m).</li>
-<li>On <b>discute</b> : d'abord le cas où ce coefficient n'est pas nul, puis chaque valeur de m qui l'annule, une par une.</li></ul>`,
+  ess:`<ul><li><b>Seconds membres a, b, c</b> : on fait le pivot avec a, b, c en lettres dans la dernière colonne. La dernière ligne devient (0 0 0 | une expression en a, b, c) : il y a des solutions si et seulement si elle vaut 0.</li>
+<li><b>Paramètre m</b> : on ne divise jamais par une expression qui peut être nulle. On met en haut une ligne dont le pivot est un nombre, on échelonne, puis on factorise ce qui reste : 1 − m² = (1 − m)(1 + m).</li>
+<li>On <b>discute</b> : le cas où ce coefficient n'est pas nul, puis chaque valeur de m qui l'annule.</li></ul>`,
   piege:`Avec m, la conclusion doit couvrir tous les réels : « si m ≠ 1 et m ≠ −1… ; si m = 1… ; si m = −1… ». Oublier un cas, c'est perdre une bonne partie des points.`,
   meth:`<p>TD 2, ex. 12 : x + 2y − 3z = a, 3x + 8y − 14z = b, 2x + 4z = c.</p>
 <ol><li>L₂ ← L₂ − 3L₁ et L₃ ← L₃ − 2L₁ : (0 2 −5 | b − 3a) et (0 −4 10 | c − 2a).</li>
@@ -35710,7 +35710,7 @@ const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
 <ol><li>m peut être nul : L₁ ↔ L₂, puis L₂ ← L₂ − mL₁. On obtient x + my = m et (1 − m²)y = 1 − m².</li>
 <li>Si m ≠ 1 et m ≠ −1 : on divise par 1 − m², y = 1, puis x = m − m × 1 = 0. Une seule solution : S = {(0, 1)}.</li>
 <li>Si m = 1 : il reste x + y = 1, S = {(1 − y, y) | y ∈ ℝ}. Si m = −1 : il reste x − y = −1, S = {(y − 1, y) | y ∈ ℝ}.</li></ol>`},
- {id:"cours",t:"Les 2 questions de cours : la définition et la proposition 37",pts:3,ou:"les 2 questions de cours de la liste",lect:1,
+ {id:"cours",t:"Les 2 questions de cours : la définition et la proposition 37",pts:3,ou:"les 2 questions de cours de la liste",lect:1.5,
   rappel:{min:4,q:`Sur une feuille, sans regarder : écris la définition d'un sous-espace vectoriel de ℝⁿ, puis démontre la proposition 37 : si v₁, …, vₖ ∈ ℝⁿ, alors Vect(v₁, …, vₖ) est un sous-espace vectoriel de ℝⁿ.`,
    r:`<p>Soit F un sous-ensemble de ℝⁿ. F est un sous-espace vectoriel de ℝⁿ si : ${Z} ∈ F ; ∀x, y ∈ F, x + y ∈ F ; ∀x ∈ F, ∀λ ∈ ℝ, λx ∈ F.</p>
 <p>Proposition 37. On vérifie les trois conditions. 1. ${Z} = 0v₁ + … + 0vₖ ∈ Vect(v₁, …, vₖ). 2. Soient x, y ∈ Vect(v₁, …, vₖ) : x = λ₁v₁ + … + λₖvₖ et y = μ₁v₁ + … + μₖvₖ, donc x + y = (λ₁ + μ₁)v₁ + … + (λₖ + μₖ)vₖ ∈ Vect(v₁, …, vₖ). 3. Soient x = λ₁v₁ + … + λₖvₖ et α ∈ ℝ : αx = (αλ₁)v₁ + … + (αλₖ)vₖ ∈ Vect(v₁, …, vₖ).</p>`},
@@ -35728,10 +35728,9 @@ const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
    r:`<p>Avec x = (x₁, …, xₙ). Sens ⇐ : si λ = 0, λx = (0x₁, …, 0xₙ) = ${Z} ; si x = ${Z}, λx = (λ × 0, …, λ × 0) = ${Z}. Sens ⇒ : si λx = ${Z}, alors λxᵢ = 0 pour tout i. Si λ = 0, c'est fini. Sinon, on divise par λ : xᵢ = 0 pour tout i, donc x = ${Z}.</p>
 <p>Il existe des réels a, b, c, d tels que x = au + bv et y = cu + dv. Alors αx + βy = (αa + βc)u + (αb + βd)v : c'est une combinaison linéaire de u et v, donc αx + βy ∈ Vect(u, v).</p>`},
   ess:`<ul><li><b>« Si et seulement si »</b> : deux sens à démontrer, ⇐ puis ⇒.</li>
-<li><b>Une égalité entre vecteurs</b>, c'est une égalité pour chaque composante.</li>
-<li><b>Être dans Vect(u, v)</b>, c'est s'écrire au + bv : on écrit les coefficients, on calcule, puis on regroupe ce qui est devant u et devant v.</li>
+<li><b>Être dans Vect(u, v)</b>, c'est s'écrire au + bv : on calcule, puis on regroupe devant u et devant v.</li>
 <li><b>Une inclusion A ⊆ B</b> : on prend un élément quelconque de A et on montre qu'il est dans B. Une égalité, ce sont deux inclusions.</li></ul>`,
-  piege:`On ne divise que par un nombre non nul : dans λx = ${Z}, on traite le cas λ = 0 à part avant de diviser par λ. Et chaque démonstration finit par sa conclusion écrite.`,
+  piege:`On ne divise que par un nombre non nul : dans λx = ${Z}, on traite λ = 0 à part. Et chaque démonstration finit par sa conclusion écrite.`,
   meth:`<p>TD 1, ex. 7, avec x = (x₁, …, xₙ) :</p>
 <ol><li>⇐ : si λ = 0, λx = (0x₁, …, 0xₙ) = ${Z}. Si x = ${Z}, λx = (λ × 0, …, λ × 0) = ${Z}.</li>
 <li>⇒ : si λx = ${Z}, alors λxᵢ = 0 pour tout i. Si λ = 0, c'est fini. Sinon, on divise par λ : xᵢ = 0 pour tout i, donc x = ${Z}.</li></ol>
@@ -35740,7 +35739,7 @@ const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
 <li>x = au + bv et y = cu + dv, donc αx + βy = (αa + βc)u + (αb + βd)v ∈ Vect(u, v).</li>
 <li>Vect((2, −1, 3)) = {(2t, −t, 3t) | t ∈ ℝ}.</li>
 <li>Un élément de Vect(λu) s'écrit μ(λu) = (μλ)u ∈ Vect(u) : Vect(λu) ⊆ Vect(u). Si λ ≠ 0, tu = (t/λ)(λu) donne l'autre inclusion. Si λ = 0, Vect(λu) = {${Z}}. Il y a égalité si et seulement si λ ≠ 0 ou u = ${Z}.</li></ol>`},
- {id:"cl",t:"Combinaison linéaire ou pas",pts:2,ou:"TD 3, ex. 3 (dans la liste)",lect:1,exo:{g:"AL4",lv:1},
+ {id:"cl",t:"Combinaison linéaire ou pas",pts:2,ou:"TD 3, ex. 3 (dans la liste)",lect:1.5,exo:{g:"AL4",lv:1},
   ess:`<ul><li>w est combinaison linéaire de u et v s'il existe des réels α, β tels que w = αu + βv.</li>
 <li>Composante par composante, c'est un <b>système</b> dont les inconnues sont α et β. Sa matrice augmentée a <b>une colonne par vecteur</b>, et w après le trait.</li>
 <li>Pivot de Gauss : si le système est compatible, la réponse est oui. Aucune inconnue libre : l'écriture est unique ; sinon, il y en a une infinité.</li></ul>`,
@@ -35748,17 +35747,18 @@ const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
   meth:`<p>TD 3, ex. 3, question 1 : (−4, 5) est-il combinaison linéaire de (1, 2) et (2, 3) ?</p>
 <ol><li>(−4, 5) = α(1, 2) + β(2, 3) donne α + 2β = −4 et 2α + 3β = 5.</li>
 <li>L₂ ← L₂ − 2L₁ : −β = 13. Pas de ligne 0 = b avec b ≠ 0, et aucune inconnue libre.</li>
-<li>β = −13, puis α = −4 − 2β = 22. Oui, et l'écriture est unique : (−4, 5) = 22(1, 2) − 13(2, 3). Vérification : 22 − 26 = −4 et 44 − 39 = 5.</li></ol>`},
+<li>β = −13, puis α = −4 − 2β = 22. Oui, et l'écriture est unique : (−4, 5) = 22(1, 2) − 13(2, 3). Vérification : 22 − 26 = −4 et 44 − 39 = 5.</li></ol>
+<p>Question 3 : quatre vecteurs de ℝ³. Le pivot donne trois pivots, aucune ligne 0 = b avec b ≠ 0, et une inconnue libre : oui, avec une infinité d'écritures, une pour chaque valeur de l'inconnue libre.</p>`},
  {id:"vect",t:"Quels vecteurs enlever d'un Vect",pts:2,ou:"TD 3, ex. 5 (dans la liste)",lect:1.5,exo:{g:"AL3",lv:2},
   ess:`<ul><li>La <b>proposition 35</b> : Vect(v₁, …, vₖ, v) = Vect(v₁, …, vₖ) si et seulement si v ∈ Vect(v₁, …, vₖ).</li>
 <li>Donc on peut enlever un vecteur sans changer le sous-espace engendré si et seulement s'il est <b>combinaison linéaire des autres</b>.</li>
 <li>Pour chaque vecteur, on cherche s'il s'écrit avec les autres (un petit système). Avec deux vecteurs, on regarde s'ils sont colinéaires.</li></ul>`,
-  piege:`On enlève un vecteur à la fois. Si w = u + v, on peut enlever u, v ou w, mais un seul : les deux qui restent ne sont pas colinéaires.`,
+  piege:`On enlève un vecteur à la fois, puis on recommence avec ceux qui restent. Dans l'ex. 5, question 2, w = u + v : on peut enlever u, v ou w, mais un seul, car les deux qui restent ne sont pas colinéaires.`,
   meth:`<ol><li>Dans ℝ², u = (1, 2) et v = (−2, −4) : v = −2u. On peut enlever u ou v, un seul : Vect(u, v) = Vect(u) = Vect(v).</li>
 <li>u = (1, 0, 1), v = (0, 1, 1), w = (1, 1, 2) : w = u + v. On peut enlever n'importe lequel des trois, mais un seul.</li>
 <li>u = (1, 1, 0), v = (0, 1, 1), w = (1, 0, 1) : w = au + bv s'écrit (a, a + b, b) = (1, 0, 1), donc a = 1, b = 1 et a + b = 0 : impossible. Les deux autres essais échouent de la même façon : on ne peut enlever aucun vecteur.</li></ol>`},
- {id:"repere",t:"Changer de repère",pts:1.5,ou:"TD 1, ex. 1 (dans la liste)",lect:1,exo:{g:"AL6",lv:0},
-  ess:`<ul><li>(O ; ${V("u")}, ${V("v")}) est un <b>repère</b> du plan quand ${V("u")} et ${V("v")} ne sont pas colinéaires. Avec leurs coordonnées (a, b) et (c, d) : ad − bc ≠ 0 (proposition 32).</li>
+ {id:"repere",t:"Changer de repère",pts:1.5,ou:"TD 1, ex. 1 (dans la liste)",lect:1.5,exo:{g:"AL6",lv:0},
+  ess:`<ul><li>Le plan a déjà un repère (O ; ${V("i")}, ${V("j")}). (O ; ${V("u")}, ${V("v")}) est un autre <b>repère</b> quand ${V("u")} et ${V("v")} ne sont pas colinéaires : avec leurs coordonnées (a, b) et (c, d) dans (${V("i")}, ${V("j")}), ad − bc ≠ 0 (proposition 32).</li>
 <li><b>Du nouveau repère vers l'ancien</b> : si M a pour coordonnées (x′, y′) dans le nouveau, on développe ${V("OM")} = x′${V("u")} + y′${V("v")} avec les coordonnées de ${V("u")} et ${V("v")}.</li>
 <li><b>De l'ancien vers le nouveau</b> : on résout ce système en x′ et y′.</li></ul>`,
   piege:`Les coordonnées dans un repère sont uniques : c'est ce qui permet d'égaler les nombres devant ${V("i")} et devant ${V("j")}.`,
@@ -35771,6 +35771,100 @@ const Z="0<sub>ℝⁿ</sub>",V=s=>`<span class="vec">${s}</span>`;
   {t:"Résoudre un système par le pivot de Gauss",ou:"TD 2, ex. 10",pts:7,g:"AL1",lv:4},
   {t:"La condition sur a, b, c",ou:"TD 2, ex. 12",pts:6,g:"AL2",lv:1},
   {t:"Combinaison linéaire ou pas",ou:"TD 3, ex. 3",pts:4,g:"AL4",lv:0}]
+},
+cc2:{
+ t:"Le CC2 d'Algèbre en 1 h",du:"du CC",au:"au CC",
+ lead:"Le programme du CC2 n'est pas encore annoncé : ce parcours suit ce qui est tombé aux CC2 de 2022 à 2024, dans l'ordre de ce qui y a rapporté le plus (points estimés par moi, aucun barème connu). Pour chaque notion : l'essentiel, la méthode sur un exercice d'un ancien CC2, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le CC2 peut aussi reprendre le programme du CC1 : son parcours en 1 h reste là.",
+ carte:"les exercices des anciens CC2 en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Quatre questions dans l'ordre des anciens CC2 : F = G ?, une matrice à inverser, linéaire ou pas, puis un noyau. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue (barème estimé par moi).",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"inverse",t:"Calculer A⁻¹ par la double matrice",pts:3.5,ou:"exercice 2 des CC2 2022 à 2024",lect:1.5,exo:{g:"AL8",lv:1},
+  ess:`<ul><li>On écrit la <b>double matrice</b> (A | Iₙ) : A à gauche, la matrice identité à droite.</li>
+<li>On fait le pivot de Gauss sur les lignes entières jusqu'à avoir Iₙ à gauche : des zéros sous les pivots, puis <b>au-dessus</b>, et des pivots égaux à 1.</li>
+<li>À droite, on lit A⁻¹. Si une ligne de zéros apparaît à gauche, A n'est pas inversible.</li>
+<li>On vérifie au moins une ligne de A × A⁻¹ = Iₙ.</li></ul>`,
+  piege:`Chaque opération se fait sur toute la ligne, partie droite comprise. Et seulement des opérations sur les lignes, jamais sur les colonnes.`,
+  meth:`<p>CC2 2024-2025, ex. 2 : A = ${M([[1,-3,0],[-2,5,0],[0,1,1]])}</p>
+<ol><li>L₂ ← L₂ + 2L₁ : la ligne 2 devient (0 −1 0 | 2 1 0).</li>
+<li>L₃ ← L₃ + L₂ : la ligne 3 devient (0 0 1 | 2 1 1).</li>
+<li>L₂ ← −L₂ : (0 1 0 | −2 −1 0).</li>
+<li>L₁ ← L₁ + 3L₂ : (1 0 0 | −5 −3 0).</li>
+<li>A⁻¹ = ${M([[-5,-3,0],[-2,-1,0],[2,1,1]])}. Vérification, ligne 1 de A fois les colonnes de A⁻¹ : 1 × (−5) − 3 × (−2) = 1, 1 × (−3) − 3 × (−1) = 0, et 0.</li></ol>`},
+ {id:"fg",t:"F = G ? Deux sous-espaces de ℝ⁴",pts:3.5,ou:"exercice 1 des CC2 2022 et 2023",lect:2.5,exo:{g:"AL14",lv:1},
+  ess:`<ul><li><b>Une famille génératrice de F</b>, donné par des équations : on résout le système, on écrit les inconnues principales avec les libres, puis on donne la valeur 1 à une libre et 0 aux autres, pour chaque libre.</li>
+<li><b>Des équations de G = Vect(u, v)</b> : on écrit (x, y, z, t) = au + bv et on fait le pivot avec x, y, z, t en lettres ; chaque ligne nulle à gauche donne une équation (comme au CC1).</li>
+<li><b>F = G</b>, ce sont deux inclusions. G ⊂ F : u et v vérifient les équations de F. F ⊂ G : les vecteurs qui engendrent F vérifient les équations de G.</li>
+<li>Un seul vecteur de G qui ne vérifie pas une équation de F suffit : F ≠ G.</li></ul>`,
+  piege:`G ⊂ F ne suffit pas pour conclure F = G : il faut aussi F ⊂ G. Et on teste les vecteurs qui engendrent, pas des vecteurs pris au hasard.`,
+  meth:`<p>CC2 2023-2024, ex. 1 : F = {(x, y, z, t) ∈ ℝ⁴ | x + y + z + 2t = 0, x + 2y − z + t = 0} et G = Vect((−3, 0, −1, 2), (0, 1, 1, −1)).</p>
+<ol><li>F : L₂ ← L₂ − L₁ donne y − 2z − t = 0. Donc y = 2z + t, puis x = −y − z − 2t = −3z − 3t. F = Vect((−3, 2, 1, 0), (−3, 1, 0, 1)).</li>
+<li>G : le pivot avec x, y, z, t en lettres laisse deux lignes nulles à gauche. G = {(x, y, z, t) | x + 3y − 3z = 0 et y − 2z − t = 0}.</li>
+<li>G ⊂ F : pour (−3, 0, −1, 2), −3 + 0 − 1 + 4 = 0 et −3 + 0 + 1 + 2 = 0 ; pour (0, 1, 1, −1), 0 + 1 + 1 − 2 = 0 et 0 + 2 − 1 − 1 = 0.</li>
+<li>F ⊂ G : pour (−3, 2, 1, 0), −3 + 6 − 3 = 0 et 2 − 2 − 0 = 0 ; pour (−3, 1, 0, 1), −3 + 3 − 0 = 0 et 1 − 0 − 1 = 0. Donc F = G.</li></ol>`},
+ {id:"applin",t:"Application linéaire ou pas, et sa matrice",pts:3,ou:"CC2 2022 ex. 4, 2023 ex. 2, 2024 ex. 3",lect:1.5,exo:{g:"AL12",lv:1},
+  ess:`<ul><li>f est <b>linéaire</b> quand chaque coordonnée de f(X) est une combinaison des variables : pas de constante, pas de produit xy, pas de carré.</li>
+<li>Pour prouver « pas linéaire » : avec une constante, f(0) ≠ 0 ; avec un produit ou un carré, un contre-exemple f(2X) ≠ 2f(X), avec X = (1, 1, …).</li>
+<li>La <b>matrice</b> de f : une ligne par coordonnée, les coefficients de x, y, z dans cet ordre, 0 pour une variable absente. Alors f(X) = AX.</li>
+<li>La matrice de f ∘ g est Mat(f) × Mat(g).</li></ul>`,
+  piege:`Avec un produit xy, on a quand même f(0) = 0 : ce test ne prouve rien. Il faut f(2X) ≠ 2f(X).`,
+  meth:`<p>CC2 2023-2024, ex. 2 :</p>
+<ol><li>f(x, y, z) = (2x + y − 3z, −x − 2y + 5z) est linéaire, de matrice ${M([[2,1,-3],[-1,-2,5]])}.</li>
+<li>g(x, y) = (x − y, xy, −2x + 3y) : g(1, 1) = (0, 1, 1) et g(2, 2) = (0, 4, 2) ≠ 2g(1, 1) = (0, 2, 2). g n'est pas linéaire.</li>
+<li>h(x, y, z) = (x − y + 3z, y − z, x, −3x + 2y − z + 1) : h(0, 0, 0) = (0, 0, 0, 1) ≠ 0. h n'est pas linéaire.</li></ol>`},
+ {id:"kerim",t:"Noyau, image, injective, surjective",pts:2.5,ou:"CC2 2023 ex. 3, 2024 ex. 5",lect:1.5,exo:{g:"AL13",lv:0},
+  ess:`<ul><li><b>ker f</b>, ce sont les X tels que f(X) = 0 : on résout AX = 0 et on l'écrit Vect(…).</li>
+<li><b>im f</b>, ce sont les vecteurs atteints : pivot sur (A | a b c) ; chaque ligne nulle à gauche donne une équation entre a, b, c.</li>
+<li>Un seul pivot sert pour les deux. f injective ⇔ ker f = {0}. f surjective ⇔ im f est tout l'espace d'arrivée.</li></ul>`,
+  piege:`Le noyau vit au départ, l'image à l'arrivée. De ℝ³ dans ℝ⁴, f n'est jamais surjective.`,
+  meth:`<p>CC2 2024-2025, ex. 5 : f(x, y, z) = (2x + y + z, y − z, x + y).</p>
+<ol><li>(A | a b c), avec L₁ ↔ L₃ pour avoir un pivot 1 : (1 1 0 | c), (0 1 −1 | b), (2 1 1 | a).</li>
+<li>L₃ ← L₃ − 2L₁ : (0 −1 1 | a − 2c). Puis L₃ ← L₃ + L₂ : (0 0 0 | a + b − 2c).</li>
+<li>Noyau (a = b = c = 0) : z est libre, y = z et x = −y = −z. ker f = Vect((−1, 1, 1)) : f n'est pas injective.</li>
+<li>Image : (a, b, c) ∈ im f ⇔ a + b − 2c = 0. Ce n'est pas tout ℝ³ : f n'est pas surjective.</li></ol>`},
+ {id:"produit",t:"Le produit de matrices",pts:1.5,ou:"CC1 2024 ex. 5 et feuille 4",lect:1,exo:{g:"AL9",lv:2},
+  ess:`<ul><li>AB existe quand A a autant de colonnes que B a de lignes : A de taille n × p et B de taille p × q donnent AB de taille n × q.</li>
+<li>Le coefficient (i, j) de AB : la ligne i de A fois la colonne j de B, terme à terme, puis la somme.</li>
+<li>En général, AB ≠ BA.</li></ul>`,
+  piege:`AB = 0 n'oblige pas A = 0 ou B = 0, et AB = AC n'oblige pas B = C.`,
+  meth:`<p>Feuille 4, ex. 3 : A = ${M([[1,-1],[3,1]])} et B = ${M([[2,1],[-1,1]])}.</p>
+<ol><li>AB : ligne 1, 1 × 2 + (−1) × (−1) = 3 et 1 × 1 + (−1) × 1 = 0 ; ligne 2, 3 × 2 + 1 × (−1) = 5 et 3 × 1 + 1 × 1 = 4. AB = ${M([[3,0],[5,4]])}.</li>
+<li>BA = ${M([[5,-1],[2,2]])}. AB ≠ BA : le produit n'est pas commutatif.</li></ol>`},
+ {id:"relation",t:"Inverser grâce à une relation",pts:2.5,ou:"CC2 2022 ex. 3, 2023 ex. 5, CC1 2024 ex. 6",lect:1,exo:{g:"AL10",lv:1},
+  ess:`<ul><li>On calcule A², puis A² − kA, et on reconnaît un multiple de I.</li>
+<li>On factorise par A : par exemple A² − 3A = −2I donne A(A − 3I) = −2I, donc A × (−½)(A − 3I) = I.</li>
+<li>Conclusion : A est inversible et A⁻¹ = −½(A − 3I) = ½(3I − A).</li></ul>`,
+  piege:`On factorise avec I : A² − 3A = A(A − 3I), et « A − 3 » n'a pas de sens. On ne divise jamais par une matrice, seulement par un nombre non nul.`,
+  meth:`<p>CC1 2024-2025, ex. 6 : A = ${M([[0,1,-1],[-1,2,-1],[1,-1,2]])}</p>
+<ol><li>A² = ${M([[-2,3,-3],[-3,4,-3],[3,-3,4]])}, et A² − 3A = ${M([[-2,0,0],[0,-2,0],[0,0,-2]])} = −2I.</li>
+<li>A(A − 3I) = −2I, donc A × ½(3I − A) = I.</li>
+<li>A est inversible et A⁻¹ = ½(3I − A) = ½ ${M([[3,-1,1],[1,1,1],[-1,1,1]])}.</li></ol>`},
+ {id:"libre",t:"Famille libre, famille liée, base",pts:2,ou:"exercice 6 des CC2 2022 et 2023",lect:1,exo:{g:"AL11",lv:1},
+  ess:`<ul><li>(u, v, w) est <b>libre</b> si au + bv + cw = 0 oblige a = b = c = 0 ; sinon elle est <b>liée</b>.</li>
+<li>On résout ce système homogène par le pivot, les vecteurs en colonnes : une colonne sans pivot, la famille est liée ; un pivot dans chaque colonne, elle est libre.</li>
+<li>Dans ℝ³, trois vecteurs libres forment une <b>base</b> ; quatre vecteurs sont toujours liés.</li></ul>`,
+  piege:`Aucun vecteur multiple d'un autre ne suffit pas : (u, v, u + v) est liée.`,
+  meth:`<p>CC2 2023-2024, ex. 6 : ((1, −1, 0), (2, −1, 2), (1, 0, 1)).</p>
+<ol><li>Les vecteurs en colonnes : ${M([[1,2,1],[-1,-1,0],[0,2,1]])}</li>
+<li>L₂ ← L₂ + L₁ : (0 1 1). Puis L₃ ← L₃ − 2L₂ : (0 0 −1).</li>
+<li>Un pivot dans chaque colonne : la seule solution est a = b = c = 0. La famille est libre : c'est une base de ℝ³.</li></ol>`},
+ {id:"cours",t:"La question de cours : F ∩ G est un sous-espace",pts:1.5,ou:"CC2 2024 ex. 1",lect:1,
+  rappel:{min:3,q:`Sur une feuille, sans regarder : écris la définition d'un sous-espace vectoriel de ℝⁿ. Puis, F et G étant deux sous-espaces vectoriels de ℝⁿ, montre que F ∩ G en est un.`,
+   r:`<p>Soit F un sous-ensemble de ℝⁿ. F est un sous-espace vectoriel de ℝⁿ si : ${Z} ∈ F ; ∀x, y ∈ F, x + y ∈ F ; ∀x ∈ F, ∀λ ∈ ℝ, λx ∈ F.</p>
+<p>1. ${Z} ∈ F et ${Z} ∈ G, donc ${Z} ∈ F ∩ G. 2. Soient x, y ∈ F ∩ G : x + y ∈ F car F est un sous-espace, et x + y ∈ G de même, donc x + y ∈ F ∩ G. 3. Soient x ∈ F ∩ G et λ ∈ ℝ : λx ∈ F et λx ∈ G, donc λx ∈ F ∩ G.</p>`},
+  ess:`<ul><li>La définition 36 : ${Z} ∈ F ; ∀x, y ∈ F, x + y ∈ F ; ∀x ∈ F, ∀λ ∈ ℝ, λx ∈ F.</li>
+<li>Pour F ∩ G, on vérifie les trois conditions en se servant de ce que F et G sont des sous-espaces.</li>
+<li>F ∪ G n'est pas un sous-espace en général : deux droites distinctes du plan.</li></ul>`,
+  piege:`Pour x + y ∈ F ∩ G, il faut le dire pour F et pour G.`,
+  meth:`<ol><li>F et G sont des sous-espaces, donc ${Z} ∈ F et ${Z} ∈ G : ${Z} ∈ F ∩ G.</li>
+<li>Soient x, y ∈ F ∩ G. Comme x, y ∈ F et que F est stable par addition, x + y ∈ F. De même, x + y ∈ G. Donc x + y ∈ F ∩ G.</li>
+<li>Soient x ∈ F ∩ G et λ ∈ ℝ. λx ∈ F et λx ∈ G, donc λx ∈ F ∩ G.</li>
+<li>Conclusion : F ∩ G est un sous-espace vectoriel de ℝⁿ.</li></ol>`}],
+ blanc:[
+  {t:"F = G ?",ou:"exercice 1",pts:5,g:"AL14",lv:1},
+  {t:"Inverser une matrice par la double matrice",ou:"exercice 2",pts:6,g:"AL8",lv:1},
+  {t:"Linéaire ou pas",ou:"exercice 3",pts:4,g:"AL12",lv:0},
+  {t:"Le noyau d'une application linéaire",ou:"exercice 5",pts:5,g:"AL13",lv:0}]
 }};
 })();
 
