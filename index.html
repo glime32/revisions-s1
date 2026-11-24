@@ -35235,15 +35235,22 @@ window.EXPRESS.calc.ccf={
 const ml=s=>W.code(s,"ml"),k=s=>"<code>"+W.esc(s)+"</code>";
 (window.EXPRESS=window.EXPRESS||{}).pf={ct:{
  t:"L'examen de Prog. fonctionnelle en 2 h",du:"de l'examen",au:"à l'examen",duree:120,
- lead:"Tout le programme de l'examen de janvier, dans l'ordre de ce qui rapporte le plus aux trois anciens sujets (janvier 2022, juin 2022, janvier 2024) : le type somme, puis l'arithmétique avec une fonction auxiliaire, puis la fonction « de trois façons ». Pour chaque notion : l'essentiel, la méthode de l'examen sur un vrai exemple, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Ta feuille A4 est permise : ce qui est marqué « sur ta feuille » mérite d'y être recopié.",
+ lead:"Tout le programme de l'examen de janvier, dans l'ordre de ce qui rapporte le plus aux trois anciens sujets (janvier 2022, juin 2022, janvier 2024) : le type somme, puis l'arithmétique avec une fonction auxiliaire, puis la fonction « de trois façons » (2022 et juin 2022). Pour chaque notion : l'essentiel, la méthode de l'examen sur un vrai exemple, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Ta feuille A4 est permise : ce qui est marqué « sur ta feuille » mérite d'y être recopié.",
  carte:"tout l'examen en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Trois exercices dans l'ordre des anciens sujets : l'arithmétique et son exception, le type somme, puis la fonction de trois façons. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Trois exercices dans l'ordre des anciens sujets : l'arithmétique et son exception, le type somme et le filtrage, puis la fonction de trois façons. Fais-les sans revenir aux notions. La note qui sort est une estimation : ici, tu complètes une ligne ou tu donnes une valeur ; à l'examen, tu écriras les fonctions entières.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
- {id:"valeur",t:"Écrire une valeur d'un type somme",pts:1,ou:"exercice 2, tous les ans",lect:1.5,exo:{g:"PF5",lv:0},
+ {id:"valeur",t:"Écrire une valeur d'un type somme",pts:1,ou:"le type somme, tous les ans (exercice 2, ou 3 en juin 2022)",lect:1.5,
+  rappel:{min:2,q:`Avec les types nombre, my_string et 'a set, écris : la fraction 3/4 ; l'entier −2 ; la chaîne « ok » ; l'ensemble {5, 7} ; la liste qui contient l'entier 2, puis la fraction 1/2.`,
+   r:ml(`Rat (3, 4)
+Ent (-2)
+Cons ('o', Cons ('k', Empty))
+Add (5, Add (7, Empty))
+[Ent 2; Rat (1, 2)]`)},
   ess:`<ul><li>Un type somme donne la liste de ses cas : ${k("type nombre = Ent of int | Rat of (int * int)")}. Chaque cas a son <b>constructeur</b> (une majuscule) et, après ${k("of")}, ce qu'il contient.</li>
 <li>Une valeur, c'est un constructeur suivi de son contenu : ${k("Ent 3")}, ${k("Rat (1, 2)")}.</li>
-<li>Un type <b>récursif</b> se contient lui-même : ${k("type my_string = Empty | Cons of char * my_string")}. On emboîte les constructeurs et on finit par le cas qui ne contient rien : « L1 » s'écrit ${k("Cons ('L', Cons ('1', Empty))")}.</li></ul>`,
+<li>Un type <b>récursif</b> se contient lui-même : ${k("type my_string = Empty | Cons of char * my_string")}. On emboîte les constructeurs et on finit par le cas qui ne contient rien : « L1 » s'écrit ${k("Cons ('L', Cons ('1', Empty))")}.</li>
+<li>${k("'a")} se lit « un type quelconque » : ${k("'a set")} est un ensemble de n'importe quoi, et un ensemble d'entiers est un ${k("int set")}.</li></ul>`,
   piege:`Un nombre négatif après un constructeur se met entre parenthèses : ${k("Ent (-3)")}. Un caractère s'écrit entre apostrophes, ${k("'L'")}, pas entre guillemets.`,
   meth:`<p>Janvier 2024, exercice 3 : l'ensemble {1, 2, 3} avec ce type.</p>${ml(`type 'a set =
   | Empty
@@ -35251,21 +35258,24 @@ const ml=s=>W.code(s,"ml"),k=s=>"<code>"+W.esc(s)+"</code>";
 <ol><li>On part de l'ensemble vide : ${k("Empty")}.</li>
 <li>On ajoute 3, puis 2 : ${k("Add (3, Empty)")}, puis ${k("Add (2, Add (3, Empty))")}.</li>
 <li>On ajoute 1 : ${k("Add (1, Add (2, Add (3, Empty)))")}. C'est la valeur du sujet, avec une parenthèse fermante par ${k("Add")}.</li></ol>`},
- {id:"somme",t:"Une fonction par filtrage sur un type somme",pts:2,ou:"exercice 2 (add_rat, inverse_nombre en 2024)",lect:2,exo:{g:"PF5",lv:1},
+ {id:"somme",t:"Lire une fonction sur un type somme : ce qu'elle renvoie",pts:2,ou:"le type somme (add_rat, inverse_nombre en 2024)",lect:2,exo:{g:"PF5",lv:1},
   ess:`<ul><li>Une fonction sur un type somme est un ${k("match")} (ou un ${k("function")}) avec <b>une branche par constructeur</b>.</li>
 <li>Le motif donne un nom à ce que contient le constructeur : dans ${k("| Rat (p, q) -> …")}, on peut se servir de p et de q.</li>
-<li>Avec deux arguments, on filtre le couple : ${k("match x, y with | Rat (a, b), Rat (c, d) -> … | _ -> …")}.</li></ul>`,
+<li>Avec deux arguments, on filtre le couple : ${k("match x, y with | Rat (a, b), Rat (c, d) -> … | _ -> …")}.</li>
+<li>Quand une branche rappelle la fonction, comme ${k("| Cons (_, r) -> 1 + my_length r")}, on déroule les appels jusqu'à ${k("Empty")}, puis on remonte. Pour un arbre, chaque nœud fait deux appels, sur g et sur d.</li></ul>`,
   piege:`Le motif ${k("_")} attrape tous les cas qui restent : mets-le en dernier, sinon les branches d'après ne servent jamais. Et ${k("Rat (1, 2) + Rat (3, 4)")} est une erreur : + ne marche que sur des int.`,
   meth:`<p>Janvier 2024, exercice 2, question 1 : add_rat, la somme de deux rationnels, sinon l'exception Failure "add_rat".</p>${ml(`let add_rat x y = match x, y with
   | Rat (a, b), Rat (c, d) -> Rat (a * d + c * b, b * d)
   | _ -> failwith "add_rat"`)}
 <ol><li>Le cas utile : deux ${k("Rat")}. On applique a/b + c/d = (ad + cb)/(bd).</li>
 <li>Tous les autres cas : l'exception demandée, en une seule branche ${k("_")}.</li>
-<li>On vérifie sur l'exemple du sujet : ${k("add_rat (Rat (1, 2)) (Rat (3, 4))")} = Rat (1 × 4 + 3 × 2, 2 × 4) = ${k("Rat (10, 8)")}. Le sujet ne demande pas de simplifier.</li></ol>`},
- {id:"recursif",t:"Une fonction récursive sur un type récursif",pts:2.5,ou:"exercices 2 et 3 (my_length, mem, union)",lect:2,exo:{g:"PF5",lv:2},
+<li>On vérifie sur l'exemple du sujet : ${k("add_rat (Rat (1, 2)) (Rat (3, 4))")} = Rat (1 × 4 + 3 × 2, 2 × 4) = ${k("Rat (10, 8)")}. Le sujet ne demande pas de simplifier.</li>
+<li>Une fonction récursive se déroule pareil : ${k("my_length (Cons ('r', Cons ('u', Empty)))")} = 1 + (1 + 0) = 2.</li></ol>`},
+ {id:"recursif",t:"Écrire une fonction sur un type somme ou récursif",pts:2.5,ou:"le type somme (my_length, mem, union, inverse_nombre)",lect:2,exo:{g:"PF5",lv:2},
   ess:`<ul><li>Même schéma que sur les listes : un <b>cas de base</b> pour le constructeur qui ne contient pas le type (${k("Empty")}), et un <b>cas récursif</b> qui rappelle la fonction sur la partie du même type.</li>
 <li>${k("Cons (c, r)")} se lit comme ${k("x :: r")} : c est le premier caractère, r la suite.</li>
-<li>Pour un arbre ${k("Node (x, g, d)")}, il y a deux appels : un sur g, un sur d.</li></ul>`,
+<li>Pour un arbre ${k("Node (x, g, d)")}, il y a deux appels : un sur g, un sur d.</li>
+<li>Une branche dont le constructeur ne contient pas le type ne rappelle rien : ${k("| Ent n -> Rat (1, n)")}.</li></ul>`,
   piege:`L'appel récursif se fait sur r, la partie plus petite, jamais sur la valeur entière : sinon le calcul ne s'arrête pas. Et pour un arbre, il faut les deux fils.`,
   meth:`<p>Janvier 2024, exercice 3 : mem, puis union.</p>${ml(`let rec mem x e = match e with
   | Empty -> false
@@ -35300,8 +35310,27 @@ let rec from_my_string s = match s with
 <li>« 1 » : premier caractère ${k("'1'")}, reste ${k('String.sub "1" 1 0')} = ${k('""')}.</li>
 <li>La chaîne vide donne ${k("Empty")}. Résultat : ${k("Cons ('L', Cons ('1', Empty))")}, comme dans le sujet.</li>
 <li>Retour : ${k("from_my_string")} de cette valeur donne ${k('"L" ^ ("1" ^ "")')} = ${k('"L1"')}.</li></ol>`},
- {id:"auxiliaire",t:"Arithmétique : la fonction auxiliaire « à partir du rang n »",pts:2.5,ou:"exercice 1 (Fermat 2022, Mersenne juin 2022, Pythagore 2024)",lect:2,exo:{g:"PF8",lv:1},
-  ess:`<ul><li>Pour savoir si p est un nombre de Mersenne, on ne sait pas jusqu'à quel rang chercher. Le sujet fait donc écrire d'abord ${k("estMersenneRec p n")} : « existe-t-il un Mₖ égal à p avec k ≥ n ? ».</li>
+ {id:"puissance",t:"La puissance avec ** et les conversions",pts:1,ou:"l'arithmétique, question 1 (2022, juin 2022)",lect:1,
+  rappel:{min:2,q:`Écris puis2 n, qui calcule 2ⁿ en int, avec ${k("**")} (qui ne prend que des float), float_of_int et int_of_float. Puis nbMersenne n, qui vaut 2ⁿ − 1.`,
+   r:ml(`let puis2 n = int_of_float (2. ** float_of_int n)
+let nbMersenne n = puis2 n - 1`)+`<p>${k("nbMersenne 3")} vaut 7.</p>`},
+  ess:`<ul><li>${k("**")} prend deux float et rend un float : ${k("2. ** 3.")} vaut ${k("8.")}.</li>
+<li>${k("float_of_int 3")} vaut ${k("3.")} et ${k("int_of_float 8.")} vaut ${k("8")}.</li>
+<li>Donc la puissance de deux entiers : ${k("int_of_float (float_of_int x ** float_of_int y)")}.</li></ul>`,
+  piege:`Écrire ${k("2 ** n")} est une erreur de type : 2 et n sont des int. Écris ${k("2.")} avec un point, et convertis n. Les opérations sur les float ont aussi un point : +. -. *. /.`,
+  meth:`<p>Janvier 2022 : Fₙ = 2<sup>2ⁿ</sup> + 1.</p>${ml(`let pow x y = int_of_float (float_of_int x ** float_of_int y)
+let fermat_nbr n = pow 2 (pow 2 n) + 1`)}
+<ol><li>${k("fermat_nbr 2")} = pow 2 (pow 2 2) + 1 = pow 2 4 + 1 = 17.</li>
+<li>${k("fermat_nbr 3")} = pow 2 8 + 1 = 257. Ce sont bien F₂ et F₃ du sujet.</li></ol>`},
+ {id:"auxiliaire",t:"Arithmétique : la fonction auxiliaire « à partir du rang n »",pts:2.5,ou:"l'arithmétique (Fermat 2022 ex. 1, Mersenne juin 2022 ex. 2, Pythagore 2024 ex. 1)",lect:2,
+  rappel:{min:4,q:`Janvier 2022 : écris is_fermat_rec p n (existe-t-il un Fₖ égal à p avec k ≥ n ?), puis is_fermat p, avec fermat_nbr. Par exemple, is_fermat_rec 15 2 vaut false, car F₂ = 17 &gt; 15.`,
+   r:ml(`let rec is_fermat_rec p n =
+  let f = fermat_nbr n in
+  if f > p then false
+  else f = p || is_fermat_rec p (n + 1)
+
+let is_fermat p = is_fermat_rec p 0`)+`<p>Fermat commence au rang 0 (F₀ = 3), Mersenne au rang 1 (M₁ = 1) : c'est le rang de départ donné à l'auxiliaire.</p>`},
+  ess:`<ul><li>Les nombres de Mersenne : Mₙ = 2ⁿ − 1 (M₁ = 1, M₂ = 3, M₃ = 7…), calculés par ${k("nbMersenne n")}. Pour savoir si p en est un, on ne sait pas jusqu'à quel rang chercher. Le sujet fait donc écrire d'abord ${k("estMersenneRec p n")} : « existe-t-il un Mₖ égal à p avec k ≥ n ? ».</li>
 <li>Trois cas : Mₙ = p, c'est ${k("true")} ; Mₙ > p, c'est ${k("false")}, car les suivants sont encore plus grands ; sinon, on essaie le rang n + 1.</li>
 <li>Puis la fonction demandée appelle l'auxiliaire au premier rang : ${k("estMersenne p = estMersenneRec p 1")}.</li></ul>`,
   piege:`Sans le cas « Mₙ > p », la fonction ne s'arrête jamais quand p n'est pas un nombre de Mersenne. Ce cas marche parce que la suite des Mₙ est croissante.`,
@@ -35314,21 +35343,8 @@ let rec from_my_string s = match s with
 let estMersenne p = estMersenneRec p 1`)}
 <ol><li>${k("estMersenneRec 15 3")} : M₃ = 7 &lt; 15, on passe au rang 4 ; M₄ = 15 : ${k("true")}, comme dans le sujet.</li>
 <li>${k("estMersenneRec 15 5")} : M₅ = 31 &gt; 15 : ${k("false")}.</li>
-<li>Même idée en 2024 : trouve_pytha x z essaie y = 1, 2, 3… et lève ${k("Not_found")} dès que y × y ≥ z × z. ${k("trouve_pytha 3 5")} vaut 4.</li></ol>
-<p>L'exercice qui suit : une fonction récursive sur un entier, du niveau de l'exercice 1.</p>`},
- {id:"puissance",t:"La puissance avec ** et les conversions",pts:1,ou:"exercice 1, question 1 (2022 et juin 2022)",lect:1,
-  rappel:{min:2,q:`Écris puis2 n, qui calcule 2ⁿ en int, avec ${k("**")} (qui ne prend que des float), float_of_int et int_of_float. Puis nbMersenne n, qui vaut 2ⁿ − 1.`,
-   r:ml(`let puis2 n = int_of_float (2. ** float_of_int n)
-let nbMersenne n = puis2 n - 1`)+`<p>${k("nbMersenne 3")} vaut 7.</p>`},
-  ess:`<ul><li>${k("**")} prend deux float et rend un float : ${k("2. ** 3.")} vaut ${k("8.")}.</li>
-<li>${k("float_of_int 3")} vaut ${k("3.")} et ${k("int_of_float 8.")} vaut ${k("8")}.</li>
-<li>Donc la puissance de deux entiers : ${k("int_of_float (float_of_int x ** float_of_int y)")}.</li></ul>`,
-  piege:`Écrire ${k("2 ** n")} est une erreur de type : 2 et n sont des int. Écris ${k("2.")} avec un point, et convertis n. Les opérations sur les float ont aussi un point : +. -. *. /.`,
-  meth:`<p>Janvier 2022 : Fₙ = 2<sup>2ⁿ</sup> + 1.</p>${ml(`let pow x y = int_of_float (float_of_int x ** float_of_int y)
-let fermat_nbr n = pow 2 (pow 2 n) + 1`)}
-<ol><li>${k("fermat_nbr 2")} = pow 2 (pow 2 2) + 1 = pow 2 4 + 1 = 17.</li>
-<li>${k("fermat_nbr 3")} = pow 2 8 + 1 = 257. Ce sont bien F₂ et F₃ du sujet.</li></ol>`},
- {id:"liste-n",t:"Fabriquer la liste des n premiers",pts:1.5,ou:"exercice 1, dernière question (tous les ans)",lect:1.5,
+<li>Même idée en 2024 : trouve_pytha x z essaie y = 1, 2, 3… et lève ${k("Not_found")} dès que y × y ≥ z × z. ${k("trouve_pytha 3 5")} vaut 4.</li></ol>`},
+ {id:"liste-n",t:"Fabriquer la liste des n premiers",pts:1.5,ou:"la dernière question de l'arithmétique, tous les ans",lect:1.5,
   rappel:{min:3,q:`Écris fermat_list n, la liste des n premiers nombres de Fermat (F₀ à Fₙ₋₁, dans l'ordre que tu veux), avec fermat_nbr.`,
    r:ml(`let rec fermat_list n =
   if n <= 0 then []
@@ -35377,7 +35393,8 @@ let rec map_sum2 f = function
  {id:"signature",t:"La signature d'une fonction qui prend une fonction",pts:1,ou:"« Quelle est sa signature ? » (2022, juin 2022), le type de mem (2024)",lect:1.5,exo:{g:"PF1",lv:4},
   ess:`<ul><li>On lit le corps et on note ce que chaque opération impose : ${k("x + 1")} force un int, ${k("f e")} force f à être une fonction.</li>
 <li>Ce qui n'est contraint par rien reste un type quelconque : ${k("'a")}, ${k("'b")}.</li>
-<li>Les flèches suivent l'ordre des arguments, et le dernier type est le résultat. Une fonction passée en argument se met entre parenthèses.</li></ul>`,
+<li>Les flèches suivent l'ordre des arguments, et le dernier type est le résultat. Une fonction passée en argument se met entre parenthèses.</li>
+<li>${k("List.map f l")} applique f à chaque élément ; ${k("List.filter p l")} garde les éléments où p vaut true, donc p doit rendre un bool. Les deux prennent une liste en dernier argument.</li></ul>`,
   piege:`Les types ${k("('a -> int) -> 'a list -> int")} et ${k("'a -> int -> 'a list -> int")} ne veulent pas dire la même chose : sans les parenthèses, f ne serait plus un seul argument.`,
   meth:`<p>Juin 2022 : la signature de prodFonc, dont le cas général est ${k("f (List.hd l) * prodFonc f (List.tl l)")}.</p>
 <ol><li>${k("*")} impose : ${k("f (List.hd l)")} est un int, et le résultat aussi.</li>
@@ -35393,11 +35410,12 @@ let prodFonc3 f l = List.fold_right (fun e acc -> f e * acc) l 1`)}
 <ol><li>${k("map_sum3 (fun x -> x * x) [1; 2; 3]")} : acc part de 0, puis 0 + 1 = 1, 1 + 4 = 5, 5 + 9 = 14.</li>
 <li>${k("prodFonc3 (fun x -> x + 1) [1; 2; 3]")} = f 1 * (f 2 * (f 3 * 1)) = 2 × 3 × 4 = 24.</li>
 <li>Pour garder ou enlever des éléments (simplifie_nombre en 2024) : ${k("fun e acc -> if … then acc else e :: acc")}, avec ${k("[]")} pour init.</li></ol>`},
- {id:"deux-args",t:"Une liste et un autre argument",pts:1,ou:"my_get (2022), union et inter (2024)",lect:1.5,exo:{g:"PF8",lv:3},
-  ess:`<ul><li>On filtre la liste, et l'autre argument suit : ${k("match li with | [] -> … | x :: r -> … f r (n - 1) …")}.</li>
+ {id:"deux-args",t:"Une fonction récursive sur une liste, comme au CC",pts:1,ou:"my_get (2022), union et inter (2024)",lect:1.5,exo:{g:"PF8",lv:3},
+  ess:`<ul><li>On filtre la liste : ${k("match li with | [] -> … | x :: r -> …")}. S'il y a un autre argument, il suit, et on le repasse à l'appel récursif.</li>
 <li>Souvent les deux diminuent ensemble : on avance dans la liste et le rang baisse de 1.</li>
-<li>Deux cas de base possibles : la liste est vide, ou l'autre argument est arrivé à 0.</li></ul>`,
-  piege:`N'oublie pas l'autre argument à l'appel récursif : ${k("prefLong r (n - 1)")}, pas ${k("prefLong r")}.`,
+<li>Deux cas de base possibles : la liste est vide, ou l'autre argument est arrivé à 0.</li>
+<li>Pour comparer deux éléments voisins (une liste triée), le motif ${k("x :: y :: r")} nomme les deux premiers.</li></ul>`,
+  piege:`N'oublie pas l'autre argument à l'appel récursif : ${k("my_get r (i - 1)")}, pas ${k("my_get r")}.`,
   meth:`<p>Janvier 2022, exercice 2, question 4 : le caractère d'indice i, sinon Invalid_argument.</p>${ml(`let rec my_get s i = match s with
   | Empty -> invalid_arg "my_get"
   | Cons (c, r) -> if i = 0 then c else my_get r (i - 1)`)}
@@ -35416,13 +35434,13 @@ let prodFonc3 f l = List.fold_right (fun e acc -> f e * acc) l 1`)}
  blanc:[
   {t:"Un test sans récursivité",ou:"exercice 1, question 1",pts:2,g:"PF8",lv:0},
   {t:"Une fonction récursive sur un entier",ou:"exercice 1",pts:3.5,g:"PF8",lv:1},
-  {t:"Lever une exception",ou:"exercice 1, question 2",pts:1.5,g:"PF7",lv:0},
-  {t:"Écrire une valeur du type somme",ou:"exercice 2",pts:1.5,g:"PF5",lv:0},
-  {t:"Ce que renvoie une fonction sur le type",ou:"exercice 2",pts:2.5,g:"PF5",lv:1},
-  {t:"La branche qui manque",ou:"exercice 2",pts:3,g:"PF5",lv:2},
-  {t:"La version récursive",ou:"exercice 3, question 1",pts:2,g:"PF6",lv:0},
-  {t:"La signature",ou:"exercice 3, question 1",pts:1.5,g:"PF1",lv:4},
-  {t:"La version avec un itérateur",ou:"exercice 3, question 3",pts:2.5,g:"PF6",lv:2}]
+  {t:"Rattraper une exception",ou:"exercice 1",pts:1.5,g:"PF7",lv:1},
+  {t:"Écrire une valeur du type somme",ou:"exercice 2",pts:2,g:"PF5",lv:0},
+  {t:"Une branche de match",ou:"exercice 2",pts:2.5,g:"PF3",lv:2},
+  {t:"Un cas oublié dans un match",ou:"exercice 2",pts:2.5,g:"PF4",lv:2},
+  {t:"Le cas général, avec l'appel récursif",ou:"exercice 3, question 1",pts:2,g:"PF3",lv:1},
+  {t:"La signature d'une fonction",ou:"exercice 3, question 1",pts:1.5,g:"PF1",lv:3},
+  {t:"La fonction donnée à l'itérateur",ou:"exercice 3, question 3",pts:2.5,g:"PF3",lv:3}]
 }};
 window.EXPRESS.pf.ct.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
 })();
@@ -35431,10 +35449,11 @@ window.EXPRESS.pf.ct.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
 <script>
 /* L'examen d'USI en 2 h (vendredi 15/01, date supposée, 100 % de la note, aucun document).
    Moitié Pompidor (10 points) : la forme de ses sujets de 2023 à 2026, regex et find 2 à 3 points, Bash 2 à 2,5,
-   Python (CSV, dictionnaire, parcours récursif) 4,5 à 6. Moitié Meynard (10 points) : aucun ancien sujet, points
-   estimés d'après la place de chaque chapitre dans son cours et ses TD (thèmes de matiere-usi.js).
-   Les exemples des méthodes sont exécutés par tools/verif/express/usi.js (vrais bash, python3 et gcc).
-   Les exercices sont tirés de gen-usi.js. */
+   Python 4,5 à 6 (CSV, dictionnaire, parcours récursif en 2025 et 2026). Moitié Meynard (10 points) : aucun ancien
+   sujet, points estimés d'après la place de chaque chapitre dans son cours et ses TD (thèmes de matiere-usi.js).
+   Relecture de menthe (24/11) prise en compte : chaque exercice tiré ne demande que ce que sa notion montre, et le sujet
+   express n'utilise pas les paliers des notions. Les exemples des méthodes sont exécutés par tools/verif/express/usi.js
+   (vrais bash, python3 et gcc). Les exercices sont tirés de gen-usi.js. */
 (()=>{
 const d36=h=>String(h).replace(/\$/g,"&#36;");
 const bloc=l=>(s,...v)=>d36(W.code(String.raw(s,...v),l)),SH=bloc("sh"),PY=bloc("py"),CC=bloc("c");
@@ -35443,15 +35462,21 @@ const K=(s,...v)=>"<code>"+d36(W.esc(String.raw(s,...v)))+"</code>";
  t:"L'examen d'USI en 2 h",du:"de l'examen",au:"à l'examen",duree:120,
  lead:"Tout le programme de l'examen de janvier, sans document, dans l'ordre de ce qui rapporte le plus. La moitié de Pompidor (10 points) suit ses sujets de 2023 à 2026 : le Python avec un fichier CSV, un dictionnaire et le parcours récursif d'un dossier, puis le script Bash, les expressions régulières et find. La moitié de Meynard (10 points) n'a aucun ancien sujet : ses points sont estimés d'après son cours et ses TD. Pour chaque notion : l'essentiel, la méthode sur un exemple, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
  carte:"tout l'examen en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Les deux moitiés de l'examen : d'abord celle de Pompidor, dans l'ordre de ses sujets (regex, find, Bash, Python), puis celle de Meynard (chemins, droits, liens, taille, processus, tubes, C). Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Les deux moitiés de l'examen : d'abord celle de Pompidor, dans l'ordre de ses sujets (regex, find, Bash, Python), puis celle de Meynard (umask, liens, processus, tubes, un programme C). Fais-les sans revenir aux notions. La note qui sort est une estimation : pour la moitié de Meynard, il n'y a aucun ancien sujet.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
- {id:"csv",t:"Python : un fichier CSV dans un dictionnaire",pts:2,ou:"Pompidor, dernière question, tous les ans",lect:2,exo:{g:"US8",lv:2},
+ {id:"csv",t:"Python : un fichier CSV dans un dictionnaire",pts:2,ou:"Pompidor, dernière question (2025, 2026)",lect:2.5,exo:{g:"US8",lv:2},
   ess:`<ul><li>On ouvre avec ${K`with open("images.csv") as fd:`}, puis on lit les lignes : ${K`fd.readlines()`} (une liste) ou ${K`for ligne in fd:`}.</li>
 <li>Chaque ligne se découpe : ${K`ligne.strip().split(",")`} donne la liste des champs.</li>
-<li>${K`d[cle] = valeur`} crée ou remplace une entrée. Pour une liste par clé : ${K`if cle in d: d[cle].append(x)`}, sinon ${K`d[cle] = [x]`}.</li></ul>`,
+<li>${K`d[cle] = valeur`} crée ou remplace une entrée. Pour une liste par clé : ${K`if cle in d: d[cle].append(x)`}, sinon ${K`d[cle] = [x]`}.</li>
+<li>Le nom du fichier donné au script (${K`python3 recus.py notes.csv`}) est ${K`sys.argv[1]`}, après ${K`import sys`}. S'il manque, ${K`len(sys.argv) < 2`} : on affiche un message et on arrête avec ${K`sys.exit()`}.</li></ul>`,
   piege:`Sans ${K`strip()`}, le dernier champ garde son retour à la ligne (${K`"12\n"`}). Et un nombre lu dans un fichier est du texte : ${K`int("12")`} pour compter avec.`,
-  meth:`<p>Janvier 2026 : le dictionnaire ${K`statistiques`}, avec ce fichier images.csv.</p>${SH`jpg,png,gif,webp
+  meth:`<p>Le fichier donné en paramètre :</p>${PY`import sys
+if len(sys.argv) < 2:
+    print("Donne le nom du fichier")
+    sys.exit()
+print("Je lis", sys.argv[1])`}
+<p>Janvier 2026 : le dictionnaire ${K`statistiques`}, avec ce fichier images.csv.</p>${SH`jpg,png,gif,webp
 10,25,0,12`}${PY`statistiques = {}
 with open("images.csv") as fd:
     lignes = fd.readlines()
@@ -35460,10 +35485,31 @@ with open("images.csv") as fd:
     for i in range(len(images)):
         statistiques[images[i]] = int(nombres[i])
 print(statistiques)`}
-<ol><li>Deux lignes : la première donne les clés, la seconde les nombres, à la même place.</li>
-<li>${K`range(len(images))`} parcourt les places 0, 1, 2, 3.</li>
-<li>Affichage : ${K`{'jpg': 10, 'png': 25, 'gif': 0, 'webp': 12}`}.</li></ol>`},
- {id:"parcours",t:"Python : le parcours récursif d'un dossier",pts:3,ou:"Pompidor, dernière question, tous les ans",lect:2,exo:{g:"US8",lv:3},
+<ol><li>Sans paramètre, le premier script affiche « Donne le nom du fichier » et s'arrête ; avec notes.csv, il affiche « Je lis notes.csv ».</li>
+<li>images.csv a deux lignes : la première donne les clés, la seconde les nombres, à la même place.</li>
+<li>${K`range(len(images))`} parcourt les places 0, 1, 2, 3. Affichage : ${K`{'jpg': 10, 'png': 25, 'gif': 0, 'webp': 12}`}.</li></ol>`},
+ {id:"parcours",t:"Python : le parcours récursif d'un dossier",pts:3,ou:"Pompidor, dernière question (janvier et juin 2025, 2026)",lect:2,
+  rappel:{min:5,q:`Écris de mémoire le script qui compte, dans un dictionnaire ${K`nb`}, les fichiers de chaque extension, dans le dossier donné en paramètre et dans tous ses sous-dossiers, avec une fonction récursive.`,
+   r:PY`import os, sys
+
+nb = {}
+
+def parcours(dossier):
+    for fichier in os.listdir(dossier):
+        chemin = dossier + os.path.sep + fichier
+        if os.path.isdir(chemin):
+            parcours(chemin)
+        else:
+            data = fichier.split(".")
+            if len(data) > 1:
+                ext = data[-1]
+                if ext in nb:
+                    nb[ext] += 1
+                else:
+                    nb[ext] = 1
+
+parcours(sys.argv[1])
+print(nb)`},
   ess:`<ul><li>${K`os.listdir(dossier)`} donne les <b>noms</b> de ce qu'il y a dans le dossier, sans le chemin.</li>
 <li>Le chemin complet : ${K`dossier + os.path.sep + nom`} (ou ${K`dossier + "/" + nom`}).</li>
 <li>${K`os.path.isdir(chemin)`} : si c'est un dossier, la fonction <b>s'appelle elle-même</b> dessus ; sinon on traite le fichier.</li>
@@ -35483,69 +35529,62 @@ parcours(sys.argv[1])
 print(statistiques)`}
 <ol><li>Un dossier : on descend dedans, avec le chemin complet.</li>
 <li>Un fichier : on prend son extension ; si c'est une clé du dictionnaire, on ajoute 1.</li>
-<li>Avec a.jpg, s1/b.png, s1/s2/c.jpg et notes.txt : ${K`{'jpg': 12, 'png': 26, 'gif': 0, 'webp': 12}`}. notes.txt est ignoré : txt n'est pas une clé.</li></ol>`},
- {id:"bash",t:"Un script Bash : une boucle et un test",pts:2.5,ou:"Pompidor, question 2 ou 3, tous les ans",lect:2,exo:{g:"US7",lv:3},
-  ess:`<ul><li>${K`for f in *.txt`} : bash remplace ${K`*.txt`} par les fichiers du dossier courant qui finissent par .txt. ${K`for f in $(ls $1)`} : les noms du dossier passé en paramètre.</li>
-<li>${K`$1`} est le premier paramètre, ${K`$#`} le nombre de paramètres.</li>
-<li>Un test : ${K`if [ $# -ne 1 ]`} ou ${K`if [[ $f == *.txt ]]`}, puis ${K`then … fi`}. Une boucle : ${K`do … done`}.</li></ul>`,
-  piege:`La commande ${K`ls $1`} donne des noms seuls : pour agir sur le fichier, il faut le chemin ${K`$1/$f`}. Et des espaces partout dans les crochets : ${K`[ $# -eq 1 ]`}.`,
+<li>Avec a.jpg, s1/b.png, s1/s2/c.jpg et notes.txt : ${K`{'jpg': 12, 'png': 26, 'gif': 0, 'webp': 12}`}. notes.txt est ignoré : txt n'est pas une clé.</li></ol>
+<p>À toi ensuite : le même parcours, de mémoire, qui crée lui-même les clés. Le sujet express te le fera écrire entier.</p>`},
+ {id:"bash",t:"Un script Bash : variables, boucle et test",pts:2.5,ou:"Pompidor, question 2 ou 3 (2 à 2,5 points chaque année)",lect:2.5,exo:{g:"US7",lv:2},
+  ess:`<ul><li>Une variable : ${K`n=0`}, sans espace autour du =, puis ${K`$n`} pour la lire. Un calcul : ${K`n=$((n + 1))`}.</li>
+<li>${K`$1`} est le premier paramètre, ${K`$#`} le nombre de paramètres, et ${K`for p in "$@"`} parcourt tous les paramètres, un par un.</li>
+<li>${K`for f in *.txt`} : bash remplace ${K`*.txt`} par les fichiers du dossier courant qui finissent par .txt. ${K`for mot in $(cat $1)`} : les mots du fichier passé en paramètre.</li>
+<li>Un test : ${K`if [ -f "$f" ]`} (un fichier ordinaire), ${K`[ -d "$f" ]`} (un répertoire), ${K`[ $# -ne 1 ]`}, puis ${K`then … fi`}. Une boucle : ${K`do … done`}.</li></ul>`,
+  piege:`Avec des espaces, ${K`n = 0`} ne marche pas : bash cherche une commande n. À l'inverse, il faut des espaces dans les crochets : ${K`[ $# -eq 1 ]`}. Et ${K`ls $1`} donne des noms seuls : le chemin est ${K`$1/$f`}.`,
   meth:`<p>Janvier 2026 (2 points) : ajouter le préfixe old à tous les fichiers .txt du dossier courant.</p>${SH`for fichier in *.txt
 do
     mv "$fichier" "old$fichier"
 done`}
-<ol><li>Renommer, c'est ${K`mv ancien nouveau`}.</li>
-<li>Avec a.txt, b.txt et c.sh : il reste olda.txt, oldb.txt et c.sh.</li></ol>
-<p>Janvier 2025 (2,5 points) : supprimer les .txt du dossier passé en paramètre, avec une boucle.</p>${SH`for f in $(ls $1)
+<p>Comme en 2023 et 2024 : la somme des nombres du fichier donné en paramètre.</p>${SH`somme=0
+for nombre in $(cat $1)
 do
-    if [[ $1/$f == *.txt ]]
+    somme=$((somme + nombre))
+done
+echo $somme`}
+<p>Comme en 2023 et juin 2025 : compter les fichiers ordinaires du dossier donné en paramètre.</p>${SH`n=0
+for f in $1/*
+do
+    if [ -f "$f" ]
     then
-        rm $1/$f
+        n=$((n + 1))
     fi
-done`}`},
- {id:"c",t:"Le C : passage par valeur, pointeurs et static",pts:2,ou:"Meynard, estimé (cours et TD, aucun ancien sujet)",lect:2,exo:{g:"US9",lv:2},
-  ess:`<ul><li>En C, une fonction reçoit une <b>copie</b> de ses paramètres : la modifier ne change pas la variable de l'appelant.</li>
-<li>Pour changer une variable de l'appelant, on passe son <b>adresse</b> ${K`&a`}, et la fonction écrit ${K`*p = …`}.</li>
-<li>Une variable locale disparaît à la fin de la fonction. Une variable ${K`static`} garde sa valeur d'un appel à l'autre.</li></ul>`,
-  piege:`La fonction ${K`void plus1(int x) { x = x + 1; }`} ne change rien dans main : x est une copie.`,
-  meth:`${CC`#include <stdio.h>
-void plus1(int x) { x = x + 1; }
-void plus1p(int *p) { *p = *p + 1; }
-int compte(void) { static int n = 0; n = n + 1; return n; }
-int main(void) {
-  int a = 5;
-  plus1(a);
-  printf("%d\n", a);
-  plus1p(&a);
-  printf("%d\n", a);
-  compte(); compte();
-  printf("%d\n", compte());
-  return 0;
-}`}
-<ol><li>${K`plus1(a)`} travaille sur une copie : on affiche 5.</li>
-<li>${K`plus1p(&a)`} écrit à l'adresse de a : on affiche 6.</li>
-<li>n est static : 1, puis 2, puis 3. On affiche 3.</li></ol>`},
- {id:"droits",t:"Les droits : qui peut faire quoi, et le umask",pts:1.5,ou:"Meynard, estimé (TD ex. 16, 17 et 25)",lect:2,exo:{g:"US1",lv:3},
-  ess:`<ul><li>Trois groupes de trois lettres : le propriétaire, le groupe, les autres. r = 4, w = 2, x = 1 : rwxr-x--- s'écrit 750.</li>
+done
+echo $n`}
+<ol><li>Avec a.txt, b.txt et c.sh, le premier laisse olda.txt, oldb.txt et c.sh.</li>
+<li>Avec un fichier qui contient « 3 5 » puis « 10 », le deuxième affiche 18.</li>
+<li>Dans un dossier avec deux fichiers et un sous-dossier, le troisième affiche 2 : le sous-dossier n'est pas un fichier ordinaire.</li></ol>`},
+ {id:"droits",t:"Les droits : qui peut faire quoi, chmod et umask",pts:1.5,ou:"Meynard, estimé (TD ex. 16, 17 et 25)",lect:2,exo:{g:"US1",lv:3},
+  ess:`<ul><li>Trois groupes de trois lettres : le propriétaire (u), le groupe (g), les autres (o). r = 4, w = 2, x = 1 : rwxr-x--- s'écrit 750.</li>
 <li>Sur un fichier : r pour le lire, w pour le modifier. Sur un répertoire : r pour lister, w pour y créer ou supprimer, x pour y entrer ou le traverser.</li>
 <li>Supprimer un fichier demande w sur le <b>répertoire</b>, pas sur le fichier.</li>
+<li>chmod en chiffres (${K`chmod 750 projet`}) ou en lettres : ${K`chmod g-w tp`} retire w au groupe, ${K`chmod u+x s.sh`} ajoute x au propriétaire, ${K`chmod o=r f`} donne exactement r aux autres.</li>
 <li>Le umask retire des droits : un nouveau fichier part de 666, un nouveau répertoire de 777.</li></ul>`,
   piege:`Le umask enlève des bits, il ne se soustrait pas : 666 avec umask 033 donne 644, pas 633.`,
-  meth:`${SH`chmod 750 projet
+  meth:`<p>Le répertoire tp est en 770 (rwxrwx---).</p>${SH`chmod 750 projet
+chmod g-w tp
 umask 027
 touch f
 mkdir d`}
 <ol><li>${K`chmod 750 projet`} : 7 = rwx, 5 = r-x, 0 = --- ; projet devient rwxr-x---.</li>
+<li>${K`chmod g-w tp`} : le groupe perd w ; tp passe de rwxrwx--- à rwxr-x--- (750). Les autres droits ne bougent pas.</li>
 <li>Avec umask 027 : le fichier f naît en 640 (rw-r-----), le répertoire d en 750 (rwxr-x---).</li>
 <li>Avec umask 033 : un fichier naît en 644. 6 = 110 et 3 = 011 : on barre le dernier bit, il reste 100 = 4.</li></ol>`},
- {id:"regex",t:"Les expressions régulières avec grep -E",pts:1.5,ou:"Pompidor, question 1 (2025, 2026)",lect:1.5,exo:{g:"US6",lv:2},
+ {id:"regex",t:"Les expressions régulières avec grep -E",pts:1.5,ou:"Pompidor, question 1 (2024, 2025, 2026)",lect:2,exo:{g:"US6",lv:2},
   ess:`<ul><li>${K`^`} colle au début, ${K`$`} à la fin. ${K`.`} est n'importe quel caractère, ${K`\.`} un vrai point.</li>
-<li>${K`[0-9]`} un chiffre, ${K`[a-z]`} une minuscule. Après un morceau : ${K`+`} une fois ou plus, ${K`*`} zéro fois ou plus, ${K`?`} facultatif.</li>
-<li>${K`(jpg|jpeg)`} : l'un ou l'autre. Ces signes demandent ${K`grep -E`}.</li></ul>`,
+<li>${K`[0-9]`} un chiffre, ${K`[a-z]`} une minuscule, ${K`[^/]`} n'importe quel caractère <b>sauf</b> / (la classe niée).</li>
+<li>Après un morceau : ${K`+`} une fois ou plus, ${K`*`} zéro fois ou plus, ${K`?`} facultatif, ${K`{2}`} exactement 2 fois, ${K`{1,3}`} de 1 à 3 fois. ${K`(jpg|jpeg)`} : l'un ou l'autre. Ces signes demandent ${K`grep -E`}.</li></ul>`,
   piege:`Sans ${K`^`} ni ${K`$`}, l'expression trouve un morceau n'importe où : ${K`\.jpg`} garde aussi photo.jpg.bak.`,
   meth:`<p>Janvier 2026 (2 points) : les fichiers du dossier courant qui finissent par .jpg ou .jpeg.</p>${SH`ls | grep -E "\.jpe?g$"`}
 <ol><li>${K`\.`} pour le vrai point, ${K`e?`} pour le e facultatif, ${K`$`} pour la fin du nom.</li>
 <li>Parmi a.jpg, b.jpeg, c.jpg.bak, d.png et xjpg, il garde a.jpg et b.jpeg.</li>
-<li>Janvier 2025 : « deux entiers séparés par un point », c'est ${K`^[0-9]+\.[0-9]+$`}. 12.5 passe ; 12.5.3 et .5 ne passent pas.</li></ol>`},
+<li>Janvier 2025 : « deux entiers séparés par un point », c'est ${K`^[0-9]+\.[0-9]+$`}. 12.5 passe ; 12.5.3 et .5 ne passent pas.</li>
+<li>Janvier 2024 : « deux points, et seulement deux » : ${K`^[^.]*\.[^.]*\.[^.]*$`}. Entre les points, ${K`[^.]*`} : tout sauf un point. a.b.c passe ; a.b et a.b.c.d ne passent pas.</li></ol>`},
  {id:"processus",t:"Les processus, et l'enchaînement des commandes",pts:1.5,ou:"Meynard, estimé (cours et TD ex. 30 à 39)",lect:1.5,exo:{g:"US10",lv:1},
   ess:`<ul><li>Pour une commande externe, bash crée un processus : il se clone (fork), le clone devient la commande (exec), bash attend (wait). Les commandes internes (cd, echo, export, exit) n'en créent pas.</li>
 <li>${K`a ; b`} : les deux. ${K`a && b`} : b seulement si a réussit. ${K`a || b`} : b seulement si a échoue.</li>
@@ -35571,6 +35610,58 @@ cut -d: -f2 notes.txt | sort | head -n 1`}
 <ol><li>${K`cut -d: -f2`} garde les notes : 12, 9, 15, 10.</li>
 <li>${K`sort -n`} les range en nombres : 9, 10, 12, 15 ; la première ligne est 9.</li>
 <li>Sans -n, le tri est celui des mots : 10, 12, 15, 9 ; la première ligne est 10.</li></ol>`},
+ {id:"compil",t:"La chaîne de compilation : gcc, en-têtes, argc et argv",pts:1,ou:"Meynard, estimé (chapitre 5 du cours, TD ex. 47 à 52)",lect:2,exo:{g:"US9",lv:1},
+  ess:`<ul><li>Un <b>interpréteur</b> (bash, python3) lit le programme et l'exécute au fur et à mesure ; un <b>compilateur</b> (gcc) le traduit d'abord en entier en un exécutable.</li>
+<li>Les étapes de gcc : le prétraitement (les ${K`#include`} sont recopiés ; ${K`gcc -E`}), la compilation en langage d'assemblage (${K`gcc -S`}, fichier .s), l'assemblage en fichier objet (${K`gcc -c`}, fichier .o), puis l'édition des liens, qui donne l'exécutable.</li>
+<li>Un fichier d'en-tête (${K`stdio.h`}) <b>déclare</b> les fonctions ; une bibliothèque contient leur code déjà compilé, ajouté à l'édition des liens (${K`-lm`} pour la bibliothèque mathématique). Deux autres options : ${K`-Wall`} affiche tous les avertissements, ${K`-g`} ajoute les informations de débogage pour gdb.</li>
+<li>${K`int main(int argc, char *argv[])`} : argc compte les mots de la commande, nom du programme compris ; ${K`argv[0]`} est ce nom, ${K`argv[1]`} le premier paramètre, du texte (${K`atoi`} pour un nombre).</li></ul>`,
+  piege:`Sans option, gcc va jusqu'à l'exécutable et l'appelle a.out. Et ${K`-o`} donne le nom du résultat : ${K`gcc -o prog.c prog.c`} écraserait ton fichier source.`,
+  meth:`<p>Le fichier double.c :</p>${CC`#include <stdio.h>
+#include <stdlib.h>
+int main(int argc, char *argv[]) {
+  printf("%d %s\n", argc, argv[0]);
+  if (argc > 1) printf("%d\n", 2 * atoi(argv[1]));
+  return 0;
+}`}${SH`gcc -c double.c
+gcc -o double double.o
+./double 21`}
+<ol><li>${K`gcc -c double.c`} s'arrête au fichier objet double.o, sans édition des liens.</li>
+<li>${K`gcc -o double double.o`} fait l'édition des liens et nomme l'exécutable double.</li>
+<li>${K`./double 21`} : argc vaut 2 et argv[0] est « ./double », donc la première ligne est « 2 ./double ». Puis atoi("21") = 21, et le programme affiche 42.</li></ol>`},
+ {id:"c",t:"Le C : passage par valeur, portée et static",pts:1,ou:"Meynard, estimé (cours et TD, aucun ancien sujet)",lect:2.5,exo:{g:"US9",lv:2},
+  ess:`<ul><li>En C, une fonction reçoit une <b>copie</b> de ses paramètres : la modifier ne change pas la variable de l'appelant. Pour la changer, on passe son <b>adresse</b> ${K`&a`}, et la fonction écrit ${K`*p = …`}.</li>
+<li><b>Portée</b> : un nom désigne la déclaration la plus proche, en remontant les blocs ${K`{ … }`} qui l'entourent. Un x déclaré dans un bloc, ou un paramètre x, cache la variable globale x.</li>
+<li>Une variable locale vit dans la pile, le temps de l'appel. ${K`static`} a deux sens : devant une variable locale, elle est créée une seule fois dans le segment statique et garde sa valeur d'un appel à l'autre ; devant une variable globale, elle n'est visible que dans son fichier.</li></ul>`,
+  piege:`La fonction ${K`void plus1(int x) { x = x + 1; }`} ne change rien dans main : x est une copie.`,
+  meth:`${CC`#include <stdio.h>
+void plus1(int x) { x = x + 1; }
+void plus1p(int *p) { *p = *p + 1; }
+int compte(void) { static int n = 0; n = n + 1; return n; }
+int main(void) {
+  int a = 5;
+  plus1(a);
+  printf("%d\n", a);
+  plus1p(&a);
+  printf("%d\n", a);
+  compte(); compte();
+  printf("%d\n", compte());
+  return 0;
+}`}
+<ol><li>${K`plus1(a)`} travaille sur une copie : on affiche 5.</li>
+<li>${K`plus1p(&a)`} écrit à l'adresse de a : on affiche 6.</li>
+<li>n est static : 1, puis 2, puis 3. On affiche 3.</li></ol>
+<p>La portée :</p>${CC`#include <stdio.h>
+int x = 1;
+void f(int x) { printf("%d\n", x); }
+int main(void) {
+  { int x = 3; printf("%d\n", x); }
+  printf("%d\n", x);
+  f(7);
+  return 0;
+}`}
+<ol><li>Dans le bloc, le x le plus proche vaut 3 : on affiche 3.</li>
+<li>Hors du bloc, on remonte jusqu'à la globale : 1.</li>
+<li>Dans f, le paramètre x cache la globale : 7.</li></ol>`},
  {id:"find",t:"find : chercher des fichiers",pts:1,ou:"Pompidor, question 1 (2025)",lect:1,exo:{g:"US5",lv:3},
   ess:`<ul><li>${K`find départ -name "motif"`} : le départ est ${K`.`} (ici), ${K`..`} (le dossier parent) ou ${K`~`} (ta maison) ; le motif utilise ${K`*`}.</li>
 <li>${K`-type f`} pour les fichiers, ${K`-type d`} pour les répertoires.</li>
@@ -35580,11 +35671,12 @@ cut -d: -f2 notes.txt | sort | head -n 1`}
 find . -type f -name "*.txt" -exec wc -l {} \;`}
 <ol><li>Janvier 2025 (1 point) : les fichiers dont le nom contient DATA, à partir du dossier parent.</li>
 <li>La 2<sup>e</sup> ligne affiche le nombre de lignes de chaque fichier .txt, dans tous les sous-dossiers.</li></ol>`},
- {id:"liens",t:"Inodes et liens : ln, ln -s, rm",pts:1,ou:"Meynard, estimé (TD ex. 21 à 29)",lect:1.5,exo:{g:"US3",lv:1},
-  ess:`<ul><li>Un <b>lien dur</b> (${K`ln a b`}) est un deuxième nom pour le même inode : le compteur de liens passe à 2.</li>
+ {id:"liens",t:"Inodes et liens : ln, ln -s, rm",pts:1,ou:"Meynard, estimé (TD ex. 21 à 29)",lect:1.5,exo:{g:"US3",lv:0},
+  ess:`<ul><li>Un <b>inode</b> est la fiche d'un fichier : son type, ses droits, sa taille, son nombre de liens et les adresses de ses blocs. Le nom n'y est pas : il est rangé dans le répertoire, avec le numéro de l'inode.</li>
+<li>Un <b>lien dur</b> (${K`ln a b`}) est un deuxième nom pour le même inode : le compteur de liens passe à 2.</li>
 <li>Un <b>lien symbolique</b> (${K`ln -s a c`}) est un petit fichier qui contient le chemin a.</li>
 <li>${K`rm`} enlève un nom ; les données disparaissent quand le compteur arrive à 0.</li>
-<li>Un répertoire a 2 + (nombre de ses sous-répertoires) liens : son nom, son ${K`.`} et le ${K`..`} de chaque sous-répertoire.</li></ul>`,
+<li>Un répertoire a 2 + (nombre de ses sous-répertoires) liens : son nom, son ${K`.`} et le ${K`..`} de chaque sous-répertoire. Un inode qui n'a qu'un lien ne peut donc pas être un répertoire.</li></ul>`,
   piege:`Après ${K`rm a`}, le lien symbolique c est cassé, mais le lien dur b marche toujours.`,
   meth:`${SH`echo bonjour > a
 ln a b
@@ -35594,11 +35686,14 @@ cat b
 cat c`}
 <ol><li>Après ${K`ln a b`}, a et b sont le même inode, avec 2 liens.</li>
 <li>${K`rm a`} : il reste 1 lien, b. ${K`cat b`} affiche bonjour.</li>
-<li>c contient le chemin a, qui n'existe plus : ${K`cat c`} donne une erreur.</li></ol>`},
+<li>c contient le chemin a, qui n'existe plus : ${K`cat c`} donne une erreur.</li>
+<li>Un répertoire r qui a deux sous-répertoires s1 et s2 a 4 liens.</li></ol>`},
  {id:"taille",t:"La taille maximale d'un fichier",pts:1,ou:"Meynard, estimé (exercices de son cours)",lect:1.5,exo:{g:"US3",lv:2},
   ess:`<ul><li>L'inode garde 10 adresses directes de blocs, puis une simple indirecte (un bloc rempli d'adresses), une double et une triple.</li>
 <li>n = taille d'un bloc ÷ taille d'une adresse : le nombre d'adresses dans un bloc.</li>
-<li>Taille maximale = (10 + n + n² + n³) × taille d'un bloc. Calcule en puissances de 2 : 1 Kio = 2¹⁰ octets.</li></ul>`,
+<li>Taille maximale = (10 + n + n² + n³) × taille d'un bloc. Avec seulement deux niveaux d'indirection, on s'arrête à n². Calcule en puissances de 2 : 1 Kio = 2¹⁰ octets.</li>
+<li>Blocs 2 fois plus grands : n double aussi, donc le terme n³ × bloc est multiplié par 2 × 2 × 2 × 2 = 16 (un facteur par niveau d'adresses, un pour le bloc).</li>
+<li>Les blocs qui ne contiennent que des adresses sont « volés » aux données : un fichier de m blocs de données en demande environ m ÷ n de plus.</li></ul>`,
   piege:`Si le champ « taille » de l'inode n'a que 32 bits, un fichier ne dépasse pas 2³² octets = 4 Gio, même quand les blocs permettraient plus.`,
   meth:`<p>Blocs de 1 Kio, adresses de 4 octets.</p>
 <ol><li>n = 2¹⁰ ÷ 2² = 2⁸ = 256 adresses par bloc.</li>
@@ -35606,7 +35701,8 @@ cat c`}
 <li>Fois 1 Kio : 10 Kio + 256 Kio + 64 Mio + 16 Gio, environ 16 Gio.</li></ol>`},
  {id:"chemins",t:"Les chemins : absolus, relatifs, cd",pts:1,ou:"Meynard, estimé (TD ex. 7 à 11)",lect:1,exo:{g:"US2",lv:1},
   ess:`<ul><li>Un chemin <b>absolu</b> commence par ${K`/`}, la racine. Un chemin <b>relatif</b> part du dossier où tu es.</li>
-<li>${K`.`} est le dossier courant, ${K`..`} le parent, ${K`~`} ta maison. ${K`cd`} tout seul ramène à la maison ; ${K`pwd`} affiche où tu es.</li></ul>`,
+<li>${K`.`} est le dossier courant, ${K`..`} le parent, ${K`~`} ta maison. ${K`cd`} tout seul ramène à la maison ; ${K`pwd`} affiche où tu es.</li>
+<li>Un cd vers un dossier qui n'existe pas, ou vers un fichier, échoue : tu restes où tu étais.</li></ul>`,
   piege:`Un chemin relatif change de sens quand tu changes de dossier : refais le trajet un cd à la fois.`,
   meth:`<p>Tu es dans /home/alice/l1.</p>${SH`cd ../docs
 pwd
@@ -35628,13 +35724,11 @@ pwd`}
   {t:"Une commande find",ou:"Pompidor, question 1",pts:1,g:"US5",lv:1},
   {t:"Un script Bash avec une boucle et un test",ou:"Pompidor, question 2",pts:2.5,g:"US7",lv:3},
   {t:"Le parcours récursif en Python",ou:"Pompidor, question 3",pts:4.5,g:"US8",lv:3},
-  {t:"Une suite de cd",ou:"Meynard",pts:1,g:"US2",lv:1},
-  {t:"Le umask",ou:"Meynard",pts:1.5,g:"US1",lv:2},
-  {t:"ln, ln -s, rm",ou:"Meynard",pts:1.5,g:"US3",lv:1},
-  {t:"La taille maximale d'un fichier",ou:"Meynard",pts:1,g:"US3",lv:2},
-  {t:"L'enchaînement des commandes et le code de retour",ou:"Meynard",pts:1.5,g:"US10",lv:1},
-  {t:"Deux filtres à enchaîner",ou:"Meynard",pts:1.5,g:"US4",lv:2},
-  {t:"Passage par valeur et portée en C",ou:"Meynard",pts:2,g:"US9",lv:2}]
+  {t:"Le umask",ou:"Meynard",pts:2,g:"US1",lv:2},
+  {t:"ln, ln -s, rm",ou:"Meynard",pts:2,g:"US3",lv:1},
+  {t:"Combien de processus",ou:"Meynard",pts:2,g:"US10",lv:0},
+  {t:"Ce qu'affiche un tube",ou:"Meynard",pts:2,g:"US4",lv:0},
+  {t:"Un programme C et son code de retour",ou:"Meynard",pts:2,g:"US9",lv:3}]
 }};
 window.EXPRESS.usi.exam.notions.forEach(n=>{n.piege="<p>"+n.piege+"</p>";});
 })();
