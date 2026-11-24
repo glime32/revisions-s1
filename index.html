@@ -20099,6 +20099,63 @@ function noyauImage(A,o){const n=3,m=A.length,X=XYZ.slice(0,n),L=YL.slice(0,m),R
     bonneTxt:[o.k?vt(v):"",o.i?eqs.map(txt).join(" et "):"",o.cc?repB.inj+", non":""].filter(Boolean).join(" ; "),repBonne:repB,repFausse:Object.assign({},repB,o.k?{v:repF.v}:repF),
     nature:(o.cc?"cc":o.k?"noyau":"image")+m+"r"+r,ens:{k:"ki",A,v,eqs:eqs.map(w=>w.map(x=>{x=q(x);return x.n/x.d;})),r,inj,o}};}
 
+/* ---------- AL14 : F = G ? (exercice 1 des CC2 2022 et 2023) ---------- */
+const ppcm=L=>L.reduce((s,x)=>{const d=q(x).d;let a=s,b=d;while(b)[a,b]=[b,a%b];return s*d/a;},1);
+const valEq=(e,w)=>e.reduce((s,c,k)=>s+c*w[k],0),F1="f<sub>1</sub>",F2="f<sub>2</sub>";
+function tireFG(R,egal){const X=XYZ;for(;;){
+  const M=[[1,R.ent(-2,2),R.ent(-2,2),R.ent(-2,2)],[R.ent(-2,2),R.ent(-2,2),R.ent(-2,2),R.ent(-2,2)]];
+  if(M[1].filter(x=>x).length<2)continue;
+  const R0=echelonne(M,[0,0]);if(R0.rang!==2||R0.piv.join()!=="0,1"||!entier(R0))continue;
+  const sol=solution(R0,X),B=sol.libres.map(L=>sol.S.map(e=>e.k[X[L]]||Q(0)));if(B.some(f=>ppcm(f)!==1))continue;
+  const F=B.map(f=>f.map(x=>q(x).n));if(F.flat().some(x=>Math.abs(x)>5))continue;
+  const co=()=>{for(;;){const c=[R.ent(-2,2),R.ent(-2,2)];if(c.some(x=>x))return c;}},c1=co(),c2=co();if(c1[0]*c2[1]===c1[1]*c2[0])continue;
+  let u=F[0].map((x,k)=>c1[0]*x+c1[1]*F[1][k]),v=F[0].map((x,k)=>c2[0]*x+c2[1]*F[1][k]);
+  if(!egal){u=u.slice();u[R.ent(0,3)]+=R.choix([1,-1,2]);if(R()<0.35){v=v.slice();v[R.ent(0,3)]+=R.choix([1,-1]);}if(R()<0.5)[u,v]=[v,u];}
+  if(u.concat(v).some(x=>Math.abs(x)>9)||u.every(x=>!x)||v.every(x=>!x))continue;
+  const RG=echelonne(colonnes([u,v]),X.map((_,i)=>X.map((_,j)=>i===j?1:0)));if(RG.rang!==2||!entier(RG))continue;
+  const dans=[u,v].map(w=>M.every(e=>!valEq(e,w)));if(dans.every(Boolean)!==egal)continue;
+  const eqG=[2,3].map(i=>{let w=X.map((_,j)=>q(RG.E[i][2+j]).n);if(w.find(x=>x)<0)w=w.map(x=>-x);return w;});
+  return {M,F,u,v,dans,R0,sol,eqG,egal};}}
+const FT=T=>`F = {(x, y, z, t) ∈ ℝ⁴ | ${T.M.map(e=>comb(e,XYZ)+" = 0").join(", ")}}`;
+const corpsFG=T=>`<p>${fl(FT(T))}</p><p>G = Vect(u, v), avec ${fx("u = "+vt(T.u))} et ${fx("v = "+vt(T.v))}.</p>`;
+function etapesGen(T){const X=XYZ,E=[{w:`On résout le système de F : ${sys(T.M,[0,0],X)}`,why:`Les vecteurs de F sont exactement les solutions de ce système homogène.`,pts:0.5}];
+  etapesOps(E,T.R0,X,M=>mat(M.map(r=>r.slice(0,-1))),"Le second membre est nul et le reste : on ne l'écrit pas.");const {remonte}=lecteur(T.R0,T.sol,X);
+  E.push({w:`z et t n'ont pas de pivot : ce sont les variables libres.<br>${[1,0].map(r=>remonte(r)).join("<br>")}<br>Avec z = 1 et t = 0 : ${F1} = ${vt(T.F[0])} ; avec z = 0 et t = 1 : ${F2} = ${vt(T.F[1])}. <b>F = Vect(${F1}, ${F2})</b> : (${F1}, ${F2}) est une famille génératrice de F.`,why:`Chaque solution s'écrit z${F1} + t${F2} : ces deux vecteurs engendrent F.`,pts:1.5});return E;}
+function etapeFG(T,eqG){const X=XYZ,ligne=w=>T.M.map(e=>fx(`${verifTxt(e,w)} = ${nb(valEq(e,w))}`)).join(" et ");
+  const tests=`Pour u : ${ligne(T.u)}. Pour v : ${ligne(T.v)}.`;
+  if(!T.egal){const k=T.dans.indexOf(false),nm=k?"v":"u";return {w:`${tests} <b>${nm} n'est pas dans F</b> : une équation de F n'est pas vérifiée. Donc G ⊄ F, et <b>F ≠ G</b>.`,why:`Si F = G, tout vecteur de G serait dans F. Un seul vecteur de G hors de F suffit à montrer F ≠ G.`,pts:2};}
+  const lg=w=>eqG.map(e=>fx(`${verifTxt(e,w)} = ${nb(valEq(e,w))}`)).join(" et ");
+  return {w:`${tests} u et v sont dans F, donc G = Vect(u, v) ⊂ F.<br>Dans l'autre sens, F = Vect(${F1}, ${F2}) avec ${F1} = ${vt(T.F[0])} et ${F2} = ${vt(T.F[1])}, et G a pour équations ${eqG.map(e=>fx(comb(e,X)+" = 0")).join(" et ")}. Pour ${F1} : ${lg(T.F[0])}. Pour ${F2} : ${lg(T.F[1])}. Donc F ⊂ G. <b>F = G.</b>`,
+    why:`Pour montrer F = G, on montre les deux inclusions. G ⊂ F : les vecteurs qui engendrent G vérifient les équations de F. F ⊂ G : ceux qui engendrent F vérifient les équations de G.`,pts:2};}
+function jugeGen(rep,T,etape){const a=liste(rep.f1,4),b=liste(rep.f2,4);if(!a||!b)return {incomplet:"Écris deux vecteurs de 4 nombres, par exemple (1, 0, -2, 1)."};
+  for(const [w,id,nm] of [[a,"f1",F1],[b,"f2",F2]]){const k=T.M.findIndex(e=>!nul(e.reduce((s,c,i)=>add(s,mul(c,w[i])),Q(0))));
+    if(k>=0)return {ok:false,faux:[id],resume:`Pas tout à fait : ton vecteur ${nm} n'est pas dans F.`,diag:{etape,type:"vecteur hors de F",titre:"Où ça part : la résolution du système de F.",msg:`Il ne vérifie pas l'équation ${fx(comb(T.M[k],XYZ)+" = 0")}. Une famille qui convient : ${vt(T.F[0])} et ${vt(T.F[1])}.`}};}
+  if(rangM([a,b])<2)return {ok:false,faux:["f1","f2"],resume:"Pas tout à fait : tes deux vecteurs ne suffisent pas à engendrer F.",diag:{etape,type:"famille génératrice trop petite",titre:"Où ça part : les variables libres.",msg:`Tes deux vecteurs sont colinéaires (ou nuls) : ils n'engendrent qu'une droite. F a deux variables libres, z et t : prends z = 1, t = 0, puis z = 0, t = 1.`}};
+  return null;}
+const champFG={k:"choix",id:"fg",titre:"F = G ?",o:[["egal","F = G"],["u","F ≠ G, car u n'est pas dans F"],["v","F ≠ G, car v n'est pas dans F"]]};
+function jugeChoixFG(rep,T,etape){if(!rep.fg)return {incomplet:"Choisis ta réponse : F = G, ou F ≠ G avec le vecteur de G qui n'est pas dans F."};
+  const bons=T.egal?["egal"]:["u","v"].filter((_,k)=>!T.dans[k]);if(bons.includes(rep.fg))return null;
+  const msg=T.egal?(rep.fg==="egal"?"":`u et v vérifient les deux équations de F, et ${F1}, ${F2} celles de G : F = G.`)
+    :rep.fg==="egal"?`${bons[0]} ne vérifie pas les équations de F : il est dans G mais pas dans F, donc F ≠ G.`:`${rep.fg} vérifie les équations de F. C'est ${bons[0]} qui n'est pas dans F.`;
+  return {ok:false,faux:["fg"],resume:"Non : F = G ? n'est pas bien réglé.",diag:{etape,type:T.egal?"F = G pris pour F ≠ G":rep.fg==="egal"?"une seule inclusion vérifiée":"mauvais vecteur testé",titre:"Où ça part : les équations de F.",msg}};}
+function fgTest(R){const T=tireFG(R,R()<0.45),eqG=T.eqG,E=[etapeFG(T,eqG)];
+  return {sig:"FG"+JSON.stringify([T.M,T.u,T.v]),q:`F et G sont deux sous-espaces vectoriels de ℝ⁴. F = G ? Teste les vecteurs qui engendrent G dans les équations de F.`,corps:corpsFG(T),texte:FT(T)+" ; G = Vect("+vt(T.u)+", "+vt(T.v)+") ; F = G ?",
+    champs:[champFG],juge:rep=>jugeChoixFG(rep,T,0)||{ok:true},etapes:E,bonne:T.egal?"F = G":`F ≠ G : ${T.dans[0]?"v":"u"} n'est pas dans F`,bonneTxt:T.egal?"F = G":"F ≠ G",
+    repBonne:{fg:T.egal?"egal":T.dans[0]?"v":"u"},repFausse:{fg:T.egal?"u":"egal"},nature:T.egal?"egal":"diff",ens:{k:"fg",M:T.M,F:T.F,u:T.u,v:T.v,eqG,egal:T.egal,o:"test"}};}
+function fgGen(R){const T=tireFG(R,R()<0.5),E=etapesGen(T);
+  return {sig:"FB"+JSON.stringify(T.M),q:`Trouve une famille génératrice de F : deux vecteurs ${F1} et ${F2} tels que F = Vect(${F1}, ${F2}).`,corps:`<p>${fl(FT(T))}</p>`,texte:FT(T)+" ; famille génératrice",
+    champs:[{k:"champ",id:"f1",nom:"f1",label:`${F1} =`,ex:"par exemple (1, 0, -2, 1)"},{k:"champ",id:"f2",nom:"f2",label:`${F2} =`,ex:"par exemple (0, 1, 3, -1)"}],juge:rep=>jugeGen(rep,T,E.length-1)||{ok:true},etapes:E,
+    bonne:`F = Vect(${vt(T.F[0])}, ${vt(T.F[1])})`,bonneTxt:`${vt(T.F[0])} et ${vt(T.F[1])}`,repBonne:{f1:rangeeT(T.F[0]),f2:rangeeT(T.F[1])},repFausse:{f1:rangeeT(T.F[0]),f2:rangeeT(T.F[0].map(x=>2*x))},nature:"gen",ens:{k:"fg",M:T.M,F:T.F,u:T.u,v:T.v,eqG:T.eqG,egal:T.egal,o:"gen"}};}
+function fgCC(R){const T=tireFG(R,R()<0.5),EQ=equations([T.u,T.v]),E1=etapesGen(T),off=E1.length,E=E1.concat(EQ.etapes),eqG=T.eqG;E.push(etapeFG(T,eqG));
+  const champs=[{k:"champ",id:"f1",nom:"f1",label:`(1) ${F1} =`,ex:"par exemple (1, 0, -2, 1)"},{k:"champ",id:"f2",nom:"f2",label:`${F2} =`,ex:"par exemple (0, 1, 3, -1)"}]
+    .concat(EQ.champs.map((c,i)=>Object.assign({},c,{label:`${i?"":"(2) "}Équation ${i+1} de G :`}))).concat([Object.assign({},champFG,{titre:"(3) F = G ?"})]);
+  function juge(rep){let d=jugeGen(rep,T,off-1);if(d)return d;const r=EQ.juge(rep);if(r.incomplet)return r;if(!r.ok){r.diag=Object.assign({},r.diag,{etape:off+(r.diag?r.diag.etape:0)});return r;}
+    return jugeChoixFG(rep,T,E.length-1)||{ok:true};}
+  return {sig:"FC"+JSON.stringify([T.M,T.u,T.v]),q:`(1) Trouve une famille génératrice de F. (2) Écris G comme l'ensemble des solutions d'un système homogène : deux équations entre x, y, z et t. (3) F = G ?`,corps:corpsFG(T),texte:FT(T)+" ; G = Vect("+vt(T.u)+", "+vt(T.v)+") ; génératrice de F, équations de G, F = G ?",
+    champs,juge,etapes:E,bonne:`F = Vect(${vt(T.F[0])}, ${vt(T.F[1])}) ; G : ${EQ.bonne} ; ${T.egal?"F = G":"F ≠ G"}`,bonneTxt:`${EQ.bonneTxt} ; ${T.egal?"F = G":"F ≠ G"}`,
+    repBonne:Object.assign({f1:rangeeT(T.F[0]),f2:rangeeT(T.F[1])},EQ.repBonne,{fg:T.egal?"egal":T.dans[0]?"v":"u"}),repFausse:Object.assign({f1:rangeeT(T.F[0]),f2:rangeeT(T.F[1])},EQ.repBonne,{fg:T.egal?"u":"egal"}),
+    nature:T.egal?"egal":"diff",ens:{k:"fg",M:T.M,F:T.F,u:T.u,v:T.v,eqG,egal:T.egal,o:"cc",rep:EQ.repBonne}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -20176,7 +20233,12 @@ G.add("lin",[
   paliers:[
    {t:"le noyau : ker f = Vect(v)",cc:4,gen:R=>noyauImage(tireKI(R,R.choix([3,3,4]),2),{k:true})},
    {t:"l'image : à quelle condition (a, b, c) est dans im f",cc:5,gen:R=>{const m=R.choix([3,3,4]);return noyauImage(tireKI(R,m,m===4&&R()<0.5?3:2),{i:true});}},
-   {t:"comme au CC2 : noyau, image, injective, surjective",cc:8,gen:R=>{const m=R.choix([3,4,4]);return noyauImage(tireKI(R,m,m===4&&R()<0.35?3:2),{k:true,i:true,cc:true});}}]}
+   {t:"comme au CC2 : noyau, image, injective, surjective",cc:8,gen:R=>{const m=R.choix([3,4,4]);return noyauImage(tireKI(R,m,m===4&&R()<0.35?3:2),{k:true,i:true,cc:true});}}]},
+ {id:"AL14",t:"F = G ? Deux sous-espaces de ℝ⁴",tache:"F = G ? (famille génératrice, équations, les deux inclusions)",th:"inter",ex:"cc2",pts:3.5,apres:["AL3"],lecons:["l2-inter"],
+  paliers:[
+   {t:"une famille génératrice de F, donné par deux équations",cc:4,gen:fgGen},
+   {t:"F = G ? : tester les vecteurs de G dans les équations de F",cc:4,gen:fgTest},
+   {t:"comme au CC2 : famille génératrice de F, équations de G, F = G ?",cc:10,gen:fgCC}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
