@@ -21317,25 +21317,25 @@ function iaf(R){const t=R(),k=R.ent(1,6);let o;
 /* AQ3 : la question de cours du CC2 (énoncés écrits de façon classique : le chapitre 4 n'est pas encore sur Moodle) */
 function coursCC2(R){const t=R();
   if(t<0.25){const m=R.nz(-6,6),p=R.ent(-9,9),x0=R.ent(-5,5),F=polyX([p,m]),M=Math.abs(m),X=nb(x0);
-    return papierQ("Q1"+[m,p,x0],"Connaissance du cours (2 points).",`<ol type="a"><li>Donne la définition, avec ε et η, de « f est continue en x₀ ».</li><li>Montre avec cette définition que ${fx(`f(x) = ${F}`)} est continue en ${X}.</li></ol>`,[
+    return papierQ("Q1"+[m,p,x0],"Connaissance du cours (3 points).",`<ol type="a"><li>Soit f définie sur un intervalle I, et x₀ ∈ I. Donne la définition, avec ε et η, de « f est continue en x₀ ».</li><li>Montre avec cette définition que ${fx(`f(x) = ${F}`)} est continue en ${X}.</li></ol>`,[
       [`a) f est continue en x₀ si ${O.f("∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε")}.`,`C'est la définition de la limite en x₀, avec f(x₀) à la place de ℓ : f est continue en x₀ quand ${fx("lim_{x→x₀} f(x) = f(x₀)")}.`,1],
       [`b) ${fx(`|f(x) − f(${X})| = ${M===1?"":M}|${moins("x",x0)}|`)}.`,`${fx(`f(x) − f(${X}) = ${nb(m)}(${moins("x",x0)})`)}, puis on prend la valeur absolue.`,0.5],
       [`Soit ${fx("ε &gt; 0")}. On pose ${fx(`η = ${M===1?"ε":"ε/"+M}`)}. Si ${fx(`|${moins("x",x0)}| &lt; η`)}, alors ${fx(`|f(x) − f(${X})| &lt; ${M===1?"":M}η = ε`)}. Donc f est continue en ${X}.`,`On choisit η en fonction de ε, puis on vérifie l'implication.`,0.5]],
       {type:"cont",f:x=>m*x+p,x0,eta:e=>e/M},"continuité");}
   if(t<0.5){const T=tviF(R),F=polyX(T.c);
-    return papierQ("Q2"+T.c,"Connaissance du cours (2 points).",`<ol type="a"><li>Énonce le théorème des valeurs intermédiaires.</li><li>Montre que l'équation ${fx(`${F} = 0`)} a au moins une solution dans ${fx(`[${T.n} ; ${T.n+1}]`)}.</li></ol>`,[
+    return papierQ("Q2"+T.c,"Connaissance du cours (3 points).",`<ol type="a"><li>Énonce le théorème des valeurs intermédiaires.</li><li>Montre que l'équation ${fx(`${F} = 0`)} a au moins une solution dans ${fx(`[${T.n} ; ${T.n+1}]`)}.</li></ol>`,[
       [`a) Si f est continue sur un intervalle ${fx("[a ; b]")}, alors pour tout réel y compris entre ${fx("f(a)")} et ${fx("f(b)")}, il existe ${fx("c ∈ [a ; b]")} tel que ${fx("f(c) = y")}.`,"Les deux mots clés : « continue » et « intervalle ». Sans l'un des deux, le théorème est faux.",1],
       [`b) ${fx(`f(x) = ${F}`)} est continue sur ${fx(`[${T.n} ; ${T.n+1}]`)} (polynôme), ${fx(`f(${T.n}) = ${nb(T.fn)}`)} et ${fx(`f(${T.n+1}) = ${nb(T.fn1)}`)}.`,"Un nombre négatif et un nombre positif : 0 est entre les deux.",0.5],
       [`0 est entre ${fx(`f(${T.n})`)} et ${fx(`f(${T.n+1})`)} : le théorème donne ${fx(`c ∈ [${T.n} ; ${T.n+1}]`)} tel que ${fx("f(c) = 0")}.`,"On applique le théorème avec y = 0.",0.5]],
       {type:"tvi",c:T.c,n:T.n},"TVI");}
   if(t<0.75){const be=R.ent(-6,6),p=R.ent(-6,3),qq=p+R.ent(1,6),F=polyX([0,be,1]),cc=Q(p+qq,2);
-    return papierQ("Q3"+[be,p,qq],"Connaissance du cours (2 points).",`<ol type="a"><li>Énonce le théorème de Rolle, puis le théorème des accroissements finis.</li><li>Pour ${fx(`f(x) = ${F}`)}, trouve le réel c que donne le théorème des accroissements finis sur ${fx(`[${nb(p)} ; ${nb(qq)}]`)}.</li></ol>`,[
+    return papierQ("Q3"+[be,p,qq],"Connaissance du cours (3 points).",`<ol type="a"><li>Énonce le théorème de Rolle, puis le théorème des accroissements finis.</li><li>Pour ${fx(`f(x) = ${F}`)}, trouve le réel c que donne le théorème des accroissements finis sur ${fx(`[${nb(p)} ; ${nb(qq)}]`)}.</li></ol>`,[
       [`a) Rolle : si f est continue sur ${fx("[a ; b]")}, dérivable sur ${fx("]a ; b[")} et ${fx("f(a) = f(b)")}, alors il existe ${fx("c ∈ ]a ; b[")} tel que ${fx("f′(c) = 0")}.`,"Trois hypothèses, et c est strictement entre a et b.",0.5],
       [`Accroissements finis : si f est continue sur ${fx("[a ; b]")} et dérivable sur ${fx("]a ; b[")}, alors il existe ${fx("c ∈ ]a ; b[")} tel que ${fx("f(b) − f(a) = f′(c)(b − a)")}.`,"C'est Rolle sans l'hypothèse f(a) = f(b).",0.5],
       [`b) ${fx(`(f(${nb(qq)}) − f(${nb(p)}))/(${nb(qq)} − ${par(p)}) = ${nb(qq+p+be)}`)} et ${fx(`f′(c) = 2c${be?(be>0?" + ":" − ")+Math.abs(be):""}`)}, donc ${fx(`c = ${nb(cc)}`)}, qui est bien dans ${fx(`]${nb(p)} ; ${nb(qq)}[`)}.`,`Pour un polynôme du second degré, c est toujours le milieu de l'intervalle.`,1]],
       {type:"taf",f:x=>x*x+be*x,fp:x=>2*x+be,p,q:qq,sl:qq+p+be,cs:[cc.n/cc.d]},"TAF");}
   const a=R.ent(-5,5),be=R.ent(-6,6),F=polyX([0,be,1]),A=nb(a);
-  return papierQ("Q4"+[a,be],"Connaissance du cours (2 points).",`<ol type="a"><li>Donne la définition de « f est dérivable en a ».</li><li>Montre avec cette définition que ${fx(`f(x) = ${F}`)} est dérivable en ${A}, et donne ${fx(`f′(${A})`)}.</li></ol>`,[
+  return papierQ("Q4"+[a,be],"Connaissance du cours (3 points).",`<ol type="a"><li>Donne la définition de « f est dérivable en a ».</li><li>Montre avec cette définition que ${fx(`f(x) = ${F}`)} est dérivable en ${A}, et donne ${fx(`f′(${A})`)}.</li></ol>`,[
     [`a) f est dérivable en a si le taux d'accroissement ${fx("(f(x) − f(a))/(x − a)")} a une limite finie quand x tend vers a. Cette limite est le nombre dérivé ${fx("f′(a)")}.`,"La limite doit être finie : c'est elle qui donne la pente de la tangente.",1],
     [`b) Pour ${fx(`x ≠ ${A}`)} : ${fx(`(f(x) − f(${A}))/(${moins("x",a)}) = ${polyX([a+be,1])}`)}.`,`${fx(`f(x) − f(${A}) = x² − ${par(a)}²${be?` + ${par(be)}(${moins("x",a)})`:""}`)}, et ${fx(`x² − ${par(a)}² = (${moins("x",a)})(${moins("x",-a)})`)} : on simplifie par ${fx(moins("x",a))}.`,0.5],
     [`Quand x tend vers ${A}, ce taux tend vers ${fx(nb(2*a+be))} : f est dérivable en ${A} et ${fx(`f′(${A}) = ${nb(2*a+be)}`)}.`,"Une limite finie : f est dérivable.",0.5]],
@@ -34545,11 +34545,11 @@ cc2:{
  t:"Le CC2 d'Analyse en 1 h",du:"du CC",au:"au CC",
  lead:"Programme supposé : le chapitre 4 n'est pas encore sur Moodle et le programme du CC2 n'est pas annoncé. D'après le programme du cours, après les limites viennent la continuité puis la dérivabilité : ce parcours couvre ces deux chapitres, avec les exercices classiques de L1, et il sera revu dès que le cours sera en ligne. Pour chaque notion : l'essentiel, la méthode, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
  carte:"continuité et dérivabilité en 1 h (programme supposé), puis un sujet express noté sur 20.",
- blancLead:"Cinq questions comme un CC de 1 h : la question de cours, puis quatre exercices. Il n'y a pas d'ancien CC2 sur Moodle : la forme est supposée, sur le modèle du CC1. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Quatre questions comme un CC de 1 h : la question de cours, puis trois exercices, dont une rédaction complète sur papier. Il n'y a pas d'ancien CC2 sur Moodle : la forme est supposée, sur le modèle du CC1. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"prolong",t:"Continuité en un point, prolongement",pts:3,ou:"chapitre « Continuité »",lect:2,exo:{g:"AN9",lv:0},
-  ess:`<p>f est <b>continue en x₀</b> si $lim_{x→x₀} f(x) = f(x₀)$. Avec ε : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</p>
+  ess:`<p>Soit f définie sur un intervalle I, et x₀ un point de I. f est <b>continue en x₀</b> si $lim_{x→x₀} f(x) = f(x₀)$. Avec ε : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</p>
 <p>Les polynômes, les quotients (là où le bas ne s'annule pas), √, sin et cos sont continus là où ils sont définis. Les sommes, produits, quotients et composées de fonctions continues aussi.</p>
 <p>Si f n'est pas définie en x₀ mais a une <b>limite finie ℓ</b> en x₀, on la <b>prolonge par continuité</b> en posant f(x₀) = ℓ.</p>`,
   piege:`« 0/0 » n'est pas une réponse : il faut simplifier d'abord. Et si la limite est infinie, ou différente à gauche et à droite, il n'y a pas de prolongement.`,
@@ -34569,7 +34569,7 @@ cc2:{
   ess:`<p><b>TVI</b> : si f est continue sur un intervalle [a ; b], alors pour tout y compris entre f(a) et f(b), il existe c ∈ [a ; b] tel que f(c) = y.</p>
 <p>En pratique : f continue sur [a ; b], f(a) et f(b) de signes contraires, donc f s'annule entre a et b.</p>
 <p>Si en plus f est <b>strictement monotone</b>, elle ne prend chaque valeur qu'une fois : la solution est <b>unique</b> (théorème de la bijection).</p>`,
-  piege:`Le TVI dit qu'une solution existe, pas qu'elle est seule : pour l'unicité, il faut la stricte monotonie. Et sans continuité, c'est faux : 1/x change de signe entre −1 et 1 sans jamais s'annuler.`,
+  piege:`Le TVI dit qu'une solution existe, pas qu'elle est seule : pour l'unicité, il faut la stricte monotonie. Et sans continuité sur tout l'intervalle, c'est faux : 1/x n'est pas définie en 0, donc pas continue sur [−1 ; 1], et elle passe de −1 à 1 sans jamais s'annuler.`,
   meth:`<p>Exemple : $x³ + x − 1 = 0$. On pose $f(x) = x³ + x − 1$.</p>
 <ol><li>f est continue sur ℝ (polynôme).</li><li>$f(0) = −1 &lt; 0$ et $f(1) = 1 &gt; 0$ : d'après le TVI, il existe α ∈ ]0 ; 1[ tel que f(α) = 0.</li>
 <li>x ↦ x³ et x ↦ x − 1 sont strictement croissantes, donc f aussi : α est la seule solution.</li>
@@ -34604,9 +34604,9 @@ cc2:{
   meth:`<ol><li>$f(x) = x³$ sur [0 ; 3] : la pente est $(27 − 0)/3 = 9$. $f′(c) = 3c² = 9$ donne $c = √3$ ou $c = −√3$. Seul √3 est dans ]0 ; 3[.</li>
 <li>Inégalité : $|sin x − sin y| ≤ |x − y|$, car $sin′ = cos$ et $|cos t| ≤ 1$. On écrit : soient x &lt; y ; d'après les accroissements finis, $sin y − sin x = cos(c)(y − x)$ avec c ∈ ]x ; y[, puis on majore |cos(c)| par 1.</li></ol>`},
  {id:"cours",t:"La question de cours : définitions et théorèmes",pts:2,ou:"question de cours (supposée, comme au CC1)",lect:1.5,
-  rappel:{min:2,q:`Écris la définition de « f est continue en x₀ » avec ε et η, puis l'énoncé du théorème des valeurs intermédiaires et celui des accroissements finis.`,
+  rappel:{min:2,q:`Soit f définie sur un intervalle I et x₀ ∈ I. Écris la définition de « f est continue en x₀ » avec ε et η, puis l'énoncé du théorème des valeurs intermédiaires et celui des accroissements finis.`,
    r:`<p>f est continue en x₀ ⇔ $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</p><p>TVI : f continue sur [a ; b] et y entre f(a) et f(b) ⇒ ∃c ∈ [a ; b], f(c) = y.</p><p>Accroissements finis : f continue sur [a ; b], dérivable sur ]a ; b[ ⇒ ∃c ∈ ]a ; b[, $f(b) − f(a) = f′(c)(b − a)$.</p>`},
-  ess:`<ul><li>Continue en x₀ : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</li>
+  ess:`<p>f est définie sur un intervalle I, et x₀ est un point de I.</p><ul><li>Continue en x₀ : $∀ε &gt; 0, ∃η &gt; 0, ∀x ∈ I, |x − x₀| &lt; η ⇒ |f(x) − f(x₀)| &lt; ε$.</li>
 <li>Dérivable en x₀ : $(f(x) − f(x₀))/(x − x₀)$ a une limite finie quand x tend vers x₀.</li>
 <li>TVI, Rolle et accroissements finis : avec leurs hypothèses, « continue sur [a ; b] » et « dérivable sur ]a ; b[ ».</li></ul>`,
   piege:`Un théorème cité sans ses hypothèses est faux (voir |x| sur [−1 ; 1]). Écris-les toujours.`,
@@ -34614,10 +34614,9 @@ cc2:{
 <ol><li>$|f(x) − f(2)| = |3x − 6| = 3|x − 2|$.</li><li>Soit ε &gt; 0. On pose η = ε/3. Si $|x − 2| &lt; η$, alors $|f(x) − f(2)| &lt; 3η = ε$.</li><li>Donc f est continue en 2.</li></ol>`}],
  blanc:[
   {t:"Question de cours : définition et théorème",ou:"connaissance du cours",pts:3,g:"AQ3",lv:0},
-  {t:"Une fonction définie par morceaux : la rendre continue",ou:"exercice 1",pts:4,g:"AN9",lv:1},
-  {t:"Le théorème des valeurs intermédiaires",ou:"exercice 2",pts:4,g:"AN10",lv:0},
-  {t:"Trouver a et b pour qu'elle soit dérivable",ou:"exercice 3",pts:5,g:"AN12",lv:1},
-  {t:"La tangente en un point",ou:"exercice 4",pts:4,g:"AN13",lv:0}]
+  {t:"Une unique solution : la rédaction avec le TVI",ou:"exercice 1, sur papier",pts:6,g:"AN10",lv:1},
+  {t:"Trouver a et b pour qu'elle soit dérivable",ou:"exercice 2",pts:6,g:"AN12",lv:1},
+  {t:"La tangente en un point",ou:"exercice 3",pts:5,g:"AN13",lv:0}]
 }};
 
 </script>
