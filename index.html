@@ -20042,6 +20042,62 @@ function appCC(R){const n=R.choix([2,3,3]),m=R.choix([2,3,3,4]),G3=R.mel(["linea
     repFausse:Object.assign(Object.fromEntries(ids.map((id,k)=>[id,k===L?"double":repApp(G3[k])])),Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(l)]))),
     nature:"cc",ens:{k:"cc",apps:N.map((s,k)=>Object.assign({nom:s,n,txt:appT(s,FS[k],n,false),id:ids[k]},k===L?{A}:{}))}};}
 
+/* ---------- AL13 : noyau, image, injective, surjective (CC2 2023 ex. 3, 2024 ex. 5) ---------- */
+const YL=["a","b","c","d"],entier=R=>R.pas.every(P=>P.M.flat().every(x=>q(x).d===1));
+function tireKI(R,m,r){const n=3;for(;;){const B=[];for(let i=0;i<r;i++)B.push([0,0,0].map(()=>R()<0.25?0:R.ent(-3,3)));
+  const A=R.mel(B.concat([...Array(m-r)].map(()=>{let a=R.ent(-2,2),b=R.ent(-2,2);if(!a&&!b)a=1;const c=r>2?R.ent(-1,1):0;return B[0].map((x,j)=>a*x+b*B[1][j]+c*(B[2]?B[2][j]:0));})));
+  if(A.some(l=>l.every(x=>!x)||l.some(x=>Math.abs(x)>7))||[0,1,2].some(j=>A.every(l=>!l[j]))||new Set(A.map(l=>l.join())).size<m)continue;
+  const Rl=echelonne(A,A.map((_,i)=>YL.slice(0,m).map((_,j)=>i===j?1:0))),R0=echelonne(A,A.map(()=>0));
+  if(R0.rang!==r||!entier(Rl)||!entier(R0))continue;
+  let v=[0,0,0];if(r<n){const sol=solution(R0,XYZ.slice(0,n)),L=sol.libres[0],f=sol.S.map(e=>e.k[XYZ[L]]||Q(0)),den=f.reduce((s,x)=>{const d=q(x).d;let a=s,b=d;while(b)[a,b]=[b,a%b];return s*d/a;},1);
+    v=f.map(x=>q(mul(x,den)).n);if(v.find(x=>x)<0)v=v.map(x=>-x);if(v.some(x=>Math.abs(x)>9))continue;}
+  return A;}}
+function noyauImage(A,o){const n=3,m=A.length,X=XYZ.slice(0,n),L=YL.slice(0,m),Rl=echelonne(A,A.map((_,i)=>L.map((_,j)=>i===j?1:0))),R0=echelonne(A,A.map(()=>0)),r=R0.rang,rend=M=>matL(M,n,m,L);
+  const fT=`f(${X.join(", ")}) = (${A.map(l=>comb(l,X)).join(", ")})`,Rm="ℝ"+["","","²","³","⁴"][m],E=[];let v=[0,0,0],iK=0,iI=0;
+  const eqs=[];for(let i=r;i<m;i++){let w=L.map((_,j)=>q(Rl.E[i][n+j]));if(w.find(x=>!nul(x)).n<0)w=w.map(x=>mul(x,-1));eqs.push(w);}
+  const txt=w=>comb(w,L)+" = 0",ne=eqs.length,inj=r===n;
+  E.push({w:`La matrice de f a ${m} lignes, une par coordonnée de f(X) : ${matH(A)}. On résout ${fx(`f(${X.join(", ")}) = ${vl(L)}`)} par le pivot, avec ${et(L)} en lettres après la barre : ${rend(A.map((l,i)=>l.concat(L.map((_,j)=>i===j?1:0))))}`,why:`Un seul pivot sert deux fois : avec ${L.join(" = ")} = 0, il donne le noyau ; avec les lettres, il donne l'image.`,pts:1});
+  etapesOps(E,Rl,X,rend,"La même opération se fait sur les lettres du second membre.");
+  iK=E.length;
+  if(inj)E.push({w:`<b>Avec ${L.join(" = ")} = 0</b>, chaque colonne de gauche a un pivot : la seule solution est x = y = z = 0. <b>ker f = {(0, 0, 0)}.</b>`,why:`Sans variable libre, le système homogène n'a que la solution nulle.`,pts:1.5});
+  else{const sol=solution(R0,X),Lb=sol.libres[0],f=sol.S.map(e=>e.k[X[Lb]]||Q(0)),den=f.reduce((s,x)=>{const d=q(x).d;let a=s,b=d;while(b)[a,b]=[b,a%b];return s*d/a;},1);
+    v=f.map(x=>q(mul(x,den)).n);if(v.find(x=>x)<0)v=v.map(x=>-x);const {remonte}=lecteur(R0,sol,X);
+    E.push({w:`<b>Avec ${L.join(" = ")} = 0</b>, ${X[Lb]} n'a pas de pivot : c'est une variable libre.<br>${R0.piv.map((_,k)=>remonte(R0.piv.length-1-k)).join("<br>")}<br>Avec ${fx(`${X[Lb]} = ${nb(v[Lb])}`)} : <b>${fx(`ker f = Vect(${vt(v)})`)}</b>. Vérification : ${fx(`f${vt(v)} = ${vt(fois(A,v))}`)}.`,why:`Le noyau, ce sont les X tels que f(X) = 0. Une variable libre donne une droite : tous les multiples d'un vecteur non nul.`,pts:1.5});}
+  iI=E.length;
+  E.push({w:`${ne>1?`Les lignes ${et(eqs.map((_,i)=>String(r+1+i)))} disent`:`La ligne ${r+1} dit`} ${eqs.map((_,i)=>fx("0 = "+lettres(vecL(Rl.E[r+i],n,m,L),L))).join(" et ")}. <b>${fl(`${vl(L)} ∈ im f ⇔ ${eqs.map(txt).join(" et ")}`)}</b>`,why:`Le système f(X) = ${vl(L)} a une solution exactement quand ${ne>1?"ces seconds membres valent":"ce second membre vaut"} 0.`,pts:1.5});
+  if(o.cc)E.push({w:`<b>f ${inj?"est":"n'est pas"} injective</b> : ${inj?"ker f = {0}":"ker f n'est pas {0}"}. <b>f n'est pas surjective</b> : im f ≠ ${Rm}, puisque ${vl(L)} doit vérifier ${ne>1?"des équations":"une équation"}.`,why:`f injective ⇔ ker f = {0}. f surjective ⇔ im f est tout l'espace d'arrivée.${m>n?` De ℝ³ dans ${Rm}, f ne peut jamais être surjective.`:""}`,pts:1});
+  const V=A[0].map((_,j)=>A.map(l=>l[j]));
+  function jugeV(rep){const x=liste(rep.v,n);if(!x)return {incomplet:`Écris v avec ${n} nombres, par exemple (1, -2, 1)${o.cc?", ou (0, 0, 0) si ker f = {0}":""}.`};
+    const z=x.every(c=>nul(c));if(inj)return z?null:{ok:false,faux:["v"],resume:"Pas tout à fait : v est faux.",diag:{etape:iK,type:"noyau non nul inventé",titre:"Où ça part : le noyau.",msg:`Chaque colonne de gauche a un pivot : seul (0, 0, 0) vérifie f(X) = 0, donc ker f = {0} et v = (0, 0, 0).`}};
+    if(z)return {ok:false,faux:["v"],resume:"Pas tout à fait : v est faux.",diag:{etape:iK,type:"variable libre oubliée",titre:"Où ça part : le noyau.",msg:`Il y a une variable libre : le noyau contient d'autres vecteurs que 0, par exemple ${vt(v)}.`}};
+    const fx0=A.map(l=>l.reduce((s,c,k)=>add(s,mul(c,x[k])),Q(0)));if(fx0.every(c=>nul(c)))return null;
+    return {ok:false,faux:["v"],resume:"Pas tout à fait : v n'est pas dans le noyau.",diag:{etape:iK,type:"calcul du noyau",titre:"Où ça part : le noyau.",msg:`Avec ton v, f(v) = ${vt(fx0)}, pas (0, ${L.map(()=>0).slice(1).join(", ")}). Un vecteur qui convient : ${vt(v)}.`}};}
+  function jugeE(rep){const T=eqs.map((_,i)=>egalite(rep["e"+(i+1)]||"",L));
+    if(T.some(w=>w===null))return {incomplet:`Écris ${ne>1?"chaque équation":"l'équation"} comme une égalité entre ${et(L)}, par exemple ${L[0]} + 2${L[1]} - ${L[m-1]} = 0.`};
+    const faux=[];let msg="";
+    T.forEach((w,i)=>{if(w===false){faux.push("e"+(i+1));msg=msg||`l'équation doit être une égalité entre ${et(L)}, sans nombre seul.`;return;}
+      const j=V.findIndex(u=>!nul(w.reduce((s,c,t)=>add(s,mul(c,u[t])),Q(0))));
+      if(j>=0){faux.push("e"+(i+1));msg=msg||`ton équation ${ne>1?i+1+" ":""}n'est pas vérifiée par f${vt(X.map((_,k)=>k===j?1:0))} = ${vt(V[j])}, qui est pourtant dans l'image.`;}});
+    if(!faux.length&&rangM(T)===ne)return null;
+    if(!faux.length){faux.push("e2");msg="tes deux équations disent la même chose : il en faut deux vraiment différentes.";}
+    return {ok:false,faux,resume:"Pas tout à fait : "+msg,diag:{etape:iI,type:"équations de l'image",titre:"Où ça part : les lettres dans la colonne des seconds membres.",msg:`${ne>1?"Les bonnes équations sont":"La bonne équation est"} ${eqs.map(w=>fx(txt(w))).join(" et ")} (ou des multiples).`}};}
+  const champs=[],repB={},repF={};
+  if(o.k){champs.push({k:"champ",id:"v",nom:"v",label:"ker f = Vect(v), avec v =",ex:o.cc?"par exemple (1, -2, 1), ou (0, 0, 0) si ker f = {0}":"par exemple (1, -2, 1)"});repB.v=vt(v).replace(/−/g,"-");repF.v=inj?"(1, 0, 0)":"(0, 0, 0)";}
+  if(o.i)eqs.forEach((w,i)=>{champs.push({k:"champ",id:"e"+(i+1),nom:"équation "+(i+1),label:ne>1?`Équation ${i+1} :`:"L'équation :",ex:`par exemple ${L[0]} + 2${L[1]} - ${L[m-1]} = 0`});repB["e"+(i+1)]=txt(w).replace(/−/g,"-");repF["e"+(i+1)]=txt(i?w:w.map((x,j)=>j?x:add(x,Q(1)))).replace(/−/g,"-");});
+  if(o.cc){champs.push({k:"choix",id:"inj",titre:"f est-elle injective ?",o:[["oui","oui"],["non","non"]]},{k:"choix",id:"sur",titre:"f est-elle surjective ?",o:[["oui","oui"],["non","non"]]});repB.inj=inj?"oui":"non";repB.sur="non";}
+  function juge(rep){if(o.cc&&(!rep.inj||!rep.sur))return {incomplet:"Réponds aussi : injective ? surjective ?"};
+    let d=o.k?jugeV(rep):null;if(d)return d;d=o.i?jugeE(rep):null;if(d)return d;
+    if(o.cc&&rep.inj!==repB.inj)return {ok:false,faux:["inj"],resume:"Non : injective est faux.",diag:{etape:iI+1,type:"injective et noyau",titre:"Où ça part : injective.",msg:`f injective ⇔ ker f = {0}. Ici ${inj?"ker f = {0} : f est injective":"ker f contient "+vt(v)+" : f n'est pas injective"}.`}};
+    if(o.cc&&rep.sur!=="non")return {ok:false,faux:["sur"],resume:"Non : surjective est faux.",diag:{etape:iI+1,type:"surjective et image",titre:"Où ça part : surjective.",msg:`Les vecteurs de l'image doivent vérifier ${eqs.map(w=>fx(txt(w))).join(" et ")} : ce n'est pas tout ${Rm}.`}};
+    return {ok:true};}
+  const q0=o.cc?`Soit f l'application linéaire ci-dessous. (1) Trouve v tel que ker f = Vect(v). (2) À quelle condition un vecteur ${vl(L)} de ${Rm} est-il dans im f ? (3) f est-elle injective ? surjective ?`
+    :o.k?`Soit f l'application linéaire ci-dessous, de ℝ³ dans ${Rm}. Trouve un vecteur v tel que ker f = Vect(v).`
+    :`Soit f l'application linéaire ci-dessous, de ℝ³ dans ${Rm}. À quelle condition un vecteur ${vl(L)} de ${Rm} est-il dans l'image de f ? Écris ${ne>1?"les "+ne+" équations":"l'équation"} entre ${et(L)}.`;
+  return {sig:"KI"+(o.k?1:0)+(o.i?1:0)+JSON.stringify(A),q:q0,corps:`<p>${fx(fT)}</p>`,texte:fT+(o.cc?" ; noyau, image, injective, surjective":o.k?" ; noyau":" ; image"),champs,juge,etapes:E,
+    bonne:[o.k?(inj?"ker f = {0}":`ker f = Vect${vt(v)}`):"",o.i?eqs.map(w=>fx(txt(w))).join(" et "):"",o.cc?`${inj?"injective":"pas injective"}, pas surjective`:""].filter(Boolean).join(" ; "),
+    bonneTxt:[o.k?vt(v):"",o.i?eqs.map(txt).join(" et "):"",o.cc?repB.inj+", non":""].filter(Boolean).join(" ; "),repBonne:repB,repFausse:Object.assign({},repB,o.k?{v:repF.v}:repF),
+    nature:(o.cc?"cc":o.k?"noyau":"image")+m+"r"+r,ens:{k:"ki",A,v,eqs:eqs.map(w=>w.map(x=>{x=q(x);return x.n/x.d;})),r,inj,o}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -20114,7 +20170,12 @@ G.add("lin",[
   paliers:[
    {t:"linéaire ou pas, et la raison",cc:2,gen:appSeule},
    {t:"la matrice d'une application linéaire",cc:3,gen:matApp},
-   {t:"comme au CC2 : trois applications, puis la matrice de celle qui est linéaire",cc:6,gen:appCC}]}
+   {t:"comme au CC2 : trois applications, puis la matrice de celle qui est linéaire",cc:6,gen:appCC}]},
+ {id:"AL13",t:"Noyau, image, injective, surjective",tache:"noyau, image, injective, surjective",th:"kerim",ex:"cc2",pts:2.5,apres:["AL12"],lecons:["l2-ker-im"],
+  paliers:[
+   {t:"le noyau : ker f = Vect(v)",cc:4,gen:R=>noyauImage(tireKI(R,R.choix([3,3,4]),2),{k:true})},
+   {t:"l'image : à quelle condition (a, b, c) est dans im f",cc:5,gen:R=>{const m=R.choix([3,3,4]);return noyauImage(tireKI(R,m,m===4&&R()<0.5?3:2),{i:true});}},
+   {t:"comme au CC2 : noyau, image, injective, surjective",cc:8,gen:R=>{const m=R.choix([3,4,4]);return noyauImage(tireKI(R,m,m===4&&R()<0.35?3:2),{k:true,i:true,cc:true});}}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
