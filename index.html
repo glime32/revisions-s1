@@ -25065,14 +25065,14 @@ function double(R){const t=R();
     {w:`${fx(`sin(2θ) = 2 × ${par(sn)} × ${par(c)} = ${nb(v)}`)}.`,why:"On remplace par les valeurs.",pts:1}],
     pieges:[[-(v.n/v.d),{etape:0,type:"signe de sin θ",titre:"Où ça part : le signe de sin θ.",msg:`${haut?"Sur ]0 ; π[, sin θ est positif":"Sur ]−π ; 0[, sin θ est négatif"} : ${fx(`sin θ = ${nb(sn)}`)}.`}]],nature:"sin 2θ en nombres",texte:`cos θ = ${nb(c)}, sin 2θ ?`,ens:{c:c.n/c.d,haut,quoi:"s2"}});}
 
-const argT=a=>a===1?"θ":a+"θ";
+const argT=a=>a===1?"θ":a+"θ",iA=a=>a===1?"iθ":a+"iθ";
 function lineaire2(R){const v=R.choix(["c","s","cs"]),k=R.choix([1,2,3,4,6,8]),a=R.choix([1,1,2,3]),u=argT(a),u2=argT(2*a),K=k===1?"":k;
   const D={c:{lab:`${K}cos²(${u})`,f:x=>k*C(a*x)**2,ans:k%2?`${k===1?"":k}(1 + cos(${u2}))/2`:`${k/2===1?"":k/2}(1 + cos(${u2}))`.replace(/^\(1 \+ cos\((.*)\)\)$/,"1 + cos($1)"),
-      eul:`${fx(`cos(${u}) = (e^{i${u}} + e^{−i${u}})/2`)}, donc ${fx(`cos²(${u}) = (e^{2i${u}} + 2 + e^{−2i${u}})/4`)}.`,grp:`${fx(`e^{2i${u}} + e^{−2i${u}} = 2cos(${u2})`)} : ${fx(`cos²(${u}) = (2cos(${u2}) + 2)/4 = (1 + cos(${u2}))/2`)}.`,pg:[[x=>k*(1-C(2*a*x))/2,"signe"],[x=>k*C(2*a*x),"la constante oubliée"],[x=>k*(1+C(2*a*x)),"la division par 2 oubliée"]]},
+      eul:`${fx(`cos(${u}) = (e^{${iA(a)}} + e^{−${iA(a)}})/2`)}, donc ${fx(`cos²(${u}) = (e^{${iA(2*a)}} + 2 + e^{−${iA(2*a)}})/4`)}.`,grp:`${fx(`e^{${iA(2*a)}} + e^{−${iA(2*a)}} = 2cos(${u2})`)} : ${fx(`cos²(${u}) = (2cos(${u2}) + 2)/4 = (1 + cos(${u2}))/2`)}.`,pg:[[x=>k*(1-C(2*a*x))/2,"signe"],[x=>k*C(2*a*x),"la constante oubliée"],[x=>k*(1+C(2*a*x)),"la division par 2 oubliée"]]},
     s:{lab:`${K}sin²(${u})`,f:x=>k*Sn(a*x)**2,ans:k%2?`${k===1?"":k}(1 − cos(${u2}))/2`:`${k/2===1?"":k/2}(1 − cos(${u2}))`.replace(/^\(1 − cos\((.*)\)\)$/,"1 − cos($1)"),
-      eul:`${fx(`sin(${u}) = (e^{i${u}} − e^{−i${u}})/(2i)`)}, donc ${fx(`sin²(${u}) = (e^{2i${u}} − 2 + e^{−2i${u}})/(2i)²`)}, avec ${fx("(2i)² = −4")}.`,grp:`${fx(`e^{2i${u}} + e^{−2i${u}} = 2cos(${u2})`)} : ${fx(`sin²(${u}) = (2cos(${u2}) − 2)/(−4) = (1 − cos(${u2}))/2`)}.`,pg:[[x=>k*(1+C(2*a*x))/2,"signe : (2i)² = −4"],[x=>k*(C(2*a*x)-1)/2,"signe : (2i)² = −4"],[x=>k*(1-C(2*a*x)),"la division par 2 oubliée"]]},
+      eul:`${fx(`sin(${u}) = (e^{${iA(a)}} − e^{−${iA(a)}})/(2i)`)}, donc ${fx(`sin²(${u}) = (e^{${iA(2*a)}} − 2 + e^{−${iA(2*a)}})/(2i)²`)}, avec ${fx("(2i)² = −4")}.`,grp:`${fx(`e^{${iA(2*a)}} + e^{−${iA(2*a)}} = 2cos(${u2})`)} : ${fx(`sin²(${u}) = (2cos(${u2}) − 2)/(−4) = (1 − cos(${u2}))/2`)}.`,pg:[[x=>k*(1+C(2*a*x))/2,"signe : (2i)² = −4"],[x=>k*(C(2*a*x)-1)/2,"signe : (2i)² = −4"],[x=>k*(1-C(2*a*x)),"la division par 2 oubliée"]]},
     cs:{lab:`${K}sin(${u})cos(${u})`,f:x=>k*Sn(a*x)*C(a*x),ans:k%2?`${k===1?"":k}sin(${u2})/2`:`${k/2===1?"":k/2}sin(${u2})`,
-      eul:`${fx(`sin(${u})cos(${u}) = (e^{i${u}} − e^{−i${u}})(e^{i${u}} + e^{−i${u}})/(4i) = (e^{2i${u}} − e^{−2i${u}})/(4i)`)}.`,grp:`${fx(`e^{2i${u}} − e^{−2i${u}} = 2i sin(${u2})`)} : ${fx(`sin(${u})cos(${u}) = 2i sin(${u2})/(4i) = sin(${u2})/2`)}.`,pg:[[x=>k*Sn(2*a*x),"la division par 2 oubliée"],[x=>k*C(2*a*x)/2,"cosinus au lieu de sinus"]]}}[v];
+      eul:`${fx(`sin(${u})cos(${u}) = (e^{${iA(a)}} − e^{−${iA(a)}})(e^{${iA(a)}} + e^{−${iA(a)}})/(4i) = (e^{${iA(2*a)}} − e^{−${iA(2*a)}})/(4i)`)}.`,grp:`${fx(`e^{${iA(2*a)}} − e^{−${iA(2*a)}} = 2i sin(${u2})`)} : ${fx(`sin(${u})cos(${u}) = 2i sin(${u2})/(4i) = sin(${u2})/2`)}.`,pg:[[x=>k*Sn(2*a*x),"la division par 2 oubliée"],[x=>k*C(2*a*x)/2,"cosinus au lieu de sinus"]]}}[v];
   const tape=D.ans.replace(/cos\((\d*)θ\)/g,"cos($1*θ)").replace(/sin\((\d*)θ\)/g,"sin($1*θ)").replace(/\(\*θ\)/g,"(θ)").replace(/−/g,"-");
   const E=[{w:`Formules d'Euler : ${D.eul}`,why:`${fx("cos u = (e^{iu} + e^{−iu})/2")} et ${fx("sin u = (e^{iu} − e^{−iu})/(2i)")}. On développe avec ${fx("(A + B)² = A² + 2AB + B²")} et ${fx("e^{iu} × e^{−iu} = 1")}.`,pts:1},
     {w:`On regroupe les exponentielles deux par deux : ${D.grp}`,why:`${fx("e^{iu} + e^{−iu} = 2cos u")} et ${fx("e^{iu} − e^{−iu} = 2i sin u")}.`,pts:1},
@@ -25204,6 +25204,7 @@ function bicarree(R){const t=R();let Zs,zs;
 
 /* ---------- CA5 : racines n-ièmes ---------- */
 const kpi=n=>n===2?"kπ":n%2===0?`kπ/${n/2}`:`2kπ/${n}`;
+const kL=n=>n===2?"k = 0, 1":n===3?"k = 0, 1, 2":`k = 0, 1, …, ${n-1}`;
 const casesRK=()=>({k:"cases",id:"p",noms:["r","θₖ"],titre:"Les solutions s'écrivent $r e^{iθₖ}$ pour $k = 0, 1, …, n − 1$. Écris $r$, puis $θₖ$ en fonction de $k$ :",large:true,sym:["√","π","k","/","^"],aide:"Par exemple r = 2^(1/3) et θₖ = π/12 + 2kπ/3 (ou pi/12+2*k*pi/3)."});
 const W1=[[Z(1),Q(0)],[Z(-1),Q(1)],[Z(0,1),Q(1,2)],[Z(0,-1),Q(-1,2)]];
 const radPow=(rho,n)=>rpow(rho,n);
@@ -25222,9 +25223,9 @@ function exoRK(o){const n=o.n,rho=rF(o.rho),phi=angF(o.phi),att=[...Array(n)].ma
     if(!okR)d=pres(A.v,rF(o.R))?{etape:1,type:"module de w au lieu de sa racine n-ième",titre:"Où ça part : le module.",msg:`${fx(`rⁿ = ${rT(o.R)}`)} : r est la racine ${n}-ième de ${fx(rT(o.R))}, ${fx(`r = ${rhoT(o.rho)}`)}.`}:pres(A.v,rF(o.R)/n)?{etape:1,type:"module divisé par n",titre:"Où ça part : le module.",msg:`r n'est pas le module divisé par ${n} : c'est sa racine ${n}-ième.`}:{etape:1,type:"module",titre:"Où ça part : le module.",msg:`${fx(`r = ${rhoT(o.rho)}`)}.`};
     else if(V.every(v=>memeAngle(v,V[0])))d={etape:2,type:"2kπ non divisé par n",titre:"Où ça part : les arguments.",msg:`Tes ${n} angles donnent tous le même point. ${fx("nθ = φ + 2kπ")} donne ${fx("θ = φ/n + 2kπ/n")} : le 2kπ est aussi divisé par n.`};
     else if(V.every(v=>att.some(a=>memeAngle(v,-a))))d={etape:0,type:"argument de w",titre:"Où ça part : l'argument de w.",msg:`L'argument de w est ${fx(angT(o.phi))}, pas son opposé.`};
-    else d={etape:2,type:"arguments",titre:"Où ça part : les arguments.",msg:`${fx(`θₖ = ${o.thT}`)}, pour ${fx(`k = 0, …, ${n-1}`)}.`};
+    else d={etape:2,type:"arguments",titre:"Où ça part : les arguments.",msg:`${fx(`θₖ = ${o.thT}`)}, pour ${fx(kL(n))}.`};
     return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"r et θₖ sont à revoir":F[0]==="r"?"r est à revoir":"les arguments sont à revoir"}.`,diag:d};}
-  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[casesRK()],juge,etapes:o.etapes,bonne:`${fx(`r = ${rhoT(o.rho)}`)} et ${fx(`θₖ = ${o.thT}`)}, ${fx(`k = 0, …, ${n-1}`)}`,bonneTxt:`r = ${rhoT(o.rho)}, θk = ${o.thT}`,
+  return {sig:o.sig,q:o.q,corps:o.corps||"",texte:o.texte,champs:[casesRK()],juge,etapes:o.etapes,bonne:`${fx(`r = ${rhoT(o.rho)}`)} et ${fx(`θₖ = ${o.thT}`)}, ${fx(kL(n))}`,bonneTxt:`r = ${rhoT(o.rho)}, θk = ${o.thT}`,
     repBonne:{p:{r:o.rhoTape,"θₖ":o.thTape}},repFausse:{p:{r:o.rhoTape,"θₖ":`${angTape(div(o.phi,n))}+2*k*pi`}},nature:o.nature,ens:{type:"rk",n,w:o.w}};}
 /* ρ, ρⁿ et l'angle : z^n = w avec w = ρⁿ e^{iφ} */
 function racN(R,genre){let n,rho,phi,w,wT;
@@ -25235,8 +25236,8 @@ function racN(R,genre){let n,rho,phi,w,wT;
   const RR=rpow(rho,n),thT=`${angT(div(phi,n))==="0"?"":angT(div(phi,n))+" + "}${kpi(n)}`,thTape=`${angTape(div(phi,n))}+2*k*pi/${n}`;
   const rhoTape=rTape(rho),RT=rT(RR);
   const E=[{w:`On écrit w en forme exponentielle : ${fx(`w = ${expT(RR,phi)==="1"?"e^{0}":expT(RR,phi)}`)}${nul(phi)?"":""}.`,why:`Module ${fx(`|w| = ${RT}`)} et argument ${fx(angT(phi))}${genre===3?" (calculés comme pour une forme exponentielle)":""}.`,pts:1},
-    {w:`On cherche ${fx("z = r e^{iθ}")} : ${fx(`zⁿ = rⁿ e^{inθ}`)}, donc ${fx(`r^{${n}} = ${RT}`)}, c'est-à-dire ${fx(`r = ${rT(rho)}`)}.`,why:`Deux complexes égaux ont le même module. ${fx("r &gt; 0")}, donc r est la racine ${n}-ième positive de ${fx(RT)}.`,pts:1},
-    {w:`Et ${fx(`${n}θ = ${angT(phi)} + 2kπ`)}, donc ${fx(`θₖ = ${thT}`)}, pour ${fx(`k = 0, 1, …, ${n-1}`)}.`,why:`Les arguments de deux complexes égaux sont égaux à 2π près. Pour k = ${n}, on retombe sur le point de k = 0 : il y a exactement ${n} solutions.`,pts:1}];
+    {w:`On cherche ${fx("z = r e^{iθ}")} : ${fx(`zⁿ = rⁿ e^{inθ}`)}, donc ${fx(`r^{${n}} = ${RT}`)}, c'est-à-dire ${fx(`r = ${rT(rho)}`)}.`,why:`Deux complexes égaux ont le même module. ${fx("r &gt; 0")}, donc r est la racine ${n===2?"carrée":n===3?"cubique":n+"-ième"} positive de ${fx(RT)}.`,pts:1},
+    {w:`Et ${fx(`${n}θ = ${angT(phi)} + 2kπ`)}, donc ${fx(`θₖ = ${thT}`)}, pour ${fx(kL(n))}.`,why:`Les arguments de deux complexes égaux sont égaux à 2π près. Pour k = ${n}, on retombe sur le point de k = 0 : il y a exactement ${n} solutions.`,pts:1}];
   return exoRK({sig:"K"+genre+"|"+wT+"|"+n,n,rho,R:RR,phi,w,thT,thTape,rhoTape,etapes:E,q:`Résous dans ℂ l'équation ${fx(`z^{${n}} = ${wT}`)}.`,corps:genre===1?`<p class="muted">Méthode : écris w en forme exponentielle ${fx("w = R e^{iφ}")}, puis cherche ${fx("z = r e^{iθ}")} : ${fx("rⁿ = R")} et ${fx("nθ = φ + 2kπ")}.</p>`:"",nature:["","racines de 1, −1, i, −i","un réel ou un imaginaire pur","w en forme algébrique"][genre],texte:`résoudre z^${n} = ${wT}`});}
 /* toutes les solutions en forme algébrique */
 function racAlg(R){const cas=R.choix([[3,Q(0)],[3,Q(1)],[3,Q(1,2)],[3,Q(-1,2)],[4,Q(0)],[4,Q(1)],[4,Q(2,3)],[4,Q(-2,3)],[6,Q(0)],[6,Q(1)],[2,Q(1,2)],[2,Q(2,3)],[2,Q(-1,3)]]),n=cas[0],phi=cas[1],rho=R.choix(n===6?[Rd(1),Rd(1,3),Rd(1,2)]:[Rd(1),Rd(2),Rd(1,2),Rd(1,3)]);
