@@ -11708,8 +11708,8 @@ SUBJ.usi={name:"USI",code:"HAI103I",color:"#5BF29A",coef:4,share:1,key:"rev-usi-
 /* Automates : « Jouons aux automates » (HAI104I, Anne-Élisabeth Baert).
    Un seul examen écrit en janvier, 1 h, aucun document ni matériel, 100 % de la note, coefficient 3 du bloc info (MCC 2026-2027).
    Sujets : janvier 2026 (1 h, sujet et corrigé officiels), janvier 2023 et 2024, juin 2023 et 2024 (2 h) dans Moodle-S1/HAI104I.
-   Pour l'instant : la page de la matière, l'examen en 1 h (express-aut.js) et les générateurs (gen-aut.js) ; pas encore de leçons.
-   Couleur provisoire, en attendant son choix (question dans ~/claude/point/questions/peche.md). */
+   La page de la matière, l'examen en 1 h (express-aut.js), les générateurs (gen-aut.js) et les leçons (lecons-aut.js).
+   Couleur saumon : son choix AUT1a du 24/11. */
 (function(){
 window.SUBJ=window.SUBJ||{};
 const infos=`<p><b>L'examen</b> : 1 h, aucun document ni matériel, 100 % de la note de l'UE (coefficient 3 du bloc informatique). Session 1 entre le 4 et le 15 janvier ; le jour n'est pas encore publié. Seconde chance : un écrit d'1 h en juin.</p>
@@ -33477,7 +33477,11 @@ const PREUVES=[
  {op:"L<sup>−d</sup> (enlever la dernière lettre)",def:"L<sup>−d</sup> = { m | ma ∈ L ou mb ∈ L }",src:"juin 2023, questions 5 et 6 (pas de corrigé officiel : corrigé écrit par moi)",
   auto:"mêmes états, même état initial, mêmes transitions ; les nouveaux états d'arrivée sont les états q tels que δ(q, a) ∈ A ou δ(q, b) ∈ A",
   eq:"m ∈ L(A′) ⟺ δ*(q<sub>d</sub>, m) = q avec δ(q, a) ∈ A ou δ(q, b) ∈ A ⟺ ma ∈ L ou mb ∈ L ⟺ m ∈ L<sup>−d</sup>",
-  regles:"(L<sub>1</sub> ∪ L<sub>2</sub>)<sup>−d</sup> = L<sub>1</sub><sup>−d</sup> ∪ L<sub>2</sub><sup>−d</sup> ; (L*)<sup>−d</sup> = L*·L<sup>−d</sup> ; (L<sub>1</sub>L<sub>2</sub>)<sup>−d</sup> = L<sub>1</sub>L<sub>2</sub><sup>−d</sup> si ε ∉ L<sub>2</sub>, et L<sub>1</sub>L<sub>2</sub><sup>−d</sup> ∪ L<sub>1</sub><sup>−d</sup> si ε ∈ L<sub>2</sub>",cle:"Un mot est accepté s'il ne lui manque qu'une lettre pour arriver."}];
+  regles:"(L<sub>1</sub> ∪ L<sub>2</sub>)<sup>−d</sup> = L<sub>1</sub><sup>−d</sup> ∪ L<sub>2</sub><sup>−d</sup> ; (L*)<sup>−d</sup> = L*·L<sup>−d</sup> ; (L<sub>1</sub>L<sub>2</sub>)<sup>−d</sup> = L<sub>1</sub>L<sub>2</sub><sup>−d</sup> si ε ∉ L<sub>2</sub>, et L<sub>1</sub>L<sub>2</sub><sup>−d</sup> ∪ L<sub>1</sub><sup>−d</sup> si ε ∈ L<sub>2</sub>",cle:"Un mot est accepté s'il ne lui manque qu'une lettre pour arriver."},
+ {op:"la fermeture préfixe Pref(L)",def:"Pref(L) = { m | il existe u tel que mu ∈ L } (les préfixes des mots de L)",src:"feuille 4 de cette année, exercice 4 (corrigé écrit par moi)",
+  auto:"mêmes états, même état initial, mêmes transitions ; les nouveaux états d'arrivée sont tous les états depuis lesquels un chemin mène à un état d'arrivée de A",
+  eq:"m ∈ Pref(L) ⟺ il existe u avec δ*(q<sub>d</sub>, mu) ∈ A ⟺ il existe u avec δ*(δ*(q<sub>d</sub>, m), u) ∈ A ⟺ δ*(q<sub>d</sub>, m) est un nouvel état d'arrivée ⟺ m ∈ L(A′)",
+  regles:"Pref(L<sub>1</sub> ∪ L<sub>2</sub>) = Pref(L<sub>1</sub>) ∪ Pref(L<sub>2</sub>) ; Pref(L<sub>1</sub>L<sub>2</sub>) = Pref(L<sub>1</sub>) ∪ L<sub>1</sub>·Pref(L<sub>2</sub>) si L<sub>2</sub> ≠ ∅ ; Pref(L*) = L*·Pref(L) si L ≠ ∅",cle:"Un mot est un préfixe s'il reste un moyen de finir sur un état d'arrivée."}];
 function preuve(R){const P=R.choix(PREUVES);
   return {sig:"P"+P.op,q:`Montre que si L est un langage reconnaissable, alors ${P.op.replace(/ \(.*\)$/,"")} est aussi reconnaissable. Puis exprime les règles de calcul.`,
     corps:`<p>Définition : ${P.def}. L est reconnu par un automate déterministe A = ⟨Σ, Q, q<sub>d</sub>, A, δ⟩ : définis précisément l'automate qui reconnaît le nouveau langage, puis justifie par une suite d'équivalences.</p><p class="muted">Sur ta feuille, puis compare avec la correction (${P.src}).</p>`,
@@ -33487,8 +33491,72 @@ function preuve(R){const P=R.choix(PREUVES);
       {w:"Donc le nouveau langage est reconnu par A′ : il est reconnaissable.",why:"La phrase de conclusion est attendue.",pts:0.5},{w:`Les règles : ${P.regles}.`,why:"À savoir par cœur ; pour le produit, le cas ε ∈ L₁ (ou L₂) est celui qu'on oublie.",pts:1}],
     bonne:"voir la correction",bonneTxt:"à écrire sur papier (voir la correction)",repBonne:{},nature:P.op.replace(/<[^>]+>/g,""),ens:{type:"preuve",op:P.op}};}
 
+/* ---------- AU7 : équations de langages (2023 et 2024, pas en 2026) ---------- */
+const NUL={t:"0"},EPS={t:"e"},cle=t=>ecrit(t,false);
+const Un=(x,y)=>x.t==="0"?y:y.t==="0"?x:cle(x)===cle(y)?x:x.t==="e"&&y.t==="s"?y:y.t==="e"&&x.t==="s"?x:{t:"u",l:x,r:y};
+const Pr=(x,y)=>x.t==="0"||y.t==="0"?NUL:x.t==="e"?y:y.t==="e"?x:{t:"p",l:x,r:y};
+const Et=x=>x.t==="0"||x.t==="e"?EPS:x.t==="s"?x:{t:"s",x};
+const Li=i=>`L<sub>${i+1}</sub>`;
+/* système : eq[i] = {c: {j: coefficient}, k: constante} */
+function eqH(eq,i){const T=Object.keys(eq[i].c).map(Number).sort((x,y)=>x-y).map(j=>ecrit(eq[i].c[j],true,1)+"."+Li(j));
+  if(eq[i].k.t!=="0")T.push(ecrit(eq[i].k,true,0));return `${Li(i)} = ${T.length?T.join(" + "):"∅"}`;}
+const sysH=eq=>`<div class="formula">${eq.map((_,i)=>eqH(eq,i)).join("<br>")}</div>`;
+const copie=eq=>eq.map(e=>({c:Object.assign({},e.c),k:e.k}));
+function systeme(n,T,F){return [...Array(n)].map((_,i)=>{const c={};T.filter(t=>t[0]===i).forEach(([,l,j])=>{c[j]=c[j]?Un(c[j],{t:"c",c:l}):{t:"c",c:l};});return {c,k:F.includes(i)?EPS:NUL};});}
+function pointFixe(eq,i){const a=eq[i].c[i];if(!a)return false;delete eq[i].c[i];const s=Et(a);Object.keys(eq[i].c).forEach(j=>{eq[i].c[j]=Pr(s,eq[i].c[j]);});eq[i].k=Pr(s,eq[i].k);return cle(a);}
+function remplace(eq,k){eq.forEach((e,i)=>{if(i===k||!e.c[k])return;const g=e.c[k];delete e.c[k];Object.keys(eq[k].c).forEach(j=>{e.c[j]=e.c[j]?Un(e.c[j],Pr(g,eq[k].c[j])):Pr(g,eq[k].c[j]);});e.k=Un(e.k,Pr(g,eq[k].k));});}
+function resous(eq0){const eq=copie(eq0),n=eq.length,E=[];
+  for(let k=n-1;k>=1;k--){const a=pointFixe(eq,k);if(a)E.push({w:`Point fixe pour ${Li(k)} : ${eqH(eq,k)}.`,why:`L'équation est de la forme ${Li(k)} = α.${Li(k)} + β avec α = ${erH(a)} : sa solution est α*β.`,pts:1});
+    remplace(eq,k);E.push({w:`On remplace ${Li(k)} : ${eq.slice(0,k).map((_,i)=>eqH(eq,i)).join(" ; ")}.`,why:`${Li(k)} ne dépend plus que des autres inconnues : on le remplace par son expression partout où il apparaît.`,pts:1});}
+  const a=pointFixe(eq,0);E.push({w:`${a?"Point fixe pour L<sub>1</sub> : ":""}${eqH(eq,0)}.`,why:a?`L<sub>1</sub> = α.L<sub>1</sub> + β avec α = ${erH(a)}, donc L<sub>1</sub> = α*β.`:"Il ne reste plus d'inconnue à droite : c'est le résultat.",pts:1});
+  return {t:eq[0].k,E};}
+const RAPPEL_EQ=`<p class="muted">Méthode du cours (corrigé de janvier 2023) : on élimine les inconnues une à une, en remplaçant chacune par son expression. Une équation L = α.L + β, où α ne contient pas ε, a pour solution L = α*β (le « point fixe »). Tape + pour « ou », * pour l'étoile, e pour ε.</p>`;
+const par=s=>s.includes("+")?"("+s+")":s;
+function uneEquation(R){let al,be,droite,sol,autre;
+  for(let t=0;;t++){al=R.choix(["a","b","ab","a + b","ba","aa","(a + b)b","bb"]);be=R.choix(["b","a","ba","bb","a + b","ab","ε"]);droite=R()<0.5;
+    const A=lisER(al),B=lisER(be),g=cle(Pr(B,Et(A))),d=cle(Pr(Et(A),B));sol=droite?g:d;autre=droite?d:g;if(!memeL(sol,autre)||t>50)break;}
+  const ref=autoDe(sol),eq=droite?`L = L.${erH(par(al))} + ${erH(be)}`:`L = ${erH(par(al))}.L + ${erH(be)}`;
+  const juge=rep=>{const j=jugeER(rep.e,ref,null,"la solution");if(j.ok||j.incomplet)return j;return {ok:false,resume:"Pas tout à fait : "+j.msg+".",diag:{etape:0,type:"point fixe mal appliqué",titre:droite?"Ici, l'inconnue L est à gauche de α.":"Ici, l'inconnue L est à droite de α.",msg:Maj(j.msg)+`. ${droite?"Pour L = L.α + β, la solution est βα* (janvier 2023).":"Pour L = α.L + β, la solution est α*β."}`}};};
+  return {sig:"EQ1"+al+be+droite,q:`Donne une expression régulière de L, solution de l'équation ${eq}.`,corps:RAPPEL_EQ+(droite?`<p class="muted">Ici L est à gauche du coefficient : c'est la forme de janvier 2023.</p>`:""),texte:`${droite?"L = Lα + β":"L = αL + β"}, α = ${al}, β = ${be}`,champs:[{k:"champ",id:"e",label:"L =",sym:SYM,apercu:false,ex:"a*b",aide:AIDE_ER}],juge,
+    etapes:[{w:`L = ${erH(sol)}.`,why:droite?"Pour L = L.α + β, la solution est L = βα* : β, puis des α à droite.":"Pour L = α.L + β, la solution est L = α*β : des α, puis un β pour finir.",pts:1},
+      {w:droite?`Vérification : L.α + β = β.α*.α + β = β.(α*.α + ε) = β.α* = L.`:`Vérification : α.L + β = α.α*.β + β = (α.α* + ε).β = α*.β = L.`,why:"C'est la preuve du corrigé de janvier 2023 : α*.α + ε = α*.",pts:1}],
+    bonne:erH(sol),bonneTxt:erT(sol),repBonne:{e:erT(sol)},repFausse:{e:autre},nature:"équation",ens:{type:"eq1",al,be,droite,sol:erT(sol)}};}
+const SYS_SUJETS=[
+ {src:"juin 2024, question 3",n:3,T:[[0,"a",2],[1,"b",0],[1,"a",1],[2,"a",1],[2,"b",1]],F:[0,2]},
+ {src:"janvier 2024, question 3",n:3,T:[[0,"a",0],[0,"a",1],[0,"b",2],[1,"a",0],[1,"a",1],[2,"b",0],[2,"a",1]],F:[2]},
+ {src:"janvier 2023, question 4",n:3,T:[[0,"b",0],[0,"a",1],[1,"a",1],[1,"b",2],[2,"b",0]],F:[0,1,2]}];
+const autoSys=S=>auto([...Array(S.n)].map((_,i)=>String(i+1)),["1"],S.F.map(i=>String(i+1)),S.T.map(([p,c,q])=>[String(p+1),c,String(q+1)]));
+function sysHasard(R,n,det){for(let t=0;;t++){const T=[];
+  for(let p=0;p<n;p++)for(const c of AB){const k=det?(R()<0.2?0:1):(R()<0.2?0:R()<0.75?1:2);R.mel([...Array(n).keys()]).slice(0,k).forEach(q=>T.push([p,c,q]));}
+  const F=[...Array(n).keys()].filter(()=>R()<0.4);if(!F.length&&t<200)continue;
+  const S={n,T,F},A=autoSys(S),vu=new Set([0]),P=[0];while(P.length){const p=P.pop();AB.forEach(c=>(A.d[p][c]||[]).forEach(q=>{if(!vu.has(q)){vu.add(q);P.push(q);}}));}
+  const M=minimal(A);if((vu.size<n||M.n<2||!M.fin.some(Boolean)||!det&&!A.d.some(x=>AB.some(c=>(x[c]||[]).length>1)))&&t<300)continue;
+  const L=cle(resous(systeme(n,T,F)).t).length;if((L>(n===2?28:46)||L<4)&&t<300)continue;return S;}}
+function resoudre(R,n,sujets){const S=sujets&&R()<0.35?R.choix(SYS_SUJETS):sysHasard(R,n,R()<0.6),A=autoSys(S),eq=systeme(S.n,S.T,S.F),r=resous(eq),sol=cle(r.t);
+  const juge=rep=>{const j=jugeER(rep.e,A,null,"L<sub>1</sub>");if(j.ok||j.incomplet)return j;return {ok:false,resume:"Pas tout à fait : "+j.msg+".",diag:{etape:0,type:j.d.dansA?"expression trop large":"expression trop étroite",titre:`Vérifie ${mot(j.d.w)} dans le système.`,msg:Maj(j.msg)+`. Un mot est dans L<sub>1</sub> quand on peut le lire en suivant les équations depuis L<sub>1</sub> (a.L<sub>2</sub> : lire a, puis un mot de L<sub>2</sub>) jusqu'à un « + ε ».`}};};
+  return {sig:"EQ"+S.n+JSON.stringify(S.T)+S.F,q:`Soit L<sub>1</sub> le langage défini par les ${S.n===2?"deux":"trois"} équations ci-dessous. Décris L<sub>1</sub> par une expression régulière.`,corps:sysH(eq)+(S.src?`<p class="muted">Le système de ${S.src}.</p>`:"")+RAPPEL_EQ,texte:"système : "+eq.map((_,i)=>eqH(eq,i)).join(" ; ").replace(/<[^>]+>/g,""),
+    champs:[{k:"champ",id:"e",label:"L₁ =",sym:SYM,apercu:false,ex:"(a + ab)*b",aide:AIDE_ER}],juge,
+    etapes:[...r.E,{w:`Donc L<sub>1</sub> = ${erH(sol)}.`,why:"Une autre expression du même langage est acceptée : le site compare les langages mot par mot.",pts:1}],
+    bonne:erH(sol),bonneTxt:sol,repBonne:{e:sol},repFausse:{e:sol==="(a + b)*"?"a*":"(a + b)*"},nature:S.src||"système",ens:{type:"sys",n:S.n,T:S.T,F:S.F,sol}};}
+function versAFD(R,det){const S=det?(R()<0.3?SYS_SUJETS[0]:sysHasard(R,3,true)):(R()<0.3?SYS_SUJETS[1]:sysHasard(R,3,false)),A=autoSys(S),eq=systeme(S.n,S.T,S.F),M=minimal(A),noms=qn(M.n);
+  return {sig:"EA"+det+JSON.stringify(S.T)+S.F,q:`Soit L<sub>1</sub> le langage défini par les ${S.n} équations ci-dessous. Décris L<sub>1</sub> par un automate déterministe et complet.`,
+    corps:sysH(eq)+(S.src?`<p class="muted">Le système de ${S.src}.</p>`:"")+`<p class="muted">Une équation par état : a.L<sub>j</sub> dans l'équation de L<sub>i</sub> veut dire une flèche a de l'état i vers l'état j, et « + ε » veut dire que l'état i est acceptant ; L<sub>1</sub> est l'état de départ. ${det?"Une lettre absente d'une équation mène au puits.":"Ici, une lettre mène parfois à deux inconnues : l'automate direct n'est pas déterministe, il faut le déterminiser."} ${AIDE_AFD}</p>`,
+    texte:"automate du système : "+eq.map((_,i)=>eqH(eq,i)).join(" ; ").replace(/<[^>]+>/g,""),
+    champs:[{k:"trace",id:"t",vars:VARS_AFD,rangs:true,serre:true,lignes:3}],juge:rep=>jugeAFD(rep,A,null,{quoi:"L<sub>1</sub>"}),
+    etapes:[{w:"L'automate direct, un état par équation :"+dessin(A),why:det?"a.L<sub>j</sub> dans l'équation de L<sub>i</sub> : flèche a de i vers j ; « + ε » : état acceptant.":"Même lecture des équations ; une lettre qui mène à deux inconnues donne deux flèches : l'automate n'est pas déterministe.",pts:1},
+      ...(det?[]:[{w:"On le déterminise par la méthode des ensembles (leçon « Déterminiser »), et on fusionne les états qui ont le même avenir.",why:"Janvier 2024 demande d'abord l'automate non déterministe, puis le déterministe.",pts:1}]),
+      ...etapesAFD(M,noms,det?"Les lettres absentes vont dans un puits, pour que l'automate soit complet.":"Chaque état regroupe des états de l'automate direct.")],
+    bonne:"voir l'automate de la correction",bonneTxt:M.T.map((t,i)=>`${noms[i]}: a→${noms[t.a]} b→${noms[t.b]}${M.fin[i]?" acceptant":""}`).join(" ; "),
+    repBonne:{t:M.T.map((t,i)=>[noms[i],noms[t.a],noms[t.b],M.fin[i]?"oui":"non"])},repFausse:{t:M.T.map((t,i)=>[noms[i],noms[t.a],noms[t.b],M.fin[i]?"non":"oui"])},nature:S.src||"système",ens:{type:"sysA",n:S.n,T:S.T,F:S.F}};}
+function preuveEq(R){const gauche=R()<0.5;
+  return {sig:"EQP"+gauche,q:gauche?"Soit l'équation L = L.α + β où α et β sont des expressions régulières ne contenant pas d'occurrence de L. Donnez une valeur de L (dépendant de α et β) qui satisfait cette équation. Prouvez votre réponse.":"Montrez que L = α*β est solution de l'équation L = α.L + β, où α et β sont des expressions régulières.",
+    corps:`<p class="muted">${gauche?"Janvier 2023, question 3 (2 points), corrigé officiel":"Feuille 4 de cette année, exercice 2 (corrigé écrit par moi, sur le modèle de janvier 2023)"}. Sur ta feuille, puis compare.</p>`,texte:gauche?"preuve L = Lα + β":"preuve L = αL + β",champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
+    etapes:gauche?[{w:"Une solution : L = β.α*.",why:"β d'abord, puis des α : l'inconnue L est à gauche de α dans l'équation.",pts:0.5},{w:"On remplace L par β.α* dans le membre de droite : L.α + β = β.α*.α + β.",why:"On vérifie que la valeur proposée satisfait l'équation.",pts:0.5},{w:"= β.(α*.α + ε) = β.α* = L.",why:"On met β en facteur à gauche (β = β.ε), puis α*.α + ε = α* : zéro α, ou au moins un.",pts:1}]
+      :[{w:"On remplace L par α*β dans le membre de droite : α.L + β = α.α*.β + β.",why:"Montrer qu'une valeur est solution, c'est la remettre dans l'équation.",pts:0.5},{w:"= (α.α* + ε).β",why:"On met β en facteur à droite (β = ε.β).",pts:0.5},{w:"= α*.β = L, car α.α* + ε = α* (au moins un α, ou aucun).",why:"Donc α*β est bien solution.",pts:1}],
+    bonne:"voir la correction",bonneTxt:"à écrire sur papier (voir la correction)",repBonne:{},nature:"preuve du point fixe",ens:{type:"preuveEq",gauche}};}
+
 G.add("aut",[
- {id:"AU6",t:"Quotients à gauche (et les autres opérations sur les langages)",tache:"quotients à gauche",th:"quotients",pts:9,
+ {id:"AU6",lecons:["au-quotients"],t:"Quotients à gauche (et les autres opérations sur les langages)",tache:"quotients à gauche",th:"quotients",pts:9,
   paliers:[
    {t:"un langage fini : La et Lb",cc:3,gen:R=>quotientsFinis(R,false)},
    {t:"un langage décrit en français : La et Lb en expressions",cc:4,gen:R=>quotientsER(R,{decrit:true}),min:11},
@@ -33497,31 +33565,39 @@ G.add("aut",[
    {t:"la démonstration « reconnaissable » et les règles, sur papier",cc:5,gen:preuve,min:5},
    {t:"un langage fini : quotients par deux lettres",cc:3,gen:R=>quotientsFinis(R,true)},
    {t:"tous les quotients, d'autres langages",cc:5,gen:R=>tousQuotients(R,1),min:6}]},
- {id:"AU5",t:"Déterminiser un automate",tache:"déterminisation",th:"det",pts:3,
+ {id:"AU5",lecons:["au-det"],t:"Déterminiser un automate",tache:"déterminisation",th:"det",pts:3,
   paliers:[
    {t:"trois états, comme en janvier 2026",cc:5,gen:R=>determiniser(R,3,false)},
    {t:"quatre états",cc:6,gen:R=>determiniser(R,4,false)},
    {t:"déterminiser, puis le complémentaire",cc:6,gen:R=>determiniser(R,R.ent(3,4),true)}]},
- {id:"AU3",t:"Expressions régulières",tache:"expressions régulières",th:"er",pts:3.5,
+ {id:"AU3",lecons:["au-er"],t:"Expressions régulières",tache:"expressions régulières",th:"er",pts:3.5,
   paliers:[
    {t:"les mots d'une expression",cc:2,gen:motsER},
    {t:"QCM : quelles expressions décrivent ce langage ?",cc:3,gen:qcmER},
    {t:"écrire l'expression d'un langage décrit",cc:3,gen:R=>ecrireER(R),min:22}]},
- {id:"AU4",t:"Construire un automate déterministe complet",tache:"construire un automate",th:"construire",pts:2,
+ {id:"AU4",lecons:["au-construire"],t:"Construire un automate déterministe complet",tache:"construire un automate",th:"construire",pts:2,
   paliers:[
    {t:"un langage simple",cc:3,gen:R=>construire(R,["pa","ia","da","fb","aa","abf","bbs","lp","nab","asb"],false),min:10},
    {t:"avec le nombre d'états imposé",cc:3,gen:R=>construire(R,["b2","m3","a3","x2a","u1a","aea","nbb","li"],true),min:8},
    {t:"les langages des sujets (2023 à 2026)",cc:5,gen:R=>construire(R,["imp","un","abba","lex","ab1","pre","f2"],false),min:7}]},
- {id:"AU2",t:"Lire un automate",tache:"lire un automate",th:"lire",pts:1.25,
+ {id:"AU2",lecons:["au-lire"],t:"Lire un automate",tache:"lire un automate",th:"lire",pts:1.25,
   paliers:[
    {t:"les mots acceptés par un automate déterministe",cc:2,gen:R=>motsAcceptes(R,true)},
    {t:"les mots acceptés par un automate non déterministe",cc:3,gen:R=>motsAcceptes(R,false)},
    {t:"les états atteints en lisant un mot",cc:2,gen:etatsAtteints}]},
- {id:"AU1",t:"Mots : préfixe, suffixe, facteur, sous-mot, ordre",tache:"mots",th:"mots",pts:1.25,
+ {id:"AU1",lecons:["au-mots"],t:"Mots : préfixe, suffixe, facteur, sous-mot, ordre",tache:"mots",th:"mots",pts:1.25,
   paliers:[
    {t:"préfixes, suffixes, facteurs, sous-mots",cc:2,gen:relMots},
    {t:"QCM : les sous-mots, comme en janvier 2026",cc:2,gen:sousMotsQcm},
-   {t:"l'ordre lexicographique",cc:2,gen:ordreLex}]}
+   {t:"l'ordre lexicographique",cc:2,gen:ordreLex}]},
+ {id:"AU7",t:"Équations de langages (2023 et 2024, pas en 2026)",tache:"équations de langages",pts:0,blanc:false,
+  paliers:[
+   {t:"une équation L = α.L + β",cc:2,gen:uneEquation,min:40},
+   {t:"un système de deux équations",cc:4,gen:R=>resoudre(R,2,false),min:150},
+   {t:"trois équations, comme en 2023 et 2024",cc:6,gen:R=>resoudre(R,3,true),min:150},
+   {t:"des équations à l'automate déterministe complet",cc:5,gen:R=>versAFD(R,true),min:150},
+   {t:"des équations non déterministes à l'automate déterministe",cc:7,gen:R=>versAFD(R,false),min:150},
+   {t:"la preuve du point fixe, sur papier",cc:4,gen:preuveEq,min:2}]}
 ]);
 })();
 
