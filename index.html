@@ -3714,7 +3714,8 @@ const infos2=({sec})=>`<div class="title-row"><h1>Le CC2 de géométrie en bref<
  ${sec(5,"Ce que le CC1 du 10 novembre 2026 apprend",`<ul><li>Les questions de cours valaient 7 points, dont <b>5 pour une démonstration du poly</b>. Le corrigé officiel le dit : citer le résultat ne suffisait pas, il fallait le démontrer. Pour le CC2, les démonstrations se récitent sur papier : <a href="#/entrainer/geo/GC1">Pythagore</a>, <a href="#/entrainer/geo/GC2">sa réciproque</a>, <a href="#/entrainer/geo/GC3">le théorème de l'aire</a>, <a href="#/entrainer/geo/GC4">l'angle au centre</a>.</li><li>Les trois exercices (13 points) demandaient des outils d'avant le CC1 : deux triangles isométriques, des bissectrices, l'inégalité triangulaire. Les CC2 de 2024 et 2025 les réutilisent aussi. La leçon <a href="#/lecon/geo/g2-bases">« Triangles : les bases du CC1 qui retombent au CC2 »</a> reprend ces exercices.</li><li>Les fautes que le corrigé officiel relève dans les copies : médiane, hauteur et bissectrice confondues ; AB, [AB] et (AB) confondus ; angles orientés et non orientés confondus ; un résultat demandé en « montrer » seulement cité.</li><li>Le sujet et son corrigé officiel sont dans les <a href="#/geo/annales">annales</a>.</li></ul>`)}`;
 SUBJ.geo={name:"Géométrie",code:"HAX104X",color:"#D980FF",coef:4,share:0.30,key:"geo-cc1-dossier-v1",lang:"",
  exams:[{id:"cc1",label:"CC1",day:"2026-11-10",start:"09:45",end:"10:45",place:"amphi Dumontet",dur:"1 h",unsure:""},
-        {id:"cc2",label:"CC2",day:"2026-12-11",start:"09:45",end:"11:15",place:"amphi Dumontet",dur:"1 h 30",covers:["cc2"],unsure:"Programme pas encore annoncé : le site prépare la suite du poly après le CC1 (§3.3 à la fin du chapitre 5).",prog:"Pas encore annoncé : la suite du poly après le CC1, c'est-à-dire translations et homothéties (§3.3), angles de vecteurs et de droites et repères (§3.4 et 3.5), Pythagore et sa réciproque, trigonométrie, aire ½ ab sin Ĉ, Al-Kashi, rotations, produit scalaire (chapitre 4), cercles, angle au centre et angle inscrit (chapitre 5). Les CC2 de 2024 et 2025 demandaient ces démonstrations."}],
+        {id:"cc2",label:"CC2",day:"2026-12-11",start:"09:45",end:"11:15",place:"amphi Dumontet",dur:"1 h 30",covers:["cc2"],unsure:"Programme pas encore annoncé : le site prépare la suite du poly après le CC1 (§3.3 à la fin du chapitre 5).",prog:"Pas encore annoncé : la suite du poly après le CC1, c'est-à-dire translations et homothéties (§3.3), angles de vecteurs et de droites et repères (§3.4 et 3.5), Pythagore et sa réciproque, trigonométrie, aire ½ ab sin Ĉ, Al-Kashi, rotations, produit scalaire (chapitre 4), cercles, angle au centre et angle inscrit (chapitre 5). Les CC2 de 2024 et 2025 demandaient ces démonstrations."},
+        {id:"ccf",label:"CC final",day:"2026-12-14",start:"09:45",end:"11:45",place:"à confirmer",dur:"2 h",share:0.4,covers:["cc1","cc2","ccf"],from:"2026-12-12",docs:"aucun (les sujets des années passées interdisent tout document, toute calculatrice et tout téléphone)",unsure:"Date supposée, à confirmer : la page examens de la fac met les épreuves finales du contrôle continu intégral du lundi 14 au vendredi 18/12, sans le jour de chaque matière (publié vers le 30/11). Le site prend le jour le plus tôt, pour que tu sois prêt quel que soit le vrai jour, et le corrigera dès que la date sera dans Prose ou les mails.",prog:"Pas encore annoncé : tout le cours, comme au CC3 du 6 janvier 2026 (2 h) et aux examens de janvier 2024 et 2025. Ces sujets demandaient des démonstrations du cours (théorème des milieux, isométries, cercle et droite), un exercice de figure (triangles isométriques, rotations, angle inscrit), la trigonométrie (formules d'addition, Al-Kashi) et un exercice en nombres complexes (distances, angles, milieu, expression complexe d'une rotation, équation d'une droite)."}],
  docs:"aucun",examMinutes:60,examMorning:"Relis les fiches en rouge et les 8 fautes de « Bien rédiger ». Carte d'étudiant.",
  prog:"Poly jusqu'au §3.2, feuille de TD 1, et les 12 démos exigibles. Thalès est tombé les deux dernières années (4 à 6 points).",
  chapters:{1:"1. Les axiomes du plan",2:"2. Parallélisme et Thalès",3:"3. Parallélogrammes et vecteurs",4:"4. Résultats de TD",5:"5. Transformations, Pythagore, trigonométrie",6:"6. Cercles"},
@@ -24047,7 +24048,7 @@ function deuxHom(R){const k=R.choix(["compo","compo","compo","inv","trouve","tro
       {w:`<b>${fx(`λ_{2} = ${par(P)}/${par(l1)} = ${nb(l2)}`)}</b>`,why:"On divise par λ₁. Diviser par une fraction, c'est multiplier par son inverse.",pts:1}];
     pieges=[[div(l1,P),1,"quotient à l'envers","Où ça part : la division.",`On divise le rapport de la composée, ${nb(P)}, par λ₁ : pas l'inverse.`],[sub(P,l1),1,"soustraction au lieu de division","Où ça part : la composée.","Les rapports se multiplient : pour retrouver λ₂, on divise, on ne soustrait pas."],[mul(P,l1),1,"multiplication au lieu de division","Où ça part : la division.","Pour isoler λ₂, on divise par λ₁."]];}
   return unNombre({nom,v:V,autre:pieges[0][0],quoi,ex:"par exemple 3/2 ou -2",etapes:E,pieges,sig:"DH"+JSON.stringify(k==="inv"?[k,brut(l1)]:[k,brut(l1),brut(l2),q.indexOf("h₂ ∘ h₁")>=0]),q,
-    corps:`<p>Rappel : l'homothétie de centre K et de rapport λ envoie M sur le point M′ tel que ${ve("KM′")} = λ${ve("KM")}. « h₂ ∘ h₁ » veut dire : d'abord h₁, puis h₂.</p>`,texte:{compo:`h1 (K, ${nb(l1)}), h2 (K, ${nb(l2)}) ; rapport de la composée`,inv:`h (K, ${nb(l1)}) ; rapport de g avec g(h(M)) = M`,trouve:`h1 (K, ${nb(l1)}), h2 ∘ h1 de rapport ${nb(P)} ; rapport de h2`}[k],
+    corps:`<p>Rappel : l'homothétie de centre K et de rapport λ envoie M sur le point M′ tel que ${ve("KM′")} = λ${ve("KM")}.${(m=>m?` « h${m[1]} ∘ h${m[2]} » veut dire : d'abord h${m[2]}, puis h${m[1]}.`:"")(q.match(/h(.) ∘ h(.)/))}</p>`,texte:{compo:`h1 (K, ${nb(l1)}), h2 (K, ${nb(l2)}) ; rapport de la composée`,inv:`h (K, ${nb(l1)}) ; rapport de g avec g(h(M)) = M`,trouve:`h1 (K, ${nb(l1)}), h2 ∘ h1 de rapport ${nb(P)} ; rapport de h2`}[k],
     nature:{compo:"composée de deux homothéties",inv:"homothétie réciproque",trouve:"rapport manquant"}[k],ens:{k,l1:fl(l1),l2:fl(l2),P:fl(P)}});}
 
 
@@ -24849,6 +24850,132 @@ function itPapier(R){const b=R.choix(IT_BANQUE),e=recit("IP"+b[0],b[4],b[5],b[6]
 /* ---------- les démonstrations et les énoncés du cours : à écrire de mémoire, puis à cocher ligne par ligne ---------- */
 const recit=(sig,q,corps,lignes)=>()=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\^\{2\}/g,"²").replace(/\$/g,"").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
   etapes:lignes.map(l=>({w:l[0],why:l[1],pts:l[2]})),bonne:"voir la correction",bonneTxt:"à écrire de mémoire (voir la correction)",repBonne:{},nature:"papier"});
+/* ---------- GE9 : les nombres complexes en géométrie (poly, chapitres 6 et 7 ; CC3 2026, examens de janvier 2024 et 2025) ---------- */
+const Zc=(a,b)=>({a:q(a),b:q(b||0)}),zAdd=(z,w)=>Zc(add(z.a,w.a),add(z.b,w.b)),zSub=(z,w)=>Zc(sub(z.a,w.a),sub(z.b,w.b));
+const zMul=(z,w)=>Zc(sub(mul(z.a,w.a),mul(z.b,w.b)),add(mul(z.a,w.b),mul(z.b,w.a))),zBar=z=>Zc(z.a,mul(z.b,-1)),zN2=z=>add(mul(z.a,z.a),mul(z.b,z.b));
+const zDiv=(z,w)=>{const d=zN2(w),p=zMul(z,zBar(w));return Zc(div(p.a,d),div(p.b,d));};
+const zEq=(z,w)=>egal(z.a,w.a)&&egal(z.b,w.b),zF=z=>[fl(z.a),fl(z.b)],zNul=z=>!z.a.n&&!z.b.n,zNeg=z=>Zc(mul(z.a,-1),mul(z.b,-1));
+const zCo=x=>{const A=vabs(q(x));return (egal(A,1)?"":A.d===1?nb(A):"("+nb(A)+")")+"i";};
+function zt(z){const a=q(z.a),b=q(z.b);if(!b.n)return nb(a);if(!a.n)return (b.n<0?"−":"")+zCo(b);return nb(a)+(b.n<0?" − ":" + ")+zCo(b);}
+const zp=z=>(!z.b.n&&z.a.n>=0)||(!z.a.n&&z.b.n>0)?zt(z):"("+zt(z)+")";
+const plusZ=z=>{if(zNul(z))return "";if(!z.b.n||!z.a.n){const c=z.b.n?z.b:z.a;return (c.n<0?" − ":" + ")+(z.b.n?zCo(c):nb(vabs(c)));}return " + ("+zt(z)+")";};
+const facZ=a=>!a.b.n&&egal(a.a,1)?"":!a.b.n&&egal(a.a,-1)?"−":!a.a.n&&egal(a.b,1)?"i":!a.a.n&&egal(a.b,-1)?"−i":!a.b.n&&a.a.d===1?nb(a.a):"("+zt(a)+")";
+const linZ=(a,w)=>facZ(a)+"z"+plusZ(w);
+const zr=(R,lo,hi)=>Zc(R.ent(lo,hi),R.ent(lo,hi)),affZ=(n,z)=>fx(`z_{${n}} = ${zt(z)}`);
+const colin=(A,B,C)=>{const u=zSub(B,A),v=zSub(C,A);return !sub(mul(u.a,v.b),mul(u.b,v.a)).n;};
+const EIA={"1/2":Zc(0,1),"-1/2":Zc(0,-1),"1":Zc(-1,0)},ANG3=[Q(1,2),Q(-1,2),Q(1,1)];
+const eia=t=>t.n<0?`e^{−i${angT(mul(t,-1))}}`:`e^{i${angT(t)}}`;
+const RAPZ=`<p class="muted">Rappel : le plan est muni d'un repère orthonormé direct et identifié à ℂ. Le point M de coordonnées (x, y) a pour affixe ${fx("z_{M} = x + iy")} (poly, chapitre 6).</p>`;
+const lisR=s=>{const t=propre(s);if(!t)return {vide:1};if(/i/i.test(t.replace(/pi/gi,"")))return {avecI:1};const v=O.calcule(t,{});return v===null||!isFinite(v)?{illisible:1}:{v,dec:/\d[.,]\d/.test(t)};};
+function exoZ(o){const z=o.z,dern=o.etapes.length-1;
+  const pieges=o.pieges.concat([[Zc(z.b,z.a),dern,"partie réelle et partie imaginaire échangées","Où ça part : lire a et b.",`a est la partie réelle (le nombre sans i), b la partie imaginaire (le nombre devant i). Ici ${fx(`a = ${nb(z.a)}`)} et ${fx(`b = ${nb(z.b)}`)}.`]]).filter((p,i,L)=>!zEq(p[0],z)&&L.findIndex(r=>zEq(r[0],p[0]))===i);
+  const juge=rep=>{const X=rep.z||{},A=lisR(X.a),B=lisR(X.b);
+    if(A.vide||B.vide)return {incomplet:"Remplis les deux cases a et b."};
+    if(A.avecI||B.avecI)return {incomplet:"Dans chaque case, écris un nombre réel, sans i : pour 2 − 3i, a = 2 et b = −3."};
+    if(A.illisible||B.illisible)return {incomplet:"Je n'arrive pas à lire une des cases. Écris un nombre, par exemple −3 ou 5/2."};
+    const [za,zb]=zF(z),okA=pres(A.v,za),okB=pres(B.v,zb);if(okA&&okB)return {ok:true};
+    if((!okA&&A.dec&&Math.abs(A.v-za)<0.02)||(!okB&&B.dec&&Math.abs(B.v-zb)<0.02))return {incomplet:"C'est une valeur approchée. Au CC il faut la valeur exacte : écris une fraction, par exemple 3/2."};
+    const F=[];if(!okA)F.push("a");if(!okB)F.push("b");
+    const pg=pieges.find(p=>{const w=zF(p[0]);return pres(A.v,w[0])&&pres(B.v,w[1]);});
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"les deux cases sont à revoir":"la case "+F[0]+" est à revoir"}.`,
+      diag:pg?{etape:pg[1],type:pg[2],titre:pg[3],msg:pg[4]}:{etape:dern,type:"calcul",titre:"Où ça part : le calcul.",msg:`Refais le calcul étape par étape : on trouve ${fx(`${o.nom} = ${zt(z)}`)}.`}};};
+  const f0=pieges.length?pieges[0][0]:zAdd(z,Zc(1));
+  return {sig:o.sig,q:o.q,corps:RAPZ+(o.corps||""),texte:o.texte,nature:o.nature,etapes:o.etapes,juge,
+    champs:[{k:"cases",id:"z",noms:["a","b"],titre:`Écris ${o.titre} sous la forme $a + ib$, avec $a$ et $b$ réels :`,sym:["/"],aide:"Dans la case b, écris seulement le nombre devant i : pour 2 − 3i, a = 2 et b = −3. Pour une fraction, écris 3/2."}],
+    bonne:fx(`${o.nom} = ${zt(z)}`),bonneTxt:`${o.nom} = ${zt(z)}`.replace(/_\{([^}]*)\}/g,"$1"),repBonne:{z:{a:brut(z.a),b:brut(z.b)}},repFausse:{z:{a:brut(f0.a),b:brut(f0.b)}},ens:Object.assign({z:zF(z)},o.ens)};}
+function jugeF(V,E,pieges,quoi){return rep=>{const r=lisNombre(rep.x,V,quoi);if(r.inc)return {incomplet:r.inc};if(pres(r.v,V))return {ok:true};
+  for(const p of pieges)if(!pres(p[0],V)&&pres(r.v,p[0]))return faux({etape:p[1],type:p[2],titre:p[3],msg:p[4]});
+  return faux({etape:E.length-1,type:"calcul",titre:"Où ça part : le calcul.",msg:E[E.length-1].w});};}
+const memeAng=(x,y)=>{const k=(x-y)/(2*Math.PI);return Math.abs(k-Math.round(k))<1e-9;};
+function jugeMod(t,E,pieges){const V=angV(t);return rep=>{const r=lisAngle(rep.x,V);if(r.inc)return {incomplet:r.inc};if(memeAng(r.v,V))return {ok:true};
+  for(const p of pieges){const w=angV(p[0]);if(!memeAng(w,V)&&memeAng(r.v,w))return faux({etape:p[1],type:p[2],titre:p[3],msg:p[4]});}
+  return faux({etape:E.length-1,type:"calcul",titre:"Où ça part : l'argument.",msg:E[E.length-1].w});};}
+
+function milieuPara(R){let A,B,C;do{A=zr(R,-4,4);B=zr(R,-4,4);C=zr(R,-4,4);}while(colin(A,B,C));
+  if(R()<0.4){const s=zAdd(B,C),V=Zc(div(s.a,2),div(s.b,2)),d=zSub(C,B);
+    const E=[{w:`Le milieu I de [BC] vérifie ${ve("BI")} = ${ve("IC")}, donc ${fx("z_{I} − z_{B} = z_{C} − z_{I}")}, d'où ${fx("z_{I} = (z_{B} + z_{C})/2")}.`,why:`Proposition 6.1.1 : le vecteur AB a pour affixe ${fx("z_{B} − z_{A}")}. L'affixe du milieu est donc la moyenne des deux affixes.`,pts:1},
+      {w:`<b>${fx(`z_{I} = (${zt(B)} + ${zp(C)})/2 = ${zp(s)}/2 = ${zt(V)}`)}</b>`,why:"On additionne les parties réelles entre elles et les parties imaginaires entre elles, puis on divise chacune par 2.",pts:1}];
+    return exoZ({nom:"z_{I}",z:V,titre:"l'affixe de I",sig:"CM"+zt(B)+"|"+zt(C),nature:"milieu",texte:`B ${zt(B)}, C ${zt(C)} ; affixe du milieu I de [BC]`,
+      q:`Soient B et C les points d'affixes ${affZ("B",B)} et ${affZ("C",C)}. Donne l'affixe du milieu I du segment [BC].`,etapes:E,
+      pieges:[[s,1,"division par 2 oubliée","Où ça part : la moyenne.","L'affixe du milieu est la moyenne des deux affixes : on divise la somme par 2."],[Zc(div(d.a,2),div(d.b,2)),0,"différence au lieu de somme","Où ça part : la formule.",`${fx("(z_{C} − z_{B})/2")} est l'affixe du vecteur ${ve("BI")}, pas celle du point I. Le point I a pour affixe ${fx("(z_{B} + z_{C})/2")}.`]],
+      ens:{k:"mil",B:zF(B),C:zF(C)}});}
+  const [W,j]=R.choix([["ABCD",3],["ABCD",3],["ABKC",2],["AGBC",1]]),L=W.split(""),X=L[j],P=L[(j+3)%4],S2=L[(j+1)%4],T=L[(j+2)%4],Z0={A,B,C};
+  const V=zSub(zAdd(Z0[P],Z0[S2]),Z0[T]),l0=L[0],l1=L[1],l2=L[2],l3=L[3];
+  const E=[{w:`${W} est un parallélogramme exactement quand ${ve(l0+l1)} = ${ve(l3+l2)}. Avec la proposition 6.1.1, cela s'écrit ${fx(`z_{${l1}} − z_{${l0}} = z_{${l2}} − z_{${l3}}`)}.`,why:`Les sommets se suivent dans l'ordre des lettres : ${l0}${l1} et ${l3}${l2} sont deux côtés opposés, parcourus dans le même sens (§3.2).`,pts:1},
+    {w:`<b>On isole ${fx(`z_{${X}}`)} : ${fx(`z_{${X}} = z_{${P}} + z_{${S2}} − z_{${T}} = ${zt(Z0[P])} + ${zp(Z0[S2])} − ${zp(Z0[T])} = ${zt(V)}`)}</b>`,why:`${X} est entre ${P} et ${S2} dans ${W}, et ${T} est le sommet opposé : il est le seul retranché.`,pts:1}];
+  return exoZ({nom:`z_{${X}}`,z:V,titre:`l'affixe de ${X}`,sig:"CP"+W+zt(A)+"|"+zt(B)+"|"+zt(C),nature:"parallélogramme",texte:`A ${zt(A)}, B ${zt(B)}, C ${zt(C)} ; ${X} tel que ${W} soit un parallélogramme`,
+    q:`Soient A, B et C les points d'affixes ${affZ("A",A)}, ${affZ("B",B)} et ${affZ("C",C)}. Donne l'affixe du point ${X} tel que ${W} soit un parallélogramme.`,etapes:E,
+    pieges:[[zSub(zAdd(Z0[P],Z0[T]),Z0[S2]),0,"mauvais sommet opposé","Où ça part : l'ordre des sommets.",`Dans ${W}, les sommets se suivent dans l'ordre des lettres : le sommet opposé à ${X} est ${T}. On a ${fx(`z_{${X}} = z_{${P}} + z_{${S2}} − z_{${T}}`)}.`],[zSub(zAdd(Z0[S2],Z0[T]),Z0[P]),0,"mauvais sommet opposé","Où ça part : l'ordre des sommets.",`Le sommet opposé à ${X} dans ${W} est ${T}, pas ${P}. On a ${fx(`z_{${X}} = z_{${P}} + z_{${S2}} − z_{${T}}`)}.`]],
+    ens:{k:"para",W,X,A:zF(A),B:zF(B),C:zF(C)}});}
+
+function distanceZ(R){let A,B,u;do{A=zr(R,-5,5);B=zr(R,-5,5);u=zSub(B,A);}while(zN2(u).n<2||Math.abs(fl(u.a))>8||Math.abs(fl(u.b))>8);
+  const n=zN2(u).n,V=racine(Q(n)),s=zAdd(A,B);
+  const E=[{w:`D'après la proposition 6.1.3, ${fx("AB = |z_{B} − z_{A}|")}, et ${fx(`z_{B} − z_{A} = ${zt(B)} − ${zp(A)} = ${zt(u)}`)}.`,why:`Le vecteur AB a pour affixe ${fx("z_{B} − z_{A}")} (proposition 6.1.1). La distance AB est la longueur de ce vecteur, c'est-à-dire le module de son affixe.`,pts:1},
+    {w:`<b>${fx(`AB = √(${c2(u.a)} + ${c2(u.b)}) = ${racLigne(Q(n))}`)}</b>`,why:`Le module de x + iy est √(x² + y²) : c'est Pythagore dans le repère orthonormé.${simplifie(Q(n))}`,pts:1}];
+  return {sig:"CD"+zt(A)+"|"+zt(B),q:`Soient A et B les points d'affixes ${affZ("A",A)} et ${affZ("B",B)}. Calcule la distance AB.`,corps:RAPZ,texte:`A ${zt(A)}, B ${zt(B)} ; distance AB`,nature:"distance",
+    champs:[champL("x","AB","$AB =$")],etapes:E,juge:jugeF(val(V),E,[[n,1,"racine oubliée","Où ça part : le module.",`${n}, c'est AB². Le module est la racine carrée : ${fx(`AB = √${n}`)}.`],[Math.abs(fl(u.a))+Math.abs(fl(u.b)),1,"parties additionnées","Où ça part : le module.",`Le module de x + iy n'est pas |x| + |y| : c'est √(x² + y²).`],[Math.sqrt(fl(zN2(s))),0,"somme au lieu de différence","Où ça part : l'affixe du vecteur.",`Le vecteur AB a pour affixe ${fx("z_{B} − z_{A}")}, une différence, pas une somme.`]],"la distance AB"),
+    bonne:fx(`AB = ${ecrit(V)}`),bonneTxt:`AB = ${ecrit(V)}`,repBonne:{x:tape(V)},repFausse:{x:String(n)},ens:{k:"dist",A:zF(A),B:zF(B)}};}
+
+const WANG=[[0,1,Q(1,2)],[0,-1,Q(-1,2)],[1,1,Q(1,4)],[1,-1,Q(-1,4)],[-1,1,Q(3,4)],[-1,-1,Q(-3,4)],[-1,0,Q(1,1)]];
+function angleQuot(R){let A,u,w,t,c,k,B,C;
+  do{A=zr(R,-3,3);u=zr(R,-3,3);c=R.choix(WANG);k=R.choix([1,1,2]);w=Zc(c[0]*k,c[1]*k);t=c[2];B=zAdd(A,u);C=zAdd(A,zMul(w,u));}while(zN2(u).n<2||[B,C].some(z=>Math.abs(fl(z.a))>9||Math.abs(fl(z.b))>9));
+  const v=zMul(w,u),n2=zN2(u),p=zMul(v,zBar(u)),rho=S(k,c[0]*c[0]+c[1]*c[1]),cs=x=>c[0]&&c[1]?S(Q(x,2),2):S(x);
+  const E=[{w:`D'après la proposition 6.1.1, ${fx(`z_{B} − z_{A} = ${zt(u)}`)} et ${fx(`z_{C} − z_{A} = ${zt(v)}`)}.`,why:`Le vecteur AB a pour affixe ${fx("z_{B} − z_{A}")}, et le vecteur AC a pour affixe ${fx("z_{C} − z_{A}")}.`,pts:1},
+    {w:`${fx(`(z_{C} − z_{A})/(z_{B} − z_{A}) = ${zp(v)}/${zp(u)}`)} ${fx(`= (${zt(p)})/${nb(n2)} = ${zt(w)}`)}.`,why:`On multiplie en haut et en bas par le conjugué du dénominateur, ${zt(zBar(u))} : en bas, ${fx("(x + iy)(x − iy) = x^{2} + y^{2}")}.`,pts:1},
+    {w:`${fx(`${zt(w)} = ${egal(rho.r,1)&&rho.k===1?"":ecrit(rho)+" "}${eia(t)}`)}.`,why:`Le module vaut ${ecrit(rho)}. En divisant par le module, ${fx(`cos θ = ${ecrit(cs(c[0]))}`)} et ${fx(`sin θ = ${ecrit(cs(c[1]))}`)}, donc ${fx(`θ = ${angS(t)}`)}.`,pts:0.5},
+    {w:`<b>D'après la proposition 6.1.4, l'angle orienté ([AB), [AC)), noté ${an("BAC")}, est l'argument de ce quotient : ${an("BAC")} ${fx(`= ${angS(t)} [2π]`)}.</b>`,why:`La mesure de l'angle ([AB), [AC)) est ${fx("arg((z_{C} − z_{A})/(z_{B} − z_{A}))")} : ${fx("z_{C}")} en haut, ${fx("z_{B}")} en bas.`,pts:0.5}];
+  return {sig:"CA"+zt(A)+"|"+zt(B)+"|"+zt(C),q:`Soient A, B et C les points d'affixes ${affZ("A",A)}, ${affZ("B",B)} et ${affZ("C",C)}. Calcule ${fx("(z_{C} − z_{A})/(z_{B} − z_{A})")}, puis donne la mesure de l'angle orienté ${an("BAC")} = ([AB), [AC)) dans ]−π ; π].`,corps:RAPZ,
+    texte:`A ${zt(A)}, B ${zt(B)}, C ${zt(C)} ; angle orienté BAC par le quotient`,nature:"angle par un quotient",champs:[champA("x","angle",`${an("BAC")} =`)],etapes:E,
+    juge:jugeMod(t,E,[[mul(t,-1),1,"quotient à l'envers","Où ça part : le quotient.",`L'angle ([AB), [AC)) est l'argument de ${fx("(z_{C} − z_{A})/(z_{B} − z_{A})")}, avec z_C en haut. Le quotient à l'envers donne l'angle opposé.`]]),
+    bonne:`${an("BAC")} ${fx(`= ${angS(t)} [2π]`)}`,bonneTxt:`BAC = ${angS(t)} [2π]`,repBonne:{x:tapeA(t)},repFausse:{x:tapeA(prin(add(t,Q(1,2))))},ens:{k:"ang",A:zF(A),B:zF(B),C:zF(C)}};}
+
+function rotImage(R){let W,B;do{W=zr(R,-3,3);B=zr(R,-4,4);}while(zNul(W)||zEq(W,B));
+  const t=R.choix(ANG3),e=EIA[brut(t)],d=zSub(B,W),ed=zMul(e,d),V=zAdd(ed,W);
+  const E=[{w:`D'après la proposition 7.3.1, la rotation de centre Ω et d'angle α s'écrit ${fx("r(z) = e^{iα}(z − ω) + ω")}. Ici ${fx(`${eia(t)} = ${zt(e)}`)}, donc ${fx(`r(z) = ${facZ(e)}(z − ${zp(W)}) + ${zp(W)}`)}.`,why:`Le poly l'écrit ${fx("r(z) = e^{iα}z + w")}, avec ${fx("w = (1 − e^{iα})ω")} : c'est la même chose, développée. Et ${fx("e^{iα} = cos α + i sin α")}.`,pts:1},
+    {w:`${fx(`z_{B} − ω = ${zt(B)} − ${zp(W)} = ${zt(d)}`)}, puis ${fx(`${facZ(e)}(${zt(d)}) = ${zt(ed)}`)}.`,why:egal(e.a,-1)?"Multiplier par −1, c'est faire un demi-tour : on change les deux signes.":"Multiplier par i fait tourner de π/2 : x + iy devient −y + ix. Multiplier par −i fait tourner de −π/2 : x + iy devient y − ix.",pts:1},
+    {w:`<b>${fx(`z_{B′} = ${zt(ed)}${plusZ(W)} = ${zt(V)}`)}</b>`,why:"On n'oublie pas de rajouter ω : la rotation tourne autour de Ω, pas autour de l'origine.",pts:1}];
+  return exoZ({nom:"z_{B′}",z:V,titre:"l'affixe de B′",sig:"CR"+zt(W)+"|"+brut(t)+"|"+zt(B),nature:"image par une rotation",texte:`rotation de centre ${zt(W)}, d'angle ${angS(t)} ; image de B ${zt(B)}`,
+    q:`Soit r la rotation de centre Ω d'affixe ${fx("ω = "+zt(W))} et d'angle ${fx(angS(t))}. Donne l'expression complexe de r, puis l'affixe du point B′ = r(B), où ${affZ("B",B)}.`,etapes:E,
+    pieges:[[zMul(e,B),0,"rotation autour de l'origine","Où ça part : le centre.",`${fx(`${facZ(e)}z_{B}`)} fait tourner B autour de l'origine. Ici le centre est Ω : on calcule ${fx("e^{iα}(z_{B} − ω) + ω")}.`],[ed,2,"ω pas rajouté","Où ça part : la dernière ligne.",`Après avoir tourné ${fx("z_{B} − ω")}, il faut rajouter ω pour revenir au point B′.`],[zAdd(zMul(zBar(e),d),W),1,"sens de rotation inversé","Où ça part : l'angle.",`L'angle est ${angS(t)}, donc ${fx(`${eia(t)} = ${zt(e)}`)}. L'angle opposé tourne dans l'autre sens.`]],
+    ens:{k:"rot",W:zF(W),t:angV(t),B:zF(B)}});}
+
+function natureZ(R){const k=R.choix(["tr","hom","hom","rot","rot"]);let W;do W=zr(R,-4,4);while(zNul(W));
+  const Tr=v=>`la translation de vecteur d'affixe ${zt(v)}`,Ho=(c,l)=>`l'homothétie de centre le point d'affixe ${zt(c)} et de rapport ${nb(l)}`,Ro=(c,t)=>`la rotation de centre le point d'affixe ${zt(c)} et d'angle ${angS(t)}`;
+  let a,b,E,O4,M,o;
+  if(k==="tr"){a=Zc(1);b=W;
+    O4={bon:Tr(b),opp:Tr(zNeg(b)),id:"l'identité : f ne déplace aucun point"};o={bon:{t:"tr",v:zF(b)},opp:{t:"tr",v:zF(zNeg(b))},id:{t:"tr",v:[0,0]}};
+    M={opp:[1,"vecteur de signe contraire","Où ça part : le vecteur.",`${fx(`f(z) − z = ${zt(b)}`)} pour tout z : chaque point avance du vecteur d'affixe ${zt(b)}, pas de son opposé.`],id:[0,"translation prise pour l'identité","Où ça part : le coefficient de z.",`Le coefficient de z vaut 1, mais il reste ${fx(zt(b))} ≠ 0 : chaque point bouge, du même vecteur.`]};
+    E=[{w:`Le coefficient de z vaut 1 : ${fx(`f(z) = z${plusZ(b)}`)}. D'après la proposition 7.1.1, f est une translation.`,why:"f(z) − z est le même nombre pour tout z : chaque point est déplacé du même vecteur.",pts:1.5},
+      {w:`<b>f est ${Tr(b)}.</b>`,why:"Le vecteur de la translation a pour affixe le nombre ajouté à z. Ce n'est pas l'identité, puisque ce nombre n'est pas nul.",pts:1.5}];}
+  else if(k==="hom"){const l=R.choix([2,3,-2,-3,Q(1,2),Q(-1,2),Q(3,2)].map(x=>q(x)));a=Zc(l);const den=sub(1,l);b=zMul(Zc(den),W);
+    O4={bon:Ho(W,l),b:Ho(b,l),moins:Ho(zNeg(W),l),tr:Tr(b),rap:Ho(W,mul(l,-1))};o={bon:{t:"hom",c:zF(W),l:fl(l)},b:{t:"hom",c:zF(b),l:fl(l)},moins:{t:"hom",c:zF(zNeg(W)),l:fl(l)},tr:{t:"tr",v:zF(b)},rap:{t:"hom",c:zF(W),l:-fl(l)}};
+    M={b:[1,"centre lu sur le terme constant","Où ça part : le centre.","Le nombre ajouté à λz n'est pas le centre : le centre est le point fixe, d'affixe w/(1 − λ)."],moins:[1,"signe du centre","Où ça part : le centre.",`Le centre vérifie ${fx("λz_{C} + w = z_{C}")}, donc ${fx("z_{C} = w/(1 − λ)")}, pas ${fx("w/(λ − 1)")}.`],tr:[0,"homothétie prise pour une translation","Où ça part : le coefficient de z.",`f est une translation seulement si le coefficient de z vaut 1. Ici il vaut ${nb(l)}.`],rap:[0,"rapport de signe contraire","Où ça part : le rapport.",`Le rapport est le coefficient de z, ${nb(l)}, avec son signe.`]};
+    E=[{w:`${fx("f(z) = λz + w")} avec ${fx("λ = "+nb(l))} et ${fx("w = "+zt(b))}. λ est un réel différent de 1 : d'après la proposition 7.2.1, f est une homothétie de rapport ${nb(l)}.`,why:"f(z) = λz + w avec λ réel, λ ≠ 1 : c'est la forme d'une homothétie.",pts:1},
+      {w:`Son centre C a pour affixe ${fx(`z_{C} = w/(1 − λ) = ${zp(b)}/${den.d===1&&den.n>0?nb(den):"("+nb(den)+")"} = ${zt(W)}`)}.`,why:`Le centre est le seul point fixe : ${fx("f(z_{C}) = z_{C}")}, soit ${fx("λz_{C} + w = z_{C}")}, d'où ${fx("z_{C} = w/(1 − λ)")}.`,pts:1},
+      {w:`<b>f est ${Ho(W,l)}.</b>`,why:"On rassemble la nature, le centre et le rapport : ce sont les « éléments géométriques » demandés.",pts:1}];}
+  else{const t=R.choix([Q(1,2),Q(-1,2)]);a=EIA[brut(t)];const u=zSub(Zc(1),a);b=zMul(u,W);
+    O4={bon:Ro(W,t),sens:Ro(W,mul(t,-1)),b:Ro(b,t),moins:Ro(zNeg(W),t)};o={bon:{t:"rot",c:zF(W),g:angV(t)},sens:{t:"rot",c:zF(W),g:-angV(t)},b:{t:"rot",c:zF(b),g:angV(t)},moins:{t:"rot",c:zF(zNeg(W)),g:angV(t)}};
+    M={sens:[0,"angle de signe contraire","Où ça part : l'angle.",`${fx(`${zt(a)} = ${eia(t)}`)} : l'angle est ${angS(t)}.`],b:[1,"centre lu sur le terme constant","Où ça part : le centre.",`Le nombre ajouté à ${fx("e^{iα}z")} n'est pas le centre : le centre est le point fixe, d'affixe ${fx("w/(1 − e^{iα})")}.`],moins:[1,"signe du centre","Où ça part : le centre.",`Le centre vérifie ${fx("e^{iα}z_{C} + w = z_{C}")}, donc ${fx("z_{C} = w/(1 − e^{iα})")}, pas ${fx("w/(e^{iα} − 1)")}.`]};
+    E=[{w:`${fx("f(z) = e^{iα}z + w")} avec ${fx(`e^{iα} = ${zt(a)} = ${eia(t)}`)} et ${fx("w = "+zt(b))}. Ce nombre est de module 1 et différent de 1 : d'après la proposition 7.3.1, f est une rotation d'angle ${fx(angS(t))}.`,why:`${fx("f(z) = e^{iα}z + w")} avec ${fx("α ≠ 0")} [2π] : c'est la forme d'une rotation.`,pts:1},
+      {w:`Son centre C a pour affixe ${fx(`z_{C} = w/(1 − e^{iα}) = ${zp(b)}/${zp(u)} = ${zt(W)}`)}.`,why:`Le centre est le seul point fixe : e^{iα}z_C + w = z_C. Pour diviser par ${zt(u)}, on multiplie en haut et en bas par son conjugué, ${zt(zBar(u))}.`,pts:1},
+      {w:`<b>f est ${Ro(W,t)}.</b>`,why:"On rassemble la nature, le centre et l'angle : ce sont les « éléments géométriques » demandés.",pts:1}];}
+  const ids=Object.keys(O4).filter((c,i,L)=>L.findIndex(d=>O4[d]===O4[c])===i),autre=ids.find(c=>c!=="bon");
+  return {sig:"CN"+k+linZ(a,b),q:`Donne la nature et les éléments géométriques de l'application ${fx(`f : z ↦ ${linZ(a,b)}`)} de ℂ dans ℂ.`,corps:RAPZ,texte:`f(z) = ${linZ(a,b)} ; nature et éléments`,nature:{tr:"translation",hom:"homothétie",rot:"rotation"}[k],
+    champs:[champC("x",null,R.mel(ids).map(c=>[c,maj(O4[c])]))],juge:jugeQ({x:"bon"},(id,v)=>M[v]||[0,"mauvaise transformation","Où ça part : la nature.","Regarde d'abord le coefficient de z : 1 pour une translation, un réel pour une homothétie, un nombre de module 1 pour une rotation."]),
+    etapes:E,bonne:maj(O4.bon),bonneTxt:O4.bon,repBonne:{x:"bon"},repFausse:{x:autre},ens:{k:"nat",a:zF(a),b:zF(b),o:Object.fromEntries(ids.map(c=>[c,o[c]]))}};}
+
+function compoRot(R){let W1,W2,t1,t2;do{W1=zr(R,-2,2);W2=zr(R,-2,2);t1=R.choix(ANG3);t2=R.choix(ANG3);}while(zEq(W1,W2)||fl(add(t1,t2))%2===0);
+  const a1=EIA[brut(t1)],a2=EIA[brut(t2)],a=zMul(a1,a2),t=prin(add(t1,t2)),u1=zSub(Zc(1),a1),u2=zSub(Zc(1),a2),w1=zMul(u1,W1),w2=zMul(u2,W2),b=zAdd(zMul(a2,w1),w2),u=zSub(Zc(1),a),F=zDiv(b,u);
+  const bInv=zAdd(zMul(a1,w2),w1);
+  const E=[{w:`D'après la proposition 7.3.1, ${fx(`r_{1}(z) = ${linZ(a1,w1)}`)} et ${fx(`r_{2}(z) = ${linZ(a2,w2)}`)}.`,why:`Une rotation de centre ω et d'angle α s'écrit ${fx("e^{iα}z + w")}, avec ${fx("w = (1 − e^{iα})ω")} : ici ${fx(`${zp(u1)} × ${zp(W1)} = ${zt(w1)}`)} et ${fx(`${zp(u2)} × ${zp(W2)} = ${zt(w2)}`)}.`,pts:1},
+    {w:`${fx(`R(z) = r_{2}(r_{1}(z)) = ${facZ(a2)}(${linZ(a1,w1)})${plusZ(w2)}`)} ${fx(`= ${linZ(a,b)}`)}.`,why:"On remplace z par r₁(z) dans l'expression de r₂ : d'abord r₁, puis r₂.",pts:1},
+    {w:`Le coefficient de z est ${fx(`${zt(a)} = ${eia(t)}`)}, différent de 1 : R est la rotation d'angle ${fx(`${angS(t1)} ${t2.n<0?"−":"+"} ${angS(vabs(t2))} = ${angS(t)}`)} [2π] (proposition 7.3.1).`,why:"Les coefficients se multiplient, donc les angles s'ajoutent. Si la somme valait 0 [2π], R serait une translation.",pts:1},
+    {w:`<b>Son centre F est son point fixe : ${fx(`z_{F} = ${zp(b)}/${zp(u)} = ${zt(F)}`)}</b>`,why:`${fx("R(z_{F}) = z_{F}")} donne ${fx("az_{F} + w = z_{F}")}, donc ${fx("z_{F} = w/(1 − a)")}. Pour diviser, on multiplie en haut et en bas par le conjugué de ${zt(u)}.`,pts:2}];
+  return exoZ({nom:"z_{F}",z:F,titre:"l'affixe de F",sig:"CC"+zt(W1)+"|"+brut(t1)+"|"+zt(W2)+"|"+brut(t2),nature:"composée de rotations",texte:`r1 (${zt(W1)}, ${angS(t1)}), r2 (${zt(W2)}, ${angS(t2)}) ; centre de r2 ∘ r1`,
+    q:`Soient A et B les points d'affixes ${affZ("A",W1)} et ${affZ("B",W2)}. On note ${fx("r_{1}")} la rotation de centre A et d'angle ${fx(angS(t1))}, ${fx("r_{2}")} celle de centre B et d'angle ${fx(angS(t2))}, et ${fx("R = r_{2} ∘ r_{1}")}. Montre que R est une rotation, puis donne l'affixe de son centre F.`,etapes:E,
+    pieges:[[b,3,"division oubliée","Où ça part : le point fixe.",`Le nombre ajouté à ${fx("az")} n'est pas le centre : le centre vérifie ${fx("az_{F} + w = z_{F}")}, donc ${fx("z_{F} = w/(1 − a)")}.`],...(zNul(zAdd(Zc(1),a))?[]:[[zDiv(b,zAdd(Zc(1),a)),3,"1 + a au lieu de 1 − a","Où ça part : le point fixe.",`${fx("az_{F} + w = z_{F}")} donne ${fx("(1 − a)z_{F} = w")} : on divise par ${fx("1 − a")}.`]]),[zDiv(bInv,u),1,"ordre de la composée","Où ça part : l'ordre.","R = r₂ ∘ r₁ : on applique d'abord r₁, puis r₂. On remplace donc z par r₁(z) dans r₂, pas l'inverse."]],
+    ens:{k:"comp",W1:zF(W1),t1:angV(t1),W2:zF(W2),t2:angV(t2)}});}
+
 const RECITS=[
  {id:"GC1",t:"Démonstration : le théorème de Pythagore, sens direct",th:"pythagore",cc:6,lecons:["g2-pythagore"],
   q:"Question de cours du CC2 2024 (5 points avec la réciproque). Démontre l'implication directe du théorème de Pythagore : si un triangle ABC est rectangle en A, alors $BC^{2} = AB^{2} + AC^{2}$.",corps:"",
@@ -24937,7 +25064,15 @@ G.add("geo",[
    {t:"possible ou pas, aligné ou pas",cc:1,min:200,gen:itBase},
    {t:"écrire la bonne inégalité",cc:2,min:200,gen:itEcrire},
    {t:"le plan d'une démonstration",cc:3,min:60,gen:itCompleter},
-   {t:"comme au CC : la démonstration, sur papier",cc:6,min:10,gen:itPapier}]}
+   {t:"comme au CC : la démonstration, sur papier",cc:6,min:10,gen:itPapier}]},
+ {id:"GE9",t:"Nombres complexes et géométrie",tache:"nombres complexes en géométrie",th:"complexes",ex:"ccf",lecons:[],
+  paliers:[
+   {t:"le milieu, le quatrième sommet d'un parallélogramme",cc:2,gen:milieuPara},
+   {t:"une distance : AB = |z_B − z_A|",cc:2,gen:distanceZ},
+   {t:"l'angle avec un quotient",cc:3,gen:angleQuot},
+   {t:"l'image par une rotation",cc:3,gen:rotImage},
+   {t:"la nature de z ↦ az + b",cc:3,min:200,gen:natureZ},
+   {t:"comme au CC : le centre d'une composée de rotations",cc:5,gen:compoRot}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,ex:"cc2",fixe:true,seuil:1,pages:[],lecons:r.lecons,paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
@@ -35175,9 +35310,9 @@ fin pour;</pre>
 (()=>{const an=s=>`<span class="ang">${s}</span>`,ab=s=>`<span class="en-nb">|${an(s)}|</span>`,ve=s=>`<span class="vec">${s}</span>`;
 (window.EXPRESS=window.EXPRESS||{}).geo={cc2:{
  t:"Le CC2 de Géométrie en 1 h",du:"du CC",au:"au CC",
- lead:"Le programme du CC2 n'est pas encore annoncé : le site prend la suite du poly après le CC1 (translations et homothéties, chapitre 4, chapitre 5), comme aux CC2 de 2024 et 2025. Les notions viennent dans l'ordre de ce qui a rapporté le plus à ces deux sujets. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le vrai CC dure 1 h 30 ; ce parcours tient en 1 h. Pas dans l'heure, faute de temps : les formules d'addition (§4.4), les tangentes à un cercle (§5.1) et les calculs de produit scalaire. Ils sont dans S'entraîner (Géométrie), à faire après le parcours.",
+ lead:"Le programme du CC2 n'est pas encore annoncé : le site prend la suite du poly après le CC1 (translations et homothéties, chapitre 4, chapitre 5), comme aux CC2 de 2024 et 2025. Les notions viennent dans l'ordre de ce qui a rapporté le plus à ces deux sujets. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le vrai CC dure 1 h 30 ; ce parcours tient en 1 h. Pas dans l'heure, faute de temps : les formules d'addition (§4.4) et les tangentes à un cercle (§5.1). Elles sont dans S'entraîner (Géométrie), à faire après le parcours.",
  carte:"la suite du poly en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Cinq questions dans l'ordre des CC2 : une démonstration du cours, les triangles isométriques, les homothéties, l'angle au centre, puis les rotations. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
+ blancLead:"Cinq questions dans l'ordre des CC2 : une démonstration du cours, les triangles isométriques, les homothéties, l'angle au centre, puis le produit scalaire. Fais-les sans revenir aux notions : la note qui sort est celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"iso",t:"Triangles isométriques : les bons triangles, le bon cas",pts:3,ou:"CC2 2024, ex. 2 (b) et (c) ; CC1 2026, ex. 1",lect:2,exo:{g:"GE7",lv:2},
@@ -35261,10 +35396,117 @@ fin pour;</pre>
  blanc:[
   {t:"Démontrer le théorème de l'aire",ou:"question de cours (CC2 2025)",pts:4,g:"GC3",lv:0},
   {t:"Triangles isométriques : le cas et ce qu'on en déduit",ou:"exercice 2 (CC2 2024)",pts:4,g:"GE7",lv:1},
-  {t:"Deux homothéties de même centre",ou:"exercice 2 (CC2 2025)",pts:4,g:"GE2",lv:3},
+  {t:"Homothéties : le rapport et son signe",ou:"exercice 2, question (1) (CC2 2025)",pts:4,g:"GE2",lv:2},
   {t:"Angle au centre, angle inscrit",ou:"question de cours (4) du CC2 2025, appliquée",pts:4,g:"GE4",lv:0},
-  {t:"Les rotations",ou:"exercice 2 (d) (CC2 2024)",pts:4,g:"GE5",lv:3}]
+  {t:"Produit scalaire et angle entre deux vecteurs",ou:"poly, §4.6 (pas tombé aux CC2 de 2024 et 2025)",pts:4,g:"GE5",lv:4}]
 }};})();
+/* Le CC final de Géométrie en 2 h (épreuve finale du contrôle continu intégral, 40 %, semaine du 14/12, date supposée) : tout le cours.
+   Ordre et points estimés d'après le CC3 du 6 janvier 2026 (2 h : cours 6, angle inscrit et rotation 6, nombres complexes 8) et les
+   examens de janvier 2024 et 2025 (nombres complexes 8 à 10 points, triangles isométriques, trigonométrie, Al-Kashi, théorème des milieux).
+   Les exemples des méthodes sont refaits par tools/verif/express/geo.js. Les exercices sont tirés de gen-geo.js (GE9 : les complexes). */
+(()=>{const an=s=>`<span class="ang">${s}</span>`,ab=s=>`<span class="en-nb">|${an(s)}|</span>`,ve=s=>`<span class="vec">${s}</span>`;
+const C2=window.EXPRESS.geo.cc2.notions,prend=(id,o)=>Object.assign({},C2.find(n=>n.id===id),o);
+window.EXPRESS.geo.ccf={
+ t:"Le CC final de Géométrie en 2 h",du:"du CC final",au:"au CC final",duree:120,
+ lead:"Le CC final porte sur tout le cours. Sa date et son programme ne sont pas encore annoncés. Le site suit le CC3 du 6 janvier 2026 (2 h) et les examens de janvier 2024 et 2025 : des questions de cours, un exercice de figure, la trigonométrie et un gros exercice en nombres complexes. Les notions viennent dans l'ordre de ce qui a rapporté le plus à ces trois sujets. Les points sont estimés : seul le CC3 donnait un barème. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Pas dans les 2 h, faute de temps : les équations de cercles (§6.2) et les symétries axiales en complexes (§7.4).",
+ carte:"tout le cours en 2 h, les nombres complexes d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Six questions dans l'ordre du CC3 de l'an dernier : les définitions du cours, l'angle inscrit, une rotation, les triangles isométriques, Al-Kashi, puis une distance en nombres complexes. Fais-les sans revenir aux notions : la note qui sort est une estimation de la tienne.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"angle",t:"Un angle avec un quotient de complexes",pts:3,ou:"CC3 2026, ex. 2 (1) à (3) ; seconde session 2024, ex. 3 (a) et (b)",lect:2.5,exo:{g:"GE9",lv:2},
+  ess:`<ul><li>Le plan est identifié à ℂ : le point M de coordonnées (x, y) a pour affixe $z_{M} = x + iy$. Le vecteur ${ve("AB")} a pour affixe $z_{B} − z_{A}$ (proposition 6.1.1).</li>
+<li>Distance : $AB = |z_{B} − z_{A}|$ (6.1.3). Angle orienté : $([AB), [AC)) = arg((z_{C} − z_{A})/(z_{B} − z_{A}))$ [2π] (6.1.4).</li>
+<li>Pour l'argument : on calcule le quotient sous la forme algébrique, puis on l'écrit $ρe^{iθ}$ : l'angle est θ.</li></ul>`,
+  meth:`<p>CC3 2026, ex. 2 : $z_{A} = 1 + i$, $z_{B} = 1 − √3$, $z_{C} = 1 + 3i$.</p>
+<ol><li>(1) $z_{B} − z_{A} = −√3 − i$ et $z_{C} − z_{A} = 2i$, donc $AB = √(3 + 1) = 2$ et $AC = 2$ : ABC est isocèle en A.</li>
+<li>(2) $(z_{B} − z_{A})/(z_{C} − z_{A}) = (−√3 − i)/(2i) = (−1 + i√3)/2 = e^{2iπ/3}$ : on a multiplié en haut et en bas par −i. Donc ${an("CAB")} = 2π/3$ [2π].</li>
+<li>(3) ABC est isocèle en A, et la somme des angles vaut π : ${ab("BCA")} = (π − 2π/3)/2 = π/6$.</li></ol>`,
+  piege:`L'ordre compte : ([AB), [AC)) est l'argument de $(z_{C} − z_{A})/(z_{B} − z_{A})$, avec z<sub>C</sub> en haut. Le quotient à l'envers donne l'angle opposé.`},
+ {id:"rotz",t:"L'expression complexe d'une rotation, l'image d'un point",pts:3,ou:"CC3 2026, ex. 2 (5) et (6) ; janvier 2025, ex. 3 (a), (d) et (f)",lect:2,exo:{g:"GE9",lv:3},
+  ess:`<ul><li>La rotation de centre Ω (affixe ω) et d'angle α : $r(z) = e^{iα}(z − ω) + ω$. Le poly l'écrit $r(z) = e^{iα}z + w$, avec $w = (1 − e^{iα})ω$ (proposition 7.3.1).</li>
+<li>À connaître : $e^{iπ/2} = i$, $e^{−iπ/2} = −i$, $e^{iπ} = −1$, $e^{iπ/4} = (√2/2)(1 + i)$, $e^{2iπ/3} = (−1 + i√3)/2$.</li>
+<li>Translation de vecteur d'affixe w : $z + w$ (7.1.1). Homothétie de centre ω et de rapport λ : $λ(z − ω) + ω$ (7.2.1).</li></ul>`,
+  meth:`<p>CC3 2026, ex. 2 (5) et (6) : r de centre A ($z_{A} = 1 + i$) et d'angle 2π/3, et $z_{B} = 1 − √3$.</p>
+<ol><li>$r(z) = e^{2iπ/3}(z − 1 − i) + 1 + i$, avec $e^{2iπ/3} = (−1 + i√3)/2$.</li>
+<li>$z_{B} − z_{A} = −√3 − i$, puis $((−1 + i√3)/2)(−√3 − i) = (2√3 − 2i)/2 = √3 − i$.</li>
+<li>On rajoute $z_{A}$ : $r(z_{B}) = √3 − i + 1 + i = 1 + √3$.</li></ol>`,
+  piege:`Ne pas oublier de retirer ω avant de multiplier, puis de le rajouter : $e^{iα}z_{B}$ seul fait tourner B autour de l'origine.`},
+ {id:"cours",t:"Les questions de cours qui sont tombées",pts:2,ou:"CC3 2026, questions de cours (1) à (5) ; janvier 2025, question de cours",lect:1.5,
+  rappel:{min:4,q:`Écris de mémoire : la définition d'une isométrie ; la preuve que s([AB]) ⊂ [s(A)s(B)] ; le théorème 5.1.1 (ii) et sa preuve ; le théorème des milieux ; cos(π/3) et sin(π/4).`,
+   r:`<ol><li>Une isométrie du plan est une application f : P → P bijective telle que f(A)f(B) = AB pour tous A, B ∈ P (définition 2.1.1).</li>
+<li>Soit M ∈ [AB] : AM + MB = AB. Comme s préserve les distances, s(A)s(M) + s(M)s(B) = s(A)s(B), ce qui veut dire s(M) ∈ [s(A)s(B)].</li>
+<li>C cercle de centre O et de rayon r, Δ une droite, M le projeté orthogonal de O sur Δ. Si OM = r, alors C ∩ Δ = {M}. Preuve : M ∈ Δ et OM = r, donc M ∈ C. Si X ∈ Δ et X ≠ M, le triangle OXM est rectangle en M, et Pythagore donne OX² = OM² + XM² &gt; OM², donc OX &gt; r : X ∉ C.</li>
+<li>Soit ABC un triangle, M le milieu de [AB] et N celui de [AC] : (MN) et (BC) sont parallèles, et MN = BC/2 (théorème 2.5.3, Thalès si ABC n'est pas aplati).</li>
+<li>cos(π/3) = 1/2 et sin(π/4) = √2/2.</li></ol>`},
+  ess:`<ul><li>Une définition dit d'où part l'application, où elle arrive, et ce qu'elle vérifie : « bijective » et « préserve les distances » pour une isométrie.</li>
+<li>Les preuves courtes du cours reposent sur une seule idée : l'égalité AM + MB = AB pour un segment, Pythagore dans OXM pour la tangente.</li>
+<li>Angle entre deux sécantes (corollaire 5.2.8) : l'angle entre deux droites qui coupent un cercle est la moyenne des deux angles au centre, à π près.</li></ul>`,
+  meth:`<ol><li>Commence par les hypothèses : « Soit M ∈ [AB] », « Soit X ∈ Δ, X ≠ M ».</li><li>Cite ce que tu utilises : la définition d'une isométrie, Pythagore, l'axiome.</li><li>Finis par la phrase de l'énoncé : « donc s(M) ∈ [s(A)s(B)] », « l'intersection est {M} ».</li></ol>`,
+  piege:`Pour la tangente, il faut les deux moitiés : M est bien sur le cercle, <b>et</b> aucun autre point de Δ ne l'est.`},
+ prend("iso",{pts:2,ou:"janvier 2024, ex. 1 ; seconde session 2024, ex. 2 ; CC2 2024, ex. 2",
+  meth:C2.find(n=>n.id==="iso").meth+`<p>Janvier 2024, ex. 1 (a) : ABCD est un parallélogramme et AC = BD. Les triangles DAC et ADB ont le côté [AD] en commun, DC = AB (côtés opposés du parallélogramme) et AC = DB : ils sont isométriques (CCC). Donc ${ab("ADC")} = ${ab("DAB")}, deux angles qui font π ensemble : chacun vaut π/2.</p>`}),
+ {id:"centre",t:"Angle inscrit et rotation : le CC3 de 2026",pts:2,ou:"CC3 2026, ex. 1 (6 points) et question de cours (4)",lect:2.5,exo:{g:"GE4",lv:1},
+  ess:`<ul><li>Angle au centre (théorème 5.2.2) : un angle inscrit qui intercepte l'arc AB vaut la moitié de l'angle au centre ${an("AOB")}.</li>
+<li>Points cocycliques (corollaire 5.2.7) : A, B, C, M sont sur un même cercle exactement quand ${an("ACB")} = ${an("AMB")} [π], en angles orientés de droites.</li>
+<li>Un triangle rectangle est inscrit dans le cercle de diamètre son hypoténuse. L'ensemble des points M tels que MA = MB est la médiatrice de [AB].</li></ul>`,
+  meth:`<p>CC3 2026, ex. 1 : C est l'image de B par la rotation de centre A et d'angle π/2.</p>
+<ol><li>(1) AC = AB et ${ab("BAC")} = π/2 : ABC est rectangle isocèle en A, ses angles en B et C valent π/4, donc ${an("ACB")} = π/4.</li>
+<li>(2) ${an("AMB")} = π/4 = ${an("ACB")} [π] : d'après 5.2.7, E<sub>1</sub> est le cercle qui passe par A, B et C, privé de A et B. ABC est rectangle en A : son centre est le milieu de [BC], son rayon AB√2/2.</li>
+<li>(3) et (4) E<sub>2</sub> est la médiatrice de [AB]. Elle passe par le centre du cercle, donc elle le coupe en deux points.</li>
+<li>(5) Ces deux points sont les extrémités d'un diamètre : leur distance vaut 2 × AB√2/2 = AB√2.</li></ol>`,
+  piege:`Avec des angles orientés <b>de droites</b>, l'égalité est « à π près » : M peut être de chaque côté de (AB), le cercle entier compte.`},
+ {id:"trig",t:"Les formules d'addition, et cos(π/5)",pts:2,ou:"janvier 2024, ex. 2 (6 questions) ; CC3 2026, question de cours (2)",lect:2,exo:{g:"GE5",lv:2},
+  ess:`<ul><li>$cos(x + y) = cos x cos y − sin x sin y$ et $sin(x + y) = sin x cos y + cos x sin y$ (§4.4).</li>
+<li>Angle double : $cos 2x = 2cos^{2}x − 1$ et $sin 2x = 2 sin x cos x$. Angle triple : $cos 3x = 4cos^{3}x − 3cos x$.</li>
+<li>$cos(π − x) = −cos x$ et $sin(π − x) = sin x$.</li></ul>`,
+  meth:`<p>Janvier 2024, ex. 2, avec θ = π/5.</p>
+<ol><li>3θ = π − 2θ, donc cos 3θ = −cos 2θ.</li>
+<li>$cos 3x = cos(2x + x) = cos 2x cos x − sin 2x sin x = (2cos^{2}x − 1)cos x − 2 sin^{2}x cos x$, et $sin^{2}x = 1 − cos^{2}x$ donne $4cos^{3}x − 3cos x$.</li>
+<li>X = cos θ vérifie $4X^{3} − 3X = −(2X^{2} − 1)$, soit $4X^{3} + 2X^{2} − 3X − 1 = 0 = (X + 1)(4X^{2} − 2X − 1)$.</li>
+<li>cos θ ≠ −1, donc $4X^{2} − 2X − 1 = 0$ : $X = (1 ± √5)/4$. cos(π/5) &gt; 0, donc $cos(π/5) = (1 + √5)/4$.</li></ol>`,
+  piege:`$cos(x + y)$ n'est pas $cos x + cos y$. Dans la formule du cosinus, c'est un <b>moins</b> entre les deux produits.`},
+ {id:"milieu",t:"Milieu, parallélogramme, produit scalaire avec les affixes",pts:2,ou:"seconde session 2024, ex. 3 ; CC3 2026, ex. 2 (4), (7) et (8)",lect:2,exo:{g:"GE9",lv:0},
+  ess:`<ul><li>Milieu I de [BC] : $z_{I} = (z_{B} + z_{C})/2$.</li>
+<li>ABCD est un parallélogramme exactement quand ${ve("AB")} = ${ve("DC")}, soit $z_{B} − z_{A} = z_{C} − z_{D}$.</li>
+<li>Produit scalaire : si ${ve("u")} et ${ve("v")} ont pour affixes z et z′, $⟨u, v⟩ = Re(z̄ z′)$ = xx′ + yy′ (proposition 6.1.2). Deux vecteurs sont orthogonaux quand il vaut 0.</li></ul>`,
+  meth:`<p>Seconde session 2024, ex. 3 : $z_{A} = 1 + i$, $z_{B} = 4 + 5i$, $z_{C} = 5 − 2i$.</p>
+<ol><li>AB = |3 + 4i| = 5 et AC = |4 − 3i| = 5.</li>
+<li>ABKC rectangle (c'est un parallélogramme) : $z_{K} = z_{B} + z_{C} − z_{A} = 8 + 2i$.</li>
+<li>AGBC parallélogramme : $z_{G} = z_{A} + z_{B} − z_{C} = 8i$. Le milieu de [KG] a pour affixe (8 + 2i + 8i)/2 = 4 + 5i : c'est B.</li>
+<li>CC3 2026, ex. 2 (7) : M est sur la hauteur issue de A exactement quand $⟨AM, BC⟩ = 0$, ce qui donne une équation de la droite.</li></ol>`,
+  piege:`Dans ABKC, les sommets se suivent dans l'ordre des lettres : K est opposé à A, pas à B. On retranche l'affixe du sommet opposé.`},
+ {id:"nature",t:"Reconnaître z ↦ az + b : translation, homothétie, rotation",pts:2,ou:"CC3 2026, question de cours (6) (1,5 point) ; seconde session 2024, ex. 4",lect:1.5,exo:{g:"GE9",lv:4},
+  ess:`<ul><li>a = 1 : translation de vecteur d'affixe b (7.1.1).</li>
+<li>a réel, a ≠ 1 : homothétie de rapport a (7.2.1). a = e<sup>iα</sup> de module 1, a ≠ 1 : rotation d'angle α (7.3.1).</li>
+<li>Le centre est le point fixe : $az + b = z$ donne $z = b/(1 − a)$.</li></ul>`,
+  meth:`<p>CC3 2026, question de cours (6).</p>
+<ol><li>$f(z) = z + 1 − 2i$ : le coefficient de z vaut 1, f est la translation de vecteur d'affixe 1 − 2i.</li>
+<li>$g(z) = 2z + 1 − 2i$ : homothétie de rapport 2, de centre d'affixe $(1 − 2i)/(1 − 2) = −1 + 2i$.</li></ol>`,
+  piege:`Le terme constant b n'est pas le centre : c'est le vecteur pour une translation, mais pour une homothétie ou une rotation, le centre est b/(1 − a).`},
+ {id:"compo",t:"Composer deux rotations",pts:1,ou:"janvier 2025, ex. 3 (c), (j) et (k)",lect:2,exo:{g:"GE9",lv:5},
+  ess:`<ul><li>On écrit chaque rotation $e^{iα}z + w$, puis on remplace z par r<sub>1</sub>(z) dans r<sub>2</sub> : r<sub>2</sub> ∘ r<sub>1</sub>, c'est d'abord r<sub>1</sub>.</li>
+<li>Les coefficients se multiplient, donc les angles s'ajoutent. Si la somme n'est pas 0 [2π], la composée est une rotation, de centre son point fixe.</li></ul>`,
+  meth:`<p>Janvier 2025, ex. 3 : $z_{A} = 1$, $z_{B} = i$, r<sub>1</sub> de centre A et d'angle −π/2, r<sub>2</sub> de centre B et d'angle π/4.</p>
+<ol><li>$r_{1}(z) = −i(z − 1) + 1 = −iz + 1 + i$ et $r_{2}(z) = e^{iπ/4}(z − i) + i$.</li>
+<li>$R(z) = e^{iπ/4}(−iz + 1) + i = e^{−iπ/4}z + e^{iπ/4} + i$ : rotation d'angle −π/2 + π/4 = −π/4.</li>
+<li>$R(z_{A}) = e^{iπ/4} × (1 − i) + i = √2 + i$. Le centre F est la solution de $R(z) = z$ (question (k)).</li></ol>`,
+  piege:`r<sub>2</sub> ∘ r<sub>1</sub> se lit de droite à gauche : on applique r<sub>1</sub> en premier.`},
+ {id:"alkashi",t:"Al-Kashi : un angle avec les trois côtés",pts:1,ou:"janvier 2024, ex. 3 (d) et (e)",lect:1.5,exo:{g:"GE1",lv:1},
+  ess:`<ul><li>$BC^{2} = AB^{2} + AC^{2} − 2 AB · AC cos(Â)$ : l'angle est celui que forment les deux côtés du second membre (théorème 4.3.1).</li>
+<li>Avec les trois côtés, on isole le cosinus, puis on reconnaît l'angle.</li></ul>`,
+  meth:`<p>Janvier 2024, ex. 3 : AB = AF = 1 et $BF = (√5 − 1)/2$.</p>
+<ol><li>$BF^{2} = 1 + 1 − 2cos(Â)$ dans le triangle ABF.</li>
+<li>$BF^{2} = (6 − 2√5)/4$, donc $cos(Â) = 1 − BF^{2}/2 = (1 + √5)/4$.</li>
+<li>C'est cos(π/5) (notion sur les formules d'addition) : ${ab("BAF")} = π/5$.</li></ol>`,
+  piege:`Le « moins 2 AB · AC cos » : un cosinus négatif rend le troisième côté plus long que dans un triangle rectangle.`}],
+ blanc:[
+  {t:"Les définitions du cours",ou:"questions de cours (CC3 2026)",pts:3,g:"GC6",lv:0},
+  {t:"Angle au centre, angle inscrit",ou:"exercice 1 (CC3 2026)",pts:4,g:"GE4",lv:3},
+  {t:"Une rotation",ou:"exercice 1 (CC3 2026)",pts:3,g:"GE5",lv:3},
+  {t:"Triangles isométriques",ou:"exercice 1 (janvier 2024)",pts:3,g:"GE7",lv:1},
+  {t:"Al-Kashi et le cosinus d'un angle",ou:"exercice 3 (janvier 2024)",pts:4,g:"GE1",lv:2},
+  {t:"Une distance avec les affixes",ou:"exercice 2 (1) (CC3 2026)",pts:3,g:"GE9",lv:1}]
+};})();
 
 </script>
 <script>
