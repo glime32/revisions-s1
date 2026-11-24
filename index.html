@@ -37377,9 +37377,11 @@ function carte(){const main=$("#main");if(!main)return;const pg0=main.querySelec
     return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}/go">${p.ms?"Reprendre":`Commencer · ${dureeTxt(C)} chrono`}</a><a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a></div></section>`;}).join("");
   const h1=pg.querySelector("h1");let apres=h1;if(apres&&apres.nextElementSibling&&apres.nextElementSibling.matches(".hlead,.lead"))apres=apres.nextElementSibling;
   if(h.length===1&&SUBJ[h[0]]&&h1)apres=h1;
+  /* Aujourd'hui (24/11 soir) : le score d'hier, les séries et le programme du jour restent en haut, les parcours viennent dessous */
+  if(!h.length&&pg.querySelector(".tiroir.prog"))apres=pg.querySelector(".tiroir.prog");
   if(apres)apres.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);
   const nt=pg.querySelector(".xp-notes"),der=[...pg.querySelectorAll(".xp-carte")].pop();if(nt&&der)der.after(nt);
-  if(S0)replie(pg,"Tout le programme du jour");else if(h.length===1&&SUBJ[h[0]])replie(pg,"Le reste de la matière : leçons, fiches, annales");}
+  if(h.length===1&&SUBJ[h[0]])replie(pg,"Le reste de la matière : leçons, fiches, annales");}
 
 /* choix 73a : la séance du jour, le plus court chemin vers la note : les notions pas encore réussies de l'épreuve la plus proche (25 min au plus), puis les cartes en rouge */
 const SEKEY="rev-s1-seance",SEANCE=25;
