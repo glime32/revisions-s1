@@ -20239,6 +20239,83 @@ function fgCC(R){const T=tireFG(R,R()<0.5),EQ=equations([T.u,T.v]),E1=etapesGen(
     repBonne:Object.assign({f1:rangeeT(T.F[0]),f2:rangeeT(T.F[1])},EQ.repBonne,{fg:T.egal?"egal":T.dans[0]?"v":"u"}),repFausse:Object.assign({f1:rangeeT(T.F[0]),f2:rangeeT(T.F[1])},EQ.repBonne,{fg:T.egal?"u":"egal"}),
     nature:T.egal?"egal":"diff",ens:{k:"fg",M:T.M,F:T.F,u:T.u,v:T.v,eqG,egal:T.egal,o:"cc",rep:EQ.repBonne}};}
 
+/* ---------- AL15 : projection et symétrie par rapport à un plan (CC2 2024 ex. 4, janvier 2026 ex. 7, poly 6.1.3 et 6.1.4) ---------- */
+const X3=["x","y","z"],egalV=(a,b)=>a.every((x,k)=>egal(x,b[k])),ps=(a,b)=>a.reduce((s,x,k)=>s+x*b[k],0);
+const colin=(a,b)=>a.some(x=>!nul(x))&&a.every((x,i)=>a.every((y,j)=>egal(mul(x,b[j]),mul(y,b[i]))));
+const planT=T=>"P : "+comb(T.n,X3)+" = 0",flottant=M=>M.map(l=>l.map(x=>q(x).n/q(x).d));
+function tirePlan(R,orth,unite){for(;;){
+  const k=orth?2:3,n=[0,0,0].map(()=>R.ent(-k,k));if(n.filter(x=>x).length<2||n.find(x=>x)<0)continue;
+  if(n.reduce((a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a;},0)!==1)continue;
+  const u=orth?n.slice():[0,0,0].map(()=>R.ent(-2,2)),nu=ps(n,u);
+  if(!nu||u.every(x=>!x)||orth&&nu>9||unite&&Math.abs(nu)!==1)continue;
+  return {n,u,nu,orth};}}
+const matProj=T=>[0,1,2].map(i=>[0,1,2].map(j=>sub(Q(i===j?1:0),Q(T.u[i]*T.n[j]*Math.sign(T.nu),Math.abs(T.nu))))),
+  matSym=A=>A.map((l,i)=>l.map((x,j)=>sub(mul(x,2),Q(i===j?1:0))));
+const matPH=A=>{const d=ppcm(A.flat());return d===1?matH(A):`${nb(Q(1,d))} × ${matH(A.map(l=>l.map(x=>mul(x,d))))}`;};
+function tireVecP(R,T){for(;;){const w=[0,0,0].map(()=>R.ent(-4,4));if(w.every(x=>!x)||ps(T.n,w))continue;
+  const l=R.choix([-2,-1,1,2]),v=w.map((x,k)=>x+l*T.u[k]),s=w.map((x,k)=>x-l*T.u[k]);
+  if(v.concat(s).some(x=>Math.abs(x)>9))continue;return {w,l,v,s};}}
+const lambdaT=T=>T.orth?"n":"u";
+function etapeLambda(T,v,lettres){const u=lambdaT(T),num=lettres?comb(T.n,X3):verifTxt(T.n,v);
+  return {w:`${T.orth?`Un vecteur normal à P : ${fx("n = "+vt(T.n))}, les coefficients de l'équation. `:""}On écrit ${lettres?"X":"v"} = w + λ${u}, avec w ∈ P. Comme w = ${lettres?"X":"v"} − λ${u} vérifie l'équation de P : ${fx(`λ = (${num}) / (${verifTxt(T.n,T.u)})`)}${lettres?"":Math.abs(T.nu)===1?` = <b>${nb(ps(T.n,v)/T.nu)}</b>`:` = ${nb(ps(T.n,v))} / ${nb(T.nu)} = <b>${nb(ps(T.n,v)/T.nu)}</b>`}.`,
+    why:`On remplace w = ${lettres?"X":"v"} − λ${u} dans l'équation de P : le calcul fait sur ${lettres?"X":"v"}, moins λ fois le calcul fait sur ${u}, doit donner 0.${T.orth?"":" Le dénominateur n'est pas nul, car D n'est pas dans P."}`,pts:1};}
+function jugeProjVec(rep,T,V){const p=liste(rep.p,3),s=liste(rep.s,3),u=lambdaT(T);
+  if(!p||!s)return {incomplet:"Écris p(v) et s(v), chacun avec 3 nombres, par exemple (1, -2, 0)."};
+  if(!egalV(p,V.w)){let type="projection fausse",msg=`p(v) doit être dans P, et ici λ = ${nb(V.l)} : p(v) = v − λ${u} = ${vt(V.w)}.`;
+    if(egalV(p,V.s)){type="symétrie à la place de la projection";msg=`Tu as enlevé 2λ${u} : c'est la symétrie. La projection n'enlève λ${u} qu'une fois : p(v) = ${vt(V.w)}.`;}
+    else if(egalV(p,V.v.map((x,k)=>x+V.l*T.u[k]))){type="signe de λ";msg=`On enlève λ${u}, on ne l'ajoute pas : p(v) = v − λ${u} = ${vt(V.w)}.`;}
+    return {ok:false,faux:["p"],resume:"Pas tout à fait : p(v) est faux.",diag:{etape:1,type,titre:"Où ça part : la projection.",msg}};}
+  if(!egalV(s,V.s)){let type="symétrie fausse",msg=`s(v) = v − 2λ${u} = 2p(v) − v = ${vt(V.s)}.`;
+    if(egalV(s,V.w)){type="projection à la place de la symétrie";msg=`Ça, c'est p(v). La symétrie traverse le plan : s(v) = 2p(v) − v = ${vt(V.s)}.`;}
+    return {ok:false,faux:["s"],resume:"Pas tout à fait : s(v) est faux.",diag:{etape:2,type,titre:"Où ça part : la symétrie.",msg}};}
+  return null;}
+function projVec(R,orth){const T=tirePlan(R,orth,false),V=tireVecP(R,T),u=lambdaT(T);
+  const E=[etapeLambda(T,V.v,false),
+    {w:`p(v) = v − λ${u} = ${vt(V.v)} − (${nb(V.l)}) × ${vt(T.u)} = <b>${vt(V.w)}</b>. Vérification : ${fx(verifTxt(T.n,V.w)+" = 0")}, p(v) est bien dans P.`,why:`La projection garde w, la partie de v qui est dans P, et enlève la partie selon ${orth?"n":"D"}.`,pts:1},
+    {w:`s(v) = v − 2λ${u} = 2p(v) − v = <b>${vt(V.s)}</b>.`,why:`La symétrie traverse le plan : p(v) est le milieu de v et de s(v), donc s(v) = 2p(v) − v.`,pts:1}];
+  return {sig:"PV"+JSON.stringify([T.n,T.u,V.v]),q:orth?`p est la projection orthogonale sur le plan P, et s la symétrie orthogonale par rapport à P. Calcule p(v) et s(v).`:`p est la projection sur le plan P parallèlement à la droite D, et s la symétrie par rapport à P de direction D. Calcule p(v) et s(v).`,
+    corps:`<p>${fx(planT(T))}${orth?"":` et ${fx("D = Vect("+vt(T.u)+")")}`}</p><p>${fx("v = "+vt(V.v))}</p>`,texte:`${planT(T)}${orth?"":" ; D = Vect"+vt(T.u)} ; v = ${vt(V.v)} ; p(v) et s(v) ?`,
+    champs:[{k:"champ",id:"p",nom:"p(v)",label:"p(v) =",ex:"par exemple (1, -2, 0)"},{k:"champ",id:"s",nom:"s(v)",label:"s(v) =",ex:"par exemple (3, 0, -1)"}],
+    juge:rep=>jugeProjVec(rep,T,V)||{ok:true},etapes:E,bonne:`p(v) = ${vt(V.w)} et s(v) = ${vt(V.s)}`,bonneTxt:`${vt(V.w)} ; ${vt(V.s)}`,
+    repBonne:{p:rangeeT(V.w),s:rangeeT(V.s)},repFausse:{p:rangeeT(V.w),s:rangeeT(V.w)},nature:orth?"orth":"para",ens:{k:"vec",n:T.n,u:T.u,v:V.v,p:V.w,s:V.s,orth}};}
+const champsLignes=(p,qui)=>[1,2,3].map(i=>({k:"champ",id:p+i,nom:`ligne ${i} (${qui})`,label:`Ligne ${i} de la matrice ${qui} :`,ex:"par exemple (1, 0, -2) ou (2/3, 1/3, 0)"}));
+function jugeSym(rep,A,S,etape,nm){nm=nm||"Mat(s) = 2Mat(p) − I₃";const Y=lignesLues(rep,"s",3,3),ids=["s1","s2","s3"];if(!Y)return {incomplet:"Écris les 3 lignes de la matrice de la symétrie, chacune avec 3 nombres (une fraction s'écrit 2/3)."};
+  if(egalM(Y,S))return null;let type="matrice de la symétrie",msg=`${nm} = ${matPH(S)}`;
+  if(egalM(Y,A.map(l=>l.map(x=>sub(mul(x,2),Q(1)))))){type="2A − 1 au lieu de 2A − I₃";msg=`On enlève I₃ : 1 seulement sur la diagonale, pas à chaque coefficient. ${msg}`;}
+  else if(egalM(Y,A)){type="projection à la place de la symétrie";msg=`Ça, c'est la matrice de la projection. La symétrie : ${msg}`;}
+  return {ok:false,faux:ids,resume:"Pas tout à fait : la matrice de la symétrie est fausse.",diag:{etape,type,titre:"Où ça part : la symétrie.",msg}};}
+function projMat(R){const orth=R()<0.3;let T,A;for(;;){T=tirePlan(R,orth,false);A=matProj(T);if((orth||Math.abs(T.nu)<=2)&&A.flat().every(x=>Math.abs(q(x).n)<=6))break;}
+  const S=matSym(A),u=lambdaT(T),lam=`(${comb(T.n,X3)})${Math.abs(T.nu)===1?"":" / "+nb(T.nu)}`;
+  const E=[etapeLambda(T,null,true),
+    {w:`p(X) = X − λ${u}, coordonnée par coordonnée : ${fx("p(x, y, z) = ("+A.map(l=>comb(l,X3)).join(", ")+")")}. <b>Mat(p) = ${matPH(A)}</b>`,why:`La coordonnée i de p(X) est la coordonnée i de X, moins ${u}ᵢ × λ, avec λ = ${lam}. On lit ensuite les coefficients de x, y, z, ligne par ligne.`,pts:2},
+    {w:`<b>Mat(s) = 2Mat(p) − I₃ = ${matPH(S)}</b>`,why:`s(X) = X − 2λ${u} = 2p(X) − X : on double la matrice de p, puis on enlève 1 sur la diagonale.`,pts:1}];
+  function juge(rep){const X=lignesLues(rep,"l",3,3),ids=["l1","l2","l3"];if(!X)return {incomplet:"Écris les 3 lignes de la matrice de p, chacune avec 3 nombres (une fraction s'écrit 2/3)."};
+    if(!egalM(X,A)){let type="matrice de la projection",msg=`La ligne i, ce sont les coefficients de x, y, z dans la i-ème coordonnée de p(x, y, z). Ici Mat(p) = ${matPH(A)}`;
+      if(egalM(X,A[0].map((_,j)=>A.map(l=>l[j])))){type="matrice transposée";msg=`Tu as écrit les colonnes en lignes. ${msg}`;}
+      else if(egalM(X,S)){type="symétrie à la place de la projection";msg=`C'est la matrice de la symétrie. ${msg}`;}
+      return {ok:false,faux:ids,resume:"Pas tout à fait : la matrice de p est fausse.",diag:{etape:1,type,titre:"Où ça part : la matrice de p.",msg}};}
+    return jugeSym(rep,A,S,2)||{ok:true};}
+  return {sig:"PM"+JSON.stringify([T.n,T.u]),q:orth?`p est la projection orthogonale sur le plan P, et s la symétrie orthogonale par rapport à P. Écris la matrice de p, puis celle de s.`:`p est la projection sur le plan P parallèlement à la droite D, et s la symétrie par rapport à P de direction D. Écris la matrice de p, puis celle de s.`,
+    corps:`<p>${fx(planT(T))}${orth?"":` et ${fx("D = Vect("+vt(T.u)+")")}`}</p>`,texte:`${planT(T)}${orth?"":" ; D = Vect"+vt(T.u)} ; Mat(p) et Mat(s) ?`,
+    champs:champsLignes("l","de p").concat(champsLignes("s","de s")),juge,etapes:E,bonne:`Mat(p) = ${matPH(A)} et Mat(s) = ${matPH(S)}`,bonneTxt:A.map(rangeeT).join(" ; ")+" | "+S.map(rangeeT).join(" ; "),
+    repBonne:Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(l)]).concat(S.map((l,i)=>["s"+(i+1),rangeeT(l)]))),repFausse:Object.fromEntries(A.map((l,i)=>["l"+(i+1),rangeeT(l)]).concat(A.map((l,i)=>["s"+(i+1),rangeeT(l)]))),
+    nature:orth?"orth":"para",ens:{k:"mat",n:T.n,u:T.u,A:flottant(A),S:flottant(S),orth}};}
+function projExam(R){let T,A;for(;;){T=tirePlan(R,false,true);A=matProj(T);if(A.flat().every(x=>Math.abs(q(x).n)<=6)&&A.every(l=>l.some(x=>!nul(x))))break;}
+  const S=matSym(A),AmI=A.map((l,i)=>l.map((x,j)=>sub(x,Q(i===j?1:0)))),fT="f(x, y, z) = ("+A.map(l=>comb(l,X3)).join(", ")+")";
+  const E=[{w:`f(X) = X ⇔ (A − I₃)X = 0, avec A − I₃ = ${matH(AmI)}. Chaque ligne est un multiple de ${vt(T.n)} : les trois équations reviennent à une seule. <b>P : ${comb(T.n,X3)} = 0.</b>`,why:`Les vecteurs que f laisse en place forment le plan P. On résout f(X) = X, c'est-à-dire AX − X = 0.`,pts:1.5},
+    {w:`f(u) pour u = ${vt(T.u)} : ${A.map(l=>fx(verifTxt(l,T.u)+" = "+nb(l.reduce((s,x,k)=>add(s,mul(x,T.u[k])),Q(0))))).join(", ")}. Donc f(u) = 0. Le pivot sur A laisse une seule ligne nulle (rang 2) : <b>D = ker f = Vect(${vt(T.u)})</b>.`,why:`D est la droite que f écrase sur 0. Un vecteur non nul de ker f suffit, puisque ker f est une droite.`,pts:1.5},
+    {w:`<b>Mat(σ) = 2A − I₃ = ${matPH(S)}</b>`,why:`σ(X) = 2f(X) − X, car f(X) est le milieu de X et de σ(X). On double A, puis on enlève 1 sur la diagonale.`,pts:1}];
+  function juge(rep){const d=liste(rep.d,3),e=liste(rep.e,3);if(!d||!e)return {incomplet:"Écris u avec 3 nombres, et les 3 coefficients (a, b, c) de l'équation de P."};
+    if(!colin(e,T.n))return {ok:false,faux:["e"],resume:"Pas tout à fait : l'équation de P est fausse.",diag:{etape:0,type:"équation de P",titre:"Où ça part : f(X) = X.",msg:`P, ce sont les X tels que f(X) = X. Les lignes de A − I₃ sont toutes des multiples de ${vt(T.n)} : P a pour équation ${fx(comb(T.n,X3)+" = 0")}.`}};
+    if(!colin(d,T.u)){const dansP=nul(T.n.reduce((s,x,k)=>add(s,mul(x,d[k])),Q(0)));return {ok:false,faux:["d"],resume:"Pas tout à fait : u n'engendre pas ker f.",diag:{etape:1,type:dansP?"vecteur de P pris pour D":"vecteur de ker f faux",titre:"Où ça part : f(X) = 0.",msg:`${dansP?"Ton vecteur est dans P : f le laisse en place, il n'est pas envoyé sur 0. ":""}ker f est la droite des X tels que AX = 0 : D = Vect(${vt(T.u)}).`}};}
+    return jugeSym(rep,A,S,2,"Mat(σ) = 2A − I₃")||{ok:true};}
+  return {sig:"PE"+JSON.stringify(A.map(l=>l.map(nb))),q:`f est la projection sur un plan P parallèlement à une droite D. (1) Donne une équation ax + by + cz = 0 de P = {X | f(X) = X}. (2) Trouve u tel que D = ker f = Vect(u). (3) Écris la matrice de la symétrie σ = 2f − Id par rapport à P de direction D.`,
+    corps:`<p>${fx(fT)}</p>`,texte:fT+" ; P, D, Mat(σ) ?",
+    champs:[{k:"champ",id:"e",nom:"équation de P",label:"(1) Les coefficients (a, b, c) de l'équation de P :",ex:"par exemple (1, -1, 1) pour x − y + z = 0"},{k:"champ",id:"d",nom:"u",label:"(2) u =",ex:"par exemple (1, 3, 1)"}].concat(champsLignes("s","de σ")),
+    juge,etapes:E,bonne:`P : ${comb(T.n,X3)} = 0 ; D = Vect(${vt(T.u)}) ; Mat(σ) = ${matH(S)}`,bonneTxt:`${rangeeT(T.n)} ; ${rangeeT(T.u)} ; `+S.map(rangeeT).join(" ; "),
+    repBonne:Object.assign({e:rangeeT(T.n),d:rangeeT(T.u)},Object.fromEntries(S.map((l,i)=>["s"+(i+1),rangeeT(l)]))),repFausse:Object.assign({e:rangeeT(T.n),d:rangeeT(T.u)},Object.fromEntries(A.map((l,i)=>["s"+(i+1),rangeeT(l)]))),
+    nature:"exam",ens:{k:"exam",n:T.n,u:T.u,A:flottant(A),S:flottant(S),orth:false}};}
+
 G.add("lin",[
  {id:"AL1",t:"Pivot de Gauss",th:"pivot",pts:4,pages:["m-pivot"],lecons:["l-pivot"],
   paliers:[
@@ -20321,7 +20398,13 @@ G.add("lin",[
   paliers:[
    {t:"une famille génératrice de F, donné par deux équations",cc:4,gen:fgGen},
    {t:"F = G ? : tester les vecteurs de G dans les équations de F",cc:4,gen:fgTest},
-   {t:"comme au CC2 : famille génératrice de F, équations de G, F = G ?",cc:10,gen:fgCC}]}
+   {t:"comme au CC2 : famille génératrice de F, équations de G, F = G ?",cc:10,gen:fgCC}]},
+ {id:"AL15",t:"Projection et symétrie par rapport à un plan",tache:"projection et symétrie par rapport à un plan",th:"projection",ex:"cc2",pts:1,apres:["AL12"],lecons:["l2-projection"],
+  paliers:[
+   {t:"projection orthogonale : p(v) et s(v) pour un vecteur v",cc:4,gen:R=>projVec(R,true)},
+   {t:"projection parallèlement à une droite : p(v) et s(v)",cc:4,gen:R=>projVec(R,false)},
+   {t:"la matrice de la projection, puis celle de la symétrie",cc:6,gen:projMat},
+   {t:"comme à l'examen de janvier 2026 : f donnée, trouver P et D, puis la symétrie",cc:7,gen:projExam}]}
 ].concat(RECITS.map(r=>({id:r.id,t:r.t,th:r.th,fixe:true,seuil:1,pages:r.pages||[],lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:r.cc,gen:recit("F"+r.id,r.q,r.corps,r.l)}]}))));
 })();
 
@@ -36968,7 +37051,7 @@ ct:{
  t:"L'examen d'Algèbre en 2 h",du:"de l'examen",au:"à l'examen",duree:120,
  lead:"Tout le cours, d'après les examens de janvier 2024 et janvier 2026, dans l'ordre de ce qui y a rapporté le plus (points estimés par moi : aucun barème n'est connu). Les polynômes sont aussi au programme (deux exercices sur sept en janvier 2026), mais le prof ne les a pas encore faits cette année : ils seront ajoutés ici quand ils auront été vus en cours, et les 20 points ci-dessous ne comptent que l'algèbre linéaire. Les nombres complexes de janvier 2024 ne sont pas dans le programme de la fiche de l'UE. Pour chaque notion : l'essentiel, la méthode sur un exercice d'un ancien examen, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Documents et calculatrice sont interdits.",
  carte:"l'algèbre linéaire de l'examen en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20 (les polynômes viendront après leur cours).",
- blancLead:"Sept questions de calcul, comme aux examens de janvier 2024 et 2026 : une relation, une famille liée, le noyau et l'image, un sous-espace, une matrice, puis une inverse. Fais-les sans revenir aux notions. Les démonstrations de cours ne sont pas dans ce sujet : refais-les sur papier avec leurs notions. La note qui sort est une estimation (barème estimé par moi), sur l'algèbre linéaire seulement.",
+ blancLead:"Sept questions de calcul, comme aux examens de janvier 2024 et 2026 : une relation, une famille liée, le noyau et l'image, un sous-espace, une projection, puis une inverse. Fais-les sans revenir aux notions. Les démonstrations de cours ne sont pas dans ce sujet : refais-les sur papier avec leurs notions. La note qui sort est une estimation (barème estimé par moi), sur l'algèbre linéaire seulement.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"kerim",t:"Noyau, image, injective, surjective",pts:4,ou:"examens de janvier 2024 et 2026, ex. 6",lect:2,exo:{g:"AL13",lv:2},
@@ -37013,12 +37096,7 @@ ct:{
 <li>I − A et I − B sont donc inverses l'une de l'autre : (I − A)⁻¹ = I − B.</li>
 <li>Alors (I − B)(I − A) = I aussi, soit I − A − B + BA = I : BA = A + B.</li>
 <li>Comme AB = A + B, on a AB = BA.</li></ol>`},
- {id:"proj",t:"Projection et symétrie par rapport à un plan",pts:2.5,ou:"janvier 2026, ex. 7 ; CC2 2024-2025, ex. 4",lect:2,
-  rappel:{min:6,q:`CC2 2024-2025, ex. 4 : P est le plan d'équation x − y + z = 0 dans ℝ³. Donne un vecteur n normal à P, puis la matrice de la projection orthogonale p sur P et celle de la symétrie orthogonale s par rapport à P.`,
-   r:`<ol><li>n = (1, −1, 1) : les coefficients de l'équation.</li>
-<li>Pour v = (x, y, z) : v = w + λn avec w ∈ P, et λ = (x − y + z)/3, car 1² + (−1)² + 1² = 3.</li>
-<li>p(v) = v − λn = ⅓(2x + y − z, x + 2y + z, −x + y + 2z), donc Mat(p) = ⅓ ${M([[2,1,-1],[1,2,1],[-1,1,2]])}</li>
-<li>s(v) = v − 2λn = 2p(v) − v, donc Mat(s) = 2Mat(p) − I₃ = ⅓ ${M([[1,2,-2],[2,1,2],[-2,2,1]])}</li></ol>`},
+ {id:"proj",t:"Projection et symétrie par rapport à un plan",pts:2.5,ou:"janvier 2026, ex. 7 ; CC2 2024-2025, ex. 4",lect:2.5,exo:{g:"AL15",lv:2},
   ess:`<ul><li>P a pour équation ax + by + cz = 0, et D = Vect(u) n'est pas dans P. Tout v s'écrit <b>v = w + λu</b>, avec w ∈ P.</li>
 <li>On trouve λ en écrivant que w = v − λu vérifie l'équation de P : λ = (ax + by + cz)/(au₁ + bu₂ + cu₃).</li>
 <li>La <b>projection</b> sur P parallèlement à D : p(v) = v − λu. La <b>symétrie</b> : s(v) = v − 2λu = 2p(v) − v, donc Mat(s) = 2Mat(p) − I₃.</li>
@@ -37030,7 +37108,8 @@ ct:{
 <li>f(X) = X : les trois équations deviennent x − y + z = 0, 3x − 3y + 3z = 0 et x − y + z = 0. Donc f(X) = X ⇔ X ∈ P.</li>
 <li>f(X) = 0 : le pivot sur A donne x − z = 0 et y − 3z = 0, donc X = z(1, 3, 1). f(X) = 0 ⇔ X ∈ D.</li>
 <li>Pour tout X : (2x − y + z) − (3x − 2y + 3z) + (x − y + 2z) = 0, donc f(X) ∈ P ; et f(X) − X = (x − y + z)(1, 3, 1) ∈ D. f est la projection sur P parallèlement à D.</li>
-<li>La symétrie σ = 2f − Id a pour matrice 2A − I₃ = ${M([[3,-2,2],[6,-5,6],[2,-2,3]])}</li></ol>`},
+<li>La symétrie σ = 2f − Id a pour matrice 2A − I₃ = ${M([[3,-2,2],[6,-5,6],[2,-2,3]])}</li></ol>
+<p>La projection orthogonale sur le même plan (CC2 2024-2025, ex. 4) : u = n = (1, −1, 1), donc λ = (x − y + z)/3, car 1² + (−1)² + 1² = 3. Alors p(v) = v − λn = ⅓(2x + y − z, x + 2y + z, −x + y + 2z), Mat(p) = ⅓ ${M([[2,1,-1],[1,2,1],[-1,1,2]])} et Mat(s) = 2Mat(p) − I₃ = ⅓ ${M([[1,2,-2],[2,1,2],[-2,2,1]])}</p>`},
  {id:"relation",t:"Inverser grâce à une relation",pts:2,ou:"janvier 2024, ex. 4 ; CC2 2022 à 2024",lect:1.5,exo:{g:"AL10",lv:2},
   ess:`<ul><li>On calcule A², puis A² − kA, et on reconnaît un multiple de I.</li>
 <li>On factorise par A : par exemple A² − 3A = 4I donne A(A − 3I) = 4I, donc A × ¼(A − 3I) = I.</li>
@@ -37080,7 +37159,7 @@ ct:{
   {t:"Le noyau",ou:"comme l'ex. 6 des deux examens",pts:3,g:"AL13",lv:0},
   {t:"L'image",ou:"comme l'ex. 6 des deux examens",pts:4,g:"AL13",lv:1},
   {t:"Une famille génératrice d'un sous-espace",ou:"comme l'ex. 3 de janvier 2024",pts:3,g:"AL14",lv:0},
-  {t:"La matrice d'une application linéaire",ou:"comme l'ex. 7 de janvier 2026",pts:2,g:"AL12",lv:1},
+  {t:"Une projection et sa symétrie",ou:"comme l'ex. 7 de janvier 2026",pts:2,g:"AL15",lv:3},
   {t:"Inverser une matrice 3 × 3",ou:"CC2, ex. 2",pts:2,g:"AL8",lv:1}]
 }};
 const L=window.EXPRESS.lin;
