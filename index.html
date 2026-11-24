@@ -33097,8 +33097,12 @@ function cardOf(sid,cid){
 function dueCards(){
   const t=today(),n=NOW(),out=[];
   SIDS.forEach(id=>{const S=SUBJ[id];if(examStart(S)<=n)return;const st=ST[id],eve=(examStart(S)-n)<=36*3600e3;
-    Object.entries(st.cards).forEach(([cid,c])=>{if(st.jv[cid])return;const L=BYL[id][cid.replace(/^m:/,"").split("#")[0]];if(L&&!A.inScope(S,L))return;/* une leçon d'une autre épreuve : pas maintenant */
-      if(cardOf(id,cid)&&(c.due<=t||(eve&&c.last!==t)))out.push({sid:id,cid,box:c.box});});
+    /* choix 78a : les cartes d'une leçon réussie dans le parcours sont mises de côté jusqu'à l'épreuve, sauf un rappel (2 cartes au plus) 3 jours après */
+    let RE={};try{RE=window.EXPRESS_OUTILS?EXPRESS_OUTILS.leconsReussies(id):{};}catch(e){}const rap={},lecDe=cid=>cid.replace(/^m:/,"").split("#")[0];
+    const j3=lid=>A.ymd(new Date(new Date(RE[lid]+"T12:00").getTime()+3*864e5)),rappelFait=lid=>Object.entries(st.cards).some(([k,c2])=>lecDe(k)===lid&&c2.last&&c2.last>=j3(lid));
+    Object.entries(st.cards).forEach(([cid,c])=>{if(st.jv[cid])return;const lid=lecDe(cid),L=BYL[id][lid];if(L&&!A.inScope(S,L))return;/* une leçon d'une autre épreuve : pas maintenant */
+      if(RE[lid]&&!eve){if(t<j3(lid)||rappelFait(lid)||(rap[lid]||0)>=2)return;rap[lid]=(rap[lid]||0)+1;}
+      if(cardOf(id,cid)&&(c.due<=t||(eve&&c.last!==t)||RE[lid]))out.push({sid:id,cid,box:c.box});});
     /* une fiche en rouge : sa question seulement une fois faites les leçons qui l'expliquent (sinon, c'est la question ratée qui revient) */
     S.ORDER.forEach(c=>{if(st.review[c.id]&&c.q&&!c.out&&!st.jv["c:"+c.id]&&expliquee(id,c.id))out.push({sid:id,cid:"c:"+c.id,box:-1});});});
   out.forEach(o=>{o.rnd=Math.random();});
@@ -36689,7 +36693,8 @@ function carte(){const main=$("#main");if(!main)return;const pg0=main.querySelec
   const pg=main.querySelector(".page");if(!pg)return;
   const L=h.length===1&&SUBJ[h[0]]?aVenir(h[0]):proche().filter(x=>!h.length||h[0]==="entrainer"&&h.length===1);if(!L.length)return;
   const S0=!h.length?seance():null;
-  const html=(S0?carteSeance(S0):"")+L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
+  const G=!h.length?gagne():null;
+  const html=(G?`<p class="el-pt xp-gagne"><b>Temps gagné cette semaine : ${hm(G.g)}.</b> Le planning prévoyait ${hm(G.prevu)} de leçons pour ce que tu as réussi en ${hm(G.p)} dans les parcours.</p>`:"")+(S0?carteSeance(S0):"")+L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
     return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}/go">${p.ms?"Reprendre":`Commencer · ${dureeTxt(C)} chrono`}</a><a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a></div></section>`;}).join("");
   const h1=pg.querySelector("h1");let apres=h1;if(apres&&apres.nextElementSibling&&apres.nextElementSibling.matches(".hlead,.lead"))apres=apres.nextElementSibling;
   if(h.length===1&&SUBJ[h[0]]&&h1)apres=h1;
@@ -36707,15 +36712,28 @@ function seance(){const x=proche()[0];if(!x)return null;const C=X(x.sid,x.ep),B=
   if(!ids.length&&!r)return null;return {sid:x.sid,ep:x.ep,x,C,B,ids,rouges:r,min:Math.max(5,Math.round(t))};}
 function carteSeance(S0){const {x,C,B,ids,rouges:r}=S0,quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true),fait=(seLit()||{}).fin;
   const quoi=ids.length?`${ids.length===1?"la notion":"les "+ids.length+" notions"} du ${x.E.label} ${/^[aeiouyéèêàâîôûh]/i.test(SUBJ[x.sid].name)?"d'":"de "}${SUBJ[x.sid].name} (${quand}) que tu ne sais pas encore faire${r?`, puis ${r} carte${r>1?"s":""} en rouge`:""}. Exercice d'abord, correction ensuite.`:`le parcours est réussi : il reste ${r} carte${r>1?"s":""} en rouge.`;
-  const go=ids.length?`${base(x.sid,x.ep)}/seance`:`#/${x.sid}/cartes/rouge`;
-  return `<section class="el-recap xp-carte xp-seance"><p class="prekick">Ta séance du jour${fait?" (faite : encore une ?)":""} · ${S0.min} min</p><p><b>Devenir fort aujourd'hui</b> : ${quoi}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${go}">Commencer · ${S0.min} min chrono</a></div></section>`;}
+  const go=ids.length?`${base(x.sid,x.ep)}/seance`:`#/${x.sid}/cartes/rouge`;let tp=null;try{tp=A.tempsPrevu?A.tempsPrevu(x.sid):null;}catch(e){}
+  return `<section class="el-recap xp-carte xp-seance"><p class="prekick">Ta séance du jour${fait?" (faite : encore une ?)":""} · ${S0.min} min</p><p><b>Devenir fort aujourd'hui</b> : ${quoi}</p>${jauge(C,B.pts)}${tp&&tp.avant>tp.apres?`<p class="el-pt">D'ici le ${x.E.label} : <b>${hm(tp.apres)}</b> de révision prévues au lieu de <b>${hm(tp.avant)}</b>. Le parcours remplace ce qu'il couvre ; le reste ne revient que pour ce que tu rates.</p>`:""}<div class="acts"><a class="btn pri big" href="${go}">Commencer · ${S0.min} min chrono</a></div></section>`;}
+/* choix 78a : les leçons dont toutes les notions du parcours de la prochaine épreuve sont réussies, avec le jour de la réussite */
+function leconsReussies(sid){const S=SUBJ[sid],E=S&&A.exam(S),C=E&&X(sid,E.id),R={};if(!C)return R;const quand={},par={};
+  A.journal().forEach(e=>{if(e.k==="cch"&&e.s===sid&&e.ep===E.id&&e.ok&&!quand[e.n])quand[e.n]=e.t;});
+  C.notions.forEach(n=>{const g=n.exo&&GEN.par[n.exo.g];(g&&g.lecons||[]).forEach(l=>{(par[l]=par[l]||[]).push(n.id);});});
+  Object.entries(par).forEach(([l,ids])=>{if(ids.every(id=>quand[id]))R[l]=A.ymd(new Date(Math.max(...ids.map(id=>quand[id]))));});return R;}
+/* choix 79a : le temps gagné cette semaine, calculé : les minutes que le planning prévoyait pour les leçons réussies dans les parcours cette semaine,
+   moins le temps passé sur ces notions (exercices mesurés, lecture prévue) ; rien si le calcul n'a pas de base */
+function gagne(){const d=new Date(A.today()+"T12:00"),lun=A.ymd(new Date(d.getTime()-((d.getDay()+6)%7)*864e5));let prevu=0,passe=0;const vus={},lus={};
+  Object.keys(window.EXPRESS||{}).forEach(sid=>{const S=SUBJ[sid],E=S&&A.exam(S),C=E&&X(sid,E.id);if(!C)return;
+    Object.entries(leconsReussies(sid)).forEach(([l,j])=>{const T=S.TB&&S.TB["L-"+l];if(j>=lun&&T&&T.min&&!vus[sid+l]){vus[sid+l]=1;prevu+=T.min;}});
+    A.journal().forEach(e=>{if(e.k==="cch"&&e.s===sid&&e.ep===E.id&&A.ymd(new Date(e.t))>=lun){passe+=(e.ms||0)/60e3;const n=C.notions.find(m=>m.id===e.n);if(n&&!lus[sid+n.id]){lus[sid+n.id]=1;passe+=n.lect||0;}}});});
+  const p=Math.round(passe),g=Math.round(prevu-p);return prevu&&g>0?{g,prevu,p}:null;}
+const hm=m=>m>=60?Math.floor(m/60)+" h"+(m%60?" "+String(m%60).padStart(2,"0"):""):m+" min";
 /* choix 75a : sur la page d'une matière, un parcours par épreuve à venir */
 function aVenir(sid){const S=SUBJ[sid],t0=A.today(),L=[];if(!S||!window.EXPRESS||!window.EXPRESS[sid])return L;
   (A.examsOf?A.examsOf(S):S.exams||[]).forEach((e0,i)=>{const E=A.examAt?A.examAt(S,i):e0;if(!E||E.off||!E.day||!window.EXPRESS[sid][E.id])return;const j=(new Date(E.day+"T12:00")-new Date(t0+"T12:00"))/864e5;if(j>=0)L.push({sid,ep:E.id,E,j});});
   return L.sort((a,b)=>a.j-b.j);}
 /* le reste de la page, replié derrière un bouton (73a, 75a) ; déplié, il le reste jusqu'à la fin de la visite */
 function replie(pg,lib){let dep=false;try{dep=sessionStorage.getItem("rev-s1-deplie")===location.hash;}catch(x){}if(dep||pg.querySelector(".xp-reste"))return;
-  const cach=[...pg.children].filter(x=>!x.matches("h1,.hlead,.lead,.back,.stitle,.kick,.xp-carte"));if(!cach.length)return;
+  const cach=[...pg.children].filter(x=>!x.matches("h1,.hlead,.lead,.back,.stitle,.kick,.xp-carte,.xp-gagne"));if(!cach.length)return;
   cach.forEach(x=>{x.dataset.xpAvant=x.style.display;x.style.display="none";});
   pg.insertAdjacentHTML("beforeend",`<div class="acts xp-reste"><button class="btn">${lib}</button></div>`);
   pg.querySelector(".xp-reste button").addEventListener("click",()=>{try{sessionStorage.setItem("rev-s1-deplie",location.hash);}catch(x){}cach.forEach(x=>{x.style.display=x.dataset.xpAvant||"";});pg.querySelector(".xp-reste").remove();});}
@@ -36736,7 +36754,7 @@ EXT.init=function(A0){const ext=init0.call(EXT,A0);A=A0;
     document.addEventListener("visibilitychange",()=>{if(document.hidden){if(CH)tic();envoie();}else if(CH)CH.t=Date.now();},true);
     setTimeout(()=>{try{new MutationObserver(carte).observe($("#main"),{childList:true});carte();}catch(e){console.error(e);}},0);}catch(e){console.error(e);}
   return ext;};
-window.EXPRESS_OUTILS={bilan,prevu,minNotion,minBlanc,surBlanc,posDe,proche,seance,aVenir,notionsDeLecon:(s,l)=>notionsDeLecon(s,l)};/* pour les essais */
+window.EXPRESS_OUTILS={bilan,prevu,minNotion,minBlanc,surBlanc,posDe,proche,seance,aVenir,notionsDeLecon:(s,l)=>notionsDeLecon(s,l),leconsReussies:s=>leconsReussies(s),gagne:()=>gagne()};/* pour les essais */
 })();
 
 </script>
@@ -37065,7 +37083,7 @@ const CLASSES={
  "2026-11-17":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Algèbre","CM, amphi 5.02","lin"]],
  "2026-11-18":[["08:00","09:30","USI","CM, amphi 5.06","usi"],["09:45","11:15","USI","TD info 36.206","usi"],["11:30","13:00","USI","TD info 36.206","usi"],["15:00","16:30","Analyse","CM, amphi 5.04","ana"],["16:45","18:15","Analyse","TD 5.202","ana"]],
  "2026-11-19":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.01","lin"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
- "2026-11-20":[["08:00","09:30","Automates","TD 2.09","aut"],["09:45","11:15","Prog. fonctionnelle","CM, amphi 5.01","pf"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"],["15:00","16:30","Algèbre","CC1, Faculté de Pharmacie, amphi J","lin"]],
+ "2026-11-20":[["08:00","09:30","Automates","TD 2.09","aut"],["09:45","11:15","Prog. fonctionnelle","CM, amphi 5.01","pf"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"],["15:00","16:30","Algèbre","CC1 reporté : n'a pas eu lieu","lin"]],
  "2026-11-23":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Analyse","CC1, amphi 5.02","ana"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
  "2026-11-24":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Analyse","CM, amphi 5.03","ana"]],
  "2026-11-25":[["09:45","11:15","USI","TD info 36.206","usi"],["11:30","13:00","USI","TD info 36.206","usi"],["15:00","16:30","Analyse","CM, amphi 5.04","ana"]],
@@ -37084,7 +37102,7 @@ const CLASSES={
  "2026-12-14":[["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM","algo"]],
  "2026-12-15":[["08:00","09:30","Analyse","TD 5.206","ana"],["09:45","11:15","Algèbre","CM, amphi 5.03","lin"]],
  "2026-12-16":[["15:00","16:30","Analyse","CC2, salle à confirmer","ana"]],
- "2026-12-17":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CC2, amphi 5.06","lin"]],
+ "2026-12-17":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CC2, amphi 5.03","lin"]],
  "2026-12-18":[]};
 const HOLIDAY={"2026-11-11":"11 novembre, férié"};
 ["2026-12-21","2026-12-22","2026-12-23","2026-12-24","2026-12-25","2026-12-28","2026-12-29","2026-12-30","2026-12-31","2027-01-01"].forEach(d=>{HOLIDAY[d]="vacances de Noël";});
@@ -37169,7 +37187,19 @@ const mienAvant=(day,until)=>seancesMiennes(day,0).reduce((s,[a,b])=>a<until?s+w
 
 /* ---------- le plan de la semaine ---------- */
 /* une étape marquée apres:"<id>" n'est proposée qu'une fois l'étape <id> faite (le 2e sujet blanc après le 1er) */
-function pendingTasks(sid){const S=SUBJ[sid],attend=t=>{const a=t.apres&&S.TB[t.apres];return a&&inScope(S,a)&&!isDone(sid,a);};return S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t)&&!attend(t)&&(!t.quand||t.quand()));}
+function pendingTasks(sid,sansParcours){const S=SUBJ[sid],attend=t=>{const a=t.apres&&S.TB[t.apres];return a&&inScope(S,a)&&!isDone(sid,a);};const L=S.tasks.filter(t=>inScope(S,t)&&!isDone(sid,t)&&!attend(t)&&(!t.quand||t.quand()));
+  if(sansParcours)return L;const X=couvertes(sid);if(!X)return L;
+  /* choix 77a : le parcours de la prochaine épreuve est la séance principale ; il remplace les leçons qu'il couvre, qui ne reviennent que si une de leurs notions est ratée */
+  const R=L.filter(t=>!(t.lesson&&X.cov[t.lesson]&&!X.rate[t.lesson]));
+  if(X.reste>0)R.unshift(S.TB[X.id]=Object.assign(S.TB[X.id]||{},{id:X.id,t:X.C.t,min:X.reste,base:X.reste,p:1,i:-1,first:true,why:"La séance principale : "+X.C.carte,links:[[`#/express/${sid}/${X.E.id}/go`,"Le parcours"]]}));
+  return R;}
+function couvertes(sid){const O=window.EXPRESS_OUTILS,S=SUBJ[sid],E=exam(S),C=E&&!E.off&&window.EXPRESS&&(window.EXPRESS[sid]||{})[E.id];if(!O||!C||!window.GEN)return null;
+  let B;try{B=O.bilan(sid,E.id);}catch(e){return null;}const cov={},rate={};
+  C.notions.forEach(n=>{const g=n.exo&&GEN.par[n.exo.g];(g&&g.lecons||[]).forEach(l=>{cov[l]=1;if(B.essais[n.id]&&!B.ok[n.id])rate[l]=1;});});
+  const reste=C.notions.filter(n=>!B.ok[n.id]).reduce((s,n)=>s+O.minNotion(n),0)+(B.blancs.length?0:O.minBlanc(C));
+  return {E,C,B,cov,rate,reste:Math.round(reste),id:"xp-"+E.id};}
+/* le temps prévu d'ici l'épreuve, sans le parcours et avec (77a) */
+function tempsPrevu(sid){const m=L=>L.reduce((s,t)=>s+(t.min||0),0);return {avant:m(pendingTasks(sid,true)),apres:m(pendingTasks(sid))};}
 /* ce qui se fait d'abord chaque jour et qui est du temps de révision : « Où j'en suis » quand il est nécessaire, l'entretien du jour,
    le mini-contrôle mélangé et les cartes de Réviser ; pour les jours suivants, seules les cartes sont connues d'avance */
 function rituels(day){const X=APP.ext,L=[];
@@ -37974,6 +38004,7 @@ function route(){
   wipe(TABS.indexOf(tab)<TABS.indexOf(prev),()=>{const cur=(location.hash||"#/").slice(2).split("/").filter(Boolean);LASTTAB=tabOf(cur);render(cur);if(cur[0]!=="lecon")deal();});
 }
 const APP={$,bilanSeance,coucheTxt,SUBJ,SIDS,ST,hub,genreTache,tempsCarte,neuvesParJour,coursJour,epreuvesDu,mm,creneauxDu,dansCreneau,cadreCren,lierCren,lierSeances,poseBoite,ajuste,sansDu,fantome,boiteCren,LES,lesOf,annOf,sujetsDe,themesOf,themeDe,maitrise,gainTheme,prioDe,marge,diagPool,diagAFaire,miniDu,logRep,allReps,repsPropres,importReps,seanceGet,seanceRep,seanceFin,seanceArrivee,faites,nouvRun,repQ,brut,lexDe,motsHTML,motsClic,examsOf,examAt,inScope,emit,work,factor,measured,doneTodayMin,stamp:()=>Date.now()+TOFF,mergeEvents,journal:()=>J,device:()=>DEV,today,NOW,ymd,addDays,dayName,exam,examStart,jx,hm,hh,sec,weight,poids0,epreuves,bilan,estime,notesHTML,plan,isDone,doneOn,taskHTML,blockHTML,bindTicks,renderSide,topInfo,fixLinks,mount,status,setStatus,activeQuiz,quizGoal,cardIds,hq,CLASSES,HOLIDAY,cur:()=>CUR,route:()=>route(),onChange:null,ext:{}};
+Object.assign(APP,{pendingTasks,tempsPrevu});
 if(window.EXT)try{APP.ext=window.EXT.init(APP)||{};}catch(err){console.error(err);APP.ext={};noteErr(err,"démarrage");}
 (window.PANNES||[]).forEach(m=>noteErr(m,"chargement"));
 addEventListener("error",e=>{if(e.message)noteErr(e.error||e.message,"page "+location.hash);});
