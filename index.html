@@ -34235,7 +34235,12 @@ function bouton(){const p=(location.hash||"").slice(2).split("/"),main=$("#main"
   else if(p[0]==="lecon"&&SUBJ[p[1]]){const acts=main.querySelector(".lp-end .acts");if(!acts)return;
     const D=defs(p[1]).filter(x=>{const T=theme(x),L=x.lecons||(T&&T.les?T.les.slice(-1):[]);return L.includes(p[2])&&!x.fixe;});
     /* choix 71a : à la fin d'une leçon, un exercice tout de suite, pendant que c'est frais */
-    if(D.length&&main.querySelector("#lsc")){acts.insertAdjacentHTML("beforebegin",`<section class="el-recap en-encore"><p class="prekick">Encore 5 minutes ?</p><p>Un exercice du niveau ${duCC(SUBJ[p[1]])} sur ce que tu viens d'apprendre, pendant que c'est frais : +5 points, et ta série tient.</p><div class="acts"><a class="btn pri big en-lien" href="#/entrainer/${D[0].sid}/${D[0].id}">Un exercice tout de suite</a></div></section>`);
+    /* choix 74a : la leçon finit sur l'exercice de sa notion du parcours, qui compte dans la jauge du CC */
+    let XN=null;try{XN=window.EXPRESS_OUTILS&&EXPRESS_OUTILS.notionsDeLecon(p[1],p[2]);}catch(x){}
+    if(XN&&main.querySelector("#lsc")){const n=XN.NS.find(m=>!EXPRESS_OUTILS.bilan(XN.sid,XN.ep).ok[m.id])||XN.NS[0];
+      acts.insertAdjacentHTML("beforebegin",`<section class="el-recap en-encore"><p class="prekick">Pour finir : l'exercice ${duCC(SUBJ[p[1]])}</p><p>${n.t}, au niveau ${duCC(SUBJ[p[1]])}, à faire avant de voir la correction. Réussi, il compte dans la jauge ${XN.C.du} (+${String(n.pts).replace(".",",")} point${n.pts>1?"s":""}).</p><div class="acts"><a class="btn pri big en-lien" href="#/express/${XN.sid}/${XN.ep}/notion/${n.id}/exo">L'exercice ${duCC(SUBJ[p[1]])}</a></div></section>`);
+      acts.querySelectorAll(".btn.pri").forEach(b=>b.classList.remove("pri","big"));}
+    else if(D.length&&main.querySelector("#lsc")){acts.insertAdjacentHTML("beforebegin",`<section class="el-recap en-encore"><p class="prekick">Encore 5 minutes ?</p><p>Un exercice du niveau ${duCC(SUBJ[p[1]])} sur ce que tu viens d'apprendre, pendant que c'est frais : +5 points, et ta série tient.</p><div class="acts"><a class="btn pri big en-lien" href="#/entrainer/${D[0].sid}/${D[0].id}">Un exercice tout de suite</a></div></section>`);
       acts.querySelectorAll(".btn.pri").forEach(b=>b.classList.remove("pri","big"));D.shift();}
     D.forEach(d=>acts.insertAdjacentHTML("beforeend",`<a class="btn en-lien" href="#/entrainer/${d.sid}/${d.id}">${D.length>1||main.querySelector(".en-encore")?"M'entraîner : "+(d.tache||d.t.charAt(0).toLowerCase()+d.t.slice(1)):"M'entraîner sur cette méthode"}</a>`));}}
 function brancher(A0,ext){A=A0;
@@ -36039,12 +36044,14 @@ function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(
     if(nouveau){const av=palier(C,B.pts),ap=palier(C,B.pts+n.pts);setTimeout(()=>etiquette(`+${virg(n.pts)} pt${n.pts>1?"s":""} ${C.du}`),300);
       if(ap&&ap!==av)setTimeout(()=>etiquette(ap[1]+" !",true),1300);
       const bar=$(".xp-j i");if(bar)setTimeout(()=>{bar.style.width=Math.min(100,(B.pts+n.pts)/20*100)+"%";},200);}
-    const suite=p.i+1<N?`Notion suivante : ${C.notions[p.i+1].t}`:"Le sujet express";
+    const se=seLit(),dansSe=se&&!se.fin&&se.sid===sid&&se.ep===ep&&se.ids.includes(n.id),nx=dansSe?se.ids[se.ids.indexOf(n.id)+1]:null,kx=nx?C.notions.findIndex(m=>m.id===nx):-1;
+    const suite=dansSe?(kx>=0?`Suite de ta séance : ${C.notions[kx].t}`:se.rouges?"Fin de la séance : tes cartes en rouge":"Fin de la séance"):p.i+1<N?`Notion suivante : ${C.notions[p.i+1].t}`:"Le sujet express";
     const msg=r.ok?(nouveau?`<p class="muted">${virg(B.pts+n.pts)} points ${C.du} sur 20 assurés.</p>`:""):`<p class="muted">Refais-en un tout de suite, avec d'autres nombres : c'est là que ça rentre.</p>`;
     $("#xp-fb").insertAdjacentHTML("beforeend",msg);
     pied(r.ok?`<button class="btn" id="xp-re">Encore un, pour être sûr</button><button class="btn pri big" id="xp-go">${suite}</button>`
       :`<button class="btn" id="xp-go">Passer à la suite</button><button class="btn pri big" id="xp-re">Refais-en un</button>`);
-    $("#xp-go").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i+1;q.st=0;garde(sid,ep,q);notion(sid,ep);});
+    $("#xp-go").addEventListener("click",()=>{if(dansSe){if(kx>=0){const q=posDe(sid,ep);q.i=kx;q.st=0;garde(sid,ep,q);notion(sid,ep);}else{se.fin=1;seEcrit(se);location.hash=se.rouges?"#/"+sid+"/cartes/rouge":"#/";}return;}
+      const q=posDe(sid,ep);q.i=p.i+1;q.st=0;garde(sid,ep,q);notion(sid,ep);});
     $("#xp-re").addEventListener("click",()=>{const q=posDe(sid,ep);q.i=p.i;q.st=2;garde(sid,ep,q);notion(sid,ep);});};
   b.innerHTML=tx(`<p class="prekick">À toi · ${exoMin(n)} min ${C.au}, sans regarder la méthode</p><div id="xp-ex"></div><div id="xp-fb"></div>`);
   pied(presse(sid,ep));
@@ -36092,12 +36099,15 @@ function route(sid,ep,parts){const C=X(sid,ep);if(!C||!SUBJ[sid]){location.repla
   if(!a)return accueil(sid,ep);
   if(a==="go"){const p=posDe(sid,ep);return p.i>=C.notions.length?sujet(sid,ep):notion(sid,ep);}
   if(a==="sujet"){const p=posDe(sid,ep);if(p.i<C.notions.length||p.st===0||p.bq>=C.blanc.length){p.i=C.notions.length;p.st=0;p.bq=0;p.bres=[];garde(sid,ep,p);}return sujet(sid,ep);}
-  if(a==="notion"&&parts[1]){const k=C.notions.findIndex(n=>n.id===parts[1]);if(k>=0){const p=posDe(sid,ep);p.i=k;p.st=0;garde(sid,ep,p);}return notion(sid,ep);}
+  if(a==="notion"&&parts[1]){const k=C.notions.findIndex(n=>n.id===parts[1]);if(k>=0){const p=posDe(sid,ep);p.i=k;p.st=parts[2]==="exo"&&C.notions[k].exo?2:0;garde(sid,ep,p);}return notion(sid,ep);}
+  if(a==="seance"){const S0=seance();if(!S0||S0.sid!==sid||S0.ep!==ep||!S0.ids.length){location.replace("#/");return;}
+    const se=seLit(),reprise=se&&se.sid===sid&&se.ep===ep&&!se.fin&&se.ids.some(id=>!S0.B.ok[id]);const o=reprise?se:{jour:A.today(),sid,ep,ids:S0.ids,rouges:S0.rouges};seEcrit(o);
+    const id=o.ids.find(x=>!bilan(sid,ep).ok[x])||o.ids[0],k=C.notions.findIndex(n=>n.id===id),p=posDe(sid,ep);if(p.i!==k){p.i=k;p.st=0;garde(sid,ep,p);}return notion(sid,ep);}
   accueil(sid,ep);}
 
 /* l'entrée : une carte en haut d'Aujourd'hui, de S'entraîner et de la page de la matière, les jours qui précèdent l'épreuve */
 function proche(){const L=[];Object.keys(window.EXPRESS||{}).forEach(sid=>{const S=SUBJ[sid];if(!S)return;const E=A.exam(S);if(!E||!window.EXPRESS[sid][E.id])return;
-  const j=(new Date(E.day+"T12:00")-new Date(A.today()+"T12:00"))/864e5;if(j>=0&&j<=(E.report?14:10))L.push({sid,ep:E.id,E,j});/* une épreuve reportée est posée à 14 jours */});return L;}
+  const j=(new Date(E.day+"T12:00")-new Date(A.today()+"T12:00"))/864e5;const C=X(sid,E.id);if(j>=0&&(j<=(E.report?14:10)||maxMin(C)>=120))L.push({sid,ep:E.id,E,j});/* reportée : posée à 14 jours ; examen en 2 h : dès maintenant (76a) */});return L.sort((a,b)=>a.j-b.j);}
 /* choix 70a : sur Aujourd'hui, la note que tu sais déjà aller chercher à chaque épreuve proche (estimation du site, ou le CC en 1 h si c'est plus) */
 function notes(pg){if(pg.querySelector(".xp-notes"))return "";const t0=A.today(),L=[];
   A.SIDS.forEach(sid=>{const S=SUBJ[sid],E=A.exam(S);if(!E||E.off||!E.day)return;if(A.examStart(S)<=A.NOW())return;const j=(new Date(E.day+"T12:00")-new Date(t0+"T12:00"))/864e5;if(j<0||j>21)return;
@@ -36108,24 +36118,60 @@ function notes(pg){if(pg.querySelector(".xp-notes"))return "";const t0=A.today()
   return `<section class="el-recap xp-notes"><p class="prekick">Tes notes, d'après ce que tu sais faire</p><div class="el-bar">${L.slice(0,4).map(ligne).join("")}</div></section>`;}
 function carte(){const main=$("#main");if(!main)return;const pg0=main.querySelector(".page");
   if(pg0&&(location.hash||"#/").replace(/^#\/?/,"")===""&&!pg0.querySelector(".xp-notes")){const h=notes(pg0);if(h){const c=pg0.querySelector(".xp-carte:last-of-type"),h1=pg0.querySelector("h1");let ap=h1&&h1.nextElementSibling&&h1.nextElementSibling.matches(".hlead,.lead")?h1.nextElementSibling:h1;if(c)c.insertAdjacentHTML("afterend",h);else if(ap)ap.insertAdjacentHTML("afterend",h);}}
-  if(main.querySelector(".xp-carte"))return;const h=(location.hash||"#/").slice(2).split("/").filter(Boolean);
+  const h=(location.hash||"#/").slice(2).split("/").filter(Boolean);
+  if(h[0]==="lecon"&&SUBJ[h[1]]&&h[2])return encadreLecon(main,h[1],h[2]);
+  if(main.querySelector(".xp-carte"))return;
   const pg=main.querySelector(".page");if(!pg)return;
-  const L=proche().filter(x=>!h.length||h[0]==="entrainer"&&h.length===1||h[0]===x.sid&&h.length===1);if(!L.length)return;
-  const html=L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
+  const L=h.length===1&&SUBJ[h[0]]?aVenir(h[0]):proche().filter(x=>!h.length||h[0]==="entrainer"&&h.length===1);if(!L.length)return;
+  const S0=!h.length?seance():null;
+  const html=(S0?carteSeance(S0):"")+L.map(x=>{const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),p=posDe(x.sid,x.ep),quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true);
     return `<section class="el-recap xp-carte"><p class="prekick">${x.E.label} ${SUBJ[x.sid].name} ${quand}${x.E.start?" à "+x.E.start.replace(":00"," h").replace(":"," h "):""}</p><p><b>${C.t}</b> : ${C.carte}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${base(x.sid,x.ep)}/go">${p.ms?"Reprendre":`Commencer · ${dureeTxt(C)} chrono`}</a><a class="btn" href="${base(x.sid,x.ep)}">Le parcours</a></div></section>`;}).join("");
   const h1=pg.querySelector("h1");let apres=h1;if(apres&&apres.nextElementSibling&&apres.nextElementSibling.matches(".hlead,.lead"))apres=apres.nextElementSibling;
+  if(h.length===1&&SUBJ[h[0]]&&h1)apres=h1;
   if(apres)apres.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);
-  const nt=pg.querySelector(".xp-notes"),der=[...pg.querySelectorAll(".xp-carte")].pop();if(nt&&der)der.after(nt);}
+  const nt=pg.querySelector(".xp-notes"),der=[...pg.querySelectorAll(".xp-carte")].pop();if(nt&&der)der.after(nt);
+  if(S0)replie(pg,"Tout le programme du jour");else if(h.length===1&&SUBJ[h[0]])replie(pg,"Le reste de la matière : leçons, fiches, annales");}
+
+/* choix 73a : la séance du jour, le plus court chemin vers la note : les notions pas encore réussies de l'épreuve la plus proche (25 min au plus), puis les cartes en rouge */
+const SEKEY="rev-s1-seance",SEANCE=25;
+const seLit=()=>{try{const o=JSON.parse(localStorage.getItem(SEKEY)||"null");return o&&o.jour===A.today()?o:null;}catch(x){return null;}};
+const seEcrit=o=>{try{localStorage.setItem(SEKEY,JSON.stringify(o));}catch(x){}};
+const rouges=sid=>{const S=SUBJ[sid],st=A.ST&&A.ST[sid];return S&&st&&st.review&&S.ORDER?S.ORDER.filter(c=>st.review[c.id]).length:0;};
+function seance(){const x=proche()[0];if(!x)return null;const C=X(x.sid,x.ep),B=bilan(x.sid,x.ep),r=Math.min(rouges(x.sid),10),ids=[];let t=r*0.5;
+  for(const n of C.notions){if(B.ok[n.id])continue;const m=minNotion(n);if(ids.length&&t+m>SEANCE)break;ids.push(n.id);t+=m;}
+  if(!ids.length&&!r)return null;return {sid:x.sid,ep:x.ep,x,C,B,ids,rouges:r,min:Math.max(5,Math.round(t))};}
+function carteSeance(S0){const {x,C,B,ids,rouges:r}=S0,quand=x.j===0?"aujourd'hui":x.j===1?"demain":A.dayName(x.E.day,false,true),fait=(seLit()||{}).fin;
+  const quoi=ids.length?`${ids.length===1?"la notion":"les "+ids.length+" notions"} du ${x.E.label} ${/^[aeiouyéèêàâîôûh]/i.test(SUBJ[x.sid].name)?"d'":"de "}${SUBJ[x.sid].name} (${quand}) que tu ne sais pas encore faire${r?`, puis ${r} carte${r>1?"s":""} en rouge`:""}. Exercice d'abord, correction ensuite.`:`le parcours est réussi : il reste ${r} carte${r>1?"s":""} en rouge.`;
+  const go=ids.length?`${base(x.sid,x.ep)}/seance`:`#/${x.sid}/cartes/rouge`;
+  return `<section class="el-recap xp-carte xp-seance"><p class="prekick">Ta séance du jour${fait?" (faite : encore une ?)":""} · ${S0.min} min</p><p><b>Devenir fort aujourd'hui</b> : ${quoi}</p>${jauge(C,B.pts)}<div class="acts"><a class="btn pri big" href="${go}">Commencer · ${S0.min} min chrono</a></div></section>`;}
+/* choix 75a : sur la page d'une matière, un parcours par épreuve à venir */
+function aVenir(sid){const S=SUBJ[sid],t0=A.today(),L=[];if(!S||!window.EXPRESS||!window.EXPRESS[sid])return L;
+  (A.examsOf?A.examsOf(S):S.exams||[]).forEach((e0,i)=>{const E=A.examAt?A.examAt(S,i):e0;if(!E||E.off||!E.day||!window.EXPRESS[sid][E.id])return;const j=(new Date(E.day+"T12:00")-new Date(t0+"T12:00"))/864e5;if(j>=0)L.push({sid,ep:E.id,E,j});});
+  return L.sort((a,b)=>a.j-b.j);}
+/* le reste de la page, replié derrière un bouton (73a, 75a) ; déplié, il le reste jusqu'à la fin de la visite */
+function replie(pg,lib){let dep=false;try{dep=sessionStorage.getItem("rev-s1-deplie")===location.hash;}catch(x){}if(dep||pg.querySelector(".xp-reste"))return;
+  const cach=[...pg.children].filter(x=>!x.matches("h1,.hlead,.lead,.back,.stitle,.kick,.xp-carte"));if(!cach.length)return;
+  cach.forEach(x=>{x.dataset.xpAvant=x.style.display;x.style.display="none";});
+  pg.insertAdjacentHTML("beforeend",`<div class="acts xp-reste"><button class="btn">${lib}</button></div>`);
+  pg.querySelector(".xp-reste button").addEventListener("click",()=>{try{sessionStorage.setItem("rev-s1-deplie",location.hash);}catch(x){}cach.forEach(x=>{x.style.display=x.dataset.xpAvant||"";});pg.querySelector(".xp-reste").remove();});}
+/* choix 74a : en haut d'une leçon liée au parcours de la prochaine épreuve, ce qu'elle rapporte ; une fois par visite */
+let LVU=null;
+function notionsDeLecon(sid,lid){const S=SUBJ[sid],E=S&&A.exam(S),C=E&&X(sid,E.id);if(!C)return null;
+  const NS=C.notions.filter(n=>n.exo&&GEN.par[n.exo.g]&&(GEN.par[n.exo.g].lecons||[]).includes(lid));return NS.length?{sid,ep:E.id,E,C,NS}:null;}
+function encadreLecon(main,sid,lid){if(LVU===location.hash||main.querySelector(".xp-lecon"))return;const D=notionsDeLecon(sid,lid);if(!D)return;
+  const pg=main.querySelector(".page")||main,B=bilan(D.sid,D.ep),pts=D.NS.reduce((s,n)=>s+n.pts,0);LVU=location.hash;
+  const html=`<section class="el-recap xp-lecon"><p class="prekick">Elle prépare ${virg(pts)} point${pts>1?"s":""} du ${D.E.label}</p><p>Dans le parcours : ${D.NS.map(n=>n.t.charAt(0).toLowerCase()+n.t.slice(1)).join(", ")}. La leçon, puis <b>un exercice du niveau du CC</b> à faire avant de voir la correction.</p>${jauge(D.C,B.pts)}</section>`;
+  const h1=pg.querySelector("h1");if(h1)h1.insertAdjacentHTML("afterend",html);else pg.insertAdjacentHTML("afterbegin",html);}
 
 const init0=EXT.init;
 EXT.init=function(A0){const ext=init0.call(EXT,A0);A=A0;
   try{ext.routes=ext.routes||{};ext.routes.express=parts=>route(parts[0],parts[1],parts.slice(2));
-    window.addEventListener("hashchange",()=>{if(!/^#\/express\//.test(location.hash))arrete();});
+    window.addEventListener("hashchange",()=>{LVU=null;if(!/^#\/express\//.test(location.hash))arrete();});
     window.addEventListener("pagehide",()=>{try{tic();envoie();}catch(e){}});
     document.addEventListener("visibilitychange",()=>{if(document.hidden){if(CH)tic();envoie();}else if(CH)CH.t=Date.now();},true);
     setTimeout(()=>{try{new MutationObserver(carte).observe($("#main"),{childList:true});carte();}catch(e){console.error(e);}},0);}catch(e){console.error(e);}
   return ext;};
-window.EXPRESS_OUTILS={bilan,prevu,minNotion,minBlanc,surBlanc,posDe,proche};/* pour les essais */
+window.EXPRESS_OUTILS={bilan,prevu,minNotion,minBlanc,surBlanc,posDe,proche,seance,aVenir,notionsDeLecon:(s,l)=>notionsDeLecon(s,l)};/* pour les essais */
 })();
 
 </script>
@@ -36458,7 +36504,7 @@ const CLASSES={
  "2026-11-23":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Analyse","CC1, amphi 5.02","ana"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
  "2026-11-24":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Analyse","CM, amphi 5.03","ana"]],
  "2026-11-25":[["09:45","11:15","USI","TD info 36.206","usi"],["11:30","13:00","USI","TD info 36.206","usi"],["15:00","16:30","Analyse","CM, amphi 5.04","ana"]],
- "2026-11-26":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.03","lin"],["15:00","16:30","Algorithmique 1","TD 5.212","algo"],["16:45","18:15","Algorithmique 1","TD 5.212","algo"]],
+ "2026-11-26":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.03","lin"],["15:00","16:30","Algorithmique 1","TD 36.315 (bâtiment 36)","algo"],["16:45","18:15","Algorithmique 1","TD 36.315 (bâtiment 36)","algo"]],
  "2026-11-27":[["08:00","09:30","Automates","TD 2.09","aut"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"]],
  "2026-11-30":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["11:30","13:00","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
  "2026-12-01":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Géométrie","CM, amphi 5.03","geo"]],
