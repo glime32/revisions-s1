@@ -9788,9 +9788,10 @@ const recettes=({sec})=>`<div class="title-row"><h1>Rédactions modèles</h1></d
 
 SUBJ.ana={name:"Analyse",code:"HAX103X",color:"#FFE45C",coef:5,share:0.25,key:"rev-ana-v1",lang:"",from:"2026-11-14",
  exams:[{id:"cc1",label:"CC1",day:"2026-11-23",start:"15:00",end:"16:00",place:"amphi 5.02 (double licence)",dur:"1 h",share:0.25,src:"annonce de l'enseignante sur le forum Moodle, le 9/11 (« le CC1 de l'UE HAX103X aura lieu lundi 23 novembre à partir de 15 h ») ; la salle, son annonce du 18/11, « CC1 HAX103X, répartition dans les amphis »."},
-        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"amphi 5.01 ou 5.02, répartition à venir (au CC1 : 5.02 pour la double licence)",dur:"1 h",share:0.25,src:"Prose, lu le 24/11 : « HAX103X Examen, contrôle continu » le mercredi 16/12, créneau 15 h-16 h 30, amphis 5.01 et 5.02. Aucune annonce Moodle ni aucun mail pour l'instant.",unsure:"Programme du CC2 pas encore annoncé, et chapitre 4 pas encore sur Moodle : le site suppose la continuité et la dérivabilité, les deux chapitres qui suivent les limites dans le programme du cours."}],
- docs:"aucun, et aucun appareil électronique",examMinutes:60,get examMorning(){const e=window.APP&&window.APP.exam?window.APP.exam(this):null,id=e?e.id:"cc1";
-  return id==="cc1"?"Récite les quatre rédactions modèles (page « Rédactions modèles »), relis les fiches « Caractériser la borne sup ; point adhérent » et « Limite d'une suite : la définition », puis les cartes en rouge."
+        {id:"cc2",label:"CC2",day:"2026-12-16",start:"15:00",end:"16:00",place:"amphi 5.01 ou 5.02, répartition à venir (au CC1 : 5.02 pour la double licence)",dur:"1 h",share:0.25,src:"Prose, lu le 24/11 : « HAX103X Examen, contrôle continu » le mercredi 16/12, créneau 15 h-16 h 30, amphis 5.01 et 5.02. Aucune annonce Moodle ni aucun mail pour l'instant.",unsure:"Programme du CC2 pas encore annoncé, et chapitre 4 pas encore sur Moodle : le site suppose la continuité et la dérivabilité, les deux chapitres qui suivent les limites dans le programme du cours."},
+        {id:"ct",label:"Examen",day:"2027-01-04",start:"09:00",end:"11:00",place:"salle à confirmer",dur:"2 h",share:0.5,covers:["cc1","cc2","ct"],from:"2026-12-17",docs:"pas encore annoncé (aux CC : aucun document, aucun appareil électronique)",src:"modalités de contrôle 2026-2027 (examen terminal de 2 h, 50 % de la note) et page des examens de la Faculté des Sciences (session 1 du 4 au 15 janvier). Aucune date dans Prose ni dans les mails pour l'instant.",unsure:"Date supposée : le premier jour de la session (lundi 4/01), pour que tu sois prêt quel que soit le vrai jour. Elle sera corrigée dès qu'elle sera dans Prose ou dans un mail.",prog:"Tout le cours : les réels et les bornes, les suites, les limites de fonctions, la continuité, les fonctions usuelles, la dérivation, et les chapitres qui suivront."}],
+ docs:"aucun, et aucun appareil électronique",get examMinutes(){const e=window.APP&&window.APP.exam?window.APP.exam(this):null;return e&&e.id==="ct"?120:60;},get examMorning(){const e=window.APP&&window.APP.exam?window.APP.exam(this):null,id=e?e.id:"cc1";
+  return id==="ct"?"Refais les notions du parcours « L'examen d'Analyse en 2 h » que tu n'as pas encore réussies, puis les cartes en rouge.":id==="cc1"?"Récite les quatre rédactions modèles (page « Rédactions modèles »), relis les fiches « Caractériser la borne sup ; point adhérent » et « Limite d'une suite : la définition », puis les cartes en rouge."
    :"Relis les fiches en rouge, puis fais les cartes de « Réviser » jusqu'à 0.";},
  prog:"Annoncé par l'enseignante le 9 novembre : les exercices du CC1 seront issus des feuilles de TD 1, 2 et 3, associées aux chapitres 1 (les réels et la borne sup), 2 (les suites) et 3 (les limites de fonctions).",
  chapters:{1:"1. Les réels : valeur absolue, intervalles, bornes",2:"2. Les suites",3:"3. Limites de fonctions"},
@@ -21357,6 +21358,38 @@ function iaf(R){const t=R(),k=R.ent(1,6);let o;
   return {sig:"IA"+o.sig,q:`Montre que, pour tous x et y de ${fx(o.I)}, on a ${fx(o.ineg)}.`,corps:"",texte:`Pour x, y dans ${o.I} : ${o.ineg} (inégalité des accroissements finis)`,champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
     etapes:L.map(x=>({w:x[0],why:x[1],pts:x[2]})),bonne:"voir la rédaction",bonneTxt:`avec |f′| ≤ ${o.M} sur ${o.I}`,repBonne:{},nature:o.sig.slice(0,2),ens:{type:"iaf",f:o.f,fp:o.fp,lo:o.lo,hi:o.hi,M:o.M}};}
 
+/* AN15 : bijection et réciproque (chapitre 4, « Bijection réciproque » ; chapitre 6, « Réciproque » ; TD 5 ex. 10) */
+function reciproque(R){const t=R();let o;
+  if(t<0.45){const a=R.ent(1,6),b=R.ent(-6,6),x0=R.ent(-2,2),c=[b,a,0,1];
+    o={sig:"P,"+[a,b,x0],I:"ℝ",F:polyX(c),x0,y0:evQ(c,x0),fp:3*x0*x0+a,f:x=>evN(c,x),lo:-60,hi:60,
+     cont:"f est continue sur ℝ (c'est un polynôme)",der:`${fx(`f′(x) = 3x² + ${a}`)}, qui est ${fx("&gt; 0")} pour tout réel x`,
+     lims:`En ${fx("−∞")} et en ${fx("+∞")}, f se comporte comme x³ : ${fx("lim_{x→−∞} f(x) = −∞")} et ${fx("lim_{x→+∞} f(x) = +∞")}`,
+     fpT:`${fx(`f′(${nb(x0)}) = 3 × ${par(x0*x0)} + ${a} = ${3*x0*x0+a}`)}`};}
+  else if(t<0.75){const k=R.ent(1,3),a=R.ent(1,5),b=R.ent(-5,5),L=polyX([b,a]),K=k>1?k:"";
+    o={sig:"E,"+[k,a,b],I:"ℝ",F:`${K}eˣ + ${L}`,x0:0,y0:Q(k+b),fp:k+a,f:x=>k*Math.exp(x)+a*x+b,lo:-60,hi:30,
+     cont:"f est continue sur ℝ (somme d'une exponentielle et d'un polynôme)",der:`${fx(`f′(x) = ${K}eˣ + ${a}`)}, qui est ${fx("&gt; 0")} pour tout réel x`,
+     lims:`En ${fx("−∞")}, ${K}eˣ tend vers 0 et ${fx(L)} vers ${fx("−∞")} ; en ${fx("+∞")}, les deux tendent vers ${fx("+∞")}. Donc ${fx("lim_{x→−∞} f(x) = −∞")} et ${fx("lim_{x→+∞} f(x) = +∞")}`,
+     fpT:`${fx(`f′(0) = ${k>1?k+" × ":""}e⁰ + ${a} = ${k+a}`)}`};}
+  else{const a=R.ent(1,5),b=R.ent(-6,6),n=R.ent(1,2),P=polyX(n>1?[b,0,a]:[b,a]),A=`${a>1?a:""}x${n>1?"²":""}`,F=`${A} + ln x${b?(b>0?" + ":" − ")+Math.abs(b):""}`;
+    o={sig:"L,"+[a,b,n],I:"]0 ; +∞[",F,x0:1,y0:Q(a+b),fp:n*a+1,f:x=>a*x**n+Math.log(x)+b,lo:1e-15,hi:1e6,
+     cont:"f est continue sur ]0 ; +∞[ (somme d'un polynôme et de ln)",der:`${fx(`f′(x) = ${n>1?2*a+"x":a} + 1/x`)}, qui est ${fx("&gt; 0")} pour tout x &gt; 0`,
+     lims:`En 0⁺, ln x tend vers ${fx("−∞")} et ${fx(P)} vers ${nb(b)} ; en ${fx("+∞")}, tout tend vers ${fx("+∞")}. Donc ${fx("lim_{x→0⁺} f(x) = −∞")} et ${fx("lim_{x→+∞} f(x) = +∞")}`,
+     fpT:`${fx(`f′(1) = ${n>1?2*a:a} + 1 = ${n*a+1}`)}`};}
+  const X=nb(o.x0),Y=nb(o.y0),d=Q(1,o.fp);
+  const E=[[`${o.cont}, et ${o.der}. Donc f est strictement croissante sur ${fx(o.I)}.`,`La stricte monotonie se lit sur le signe de f′. C'est elle qui donne « bijection », la continuité donne « sur un intervalle ».`,1],
+    [`${o.lims}. f est continue et strictement croissante sur l'intervalle ${fx(o.I)} : elle réalise une bijection de ${fx(o.I)} sur ${fx(`J = f(${o.I}) = ℝ`)}, et sa réciproque g est continue et strictement croissante.`,`C'est le théorème de la bijection du cours : les bornes de J sont les limites de f aux bornes de I.`,1],
+    [`${fx(`f(${X}) = ${Y}`)}, donc <b>${fx(`g(${Y}) = ${X}`)}</b>.`,`g(y) est le x de I tel que f(x) = y. On essaie les x simples (0, 1, −1, 2…) : ici ${X} convient.`,1],
+    [`${o.fpT} ≠ 0, donc g est dérivable en ${Y} et <b>${fx(`g′(${Y}) = 1/f′(g(${Y})) = 1/f′(${X}) = ${nb(d)}`)}</b>.`,`Le théorème du cours : si ${fx("f′(x₀) ≠ 0")}, la réciproque est dérivable en ${fx("y₀ = f(x₀)")}, avec ${fx("(f⁻¹)′(y₀) = 1/f′(x₀)")}.`,1]];
+  const juge=rep=>{const C=casesDe(rep,"c"),u=qLu(C.a),v=qLu(C.b);if(!u||!v)return {incomplet:"Écris a et b : deux nombres, par exemple 2 et 1/5."};
+    const ok=[egal(u,o.x0),egal(v,d)];if(ok[0]&&ok[1])return {ok:true};const F=["a","b"].filter((_,i)=>!ok[i]);
+    const d0=!ok[0]?{etape:2,type:"valeur de la réciproque",titre:"Où ça part : g(y₀).",msg:`${fx(`g(${Y})`)} est le nombre x tel que ${fx(`f(x) = ${Y}`)}. Essaie ${fx(`x = ${X}`)} : ${fx(`f(${X}) = ${Y}`)}, donc ${fx(`g(${Y}) = ${X}`)}.`}
+      :egal(v,o.fp)?{etape:3,type:"dérivée de la réciproque non inversée",titre:"Où ça part : il faut inverser.",msg:`La dérivée de la réciproque est l'<b>inverse</b> : ${fx(`g′(${Y}) = 1/f′(${X}) = ${nb(d)}`)}, pas ${fx(`f′(${X})`)}.`}
+      :{etape:3,type:"dérivée de la réciproque",titre:"Où ça part : g′(y₀).",msg:`On prend f′ au point ${fx(`g(${Y}) = ${X}`)}, pas en ${Y} : ${fx(`g′(${Y}) = 1/f′(${X}) = 1/${o.fp}`)}.`};
+    return {ok:false,faux:F,resume:`Pas tout à fait : ${F.length>1?"a et b sont à revoir":F[0]+" est à revoir"}.`,diag:d0};};
+  return {sig:"RC"+o.sig,q:`Soit f la fonction définie sur ${fx(o.I)} par ${fx(`f(x) = ${o.F}`)}. Montre que f réalise une bijection de ${fx(o.I)} sur un intervalle J à préciser. On note g sa réciproque. Donne ${fx(`a = g(${Y})`)} et ${fx(`b = g′(${Y})`)}.`,corps:"",
+    texte:`f(x) = ${o.F} sur ${o.I}, g sa réciproque : g(${Y}) et g′(${Y})`,champs:[{k:"cases",id:"c",noms:["a","b"],aide:`a = g(${Y}) est le x tel que f(x) = ${Y}.`}],juge,etapes:E.map(x=>({w:x[0],why:x[1],pts:x[2]})),
+    bonne:`${fx(`g(${Y}) = ${X}`)} et ${fx(`g′(${Y}) = ${nb(d)}`)}`,bonneTxt:`g(${Y}) = ${X}, g′(${Y}) = ${nb(d)}`,repBonne:{c:{a:String(o.x0),b:brut(d)}},repFausse:{c:{a:String(o.x0),b:brut(add(d,1))}},nature:o.sig[0],ens:{type:"recip",f:o.f,lo:o.lo,hi:o.hi,x0:o.x0,y0:o.y0.n/o.y0.d,d:d.n/d.d}};}
+
 /* AQ3 : la question de cours du CC2 (énoncés écrits de façon classique : le chapitre 4 n'est pas encore sur Moodle) */
 function coursCC2(R){const t=R();
   if(t<0.25){const m=R.nz(-6,6),p=R.ent(-9,9),x0=R.ent(-5,5),F=polyX([p,m]),M=Math.abs(m),X=nb(x0);
@@ -21459,6 +21492,8 @@ G.add("ana",[
   paliers:[
    {t:"trouver le c du théorème",cc:3,gen:taf},
    {t:"une inégalité des accroissements finis, sur papier",cc:6,min:15,gen:iaf}]},
+ {id:"AN15",t:"Bijection et réciproque",tache:"bijection et réciproque",th:"continuite",ex:"cc2",pts:2,lecons:[],
+  paliers:[{t:"la bijection, puis g(y₀) et g′(y₀)",cc:4,gen:reciproque}]},
  {id:"AQ3",t:"Connaissance du cours : continuité et dérivabilité",th:"continuite",ex:"cc2",fixe:true,seuil:1,lecons:[],paliers:[{t:"à écrire de mémoire, sur papier",cc:4,gen:coursCC2}]}
 ]);
 })();
@@ -34668,6 +34703,127 @@ cc2:{
   {t:"Une unique solution : la rédaction avec le TVI",ou:"exercice 1, sur papier",pts:6,g:"AN10",lv:1},
   {t:"Trouver a et b pour qu'elle soit dérivable",ou:"exercice 2",pts:6,g:"AN12",lv:1},
   {t:"La tangente en un point",ou:"exercice 3",pts:5,g:"AN13",lv:0}]
+},
+/* L'examen d'Analyse en 2 h (session 1, entre le 4 et le 15/01, 50 % de la note, tout le cours). Date supposée.
+   Aucun ancien examen sur Moodle : points estimés par moi, d'après les CC1 de 2024 et 2025, les exercices « d'après examen » des TD 4 et 5
+   et le poids de chaque chapitre. Chapitres lus : 1 à 4 et 6 ; le chapitre 5 (fonctions usuelles) n'est pas encore lisible, et les chapitres
+   suivants ne sont pas encore en ligne. Exemples refaits par tools/verif/express/ana-ct.js. Exercices de gen-ana.js. */
+ct:{
+ t:"L'examen d'Analyse en 2 h",du:"de l'examen",au:"à l'examen",duree:120,
+ lead:"L'examen porte sur tout le cours, et il n'y a aucun ancien examen sur Moodle. Les notions sont rangées dans l'ordre de ce qui devrait rapporter le plus, d'après les CC1, les exercices « d'après examen » des feuilles de TD 4 et 5, et le poids de chaque chapitre : les points sont estimés par moi. Ce parcours couvre les chapitres 1 à 4 et 6. Il n'a pas encore les fonctions usuelles (chapitre 5, pas encore lisible) ni les chapitres qui suivront la dérivation : je les ajouterai quand ils seront sur Moodle. Pour chaque notion : l'essentiel, la méthode, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
+ carte:"tout le cours en 2 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
+ blancLead:"Sept questions comme un examen de 2 h : la question de cours, une suite récurrente rédigée sur papier, le tableau inf, min, max, sup, une rédaction avec le TVI sur papier, a et b pour qu'elle soit dérivable, la tangente, puis le c des accroissements finis. La forme est supposée : il n'y a aucun ancien examen sur Moodle. Fais-les sans revenir aux notions : la note qui sort est une estimation de la tienne.",
+ paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
+ notions:[
+ {id:"cours",t:"Le cours à savoir par cœur",pts:2,ou:"question de cours, à chaque CC",lect:2,
+  rappel:{min:3,q:`Écris de mémoire : la caractérisation de sup A ; la définition de « (uₙ) converge vers ℓ » ; la définition, avec ε et δ, de « f est continue en x₀ » ; l'énoncé du théorème des valeurs intermédiaires et celui des accroissements finis.`,
+   r:`<p>A non vide et majorée : m = sup(A) ⇔ m majore A et $∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a$.</p><p>$uₙ → ℓ ⇔ ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε$.</p><p>f définie sur I, x₀ ∈ I : f est continue en x₀ ⇔ $∀ε &gt; 0, ∃δ &gt; 0, ∀x ∈ I, |x − x₀| &lt; δ ⇒ |f(x) − f(x₀)| &lt; ε$.</p><p>TVI : f continue sur [a ; b] et y compris entre f(a) et f(b) ⇒ ∃c ∈ [a ; b], f(c) = y.</p><p>Accroissements finis : f continue sur [a ; b], dérivable sur ]a ; b[ ⇒ ∃c ∈ ]a ; b[, $f(b) − f(a) = f′(c)(b − a)$.</p>`},
+  ess:`<ul><li><b>Borne sup</b> (A non vide et majorée) : m = sup(A) ⇔ m majore A et $∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a$.</li>
+<li><b>Limite d'une suite</b> : $∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε$.</li>
+<li><b>Continuité en x₀</b> (f définie sur I, x₀ ∈ I) : $lim_{x→x₀} f(x) = f(x₀)$, c'est-à-dire $∀ε &gt; 0, ∃δ &gt; 0, ∀x ∈ I, |x − x₀| &lt; δ ⇒ |f(x) − f(x₀)| &lt; ε$.</li>
+<li><b>Dérivable en x₀</b> : $(f(x) − f(x₀))/(x − x₀)$ a une limite finie quand x tend vers x₀ ; c'est f′(x₀).</li>
+<li><b>TVI</b>, <b>Rolle</b> et <b>accroissements finis</b>, avec leurs hypothèses : « continue sur [a ; b] », et « dérivable sur ]a ; b[ » pour les deux derniers.</li></ul>`,
+  piege:`Un théorème cité sans ses hypothèses est faux : |x| sur [−1 ; 1] prend la même valeur aux deux bouts, mais sa dérivée ne s'annule jamais (elle n'existe pas en 0). Écris toujours les hypothèses.`,
+  meth:`<p>Souvent, la question b) applique une définition. Exemple : montrer avec ε et δ que $f(x) = 2x + 5$ est continue en 1.</p>
+<ol><li>$|f(x) − f(1)| = |2x + 5 − 7| = 2|x − 1|$.</li><li>Soit ε &gt; 0. On pose δ = ε/2. Si $|x − 1| &lt; δ$, alors $|f(x) − f(1)| &lt; 2δ = ε$.</li><li>Donc f est continue en 1.</li></ol>`},
+ {id:"recurrente",t:"Suite récurrente : encadrer, sens, limite",pts:2,ou:"exercice 2 du CC1 2024",lect:2,exo:{g:"AN6",lv:2},
+  ess:`<p>Pour $uₙ₊₁ = f(uₙ)$, toujours le même plan :</p>
+<ol><li>les premiers termes ;</li><li>un encadrement $a ≤ uₙ ≤ b$, par récurrence (initialisation, hérédité, conclusion) ;</li><li>le signe de $uₙ₊₁ − uₙ$ ;</li><li>croissante et majorée (ou décroissante et minorée) : elle converge ;</li><li>sa limite ℓ vérifie ℓ = f(ℓ) (si f est continue), et l'encadrement choisit la bonne solution.</li></ol>`,
+  piege:`On n'écrit ℓ = f(ℓ) qu'après avoir prouvé que la suite converge.`,
+  meth:`<p>Exemple : $u₀ = 0$ et $uₙ₊₁ = √(uₙ + 6)$.</p>
+<ol><li>Encadrement : si $0 ≤ uₙ ≤ 3$, alors $6 ≤ uₙ + 6 ≤ 9$, donc $√6 ≤ uₙ₊₁ ≤ 3$. Avec u₀ = 0, on a $0 ≤ uₙ ≤ 3$ pour tout n.</li>
+<li>Sens : pour $0 ≤ u ≤ 3$, $(u − 3)(u + 2) ≤ 0$, c'est-à-dire $u² ≤ u + 6$, donc $u ≤ √(u + 6)$. Ainsi $uₙ ≤ uₙ₊₁$ : la suite est croissante.</li>
+<li>Croissante et majorée par 3 : elle converge vers un ℓ de [0 ; 3].</li>
+<li>$ℓ = √(ℓ + 6)$ donne $ℓ² − ℓ − 6 = 0$, soit $(ℓ − 3)(ℓ + 2) = 0$. Comme ℓ ≥ 0, ℓ = 3.</li></ol>`},
+ {id:"prolong",t:"Continuité : prolongement et raccord",pts:2,ou:"TD 4, ex. 6, 9 et 15 (d'après CC et examen)",lect:2,exo:{g:"AN9",lv:0},
+  ess:`<ul><li>Les polynômes, les quotients (là où le bas ne s'annule pas), √, exp, ln, sin et cos sont continus là où ils sont définis, ainsi que leurs sommes, produits, quotients et composées.</li>
+<li>f n'est pas définie en x₀ mais a une <b>limite finie ℓ</b> en x₀ : on la <b>prolonge par continuité</b> en posant f(x₀) = ℓ.</li>
+<li>Par morceaux : f est continue en x₀ si et seulement si la limite à gauche, la limite à droite et f(x₀) sont égales.</li></ul>`,
+  piege:`Si les limites à gauche et à droite sont différentes, il n'y a pas de prolongement. Le TD 4, ex. 15 : $f(x) = (x² + |x|)/x$ vaut x + 1 pour x &gt; 0 (limite 1) et x − 1 pour x &lt; 0 (limite −1).`,
+  meth:`<p>Le TD 4, ex. 6 : h(x) = 2x − 1 si x &lt; 1, x² si 1 ≤ x ≤ 4, et 8√x si x &gt; 4.</p>
+<ol><li>Chaque morceau est continu sur son intervalle ouvert : tout se joue en 1 et en 4.</li>
+<li>En 1 : à gauche, 2x − 1 tend vers 1 ; h(1) = 1² = 1. Raccord.</li>
+<li>En 4 : h(4) = 4² = 16 ; à droite, 8√x tend vers 8 × 2 = 16. Raccord.</li>
+<li>h est continue sur ℝ.</li></ol>`},
+ {id:"tvi",t:"Le TVI : une solution, puis une seule",pts:2,ou:"TD 4, ex. 10 et 11",lect:2,exo:{g:"AN10",lv:0},
+  ess:`<p><b>TVI</b> : f continue sur [a ; b], y compris entre f(a) et f(b) ⇒ il existe c ∈ [a ; b] tel que f(c) = y. En pratique : f(a) et f(b) de signes contraires, donc f s'annule sur ]a ; b[.</p>
+<p><b>Une seule</b> solution : f est en plus strictement monotone.</p>`,
+  piege:`Le TVI dit qu'une solution existe, pas qu'elle est seule : l'unicité vient de la stricte monotonie. Et il faut la continuité sur tout l'intervalle.`,
+  meth:`<p>Le TD 4, ex. 10 : $eˣ + x³ = 5$. On pose $f(x) = eˣ + x³ − 5$.</p>
+<ol><li>f est continue sur ℝ, et strictement croissante comme somme de deux fonctions strictement croissantes.</li>
+<li>$f(1) = e − 4 &lt; 0$ et $f(2) = e² + 3 &gt; 0$ : d'après le TVI, il existe α ∈ ]1 ; 2[ tel que f(α) = 0.</li>
+<li>f est strictement croissante : α est la seule solution sur ℝ.</li>
+<li>Dichotomie : $f(1,5) = e^{1,5} + 3,375 − 5 ≈ 2,86 &gt; 0$, donc α ∈ ]1 ; 1,5[.</li></ol>`},
+ {id:"derpoint",t:"Dérivable en un point, a et b",pts:2,ou:"TD 5, ex. 5, 7 et 17 (d'après examen)",lect:2,exo:{g:"AN12",lv:0},
+  ess:`<ul><li>f est dérivable en x₀ si le taux $(f(x) − f(x₀))/(x − x₀)$ a une limite finie : f′(x₀). La tangente : $y = f′(x₀)(x − x₀) + f(x₀)$.</li>
+<li>Dérivable si et seulement si dérivable à gauche et à droite, avec $f′_{g}(x₀) = f′_{d}(x₀)$.</li>
+<li>Dérivable ⇒ continue. La réciproque est fausse : |x| en 0.</li></ul>`,
+  piege:`Pour une fonction par morceaux, vérifie d'abord la continuité : sans elle, pas de dérivabilité, même si les dérivées des deux morceaux sont égales.`,
+  meth:`<p>Le TD 5, ex. 7 : f(x) = √x si 0 ≤ x ≤ 1, et $f(x) = ax² + bx + 1$ si x &gt; 1. Trouver a et b pour que f soit dérivable sur ]0 ; +∞[.</p>
+<ol><li>Continuité en 1 : f(1) = 1, et à droite $ax² + bx + 1$ tend vers a + b + 1. Donc a + b = 0.</li>
+<li>À gauche, la dérivée de √x en 1 vaut 1/(2√1) = 1/2. À droite, celle de $ax² + bx + 1$ vaut 2a + b.</li>
+<li>Dérivable en 1 : 2a + b = 1/2. Avec a + b = 0, on trouve a = 1/2 et b = −1/2.</li></ol>`},
+ {id:"tableau",t:"Le tableau inf, min, max, sup",pts:1.5,ou:"partie 2 des CC1 2024 et 2025",lect:1.5,exo:{g:"AN1",lv:4},
+  ess:`<ul><li><b>Max</b> : un majorant qui est <b>dans</b> A. <b>Sup</b> : le plus petit des majorants ; il existe dès que A est non vide et majorée, mais il n'est pas forcément dans A.</li>
+<li>Pareil par en dessous : min et inf.</li><li>Pas de majorant : « non » dans la case du sup, jamais « +∞ ».</li></ul>`,
+  piege:`Un sup n'est un max que s'il est atteint. Et une réponse fausse peut enlever des points : ne remplis pas au hasard.`,
+  meth:`<p>Exemple : $B = {(−1)ⁿ + 1/n, n ≥ 1}$.</p>
+<ol><li>Les premiers termes : 0 ; 3/2 ; −2/3 ; 5/4 ; −4/5…</li>
+<li>Rangs pairs : 1 + 1/n ≤ 3/2, atteint pour n = 2. Rangs impairs : −1 + 1/n ≤ 0. Donc max B = sup B = 3/2.</li>
+<li>Tous les termes sont &gt; −1, et les rangs impairs −1 + 1/n descendent vers −1 sans l'atteindre : inf B = −1, pas de min.</li>
+<li>B n'est pas un intervalle : 0 et 3/2 sont dans B, mais pas 1.</li></ol>`},
+ {id:"lim-suite",t:"Limite d'une suite avec ε",pts:1.5,ou:"exercice 1 du CC1 2024",lect:1.5,exo:{g:"AN2",lv:2},
+  ess:`<p>$uₙ → ℓ ⇔ ∀ε &gt; 0, ∃N ∈ ℕ, ∀n ≥ N, |uₙ − ℓ| ≤ ε$. N dépend de ε.</p><p>Au brouillon, majore $|uₙ − ℓ|$ par quelque chose de simple, comme c/n.</p>`,
+  piege:`N doit être un entier : d'où le « E(…) + 1 ». Et c'est une majoration de |uₙ − ℓ| qu'il faut, pas une minoration.`,
+  meth:`<p>Exemple : $uₙ = (2n + 1)/(n + 3)$ tend vers 2.</p>
+<ol><li>$uₙ − 2 = (2n + 1 − 2n − 6)/(n + 3) = −5/(n + 3)$, donc $|uₙ − 2| = 5/(n + 3) &lt; 5/n$ pour n ≥ 1.</li>
+<li>Soit ε &gt; 0. On pose $N = E(5/ε) + 1$ : N est un entier et N &gt; 5/ε.</li>
+<li>Pour tout n ≥ N : $|uₙ − 2| &lt; 5/n ≤ 5/N &lt; ε$. Donc uₙ → 2.</li></ol>`},
+ {id:"calcul",t:"Calculer une limite",pts:1.5,ou:"CC1, TD 3 et TD 5, ex. 9 et 14",lect:1.5,exo:{g:"AN4",lv:4},
+  ess:`<ul><li>Quotient : factorise par le terme de plus haut degré.</li><li>Racines : la quantité conjuguée.</li><li>Terme borné (sin, cos, (−1)ⁿ) : encadre, puis les gendarmes.</li>
+<li>Une forme 0/0 en un point : simplifie, ou reconnais un <b>taux d'accroissement</b>. $sin(x)/x → sin′(0) = 1$ et $(cos(x) − 1)/x → cos′(0) = 0$ en 0 (TD 5, ex. 9 et 14).</li></ul>`,
+  piege:`« ∞/∞ », « 0/0 » ou « ∞ − ∞ » ne sont pas des résultats : transforme l'écriture d'abord.`,
+  meth:`<ol><li>$√(n² + n) − n = n/(√(n² + n) + n) = 1/(√(1 + 1/n) + 1)$, qui tend vers 1/2.</li>
+<li>$sin(3x)/x = 3 × sin(3x)/(3x)$, qui tend vers 3 × 1 = 3 en 0.</li></ol>`},
+ {id:"adjacentes",t:"Suites adjacentes",pts:1.5,ou:"exercice 2 du CC1 2025",lect:1.5,exo:{g:"AN5",lv:2},
+  ess:`<p>(uₙ) croissante, (vₙ) décroissante, $uₙ ≤ vₙ$ pour tout n, et $vₙ − uₙ → 0$ : elles sont adjacentes, et convergent vers la même limite ℓ, avec $uₙ ≤ ℓ ≤ vₙ$ pour tout n.</p>`,
+  piege:`Cite les quatre conditions du cours. « L'écart tend vers 0 » seul ne suffit pas : uₙ = n et vₙ = n + 1/n tendent vers +∞.`,
+  meth:`<p>Exemple : $uₙ = 1 + 1/2² + … + 1/n²$ et $vₙ = uₙ + 1/n$ (n ≥ 1).</p>
+<ol><li>$uₙ₊₁ − uₙ = 1/(n + 1)² &gt; 0$ : (uₙ) est croissante.</li>
+<li>$vₙ₊₁ − vₙ = 1/(n + 1)² + 1/(n + 1) − 1/n = −1/(n(n + 1)²) &lt; 0$ : (vₙ) est décroissante.</li>
+<li>$vₙ − uₙ = 1/n$ : il est positif, donc uₙ ≤ vₙ, et il tend vers 0. Elles sont adjacentes et ont la même limite.</li></ol>`},
+ {id:"bijection",t:"Bijection et réciproque",pts:1.5,ou:"TD 5, ex. 10 ; TD 4, ex. 19",lect:2,exo:{g:"AN15",lv:0},
+  ess:`<ul><li>f <b>continue et strictement croissante</b> sur un intervalle I : f est une bijection de I sur J = f(I), un intervalle dont les bornes sont les limites de f aux bornes de I. Sa réciproque est continue et strictement croissante.</li>
+<li>Si f est dérivable en x₀ et $f′(x₀) ≠ 0$, la réciproque est dérivable en y₀ = f(x₀), et $(f⁻¹)′(y₀) = 1/f′(x₀)$.</li></ul>`,
+  piege:`$(f⁻¹)′(y₀)$ se calcule avec f′ au point x₀ = f⁻¹(y₀), pas au point y₀.`,
+  meth:`<p>Le TD 5, ex. 10 : $f(x) = x ln(x) − x$ sur [1 ; +∞[, et g sa réciproque.</p>
+<ol><li>$f′(x) = ln(x) + 1 − 1 = ln(x) &gt; 0$ pour x &gt; 1 : f est continue et strictement croissante sur [1 ; +∞[.</li>
+<li>f(1) = −1 et f tend vers +∞ en +∞ : f est une bijection de [1 ; +∞[ sur [−1 ; +∞[.</li>
+<li>$f(e) = e − e = 0$, donc g(0) = e.</li>
+<li>$f′(e) = ln(e) = 1 ≠ 0$, donc $g′(0) = 1/f′(e) = 1$.</li></ol>`},
+ {id:"taf",t:"Accroissements finis : une inégalité",pts:1.5,ou:"TD 5, ex. 3, 4 et 11",lect:2,exo:{g:"AN14",lv:1},
+  ess:`<ul><li><b>Rolle</b> : f continue sur [a ; b], dérivable sur ]a ; b[, f(a) = f(b) ⇒ ∃c ∈ ]a ; b[, f′(c) = 0.</li>
+<li><b>Accroissements finis</b> : mêmes hypothèses, sans f(a) = f(b) ⇒ ∃c ∈ ]a ; b[, $f(b) − f(a) = f′(c)(b − a)$.</li>
+<li><b>Inégalité</b> : si $|f′| ≤ M$ sur ]a ; b[, alors $|f(b) − f(a)| ≤ M|b − a|$.</li></ul>`,
+  piege:`c dépend de a et de b, et on ne le connaît pas : on ne le calcule pas, on <b>majore</b> f′(c) pour tous les c possibles.`,
+  meth:`<p>Le TD 5, ex. 11 : $√(1 + x) ≤ 1 + x/2$ pour tout x &gt; 0.</p>
+<ol><li>Soit x &gt; 0. $f(t) = √(1 + t)$ est continue sur [0 ; x] et dérivable sur ]0 ; x[, avec $f′(t) = 1/(2√(1 + t))$.</li>
+<li>Accroissements finis : il existe c ∈ ]0 ; x[ tel que $√(1 + x) − 1 = x/(2√(1 + c))$.</li>
+<li>c &gt; 0, donc √(1 + c) &gt; 1 et $x/(2√(1 + c)) &lt; x/2$. D'où $√(1 + x) &lt; 1 + x/2$.</li></ol>`},
+ {id:"quantif",t:"Nier une phrase à quantificateurs",pts:1,ou:"vrai/faux des CC1 ; TD 4, ex. 1",lect:1,exo:{g:"AN7",lv:2},
+  ess:`<p>On échange ∀ et ∃, on garde les domaines, on nie la fin. La négation de « P ⇒ Q » est « P et non Q ».</p>`,
+  piege:`« ε &gt; 0 » ne se nie pas : la négation commence par « ∃ε &gt; 0 ».`,
+  meth:`<p>Le TD 4, ex. 1 : « f n'est pas continue en b ».</p>
+<ol><li>Continue : $∀ε &gt; 0, ∃δ &gt; 0, ∀x ∈ I, |x − b| &lt; δ ⇒ |f(x) − f(b)| &lt; ε$.</li>
+<li>Pas continue : $∃ε &gt; 0, ∀δ &gt; 0, ∃x ∈ I, |x − b| &lt; δ$ et $|f(x) − f(b)| ≥ ε$.</li></ol>`}],
+ blanc:[
+  {t:"Question de cours : définition et théorème",ou:"connaissance du cours",pts:2,g:"AQ3",lv:0},
+  {t:"Une suite récurrente, rédigée sur papier",ou:"exercice 1",pts:5,g:"AN6",lv:3},
+  {t:"Le tableau inf, min, max, sup",ou:"exercice 2",pts:2,g:"AN1",lv:3},
+  {t:"Une unique solution : la rédaction avec le TVI",ou:"exercice 3, sur papier",pts:4,g:"AN10",lv:1},
+  {t:"Trouver a et b pour qu'elle soit dérivable",ou:"exercice 4",pts:3,g:"AN12",lv:1},
+  {t:"La tangente en un point",ou:"exercice 4",pts:2,g:"AN13",lv:0},
+  {t:"Le c des accroissements finis",ou:"exercice 5",pts:2,g:"AN14",lv:0}]
 }};
 
 </script>
