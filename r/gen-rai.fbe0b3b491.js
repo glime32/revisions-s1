@@ -784,6 +784,81 @@ function redactionContra(R){const t=R.ent(0,2);
     [`Si x est impair : ${wi.charAt(0).toLowerCase()+wi.slice(1)}`,"Impair × impair = impair ; une somme est impaire quand elle a un nombre impair de termes impairs.",1.5],
     ["Dans les deux cas, le membre de gauche est impair, donc il ne vaut pas 0 : contradiction. L'équation n'a pas de solution entière.","0 est pair : un nombre impair ne peut pas lui être égal.",1]],{type:"ca",T:P.T},"absurde");}
 
+/* rédaction sur papier : « justifier soigneusement », comme au CC du 15/11/2024 (ex. 2 b) et au CC2 2025-2026 (ex. 3 c) */
+function redactionInj(R){const NN={t:"ℕ",in:x=>Number.isInteger(x)&&x>=0,ent:true},ZZ={t:"ℤ",in:x=>Number.isInteger(x),ent:true},
+    consigne=`<p>Rédige sur ta feuille comme au contrôle. Pour chaque « oui » : une preuve qui marche pour tous les éléments. Pour chaque « non » : un contre-exemple avec des nombres.</p>`,
+    wInj="Pour prouver « injective » : on part de deux éléments qui ont la même image, et on montre qu'ils sont égaux.",wSurj="Pour prouver « surjective » : on prend un y quelconque de l'ensemble d'arrivée, et on lui donne un antécédent.",wBij="Bijective veut dire injective et surjective à la fois : ici il en manque une.";
+  if(R()<0.5){const m=R.ent(3,5),D=R()<0.5?NN:ZZ,T=D.t,
+      f={nom:"f",D,A:D,f:n=>m*n,inj:true,surj:false,sans:1},g={nom:"g",D,A:D,f:n=>n%m===0?n/m:0,inj:false,surj:true,meme:[1,2]};
+    return papierQ("RI"+m+T,`Soit f l'application ${fx(`f : ${T} → ${T}, n ↦ ${m}n`)}, et g l'application ${fx(`g : ${T} → ${T}`)} qui envoie n sur ${fx(`n/${m}`)} si n est un multiple de ${m}, et sur 0 sinon. Les applications f et g sont-elles injectives ? surjectives ? bijectives ? <b>Justifie soigneusement.</b>`,
+      consigne+`<p class="muted">Comme au CC du 15 novembre 2024 (exercice 2, deuxième question) et au CC2 2025-2026 (exercice 3, dernière question), avec d'autres nombres.</p>`,[
+      [`f est injective : soient n₁ et n₂ dans ${T} tels que ${fx("f(n₁) = f(n₂)")}. Alors ${fx(`${m}n₁ = ${m}n₂`)}, donc ${fx("n₁ = n₂")}.`,wInj,1.5],
+      [`f n'est pas surjective : 1 n'a pas d'antécédent par f.`,`Il faudrait un n de ${T} tel que ${fx(`${m}n = 1`)}, c'est-à-dire ${fx(`n = 1/${m}`)}, qui n'est pas un entier. Un seul élément sans antécédent suffit.`,1],
+      [`Conclusion : f est injective, non surjective, donc non bijective.`,wBij,0.5],
+      [`g n'est pas injective : ${fx("g(1) = 0")} et ${fx("g(2) = 0")}, alors que 1 ≠ 2.`,`1 et 2 ne sont pas des multiples de ${m} : leur image est 0. Deux éléments différents de même image suffisent.`,1],
+      [`g est surjective : soit y ∈ ${T}. Posons ${fx(`n = ${m}y`)}. C'est un élément de ${T} et un multiple de ${m}, donc ${fx(`g(n) = ${m}y/${m} = y`)}.`,wSurj,1.5],
+      [`Conclusion : g est surjective, non injective, donc non bijective.`,wBij,0.5]],{type:"redac",apps:[f,g]},"deux applications sur ℕ ou ℤ");}
+  let a,b;do{a=R.ent(2,5);b=R.nz(-6,6);}while(a===2&&b===1);
+  const K=R()<0.5?{t:"ℝ",mot:"un réel"}:{t:"ℚ",mot:"un rationnel"},RR={t:K.t,in:x=>Number.isFinite(x)},axb=v=>plusC(`${a}${v}`,b),inv=`(${plusC("y",-b)})/${a}`,
+    f={nom:"f",D:ZZ,A:ZZ,f:n=>a*n+b,inj:true,surj:false,sans:b+1},g={nom:"g",D:RR,A:RR,f:x=>a*x+b,inj:true,surj:true,inv:[inv,`(y-(${b}))/${a}`]};
+  return papierQ("RJ"+[a,b]+K.t,`Soit f l'application ${fx(`f : ℤ → ℤ, n ↦ ${axb("n")}`)}, et g l'application ${fx(`g : ${K.t} → ${K.t}, x ↦ ${axb("x")}`)}. Sont-elles injectives ? surjectives ? bijectives ? <b>Justifie soigneusement.</b> Si l'une est bijective, donne sa réciproque.`,
+    consigne+`<p class="muted">Comme au TD 3 (exercice 7) et aux CC de novembre 2024 et 2025 : la même formule, avec deux ensembles différents.</p>`,[
+    [`f est injective : soient n₁ et n₂ dans ℤ tels que ${fx("f(n₁) = f(n₂)")}. Alors ${fx(`${axb("n₁")} = ${axb("n₂")}`)}, donc ${fx(`${a}n₁ = ${a}n₂`)}, donc ${fx("n₁ = n₂")}.`,wInj,1.5],
+    [`f n'est pas surjective : ${nb(b+1)} n'a pas d'antécédent par f.`,`Il faudrait un entier n tel que ${fx(`${axb("n")} = ${nb(b+1)}`)}, c'est-à-dire ${fx(`${a}n = 1`)}, donc ${fx(`n = 1/${a}`)}, qui n'est pas un entier. Un seul élément sans antécédent suffit.`,1],
+    [`Conclusion : f est injective, non surjective, donc non bijective.`,wBij,0.5],
+    [`g est injective : soient x₁ et x₂ dans ${K.t} tels que ${fx("g(x₁) = g(x₂)")}. Alors ${fx(`${axb("x₁")} = ${axb("x₂")}`)}, donc ${fx("x₁ = x₂")}.`,"C'est le même calcul que pour f : il ne dépend pas de l'ensemble.",1],
+    [`g est surjective : soit y ∈ ${K.t}. Posons ${fx(`x = ${inv}`)}, qui est ${K.mot}. Alors ${fx(`g(x) = ${a} × ${inv} ${b>0?"+":"−"} ${Math.abs(b)} = y`)}.`,`${wSurj} On trouve x en résolvant ${fx(`${axb("x")} = y`)}. Cette fois x est dans l'ensemble de départ : ${K.t} contient ce quotient, alors que ℤ ne le contient pas toujours. C'est l'ensemble qui fait la différence avec f.`,1.5],
+    [`Conclusion : g est bijective, et sa réciproque est ${fx(`g⁻¹ : ${K.t} → ${K.t}, y ↦ ${inv}`)}.`,"L'antécédent trouvé à l'étape précédente donne la réciproque.",0.5]],{type:"redac",apps:[f,g]},"la même formule sur deux ensembles");}
+/* rédaction sur papier : une inclusion ou une égalité avec f et f⁻¹ (TD 3, ex. 8, 15, 17 ; CC2 2022 ex. 2 ; CC2 2023 ex. 5) */
+function redactionIncl(R){const s=fx,dep="Pour montrer une inclusion, on prend un élément quelconque de l'ensemble de gauche.",fin="La phrase de conclusion reprend ce qu'il fallait montrer.",eq="On raisonne par équivalences sur un élément x de E : chaque ⇔ est une définition dépliée.",imd="C'est la définition de l'image directe.",hyp="On suppose l'hypothèse, puis on prend un élément quelconque de l'ensemble de gauche.";
+  const o=R.choix([
+   {id:"aller",en:`Montre que, pour toute partie A de E : ${s("A ⊂ f⁻¹(f(A))")}.`,src:"TD 3, exercice 17, première question ; c'est aussi le début de la dernière question du CC2 2023-2024.",L:[
+     [`Soit A une partie de E. Soit x ∈ A.`,dep,1],
+     [`Alors ${s("f(x) ∈ f(A)")}.`,"C'est la définition de l'image directe : f(A) contient les images des éléments de A.",1],
+     [`Or ${s("x ∈ f⁻¹(f(A))")} veut dire ${s("f(x) ∈ f(A)")}. Donc ${s("x ∈ f⁻¹(f(A))")}.`,"C'est la définition de l'image réciproque, appliquée à la partie f(A).",1.5],
+     [`Donc ${s("A ⊂ f⁻¹(f(A))")}.`,fin,0.5]]},
+   {id:"inj",en:`On suppose que f est injective. Montre que, pour toute partie A de E : ${s("f⁻¹(f(A)) ⊂ A")}.`,src:"CC2 2023-2024, exercice 5, dernière question.",L:[
+     [`Soit A une partie de E. Soit ${s("x ∈ f⁻¹(f(A))")}.`,dep,1],
+     [`Alors ${s("f(x) ∈ f(A)")} : il existe a ∈ A tel que ${s("f(x) = f(a)")}.`,"On déplie d'abord l'image réciproque, puis l'image directe.",1.5],
+     [`Comme f est injective, x = a. Donc x ∈ A.`,"C'est ici que l'hypothèse sert : sans elle, x pourrait être un autre antécédent de f(a).",1],
+     [`Donc ${s("f⁻¹(f(A)) ⊂ A")}.`,fin,0.5]]},
+   {id:"surj",en:`On suppose que f est surjective. Montre que, pour toute partie B de F : ${s("B ⊂ f(f⁻¹(B))")}.`,src:"TD 3, exercice 17, dernière question.",L:[
+     [`Soit B une partie de F. Soit y ∈ B.`,dep,1],
+     [`Comme f est surjective, il existe x ∈ E tel que ${s("f(x) = y")}.`,"C'est ici que l'hypothèse sert : sans elle, y pourrait n'avoir aucun antécédent.",1],
+     [`${s("f(x) = y ∈ B")}, donc ${s("x ∈ f⁻¹(B)")}. Et ${s("y = f(x)")} : donc ${s("y ∈ f(f⁻¹(B))")}.`,"x est dans l'image réciproque de B, donc son image y est dans l'image directe de cette partie.",1.5],
+     [`Donc ${s("B ⊂ f(f⁻¹(B))")}.`,fin,0.5]]},
+   {id:"union",en:`Montre que, pour toutes parties A₁ et A₂ de E : ${s("f(A₁ ∪ A₂) ⊂ f(A₁) ∪ f(A₂)")}.`,src:"TD 3, exercice 15, première question : la première des deux inclusions.",L:[
+     [`Soient A₁ et A₂ deux parties de E. Soit ${s("y ∈ f(A₁ ∪ A₂)")}.`,dep,1],
+     [`Il existe ${s("x ∈ A₁ ∪ A₂")} tel que ${s("y = f(x)")}.`,imd,1],
+     [`Si x ∈ A₁, alors ${s("y = f(x) ∈ f(A₁)")}. Si x ∈ A₂, alors ${s("y = f(x) ∈ f(A₂)")}.`,"x est dans une réunion : on traite les deux cas.",1.5],
+     [`Dans les deux cas, ${s("y ∈ f(A₁) ∪ f(A₂)")}. Donc ${s("f(A₁ ∪ A₂) ⊂ f(A₁) ∪ f(A₂)")}.`,fin,0.5]]},
+   {id:"recU",en:`Montre que, pour toutes parties B₁ et B₂ de F : ${s("f⁻¹(B₁ ∪ B₂) = f⁻¹(B₁) ∪ f⁻¹(B₂)")}.`,src:"TD 3, exercice 8, seconde question.",L:[
+     [`Soient B₁ et B₂ deux parties de F. Soit x ∈ E.`,eq,1],
+     [`${s("x ∈ f⁻¹(B₁ ∪ B₂)")} ⇔ ${s("f(x) ∈ B₁ ∪ B₂")} ⇔ (${s("f(x) ∈ B₁")} ou ${s("f(x) ∈ B₂")})`,"La définition de l'image réciproque, puis celle de la réunion.",1.5],
+     [`⇔ (${s("x ∈ f⁻¹(B₁)")} ou ${s("x ∈ f⁻¹(B₂)")}) ⇔ ${s("x ∈ f⁻¹(B₁) ∪ f⁻¹(B₂)")}.`,"Les mêmes définitions, lues dans l'autre sens.",1],
+     [`Les deux ensembles ont les mêmes éléments : ${s("f⁻¹(B₁ ∪ B₂) = f⁻¹(B₁) ∪ f⁻¹(B₂)")}.`,fin,0.5]]},
+   {id:"recI",en:`Montre que, pour toutes parties B₁ et B₂ de F : ${s("f⁻¹(B₁ ∩ B₂) = f⁻¹(B₁) ∩ f⁻¹(B₂)")}.`,src:"TD 3, exercice 15, seconde question.",L:[
+     [`Soient B₁ et B₂ deux parties de F. Soit x ∈ E.`,eq,1],
+     [`${s("x ∈ f⁻¹(B₁ ∩ B₂)")} ⇔ ${s("f(x) ∈ B₁ ∩ B₂")} ⇔ (${s("f(x) ∈ B₁")} et ${s("f(x) ∈ B₂")})`,"La définition de l'image réciproque, puis celle de l'intersection.",1.5],
+     [`⇔ (${s("x ∈ f⁻¹(B₁)")} et ${s("x ∈ f⁻¹(B₂)")}) ⇔ ${s("x ∈ f⁻¹(B₁) ∩ f⁻¹(B₂)")}.`,"Les mêmes définitions, lues dans l'autre sens.",1],
+     [`Les deux ensembles ont les mêmes éléments : ${s("f⁻¹(B₁ ∩ B₂) = f⁻¹(B₁) ∩ f⁻¹(B₂)")}.`,fin,0.5]]},
+   {id:"compl",en:`Soit A une partie de F. Démontre soigneusement que ${s("f⁻¹(∁_{F} A) = ∁_{E} (f⁻¹(A))")}. Rappel : ${s("∁_{F} A")} désigne le complémentaire de A dans F.`,src:"CC2 2022-2023, exercice 2 (4 points).",L:[
+     [`Soit x ∈ E.`,eq,1],
+     [`${s("x ∈ f⁻¹(∁_{F} A)")} ⇔ ${s("f(x) ∈ ∁_{F} A")} ⇔ ${s("f(x) ∉ A")}`,"La définition de l'image réciproque, puis celle du complémentaire dans F.",1.5],
+     [`⇔ ${s("x ∉ f⁻¹(A)")} ⇔ ${s("x ∈ ∁_{E} (f⁻¹(A))")}.`,"x n'est pas dans f⁻¹(A) quand son image n'est pas dans A ; puis la définition du complémentaire dans E.",1],
+     [`Donc ${s("f⁻¹(∁_{F} A) = ∁_{E} (f⁻¹(A))")}.`,fin,0.5]]},
+   {id:"croA",en:`Soient A₁ et A₂ deux parties de E. Montre que si ${s("A₁ ⊂ A₂")}, alors ${s("f(A₁) ⊂ f(A₂)")}.`,src:"Une inclusion du même modèle que celles du TD 3 (exercices 8, 15 et 17).",L:[
+     [`Supposons ${s("A₁ ⊂ A₂")}. Soit ${s("y ∈ f(A₁)")}.`,hyp,1],
+     [`Il existe x ∈ A₁ tel que ${s("y = f(x)")}.`,imd,1],
+     [`Comme ${s("A₁ ⊂ A₂")}, x ∈ A₂. Donc ${s("y = f(x) ∈ f(A₂)")}.`,"y est l'image d'un élément de A₂.",1.5],
+     [`Donc ${s("f(A₁) ⊂ f(A₂)")}.`,fin,0.5]]},
+   {id:"croB",en:`Soient B₁ et B₂ deux parties de F. Montre que si ${s("B₁ ⊂ B₂")}, alors ${s("f⁻¹(B₁) ⊂ f⁻¹(B₂)")}.`,src:"Une inclusion du même modèle que celles du TD 3 (exercices 8, 15 et 17).",L:[
+     [`Supposons ${s("B₁ ⊂ B₂")}. Soit ${s("x ∈ f⁻¹(B₁)")}.`,hyp,1],
+     [`Alors ${s("f(x) ∈ B₁")}.`,"C'est la définition de l'image réciproque.",1],
+     [`Comme ${s("B₁ ⊂ B₂")}, ${s("f(x) ∈ B₂")}. Donc ${s("x ∈ f⁻¹(B₂)")}.`,"On replie la définition, avec B₂ cette fois.",1.5],
+     [`Donc ${s("f⁻¹(B₁) ⊂ f⁻¹(B₂)")}.`,fin,0.5]]}]);
+  return papierQ("RN"+o.id,`Soit ${s("f : E → F")} une application. ${o.en}`,`<p>Rédige sur ta feuille comme au contrôle : « Soit… », les définitions dépliées une par une, puis la conclusion.</p><p class="muted">${o.src}</p>`,o.L,{type:"redac",id:o.id},o.id);}
+
 G.rai={IMPL,DEDUIRE,appliFormule,ecritAppli,notes,plusC,dec,classe,DEFINJ,lisFini,ensF,tapeF,memeF,tri,OPF,ensR,tapeR,interP,complP,diffP,ptR,partiesReelles,ensemblesFinis,fx,h,et,ent};
 G.add("rai",[
  {id:"RA3",t:"Ensembles : réunion, intersection, différence, ∈ et ⊂",tache:"opérations sur les ensembles",th:"ensembles",pts:3,lecons:["r-ensembles","r-operations"],
@@ -798,14 +873,16 @@ G.add("rai",[
    {t:"une application entre deux ensembles finis",cc:3,gen:imagesFinies},
    {t:"une fonction affine et des intervalles",cc:4,gen:imagesAffines},
    {t:"x ↦ x² ou |x| : parfois deux morceaux",cc:5,gen:imagesCarre},
-   {t:"aller et retour : f⁻¹(f(A)) et f(f⁻¹(B))",cc:6,gen:allerRetour,min:150}]},
+   {t:"aller et retour : f⁻¹(f(A)) et f(f⁻¹(B))",cc:6,gen:allerRetour,min:150},
+   {t:"rédaction sur papier : démontrer une inclusion avec f et f⁻¹",cc:4,gen:redactionIncl,min:9}]},
  {id:"RA1",t:"Injective, surjective, bijective",th:"injective",pts:4,lecons:["r-injective"],apres:["RA2"],
   paliers:[
    {t:"une application entre deux ensembles finis",cc:2,gen:fleches,min:120},
    {t:"une formule sur ℝ : l'ensemble de départ et l'ensemble d'arrivée comptent",cc:3,gen:R=>formule(R,"reels"),min:60},
    {t:"sur ℕ ou sur ℤ",cc:3,gen:R=>formule(R,"entiers"),min:20},
    {t:"donner un contre-exemple",cc:3,gen:contreExemple,min:60},
-   {t:"la bijection réciproque",cc:4,gen:reciproque,min:30}]},
+   {t:"la bijection réciproque",cc:4,gen:reciproque,min:30},
+   {t:"rédaction sur papier : justifier soigneusement",cc:6,gen:redactionInj,min:40}]},
  {id:"RA4",t:"Quantificateurs : nier, traduire, dire si c'est vrai",tache:"quantificateurs",th:"quantif",pts:2.5,lecons:["r-quantif","r-preuves"],
   paliers:[
    {t:"nier une phrase à un ou deux quantificateurs",cc:2,gen:R=>negation(phraseR(R,1)),min:40},

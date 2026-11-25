@@ -25,14 +25,14 @@ add(1,{id:"rai-quantif",type:"meth",ref:"Chapitres 1 et 2 ; TD 1, ex. 1, 2, 7, 1
 
 add(2,{id:"rai-raisonnements",type:"meth",ref:"Chapitre 2 ; TD 1, ex. 4, 13, 18 ; TD 2, ex. 1, 7, 18 ; CC2 2025-2026, ex. 2",t:"Contraposée, absurde, disjonction de cas",short:"Types de raisonnement",
  plain:`Quand une preuve directe bloque : prouver la ${hl("contraposée")} (non Q ⇒ non P), raisonner ${hl("par l'absurde")}, ou ${hl("séparer en cas")} (pair / impair).`,
- formal:`<ul><li>P ⇒ Q ≡ non Q ⇒ non P (contraposée). La réciproque Q ⇒ P n'est pas équivalente.</li><li>Par l'absurde : supposer la négation exacte et obtenir une contradiction (√2 irrationnel).</li><li>Disjonction de cas : des cas qui couvrent tout.</li></ul>${F("9x⁵ − 11x⁴ + 6x − 5 est impair pour tout entier x (cas x pair, x impair) : il ne vaut jamais 0.")}`,
+ formal:`<ul><li>P ⇒ Q ≡ non Q ⇒ non P (contraposée). La réciproque Q ⇒ P n'est pas équivalente.</li><li>Par l'absurde : supposer la négation exacte et obtenir une contradiction (√2 irrationnel).</li><li>Disjonction de cas : des cas qui couvrent tout.</li><li>Analyse-synthèse, pour « déterminer tous les… » : si x est solution, alors x est forcément de telle forme (analyse) ; puis on vérifie lesquels conviennent vraiment (synthèse). TD 2, ex. 2 et 19.</li><li>Vocabulaire : quand P ⇒ Q, P est une condition suffisante de Q, et Q une condition nécessaire de P.</li></ul>${F("9x⁵ − 11x⁴ + 6x − 5 est impair pour tout entier x (cas x pair, x impair) : il ne vaut jamais 0.")}`,
  use:`<p>Écris toujours la contraposée ou l'hypothèse de l'absurde en toutes lettres avant de commencer.</p>`,
  trap:`L'hypothèse de l'absurde est la négation exacte : « il existe r ∈ A, r &lt; 0 et r³ ∈ ℤ », pas « pour tout r ».`,
  q:"Quelle est la contraposée de « si n² est impair, alors n est impair » ? Est-elle vraie ?",a:"Si n est pair, alors n² est pair (vrai : n = 2k donne n² = 2(2k²)).",rel:["rai-recurrence","rai-quantif"]});
 
 add(2,{id:"rai-recurrence",type:"meth",ref:"Chapitre 2 (2.5) ; TD 2, ex. 9, 10, 20 ; CC 2024-2025, ex. 3",t:"La récurrence",short:"Récurrence",cc:"un exercice en 2024",
  plain:`Une récurrence, c'est un ${hl("effet domino")} : le premier tombe (initialisation), et chaque domino fait tomber le suivant (hérédité).`,
- formal:`<ol><li>Énoncer P(n).</li><li>Initialisation : P(0).</li><li>Hérédité : soit n ∈ ℕ ; supposons P(n) ; montrons P(n + 1).</li><li>Conclusion : P(n) pour tout n.</li></ol>${F("3²ⁿ⁺⁴ − 2ⁿ⁺² = 9 × 3²ⁿ⁺² − 2 × 2ⁿ⁺¹ = 7 × 3²ⁿ⁺² + 2(3²ⁿ⁺² − 2ⁿ⁺¹)")}`,
+ formal:`<ol><li>Énoncer P(n).</li><li>Initialisation : P(0).</li><li>Hérédité : soit n ∈ ℕ ; supposons P(n) ; montrons P(n + 1).</li><li>Conclusion : P(n) pour tout n.</li></ol><p>Variantes du cours. À partir d'un rang n₀ : on initialise à n₀, et l'hérédité se fait pour n ≥ n₀. Récurrence double : on vérifie P(0) et P(1), puis on montre (P(n) et P(n + 1)) ⇒ P(n + 2). Récurrence forte : dans l'hérédité, on suppose P(m) pour tous les m ≤ n (TD 2, ex. 11).</p>${F("3²ⁿ⁺⁴ − 2ⁿ⁺² = 9 × 3²ⁿ⁺² − 2 × 2ⁿ⁺¹ = 7 × 3²ⁿ⁺² + 2(3²ⁿ⁺² − 2ⁿ⁺¹)")}`,
  use:`<p>Dans l'hérédité, fais apparaître l'expression de P(n) pour utiliser l'hypothèse.</p>`,
  trap:`Une propriété héréditaire mais fausse au départ (4ⁿ + 1 multiple de 3) n'est jamais vraie.`,
  q:"Dans l'hérédité d'une récurrence, on suppose 2ⁿ ≥ n. Comment en déduire 2ⁿ⁺¹ ≥ n + 1 ?",a:"2ⁿ⁺¹ = 2ⁿ + 2ⁿ ≥ n + 1, car 2ⁿ ≥ n et 2ⁿ ≥ 1.",rel:["rai-raisonnements"]});
@@ -55,21 +55,21 @@ add(3,{id:"rai-operations",type:"meth",ref:"Chapitre 3 ; TD 2, ex. 4, 12, 14, 21
 /* ---------- chapitre 4 : applications ---------- */
 add(4,{id:"rai-image",type:"def",ref:"Chapitre 4 (3) ; TD 3, ex. 4, 6, 8, 15 ; CC2 2025-2026, ex. 1 et 3a",t:"Image directe, image réciproque",short:"f(A) et f⁻¹(B)",cc:"tombé chaque année",
  plain:`f(A) : ${hl("toutes les images")} des éléments de A. f⁻¹(B) : ${hl("tous les éléments dont l'image est dans B")}. f⁻¹(B) existe même si f n'est pas bijective.`,
- formal:`${F("f(A) = {f(x) | x ∈ A} = {y ∈ F | ∃x ∈ A, y = f(x)}        f⁻¹(B) = {x ∈ E | f(x) ∈ B}")}<ul><li>f(f⁻¹(B)) ⊂ B ; A ⊂ f⁻¹(f(A)) ; égalités si f est surjective (resp. injective).</li><li>f(A₁ ∩ A₂) ⊂ f(A₁) ∩ f(A₂) ; f⁻¹(B₁ ∪ B₂) = f⁻¹(B₁) ∪ f⁻¹(B₂).</li></ul>`,
+ formal:`${F("f(A) = {f(x) | x ∈ A} = {y ∈ F | ∃x ∈ A, y = f(x)}        f⁻¹(B) = {x ∈ E | f(x) ∈ B}")}<ul><li>f(f⁻¹(B)) ⊂ B ; A ⊂ f⁻¹(f(A)) ; égalités si f est surjective (resp. injective).</li><li>f(A₁ ∩ A₂) ⊂ f(A₁) ∩ f(A₂) ; f⁻¹(B₁ ∪ B₂) = f⁻¹(B₁) ∪ f⁻¹(B₂).</li><li>Restriction de f à une partie A de E : la même formule, avec A pour ensemble de départ (notée f<sub>|A</sub> : A → F). Dans l'autre sens, g prolonge f quand f est une restriction de g.</li></ul>`,
  use:`<p>Pour prouver une inclusion avec f(A), écris « il existe x ∈ A tel que y = f(x) ». Pour f⁻¹(B), traduis « x ∈ f⁻¹(B) » par « f(x) ∈ B ».</p>`,
  trap:`f(f⁻¹(B)) = B est faux en général : x², B = {−1}.`,
  q:"f : ℝ → ℝ, f(x) = x². Que vaut l'image réciproque f⁻¹(ℝ₋), c'est-à-dire l'ensemble des x dont l'image est négative ou nulle ?",a:"{0}.",rel:["rai-injective","rai-operations"]});
 
 add(4,{id:"rai-injective",type:"def",ref:"Chapitre 4 (6) ; TD 3, ex. 2, 7, 10, 13 ; CC 2024-2025, ex. 2 ; CC2 2025-2026, ex. 3c",t:"Injective, surjective, bijective",short:"Injectivité, surjectivité",cc:"tombé chaque année",
  plain:`Injective : ${hl("jamais deux éléments pour une même image")}. Surjective : ${hl("tout est atteint")}. Bijective : les deux, chaque élément d'arrivée a exactement un antécédent.`,
- formal:`<ul><li>Injective : ∀x, x′ ∈ E, f(x) = f(x′) ⇒ x = x′.</li><li>Surjective : ∀y ∈ F, ∃x ∈ E, f(x) = y.</li><li>Bijective : injective et surjective ; réciproque f⁻¹ : F → E.</li></ul>${F("f(x) = 2x sur ℕ : injective, pas surjective.   g(x) = x/2 (pair), 0 (impair) : surjective, pas injective.")}`,
+ formal:`<ul><li>Injective : ∀x, x′ ∈ E, f(x) = f(x′) ⇒ x = x′.</li><li>Surjective : ∀y ∈ F, ∃x ∈ E, f(x) = y.</li><li>Bijective : injective et surjective.</li><li>Réciproque : g : F → E telle que f ∘ g = Id<sub>F</sub> et g ∘ f = Id<sub>E</sub>. Elle existe si et seulement si f est bijective ; elle est alors unique, notée f⁻¹.</li></ul>${F("f(x) = 2x sur ℕ : injective, pas surjective.   g(x) = x/2 (pair), 0 (impair) : surjective, pas injective.")}`,
  use:`<p>« Oui » : la méthode générale (« Soient x, x′ … » ou « Soit y … posons x = … »). « Non » : un contre-exemple chiffré.</p>`,
  trap:`Les ensembles de départ et d'arrivée font partie de l'application : x² est bijective de ℝ₊ dans ℝ₊, pas de ℝ dans ℝ.`,
  q:"f : ℤ × ℤ → ℤ, (a, b) ↦ 2a + b. Est-elle injective ? Est-elle surjective ?",a:"Pas injective (f(0, 0) = f(1, −2)) ; surjective (f(0, m) = m).",rel:["rai-image","rai-composition"]});
 
 add(4,{id:"rai-composition",type:"th",ref:"Chapitre 4 (4) ; TD 3, ex. 9, 10, 11 ; CC2 2023-2024, ex. 4",t:"Composition",short:"Composée g ∘ f",
  plain:`g ∘ f, c'est ${hl("f d'abord, puis g")}. Si g ∘ f est injective, f l'est ; si g ∘ f est surjective, g l'est.`,
- formal:`<ul><li>f : E → F, g : F → G : g ∘ f : E → G, x ↦ g(f(x)).</li><li>g ∘ f injective ⇒ f injective ; g ∘ f surjective ⇒ g surjective.</li><li>Composée de deux injections : injection ; de deux surjections : surjection.</li></ul>`,
+ formal:`<ul><li>f : E → F, g : F → G : g ∘ f : E → G, x ↦ g(f(x)).</li><li>g ∘ f injective ⇒ f injective ; g ∘ f surjective ⇒ g surjective.</li><li>Composée de deux injections : injection (si g(f(x)) = g(f(x′)), alors f(x) = f(x′) car g est injective, puis x = x′ car f l'est) ; de deux surjections : surjection.</li><li>Composée de deux bijections : bijection, et (g ∘ f)⁻¹ = f⁻¹ ∘ g⁻¹ (on défait dans l'ordre inverse).</li></ul>`,
  use:`<p>Pour une relation comme f(f(x) − 1) = x + 1 : injectivité en appliquant f, surjectivité en choisissant x = y − 1.</p>`,
  trap:`f ∘ g peut ne pas exister alors que g ∘ f existe (f : ℤ × ℤ → ℤ, g : ℤ → ℤ).`,
  q:"Si g ∘ f est surjective, laquelle des deux applications f et g est forcément surjective ?",a:"g, celle qu'on applique en dernier.",rel:["rai-injective"]});

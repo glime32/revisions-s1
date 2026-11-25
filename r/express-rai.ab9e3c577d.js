@@ -1,11 +1,12 @@
 /* Le CC2 de Raisonnement en 1 h (vendredi 4/12, 15 h) : ensembles, applications, quantificateurs, récurrence, logique,
    dans l'ordre de ce qui a rapporté le plus aux CC2 de 2022, 2023 et 2025 et au CC du 15/11/2024 (les poids des générateurs de gen-rai.js).
-   Les exemples des méthodes sont exécutés par tools/verif-express-rai.js. Les exercices sont tirés de gen-rai.js. */
+   Les exemples des méthodes sont exécutés par tools/verif-express-rai.js. Les exercices sont tirés de gen-rai.js.
+   Sa réponse RL1a du 25/11 : le sujet express fait rédiger sur papier une justification d'injectivité et une inclusion, en plus de la récurrence, d'où duree:67. */
 (window.EXPRESS=window.EXPRESS||{}).rai={cc2:{
- t:"Le CC2 de Raisonnement en 1 h",du:"du CC",au:"au CC",
+ t:"Le CC2 de Raisonnement en 1 h",du:"du CC",au:"au CC",duree:67,
  lead:"Tout le programme du CC2, dans l'ordre de ce qui a rapporté le plus aux CC2 de 2022, 2023 et 2025. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20.",
  carte:"tout le programme en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
- blancLead:"Quatre questions comme au CC2 : les ensembles, injective ou surjective, les images, puis une récurrence rédigée sur papier. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
+ blancLead:"Cinq questions comme au CC2 : les ensembles, injective ou surjective à justifier, les images, une inclusion à démontrer, puis une récurrence. Trois sont à rédiger sur papier, comme au contrôle : tu compares ensuite ta copie à la correction, ligne par ligne. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
  {id:"injective",t:"Injective, surjective, bijective",pts:4,ou:"tous les ans (2022 ex. 1, 2023 ex. 4, 2024 ex. 2, 2025 ex. 3)",lect:2,exo:{g:"RA1",lv:1},
@@ -78,8 +79,9 @@
   meth:`<ol><li>« Si n² est pair, alors n est pair. » Contraposée : si n est impair, $n = 2k + 1$, alors $n² = 2(2k² + 2k) + 1$ est impair. Donc la phrase est vraie.</li>
 <li>Le CC2 2025 : $9x⁵ − 11x⁴ + 6x − 5 = 0$ n'a pas de solution entière. Disjonction de cas sur la parité de x. Si x est pair, $9x⁵ − 11x⁴ + 6x$ est pair, donc le tout est impair. Si x est impair, $9x⁵$ et $11x⁴$ sont impairs et $6x$ est pair : $9x⁵ − 11x⁴ + 6x$ est pair, et le tout est encore impair. Un nombre impair n'est jamais 0.</li></ol>`}],
  blanc:[
-  {t:"Les ensembles",ou:"exercice 1",pts:4,g:"RA3",lv:3},
-  {t:"Injective, surjective : un contre-exemple",ou:"exercice 2",pts:5,g:"RA1",lv:3},
-  {t:"Image directe, image réciproque",ou:"exercice 3",pts:4,g:"RA2",lv:2},
-  {t:"Une récurrence rédigée",ou:"exercice 4",pts:7,g:"RA5",lv:3}]
+  {t:"Les ensembles",ou:"exercice 1",pts:3,g:"RA3",lv:3},
+  {t:"Injective, surjective : à justifier sur papier",ou:"exercice 2",pts:5,g:"RA1",lv:5},
+  {t:"Image directe, image réciproque",ou:"exercice 3",pts:3,g:"RA2",lv:2},
+  {t:"Une inclusion à démontrer sur papier",ou:"exercice 4",pts:4,g:"RA2",lv:4},
+  {t:"Une récurrence rédigée",ou:"exercice 5",pts:5,g:"RA5",lv:3}]
 }};

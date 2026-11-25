@@ -1806,7 +1806,15 @@ rai:{
 <p><b>Prouver qu'elle est surjective :</b> « Soit $y$ dans l'ensemble d'arrivée. » On résout $f(x) = y$ pour trouver un $x$ qui convient, et on vérifie qu'il est bien dans l'ensemble de départ.</p>
 <p>Même exemple : $3x − 2 = y$ donne $x = (y + 2)/3$, qui est un réel. Surjective de $ℝ$ dans $ℝ$.</p>
 <p><b>Pour dire non,</b> un contre-exemple : deux éléments différents de même image (pas injective), ou un élément jamais atteint (pas surjective).</p>
-<p><b>Les ensembles comptent.</b> $f(x) = 3x − 2$ de $ℤ$ dans $ℤ$ n'est plus surjective : pour $y = 0$, il faudrait $x = 2/3$, qui n'est pas un entier.</p>`},
+<p><b>Les ensembles comptent.</b> $f(x) = 3x − 2$ de $ℤ$ dans $ℤ$ n'est plus surjective : pour $y = 0$, il faudrait $x = 2/3$, qui n'est pas un entier.</p>`,
+  "La réciproque":`<p><b>L'idée.</b> Quand $f$ est bijective, chaque $y$ de l'arrivée a exactement un antécédent $x$. La réciproque, notée $f⁻¹$, est l'application qui fait le chemin du retour : elle envoie $y$ sur cet $x$.</p>
+<p><b>Ce que disent les deux égalités.</b> $Id_{E}$ est l'application « qui ne fait rien » sur $E$ : elle envoie $x$ sur $x$.</p>
+<ul><li>$g ∘ f = Id_{E}$ veut dire : on applique $f$, puis $g$, et on retombe sur le $x$ de départ.</li><li>$f ∘ g = Id_{F}$ veut dire : on applique $g$, puis $f$, et on retombe sur le $y$ de départ.</li></ul>
+<p><b>Exemple :</b> $f(x) = 5x − 10$, de $ℝ$ dans $ℝ$.</p>
+<ol><li>On résout $5x − 10 = y$ : $5x = y + 10$, donc $x = (y + 10)/5$.</li><li>Donc $f⁻¹(y) = (y + 10)/5$.</li><li>On vérifie dans un sens : $f(f⁻¹(y)) = 5 × (y + 10)/5 − 10 = y$.</li><li>Et dans l'autre : $f⁻¹(f(x)) = (5x − 10 + 10)/5 = x$.</li></ol>
+<p><b>Quand il n'y en a pas.</b> $x ↦ x²$, de $ℝ$ dans $ℝ$, n'a pas de réciproque : $4$ a deux antécédents ($2$ et $−2$), et $−1$ n'en a aucun. Elle n'est pas bijective.</p>
+<p><b>Une seule réciproque possible.</b> La preuve de l'écran prend deux réciproques $g₁$ et $g₂$ et montre qu'elles donnent la même image à chaque $y$ : c'est la façon habituelle de prouver qu'un objet est unique.</p>
+<p><b>Deux écritures qui se ressemblent.</b> $f⁻¹(B)$, avec une partie $B$ entre les parenthèses, est un ensemble qui existe toujours. $f⁻¹$ tout seul, ou $f⁻¹(y)$ avec un élément, n'a de sens que si $f$ est bijective.</p>`},
  "r-composition":{
   "La composée":`<p><b>Composer,</b> c'est enchaîner deux applications : on applique d'abord $f$, puis $g$ au résultat. On note $g ∘ f$, et on lit « $g$ rond $f$ ».</p>
 <p><b>On lit de droite à gauche :</b> $(g ∘ f)(x) = g(f(x))$. Celle qui est écrite à droite agit en premier.</p>

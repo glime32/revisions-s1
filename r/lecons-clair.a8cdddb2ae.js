@@ -424,7 +424,8 @@ rai:{
   "Les définitions":`<p>Imagine que f associe à chaque élève sa note. f(A) : les notes obtenues par les élèves du groupe A. f⁻¹(B) : les élèves dont la note est dans B, par exemple ceux qui ont eu au moins 10.</p><p>f⁻¹(B) existe toujours : c'est juste « qui a une note dans B ».</p>`},
  "r-injective":{
   "Les trois définitions":`<p>Injective : deux élèves différents n'ont jamais la même note. Surjective : chaque note possible est obtenue par au moins un élève. Bijective : chaque note est obtenue par exactement un élève.</p>`,
-  "Les méthodes":`<p>Pour dire « oui », il faut un raisonnement qui marche pour tous les cas. Pour dire « non », un seul exemple qui coince suffit.</p><p>Exemple : x ↦ x² n'est pas injective sur ℝ, car 1 et −1 ont la même image.</p>`},
+  "Les méthodes":`<p>Pour dire « oui », il faut un raisonnement qui marche pour tous les cas. Pour dire « non », un seul exemple qui coince suffit.</p><p>Exemple : x ↦ x² n'est pas injective sur ℝ, car 1 et −1 ont la même image.</p>`,
+  "La réciproque":`<p>La réciproque défait ce que f a fait : si f envoie x sur y, alors f⁻¹ renvoie y sur x. Faire l'une puis l'autre ramène toujours au point de départ.</p><p>Elle n'existe que si chaque y a exactement un antécédent : avec deux antécédents, on ne saurait pas vers lequel revenir ; avec aucun, on n'aurait nulle part où aller.</p>`},
  "r-composition":{
   "La composée":`<p>Composer, c'est enchaîner : g ∘ f veut dire « d'abord f, puis g sur le résultat ». On lit de droite à gauche.</p><p>Exemple : f ajoute 1, g double. (g ∘ f)(3) = g(4) = 8, mais (f ∘ g)(3) = f(6) = 7.</p>`,
   "Les deux résultats à savoir prouver":`<p>Si l'enchaînement complet ne confond jamais deux départs, alors la première étape ne les confondait pas non plus : f est injective.</p><p>Et si l'enchaînement atteint toutes les arrivées, c'est que la dernière étape les atteint : g est surjective.</p>`}},
