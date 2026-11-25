@@ -827,7 +827,7 @@ lin:{
 <p>Donc $A$ est inversible et $A^{−1} = (1/3)(4I − A)$.</p>
 <p><b>Deux règles :</b> on ne « divise » jamais par une matrice ; et on a le droit de factoriser $A² − 4A$ en $A(A − 4I)$, car $A × I = A$.</p>`,
   "Pour le CC2 : deux formes plus dures":`<p><b>Même idée, en plus long.</b> Les écrans suivants viennent des CC2 et de l'examen de janvier.</p>
-<ul><li>Une matrice de taille $4$ : on calcule $A²$ à la main, on trouve une relation comme $A² = 2A + I$, puis on fait comme à l'écran précédent.</li><li>Une relation entre deux matrices, comme $AB = A + B$ : on cherche un produit qui donne $I$.</li></ul>
+<ul><li>Une matrice de taille $4$ : on calcule $A²$ à la main, on trouve une relation (pour celle de l'écran suivant, $A² = 2A + 3I$), puis on fait comme à l'écran précédent.</li><li>Une relation entre deux matrices, comme $AB = A + B$ : on cherche un produit qui donne $I$.</li></ul>
 <p>Dans tous les cas, le but est le même : faire apparaître « (une matrice) × (une autre) $= I$ ».</p>`,
   "Examen de janvier 2026 : AB = A + B":`<p><b>On sait que $AB = A + B$.</b> On veut montrer que $I − A$ est inversible.</p>
 <ol><li>On développe $(I − A)(I − B)$, en gardant l'ordre : $I − B − A + AB$.</li><li>On remplace $AB$ par $A + B$ : $I − B − A + A + B$.</li><li>Tout se simplifie : il reste $I$.</li></ol>
@@ -986,7 +986,7 @@ ana:{
 <ol><li><b>m est un majorant</b> : tous les éléments de A sont inférieurs ou égaux à m.</li><li><b>Rien de plus petit que m n'est un majorant.</b> Si je descends un peu sous m, d'une petite quantité ε, alors le nombre m − ε n'est plus au-dessus de tout le monde : il y a un élément de A qui le dépasse.</li></ol>
 <p>La deuxième condition s'écrit : ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a. Elle se lit : « pour tout ε strictement positif, il existe un élément a de A plus grand que m − ε ».</p>
 <p><b>Sur l'exemple A = [0, 1[ et m = 1.</b></p>
-<ol><li>Tout élément de A est plus petit que 1 : 1 est un majorant.</li><li>Je descends de ε = 0,1 : il me faut un élément de A plus grand que 0,9. Je prends 0,95. Je descends de ε = 0,01 : je prends 0,995. Chaque fois, je peux prendre le nombre à mi-chemin entre 1 − ε et 1.</li></ol>
+<ol><li>Tout élément de A est plus petit que 1 : 1 est un majorant.</li><li>Je descends de ε = 0,1 : il me faut un élément de A plus grand que 0,9. Je prends 0,95. Je descends de ε = 0,01 : je prends 0,995. Chaque fois, je peux prendre le nombre à mi-chemin entre 1 − ε et 1 (pour un ε plus grand que 1, 0 convient).</li></ol>
 <p>Les deux conditions sont vraies : sup(A) = 1.</p>
 <p><b>Pour le contrôle.</b> La phrase « m est un majorant de A et ∀ε &gt; 0, ∃a ∈ A, m − ε &lt; a » est une question de cours : elle a été demandée telle quelle au CC de 2025.</p>`,
   "Point adhérent":`<p><b>L'idée.</b> Un nombre x est « adhérent » à un ensemble A quand il <b>colle</b> à A : on peut trouver des éléments de A aussi près de x qu'on veut.</p>
@@ -1133,7 +1133,7 @@ ana:{
 <p><b>Ce qui est nouveau avec les fonctions :</b> on peut chercher une limite en un nombre x₀, et pas seulement à l'infini. Si la fonction est définie en x₀ par une formule sans piège, il suffit de remplacer. Sinon (forme 0/0), on factorise ou on utilise la quantité conjuguée, comme à l'infini.</p>`,
   "Limites et suites":`<p><b>Le lien.</b> Si f(x) tend vers ℓ quand x tend vers x₀, alors pour <b>n'importe quelle</b> suite (xₙ) qui tend vers x₀, la suite des images f(xₙ) tend vers ℓ. Quelle que soit la façon de s'approcher de x₀, on arrive au même résultat.</p>
 <p><b>On s'en sert à l'envers, pour montrer qu'une limite n'existe pas.</b> Il suffit de trouver <b>deux</b> façons de s'approcher de x₀ qui donnent deux résultats différents.</p>
-<p><b>Exemple : la partie entière E(x), en 1.</b> (E(x) est l'entier juste en dessous de x.)</p>
+<p><b>Exemple : la partie entière E(x), en 1.</b> (E(x) est le plus grand entier inférieur ou égal à x : E(1,5) = 1, E(1) = 1, E(0,9) = 0.)</p>
 <ul><li>Je m'approche de 1 par la droite avec xₙ = 1 + 1/n (n ≥ 2) : ces nombres sont entre 1 et 2, sans atteindre 2, donc E(xₙ) = 1. Les images tendent vers 1.</li><li>Je m'approche de 1 par la gauche avec yₙ = 1 − 1/n (n ≥ 2) : ces nombres sont entre 0 et 1, donc E(yₙ) = 0. Les images tendent vers 0.</li></ul>
 <p>Deux résultats différents : E(x) n'a pas de limite en 1.</p>
 <p><b>La méthode sur la copie :</b> j'écris mes deux suites, je vérifie que toutes les deux tendent vers x₀, je calcule les deux suites d'images, et je constate que leurs limites sont différentes.</p>
