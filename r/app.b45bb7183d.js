@@ -331,7 +331,7 @@ const CLASSES={
  "2026-11-30":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["11:30","13:00","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"],["16:45","18:15","Prog. fonctionnelle","TD 5.201","pf"]],
  "2026-12-01":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Géométrie","CM, amphi 5.03","geo"]],
  "2026-12-02":[["15:00","16:30","Analyse","CM, amphi 5.01","ana"],["16:45","18:15","Analyse","TD 5.202","ana"]],
- "2026-12-03":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.03","lin"],["15:00","16:30","Algorithmique 1","TD 36.310","algo"],["16:45","18:15","Algorithmique 1","TD 36.310","algo"]],
+ "2026-12-03":[["08:00","09:30","Géométrie","TD 5.211","geo"],["11:30","13:00","Algèbre","CM, amphi 5.03","lin"],["15:00","16:30","Algorithmique 1","TD 36.310","algo"],["16:45","18:15","Algorithmique 1","CC2, TD36.310 (bâtiment 36)","algo"]],
  "2026-12-04":[["08:00","09:30","Automates","TD 2.09","aut"],["11:30","13:00","Prog. fonctionnelle","TD info 5.127","pf"],["15:00","16:30","Raisonnement","CC2, amphi 5.05","rai"]],
  "2026-12-07":[["08:00","09:30","Géométrie","CM, amphi 5.03","geo"],["09:45","11:15","Algèbre","TD 2.02","lin"],["15:00","16:30","Algorithmique 1","CM, amphi 5.01","algo"]],
  "2026-12-08":[["08:00","09:30","Analyse","TD 5.207","ana"],["09:45","11:15","Analyse","CM, amphi 5.06","ana"]],
@@ -772,8 +772,8 @@ function lierSeances(root,box,refresh){
 /* ---------- examens et coefficients ---------- */
 /* d'où vient chaque date d'épreuve (le champ src d'une épreuve, dans le fichier de sa matière, passe avant) */
 const SRC={"algo.cc1":"mail de ton chargé de TD du 5/11.",
-  "algo.cc2":"mail du responsable de l'UE du 24/9, « Dates des contrôles continus d'algo 1 » : « CC2 : créneau de TD entre le jeudi 26/11 et le mercredi 2/12 ». Ton TD d'Algo est le jeudi : le jour est déduit, l'heure n'est pas donnée. Le même mail annonçait le CC1 mi-octobre et il a eu lieu le 12/11 : demande à ton chargé de TD si le 26 tient toujours.",
-  "algo.cc3":"le même mail du 24/9 : « CC3 : entre le lundi 14/12 et le vendredi 18/12 ». Le jour et l'heure sont supposés.",
+  "algo.cc2":"page Moodle du cours, lue le 25/11 : « groupe math-A+double licence : jeudi 3 décembre à 16h45 » ; la salle, d'après Prose.",
+  "algo.cc3":"page Moodle du cours, lue le 25/11 : « Le CC3 est prévu le 6 janvier 2027 à 13h » (date provisoire).",
   "ana.cc1":"annonce de l'enseignante sur le forum Moodle, le 9/11.","calc.cc2":"mail de l'enseignant du 6/11.","geo.cc2":"mail du 27/10.",
   "lin.cc1":"mail du prof du 11/11 ; le lieu, mail du 18/11.","rai.cc2":"mail du 3/11.","pf.ct":"date supposée, pas encore officielle.","aut.exam":"date supposée, pas encore officielle.","usi.exam":"date supposée, pas encore officielle."};
 const srcDe=(S,e)=>e.src||SRC[S.id+"."+e.id]||"pas encore notée sur le site.";

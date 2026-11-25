@@ -1,4 +1,4 @@
-/* Le CC2 d'Algo en 1 h (jeudi 26/11, 15 h) : preuves et complexité (TD 6 à 8). Ordre et points d'après les vrais sujets
+/* Le CC2 d'Algo en 1 h (jeudi 3/12, 16 h 45) : preuves et complexité (TD 6 à 8). Ordre et points d'après les vrais sujets
    (CC 2022, CC 2024, janvier 2023, mai 2023) : la question de cours d'abord, puis la trace et l'invariant, le comptage,
    le récursif (le plus lourd aux sujets : valeur, affichages, équation), le master theorem, l'arrêt, l'ordinateur plus rapide.
    Corrigé le 24/11 d'après la relecture de menthe (~/claude/point/questions/menthe.md, partie 1).
@@ -149,7 +149,7 @@ Renvoyer cond(deb&lt;taille(T) et T[deb]=e, deb, -1)</pre>
   {t:"Le master theorem, à partir d'une procédure",ou:"janvier 2023 ex. 3 q. 5",pts:2,g:"AG7",lv:2}]
 }};
 
-/* Le CC3 d'Algo en 1 h (supposé lundi 14/12 à 15 h) : recherche et tris (TD 9 et 10, diapos 88 à 114). Ni la date ni le programme
+/* Le CC3 d'Algo en 1 h (mercredi 6/01/2027, 13 h, provisoire) : recherche et tris (TD 9 et 10, diapos 88 à 114). Ni la date ni le programme
    ne sont annoncés : partage supposé d'après le mail du 24/9 et l'ordre du cours, comme dans matiere-algo.js. Pas encore de CC3 aux
    annales : l'ordre suit les questions déjà tombées (CC1 2024 q. 2 et 3, janvier 2023 ex. 4, PEIP mai 2023 ex. 4) et les TD.
    Corrigé le 24/11 d'après la relecture de menthe (partie 2). Les exemples sont exécutés par tools/verif/express/algo.js.
