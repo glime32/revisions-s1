@@ -120,7 +120,7 @@ function exoFind(R,palier){
       if(manque&&r.trouve.length>L.length)return faux(1,"fichier oublié par find","Où ça part : un chemin oublié.",`find trouve aussi ${c(manque)} : il correspond aux critères.`);
       if(trop&&!r.trouve.map(x=>x.split("/").pop()).includes(trop.split("/").pop()))return faux(1,"critère de find","Où ça part : les critères.",`${c(trop)} ne correspond pas aux critères de la commande.`);
       return faux(2,"chemin affiché par find","Où ça part : l'écriture des chemins.",`Écris chaque chemin complet, depuis le départ : par exemple ${c(r.trouve[0])}.`);}
-    return {sig:"F0"+cmd+JSON.stringify(A),q:`Voici une arborescence et une commande. Qu'affiche ${c(cmd)} ? Écris les chemins, séparés par des espaces, dans n'importe quel ordre.`,corps:bloc(voir),texte:cmd+" — chemins affichés",
+    return {sig:"F0"+cmd+JSON.stringify(A),q:`Voici une arborescence et une commande, lancée depuis le dossier courant ${c(COURANT.replace(ACCUEIL,"~"))}. Qu'affiche ${c(cmd)} ? Écris les chemins, séparés par des espaces, dans n'importe quel ordre.`,corps:bloc(voir),texte:cmd+" — chemins affichés",
       champs:[{k:"champ",id:"s",nom:"chemins",label:"Ce qu'affiche find :",ex:"par exemple ./a.log ./src/b.log",apercu:false,sym:[["./","./"],["/","/"]]}],juge,etapes:E,
       bonne:c(r.trouve.join(" ")),bonneTxt:r.trouve.join(" "),repBonne:{s:r.trouve.join(" ")},repFausse:{s:r.trouve.length>1?r.trouve.slice(1).join(" "):"./rien"},nature:"lire",
       ens:{bash:[{arbo:A,cmd,abs:r.abs.slice().sort()}]}};}
@@ -3891,7 +3891,7 @@ function exoC2(R){
         else if(op[0]==="pp"){o2++;w=`t avance d'une case : il pointe maintenant sur tab[${o2}]. tab ne bouge pas.`}
         else if(op[0]==="ep"){if(p==="m"){w=`p pointe sur m : m devient ${op[2]?"m + "+op[1]:op[1]}.`;}else{a=op[2]?a+op[1]:op[1];w=`p pointe sur a : a vaut ${a} ; m ne bouge pas.`;}}
         else{p="a";w=`p pointe maintenant sur la copie a, plus sur m.`}
-        return {w:`${c(ligne(op).trim())} : ${w}`,why:op[0]==="a"||op[0]==="pp"||op[0]==="pa"?"On change une copie locale à f.":"On écrit à une adresse de main.",pts:1};}),
+        return {w:`${c(ligne(op).trim())} : ${w}`,why:op[0]==="a"||op[0]==="pp"||op[0]==="pa"?"On change une copie locale à f.":op[0]==="ep"&&p==="a"?"On écrit dans a, la copie locale de f : m ne bouge pas.":"On écrit à une adresse de main.",pts:1};}),
       {w:`<b>n=${att.n} m=${att.m}</b> et <b>tab = ${att.t}</b>`,why:"main affiche ses propres variables.",pts:0.5}];
     const juge=rep=>{const r={n:propre(rep.n),m:propre(rep.m),t:propre(rep.t).replace(/[{},;]/g," ").replace(/\s+/g," ").trim()};
       if(!r.n||!r.m||!r.t)return {incomplet:"Remplis les trois cases : n, m et les trois cases de tab."};

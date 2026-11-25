@@ -891,7 +891,8 @@ function exoRenvoie(def,appel,o){o=o||{};
         {w:`Le dernier appel, ${c(dernier)}, est le cas de base : il renvoie ${c(base)}.`,why:"Avec un accumulateur, la valeur du cas de base est déjà la réponse.",pts:0.5},
         fin("C'est la valeur du cas de base, renvoyée telle quelle par chaque appel.")];}
     else{
-      E=[{w:`Les appels s'enchaînent jusqu'au cas de base : ${d.ordre.map(c).join(" → ")}.`,why:`Chaque appel attend le résultat de l'appel suivant. ${c(dernier)} répond sans rappeler ${c(nom)} : c'est le cas de base.`,pts:1},
+      const feuille=/Node/.test(dernier);
+      E=[{w:`Les appels s'enchaînent jusqu'au cas de base : ${d.ordre.map(c).join(" → ")}${feuille?` → ${c(nom+" Empty")}`:""}.`,why:`Chaque appel attend le résultat de l'appel suivant. ${c(feuille?nom+" Empty":dernier)} répond sans rappeler ${c(nom)} : c'est le cas de base.`,pts:1},
         {w:`On remonte, du cas de base vers le premier appel&nbsp;:${bloc(d.lignes.map(l=>coupe(l.parts.join(" = "),"    ")).join("\n"))}`,why:"Chaque ligne remplace l'appel récursif par sa valeur, trouvée juste au-dessus, puis fait le calcul.",pts:1.5},
         fin("C'est la dernière ligne de la remontée : la valeur du premier appel.")];}}
   else{const S2=ML.session();if(pre)S2.lis(pre);S2.lis(def);const d=S2.deroule(appel);

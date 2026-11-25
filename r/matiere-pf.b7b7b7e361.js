@@ -88,7 +88,7 @@ gg 3.2          (* float -> bool *)`)}</div></div>`;},
  q:"Quelle est la signature de let f = function (x, y) -> if y then x + 1 else 2 * x ?",a:"int * bool -> int (partiel 2021 et TD ex. 7).",rel:["pf-signature"]});
 
 add(2,{id:"pf-signature",type:"meth",ref:"Partiel 2021, Q1.2",t:"Trouver la signature d'une fonction",short:"Trouver une signature",cc:"Tombé en 2021",
- plain:`On lit le corps de la fonction et on note ce que ${hl("chaque opérateur impose")} : x + 1 force x : int ; if y force y : bool ; List.hd y force y : liste. Ce qui n'est contraint par rien devient 'a (n'importe quel type), mais le polymorphisme n'est pas au contrôle : les exercices te donneront des listes d'entiers.`,
+ plain:`On lit le corps de la fonction et on note ce que ${hl("chaque opérateur impose")} : x + 1 force x : int ; if y force y : bool ; List.hd y force y : liste. Ce qui n'est contraint par rien devient 'a (n'importe quel type).`,
  fig:()=>h=>{h.innerHTML=`<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Fonction</th><th>Raisonnement</th><th>Signature</th></tr></thead><tbody>
  <tr><td><code>function (x, y) -> if y then x+1 else 2*x</code></td><td>if y → y : bool ; x+1 → x : int ; résultat int</td><td><code>int * bool -> int</code></td></tr>
  <tr><td><code>function (x, y) -> x + 2 * List.hd(y)</code></td><td>List.hd y est un int → y : int list</td><td><code>int * int list -> int</code></td></tr>
