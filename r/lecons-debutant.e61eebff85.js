@@ -1708,7 +1708,7 @@ rai:{
 <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Phrase</th><th>En symboles</th></tr></thead><tbody>
 <tr><td>Tout réel au carré est positif.</td><td>$∀x ∈ ℝ, x² ≥ 0$</td></tr>
 <tr><td>Il existe un entier plus grand que $100$.</td><td>$∃n ∈ ℕ, n &gt; 100$</td></tr>
-<tr><td>Tout entier pair est la somme de deux impairs.</td><td>$∀n ∈ ℕ$, (n pair) ⇒ ($∃a, ∃b$ impairs, $n = a + b$)</td></tr></tbody></table></div>
+<tr><td>Tout entier pair est la somme de deux entiers impairs.</td><td>$∀n ∈ ℤ$, (n pair) ⇒ ($∃a ∈ ℤ, ∃b ∈ ℤ$, a et b impairs et $n = a + b$)</td></tr></tbody></table></div>
 <p><b>« Tout … qui … » devient un $∀$ avec une implication :</b> « tout entier pair est … » = « pour tout entier n, si n est pair, alors … ».</p>
 <p><b>L'ordre compte.</b> « $∀x, ∃y, y &gt; x$ » : pour chaque $x$, on trouve un $y$ plus grand (on peut prendre $y = x + 1$) : vrai. « $∃y, ∀x, y &gt; x$ » : un même $y$ plus grand que tous les nombres : faux.</p>`,
   "Nier une phrase quantifiée":`<p><b>La recette, de gauche à droite :</b></p>

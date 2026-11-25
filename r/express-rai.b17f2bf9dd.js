@@ -17,7 +17,7 @@
   meth:`<p>f : ℤ → ℤ, $f(n) = 2n + 1$.</p>
 <ol><li><b>Injective</b> : on part de $f(n) = f(m)$, donc $2n + 1 = 2m + 1$, donc $n = m$. f est injective.</li>
 <li><b>Surjective ?</b> On cherche un antécédent de 0 : $2n + 1 = 0$ donne $n = −1/2$, qui n'est pas dans ℤ. 0 n'a pas d'antécédent : f n'est pas surjective.</li>
-<li>g : ℕ → ℕ, $g(n) = n/2$ si n est pair, $g(n) = 0$ sinon (CC 2024 ex. 2, CC2 2025 ex. 3) : $g(1) = g(3) = 0$ avec $1 ≠ 3$, donc g n'est pas injective ; tout n a l'antécédent 2n, car $g(2n) = n$ : g est surjective.</li>
+<li>g : ℕ → ℕ, $g(n) = n/2$ si n est pair, $g(n) = 0$ sinon (CC 2024 ex. 2 ; au CC2 2025 ex. 3, la même de ℤ dans ℤ, avec les mêmes réponses) : $g(1) = g(3) = 0$ avec $1 ≠ 3$, donc g n'est pas injective ; tout n a l'antécédent 2n, car $g(2n) = n$ : g est surjective.</li>
 <li>h : ℝ → ℝ, $h(x) = x²$ : $h(−1) = h(1) = 1$ avec $−1 ≠ 1$, donc pas injective ; −1 n'a pas d'antécédent, donc pas surjective.</li></ol>`},
  {id:"image",t:"Image directe, image réciproque",pts:3.5,ou:"2022 ex. 2, 2023 ex. 5, 2025 ex. 1",lect:2,exo:{g:"RA2",lv:1},
   ess:`<ul><li>L'<b>image directe</b> $f(A) = \{f(x) : x ∈ A\}$ : les images des éléments de A.</li>
@@ -44,7 +44,7 @@
   ess:`<ul><li><b>Nier</b> : on échange ∀ et ∃, on garde les domaines, et on nie la fin. La négation de $x &lt; y$ est $x ≥ y$.</li>
 <li>Une phrase en ∀ est fausse dès qu'on trouve <b>un</b> contre-exemple ; une phrase en ∃ est vraie dès qu'on trouve <b>un</b> exemple.</li>
 <li>L'ordre compte : dans « ∀x, ∃y », y peut dépendre de x ; dans « ∃y, ∀x », c'est le même y pour tous les x.</li>
-<li><b>Traduire</b> (CC2 2023, la conjecture de Goldbach) : « tout entier pair au moins égal à 4 est la somme de deux nombres premiers » s'écrit $∀n ∈ ℕ, (n ≥ 4 et n pair) ⇒ ∃p, q premiers, n = p + q$.</li></ul>`,
+<li><b>Traduire</b> (CC2 2023 ex. 2). On note Pair(n) : « n est pair » et Prem(n) : « n est premier ». La phrase « Tout nombre entier pair supérieur à 3 peut s'écrire comme somme de deux nombres premiers » s'écrit :<br>$∀n ∈ ℕ, (Pair(n) et n &gt; 3) ⇒$<br>$(∃p ∈ ℕ, ∃q ∈ ℕ,$<br>$Prem(p) et Prem(q)$<br>$et n = p + q)$.</li></ul>`,
   piege:`On ne nie pas les domaines : la négation de « ∀x ∈ ℝ » commence par « ∃x ∈ ℝ », pas par « ∃x ∉ ℝ ».`,
   meth:`<p>Avec $E = \{1, 2, 3\}$ :</p>
 <ol><li>« $∀x ∈ E, ∃y ∈ E, y &gt; x$ » est fausse : pour x = 3, aucun y de E n'est plus grand.</li>
@@ -59,7 +59,7 @@
 <ol><li>Initialisation : $8⁰ − 1 = 0 = 7 × 0$.</li>
 <li>Hérédité : on suppose $8ⁿ − 1 = 7k$, avec k entier. Alors $8ⁿ⁺¹ − 1 = 8 × 8ⁿ − 1 = 8(8ⁿ − 1) + 7 = 7(8k + 1)$.</li>
 <li>Conclusion : 7 divise $8ⁿ − 1$ pour tout n.</li></ol>
-<p>Une inégalité (CC2 2022 ex. 3) : pour $x ≥ −1$, $(1 + x)ⁿ ≥ 1 + nx$. Initialisation : $1 ≥ 1$. Hérédité : on multiplie par $1 + x ≥ 0$, donc $(1 + x)ⁿ⁺¹ ≥ (1 + nx)(1 + x) = 1 + (n + 1)x + nx² ≥ 1 + (n + 1)x$, car $nx² ≥ 0$.</p>`},
+<p>Une inégalité (CC2 2022 ex. 3) : pour tout réel $x &gt; −1$, $(1 + x)ⁿ ≥ 1 + nx$. Initialisation : $1 ≥ 1$. Hérédité : on multiplie par $1 + x &gt; 0$, donc $(1 + x)ⁿ⁺¹ ≥ (1 + nx)(1 + x) = 1 + (n + 1)x + nx² ≥ 1 + (n + 1)x$, car $nx² ≥ 0$.</p>`},
  {id:"composer",t:"Composer deux applications",pts:3,ou:"2023 ex. 4, 2024 ex. 2, 2025 ex. 3",lect:2,exo:{g:"RA6",lv:1},
   ess:`<ul><li>$(g ∘ f)(x) = g(f(x))$ : on applique f d'abord, puis g. Il faut que l'arrivée de f soit dans le départ de g.</li>
 <li>Si f et g sont injectives (ou surjectives), g ∘ f l'est aussi.</li>
