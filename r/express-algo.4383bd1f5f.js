@@ -2,11 +2,13 @@
    (CC 2022, CC 2024, janvier 2023, mai 2023) : la question de cours d'abord, puis la trace et l'invariant, le comptage,
    le récursif (le plus lourd aux sujets : valeur, affichages, équation), le master theorem, l'arrêt, l'ordinateur plus rapide.
    Corrigé le 24/11 d'après la relecture de menthe (~/claude/point/questions/menthe.md, partie 1).
+   Sa réponse RA1a (25/11) : les deux premières notions du CC3 (recherche dichotomique) sont reprises à la fin, au cas où, à 0 point :
+   les 8 premières font les 20 points et 60 min, d'où duree:72.
    Les exemples sont exécutés par tools/verif-express-algo.js et tools/verif/express/algo.js. Les exercices sont tirés de gen-algo.js ;
    aucune question du sujet express ne reprend le générateur et le palier d'une notion. */
 (window.EXPRESS=window.EXPRESS||{}).algo={cc2:{
- t:"Le CC2 d'Algo en 1 h",du:"du CC",au:"au CC",
- lead:"Le programme du CC2 (preuves et complexité, TD 6 à 8), dans l'ordre de ce qui rapporte le plus aux anciens sujets. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Le CC2 peut aussi reprendre le CC1 : tes cartes de Réviser s'en occupent.",
+ t:"Le CC2 d'Algo en 1 h",du:"du CC",au:"au CC",duree:72,
+ lead:"Le programme du CC2 (preuves et complexité, TD 6 à 8), dans l'ordre de ce qui rapporte le plus aux anciens sujets. Pour chaque notion : l'essentiel, la méthode du CC, puis un exercice à faire toi-même avant de voir la correction. À la fin, un sujet express noté sur 20. Les notions 9 et 10 (la recherche dichotomique, 12 min) sont là au cas où : rien ne dit qu'elle sera au CC2. Elles ne comptent pas dans les 20 points. Le CC2 peut aussi reprendre le CC1 : tes cartes de Réviser s'en occupent.",
  carte:"preuves et complexité en 1 h, ce qui rapporte le plus d'abord, puis un sujet express noté sur 20.",
  blancLead:"Cinq questions comme aux anciens sujets : la question de cours, la trace, l'arrêt, un algorithme récursif comme en janvier 2023, puis le master theorem à partir d'une procédure. Les points suivent à peu près ces sujets, où le récursif pèse le plus. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
@@ -104,13 +106,41 @@ pour i de 1 à n faire
  {id:"rapide",t:"Un ordinateur plus rapide",pts:2,ou:"janvier 2023 ex. 2 (3 points)",lect:1.5,exo:{g:"AG7",lv:3},
   ess:`<ul><li>Un ordinateur k fois plus rapide fait k fois plus d'opérations dans le même temps.</li>
 <li><b>Quelle taille ?</b> Pour n<sup>d</sup> opérations : m = n × (racine d-ième de k). Pour 2ⁿ : m = n + log₂(k).</li>
-<li><b>Quel temps ?</b> Pour n² : une taille × 4 donne un temps × 4² = 16. Pour 2ⁿ : une taille + 6 donne un temps × 2⁶ = 64.</li></ul>`,
+<li><b>Quel temps ?</b> Pour n² : une taille × 3 donne un temps × 3² = 9. Pour 2ⁿ : une taille + 5 donne un temps × 2⁵ = 32.</li></ul>`,
   piege:`Pour 2ⁿ, on ne multiplie pas n : on ajoute seulement log₂(k). C'est pour ça qu'un algorithme exponentiel reste lent sur une machine plus rapide.`,
   meth:`<p>Janvier 2023 : le temps est proportionnel à n log₁₀(n). A traite une taille 100 en une minute ; B est 200 fois plus rapide. Quelle taille B traite-t-il en une minute ?</p>
 <ol><li>A : 100 × log₁₀(100) = 100 × 2 = 200.</li>
 <li>B fait 200 fois plus d'opérations : n log₁₀(n) = 200 × 200 = 40 000.</li>
 <li>Le tableau du sujet donne 10 000 × log₁₀(10 000) = 40 000 : B traite une taille 10 000.</li></ol>
-<p>Les temps : 1 s pour une taille 1 000 avec n² donne 16 s pour 4 000 ; 3 s pour 200 avec 2ⁿ donne 3 × 64 = 192 s pour 206.</p>`}],
+<p>Les temps : 2 s pour une taille 300 avec n² donne 2 × 9 = 18 s pour 900 ; 5 s pour une taille 40 avec 2ⁿ donne 5 × 32 = 160 s pour 45.</p>`},
+ {id:"dicho",t:"La recherche dichotomique : la trace et l'arrêt",pts:0,ou:"au cas où, pas sûr au CC2 · TD 9, diapos 91 à 98",lect:2,exo:{g:"AG9",lv:1},
+  ess:`<ul><li>RechDic cherche e dans un tableau <b>trié</b>. À chaque tour : mil = (deb + fin) div 2 ; si T[mil] &lt; e, deb ← mil + 1, sinon fin ← mil − 1.</li>
+<li>Quand deb &gt; fin, elle renvoie deb si T[deb] = e, sinon −1 : c'est le plus petit indice qui contient e.</li>
+<li><b>L'arrêt</b> : fin − deb + 1, le nombre de cases où on cherche encore, est un entier qui décroît strictement à chaque tour. La boucle s'arrête quand il vaut 0 ou moins.</li>
+<li><b>La complexité</b> : θ(log n), contre θ(n) pour la recherche linéaire.</li></ul>`,
+  piege:`Quand T[mil] = e, la boucle ne s'arrête pas : elle fait fin ← mil − 1 et continue à gauche, pour trouver le plus petit indice. Dans ta trace, ne t'arrête pas à la première case égale à e.`,
+  meth:`<pre class="code">deb, fin ← 0, taille(T)-1
+tant que deb≤fin faire
+    mil ← (deb+fin) div 2
+    si T[mil]&lt;e alors deb ← mil+1
+    sinon fin ← mil-1
+fin tq;
+Renvoyer cond(deb&lt;taille(T) et T[deb]=e, deb, -1)</pre>
+<p>RechDic(12, T) avec T = [2, 5, 7, 9, 12, 15, 20] :</p>
+<ol><li>Au départ : deb = 0, fin = 6.</li>
+<li>Tour 1 : mil = 3, T[3] = 9 &lt; 12, donc deb = 4.</li>
+<li>Tour 2 : mil = 5, T[5] = 15 n'est pas &lt; 12, donc fin = 4.</li>
+<li>Tour 3 : mil = 4, T[4] = 12 n'est pas &lt; 12, donc fin = 3.</li>
+<li>deb = 4 &gt; fin = 3 : la boucle s'arrête, et RechDic renvoie 4, après 3 tours.</li></ol>`},
+ {id:"essais",t:"Combien de mesures, combien de tours",pts:0,ou:"au cas où, pas sûr au CC2 · CC1 2024, question 3 ; diapo 97",lect:1.5,exo:{g:"AG9",lv:2},
+  ess:`<ul><li>Chaque essai divise par 2 le nombre de cases où chercher : doubler le nombre de cases n'ajoute qu'<b>un</b> essai. C'est ce que veut dire θ(log n).</li>
+<li><b>Les mesures</b> (corrigé du CC1 2024) : le nombre de fois qu'on divise n par 2 pour arriver à 1. 128 = 2⁷ : 7 mesures pour les 128 chevaux de Sarah.</li>
+<li><b>Les tours de RechDic</b> (diapo 97) : quand toutes les valeurs sont plus petites que e, la boucle continue jusqu'à 0 case, d'où k + 1 tours pour n = 2ᵏ. 32 cases : 6 tours ; 128 cases : 8 tours.</li></ul>`,
+  piege:`Lis ce qu'on te demande : des mesures (7 pour 128 chevaux) ou des tours de la boucle de RechDic (8 pour 128 cases). Et deux fois plus de légos, ce n'est pas deux fois plus d'essais : 24 000 légos demandent 15 essais, pas 28.`,
+  meth:`<p>CC1 2024 : les 12 000 légos de Mr Bricks sont rangés par taille, il lui faut au plus 14 essais. Combien avec 24 000 ?</p>
+<ol><li>Après le premier essai, il reste 12 000 légos où chercher.</li>
+<li>Pour 12 000 légos, il faut au plus 14 essais.</li>
+<li>En tout : 1 + 14 = 15 essais au plus.</li></ol>`}],
  blanc:[
   {t:"Question de cours : o, θ, ω",ou:"CC 2022 q. 4 ; CC 2024 q. 4",pts:3,g:"AGQ2",lv:0},
   {t:"La trace d'une boucle",ou:"CC 2022 ex. 3",pts:6,g:"AG1",lv:1},
