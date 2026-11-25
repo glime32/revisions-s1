@@ -3,9 +3,11 @@
    on sert la copie gardée : jamais de page à moitié chargée ; la page neuve finit d'arriver en fond, pour l'ouverture suivante.
    Sans réseau, on sert la copie. Les autres fichiers viennent de la copie, mise à jour en arrière-plan.
    Quand la copie a été servie et que la page neuve, arrivée ensuite, est différente, la page affichée le sait (message « neuve ») :
-   elle propose de recharger. */
-const CACHE = "revisions-20261125-001301", PAGE = "revisions-page", DELAI = 5000;
-const FICHIERS = ["manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf"];
+   elle propose de recharger.
+   Les scripts et la feuille de style (r/…) ont un nom qui change avec leur contenu : ils sont gardés à l'installation, servis
+   depuis la copie sans passer par le réseau, et seuls ceux d'une version neuve sont téléchargés. */
+const CACHE = "revisions-20261125-045938", PAGE = "revisions-page", DELAI = 5000;
+const FICHIERS = ["manifest.webmanifest", "icone-192.png", "icone-512.png", "feuilles/feuille-a4-algo.pdf", "feuilles/feuille-a4-ocaml.pdf", "r/style.7d2779d018.css", "r/geo.fcd10db6b6.js", "r/outils.c299d4f6f6.js", "r/geo-c1.22b0f9c5ff.js", "r/geo-c2.705d0324c4.js", "r/geo-c3.53394caef9.js", "r/geo-entrainement.b3c5485181.js", "r/geo-c5.41a2d3ef59.js", "r/geo-couleurs.2c0627ca1d.js", "r/matiere-geo.c1533c121b.js", "r/matiere-algo.1bda402a13.js", "r/matiere-pf.a79522ed27.js", "r/matiere-calc.673de0fe32.js", "r/matiere-lin.5f485c6627.js", "r/matiere-ana.5f8c20192c.js", "r/matiere-rai.1a994e0fd0.js", "r/matiere-usi.851132e28d.js", "r/matiere-aut.5c1f831cee.js", "r/lecons-geo.6774537d98.js", "r/lecons-algo.cdf14b97ec.js", "r/lecons-pf.e66aff25f6.js", "r/lecons-calc.a4f0ef6024.js", "r/lecons-lin.530dced208.js", "r/lecons-ana.3d02b0e558.js", "r/lecons-rai.638c47e170.js", "r/lecons-usi.4cd8f28195.js", "r/lecons-clair.f6149d53e1.js", "r/lecons-debutant.94f95b06cb.js", "r/lexique.c4ab3c0d40.js", "r/generateurs.80f6b815b3.js", "r/gen-lin.9c5986f9f5.js", "r/gen-ana.4c5e6323ca.js", "r/gen-algo.45129e1187.js", "r/gen-rai.3d3c3b7e56.js", "r/gen-geo.7be8228d50.js", "r/gen-calc.dae28e4033.js", "r/gen-pf.fcdde099e6.js", "r/gen-usi.c83c6641d8.js", "r/gen-aut.7245637439.js", "r/lecons-aut.65b6278ed0.js", "r/apprendre.fbc966ba5b.js", "r/entrainement.34f0972256.js", "r/express-ana.3714cbcde0.js", "r/express-algo.334ab6b501.js", "r/express-rai.a465cd1ec6.js", "r/express-geo.cf08429c44.js", "r/express-calc.242d696979.js", "r/express-pf.99c6bf68c7.js", "r/express-usi.531ae9b488.js", "r/express-lin.945a21c623.js", "r/express-aut.c7404666e4.js", "r/express.17ea4f2dc0.js", "r/app.db1f129967.js"];
 const prevenir = (e, copie, neuve) => e.waitUntil(neuve.then(async rep => {
   if (!rep || !rep.ok) return;
   const a = copie.headers.get("etag"), b = rep.headers.get("etag");
@@ -19,8 +21,13 @@ const gardePage = async () => {
   const ancienne = await caches.match("index.html");
   if (ancienne) await c.put("index.html", ancienne); else await c.add("index.html");
 };
-self.addEventListener("install", e => { e.waitUntil(Promise.all([caches.open(CACHE).then(c => c.addAll(FICHIERS)), gardePage()])); self.skipWaiting(); });
+/* la copie de la page doit aller avec les fichiers gardés : à l'installation, on garde la page de cette version */
+const pageDeLaVersion = async () => { const rep = await fetch("index.html", { cache: "reload" }); if (rep.ok) await (await caches.open(PAGE)).put("index.html", rep); };
+self.addEventListener("install", e => { e.waitUntil(Promise.all([caches.open(CACHE).then(c => c.addAll(FICHIERS)), gardePage()]).then(() => pageDeLaVersion().catch(() => {}))); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== CACHE && n !== PAGE).map(n => caches.delete(n))))); self.clients.claim(); });
+/* une page neuve n'est gardée hors ligne que si tous ses fichiers r/… sont déjà dans la copie */
+const versionOk = async rep => { const t = await rep.text(), L = [...t.matchAll(/(?:src|href)="(r\/[^"]+)"/g)].map(m => m[1]), c = await caches.open(CACHE);
+  for (const f of L) if (!await c.match(f)) return false; return true; };
 self.addEventListener("fetch", e => {
   const r = e.request;
   if (r.method !== "GET" || new URL(r.url).origin !== location.origin) return;
@@ -28,7 +35,7 @@ self.addEventListener("fetch", e => {
     const ici = new URL(r.url).pathname, base = new URL("./", location).pathname;
     if (ici !== base && ici !== base + "index.html") return;
     const page = caches.open(PAGE);
-    const neuve = page.then(c => fetch(r).then(async rep => { if (rep && rep.ok) await c.put("index.html", rep.clone()); return rep; }));
+    const neuve = page.then(c => fetch(r).then(async rep => { if (rep && rep.ok && await versionOk(rep.clone())) await c.put("index.html", rep.clone()); return rep; }));
     e.waitUntil(neuve.catch(() => {}));
     e.respondWith(page.then(c => c.match("index.html")).then(copie => !copie ? neuve : Promise.race([
       neuve.then(rep => rep && rep.ok ? rep : copie, () => copie),
