@@ -93,7 +93,7 @@ function notion(sid,ep){const C=X(sid,ep),p=posDe(sid,ep),N=C.notions.length;if(
     const ev={k:"cch",s:sid,ep,n:n.id,nt:n.t,ok:r.ok?1:0,part:Math.round(r.part*100)/100,ms:r.ms};A.emit(ev);
     if(window.ENT){try{ENT.shot(ev);ENT.pastille();}catch(x){}}
     tic();const q=posDe(sid,ep);q.k=(q.k||0)+1;if(r.ok){q.i=p.i+1;q.st=0;}else q.st=2;garde(sid,ep,q);
-    if(nouveau){const av=palier(C,B.pts),ap=palier(C,B.pts+n.pts);setTimeout(()=>etiquette(`+${virg(n.pts)} pt${n.pts>1?"s":""} ${C.du}`),300);
+    if(nouveau){const av=palier(C,B.pts),ap=palier(C,B.pts+n.pts);if(n.pts>0)setTimeout(()=>etiquette(`+${virg(n.pts)} pt${n.pts>1?"s":""} ${C.du}`),300);
       if(ap&&ap!==av)setTimeout(()=>etiquette(ap[1]+" !",true),1300);
       const bar=$(".xp-j i");if(bar)setTimeout(()=>{bar.style.width=Math.min(100,(B.pts+n.pts)/20*100)+"%";},200);}
     const se=seLit(),dansSe=se&&!se.fin&&se.sid===sid&&se.ep===ep&&se.ids.includes(n.id),nx=dansSe?se.ids[se.ids.indexOf(n.id)+1]:null,kx=nx?C.notions.findIndex(m=>m.id===nx):-1;
