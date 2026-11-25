@@ -957,7 +957,7 @@ function jugeRel(rep,o){const ids=o.ids,Y=coefsLus(rep,ids),S=o.S;if(!Y)return {
   if(ids.length===2&&egal(Y[0],S.X[1])&&egal(Y[1],S.X[0]))return r(S.iFin,"α et β échangés","Où ça part : la lecture du résultat.",`α est le nombre devant A, β celui devant ${o.I}.`);
   return r(S.iFin,"calcul de A⁻¹","Où ça part : la fin du calcul.",`${fac}, donc A⁻¹ = ${polyT(S.X,o.I)} : on divise chaque coefficient par ${nb(-d)}.`);}
 const champsRel=ids=>ids.map((k,i)=>({k:"champ",id:k,nom:["α","β","γ"][i],label:["α","β","γ"][i]+" =",ex:["par exemple −1/2","par exemple 3","par exemple 0"][i]}));
-function relationDonnee(R){const n=R.choix([2,3]),I=nomI(n),forme=R.ent(0,1),a=forme?R.choix([1,1,1,2]):R.choix([1,1,1,2,-1]),p=R.choix([-5,-4,-3,-2,-1,0,1,2,3,4,5]),d=R.choix([-6,-5,-4,-3,-2,-1,1,2,3,4,6]),c=[a,p,d];
+function relationDonnee(R){const n0=R.choix([2,3]),forme=R.ent(0,1),a=forme?R.choix([1,1,1,2]):R.choix([1,1,1,2,-1]),p=R.choix([-5,-4,-3,-2,-1,0,1,2,3,4,5]),d=R.choix([-6,-5,-4,-3,-2,-1,1,2,3,4,6]),c=[a,p,d],n=n0===3&&p*p<4*a*d?2:n0,I=nomI(n);
   const rel=forme?`${comb([a],["A²"])} = ${comb([-p,-d],["A",I])}`:`${polyT(c,I)} = 0`,S=etapesRel(c,I),pre=forme?[{w:`On met tout du même côté : ${polyT(c,I)} = 0.`,why:`Ce qui change de côté change de signe.`,pts:1}]:[],ids=["al","be"];
   return {sig:"RD"+JSON.stringify([n,c,forme]),q:`Une matrice carrée A de taille ${n} × ${n} vérifie ${rel}. Montre que A est inversible, et écris A⁻¹ sous la forme αA + β${I} : que valent α et β ?`,corps:"",texte:`A vérifie ${rel} ; A⁻¹ = αA + β${I}, α et β ?`,
     champs:champsRel(ids),juge:rep=>jugeRel(rep,{ids,noms:["α","β"],S,c,I,dec:pre.length}),etapes:pre.concat(S.E),bonne:`A⁻¹ = ${polyT(S.X,I)} : α = ${nb(S.X[0])} et β = ${nb(S.X[1])}`,bonneTxt:`A⁻¹ = ${polyT(S.X,I)}`,
@@ -971,8 +971,8 @@ function matRel(R){for(;;){let A;if(R()<0.5)A=matAlea(R,2,2,3,.1);else{const l=R
   return {A,A2,k,c,n:A.length,M:A2.map((l,i)=>l.map((x,j)=>x-k*A[i][j])),I:nomI(A.length),ex:polyT([1,-k,0],"I")};}}
 function etapesCarre(T){const {A,A2,k,M,I,ex}=T,E=lignesProduit(A,A,"A²","A","A");
   E.push({w:`<b>A² = ${matH(A2)}</b>`,why:`A² = A × A : les lignes de A fois les colonnes de A.`,pts:1});
-  E.push({w:`${comb([k],["A"])} = ${matH(A.map(l=>l.map(x=>k*x)))}`,why:`Multiplier une matrice par un nombre, c'est multiplier chacun de ses coefficients.`,pts:1});
-  E.push({w:`<b>${ex} = ${matH(M)} = ${comb([T.c],[I])}</b>`,why:`On soustrait coefficient par coefficient. Hors de la diagonale, tout s'annule ; sur la diagonale, le même nombre partout : c'est ${comb([T.c],[I])}.`,pts:1});
+  E.push({w:`${comb([Math.abs(k)],["A"])} = ${matH(A.map(l=>l.map(x=>Math.abs(k)*x)))}`,why:`Multiplier une matrice par un nombre, c'est multiplier chacun de ses coefficients.`,pts:1});
+  E.push({w:`<b>${ex} = ${matH(M)} = ${comb([T.c],[I])}</b>`,why:`${k>0?"On soustrait":"On additionne"} coefficient par coefficient. Hors de la diagonale, tout s'annule ; sur la diagonale, le même nombre partout : c'est ${comb([T.c],[I])}.`,pts:1});
   return E;}
 function calculRel(R){const T=matRel(R),{A,A2,k,M,n,I,ex}=T,E=etapesCarre(T),noms=M.map((_,i)=>"l"+(i+1)),eg=`par exemple (${[1,-2,0].slice(0,n).join(", ")})`;
   function juge(rep){const X=lignesLues(rep,"l",n,n);if(!X)return {incomplet:`Écris les ${n} lignes de ${ex}, chacune avec ${n} nombres, ${eg}.`};
@@ -1194,7 +1194,7 @@ function etapesGen(T){const X=XYZ,E=[{w:`On résout le système de F : ${sys(T.M
   E.push({w:`z et t n'ont pas de pivot : ce sont les variables libres.<br>${[1,0].map(r=>remonte(r)).join("<br>")}<br>Avec z = 1 et t = 0 : ${F1} = ${vt(T.F[0])} ; avec z = 0 et t = 1 : ${F2} = ${vt(T.F[1])}. <b>F = Vect(${F1}, ${F2})</b> : (${F1}, ${F2}) est une famille génératrice de F.`,why:`Chaque solution s'écrit z${F1} + t${F2} : ces deux vecteurs engendrent F.`,pts:1.5});return E;}
 function etapeFG(T,eqG){const X=XYZ,ligne=w=>T.M.map(e=>fx(`${verifTxt(e,w)} = ${nb(valEq(e,w))}`)).join(" et ");
   const tests=`Pour u : ${ligne(T.u)}. Pour v : ${ligne(T.v)}.`;
-  if(!T.egal){const k=T.dans.indexOf(false),nm=k?"v":"u";return {w:`${tests} <b>${nm} n'est pas dans F</b> : une équation de F n'est pas vérifiée. Donc G ⊄ F, et <b>F ≠ G</b>.`,why:`Si F = G, tout vecteur de G serait dans F. Un seul vecteur de G hors de F suffit à montrer F ≠ G.`,pts:2};}
+  if(!T.egal){const k=T.dans.indexOf(false),nm=k?"v":"u",deux=!T.dans[0]&&!T.dans[1];return {w:`${tests} <b>${deux?"Ni u ni v n'est dans F":nm+" n'est pas dans F"}</b> : ${deux?"chacun ne vérifie pas une équation de F (les deux réponses « u » et « v » sont justes)":"une équation de F n'est pas vérifiée"}. Donc G ⊄ F, et <b>F ≠ G</b>.`,why:`Si F = G, tout vecteur de G serait dans F. Un seul vecteur de G hors de F suffit à montrer F ≠ G.`,pts:2};}
   const lg=w=>eqG.map(e=>fx(`${verifTxt(e,w)} = ${nb(valEq(e,w))}`)).join(" et ");
   return {w:`${tests} u et v sont dans F, donc G = Vect(u, v) ⊂ F.<br>Dans l'autre sens, F = Vect(${F1}, ${F2}) avec ${F1} = ${vt(T.F[0])} et ${F2} = ${vt(T.F[1])}, et G a pour équations ${eqG.map(e=>fx(comb(e,X)+" = 0")).join(" et ")}. Pour ${F1} : ${lg(T.F[0])}. Pour ${F2} : ${lg(T.F[1])}. Donc F ⊂ G. <b>F = G.</b>`,
     why:`Pour montrer F = G, on montre les deux inclusions. G ⊂ F : les vecteurs qui engendrent G vérifient les équations de F. F ⊂ G : ceux qui engendrent F vérifient les équations de G.`,pts:2};}

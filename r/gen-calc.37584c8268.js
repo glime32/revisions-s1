@@ -251,7 +251,7 @@ const angT=t=>{t=q(t);if(nul(t))return "0";const A=absQ(t);return (t.n<0?"−":"
 const angE=t=>{t=q(t);const A=absQ(t);return (t.n<0?"−":"")+(A.n===1?"":A.n)+"iπ"+(A.d>1?"/"+A.d:"");};
 const angTape=t=>{t=q(t);return nul(t)?"0":(t.n<0?"-":"")+Math.abs(t.n)+"*pi"+(t.d>1?"/"+t.d:"");};
 const angF=t=>q(t).n/q(t).d*Math.PI;
-const expT=(r,t)=>nul(q(t))?rT(r):`${rT(r)==="1"?"":rT(r)}e^{${angE(t)}}`;
+const expT=(r,t)=>nul(q(t))?rT(r):`${rT(r)==="1"?"":/^[^()]*\/[^()]*$/.test(rT(r))?"("+rT(r)+")":rT(r)}e^{${angE(t)}}`;
 /* cos et sin exacts des multiples de π/4 et de π/6 */
 const TRIG=(()=>{const T={},h=Q(1,2),mh=Q(-1,2),set=(m,c,s)=>{T[m]={c,s};};
   set(0,Rd(1),Rd(0));set(6,Rd(0),Rd(1));set(12,Rd(-1),Rd(0));set(18,Rd(0),Rd(-1));
@@ -969,7 +969,7 @@ function ippTire(R,fam){
   if(fam==="lnx"){const a=R.ent(1,4),Bk=R.choix(["e","2","3","e2"]),crL={e:[[a,"e",1]],"2":[[2*a,"ln2"]],"3":[[3*a,"ln3"]],e2:[[2*a,"e",2]]}[Bk],resteL={e:[[a,"e",1],[-a,"1"]],"2":[[a,"1"]],"3":[[2*a,"1"]],e2:[[a,"e",2],[-a,"1"]]}[Bk];
     const cr=VX(crL),reste=VX(resteL),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L))),BT={e:"e","2":"2","3":"3",e2:"e²"}[Bk];
     return {sig:`N${a},${Bk}`,f:x=>a*Math.log(x),A:1,B:{e:Math.E,"2":2,"3":3,e2:Math.E**2}[Bk],BT,fT:`${a===1?"":a}ln x`,u:"ln x",du:"1/x",dv:String(a),v:`${a===1?"":a}x`,vF:x=>a*x,duV:null,
-      cr,reste,I,crT:`[${a===1?"":a}x ln x]_{1}^{${BT}}`,resteT:`∫_{1}^{${BT}} (1/x) × ${a===1?"":a}x dx`,resteS:`∫_{1}^{${BT}} ${a} dx`,resteP:"",why0:"Astuce : ln x = 1 × ln x. On dérive ln x et on primitive 1 (v = x) : la dérivée 1/x se simplifie avec x."};}
+      cr,reste,I,crT:`[${a===1?"":a}x ln x]_{1}^{${BT}}`,resteT:`∫_{1}^{${BT}} (1/x) × ${a===1?"":a}x dx`,resteS:`∫_{1}^{${BT}} ${a} dx`,resteP:"",why0:a===1?"Astuce : ln x = 1 × ln x. On dérive ln x et on primitive 1 (v = x) : la dérivée 1/x se simplifie avec x.":`Astuce : on dérive ln x et on primitive ${a} (v = ${a}x) : la dérivée 1/x se simplifie avec x.`};}
   if(fam==="atan"){const a=R.ent(1,3),cr=VX([[Q(a,4),"pi"]]),reste=VX([[Q(a,2),"ln2"]]),I=VX(cr.L.map(x=>x.slice()).concat(negV(reste.L)));
     return {sig:`A${a}`,f:x=>a*Math.atan(x),A:0,B:1,BT:"1",fT:`${a===1?"":a}arctan x`,u:"arctan x",du:"1/(1 + x²)",dv:String(a),v:`${a===1?"":a}x`,vF:x=>a*x,duV:null,
       cr,reste,I,crT:`[${a===1?"":a}x arctan x]_{0}^{1}`,resteT:`∫_{0}^{1} ${a===1?"":a}x/(1 + x²) dx`,resteS:`${coef(Q(a,2))}[ln(1 + x²)]_{0}^{1}`,resteP:"",why0:`Astuce : arctan x = 1 × arctan x. ${fx("(arctan x)′ = 1/(1 + x²)")}, puis ${fx("x/(1 + x²)")} est de la forme ${fx("(1/2) × u′/u")}.`};}
@@ -1564,20 +1564,20 @@ function lmTaux(R){const t=R(),P0={a:0,c:0},defi=`Le taux d'accroissement de f e
   if(t<0.5){const g=R.choix(["sin","sin","exp","exp","ln","cos"]),o=tire(g),b=R.choix([1,1,2,3,4,5]),L={v:Q(o.d0,b)},tx=lmF(o.top,"x"),rec="Reconnais un taux d'accroissement en 0.";
     return lmExo({sig:"T1"+[o.top,b],expr:lmF(o.top,lmM(b,1)),pt:P0,lim:L,nature:"en 0 : "+g,type:"taux d'accroissement",faux:o.d0?"0":"1",
       pieges:[["+∞","pris pour l'infini"]].concat(o.d0?[["0","pris pour 0"]]:[["1","dérivée en 0"]],o.d0&&o.d0!==b?[["1","coefficient"]]:[],o.d0&&Math.abs(o.d0)!==b?[[brut(Q(b,o.d0)),"inversé"]]:[]),
-      etapes:[{w:`Quand x tend vers 0, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». On reconnaît un taux d'accroissement : avec ${fx(`f(x) = ${o.f}`)}, on a ${fx(`f(0) = ${o.f0}`)}, donc le haut est ${fx("f(x) − f(0)")}.`,why:`${defi} Ici a = 0.`,pts:1},
-        {w:`${fx(`f′(x) = ${o.d}`)}, donc ${fx(`f′(0) = ${nb(o.d0)}`)} : ${fx(tx)} tend vers ${fx(nb(o.d0))}.`,why:`${o.r}.`,pts:1},
+      etapes:[{w:`Quand x tend vers 0, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». On reconnaît un taux d'accroissement : avec ${fx(`g(x) = ${o.f}`)}, on a ${fx(`g(0) = ${o.f0}`)}, donc le haut est ${fx("g(x) − g(0)")}.`,why:`${defi} Ici a = 0.`,pts:1},
+        {w:`${fx(`g′(x) = ${o.d}`)}, donc ${fx(`g′(0) = ${nb(o.d0)}`)} : ${fx(tx)} tend vers ${fx(nb(o.d0))}.`,why:`${o.r}.`,pts:1},
         {w:lmFin(P0,L),why:b===1?"C'est exactement ce taux d'accroissement.":`${fx(`f(x) = (1/${b}) × ${tx}`)} : on divise la limite du taux d'accroissement par ${b}.`,pts:1}],
       diag:lu=>lu.inf?zi(rec):!o.d0?(lu.v===1?lmD(1,"dérivée en 0 mal calculée","la dérivée.",`${o.r} : le taux d'accroissement tend vers 0, pas vers 1.`):null):lu.v===0?zz(rec)
         :lu.v===1?lmD(1,"coefficient de x oublié","la dérivée.",`${fx("(sin x)/x")} et ${fx("(eˣ − 1)/x")} tendent vers 1, mais ici x a un coefficient : la dérivée en 0 vaut ${fx(nb(o.d0))}${b===1?"":`, et on divise par ${b}`}.`)
         :Math.abs(o.d0)!==b&&pres(lu.v,b/o.d0)?lmD(2,"quotient inversé","la conclusion.",`La dérivée en 0 vaut ${fx(nb(o.d0))}, et c'est elle qu'on divise par ${b}.`):null});}
   if(t<0.75){const a=R.choix([1,1,1,2,-1,3]),n=R.ent(2,a===3?3:a===2?4:5),an=a**n,d0=n*a**(n-1),inv=R()<0.4,P={a,c:0},A=fx(nb(a)),haut=`${LMP[n]} ${lmSi(-an)} ${Math.abs(an)}`,bas=`x ${lmSi(-a)} ${Math.abs(a)}`,tx=lmF(haut,bas),L={v:inv?Q(1,d0):Q(d0)},
-      calc=a===1?`f′(1) = ${n}`:`f′(${nb(a)}) = ${n} × ${a<0?"(−1)":a}${n>2?"⁰¹²³⁴"[n-1]:""} = ${nb(d0)}`,rec=`Reconnais le taux d'accroissement de ${fx(LMP[n])} en ${A}.`;
+      calc=a===1?`g′(1) = ${n}`:`g′(${nb(a)}) =${n} × ${a<0?"(−1)":a}${n>2?"⁰¹²³⁴"[n-1]:""} = ${nb(d0)}`,rec=`Reconnais le taux d'accroissement de ${fx(LMP[n])} en ${A}.`;
     return lmExo({sig:"T2"+[a,n,+inv],expr:inv?lmF(bas,haut):tx,pt:P,lim:L,nature:inv?"xⁿ, inverse":"xⁿ",type:"taux d'accroissement",pieges:[["+∞","pris pour l'infini"],["0","pris pour 0"],["1","pris pour 1"],[brut(inv?Q(d0):Q(1,d0)),"invers"]],
-      etapes:[{w:`Quand x tend vers ${A}, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». Avec ${fx(`f(x) = ${LMP[n]}`)}, on a ${fx(`f(${nb(a)}) = ${nb(an)}`)} : ${fx(tx)} est le taux d'accroissement de f en ${A}.${inv?" Notre fonction est son inverse.":""}`,why:defi,pts:1},
-        {w:`${fx(`f′(x) = ${n}${LMP[n-1]}`)}, donc ${fx(calc)} : le taux d'accroissement tend vers ${fx(nb(d0))}.`,why:`${fx("(xⁿ)′ = nxⁿ⁻¹")}.`,pts:1},
+      etapes:[{w:`Quand x tend vers ${A}, le haut et le bas tendent vers 0 : c'est une forme indéterminée « 0/0 ». Avec ${fx(`g(x) = ${LMP[n]}`)}, on a ${fx(`g(${nb(a)}) = ${nb(an)}`)} : ${fx(tx)} est le taux d'accroissement de g en ${A}.${inv?" Notre fonction est son inverse.":""}`,why:defi,pts:1},
+        {w:`${fx(`g′(x) = ${n}${LMP[n-1]}`)}, donc ${fx(calc)} : le taux d'accroissement tend vers ${fx(nb(d0))}.`,why:`${fx("(xⁿ)′ = nxⁿ⁻¹")}.`,pts:1},
         {w:lmFin(P,L),why:inv?`L'inverse d'une quantité qui tend vers ${fx(nb(d0))} (pas vers 0) tend vers ${fx(nb(Q(1,d0)))}.`:"C'est exactement ce taux d'accroissement.",pts:1}],
       diag:lu=>lu.inf?zi(rec):lu.v===0?zz(rec):lu.v===1?lmD(0,"« 0/0 » pris pour 1","la forme indéterminée.",`« 0/0 » ne vaut pas 1 : c'est une forme indéterminée. ${rec}`)
-        :pres(lu.v,inv?d0:1/d0)?lmD(2,inv?"inverse oublié":"quotient inversé","la conclusion.",inv?`${fx(nb(d0))} est la limite de ${fx(tx)}. Notre fonction est son inverse : sa limite est ${fx(nb(Q(1,d0)))}.`:`Le taux d'accroissement est ${fx(tx)} : il tend vers ${fx(`f′(${nb(a)}) = ${nb(d0)}`)}.`):null});}
+        :pres(lu.v,inv?d0:1/d0)?lmD(2,inv?"inverse oublié":"quotient inversé","la conclusion.",inv?`${fx(nb(d0))} est la limite de ${fx(tx)}. Notre fonction est son inverse : sa limite est ${fx(nb(Q(1,d0)))}.`:`Le taux d'accroissement est ${fx(tx)} : il tend vers ${fx(`g′(${nb(a)}) = ${nb(d0)}`)}.`):null});}
   let o1,o2;do{o1=tire(R.choix(["sin","exp","ln"]));o2=tire(R.choix(["sin","sin","exp","ln"]));}while(o1.d0===o2.d0);
   const L={v:Q(o1.d0,o2.d0)},t1=lmF(o1.top,"x"),t2=lmF(o2.top,"x"),rec="Divise le haut et le bas par x : deux taux d'accroissement apparaissent.",inverse=Math.abs(o1.d0)!==Math.abs(o2.d0);
   return lmExo({sig:"T3"+[o1.top,o2.top],expr:lmF(o1.top,o2.top),pt:P0,lim:L,nature:"deux taux d'accroissement",type:"taux d'accroissement",pieges:[["+∞","pris pour l'infini"],["0","pris pour 0"],["1","coefficients"]].concat(inverse?[[brut(Q(o2.d0,o1.d0)),"inversé"]]:[]),
