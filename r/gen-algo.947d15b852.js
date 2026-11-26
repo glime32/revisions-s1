@@ -299,7 +299,7 @@ function sommeRef(R,nb,sansExp,melange){const pool=R.mel(REF.filter(r=>!sansExp|
 const versN=src=>String(src||"").replace(/ⁿ/g,"^n").replace(/[.·](?=\s*[a-zA-Z(√])/g,"*").replace(/log\s*n\b/gi,"log(n)");
 const GRANDS=e=>e?[30,60,90]:[1e4,1e8,1e12];
 const pourquoiDom=(S)=>S.T.length<2?"Il n'y a qu'un terme.":`Quand on divise par ${fx(S.dom[1].t)}, ${S.T.length>2?"les autres termes tendent":"l'autre terme tend"} vers 0 : par exemple ${fx(`${S.T[1][1].t}/${S.dom[1].t}`)} tend vers 0, car ${fx(S.T[1][1].t)} vient avant ${fx(S.dom[1].t)} dans la liste des suites de référence.`;
-const LISTE="L'ordre du cours, de la plus lente à la plus rapide : 1, log(n), n, n.log(n), n², n³, puis les exponentielles 2ⁿ, 3ⁿ, et enfin n!. La racine √n se place entre log(n) et n, et n².log(n) entre n² et n³.";
+const LISTE="L'ordre du cours, de la suite qui grandit le moins vite à celle qui grandit le plus vite (donc de l'algorithme le plus rapide au plus lent) : 1, log(n), n, n.log(n), n², n³, puis les exponentielles 2ⁿ, 3ⁿ, et enfin n!. La racine √n se place entre log(n) et n, et n².log(n) entre n² et n³.";
 function ranger(R){const nb=R.choix([4,4,5]),FACT={t:"n!",cl:[99,0,0]},pool=R.mel(REF.concat([FACT])).slice(0,nb),LET=["A","B","C","D","E"].slice(0,nb);
   const deco=r=>{const k=R.choix([1,1,2,5,10,100,1000]),d=R()<0.25&&r.t!=="1"&&r.t!=="n!";return r.t==="1"?String(R.choix([1,7,100,1000])):d?`${r.t}/${R.choix([10,50,100])}`:r.t==="n!"?"n!":termeT(k,r);};
   const F=pool.map((r,i)=>({l:LET[i],r,t:deco(r)})),bon=F.slice().sort((x,y)=>cmpCl(x.r,y.r)),att=bon.map(x=>x.l).join("");
@@ -311,7 +311,7 @@ function ranger(R){const nb=R.choix([4,4,5]),FACT={t:"n!",cl:[99,0,0]},pool=R.me
     let d=null;for(let i=0;i+1<nb;i++){const x=F.find(z=>z.l===L[i]),y=F.find(z=>z.l===L[i+1]);if(cmpCl(x.r,y.r)>0){d={etape:1,type:"deux ordres de grandeur inversés",titre:`Où ça part : ${x.l} et ${y.l}.`,msg:`${fx(y.t)} grandit moins vite que ${fx(x.t)} : le quotient ${fx(`${y.r.t}/${x.r.t}`)} tend vers 0. Les constantes ne changent rien quand n est très grand.`};break;}}
     return {ok:false,faux:["o"],resume:"Pas tout à fait : ce n'est pas le bon ordre.",diag:d};}
   return {sig:"RG"+F.map(x=>x.t).join("|"),q:`Voici ${nb} suites : ${F.map(x=>`${x.l} : ${fx(x.t)}`).join(" ; ")}. Range-les de celle qui grandit le moins vite à celle qui grandit le plus vite, quand n devient très grand.`,corps:"",texte:`ranger par ordre de grandeur : ${F.map(x=>`${x.l} = ${x.t}`).join(" ; ")}`,
-    champs:[{k:"champ",id:"o",nom:"ordre",label:"De la plus lente à la plus rapide :",ex:"par exemple B A D C",apercu:false,sym:LET.map(l=>[l,l+" "])}],juge,etapes:E,bonne:bon.map(x=>x.l).join(" &lt; "),bonneTxt:bon.map(x=>x.l).join(" < "),repBonne:{o:att.split("").join(" ")},repFausse:{o:att.split("").reverse().join(" ")},nature:"ranger",
+    champs:[{k:"champ",id:"o",nom:"ordre",label:"De la croissance la plus faible à la plus forte :",ex:"par exemple B A D C",apercu:false,sym:LET.map(l=>[l,l+" "])}],juge,etapes:E,bonne:bon.map(x=>x.l).join(" &lt; "),bonneTxt:bon.map(x=>x.l).join(" < "),repBonne:{o:att.split("").join(" ")},repFausse:{o:att.split("").reverse().join(" ")},nature:"ranger",
     ens:{type:"ranger",ordre:bon.map(x=>x.r.t)}};}
 function simplifier(R){const S=sommeRef(R,R.choix([2,3,3]),R()<0.8,true),ref=S.dom[1],PT=[7,20,50],G=GRANDS(S.exp||true);
   const E=[{w:`Les termes de ${fx("T_{n}")} sont de l'ordre de ${et(S.T.map(x=>fx(x[1].t)))}.`,why:"On regarde chaque terme sans sa constante.",pts:1},
