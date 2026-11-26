@@ -13,7 +13,7 @@
  blancLead:"Cinq questions comme aux anciens sujets : la question de cours, la trace, l'arrêt, un algorithme récursif comme en janvier 2023, puis le master theorem à partir d'une procédure. Les points suivent à peu près ces sujets, où le récursif pèse le plus. Fais-les sans revenir aux notions : la note qui sort est une estimation de celle que tu aurais eue.",
  paliers:[[10,"Moyenne assurée"],[14,"Bonne note"]],
  notions:[
- {id:"cours",t:"La question de cours : θ, o, ω, et à quoi servent les outils",pts:3,ou:"CC 2022 q. 4 et 5 ; CC 2024 q. 1, 4 et 5",lect:1.5,
+ {id:"cours",t:"La question de cours : θ, o, ω, et à quoi servent les outils",pts:2,ou:"CC 2022 q. 4 et 5 ; CC 2024 q. 1, 4 et 5",lect:1.5,
   rappel:{min:2,q:`Écris quand Tₙ = θ(Rₙ), Tₙ = o(Rₙ) et Tₙ = ω(Rₙ). Range 2ⁿ, n log n, 1, n², log n, n, n³ de celle qui grandit le moins vite à celle qui grandit le plus vite. Puis dis à quoi sert le master theorem, et à quoi servent les équations d'itération dans une preuve de validité.`,
    r:`<p>θ(Rₙ) : Tₙ/Rₙ reste entre deux nombres strictement positifs (c'est le cas s'il tend vers a &gt; 0). o(Rₙ) : il tend vers 0. ω(Rₙ) : il tend vers +∞. O veut dire o ou θ ; Ω veut dire ω ou θ.</p><p>1, log n, n, n log n, n², n³, 2ⁿ.</p><p>Le master theorem donne une approximation de la complexité d'un algorithme récursif dont la taille de l'entrée est divisée à chaque appel. Les équations d'itération traduisent le fonctionnement de l'algorithme en relations entre les variables : elles permettent de montrer qu'un invariant est héréditaire.</p>`},
   ess:`<ul><li>Tₙ = θ(Rₙ) : le quotient Tₙ/Rₙ reste entre deux nombres strictement positifs (diapo 77). C'est le cas dès qu'il tend vers a &gt; 0. Tend vers 0 : o(Rₙ). Vers +∞ : ω(Rₙ). O = o ou θ ; Ω = ω ou θ.</li>
@@ -103,16 +103,16 @@ pour i de 1 à n faire
 <ol><li>Fais-la tourner : D(20) donne m = 20, 10, 5, 2, 1 et renvoie k = 4.</li>
 <li>Arrêt : m est un entier, il vaut n au début, et m div 2 &lt; m quand m &gt; 1 : il décroît strictement. La boucle s'arrête quand m ≤ 1, donc après au plus n − 1 itérations : elle s'arrête.</li>
 <li>Le nombre de tours : m est divisé par 2 à chaque tour, donc D(n) fait log₂(n) tours (arrondi en dessous).</li></ol>`},
- {id:"rapide",t:"Un ordinateur plus rapide",pts:2,ou:"janvier 2023 ex. 2 (3 points)",lect:1.5,exo:{g:"AG7",lv:3},
-  ess:`<ul><li>Un ordinateur k fois plus rapide fait k fois plus d'opérations dans le même temps.</li>
-<li><b>Quelle taille ?</b> Pour n<sup>d</sup> opérations : m = n × (racine d-ième de k). Pour 2ⁿ : m = n + log₂(k).</li>
-<li><b>Quel temps ?</b> Pour n² : une taille × 3 donne un temps × 3² = 9. Pour 2ⁿ : une taille + 5 donne un temps × 2⁵ = 32.</li></ul>`,
-  piege:`Pour 2ⁿ, on ne multiplie pas n : on ajoute seulement log₂(k). C'est pour ça qu'un algorithme exponentiel reste lent sur une machine plus rapide.`,
-  meth:`<p>Janvier 2023 : le temps est proportionnel à n log₁₀(n). A traite une taille 100 en une minute ; B est 200 fois plus rapide. Quelle taille B traite-t-il en une minute ?</p>
-<ol><li>A : 100 × log₁₀(100) = 100 × 2 = 200.</li>
-<li>B fait 200 fois plus d'opérations : n log₁₀(n) = 200 × 200 = 40 000.</li>
-<li>Le tableau du sujet donne 10 000 × log₁₀(10 000) = 40 000 : B traite une taille 10 000.</li></ol>
-<p>Les temps : 2 s pour une taille 300 avec n² donne 2 × 9 = 18 s pour 900 ; 5 s pour une taille 40 avec 2ⁿ donne 5 × 32 = 160 s pour 45.</p>`},
+ {id:"rapide",t:"La complexité en pratique : ranger, choisir, machine plus rapide (TD 29 à 31)",pts:3,ou:"annoncé par le prof pour le CC2 : « entre le 29 et le 31 » ; janvier 2023 ex. 2",lect:2,exo:{g:"AG7",lv:5},
+  ess:`<ul><li><b>Ranger des suites (TD 29).</b> Pour chaque suite, garde le terme dominant (celui qui grandit le plus vite) et oublie les constantes : 0,001n² − 100000n est en Θ(n²), log(n² + 1) en Θ(log n), 3ⁿ − 2ⁿ en Θ(3ⁿ), 2^(n/2) = (√2)ⁿ. Puis range avec la liste du cours, de la croissance la plus faible à la plus forte : 1, log n, √n, n, n log n, n², n² log n, n³, (√2)ⁿ, 2ⁿ, 3ⁿ, n!. En cas de doute entre u et v : la limite de u/v vaut 0 (u dominée), une constante &gt; 0 (même ordre) ou +∞ (u domine).</li>
+<li><b>Choisir entre deux algorithmes (TD 30).</b> Θ ne donne que l'ordre : une mesure ne suffit pas, il faut supposer le temps proportionnel (t = k n², t = k n log n). Une mesure donne k ; on calcule les deux temps pour chaque taille et on prend le plus petit. Dis la base du log (base 10 avec n = 100, 1000, 10000) : en base 2, k change mais pas les temps.</li>
+<li><b>Une machine k fois plus rapide (TD 31).</b> Elle fait k fois plus d'opérations dans le même temps. Pour n² : m² = k n₀², donc m = n₀ √k (100 fois plus rapide : 10 n₀). Pour 2ⁿ : 2^m = k 2^(n₀), donc m = n₀ + log₂(k) (100 fois plus rapide : n₀ + 6,6).</li></ul>`,
+  piege:`Ne range pas d'après les constantes ni d'après une valeur de n : 3000n reste dominée par n log n (il faut seulement n très grand), et 0,001n² − 100000n, négative tant que n &lt; 10⁸, est quand même en Θ(n²). Pour 2ⁿ, une machine plus rapide n'ajoute que log₂(k) à la taille, elle ne la multiplie pas.`,
+  meth:`<p><b>TD 29</b> (corrigé) : c<sub>n</sub> = log(n² + 1) ≺ f<sub>n</sub> = 3000n + 28 ≺ a<sub>n</sub> = 0,001n² − 100000n et d<sub>n</sub> = n² (même ordre, Θ(n²)) ≺ e<sub>n</sub> = n²(log(3n) + 5) ≺ b<sub>n</sub> = 2^(n/2) ≺ g<sub>n</sub> = 2ⁿ + 1 ≺ h<sub>n</sub> = 3ⁿ − 2ⁿ.</p>
+<p><b>TD 30</b> : A en Θ(n²) met 1 s pour n = 100, B en Θ(n log n) met 10 s. k<sub>A</sub> = 1/100² = 0,0001 ; k<sub>B</sub> = 10/(100 × log₁₀ 100) = 10/200 = 0,05.</p>
+<ol><li>n = 1000 : A met 0,0001 × 1000² = 100 s ; B met 0,05 × 1000 × 3 = 150 s : on choisit A.</li>
+<li>n = 10000 : A met 0,0001 × 10000² = 10 000 s ; B met 0,05 × 10000 × 4 = 2000 s : on choisit B.</li></ol>
+<p><b>TD 31</b> : X traite n₀ en 1 minute, Y est 100 fois plus rapide. Avec n² : n² = 100 n₀², donc n = 10 n₀. Avec 2ⁿ : 2ⁿ = 100 × 2^(n₀), donc n = n₀ + log₂(100) ≈ n₀ + 6,6 : Y traite seulement n₀ + 6.</p>`},
  {id:"dicho",t:"La recherche dichotomique : la trace et l'arrêt",pts:0,ou:"au cas où, pas sûr au CC2 · TD 9, diapos 91 à 98",lect:2,exo:{g:"AG9",lv:1},
   ess:`<ul><li>RechDic cherche e dans un tableau <b>trié</b>. À chaque tour : mil = (deb + fin) div 2 ; si T[mil] &lt; e, deb ← mil + 1, sinon fin ← mil − 1.</li>
 <li>Quand deb &gt; fin, elle renvoie deb si T[deb] = e, sinon −1 : c'est le plus petit indice qui contient e.</li>

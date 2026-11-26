@@ -414,6 +414,54 @@ function machine(R){const t=R.ent(0,3),d=R.ent(1,3),mm=R.choix([2,3,4,5,10]),N=R
   function juge(r){const v=nombre(r.v);if(!v)return {incomplet:"Écris un nombre."};if(v.d===1&&v.n===rep)return {ok:true};
     return {ok:false,faux:["v"],resume:"Pas tout à fait : ce n'est pas la bonne valeur.",diag:{etape:1,type:t<2?"taille traitée par une machine plus rapide":"temps d'exécution quand la taille change",titre:"Où ça part : le lien entre la taille et le temps.",msg:`${E[1].w} ${E[1].why}`}};}
   return {sig:"MA"+[t,d,mm,N,j],q,corps:"",texte:q.replace(/<[^>]+>|\$/g,""),champs:[{k:"champ",id:"v",nom:"réponse",label:t<2?"Taille que Y peut traiter :":"Temps, en secondes :",ex:"un nombre"}],juge,etapes:E,bonne:`<b>${rep}</b>`,bonneTxt:String(rep),repBonne:{v:String(rep)},repFausse:{v:String(t===0&&N*k!==rep?N*k:rep+1)},nature,ens:{type:"machine",t,d,mm,N,j,rep}};}
+/* TD 29 : ranger des suites écrites comme au TD (sommes, différences, log d'un polynôme, 2^{n/2}), chacune d'un ordre différent */
+const FORMES_TD=[
+  {o:"Θ(log n)",f:[["log(n² + 1)","log(n² + 1) = log(n²) + log(1 + 1/n²), et log(n²) = 2 log(n) : c'est Θ(log n)."],["log(5n)","log(5n) = log(5) + log(n) : c'est Θ(log n)."]]},
+  {o:"Θ(√n)",f:[["√n + 100","Le terme qui grandit est √n : c'est Θ(√n)."],["√(4n)","√(4n) = 2√n : c'est Θ(√n)."]]},
+  {o:"Θ(n)",f:[["3000n + 28","On garde 3000n, sans la constante : c'est Θ(n)."],["n/50 − 7","On garde n/50, sans la constante : c'est Θ(n)."]]},
+  {o:"Θ(n log n)",f:[["n log(n) + 1000n","1000n / (n log n) = 1000 / log(n) tend vers 0 : c'est Θ(n log n)."],["n(log(2n) + 1)","n(log(2n) + 1) = n log(n) + n(log(2) + 1) : c'est Θ(n log n)."]]},
+  {o:"Θ(n²)",f:[["0,001n² − 100000n","Divisé par n², on obtient 0,001 − 100000/n, qui tend vers 0,001 > 0 : c'est Θ(n²). Elle est négative tant que n < 10⁸, mais seul n → +∞ compte."],["(n + 3)²","(n + 3)² = n² + 6n + 9 : c'est Θ(n²)."]]},
+  {o:"Θ(n² log n)",f:[["n²(log(3n) + 5)","n²(log(3n) + 5) = n² log(n) + n²(log(3) + 5) : c'est Θ(n² log n)."],["n² log(n) − n²","n² / (n² log n) = 1 / log(n) tend vers 0 : c'est Θ(n² log n)."]]},
+  {o:"Θ(n³)",f:[["n³ − n²","On garde n³ : c'est Θ(n³)."],["n²(n + 1)","n²(n + 1) = n³ + n² : c'est Θ(n³)."]]},
+  {o:"Θ(2^{n/2})",f:[["2^{n/2}","2^{n/2} = (√2)ⁿ : une exponentielle de base √2 ≈ 1,41. Elle domine tous les polynômes, et 2ⁿ la domine : 2^{n/2} / 2ⁿ = 1/2^{n/2} tend vers 0."],["√(2^{n})","√(2ⁿ) = 2^{n/2} = (√2)ⁿ : une exponentielle de base √2 ≈ 1,41, plus lente que 2ⁿ."]]},
+  {o:"Θ(2ⁿ)",f:[["2^{n} + 1","On garde 2ⁿ : c'est Θ(2ⁿ)."],["2^{n} − n³","n³ / 2ⁿ tend vers 0 (croissances comparées) : c'est Θ(2ⁿ)."]]},
+  {o:"Θ(3ⁿ)",f:[["3^{n} − 2^{n}","2ⁿ / 3ⁿ = (2/3)ⁿ tend vers 0 : c'est Θ(3ⁿ)."],["3^{n} + n^{10}","n¹⁰ / 3ⁿ tend vers 0 (croissances comparées) : c'est Θ(3ⁿ)."]]},
+  {o:"Θ(n!)",f:[["n! − 3^{n}","3ⁿ / n! tend vers 0 : c'est Θ(n!)."]]}];
+const METHODE_TD="Pour chaque suite, on garde le terme qui grandit le plus vite (le terme dominant) et on oublie les constantes, puis on range les ordres obtenus avec la liste du cours. En cas de doute entre deux suites u et v, on calcule la limite de u/v : 0 si u est dominée par v, une constante > 0 si elles ont le même ordre, +∞ si u domine v.";
+function rangerTD(R){const nb=5,LET=["A","B","C","D","E"],cls=R.mel(FORMES_TD.map((c,i)=>i)).slice(0,nb),F=R.mel(cls.map(i=>({i,c:FORMES_TD[i],f:R.choix(FORMES_TD[i].f)}))).map((x,k)=>Object.assign(x,{l:LET[k]}));
+  const bon=F.slice().sort((x,y)=>x.i-y.i),att=bon.map(x=>x.l).join("");
+  const E=[{w:F.map(x=>`${x.l} = ${fx(x.f[0])} est ${fx(x.c.o)}`).join(" ; ")+".",why:F.map(x=>`${x.l} : ${x.f[1]}`).join(" "),pts:1},
+    {w:`On range ces ordres : ${bon.map(x=>fx(x.c.o)).join(", ")}.`,why:LISTE+" "+METHODE_TD,pts:1},
+    {w:`<b>${bon.map(x=>x.l).join(" ≺ ")}</b>`,why:"« ≺ » : est strictement dominée par (le cours note o). Ce sont les ordres de grandeur, rangés de la croissance la plus faible à la plus forte.",pts:1}];
+  function juge(rep){const L=(propre(rep.o).toUpperCase().match(/[A-E]/g)||[]);if(L.length!==nb||new Set(L).size!==nb)return {incomplet:`Écris les ${nb} lettres ${LET.join(", ")}, une fois chacune, de la suite dominée par toutes les autres à celle qui les domine toutes.`};
+    if(L.join("")===att)return {ok:true};
+    let d=null;for(let i=0;i+1<nb;i++){const x=F.find(z=>z.l===L[i]),y=F.find(z=>z.l===L[i+1]);if(x.i>y.i){d={etape:1,type:"deux ordres de grandeur inversés",titre:`Où ça part : ${x.l} et ${y.l}.`,msg:`${y.l} est ${fx(y.c.o)} et ${x.l} est ${fx(x.c.o)} : ${y.l} est dominée par ${x.l}. ${y.f[1]}`};break;}}
+    return {ok:false,faux:["o"],resume:"Pas tout à fait : ce n'est pas le bon ordre.",diag:d};}
+  const q=`Trie les suites ci-dessous par ordre de domination au voisinage de +∞, de celle qui est dominée par toutes les autres à celle qui les domine toutes (comme au TD 29) : ${F.map(x=>`${x.l} : ${fx(x.f[0])}`).join(" ; ")}.`;
+  return {sig:"RT"+F.map(x=>x.f[0]).join("|"),q,corps:"",texte:q.replace(/<[^>]+>|\$/g,""),champs:[{k:"champ",id:"o",nom:"ordre",label:"De la plus dominée à la plus dominante :",ex:"par exemple B A D C E",apercu:false,sym:LET.map(l=>[l,l+" "])}],juge,etapes:E,bonne:bon.map(x=>x.l).join(" ≺ "),bonneTxt:bon.map(x=>x.l).join(" < "),repBonne:{o:att.split("").join(" ")},repFausse:{o:att.split("").reverse().join(" ")},nature:"ranger comme au TD 29",ens:{type:"rangerTD",formes:F.map(x=>[x.l,x.f[0]]),att}};}
+/* TD 30 : A en Θ(n²), B en Θ(n log n), un temps mesuré chacun : les coefficients, puis lequel choisir. log en base 10 (en base 2, seul k_B change, pas les temps) */
+const fr=(a,b)=>{const g=(x,y)=>y?g(y,x%y):x,p=g(Math.abs(a),Math.abs(b))||1;return [a/p,b/p];};
+const decimal=([a,b])=>{let s=b,k=0;while(s%10===0){s/=10;k++;}while(s%2===0||s%5===0){if(s%2===0){s/=2;a*=5;}else{s/=5;a*=2;}k++;}if(s!==1)return null;const t=String(Math.abs(a)).padStart(k+1,"0");return (a<0?"-":"")+(k?t.slice(0,-k)+","+t.slice(-k):t);};
+function choisir(R){const croise=R()<0.7;for(let essai=0;essai<400;essai++){
+  const n0=R.choix([10,100,100,1000]),L0=Math.round(Math.log10(n0)),tA=R.choix([1,2,3,4,5,6,8,10,12,15,20,25]),tB=R.choix([2,3,4,5,6,8,10,12,15,16,20,24,25,30,40,45,50,60,75,80,90,100]),e1=L0+R.ent(1,2),e2=e1+R.ent(1,2),n1=10**e1,n2=10**e2;
+  const kA=fr(tA,n0*n0),kB=fr(tB,n0*L0),dA=decimal(kA),dB=decimal(kB);if(!dA||!dB)continue;
+  const T=(k,x)=>k[0]*x/k[1];const A1=T(kA,n1*n1),B1=T(kB,n1*e1),A2=T(kA,n2*n2),B2=T(kB,n2*e2);
+  if(A1===B1||A2===B2||(croise&&(!(A1<B1)||!(A2>B2)))||![B1,B2].every(x=>Math.abs(x*100-Math.round(x*100))<1e-6))continue;
+  const c1=A1<B1?"A":"B",c2=A2<B2?"A":"B",s=x=>String(Math.round(x*100)/100).replace(".",",");
+  const q=`A et B répondent au même problème. A est en ${fx("Θ(n²)")}, B en ${fx("Θ(n log n)")}. Sur le même ordinateur, A met ${tA} s pour n = ${s(n0)} et B met ${tB} s pour n = ${s(n0)}. On suppose les temps proportionnels à ${fx("n²")} et à ${fx("n log(n)")}, avec log en base 10. Calcule les coefficients ${fx("k_A")} et ${fx("k_B")}, puis dis quel algorithme choisir pour n = ${s(n1)}, puis pour n = ${s(n2)} (comme au TD 30).`;
+  const E=[{w:`Une seule mesure ne donne pas la formule : ${fx("Θ")} ne dit que l'ordre de grandeur (n², 1000n² et n² + 10⁶ sont tous en ${fx("Θ(n²)")}). D'où l'hypothèse « proportionnel ».`,why:"C'est la question 1 du TD 30 : sans l'hypothèse, on ne peut rien calculer.",pts:1},
+    {w:`${fx(`k_A = ${tA} / ${s(n0)}² = ${dA}`)} et ${fx(`k_B = ${tB} / (${s(n0)} × log(${s(n0)})) = ${tB} / ${s(n0*L0)} = ${dB}`)}.`,why:`${fx(`t_A = k_A n²`)} et ${fx(`t_B = k_B n log(n)`)}, avec ${fx(`log(${s(n0)}) = ${L0}`)} en base 10. En base 2, ${fx("k_B")} serait différent, mais les temps calculés ensuite seraient les mêmes : seul le rapport log(n)/log(${s(n0)}) compte.`,pts:1},
+    {w:`n = ${s(n1)} : A met ${fx(`${dA} × ${s(n1)}² = ${s(A1)}`)} s, B met ${fx(`${dB} × ${s(n1)} × ${e1} = ${s(B1)}`)} s : <b>on choisit ${c1}</b>.`,why:`${fx(`log(${s(n1)}) = ${e1}`)}. On compare les deux temps.`,pts:1},
+    {w:`n = ${s(n2)} : A met ${s(A2)} s, B met ${s(B2)} s : <b>on choisit ${c2}</b>.`,why:`${fx(`log(${s(n2)}) = ${e2}`)}. Pour n assez grand, l'algorithme d'ordre le plus petit (B, en n log n) finit toujours par gagner, même avec un plus mauvais coefficient.`,pts:1}];
+  function juge(r){const a=nombre(r.a),b=nombre(r.b);if(!a||!b||!r.c1||!r.c2)return {incomplet:"Écris les deux coefficients et choisis un algorithme pour chaque taille."};
+    const eq=(v,k)=>v.n*k[1]===k[0]*v.d,faux=[];if(!eq(a,kA))faux.push("a");if(!eq(b,kB))faux.push("b");if(r.c1!==c1)faux.push("c1");if(r.c2!==c2)faux.push("c2");
+    if(!faux.length)return {ok:true};
+    const et=faux.includes("a")||faux.includes("b")?1:faux.includes("c1")?2:3;
+    return {ok:false,faux,resume:"Pas tout à fait.",diag:{etape:et,type:et===1?"coefficient de proportionnalité":"comparer deux temps",titre:et===1?"Où ça part : le coefficient.":"Où ça part : le calcul des deux temps.",msg:`${E[et].w} ${E[et].why}`}};}
+  return {sig:"CH"+[n0,tA,tB,e1,e2],q,corps:"",texte:q.replace(/<[^>]+>|\$/g,""),champs:[{k:"champ",id:"a",nom:"k_A",label:"k_A =",ex:"un nombre, par exemple 0,001"},{k:"champ",id:"b",nom:"k_B",label:"k_B =",ex:"un nombre"},{k:"choix",id:"c1",titre:`Pour n = ${s(n1)}, on choisit :`,o:[["A","A"],["B","B"]]},{k:"choix",id:"c2",titre:`Pour n = ${s(n2)}, on choisit :`,o:[["A","A"],["B","B"]]}],juge,etapes:E,bonne:`k_A = ${dA}, k_B = ${dB} ; ${c1} pour n = ${s(n1)}, ${c2} pour n = ${s(n2)}`,bonneTxt:`${dA} ; ${dB} ; ${c1} ; ${c2}`,repBonne:{a:dA,b:dB,c1,c2},repFausse:{a:dA,b:dB,c1:c1==="A"?"B":"A",c2},nature:"deux algorithmes, lequel choisir",ens:{type:"choisir",n0,tA,tB,n1,n2,kA:dA,kB:dB,c1,c2}};}
+  throw new Error("choisir : pas de tirage");}
+/* TD 29 à 31 mélangés : l'exercice annoncé pour le CC2 */
+function pratique(R){return R.choix([rangerTD,choisir,machine])(R);}
 
 /* ---------- les questions de cours des annales (CC de 2022 et de novembre 2024), sur papier ---------- */
 const papierQ=(sig,q,corps,L,nature)=>({sig,q,corps,texte:(q+" "+corps).replace(/<[^>]+>/g," ").replace(/\$/g,"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/\s+/g," ").trim(),champs:[],papier:true,juge:()=>({incomplet:"Cet exercice se fait sur papier."}),
@@ -725,13 +773,16 @@ G.add("algo",[
    {t:"ranger des suites par ordre de grandeur",cc:2,gen:ranger},
    {t:"l'ordre de complexité d'une somme : θ(…)",cc:2,gen:simplifier,min:150},
    {t:"o, θ ou ω, par la limite du quotient",cc:3,gen:R=>quotient(R,false)},
-   {t:"vrai ou faux avec O, Ω, o, ω, θ",cc:3,gen:R=>quotient(R,true)}]},
+   {t:"vrai ou faux avec O, Ω, o, ω, θ",cc:3,gen:R=>quotient(R,true)},
+   {t:"ranger comme au TD 29 : sommes, différences, log d'un polynôme, 2^(n/2)",cc:3,gen:rangerTD}]},
  {id:"AG7",t:"Master theorem",th:"master",ex:"cc2",pts:3,lecons:["a2-boucles"],apres:["AG6"],
   paliers:[
    {t:"lire a, b et d dans l'équation",cc:1,gen:masterLire,min:115},
    {t:"comparer b puissance d et a, puis conclure",cc:3,gen:R=>masterConclure(R,false),min:105},
    {t:"à partir d'une procédure récursive",cc:4,gen:R=>masterConclure(R,true),min:95},
-   {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100}]},
+   {t:"machine plus rapide, entrée plus grande",cc:3,gen:machine,min:100},
+   {t:"deux algorithmes : les coefficients, puis lequel choisir (TD 30)",cc:4,gen:choisir},
+   {t:"TD 29 à 31 mélangés : ranger, choisir, machine plus rapide",cc:3,gen:pratique}]},
  {id:"AG8",t:"Trouver la ligne fausse, écrire la ligne manquante",tache:"trouver la ligne fausse",th:"preuves",ex:"cc2",pts:1,lecons:["a2-invariant"],apres:["AG1"],
   paliers:[
    {t:"les bornes d'une boucle",cc:3,gen:R=>ligneFausse(R,"borne"),min:25},
