@@ -23,7 +23,7 @@
  {id:"homothetie",t:"Homothéties : deux de même centre, et leur composée",pts:3,ou:"CC2 2025, ex. 2 (5 points)",lect:2,exo:{g:"GE2",lv:3},
   ess:`<ul><li>L'homothétie h de centre K et de rapport λ envoie M sur le point M′ tel que ${ve("KM′")} = λ${ve("KM")} (définition 3.3.3).</li>
 <li>Deux homothéties de <b>même centre</b> K se composent en une homothétie de centre K, et <b>les rapports se multiplient</b> : le rapport de h₂ ∘ h₁ est λ₂λ₁ (feuille 3, ex. 1). L'ordre ne change donc rien : h₂ ∘ h₁ = h₁ ∘ h₂.</li>
-<li>L'image d'une droite par une homothétie est une droite <b>parallèle</b>.</li></ul>`,
+<li>Si λ ≠ 0, l'image d'une droite par une homothétie est une droite <b>parallèle</b> (théorème 3.3.4 (ii)).</li></ul>`,
   piege:`Les rapports se multiplient, ils ne s'ajoutent pas. Et l'homothétie qui défait h, de rapport λ, est de rapport 1/λ, pas −λ.`,
   meth:`<ol><li>Composée : λ₁ = 2 et λ₂ = −1/3 donnent h₂ ∘ h₁ de rapport 2 × (−1/3) = −2/3.</li>
 <li>Défaire h de rapport 3/2 : μ × 3/2 = 1, donc μ = 2/3.</li>
