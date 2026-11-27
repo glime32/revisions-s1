@@ -1,7 +1,7 @@
 /* Générateurs de Calculus. CC2 : nombres complexes (TD 3), équations différentielles d'ordre 2 (TD 2, ex. 3 à 5). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nul,nb,brut,par,propre}=O;
+const G=window.GEN,O=G.outils,{Q,q,add,sub,mul,div,egal,nul,nb,brut,par,propre,suiteNb}=O;
 const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
 
 /* ---------- lire une formule tapée ----------
@@ -445,7 +445,8 @@ function diagFamille(o,Y,f,E){const d=(type,msg)=>({etape:E,type,titre:"Où ça 
   if(f.pb==="rang"||f.pb==="nonlineaire")return d(o.cas==="1"?"racine double sans le x":"deux constantes qui n'en font qu'une",o.cas==="1"?`Avec une racine double, ${fx(ex(o.r))} ne suffit pas : ${fx(`y = (C₁ + C₂x)${ex(o.r)}`)}.`:`Les deux constantes doivent multiplier deux fonctions différentes : ${fx(`y = ${genT(o)}`)}.`);
   return d(o.cas==="1"?"forme de la racine double":o.cas==="3"?"forme des racines complexes":"solution qui ne vérifie pas l'équation",`Ta formule ne vérifie pas l'équation pour toutes les valeurs des constantes. Avec ${fx(racT(o))} : ${fx(`y = ${genT(o)}`)}.`);}
 function generaleED(R,cas){const o=tireED(R,cas),eq=yEq(o.k,o.p,o.c),E=etapesCar(o),att=racines(o),B=baseED(o);
-  function juge(rep){const L=lisListe(rep.rac),Y=lisY(rep.y);
+  function juge(rep){const S=suiteNb(rep.rac,racTape(o).split(";"));if(S.colle)return {incomplet:"Sépare les racines par « ; », par exemple 3 ; 12."};
+    const L=lisListe(/^\s*\d+\s*$/.test(String(rep.rac||""))&&S.P.length>1?S.P.join(" ; "):rep.rac),Y=lisY(rep.y);
     if(L.vide||Y.vide)return {incomplet:"Remplis les deux champs : les racines, puis y."};
     if(L.neg)return {incomplet:"La racine carrée d'un nombre négatif n'existe pas dans ℝ : écris les racines complexes avec i, par exemple −1 + 2i ; −1 − 2i."};
     if(L.illisible)return {incomplet:"Je n'arrive pas à lire les racines. Sépare-les par « ; », par exemple 1 ; −3, ou 2 + i ; 2 − i."};
@@ -1984,7 +1985,8 @@ function feLisZ(t){const s=propre(t).toLowerCase();if(!s)return null;if(/^(aucun
 function feDer(R){const o=feTire(R,R.choix(FE_FAM)),D=dmT(o.P),dE=o.dE.map(x=>Object.assign({pts:1},x)),E=dE.concat([{w:o.sgW.w,why:o.sgW.why,pts:1}]),dern=E.length-1;
   const jx=jugeX({ref:o.d,ans:o.dT,fin:dE.length-1,type:"dérivée",pieges:o.dpg.map(p=>[p[0],{etape:dE.length-1,type:p[2],titre:"Où ça part : la dérivée.",msg:p[3]}])});
   const Z=o.zeros.map(z=>z.v),zT=o.zeros.map(z=>fx(`x = ${z.t}`)).join(" et "),bords=o.noeuds.filter(n=>n.k==="bord").map(n=>n.x),fin=Z.length?`f′(x) = 0 pour ${zT}.`:"f′(x) ne s'annule jamais sur D.";
-  function juge(rep){const j=jx(rep);if(j.incomplet)return j;const lu=feLisZ(rep.z);
+  function juge(rep){const j=jx(rep);if(j.incomplet)return j;const S=suiteNb(rep.z,o.zeros.map(z=>String(z.tp)));if(S.colle)return {incomplet:"Sépare les valeurs de x par « ; », par exemple 2 ; 13."};
+    const lu=feLisZ(/^\s*\d+\s*$/.test(String(rep.z||""))&&S.P.length>1?S.P.join(" ; "):rep.z);
     if(lu===null)return {incomplet:"Écris les valeurs de x séparées par « ; », par exemple 2 ; -1, ou « aucune » si f′ ne s'annule pas."};
     if(lu==="dec")return {incomplet:"Donne les valeurs exactes (une fraction, e, e^(-1)), pas des nombres arrondis."};
     const okZ=lu.length===Z.length&&Z.every(z=>lu.some(v=>pres(v,z)))&&lu.every(v=>Z.some(z=>pres(v,z)));

@@ -1,7 +1,7 @@
 /* Générateurs de Raisonnement (CC2 : ensembles, applications, quantificateurs, récurrence, logique). */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils,{Q,nb,brut,propre,nombre}=O,AN=G.ana;
+const G=window.GEN,O=G.outils,{Q,nb,brut,propre,nombre,suiteNb}=O,AN=G.ana;
 const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
 const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
@@ -11,8 +11,8 @@ const ent=x=>x<0?"−"+(-x):String(x);
 const tri=A=>[...new Set(A)].sort((x,y)=>x-y);
 const ensF=A=>A.length?"{"+A.map(ent).join(", ")+"}":"∅";
 const tapeF=A=>A.length?"{"+A.join(", ")+"}":"∅";
-function lisFini(src){let s=propre(src).trim();if(!s)return null;if(/^(∅|vide|ensemble vide|\{\s*\})$/i.test(s))return [];
-  s=s.replace(/^\{|\}$/g,"").trim();if(!s)return [];const P=s.split(/[\s,;]+/).filter(Boolean).map(x=>nombre(x));return P.every(x=>x&&x.d===1)?tri(P.map(x=>x.n)):null;}
+function lisFini(src,att){let s=propre(src).trim();if(!s)return null;if(/^(∅|vide|ensemble vide|\{\s*\})$/i.test(s))return [];
+  s=s.replace(/^\{|\}$/g,"").trim();if(!s)return [];const S=suiteNb(s,att);if(S.colle)return null;const P=S.P.map(x=>nombre(x));return P.every(x=>x&&x.d===1)?tri(P.map(x=>x.n)):null;}
 const memeF=(A,B)=>A.length===B.length&&A.every((x,i)=>x===B[i]);
 const OPF={"∪":(A,B)=>tri(A.concat(B)),"∩":(A,B)=>A.filter(x=>B.includes(x)),"∖":(A,B)=>A.filter(x=>!B.includes(x)),"Δ":(A,B)=>tri(A.filter(x=>!B.includes(x)).concat(B.filter(x=>!A.includes(x))))};
 const DITF={"∪":"les éléments qui sont dans l'un ou dans l'autre (ou dans les deux)","∩":"les éléments qui sont dans les deux à la fois","∖":"les éléments du premier qui ne sont pas dans le second","Δ":"les éléments qui sont dans un seul des deux"};
@@ -20,7 +20,7 @@ const partie=(R,E,lo,hi)=>tri(R.mel(E).slice(0,R.ent(lo,hi)));
 /* o : {noms: [[étiquette, ensemble attendu, pourquoi]], enonce, rappel, sig, ens} : plusieurs ensembles finis à écrire */
 function ensemblesFinis(o){const ids=o.Q.map(x=>x[0]);
   const E=o.Q.map(x=>({w:`<b>${fx(`${x[0]} = ${ensF(x[1])}`)}</b>`,why:x[2],pts:1}));
-  function juge(rep){const L=ids.map(k=>lisFini((rep.c||{})[k]));if(L.some(x=>!x))return {incomplet:"Écris chaque ensemble entre accolades, avec des virgules, par exemple {1, 4, 7}. Pour l'ensemble vide : ∅."};
+  function juge(rep){const L=ids.map((k,i)=>lisFini((rep.c||{})[k],o.Q[i][1]));if(L.some(x=>!x))return {incomplet:"Écris chaque ensemble entre accolades, avec des virgules, par exemple {1, 4, 7}. Pour l'ensemble vide : ∅."};
     const F=ids.filter((k,i)=>!memeF(L[i],o.Q[i][1]));if(!F.length)return {ok:true};
     const i=ids.indexOf(F[0]),att=o.Q[i][1],lu=L[i],manque=att.filter(x=>!lu.includes(x)),trop=lu.filter(x=>!att.includes(x)),autre=lu.length?o.Q.find((x,j)=>j!==i&&memeF(lu,x[1])):null,conf=(o.pieges||[]).find(x=>x[0]===F[0]&&memeF(lu,x[1]));
     return {ok:false,faux:F,resume:`Pas tout à fait : ${et(F)} ${F.length>1?"sont à revoir":"est à revoir"}.`,diag:{etape:i,type:conf?conf[2]:autre?"deux opérations sur les ensembles confondues":"élément oublié ou en trop dans un ensemble",titre:`Où ça part : ${F[0]}.`,

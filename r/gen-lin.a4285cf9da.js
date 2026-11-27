@@ -315,7 +315,8 @@ function avecM(M0,c,rac){
     else{const so=solution({E:E0.map(l=>l.map(p=>pev(p,k))),piv:[...Array(r).keys()],rang:r,c}),ex=so.S.map(e=>aff(e,N));
       E.push({w:`Si ${fx("m = "+nb(k))} : la ligne ${r+1} devient ${fx("0 = 0")}, toujours vraie. Il reste ${r} ${r>1?"lignes":"ligne"} pour ${c} inconnues : <b>une infinité de solutions</b>, ${fl(`S = {(${ex.join(", ")}) | ${so.libres.map(j=>N[j]).join(", ")} ∈ ℝ}`)}.`,why:`On remplace m par ${nb(k)} dans la matrice échelonnée. ${N[jd]} n'a plus de pivot : c'est une variable libre, elle peut prendre n'importe quelle valeur.`,pts:1});}});
   const liste2=L=>L.length?L.map(nb).join(" et "):"aucune valeur";
-  function juge(rep){const z=valeursM(rep.zero),i=valeursM(rep.inf);
+  function juge(rep){const etale=(s,A)=>{const S=G.outils.suiteNb(s,A.map(String));return S.colle?null:/^\s*\d+\s*$/.test(String(s||""))&&S.P.length>1?S.P.join(" ; "):s;};
+    const z=valeursM(etale(rep.zero,Z)),i=valeursM(etale(rep.inf,I));
     if(!z||!i)return {incomplet:"Remplis les deux cases avec des valeurs de m, par exemple 1 ; -2. S'il n'y en a pas, écris : aucune."};
     const dans=(L,k)=>L.some(x=>egal(x,k)),memes=(L,K)=>L.length===K.length&&K.every(k=>dans(L,k)),okZ=memes(z,Z),okI=memes(i,I);
     if(okZ&&okI)return {ok:true};

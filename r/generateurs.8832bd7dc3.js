@@ -56,8 +56,16 @@ function nombre(s){s=propre(s).replace(/ /g,"").replace(/^\+/,"");
   let m=/^(-?\d+)(?:\/(\d+))?$/.exec(s);if(m)return m[2]!=null&&+m[2]===0?null:Q(+m[1],m[2]?+m[2]:1);
   m=/^(-?)(\d*)[.,](\d+)$/.exec(s);if(m){const d=Math.pow(10,m[3].length);return Q((m[1]?-1:1)*(+(m[2]||0)*d+ +m[3]),d);}
   return null;}
+/* Une suite de nombres tapée librement (espaces, virgules, points-virgules). « 12345 » pour 1 2 3 4 5 : sans séparateur, elle n'est lisible
+   que si chaque nombre attendu a un seul chiffre ; si les nombres collés font la bonne réponse avec des nombres de plusieurs chiffres,
+   colle est vrai : on demande de les séparer au lieu de compter faux. */
+function suiteNb(s,att){const P=propre(s==null?"":s).split(/[\s,;]+/).filter(Boolean);
+  if(!att||!P.length||P.length>=att.length||!P.every(x=>/^\d+$/.test(x)))return {P,colle:false};
+  const ch=P.join("");if(att.every(x=>/^\d$/.test(String(x)))&&ch.length===att.length)return {P:ch.split(""),colle:false};
+  return {P,colle:ch===att.map(String).join("")};}
 function liste(s,n){s=propre(s).replace(/^[(\[{]|[)\]}]$/g,"").trim();if(!s)return null;let P;
   if(s.includes(";"))P=s.split(";");else{const a=s.split(/\s*,\s+|\s+/).filter(Boolean);P=a.length===n||!s.includes(",")?a:s.split(",");}
+  if(n>1&&P.length===1&&new RegExp("^\\d{"+n+"}$").test(P[0].trim()))P=P[0].trim().split("");
   P=P.map(x=>nombre(x.trim()));return P.length===n&&P.every(Boolean)?P:null;}
 /* « 2 - z », « (1+3t)/2 », « -z » : rend { c, k } ou null si ce n'est pas une expression du premier degré */
 function affine(src,permis){const s=propre(src).replace(/ /g,"");let p=0;if(!s)return null;
@@ -120,7 +128,7 @@ function predicat(src,vars){let s=String(src==null?"":src).replace(/f\s*\(\s*x\s
   return true;}
 
 const GEN=window.GEN={defs:{},par:{},
-  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,liste,affine,calcule,predicat},
+  outils:{alea,hache,Q,q,add,sub,mul,div,egal,nul,entier,nb,brut,par,comb,aff,f,fx,sys,mat,ligne,trou,rang,dansLignes,propre,nombre,suiteNb,liste,affine,calcule,predicat},
   /* un tirage : la graine suffit à retrouver l'exercice */
   tire(d,palier,graine){const R=alea(graine),e=d.paliers[palier].gen(R);e.g=d.id;e.palier=palier;e.gr=graine;e.cle=hache(d.id+"|"+palier+"|"+e.sig);return e;},
   add(sid,defs){const S=SUBJ[sid];GEN.defs[sid]=(GEN.defs[sid]||[]).concat(defs);

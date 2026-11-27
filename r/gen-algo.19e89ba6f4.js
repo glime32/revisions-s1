@@ -2,7 +2,7 @@
    Un programme est un petit arbre : le même arbre est affiché dans le pseudo-code du cours et exécuté pour calculer la correction. */
 (function(){
 "use strict";
-const G=window.GEN,O=G.outils,{propre,nombre}=O;
+const G=window.GEN,O=G.outils,{propre,nombre,suiteNb}=O;
 const fx=s=>s.replace(/&[a-z]+;/g,"x").replace(/[_{}]/g,"").length>30||s.length>36?O.f(s):O.fx(s);
 const h=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const et=L=>L.length<2?L.join(""):L.slice(0,-1).join(", ")+" et "+L[L.length-1];
@@ -578,7 +578,8 @@ function ordreAff(R){const nom=R.choix(["P","Q","Aff"]),k=R.ent(3,5),t=R.ent(0,4
   const E=[{w:`Les appels successifs : ${CH.map(v=>fx(`${nom}(${ent(v)})`)).join(", ")}. Le dernier, ${dernier}, n'affiche rien et ne fait pas d'appel : n n'est plus strictement positif.`,why:`On écrit d'abord la chaîne des appels, sans s'occuper des affichages : chaque appel recalcule n avec « ${ecrit(pas)} ».`,pts:1},
     {w:avant&&apres?"Chaque appel affiche une fois avant son appel récursif, et une fois après.":avant?"Chaque appel affiche avant son appel récursif : les affichages se font en descendant, du premier appel au dernier.":"Chaque appel affiche après son appel récursif : il attend que tous les appels suivants soient finis. Les affichages se font en remontant, du dernier appel au premier.",why:"C'est la place de la ligne « affiche » par rapport à l'appel récursif qui décide de l'ordre.",pts:1},
     {w:`<b>Nombres affichés, dans l'ordre : ${att.map(ent).join(" ")}</b>`,why:`${att.length} ${att.length>1?"affichages":"affichage"} en tout.`,pts:1}];
-  function juge(rep){const L=propre(rep.s).split(/[\s,;]+/).filter(Boolean).map(x=>nombre(x));if(!L.length||L.some(x=>!x||x.d!==1))return {incomplet:"Écris les nombres affichés, dans l'ordre, séparés par des espaces : par exemple 3 2 1."};
+  function juge(rep){const S=suiteNb(rep.s,att);if(S.colle)return {incomplet:"Sépare les nombres par des espaces : par exemple 3 12 7."};
+    const L=S.P.map(x=>nombre(x));if(!L.length||L.some(x=>!x||x.d!==1))return {incomplet:"Écris les nombres affichés, dans l'ordre, séparés par des espaces : par exemple 3 2 1."};
     const V=L.map(x=>x.n);if(V.length===att.length&&V.every((x,i)=>x===att[i]))return {ok:true};
     const inv=V.length===att.length&&V.every((x,i)=>x===att[att.length-1-i]),tri=a=>a.slice().sort((x,y)=>x-y).join(),memes=tri(V)===tri(att);
     return {ok:false,faux:["s"],resume:"Pas tout à fait : ce n'est pas ce qui est affiché.",diag:inv?{etape:1,type:"ordre des affichages inversé",titre:"Où ça part : avant ou après l'appel.",msg:avant?"La ligne « affiche » est écrite avant l'appel récursif : chaque appel affiche d'abord, puis appelle le suivant.":"La ligne « affiche » est écrite après l'appel récursif : le premier appel n'affiche qu'à la toute fin, quand tous les autres ont fini."}
